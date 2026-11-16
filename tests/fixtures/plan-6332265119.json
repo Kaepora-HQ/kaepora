@@ -54,7 +54,7 @@
       "files": [
         "Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "4402942101476009858",
@@ -62,7 +62,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Obj_Heart_Piece"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "14647422914070455120",
@@ -70,7 +70,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "Item_Arrow_Ice"
     },
     {
       "hash": "3130048366421939233",
@@ -98,7 +98,7 @@
       "files": [
         "Banc/InsideTheDekuTree/InsideTheDekuTree_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_HeavyBoot"
     },
     {
       "hash": "12889104996486369065",
@@ -112,14 +112,14 @@
       "files": [
         "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_HeavyBoot"
+      "drop_actor": "TBox_DekuNutBundle"
     },
     {
       "hash": "13027331340815880287",
       "files": [
         "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Arrow_Ice"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "8291119063305855945",
@@ -140,14 +140,14 @@
       "files": [
         "Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "3510516276638146208",
       "files": [
         "Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_DekuNutBundle"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "5527401621172639818",
@@ -246,7 +246,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "13828480906010430010",
@@ -260,7 +260,7 @@
       "files": [
         "Banc/IceCavern/IceCavern_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Obj_Heart_Piece"
     },
     {
       "hash": "13542013937093159888",
@@ -281,7 +281,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "13501407288943710656",
@@ -295,7 +295,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_DekuStickBundle_Small"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "4320448574091221496",
@@ -337,14 +337,14 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "Item_DekuStickBundle_Small"
     },
     {
       "hash": "4372363658229299619",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "11563468890171962383",
@@ -358,7 +358,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "4519534997122863169",

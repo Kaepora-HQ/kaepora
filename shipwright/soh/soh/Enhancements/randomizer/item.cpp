@@ -10,8 +10,7 @@ extern "C" {
 }
 
 namespace Rando {
-Item::Item()
-    : randomizerGet(RG_NONE), type(ITEMTYPE_ITEM), getItemId(GI_NONE), advancement(false), hintKey(RHT_NONE), price(0) {
+Item::Item() : randomizerGet(RG_NONE), type(ITEMTYPE_ITEM), getItemId(GI_NONE), advancement(false), hintKey(RHT_NONE) {
 }
 Item::Item(const RandomizerGet randomizerGet_, Text name_, const ItemType type_, const int16_t getItemId_,
            const bool advancement_, LogicVal logicVal_, const RandomizerHintTextKey hintKey_, const uint16_t itemId_,
@@ -20,7 +19,7 @@ Item::Item(const RandomizerGet randomizerGet_, Text name_, const ItemType type_,
            const std::string color_, const uint16_t price_)
     : randomizerGet(randomizerGet_), name(std::move(name_)), type(type_), getItemId(getItemId_),
       advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_),
-      article(std::move(article_)), color(std::move(color_)), price(price_) {
+      article(std::move(article_)), color(std::move(color_)) {
 
     if (modIndex_ == MOD_RANDOMIZER || getItemId > 0x7D) {
         giEntry = std::make_shared<GetItemEntry>(GetItemEntry{
@@ -40,7 +39,7 @@ Item::Item(const RandomizerGet randomizerGet_, Text name_, const ItemType type_,
            const GetItemCategory category_, Text article_, const std::string color_, const uint16_t price_)
     : randomizerGet(randomizerGet_), name(std::move(name_)), type(type_), getItemId(getItemId_),
       advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_),
-      article(std::move(article_)), color(std::move(color_)), price(price_) {
+      article(std::move(article_)), color(std::move(color_)) {
 }
 
 void Item::ApplyEffect() const {
@@ -93,10 +92,6 @@ LogicVal Item::GetLogicVal() const {
 
 RandomizerGet Item::GetRandomizerGet() const {
     return randomizerGet;
-}
-
-uint16_t Item::GetPrice() const {
-    return price;
 }
 
 std::shared_ptr<GetItemEntry> Item::GetGIEntry() const { // NOLINT(*-no-recursion)
@@ -400,10 +395,6 @@ std::shared_ptr<GetItemEntry> Item::GetGIEntry() const { // NOLINT(*-no-recursio
 
 GetItemEntry Item::GetGIEntry_Copy() const {
     return *GetGIEntry();
-}
-
-void Item::SetPrice(const uint16_t price_) {
-    price = price_;
 }
 
 void Item::SetAsPlaythrough() {

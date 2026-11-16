@@ -50,10 +50,8 @@ class Item {
     ItemType GetItemType() const;
     LogicVal GetLogicVal() const;
     RandomizerGet GetRandomizerGet() const;
-    uint16_t GetPrice() const;
     std::shared_ptr<GetItemEntry> GetGIEntry() const;
     GetItemEntry GetGIEntry_Copy() const;
-    void SetPrice(uint16_t price_);
     void SetAsPlaythrough();
     void SetCustomDrawFunc(CustomDrawFunc) const;
     bool IsPlaythrough() const;
@@ -78,7 +76,6 @@ class Item {
     GetItemCategory category;
     Text article;
     std::string color;
-    uint16_t price;
     bool playthrough = false;
     std::shared_ptr<GetItemEntry> giEntry;
     const char* customIcon = nullptr;
