@@ -10,6 +10,8 @@ import sys
 import unittest
 
 REACH = None
+# The 10 and 30 Gold Skulltula rewards are the only wallet upgrades.
+NO_WALLET_UPGRADE = (("Kak 10 Gold Skulltula Reward", "Green Rupee"), ("Kak 30 Gold Skulltula Reward", "Green Rupee"))
 
 
 class LogicTest(unittest.TestCase):
@@ -38,6 +40,11 @@ class LogicTest(unittest.TestCase):
         never_adult = ("HF Ocarina of Time Item", "Green Rupee")
         self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
         self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
+
+    def test_shops_charge_the_remakes_prices(self):
+        # A fish costs 50 at the Market Potion Shop. 20 bombchus cost 240.
+        self.assertTrue(self.reachable("Market Potion Shop Item 8", *NO_WALLET_UPGRADE))
+        self.assertFalse(self.reachable("Market Bombchu Shop Item 5", *NO_WALLET_UPGRADE))
 
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))

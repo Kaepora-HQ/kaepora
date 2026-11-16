@@ -45,7 +45,6 @@ RandomizerGet ItemLocation::GetPlacedRandomizerGet() const {
 
 void ItemLocation::SetPlacedItem(const RandomizerGet item) {
     placedItem = item;
-    SetPrice(StaticData::RetrieveItem(placedItem).GetPrice());
 }
 
 void ItemLocation::DelayItem() {
@@ -102,6 +101,7 @@ RandomizerArea ItemLocation::GetRandomArea() const {
 
 void ItemLocation::PlaceVanillaItem() {
     placedItem = StaticData::GetLocation(rc)->GetVanillaItem();
+    SetPrice(StaticData::GetLocation(rc)->GetVanillaPrice());
 }
 
 void ItemLocation::ApplyPlacedItemEffect() const {
@@ -109,10 +109,6 @@ void ItemLocation::ApplyPlacedItemEffect() const {
 }
 
 uint16_t ItemLocation::GetPrice() const {
-    // RANDOTODO if we ever change price of shop items, this needs replacing with proper price assignment in Fill
-    if (StaticData::RetrieveItem(placedItem).GetItemType() == ITEMTYPE_SHOP) {
-        return StaticData::RetrieveItem(placedItem).GetPrice();
-    }
     return price;
 }
 
