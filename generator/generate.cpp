@@ -16,6 +16,7 @@ GeneratedSeed Generate(const std::string& seed) {
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> chests = LoadRemakeChests();
 
+    SetUnmodifiedGameOptions();
     auto ctx = Rando::Context::GetInstance();
     ctx->SetSeedString(seed);
     ctx->SetSeed(SohUtils::Hash(seed));

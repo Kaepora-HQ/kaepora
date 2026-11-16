@@ -40,6 +40,19 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(files(self.tmp / "seed"), {**files(mod), "spoiler.json": spoiler.read_bytes()})
 
+    def test_two_seeds_in_one_process(self):
+        for seed in ["7", "8"]:
+            result = self.make_seeds((seed, self.tmp / "alone" / seed))
+            self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.make_seeds(("7", self.tmp / "together" / "7"), ("8", self.tmp / "together" / "8"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(files(self.tmp / "together"), files(self.tmp / "alone"))
+
+    def test_same_seed_twice_in_one_process(self):
+        result = self.make_seeds(("7", self.tmp / "first"), ("7", self.tmp / "second"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(files(self.tmp / "second"), files(self.tmp / "first"))
+
     def test_existing_folder_is_refused(self):
         seed = self.tmp / "seed"
         seed.mkdir()

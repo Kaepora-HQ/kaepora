@@ -302,8 +302,12 @@ void InitializeRandomizer() {
     Rando::StaticData::RegisterFireGoronLocations();
     Rando::StaticData::InitHashMaps();
     ctx->AddExcludedOptions();
-    settings->SetAllToContext();
+    SetUnmodifiedGameOptions();
+}
+
+void SetUnmodifiedGameOptions() {
+    Rando::Settings::GetInstance()->SetAllToContext();
     for (auto [key, value] : unmodifiedGame) {
-        ctx->GetOption(key).Set(value);
+        Rando::Context::GetInstance()->GetOption(key).Set(value);
     }
 }

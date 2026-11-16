@@ -88,7 +88,8 @@ if(KAEPORA_GAME_NUP)
     foreach(test larger-plan bad-input size-table size-table-unchanged start-flags)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
-    foreach(TEST IN ITEMS same_files_as_the_two_programs existing_folder_is_refused new_folder_in_a_missing_folder)
+    foreach(TEST IN ITEMS same_files_as_the_two_programs two_seeds_in_one_process same_seed_twice_in_one_process
+                          existing_folder_is_refused new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
