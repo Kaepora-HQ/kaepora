@@ -90,7 +90,7 @@ Water Temple Cracked Wall Chest				no	no remake chest
 Water Temple Boss Key Chest	10378828369334876242	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
 Water Temple Longshot Chest	18059711820131847165	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Longshot	no	dungeon with changed locks and keys
 Water Temple River Chest				no	no remake chest
-Spirit Temple Silver Gauntlets Chest	2490063409521505179	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Gauntlet_Silver	yes	
+Spirit Temple Silver Gauntlets Chest	2490063409521505179	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Gauntlet_Silver	no	a tier above Goron's Bracelet; opened after the Golden Gauntlets it may lower strength
 Spirit Temple Mirror Shield Chest	10012167258643363548	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Shield_Mirror	yes	
 Spirit Temple Child Bridge Chest	5309180490719879013	Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
 Spirit Temple Child Early Torches Chest	5703423643219134246	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
