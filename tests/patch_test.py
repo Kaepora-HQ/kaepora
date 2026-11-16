@@ -1,7 +1,9 @@
-"""End-to-end tests of kaepora-patch on the game's own placement files.
+"""End-to-end tests of kaepora-patch on the game's own placement files and game data list.
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
-       python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
+       python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|start-flags \
+           <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
 reader bug in either shows as a difference.
@@ -20,16 +22,28 @@ DEKU_STATIC = "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
 FOREST_DYNAMIC = "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
 WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
 SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
+GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
 LONGSHOT_CHEST = 18059711820131847165
 # A Forest Temple chest whose actor has no Dynamic.Drop__DropActor.
 FOREST_CHEST_WITHOUT_DROP = 15117164073907033527
+BOOL = 0xD0
+INT64 = 0xD4
 UINT64 = 0xD5
+
+# Saved values by name, and the MurmurHash3 x86_32 hash of each name that keys it in the game data list.
+FIRE_LOCK = "IsChainLockDoorOpen.4189300454150217955"
+WATER_LOCK = "IsChainLockDoorOpen.2202807660383340401"
+MIDO_CHEST = "IsTreasureBoxOpen.12786193094758345086"
+WATER_KEYS = "DungeonInfo.WaterTemple.SmallKeyTotalNum"
+IS_CHILD = "Sequence_IsChildhood"
+HASHES = {FIRE_LOCK: 749909151, WATER_LOCK: 400117133, WATER_KEYS: 3683958665, IS_CHILD: 3466731731}
 
 
 class Game:
-    """The update package's RomFS, which holds every placement file, the dictionary pack and the size table."""
+    """The update package's RomFS, which holds every placement file, the game data list, the dictionary pack and the
+    size table."""
 
     def __init__(self, nup):
         self.nup = nup
@@ -59,7 +73,9 @@ class Game:
 
         update = next(0x30 + 0x40 * i for i in range(package_count) if toc[0x30 + 0x40 * i + 0x18] == 1)
         walk(struct.unpack_from("<I", toc, update + 0x10)[0], "")
-        self.dictionary = zstd.ZstdDict(sarc_member(zstd.decompress(self.read("Pack/ZsDic.pack.zs")), b"bcett.byml.zsdic"))
+        dictionaries = zstd.decompress(self.read("Pack/ZsDic.pack.zs"))
+        self.dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"bcett.byml.zsdic"))
+        self.list_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"zs.zsdic"))
 
     def read(self, path):
         size, offset = self.files[path]
@@ -69,6 +85,9 @@ class Game:
 
     def placement(self, data):
         return byml(zstd.decompress(data, zstd_dict=self.dictionary))
+
+    def game_data_list(self, data):
+        return byml(zstd.decompress(data, zstd_dict=self.list_dictionary))
 
 
 def sarc_member(data, wanted):
@@ -85,31 +104,37 @@ def sarc_member(data, wanted):
 
 
 def byml(data):
-    """Parses little-endian BYML v7. Strings, arrays and dicts become Python values; other values become (type, value)."""
-    assert data[:4] == b"YB\x07\x00", data[:4]
+    """Parses BYML v7 in either byte order. Strings, arrays and dicts become Python values; other values become
+    (type, value)."""
+    order = {b"YB": "little", b"BY": "big"}[data[:2]]
+    assert int.from_bytes(data[2:4], order) == 7, data[:4]
+
+    def u24(offset):
+        return int.from_bytes(data[offset:offset + 3], order)
 
     def u32(offset):
-        return struct.unpack_from("<I", data, offset)[0]
+        return int.from_bytes(data[offset:offset + 4], order)
 
     def table(offset):
-        return [data[offset + u32(offset + 4 + 4 * i):].split(b"\0", 1)[0].decode() for i in range(u32(offset) >> 8)]
+        starts = [offset + u32(offset + 4 + 4 * i) for i in range(u24(offset + 1))]
+        return [data[start:data.index(b"\0", start)].decode() for start in starts]
 
     keys, strings = table(u32(4)), table(u32(8))
 
     def value(kind, raw):
         if kind == 0xA0:
             return strings[raw]
-        if kind in (0xD0, 0xD1, 0xD2, 0xD3):
+        if kind in (BOOL, 0xD1, 0xD2, 0xD3):
             return (kind, raw)
-        if kind == UINT64:
-            return (kind, struct.unpack_from("<Q", data, raw)[0])
-        count = u32(raw) >> 8
+        if kind in (INT64, UINT64):
+            return (kind, int.from_bytes(data[raw:raw + 8], order))
+        count = u24(raw + 1)
         if kind == 0xC0:
             values = raw + 4 + (count + 3) // 4 * 4
             return [value(data[raw + 4 + i], u32(values + 4 * i)) for i in range(count)]
         if kind == 0xC1:
-            entries = [(u32(raw + 4 + 8 * i), u32(raw + 8 + 8 * i)) for i in range(count)]
-            return {keys[entry & 0xFFFFFF]: value(entry >> 24, v) for entry, v in entries}
+            entries = [(u24(raw + 4 + 8 * i), data[raw + 7 + 8 * i], u32(raw + 8 + 8 * i)) for i in range(count)]
+            return {keys[key]: value(entry_kind, v) for key, entry_kind, v in entries}
         raise ValueError(f"node type {kind:#x}")
 
     return value(data[u32(12)], u32(12))
@@ -119,8 +144,9 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests):
-    return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests]}
+def plan(chests, start_flags=()):
+    return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
+            "start_flags": list(start_flags)}
 
 
 def run(patch, game, plan, tmp):
@@ -149,6 +175,24 @@ def tested_mod(patch, game, mod_file):
     # The tested mod wrote Item_Hookshot over Item_Range_SlingShot in the string table and padded it with zero bytes.
     # The game's own files never pad a string, so the bytes differ and the parsed content must match.
     assert game.placement(ours) == game.placement(tested)
+
+
+def tested_start_mod(patch, game, mod_file):
+    """The start state the game accepted: two lock records and one Mido's House chest record start set."""
+    tested = pathlib.Path(mod_file).read_bytes()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, plan([], [FIRE_LOCK, WATER_LOCK, MIDO_CHEST]), tmp)
+        assert result.returncode == 0, result.stderr
+        assert written(tmp) == [GAME_DATA_LIST], written(tmp)
+        ours = (tmp / "mod" / "romfs" / GAME_DATA_LIST).read_bytes()
+    game_frame = game.read(GAME_DATA_LIST)
+    # Single segment, content size in the header, no checksum, and the same dictionary, as in the game's own list.
+    assert ours[4] == game_frame[4], (ours[4], game_frame[4])
+    info, game_info = zstd.get_frame_info(ours), zstd.get_frame_info(game_frame)
+    assert (info.decompressed_size, info.dictionary_id) == (game_info.decompressed_size, game_info.dictionary_id)
+    assert zstd.decompress(ours, zstd_dict=game.list_dictionary) == zstd.decompress(
+        tested, zstd_dict=game.list_dictionary)
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -189,6 +233,28 @@ def larger_plan(patch, game):
                 if path in files:
                     actor(expected, h)["Dynamic"]["Drop__DropActor"] = drop_actor
             assert game.placement((tmp / "mod" / "romfs" / path).read_bytes()) == expected, path
+
+
+def start_flags_with_chests(patch, game):
+    flags = [FIRE_LOCK, WATER_LOCK]
+    chests = rotated(game)
+    with tempfile.TemporaryDirectory() as without, tempfile.TemporaryDirectory() as tmp:
+        without, tmp = pathlib.Path(without), pathlib.Path(tmp)
+        assert run(patch, game, plan(chests), without).returncode == 0
+        result = run(patch, game, plan(chests, flags), tmp)
+        assert result.returncode == 0, result.stderr
+        changed = written(without)
+        assert written(tmp) == sorted(changed + [GAME_DATA_LIST]), written(tmp)
+        # The placement files are the ones the same chests give without flags.
+        for path in changed:
+            assert (tmp / "mod" / "romfs" / path).read_bytes() == (without / "mod" / "romfs" / path).read_bytes(), path
+        ours = game.game_data_list((tmp / "mod" / "romfs" / GAME_DATA_LIST).read_bytes())
+    expected = game.game_data_list(game.read(GAME_DATA_LIST))
+    entries = [e for e in expected["Data"]["Bool"] if e["Hash"][1] in {HASHES[f] for f in flags}]
+    assert [e["DefaultValue"] for e in entries] == [(BOOL, 0)] * len(flags), entries
+    for entry in entries:
+        entry["DefaultValue"] = (BOOL, 1)
+    assert ours == expected
 
 
 def read_size_table(data):
@@ -276,10 +342,23 @@ def bad_input(patch, game):
             {"hash": str(FOREST_CHEST_WITHOUT_DROP), "files": [FOREST_DYNAMIC], "drop_actor": "Item_Hookshot"},
             [str(FOREST_CHEST_WITHOUT_DROP), FOREST_DYNAMIC]),
     }
-    for name, (chest, named) in cases.items():
+    plans = {name: ({"seed": "1", "chests": [valid, chest], "start_flags": []}, named)
+             for name, (chest, named) in cases.items()}
+    plans["no start_flags"] = ({"seed": "1", "chests": [valid]}, ["plan.json", "start_flags"])
+    values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
+    assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
+    assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)
+    flags = {
+        "flag not in the list": ("IsChainLockDoorOpen.1", "not a true-or-false value"),
+        "flag not true-or-false": (WATER_KEYS, "not a true-or-false value"),
+        "flag already true": (IS_CHILD, "already true"),
+    }
+    for name, (flag, reason) in flags.items():
+        plans[name] = ({"seed": "1", "chests": [valid], "start_flags": [FIRE_LOCK, flag]}, [flag, reason])
+    for name, (bad_plan, named) in plans.items():
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)
-            result = run(patch, game, {"seed": "1", "chests": [valid, chest]}, tmp)
+            result = run(patch, game, bad_plan, tmp)
             assert result.returncode != 0, name
             assert all(text in result.stderr for text in named), (name, result.stderr)
             assert not (tmp / "mod").exists(), name
@@ -288,7 +367,7 @@ def bad_input(patch, game):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         (tmp / "mod").mkdir()
-        result = run(patch, game, {"seed": "1", "chests": [valid]}, tmp)
+        result = run(patch, game, {"seed": "1", "chests": [valid], "start_flags": []}, tmp)
         assert result.returncode != 0, "mod folder exists"
         assert str(tmp / "mod") in result.stderr, result.stderr
         assert not any((tmp / "mod").iterdir())
@@ -299,10 +378,12 @@ def main():
     game = Game(nup)
     tests = {
         "tested-mod": tested_mod,
+        "tested-start-mod": tested_start_mod,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
         "size-table": size_table_entries,
         "size-table-unchanged": size_table_unchanged,
+        "start-flags": start_flags_with_chests,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")
