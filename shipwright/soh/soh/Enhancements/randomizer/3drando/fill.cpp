@@ -998,6 +998,61 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     }
 }
 
+// Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests what
+// the unmodified game gives there. The shuffled chests' items make up the item pool. Returns the shuffled chests.
+std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests) {
+    auto ctx = Rando::Context::GetInstance();
+    RegionTable_Init(); // Reset the world graph to initialize the proper locations
+    ctx->ItemReset();
+    ctx->GenerateLocationPool();
+    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests);
+    GenerateStartingInventory();
+
+    StartPerformanceTimer(PT_SHOPSANITY);
+    // Add prices to scrubs
+    auto scrubLoc = Rando::StaticData::GetScrubLocations();
+    if (ctx->GetOption(RSK_SHUFFLE_SCRUBS).Is(RO_SCRUBS_ALL)) {
+        for (size_t i = 0; i < scrubLoc.size(); i++) {
+            ctx->GetItemLocation(scrubLoc[i])
+                ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(scrubLoc[i]), scrubPrices));
+        }
+    } else {
+        for (size_t i = 0; i < scrubLoc.size(); i++) {
+            ctx->GetItemLocation(scrubLoc[i])
+                ->SetCustomPrice(Rando::StaticData::GetLocation(scrubLoc[i])->GetVanillaPrice());
+        }
+    }
+
+    // set merchant prices
+    if (ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_BEANS_ONLY) ||
+        ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL)) {
+        ctx->GetItemLocation(RC_ZR_MAGIC_BEAN_SALESMAN)
+            ->SetCustomPrice(
+                GetRandomPrice(Rando::StaticData::GetLocation(RC_ZR_MAGIC_BEAN_SALESMAN), merchantPrices));
+    } else {
+        ctx->GetItemLocation(RC_ZR_MAGIC_BEAN_SALESMAN)
+            ->SetCustomPrice(Rando::StaticData::GetLocation(RC_ZR_MAGIC_BEAN_SALESMAN)->GetVanillaPrice());
+    }
+
+    auto merchantLoc = Rando::StaticData::GetMerchantLocations();
+
+    if (ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL_BUT_BEANS) ||
+        ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL)) {
+        for (size_t i = 0; i < merchantLoc.size(); i++) {
+            ctx->GetItemLocation(merchantLoc[i])
+                ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(merchantLoc[i]), merchantPrices));
+        }
+    } else {
+        for (size_t i = 0; i < merchantLoc.size(); i++) {
+            ctx->GetItemLocation(merchantLoc[i])
+                ->SetCustomPrice(Rando::StaticData::GetLocation(merchantLoc[i])->GetVanillaPrice());
+        }
+    }
+    StopPerformanceTimer(PT_SHOPSANITY);
+
+    return shuffled;
+}
+
 void ClearProgress() {
 }
 
@@ -1011,11 +1066,7 @@ int Fill(const std::vector<RemakeChest>& chests) {
         // showItemProgress = false;
         ctx->playthroughLocations.clear();
         ctx->GetEntranceShuffler()->playthroughEntrances.clear();
-        RegionTable_Init(); // Reset the world graph to initialize the proper locations
-        ctx->ItemReset();
-        ctx->GenerateLocationPool();
-        std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests);
-        GenerateStartingInventory();
+        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests);
 
         // Temporarily add shop items to the itemPool so that entrance randomization
         // can validate the world using deku/hylian shields
@@ -1036,48 +1087,6 @@ int Fill(const std::vector<RemakeChest>& chests) {
             return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_SHOP;
         });
         StopPerformanceTimer(PT_ENTRANCE_SHUFFLE);
-
-        StartPerformanceTimer(PT_SHOPSANITY);
-        // Add prices to scrubs
-        auto scrubLoc = Rando::StaticData::GetScrubLocations();
-        if (ctx->GetOption(RSK_SHUFFLE_SCRUBS).Is(RO_SCRUBS_ALL)) {
-            for (size_t i = 0; i < scrubLoc.size(); i++) {
-                ctx->GetItemLocation(scrubLoc[i])
-                    ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(scrubLoc[i]), scrubPrices));
-            }
-        } else {
-            for (size_t i = 0; i < scrubLoc.size(); i++) {
-                ctx->GetItemLocation(scrubLoc[i])
-                    ->SetCustomPrice(Rando::StaticData::GetLocation(scrubLoc[i])->GetVanillaPrice());
-            }
-        }
-
-        // set merchant prices
-        if (ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_BEANS_ONLY) ||
-            ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL)) {
-            ctx->GetItemLocation(RC_ZR_MAGIC_BEAN_SALESMAN)
-                ->SetCustomPrice(
-                    GetRandomPrice(Rando::StaticData::GetLocation(RC_ZR_MAGIC_BEAN_SALESMAN), merchantPrices));
-        } else {
-            ctx->GetItemLocation(RC_ZR_MAGIC_BEAN_SALESMAN)
-                ->SetCustomPrice(Rando::StaticData::GetLocation(RC_ZR_MAGIC_BEAN_SALESMAN)->GetVanillaPrice());
-        }
-
-        auto merchantLoc = Rando::StaticData::GetMerchantLocations();
-
-        if (ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL_BUT_BEANS) ||
-            ctx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL)) {
-            for (size_t i = 0; i < merchantLoc.size(); i++) {
-                ctx->GetItemLocation(merchantLoc[i])
-                    ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(merchantLoc[i]), merchantPrices));
-            }
-        } else {
-            for (size_t i = 0; i < merchantLoc.size(); i++) {
-                ctx->GetItemLocation(merchantLoc[i])
-                    ->SetCustomPrice(Rando::StaticData::GetLocation(merchantLoc[i])->GetVanillaPrice());
-            }
-        }
-        StopPerformanceTimer(PT_SHOPSANITY);
 
         std::vector<RandomizerCheck> shuffledLocations;
         for (const RemakeChest* chest : shuffled) {
