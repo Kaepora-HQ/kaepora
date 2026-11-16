@@ -28,7 +28,7 @@
         "Bridge Reward Count": "9",
         "Bridge Dungeon Count": "8",
         "Bridge Token Count": "100",
-        "Bridge Triforce Piece Count": "0",
+        "Bridge Triforce Piece Count": "100",
         "Bridge Reward Options": "Standard Rewards",
         "Ganon's Trials": "Set Number",
         "Ganon's Trials Count": "6",
@@ -57,13 +57,13 @@
         "Start with Requiem of Spirit": "Off",
         "Start with Nocturne of Shadow": "Off",
         "Start with Prelude of Light": "Off",
-        "Shuffle Kokiri Sword": "Off",
+        "Shuffle Kokiri Sword": "On",
         "Shuffle Master Sword": "Off",
         "Swordless Epona Items": "Off",
         "Shuffle Child's Wallet": "Off",
         "Include Tycoon Wallet": "Off",
-        "Shuffle Dungeon Rewards": "End of Dungeons",
-        "Shuffle Songs": "Song Locations",
+        "Shuffle Dungeon Rewards": "Vanilla",
+        "Shuffle Songs": "Off",
         "Token Shuffle": "Off",
         "Shop Shuffle": "Off",
         "Shops Item Count": "0",
@@ -107,10 +107,10 @@
         "Additional Ice Traps": "0",
         "Ice Trap Percent": "0",
         "Ice Trap Trick Names": "Similar",
-        "Gossip Stone Hints": "Need Nothing",
-        "ToT Altar Hint": "On",
-        "Ganondorf Hint": "On",
-        "Sheik Light Arrow Hint": "On",
+        "Gossip Stone Hints": "No Hints",
+        "ToT Altar Hint": "Off",
+        "Ganondorf Hint": "Off",
+        "Sheik Light Arrow Hint": "Off",
         "Boss Door Hints": "Off",
         "Dampe's Diary Hint": "Off",
         "Greg the Green Rupee Hint": "Off",
@@ -190,7 +190,7 @@
         "Skip Planting Beans": "Off",
         "Night Skulltula's Expect Sun's Song": "Off",
         "Early Granny's Potion Shop": "Off",
-        "Shuffle Adult Trade": "Off",
+        "Shuffle Adult Trade": "On",
         "Shuffle Merchants": "Off",
         "Merchant Prices": "Vanilla",
         "Merchant Fixed Price": "50",
@@ -209,9 +209,9 @@
         "Bunny Hood Effect": "Off",
         "Masks as Adult": "Off",
         "Slingshot/Bow Can Break Beehives": "Off",
-        "Bombchu Drops": "Yes",
+        "Bombchu Drops": "No",
         "Bombchu Bag": "None",
-        "Link's Pocket": "Dungeon Reward",
+        "Link's Pocket": "Nothing",
         "Link's Pocket Reward Type": "Any Reward",
         "MQ Dungeon Setting": "None",
         "MQ Dungeon Count": "0",
@@ -233,14 +233,14 @@
         "GBK Reward Count": "9",
         "GBK Dungeon Count": "8",
         "GBK Token Count": "100",
-        "GBK Triforce Piece Count": "0",
+        "GBK Triforce Piece Count": "100",
         "GBK Reward Options": "Standard Reward",
         "Ganon's Soul Stone Count": "3",
         "Ganon's Soul Medallion Count": "6",
         "Ganon's Soul Reward Count": "9",
         "Ganon's Soul Dungeon Count": "8",
         "Ganon's Soul Token Count": "100",
-        "Ganon's Soul Triforce Piece Count": "0",
+        "Ganon's Soul Triforce Piece Count": "100",
         "Ganon's Soul Reward Options": "Standard Reward",
         "Keyrings": "Off",
         "Keyring Dungeon Count": "8",
@@ -285,7 +285,7 @@
         "Win Condition Reward Count": "9",
         "Win Condition Dungeon Count": "8",
         "Win Condition Token Count": "100",
-        "Win Condition Triforce Piece Count": "0",
+        "Win Condition Triforce Piece Count": "100",
         "Win Condition Options": "Standard Reward",
         "Triforce Hunt Pieces Location": "Anywhere",
         "Shuffle Bean Souls": "Off",
@@ -486,364 +486,19 @@
             "Ganon": "Triforce"
         }
     },
-    "Gossip Stone Hints": {
-        "KF Left Near Deku Gossip Stone": {
-            "type": "Message",
-            "message": "They say pulling all gravestones in the graveyard leads to something magical.",
-            "distribution": "Junk",
-            "hintKey": 73
-        },
-        "KF Right Near Deku Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that a Green Rupee can be found at Sacred Forest Meadow.",
-            "distribution": "Random",
-            "location": "SFM Wolfos Grotto Chest",
-            "item": "Green Rupee",
-            "area": "Sacred Forest Meadow"
-        },
-        "KF Gossip Stone": {
-            "type": "Message",
-            "message": "They say if you use Strength on the truck, you can find Mew.",
-            "distribution": "Junk",
-            "hintKey": 36
-        },
-        "KF Storms Grotto Gossip Stone": {
-            "type": "Message",
-            "message": "They say that walking backwards is very fast.",
-            "distribution": "Junk",
-            "hintKey": 52
-        },
-        "LW Gossip Stone": {
-            "type": "Message",
-            "message": "They say without the Lens of Truth, the Treasure Chest Mini-Game is a 1 out of 32 chance. Good luck!",
-            "distribution": "Junk",
-            "hintKey": 19
-        },
-        "LW Near Shortcuts Grotto Gossip Stone": {
-            "type": "Message",
-            "message": "They say Ganon's tail is vulnerable to nuts, arrows, swords, explosives, hammers... ...sticks, seeds, boomerangs... ...rods, shovels, iron balls, angry bees...",
-            "distribution": "Junk",
-            "hintKey": 61
-        },
-        "SFM Near LW Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Kokiri Forest is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "KF Kokiri Sword Chest",
-            "item": "Kokiri Sword",
-            "area": "Kokiri Forest"
-        },
-        "SFM Center Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that a Piece of Heart can be found at Goron City.",
-            "distribution": "Random",
-            "location": "GC Maze Center Chest",
-            "item": "Piece of Heart",
-            "area": "Goron City"
-        },
-        "SFM Near Saria Gossip Stone": {
-            "type": "Item",
-            "message": "They say that pillars of wood in the Deku Tree lead to a Piece of Heart.",
-            "distribution": "Dungeon",
-            "location": "Deku Tree Compass Room Side Chest",
-            "item": "Piece of Heart",
-            "area": "Deku Tree"
-        },
-        "HF Cow Grotto Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Deku Nuts (5 pieces) can be found at Gerudo's Fortress.",
-            "distribution": "Random",
-            "location": "GF Chest",
-            "item": "Deku Nuts (5)",
-            "area": "Gerudo's Fortress"
-        },
-        "HF Near Market Grotto Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Dodongo's Cavern is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "Dodongos Cavern Bomb Bag Chest",
-            "item": "Boomerang",
-            "area": "Dodongo's Cavern"
-        },
-        "HF Open Grotto Gossip Stone": {
-            "type": "Message",
-            "message": "They say that all the Zora drowned in Wind Waker.",
-            "distribution": "Junk",
-            "hintKey": 9
-        },
-        "HF Southeast Grotto Gossip Stone": {
-            "type": "Foolish",
-            "message": "They say that plundering Spirit Temple is a foolish choice.",
-            "distribution": "Foolish",
-            "area": "Spirit Temple"
-        },
-        "Market Left Center Gossip Stone": {
-            "type": "Item",
-            "message": "They say that inside Mido's house is a Red Rupee.",
-            "distribution": "Overworld",
-            "location": "KF Mido Top Left Chest",
-            "item": "Red Rupee",
-            "area": "Kokiri Forest"
-        },
-        "Market Leftmost Center Gossip Stone": {
-            "type": "Message",
-            "message": "Gorons are stupid. They eat rocks.",
-            "distribution": "Junk",
-            "hintKey": 17
-        },
-        "Market Right Center Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards the Iron Boots.",
-            "distribution": "Named Item",
-            "location": "Gerudo Training Ground Beamos Chest",
-            "item": "Iron Boots",
-            "area": "Gerudo Training Ground"
-        },
-        "Market Rightmost Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards a Red Rupee.",
-            "distribution": "Random",
-            "location": "Gerudo Training Ground Lobby Right Chest",
-            "item": "Red Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "HC Near Malon Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards a Blue Rupee.",
-            "distribution": "Random",
-            "location": "Gerudo Training Ground Near Scarecrow Chest",
-            "item": "Blue Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "HC Rock Wall Gossip Stone": {
-            "type": "Message",
-            "message": "Game Over. Return of Ganon.",
-            "distribution": "Junk",
-            "hintKey": 26
-        },
-        "HC Storm Grotto Gossip Stone": {
-            "type": "Item",
-            "message": "They say that the treasure guarded by a scrub in the Deku Tree is Bombchus (5 pieces).",
-            "distribution": "Dungeon",
-            "location": "Deku Tree Slingshot Room Side Chest",
-            "item": "Bombchus (5)",
-            "area": "Deku Tree"
-        },
-        "Kak Open Grotto Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards a Red Rupee.",
-            "distribution": "Random",
-            "location": "Gerudo Training Ground Hammer Room Switch Chest",
-            "item": "Red Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "Graveyard Gossip Stone": {
-            "type": "Item",
-            "message": "They say that the final prize of the thieves' training is a Red Rupee.",
-            "distribution": "Dungeon",
-            "location": "Gerudo Training Ground Maze Path Final Chest",
-            "item": "Red Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "DMT Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards a Blue Rupee.",
-            "distribution": "Random",
-            "location": "Gerudo Training Ground Underwater Silver Rupee Chest",
-            "item": "Blue Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "DMT Storms Grotto Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Jabu-Jabu's Belly is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "Jabu Jabus Belly Compass Chest",
-            "item": "Strength Upgrade",
-            "area": "Jabu-Jabu's Belly"
-        },
-        "GC Maze Gossip Stone": {
-            "type": "Item",
-            "message": "They say that in Goron City the hammer unlocks a Blue Rupee.",
-            "distribution": "Overworld",
-            "location": "GC Maze Left Chest",
-            "item": "Blue Rupee",
-            "area": "Goron City"
-        },
-        "GC Medigoron Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Kokiri Forest is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "KF Mido Bottom Left Chest",
-            "item": "Progressive Slingshot",
-            "area": "Kokiri Forest"
-        },
-        "DMC Gossip Stone": {
-            "type": "Message",
-            "message": "They say Medigoron sells the earliest Breath of the Wild demo.",
-            "distribution": "Junk",
-            "hintKey": 34
-        },
-        "DMC Upper Grotto Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that a Purple Rupee can be found at Kokiri Forest.",
-            "distribution": "Random",
-            "location": "KF Mido Top Right Chest",
-            "item": "Purple Rupee",
-            "area": "Kokiri Forest"
-        },
-        "ZR Near Domain Gossip Stone": {
-            "type": "Message",
-            "message": "One who does not have Triforce can't go in.",
-            "distribution": "Junk",
-            "hintKey": 12
-        },
-        "ZR Near Grottos Gossip Stone": {
-            "type": "Item",
-            "message": "They say that in Goron City explosives unlock a Purple Rupee.",
-            "distribution": "Overworld",
-            "location": "GC Maze Right Chest",
-            "item": "Purple Rupee",
-            "area": "Goron City"
-        },
-        "ZR Open Grotto Gossip Stone": {
-            "type": "Message",
-            "message": "They say Ganon's tail is vulnerable to nuts, arrows, swords, explosives, hammers... ...sticks, seeds, boomerangs... ...rods, shovels, iron balls, angry bees...",
-            "distribution": "Junk",
-            "hintKey": 61
-        },
-        "ZD Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that the Ice Arrows can be found at Zora's Domain.",
-            "distribution": "Named Item",
-            "location": "ZD Chest",
-            "item": "Ice Arrows",
-            "area": "Zora's Domain"
-        },
-        "ZF Near Jabu Gossip Stone": {
-            "type": "Message",
-            "message": "They say that Lon Lon Ranch prospered under Ingo.",
-            "distribution": "Junk",
-            "hintKey": 18
-        },
-        "ZF Near Fairy Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Ice Cavern hoards a Purple Rupee.",
-            "distribution": "Random",
-            "location": "Ice Cavern Map Chest",
-            "item": "Purple Rupee",
-            "area": "Ice Cavern"
-        },
-        "LH Near Lab Gossip Stone": {
-            "type": "Item",
-            "message": "They say that the treasure guarded by a scrub in the Deku Tree is a Deku Stick.",
-            "distribution": "Dungeon",
-            "location": "Deku Tree Slingshot Chest",
-            "item": "Deku Stick (1)",
-            "area": "Deku Tree"
-        },
-        "LH Southeast Gossip Stone": {
-            "type": "Message",
-            "message": "They say that Ganon's Tower is protected by a powerful barrier.",
-            "distribution": "Trial",
-            "hintKey": 1242
-        },
-        "LH Southwest Gossip Stone": {
-            "type": "Message",
-            "message": "They say that Bongo Bongo really hates the cold.",
-            "distribution": "Junk",
-            "hintKey": 47
-        },
-        "Gerudo Valley Gossip Stone": {
-            "type": "Item Area",
-            "message": "They say that Gerudo Training Ground hoards a Blue Rupee.",
-            "distribution": "Random",
-            "location": "Gerudo Training Ground Maze Path Second Chest",
-            "item": "Blue Rupee",
-            "area": "Gerudo Training Ground"
-        },
-        "Desert Colossus Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Kokiri Forest is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "KF Mido Bottom Right Chest",
-            "item": "Mirror Shield",
-            "area": "Kokiri Forest"
-        },
-        "Dodongo's Cavern Gossip Stone": {
-            "type": "Way of the Hero",
-            "message": "They say that Deku Tree is on the way of the hero.",
-            "distribution": "WotH",
-            "location": "Deku Tree Map Chest",
-            "item": "Progressive Bomb Bag",
-            "area": "Deku Tree"
-        }
-    },
     "Static Hints": {
-        "Ganondorf Hint": {
-            "type": "Area",
-            "message": "Ha ha ha... You'll never beat me by reflecting my lightning bolts and unleashing the arrows from Temple of Time!",
-            "location": "Market ToT Light Arrow Cutscene",
-            "item": "Light Arrows",
-            "area": "Temple of Time",
-            "hintKey": 1258
-        },
         "Ganondorf Joke": {
             "type": "Message",
             "message": "Oh! It's @.\nI was expecting someone called Sheik.\nDo you know what happened to them?",
             "hintKey": 1388
         },
-        "Sheik in Ganons Castle Hint": {
-            "type": "Area",
-            "message": "I overheard Ganondorf say that he misplaced the Light Arrows in Temple of Time.",
-            "location": "Market ToT Light Arrow Cutscene",
-            "area": "Temple of Time"
-        },
         "ToT Altar as Child": {
             "type": "Child Altar",
-            "message": "3 Spiritual Stones found in Hyrule... Deku Tree... Dodongo's Cavern... Jabu-Jabu's Belly... Ye who may become a Hero...\nOffer the spiritual stones and\nplay the Song of Time.",
-            "locations": [
-                "Queen Gohma",
-                "King Dodongo",
-                "Barinade"
-            ],
-            "items": [
-                "Kokiri's Emerald",
-                "Goron's Ruby",
-                "Zora's Sapphire"
-            ],
-            "areas": [
-                "Deku Tree",
-                "Dodongo's Cavern",
-                "Jabu-Jabu's Belly"
-            ]
+            "message": "Ye who may become a Hero...\nOffer the spiritual stones and\nplay the Song of Time."
         },
         "ToT Altar as Adult": {
             "type": "Adult Altar",
-            "message": "An awakening voice from the Sacred Realm will call those destined to be Sages, who dwell in the five temples. Temple of Time... Forest Temple... Fire Temple... Water Temple... Spirit Temple... Shadow Temple... The awakened ones require the Shadow and Spirit Medallions as well as the Light Arrows. And the evil one's key will be kept in a big chest inside its tower. And the Triforce will be granted once the evil one is defeated. Together with the Hero of Time, the awakened ones will return the light of peace to the world...",
-            "locations": [
-                "Gift from Rauru",
-                "Phantom Ganon",
-                "Volvagia",
-                "Morpha",
-                "Twinrova",
-                "Bongo Bongo"
-            ],
-            "items": [
-                "Light Medallion",
-                "Forest Medallion",
-                "Fire Medallion",
-                "Water Medallion",
-                "Spirit Medallion",
-                "Shadow Medallion"
-            ],
-            "areas": [
-                "Temple of Time",
-                "Forest Temple",
-                "Fire Temple",
-                "Water Temple",
-                "Spirit Temple",
-                "Shadow Temple"
-            ]
+            "message": "The awakened ones require the Shadow and Spirit Medallions as well as the Light Arrows. And the evil one's key will be kept in a big chest inside its tower. And the Triforce will be granted once the evil one is defeated. Together with the Hero of Time, the awakened ones will return the light of peace to the world..."
         }
     },
     "locations": {
@@ -891,9 +546,11 @@
         "LW Ocarina Memory Game": "Piece of Heart",
         "LW Target in Woods": "Progressive Slingshot",
         "LW Near Shortcuts Grotto Chest": "Purple Rupee",
+        "LW Trade Cojiro": "Odd Mushroom",
         "LW Deku Theater Skull Mask": "Progressive Stick Capacity",
         "LW Deku Theater Mask of Truth": "Progressive Nut Capacity",
         "LW Skull Kid": "Piece of Heart",
+        "LW Trade Odd Potion": "Poacher's Saw",
         "LW GS Bean Patch Near Bridge": "Gold Skulltula Token",
         "LW GS Bean Patch Near Theater": "Gold Skulltula Token",
         "LW GS Above Theater": "Gold Skulltula Token",
@@ -957,10 +614,12 @@
         "Kak Open Grotto Chest": "Purple Rupee",
         "Kak Redead Grotto Chest": "Blue Rupee",
         "Kak Shooting Gallery Reward": "Progressive Bow",
+        "Kak Trade Odd Mushroom": "Odd Potion",
         "Kak Granny's Shop": {
             "item": "Buy Blue Potion",
             "price": 100
         },
+        "Kak Trade Pocket Cucco": "Cojiro",
         "Kak 10 Gold Skulltula Reward": "Progressive Wallet",
         "Kak 20 Gold Skulltula Reward": "Stone of Agony",
         "Kak 30 Gold Skulltula Reward": "Progressive Wallet",
@@ -1000,6 +659,8 @@
         "DMT Freestanding PoH": "Piece of Heart",
         "DMT Chest": "No Item",
         "DMT Storms Grotto Chest": "No Item",
+        "DMT Trade Broken Sword": "Prescription",
+        "DMT Trade Eyedrops": "Claim Check",
         "DMT Trade Claim Check": "Biggoron's Sword",
         "DMT Great Fairy Reward": "Progressive Magic Meter",
         "DMT GS Near Kak": "Gold Skulltula Token",
@@ -1049,6 +710,7 @@
         "ZD Diving Minigame": "Progressive Scale",
         "ZD Chest": "Ice Arrows",
         "ZD King Zora Thawed": "Zora Tunic",
+        "ZD Trade Prescription": "Eyeball Frog",
         "ZD GS Frozen Waterfall": "Gold Skulltula Token",
         "ZD Shop Item 1": "Buy Zora Tunic",
         "ZD Shop Item 2": "Buy Arrows (10)",
@@ -1068,6 +730,7 @@
         "LH Child Fishing": "Piece of Heart",
         "LH Adult Fishing": "Progressive Scale",
         "LH Lab Dive": "Piece of Heart",
+        "LH Lab Trade Eyeball Frog": "World's Finest Eyedrops",
         "LH Freestanding PoH": "Piece of Heart",
         "LH Sun": "Fire Arrows",
         "LH GS Bean Patch": "Gold Skulltula Token",
@@ -1078,6 +741,7 @@
         "GV Crate Freestanding PoH": "Piece of Heart",
         "GV Waterfall Freestanding PoH": "Piece of Heart",
         "GV Chest": "Red Rupee",
+        "GV Trade Saw": "Broken Goron's Sword",
         "GV GS Small Bridge": "Gold Skulltula Token",
         "GV GS Bean Patch": "Gold Skulltula Token",
         "GV GS Behind Tent": "Gold Skulltula Token",
