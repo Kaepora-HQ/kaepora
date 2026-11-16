@@ -21,8 +21,6 @@ struct PriceSettingsStruct {
                         RandomizerSettingKey _tycoonWallet, RandomizerSettingKey _affordable);
 };
 
-extern void PlaceVanillaShopItems();
 extern std::vector<RandomizerGet> GetMinVanillaShopItems(int total_replaced);
 extern uint16_t GetRandomPrice(Rando::Location* loc, PriceSettingsStruct priceSettings);
 extern uint16_t GetCheapBalancedPrice();
-extern int GetShopsanityReplaceAmount();

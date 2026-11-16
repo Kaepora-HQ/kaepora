@@ -33,9 +33,7 @@ class StaticData {
     static Location* GetLocation(RandomizerCheck locKey);
     static std::array<Rando::Location, RC_MAX>& GetLocationTable();
     static std::multimap<std::tuple<s16, s16, s32>, RandomizerCheck> CheckFromActorMultimap;
-    static std::vector<RandomizerCheck> GetAllDungeonLocations();
     static std::vector<RandomizerCheck> dungeonRewardLocations;
-    static std::vector<RandomizerCheck> GetShopLocations();
     static std::vector<RandomizerCheck> GetScrubLocations();
     static std::vector<RandomizerCheck> GetMerchantLocations();
     static std::vector<RandomizerCheck> GetAdultTradeLocations();

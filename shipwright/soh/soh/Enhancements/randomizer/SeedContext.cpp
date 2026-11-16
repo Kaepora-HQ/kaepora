@@ -41,14 +41,6 @@ Context::Context() {
     mTrials = std::make_shared<Trials>();
 }
 
-int Context::CountEmptyLocations(const bool countShops) {
-    auto ctx = Rando::Context::GetInstance();
-    return static_cast<int>(count_if(allLocations.begin(), allLocations.end(), [ctx, countShops](const auto loc) {
-        return ctx->GetItemLocation(loc)->GetPlacedRandomizerGet() == RG_NONE &&
-               (countShops || Rando::StaticData::GetLocation(loc)->GetRCType() != RCTYPE_SHOP);
-    }));
-}
-
 void Context::InitStaticData() {
     StaticData::InitLocationTable();
 }
@@ -135,13 +127,9 @@ bool Context::IsQuestOfLocationActive(RandomizerCheck rc) {
 
 void Context::GenerateLocationPool() {
     allLocations.clear();
-    overworldLocations.clear();
     // add wincon here so it is properly logged
     if (ctx->GetOption(RSK_WINCON).Get() > RO_WINCON_ANYWHERE) {
         AddLocation(RC_WINCON);
-    }
-    for (auto dungeon : ctx->GetDungeons()->GetDungeonList()) {
-        dungeon->locations.clear();
     }
     for (Location& location : StaticData::GetLocationTable()) {
         // skip RCs that shouldn't be in the pool for any reason (i.e. settings, unsupported check type, etc.)
@@ -223,7 +211,6 @@ void Context::GenerateLocationPool() {
             }
             // If we've gotten past all the conditions where an overworld location should not be
             // shuffled, add it to the pool.
-            AddLocation(location.GetRandomizerCheck(), &overworldLocations);
             AddLocation(location.GetRandomizerCheck());
         } else { // is a dungeon check
             auto* dungeon = GetDungeon(location.GetArea() - RCAREA_DEKU_TREE);
@@ -248,8 +235,6 @@ void Context::GenerateLocationPool() {
                      mOptions[RSK_SHUFFLE_SIGNS].Is(RO_SHUFFLE_SIGNS_OVERWORLD))) {
                     continue;
                 }
-                // also add to that dungeon's location list.
-                AddLocation(location.GetRandomizerCheck(), &dungeon->locations);
                 AddLocation(location.GetRandomizerCheck());
             }
         }
@@ -273,17 +258,6 @@ void Context::AddExcludedOptions() {
             areaOptions.push_back(excludedOption);
         }
     }
-}
-
-std::vector<RandomizerCheck> Context::GetLocations(const std::vector<RandomizerCheck>& locationPool,
-                                                   const RandomizerCheckType checkType) {
-    std::vector<RandomizerCheck> locationsOfType;
-    for (RandomizerCheck locKey : locationPool) {
-        if (StaticData::GetLocation(locKey)->GetRCType() == checkType) {
-            locationsOfType.push_back(locKey);
-        }
-    }
-    return locationsOfType;
 }
 
 void Context::ClearItemLocations() {
@@ -342,10 +316,6 @@ void Context::SetSeedGenerated(const bool seedGenerated) {
 
 bool Context::IsSpoilerLoaded() const {
     return mSpoilerLoaded;
-}
-
-void Context::SetSpoilerLoaded(const bool spoilerLoaded) {
-    mSpoilerLoaded = spoilerLoaded;
 }
 
 GetItemEntry Context::GetFinalGIEntry(const RandomizerCheck rc, const bool checkObtainability, const GetItemID ogItemId,

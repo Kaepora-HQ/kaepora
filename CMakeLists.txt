@@ -17,10 +17,12 @@ add_executable(kaepora-seedgen
     generator/build_info.c
     generator/cvars.cpp
     generator/game_state.cpp
+    generator/remake.cpp
     generator/traps.cpp
     ${SHIPWRIGHT_SOURCES}
 )
 target_include_directories(kaepora-seedgen PRIVATE
+    .
     shipwright/soh/include
     shipwright/soh/src
     shipwright/soh/assets
@@ -35,7 +37,8 @@ target_link_libraries(kaepora-seedgen PRIVATE nlohmann_json::nlohmann_json spdlo
 
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
-foreach(TEST IN ITEMS same_seed_same_files twenty_seeds_generate)
+foreach(TEST IN ITEMS only_shuffled_chests_change same_seed_same_files twenty_seeds_generate
+                     spirit_dungeon_items_stay_out_of_the_colossus)
     add_test(NAME ${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> SeedgenTest.test_${TEST})
 endforeach()

@@ -24,15 +24,6 @@ PriceSettingsStruct::PriceSettingsStruct(RandomizerSettingKey _main, RandomizerS
     affordable = _affordable;
 }
 
-// Set vanilla shop item locations before potentially shuffling
-void PlaceVanillaShopItems() {
-    auto ctx = Rando::Context::GetInstance();
-    // Loop to place vanilla items in each location
-    for (RandomizerCheck& randomizerCheck : Rando::StaticData::GetShopLocations()) {
-        ctx->GetItemLocation(randomizerCheck)->PlaceVanillaItem();
-    }
-}
-
 // These are the vanilla shop items, but in a priority order of importance
 // However many shop item slots were cleared, this will return 64 minus that number of vanilla shop items to be placed
 // with assumed fill The first 32 items here will always be present in shops Shopsanity 4 will only have the first 32,
@@ -195,39 +186,4 @@ uint16_t GetCheapBalancedPrice() {
         }
     }
     return -1;
-}
-
-// Get 0 to 8, or a random number, depending on shopsanity setting. The 8th item is only allowed with No Logic,
-// since logic otherwise requires at least one buyable refill to remain reachable in each shop.
-int GetShopsanityReplaceAmount() {
-    auto ctx = Rando::Context::GetInstance();
-    const int maxReplace = ctx->GetOption(RSK_NO_LOGIC).Is(RO_GENERIC_ON) ? 8 : 7;
-    if (ctx->GetOption(RSK_SHOPSANITY).Is(RO_SHOPSANITY_OFF)) {
-        return 0;
-    } else if (ctx->GetOption(RSK_SHOPSANITY).Is(RO_SHOPSANITY_SPECIFIC_COUNT)) {
-        if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_ZERO_ITEMS)) {
-            return 0;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_ONE_ITEM)) {
-            return 1;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_TWO_ITEMS)) {
-            return 2;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_THREE_ITEMS)) {
-            return 3;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_FOUR_ITEMS)) {
-            return 4;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_FIVE_ITEMS)) {
-            return 5;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_SIX_ITEMS)) {
-            return 6;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_SEVEN_ITEMS)) {
-            return 7;
-        } else if (ctx->GetOption(RSK_SHOPSANITY_COUNT).Is(RO_SHOPSANITY_COUNT_EIGHT_ITEMS)) {
-            return maxReplace; // Clamped to 7 unless No Logic
-        } else {
-            assert(false);
-            return 0;
-        }
-    } else { // Random, get number in [1, maxReplace]
-        return Random(1, maxReplace + 1);
-    }
 }

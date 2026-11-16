@@ -16,14 +16,11 @@ DungeonInfo::DungeonInfo(std::string name_, const RandomizerHintTextKey hintKey_
                          const RandomizerSettingKey mqSetting_, const SceneID scene_,
                          const std::vector<uint8_t> vanillaDoorFlags_, const std::vector<uint8_t> randoDoorFlags_,
                          const std::vector<uint8_t> MQDoorFlags_)
-    : name(std::move(name_)), hintKey(hintKey_), map(map_), compass(compass_), smallKey(smallKey_), keyRing(keyRing_),
-      bossKey(bossKey_), reward(reward_), area(area_), vanillaKeyCount(vanillaKeyCount_), mqKeyCount(mqKeyCount_),
-      mqSetting(mqSetting_), scene(scene_), vanillaDoorFlags(vanillaDoorFlags_), randoDoorFlags(randoDoorFlags_),
-      MQDoorFlags(MQDoorFlags_) {
+    : name(std::move(name_)), hintKey(hintKey_), map(map_), compass(compass_), smallKey(smallKey_), bossKey(bossKey_),
+      vanillaKeyCount(vanillaKeyCount_), mqKeyCount(mqKeyCount_), mqSetting(mqSetting_), scene(scene_),
+      vanillaDoorFlags(vanillaDoorFlags_), randoDoorFlags(randoDoorFlags_), MQDoorFlags(MQDoorFlags_) {
 }
-DungeonInfo::DungeonInfo()
-    : hintKey(RHT_NONE), map(RG_NONE), compass(RG_NONE), smallKey(RG_NONE), keyRing(RG_NONE), bossKey(RG_NONE),
-      reward(RG_NONE) {
+DungeonInfo::DungeonInfo() : hintKey(RHT_NONE), map(RG_NONE), compass(RG_NONE), smallKey(RG_NONE), bossKey(RG_NONE) {
 }
 DungeonInfo::~DungeonInfo() = default;
 
@@ -51,10 +48,6 @@ void DungeonInfo::ClearKeyRing() {
     hasKeyRing = false;
 }
 
-bool DungeonInfo::HasKeyRing() const {
-    return hasKeyRing;
-}
-
 bool DungeonInfo::IsVanilla() const {
     return !masterQuest;
 }
@@ -75,16 +68,8 @@ RandomizerHintTextKey DungeonInfo::GetHintKey() const {
     return hintKey;
 }
 
-RandomizerArea DungeonInfo::GetArea() const {
-    return area;
-}
-
 RandomizerGet DungeonInfo::GetSmallKey() const {
     return smallKey;
-}
-
-RandomizerGet DungeonInfo::GetKeyRing() const {
-    return keyRing;
 }
 
 RandomizerGet DungeonInfo::GetMap() const {
@@ -97,10 +82,6 @@ RandomizerGet DungeonInfo::GetCompass() const {
 
 RandomizerGet DungeonInfo::GetBossKey() const {
     return bossKey;
-}
-
-RandomizerGet DungeonInfo::GetReward() const {
-    return reward;
 }
 
 RandomizerSettingKey DungeonInfo::GetMQSetting() const {
@@ -207,61 +188,6 @@ std::span<const uint8_t> DungeonInfo::GetDoorFlags() const {
 
 void DungeonInfo::SetDungeonKnown(bool known) {
     isDungeonModeKnown = known;
-}
-
-void DungeonInfo::PlaceVanillaMap() const {
-    if (map == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto mapLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_MAP;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(mapLocation, map);
-}
-
-void DungeonInfo::PlaceVanillaCompass() const {
-    if (compass == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto compassLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_COMPASS;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(compassLocation, compass);
-}
-
-void DungeonInfo::PlaceVanillaBossKey() const {
-    if (bossKey == RG_NONE || bossKey == RG_GANONS_CASTLE_BOSS_KEY) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto bossKeyLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_BOSS_KEY;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(bossKeyLocation, bossKey);
-}
-
-void DungeonInfo::PlaceVanillaSmallKeys() const {
-    if (smallKey == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto smallKeyLocations = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_SMALL_KEY;
-    });
-    for (const auto location : smallKeyLocations) {
-        Context::GetInstance()->PlaceItemInLocation(location, smallKey);
-    }
-}
-
-// Gets the chosen dungeon locations for a playthrough (so either MQ or Vanilla)
-std::vector<RandomizerCheck> DungeonInfo::GetDungeonLocations() const {
-    return locations;
 }
 
 Dungeons::Dungeons() {

@@ -85,7 +85,6 @@ class Entrance {
     void BindTwoWay(Entrance* otherEntrance);
     Entrance* GetNewTarget();
     Entrance* AssumeReachable();
-    bool DoesSpreadAreas();
     const std::string& GetConditionStr() const;
 
   private:
@@ -105,9 +104,6 @@ class Entrance {
     bool decoupled = false;
     std::string name = "";
     std::string condition_str = "";
-    // If this is false, areas only spread to interiors through this entrance if there is no other choice
-    // Set to false for owl drops, the windmill path between dampe's grave and windmill and blue warps
-    bool spreadsAreasWithPriority = true;
 };
 
 typedef struct {

@@ -5,7 +5,6 @@
 
 #include "logic.h"
 #include "bean_patches.h"
-#include "../debugger/performanceTimer.h"
 #include "soh/OTRGlobals.h"
 #include "randomizer.h"
 #include "randomizerEnumStrings.h"
@@ -2027,8 +2026,24 @@ bool Logic::CanTriggerWincon() {
     }
 }
 
+// The remake moved locks and keys in these dungeons, so SoH's key rules do not describe them. Their chests stay as the
+// unmodified game has them and the player walks them as designed, so their small keys count as held.
+static bool SmallKeysHeld(SceneID scene) {
+    switch (scene) {
+        case SCENE_FOREST_TEMPLE:
+        case SCENE_FIRE_TEMPLE:
+        case SCENE_WATER_TEMPLE:
+        case SCENE_SHADOW_TEMPLE:
+        case SCENE_BOTTOM_OF_THE_WELL:
+        case SCENE_INSIDE_GANONS_CASTLE:
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool Logic::SmallKeys(SceneID scene, uint8_t requiredAmount) {
-    if (HasItem(RG_SKELETON_KEY)) {
+    if (HasItem(RG_SKELETON_KEY) || SmallKeysHeld(scene)) {
         return true;
     }
     return GetSmallKeyCount(scene) >= requiredAmount;
@@ -3251,7 +3266,6 @@ void Logic::Reset(bool resetSaveContext /*= true*/) {
     if (resetSaveContext) {
         NewSaveContext();
     }
-    StartPerformanceTimer(PT_LOGIC_RESET);
     memset(inLogic, false, sizeof(inLogic));
 
     if (resetSaveContext) {
@@ -3337,7 +3351,5 @@ void Logic::Reset(bool resetSaveContext /*= true*/) {
     }
 
     CalculatingAvailableChecks = false;
-
-    StopPerformanceTimer(PT_LOGIC_RESET);
 }
 } // namespace Rando

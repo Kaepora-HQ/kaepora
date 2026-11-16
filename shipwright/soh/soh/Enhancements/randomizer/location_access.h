@@ -147,7 +147,6 @@ class Region {
     std::string regionName;
     SceneID scene;
     bool timePass;
-    std::set<RandomizerArea> areas;
     std::vector<EventAccess> events;
     std::vector<LocationAccess> locations;
     std::list<Rando::Entrance> exits;
@@ -199,14 +198,6 @@ class Region {
 
     // Check to see if an exit can be access as both ages at both times of day
     bool CheckAllAccess(RandomizerRegion exitKey);
-
-    std::set<RandomizerArea> GetAllAreas() const {
-        return areas;
-    }
-
-    void ReplaceAreas(std::set<RandomizerArea> newAreas) {
-        areas = newAreas;
-    }
 
     // Here checks conditional access based on whether or not both ages have
     // access to this area. For example: if there are rocks that block a path

@@ -21,8 +21,6 @@ class ItemLocation {
     void DelayItem();
     RandomizerRegion GetParentRegionKey() const;
     void SetParentRegion(RandomizerRegion region);
-    const std::set<RandomizerArea>& GetAreas() const;
-    void MergeAreas(std::set<RandomizerArea> newAreas);
     void PlaceVanillaItem();
     void ApplyPlacedItemEffect() const;
     void SaveDelayedItem();
@@ -55,7 +53,6 @@ class ItemLocation {
     OptionValue excludedOption = OptionValue(RO_LOCATION_INCLUDE);
     uint16_t price = 0;
     RandomizerRegion parentRegion = RR_NONE;
-    std::set<RandomizerArea> areas = {};
     bool hasCustomPrice = false;
     bool hidden = false;
     bool visibleInImGui = false;

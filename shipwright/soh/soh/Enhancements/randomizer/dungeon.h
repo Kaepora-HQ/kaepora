@@ -25,32 +25,22 @@ class DungeonInfo {
     bool IsMQ() const;
     void SetKeyRing();
     void ClearKeyRing();
-    bool HasKeyRing() const;
     bool IsVanilla() const;
     SceneID GetScene() const;
     /// Key count for the seed's own layout. Use GetSceneSmallKeyMax for what the player will actually walk into.
     uint8_t GetSmallKeyCount() const;
     uint8_t GetSmallKeyCountForQuest(bool masterQuest) const;
     RandomizerHintTextKey GetHintKey() const;
-    RandomizerArea GetArea() const;
     RandomizerGet GetSmallKey() const;
-    RandomizerGet GetKeyRing() const;
     RandomizerGet GetMap() const;
     RandomizerGet GetCompass() const;
     RandomizerGet GetBossKey() const;
-    RandomizerGet GetReward() const;
     int8_t GetUsedSmallKeys(SaveContext* saveContext) const;
     int8_t GetCurrentSmallKeys(SaveContext* saveContext) const;
     int8_t GetTotalSmallKeys(SaveContext* saveContext) const;
     RandomizerSettingKey GetMQSetting() const;
     std::span<const uint8_t> GetDoorFlags() const;
     void SetDungeonKnown(bool known);
-    void PlaceVanillaMap() const;
-    void PlaceVanillaCompass() const;
-    void PlaceVanillaBossKey() const;
-    void PlaceVanillaSmallKeys() const;
-    std::vector<RandomizerCheck> GetDungeonLocations() const;
-    std::vector<RandomizerCheck> locations;
 
   private:
     std::string name;
@@ -58,10 +48,7 @@ class DungeonInfo {
     RandomizerGet map;
     RandomizerGet compass;
     RandomizerGet smallKey;
-    RandomizerGet keyRing;
     RandomizerGet bossKey;
-    RandomizerGet reward;
-    RandomizerArea area;
     uint8_t vanillaKeyCount{};
     uint8_t mqKeyCount{};
     RandomizerSettingKey mqSetting;

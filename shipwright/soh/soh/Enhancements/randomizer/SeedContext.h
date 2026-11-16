@@ -44,14 +44,11 @@ class Context {
     void PlaceItemInLocation(RandomizerCheck locKey, RandomizerGet item, bool applyEffectImmediately = false,
                              bool setHidden = false);
     std::vector<RandomizerCheck> allLocations;
-    std::vector<RandomizerCheck> overworldLocations;
     void AddLocation(RandomizerCheck loc, std::vector<RandomizerCheck>* destination = nullptr);
     template <typename Container>
     void AddLocations(const Container& locations, std::vector<RandomizerCheck>* destination = nullptr);
     bool IsQuestOfLocationActive(RandomizerCheck rc);
     void GenerateLocationPool();
-    static std::vector<RandomizerCheck> GetLocations(const std::vector<RandomizerCheck>& locationPool,
-                                                     const RandomizerCheckType checkType);
     void AddExcludedOptions();
     void LocationReset();
     void ClearItemLocations();
@@ -60,7 +57,6 @@ class Context {
     bool IsSeedGenerated() const;
     void SetSeedGenerated(bool seedGenerated = true);
     bool IsSpoilerLoaded() const;
-    void SetSpoilerLoaded(bool spoilerLoaded = true);
 
     /**
      * @brief Reset all RandomizerTrick keys.
@@ -127,7 +123,6 @@ class Context {
     std::array<uint8_t, 5> hashIconIndexes = {};
     bool playthroughBeatable = false;
     bool allLocationsReachable = false;
-    int CountEmptyLocations(bool countShops);
 
     /**
      * @brief Get the hash for the current seed.
