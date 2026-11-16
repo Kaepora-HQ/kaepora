@@ -3,13 +3,9 @@
 #include "option.h"
 #include "randomizerEnumStrings.h"
 #include "static_data.h"
-#include "soh/SohGui/SohMenu.h"
 #include "soh/Enhancements/Lang/Lang.h"
 #include <soh/cvar_prefixes.h>
-
-namespace SohGui {
-extern std::shared_ptr<SohMenu> mSohMenu;
-}
+#include <spdlog/spdlog.h>
 
 namespace Rando {
 Option Option::Bool(RandomizerSettingKey key_, std::vector<std::string> options_, const OptionCategory category_,
@@ -236,77 +232,7 @@ Option::Option(size_t key_, std::vector<std::string> options_, OptionCategory ca
     for (size_t i = 0; i < options.size(); i++) {
         optionsMap.emplace(static_cast<int32_t>(i), options[i].c_str());
     }
-    UIWidgets::LabelPositions labelPosition;
-    switch (widgetType) {
-        case WIDGET_CVAR_CHECKBOX:
-            // labelPosition = UIWidgets::LabelPositions::Near;
-            // if (imFlags_ & IMFLAG_LABEL_INLINE) {
-            //     labelPosition = UIWidgets::LabelPositions::Near;
-            // }
-            widgetOptions = std::make_shared<UIWidgets::CheckboxOptions>(
-                UIWidgets::CheckboxOptions().DefaultValue(defaultOption).Tooltip(this->GetDescription()));
-            break;
-        case WIDGET_CVAR_COMBOBOX:
-            labelPosition = UIWidgets::LabelPositions::Above;
-            if (imFlags_ & IMFLAG_LABEL_INLINE) {
-                labelPosition = UIWidgets::LabelPositions::Near;
-            }
-            widgetOptions = std::make_shared<UIWidgets::ComboboxOptions>(UIWidgets::ComboboxOptions()
-                                                                             .DefaultIndex(defaultOption)
-                                                                             .ComboMap(optionsMap)
-                                                                             .Tooltip(this->GetDescription())
-                                                                             .LabelPosition(labelPosition));
-            break;
-        case WIDGET_CVAR_SLIDER_INT:
-            labelPosition = UIWidgets::LabelPositions::Above;
-            if (imFlags_ & IMFLAG_LABEL_INLINE) {
-                labelPosition = UIWidgets::LabelPositions::Near;
-            }
-            widgetOptions =
-                std::make_shared<UIWidgets::IntSliderOptions>(UIWidgets::IntSliderOptions()
-                                                                  .DefaultValue(defaultOption)
-                                                                  .Tooltip(this->GetDescription())
-                                                                  .Min(0)
-                                                                  .Max(static_cast<int32_t>(options.size() - 1))
-                                                                  .Format(options[defaultOption].c_str())
-                                                                  .LabelPosition(labelPosition));
-            break;
-        default:
-            break;
-    }
     PopulateTextToNum();
-}
-
-void Option::AddWidget(WidgetPath& path) {
-    auto widget = SohGui::mSohMenu->AddWidget(path, this->GetName() + "##Randomizer", widgetType)
-                      .Callback(callback)
-                      .PreFunc([this](WidgetInfo& info) {
-                          info.isHidden = this->IsHidden();
-                          info.options->disabled = this->disabled;
-                          info.options->disabledTooltip = this->disabledText.c_str();
-                          info.options->tooltip = this->GetDescription();
-                          if (info.type == WIDGET_CVAR_SLIDER_INT) {
-                              UIWidgets::IntSliderOptions* sliderOpts =
-                                  (UIWidgets::IntSliderOptions*)info.options.get();
-                              size_t maxIndex = this->options.size() - 1;
-                              if (this->GetKey() == RSK_SHOPSANITY_COUNT && maxIndex > 7 &&
-                                  CVarGetInteger(CVAR_RANDOMIZER_SETTING("NoLogic"), RO_GENERIC_OFF) != RO_GENERIC_ON) {
-                                  maxIndex = 7;
-                              }
-                              sliderOpts->Max(static_cast<int32_t>(maxIndex));
-                              if (this->GetOptionIndex() > maxIndex) {
-                                  CVarSetInteger(cvarName.c_str(), static_cast<int32_t>(maxIndex));
-                              }
-                              sliderOpts->Format(this->GetOptionText(this->GetOptionIndex()).c_str());
-                          }
-                      })
-                      .CVar(cvarName.c_str())
-                      .Options(widgetOptions)
-                      .SameLine(imFlags & IMFLAG_SAME_LINE);
-    widgetInfo = widget;
-    if (callback != nullptr) {
-        callback(widgetInfo);
-    }
 }
 
 void Option::PopulateTextToNum() {
@@ -426,31 +352,5 @@ void OptionGroup::Enable() {
 
 void OptionGroup::Disable() {
     mDisabled = true;
-}
-
-void OptionGroup::AddWidgets(WidgetPath& path) const {
-    if (mContainerType == WidgetContainerType::TABLE) {
-        path.column = SECTION_COLUMN_1;
-        path.sidebarName = mName;
-        SohGui::mSohMenu->AddSidebarEntry("Randomizer", path.sidebarName, static_cast<uint32_t>(mSubGroups.size()));
-    }
-    if (mContainerType == WidgetContainerType::SECTION || mContainerType == WidgetContainerType::COLUMN) {
-        if (!mName.empty()) {
-            SohGui::mSohMenu->AddWidget(path, mName.c_str(), WIDGET_SEPARATOR_TEXT);
-        }
-    }
-    if (mContainsType == OptionGroupType::SUBGROUP) {
-        for (const auto optionGroup : mSubGroups) {
-            optionGroup->AddWidgets(path);
-        }
-    } else {
-        for (const auto option : mOptions) {
-            option->AddWidget(path);
-        }
-    }
-    if (mContainerType == WidgetContainerType::COLUMN) {
-        assert(path.column < 3);
-        path.column = static_cast<SectionColumns>(path.column + 1);
-    }
 }
 } // namespace Rando

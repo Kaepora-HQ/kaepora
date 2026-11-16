@@ -21,8 +21,6 @@
 #include <filesystem>
 #include <variables.h>
 
-#include <ship/Context.h>
-
 #include <libultraship/bridge/consolevariablebridge.h>
 
 using json = nlohmann::ordered_json;
@@ -322,29 +320,6 @@ void SpoilerLog_Write() {
     ctx->WriteHintJson(jsonData);
     WriteShuffledEntrances();
     WriteAllLocations();
-
-    if (!std::filesystem::exists(Ship::Context::GetPathRelativeToAppDirectory("Randomizer"))) {
-        std::filesystem::create_directory(Ship::Context::GetPathRelativeToAppDirectory("Randomizer"));
-    }
-
-    std::string jsonString = jsonData.dump(4);
-    std::ostringstream fileNameStream;
-    for (uint8_t i = 0; i < ctx->hashIconIndexes.size(); i++) {
-        if (i) {
-            fileNameStream << '-';
-        }
-        if (ctx->hashIconIndexes[i] < 10) {
-            fileNameStream << '0';
-        }
-        fileNameStream << std::to_string(ctx->hashIconIndexes[i]);
-    }
-    std::string fileName = fileNameStream.str();
-    std::ofstream jsonFile(Ship::Context::GetPathRelativeToAppDirectory(
-        (std::string("Randomizer/") + fileName + std::string(".json")).c_str()));
-    jsonFile << std::setw(4) << jsonString << std::endl;
-    jsonFile.close();
-
-    CVarSetString(CVAR_GENERAL("SpoilerLog"), (std::string("./Randomizer/") + fileName + std::string(".json")).c_str());
 }
 
 void PlacementLog_Msg(std::string_view msg) {

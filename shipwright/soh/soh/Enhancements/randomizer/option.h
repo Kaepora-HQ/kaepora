@@ -268,8 +268,6 @@ class Option {
 
     OptionCategory GetCategory() const;
 
-    void AddWidget(WidgetPath& path);
-
     void AddFlag(int imFlag_);
     void RemoveFlag(int imFlag_);
 
@@ -482,7 +480,6 @@ class OptionGroup {
 
     const std::string& GetDescription() const;
 
-    void AddWidgets(WidgetPath& path) const;
     void Disable();
     void Enable();
 

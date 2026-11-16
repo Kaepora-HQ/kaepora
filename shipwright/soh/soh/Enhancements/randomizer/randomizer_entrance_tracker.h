@@ -8,7 +8,6 @@
 #include <nlohmann/json_fwd.hpp>
 #include <libultraship/color.h>
 #include <libultraship/libultra.h>
-#include <ship/window/gui/GuiWindow.h>
 #include "randomizerEnums.h"
 
 typedef enum {
@@ -115,24 +114,4 @@ s16 GetLastEntranceOverride();
 s16 GetCurrentGrottoId();
 const EntranceData* GetEntranceData(s16);
 void LoadFromPreset(const nlohmann::json& info);
-
-class EntranceTrackerSettingsWindow final : public Ship::GuiWindow {
-  public:
-    using GuiWindow::GuiWindow;
-
-  protected:
-    void InitElement() override{};
-    void DrawElement() override;
-    void UpdateElement() override{};
-};
-
-class EntranceTrackerWindow final : public Ship::GuiWindow {
-  public:
-    using GuiWindow::GuiWindow;
-    void Draw() override;
-
-    void InitElement() override;
-    void DrawElement() override;
-    void UpdateElement() override{};
-};
 } // namespace EntranceTracker

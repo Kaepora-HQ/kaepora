@@ -1,20 +1,11 @@
 #include <memory>
 
 #include <libultraship/bridge/consolevariablebridge.h>
-#include "ship/Context.h"
-#include "ship/resource/File.h"
-#include "ship/resource/type/Json.h"
-#include "ship/utils/StringHelper.h"
 
 #include "Lang.h"
-#include "soh/SohGui/MenuTypes.h"
-#include "soh/SohGui/SohMenu.h"
+#include "soh/cvar_prefixes.h"
 #include "soh/util.h"
 #include "spdlog/spdlog.h"
-
-namespace SohGui {
-extern std::shared_ptr<SohMenu> mSohMenu;
-}
 
 static bool initialized = false;
 static std::unordered_map<std::string, nlohmann::json> langs;
@@ -129,46 +120,9 @@ const std::string& Lang::Translate(const char* path) {
 }
 
 void Lang::LoadLangs() {
-    auto initData = std::make_shared<Ship::ResourceInitData>();
-    initData->Format = RESOURCE_FORMAT_BINARY;
-    initData->Type = static_cast<uint32_t>(Ship::ResourceType::Json);
-    initData->ResourceVersion = 0;
-    const static std::string folder = "lang/*";
-    auto langFiles = Ship::Context::GetRawInstance()->GetResourceManager()->GetArchiveManager()->ListFiles(folder);
-    size_t start = std::string(folder).size() - 1;
-    for (size_t i = 0; i < langFiles->size(); i++) {
-        std::string filePath = langFiles->at(i);
-        auto json = std::static_pointer_cast<Ship::Json>(
-            Ship::Context::GetRawInstance()->GetResourceManager()->LoadResource(filePath, true, initData));
-
-        std::string fileName = filePath.substr(start, filePath.size() - start - 5); // 5 for length of ".json"
-        langs.insert_or_assign(fileName, json->Data);
-    }
+    static const unsigned char enUS[] = {
+#embed "../../../assets/custom/lang/en_US.json"
+    };
+    langs.insert_or_assign("en_US", nlohmann::json::parse(std::begin(enUS), std::end(enUS), nullptr, true, true));
     initialized = true;
 }
-
-void LanguageCustomWidget(WidgetInfo& info) {
-    ImGui::Text("Select Language:");
-    for (const auto& [id, data] : langs) {
-        if (ImGui::Button(StringHelper::Sprintf("%s [%s]", data["language_name"].get_ref<const std::string&>().c_str(),
-                                                id.c_str())
-                              .c_str())) {
-            CVarSetString(LANGUAGE_CVAR, id.c_str());
-            cache.clear();
-        }
-    }
-}
-
-void RegisterLangWidgets() {
-    return;
-
-    // TODO: Improve & enable this when everything is set up
-
-    SohGui::mSohMenu->AddSidebarEntry("Settings", "Language", 1);
-    WidgetPath path = { "Settings", "Language", SECTION_COLUMN_1 };
-    SohGui::mSohMenu->AddWidget(path, "LanguageWidget", WIDGET_CUSTOM)
-        .CustomFunction(LanguageCustomWidget)
-        .HideInSearch(true);
-}
-
-static RegisterMenuInitFunc menuInitFunc(RegisterLangWidgets);

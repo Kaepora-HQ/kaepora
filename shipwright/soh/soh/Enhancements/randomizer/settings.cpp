@@ -1,7 +1,5 @@
 #include <spdlog/spdlog.h>
 #include <libultraship/bridge/consolevariablebridge.h>
-#include <ship/Context.h>
-#include <ship/window/Window.h>
 
 #include "settings.h"
 #include "trial.h"
@@ -3212,8 +3210,6 @@ void Settings::RandomizeAllSettings() {
         }
         option.RunCallback();
     }
-
-    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
 }
 
 std::shared_ptr<Settings> Settings::GetInstance() {
