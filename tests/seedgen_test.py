@@ -14,6 +14,8 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+FIXTURES = ROOT / "tests" / "fixtures"
+FIXED_SEED = "6332265119"
 SEEDGEN = None
 
 
@@ -23,6 +25,11 @@ def read_tsv(name):
 
 
 SHUFFLED = [row for row in read_tsv("chests.tsv") if row["shuffled"] == "yes"]
+ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.tsv")}
+
+
+def folder(path):
+    return path.split("/")[1]
 
 
 class SeedgenTest(unittest.TestCase):
@@ -33,17 +40,18 @@ class SeedgenTest(unittest.TestCase):
     def run_seedgen(self, seed):
         out = pathlib.Path(self.tmp.name) / seed
         out.mkdir(exist_ok=True)
-        spoiler = out / "spoiler.json"
-        result = subprocess.run([SEEDGEN, seed, spoiler], capture_output=True, text=True)
+        spoiler, plan = out / "spoiler.json", out / "plan.json"
+        result = subprocess.run([SEEDGEN, seed, spoiler, plan], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return spoiler.read_bytes()
+        return spoiler.read_bytes(), plan.read_bytes()
 
     def generate(self, seed):
-        return json.loads(self.run_seedgen(seed))
+        spoiler, plan = self.run_seedgen(seed)
+        return json.loads(spoiler), json.loads(plan)
 
     def test_only_shuffled_chests_change(self):
-        first = self.generate("1")
-        second = self.generate("2")
+        first, _ = self.generate("1")
+        second, _ = self.generate("2")
         shuffled = {row["location"] for row in SHUFFLED}
         self.assertEqual(first["locations"].keys(), second["locations"].keys())
         self.assertLessEqual(shuffled, first["locations"].keys())
@@ -51,6 +59,31 @@ class SeedgenTest(unittest.TestCase):
             if location not in shuffled:
                 self.assertEqual(item, second["locations"][location], location)
         self.assertTrue(any(first["locations"][name] != second["locations"][name] for name in shuffled))
+
+    def test_plan_lists_each_shuffled_chest(self):
+        _, plan = self.generate("3")
+        self.assertEqual(plan["seed"], "3")
+        planned = {entry["hash"]: entry for entry in plan["chests"]}
+        self.assertEqual(len(planned), len(plan["chests"]))
+        self.assertEqual(planned.keys(), {row["hash"] for row in SHUFFLED})
+        for row in SHUFFLED:
+            self.assertEqual(planned[row["hash"]]["files"], row["files"].split(","))
+        self.assertEqual(collections.Counter(entry["drop_actor"] for entry in plan["chests"]),
+                         collections.Counter(row["item"] for row in SHUFFLED))
+
+    def test_plan_matches_spoiler(self):
+        spoiler, plan = self.generate("4")
+        rows = {row["hash"]: row for row in SHUFFLED}
+        for entry in plan["chests"]:
+            location = rows[entry["hash"]]["location"]
+            self.assertIn((entry["drop_actor"], spoiler["locations"][location]), ITEM_PAIRS, location)
+        # A remake dungeon item names no dungeon, so it must stay in the dungeon it came from.
+        dungeon_names = {name for name, _ in ITEM_PAIRS if sum(pair[0] == name for pair in ITEM_PAIRS) > 1}
+        self.assertEqual(
+            collections.Counter((folder(e["files"][0]), e["drop_actor"]) for e in plan["chests"]
+                                if e["drop_actor"] in dungeon_names),
+            collections.Counter((folder(row["files"]), row["item"]) for row in SHUFFLED
+                                if row["item"] in dungeon_names))
 
     def test_same_seed_same_files(self):
         self.assertEqual(self.run_seedgen("5"), self.run_seedgen("5"))
@@ -66,11 +99,16 @@ class SeedgenTest(unittest.TestCase):
         spirit = {"Spirit Temple Small Key", "Spirit Temple Boss Key", "Spirit Temple Map", "Spirit Temple Compass"}
         placed = collections.Counter()
         for seed in range(200, 220):
-            spoiler = self.generate(str(seed))
+            spoiler, _ = self.generate(str(seed))
             placed.update(spoiler["locations"][name] for name in colossus)
         self.assertFalse(spirit & placed.keys())
         # Other items still land there.
         self.assertGreater(len(placed), len(colossus))
+
+    def test_fixed_seed_matches_fixture(self):
+        spoiler, plan = self.run_seedgen(FIXED_SEED)
+        self.assertEqual(spoiler, (FIXTURES / f"spoiler-{FIXED_SEED}.json").read_bytes())
+        self.assertEqual(plan, (FIXTURES / f"plan-{FIXED_SEED}.json").read_bytes())
 
 
 if __name__ == "__main__":

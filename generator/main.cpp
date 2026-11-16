@@ -1,4 +1,4 @@
-// Generates one seed and writes its spoiler log.
+// Generates one seed and writes its spoiler log and the plan the patcher reads.
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/settings.h"
 #include "soh/Enhancements/randomizer/static_data.h"
@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 
@@ -84,9 +85,18 @@ static bool Generate(const std::string& seed, const std::vector<RemakeChest>& ch
     return Playthrough::Playthrough_Init(ctx->GetSeed(), {}, {}, chests) > 0;
 }
 
+static void Write(const char* path, const nlohmann::ordered_json& json, int indent) {
+    std::ofstream out(path);
+    out << json.dump(indent) << std::endl;
+    if (!out) {
+        std::fprintf(stderr, "cannot write %s\n", path);
+        std::exit(1);
+    }
+}
+
 int main(int argc, char** argv) {
-    if (argc != 3 || argv[1][0] == '\0') {
-        std::fprintf(stderr, "usage: %s <seed> <spoiler.json>\n", argv[0]);
+    if (argc != 4 || argv[1][0] == '\0') {
+        std::fprintf(stderr, "usage: %s <seed> <spoiler.json> <plan.json>\n", argv[0]);
         return 2;
     }
 
@@ -96,6 +106,7 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "generation failed\n");
         return 1;
     }
-    std::ofstream(argv[2]) << jsonData.dump(4) << std::endl;
+    Write(argv[2], jsonData, 4);
+    Write(argv[3], RemakePlan(argv[1], chests), 2);
     return 0;
 }
