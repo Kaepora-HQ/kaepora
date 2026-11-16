@@ -42,6 +42,10 @@ class LogicTest(unittest.TestCase):
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
+    def test_bombchu_shop_opens_after_dodongos_cavern(self):
+        # With no Goron's Bracelet and the only bomb bag inside it, Dodongo's Cavern stays shut.
+        self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

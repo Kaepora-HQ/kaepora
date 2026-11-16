@@ -54,7 +54,8 @@ void RegionTable_Init_Market() {
     areaTable[RR_MARKET_BACK_ALLEY] = Region("Market Back Alley", SCENE_BACK_ALLEY_DAY, {}, {}, {
         //Exits
         ENTRANCE(RR_THE_MARKET,                true),
-        ENTRANCE(RR_MARKET_BOMBCHU_SHOP,       logic->AtNight && logic->HasItem(RG_BOMBCHU_SHOP_KEY)),
+        // The game opens the Bombchu Shop after the Dodongo's Cavern blue warp.
+        ENTRANCE(RR_MARKET_BOMBCHU_SHOP,       logic->AtNight && logic->HasItem(RG_BOMBCHU_SHOP_KEY) && logic->Get(LOGIC_DODONGOS_CAVERN_CLEAR)),
         ENTRANCE(RR_MARKET_DOG_LADY_HOUSE,     logic->HasItem(RG_RICHARDS_HOUSE_KEY)),
         ENTRANCE(RR_MARKET_MAN_IN_GREEN_HOUSE, logic->AtNight && logic->HasItem(RG_ALLEY_HOUSE_KEY)),
     });
@@ -170,7 +171,8 @@ void RegionTable_Init_Market() {
 
     areaTable[RR_MARKET_BOMBCHU_BOWLING] = Region("Market Bombchu Bowling", SCENE_BOMBCHU_BOWLING_ALLEY, {
         //Events
-        EVENT_ACCESS(LOGIC_COULD_PLAY_BOWLING, logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
+        // The game opens Bombchu Bowling after the Dodongo's Cavern blue warp.
+        EVENT_ACCESS(LOGIC_COULD_PLAY_BOWLING, logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->Get(LOGIC_DODONGOS_CAVERN_CLEAR)),
     }, {
         //Locations
         LOCATION(RC_MARKET_BOMBCHU_BOWLING_FIRST_PRIZE,  logic->Get(LOGIC_COULD_PLAY_BOWLING) && logic->BombchusEnabled()),
