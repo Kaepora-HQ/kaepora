@@ -54,6 +54,10 @@ target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PRIVATE zstd::libzstd)
 target_compile_options(kaepora-patch-files PRIVATE ${PATCHER_WARNINGS})
 
+add_executable(kaepora-patch patcher/main.cpp)
+target_link_libraries(kaepora-patch PRIVATE kaepora-patch-files nlohmann_json::nlohmann_json)
+target_compile_options(kaepora-patch PRIVATE ${PATCHER_WARNINGS})
+
 add_executable(kaepora-patch-roundtrip tests/placement_roundtrip.cpp)
 target_link_libraries(kaepora-patch-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-roundtrip PRIVATE ${PATCHER_WARNINGS})
@@ -70,6 +74,15 @@ add_test(NAME logic COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/logic_test.py
 
 # The game's container is Nintendo's data and stays out of git, so the tests that read it need its path.
 set(KAEPORA_GAME_NUP "" CACHE FILEPATH "The game's .nup container, read by the patcher tests")
+set(KAEPORA_TESTED_MOD "" CACHE FILEPATH "The placement file of the chest-swap mod tested in the game")
+set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
+    foreach(test larger-plan bad-input)
+        add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
+    endforeach()
+    if(KAEPORA_TESTED_MOD)
+        add_test(NAME patch-tested-mod
+            COMMAND ${PATCH_TEST} tested-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}" "${KAEPORA_TESTED_MOD}")
+    endif()
 endif()
