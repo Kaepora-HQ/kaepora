@@ -25,6 +25,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Queen Gohma"))
         self.assertFalse(self.reachable("Queen Gohma", ("KF Kokiri Sword Chest", "Green Rupee")))
 
+    def test_child_comes_back_only_with_the_prelude_of_light(self):
+        # Only child Link can drain the well, with the Song of Storms that only adult Link learns.
+        self.assertTrue(self.reachable("Bottom of the Well Lens of Truth Chest"))
+        # With the Fairy Bow in the well, adult Link cannot finish the Forest Temple to learn the Prelude of Light.
+        self.assertFalse(self.reachable("Bottom of the Well Lens of Truth Chest",
+                                        ("Bottom of the Well Lens of Truth Chest", "Progressive Bow"),
+                                        ("Forest Temple Bow Chest", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

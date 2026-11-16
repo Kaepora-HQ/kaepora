@@ -427,7 +427,6 @@
         },
         "sphere 08": {
             "Forest Temple Bow Chest": "Progressive Bow",
-            "Bottom of the Well Lens of Truth Chest": "Lens of Truth",
             "Fire Temple Megaton Hammer Chest": "Megaton Hammer",
             "GF 1 Torch Carpenter": "Gerudo Fortress Small Key",
             "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
@@ -440,49 +439,55 @@
             "Fire Temple Boss Key Chest": "Fire Temple Boss Key"
         },
         "sphere 10": {
-            "Gerudo Training Ground Beamos Chest": "Iron Boots",
+            "Gerudo Training Ground Hammer Room Switch Chest": "Iron Boots",
             "Phantom Ganon": "Forest Medallion",
             "Volvagia": "Fire Medallion"
         },
         "sphere 11": {
-            "Water Temple Longshot Chest": "Progressive Hookshot"
+            "Water Temple Longshot Chest": "Progressive Hookshot",
+            "Sheik at Temple": "Prelude of Light"
         },
         "sphere 12": {
-            "Spirit Temple Compass Chest": "Spirit Temple Small Key",
-            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key",
-            "Sheik at Colossus": "Requiem of Spirit",
             "Water Temple Boss Key Chest": "Water Temple Boss Key"
         },
         "sphere 13": {
-            "Spirit Temple Sun Block Room Chest": "Spirit Temple Boss Key",
-            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
-            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
             "Morpha": "Water Medallion"
         },
         "sphere 14": {
-            "Sheik in Kakariko": "Nocturne of Shadow",
-            "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key"
+            "Sheik in Kakariko": "Nocturne of Shadow"
         },
         "sphere 15": {
-            "Shadow Temple Hover Boots Chest": "Hover Boots",
-            "Twinrova": "Spirit Medallion"
+            "Bottom of the Well Lens of Truth Chest": "Lens of Truth"
         },
         "sphere 16": {
-            "Shadow Temple Boss Key Chest": "Shadow Temple Boss Key"
+            "Spirit Temple Compass Chest": "Spirit Temple Small Key",
+            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key",
+            "Sheik at Colossus": "Requiem of Spirit",
+            "Shadow Temple Hover Boots Chest": "Hover Boots"
         },
         "sphere 17": {
-            "Bongo Bongo": "Shadow Medallion"
+            "Spirit Temple Sun Block Room Chest": "Spirit Temple Boss Key",
+            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
+            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
+            "Shadow Temple Boss Key Chest": "Shadow Temple Boss Key"
         },
         "sphere 18": {
-            "Market ToT Light Arrow Cutscene": "Light Arrows"
+            "Bongo Bongo": "Shadow Medallion",
+            "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key"
         },
         "sphere 19": {
-            "Ganon's Castle Shadow Trial Golden Gauntlets Chest": "Strength Upgrade"
+            "Twinrova": "Spirit Medallion"
         },
         "sphere 20": {
-            "Ganon's Castle Tower Boss Key Chest": "Ganon's Castle Boss Key"
+            "Market ToT Light Arrow Cutscene": "Light Arrows"
         },
         "sphere 21": {
+            "Ganon's Castle Shadow Trial Golden Gauntlets Chest": "Strength Upgrade"
+        },
+        "sphere 22": {
+            "Ganon's Castle Tower Boss Key Chest": "Ganon's Castle Boss Key"
+        },
+        "sphere 23": {
             "Ganon": "Triforce"
         }
     },
@@ -938,12 +943,12 @@
         "Gerudo Training Ground Eye Statue Chest": "Training Ground Small Key",
         "Gerudo Training Ground Near Scarecrow Chest": "Blue Rupee",
         "Gerudo Training Ground Hammer Room Clear Chest": "No Item",
-        "Gerudo Training Ground Hammer Room Switch Chest": "Red Rupee",
+        "Gerudo Training Ground Hammer Room Switch Chest": "Iron Boots",
         "Gerudo Training Ground Freestanding Key": "Training Ground Small Key",
         "Gerudo Training Ground Maze Right Central Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Right Side Chest": "Red Rupee",
-        "Gerudo Training Ground Underwater Silver Rupee Chest": "Blue Rupee",
-        "Gerudo Training Ground Beamos Chest": "Iron Boots",
+        "Gerudo Training Ground Underwater Silver Rupee Chest": "Red Rupee",
+        "Gerudo Training Ground Beamos Chest": "Blue Rupee",
         "Gerudo Training Ground Hidden Ceiling Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Path First Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Path Second Chest": "Blue Rupee",
