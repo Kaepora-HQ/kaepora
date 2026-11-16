@@ -1,4 +1,5 @@
-// A plan as a mod: each placement file the plan changes, at its path in the game's RomFS.
+// A plan as a mod: each placement file the plan changes, and the size table if a file outgrows its entry, at their
+// paths in the game's RomFS.
 #pragma once
 
 #include <nlohmann/json.hpp>

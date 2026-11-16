@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 static_assert(std::endian::native == std::endian::little, "the game's data is read in place as little endian");
@@ -16,6 +17,14 @@ T ReadAt(std::string_view data, size_t offset) {
     T value;
     std::memcpy(&value, data.data() + offset, sizeof(T));
     return value;
+}
+
+template <typename T>
+void WriteAt(std::string& data, size_t offset, T value) {
+    if (offset > data.size() || data.size() - offset < sizeof(T)) {
+        throw std::runtime_error("write past the end of the data");
+    }
+    std::memcpy(data.data() + offset, &value, sizeof(T));
 }
 
 constexpr size_t AlignUp(size_t size, size_t alignment) {
