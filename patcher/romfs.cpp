@@ -21,9 +21,8 @@ constexpr uint8_t BasePackage = 0;
 constexpr uint8_t UpdatePackage = 1;
 constexpr uint8_t RawCodec = 0;
 
-// The placement files' dictionary sits in a SARC archive inside this zstd file.
+// The dictionaries sit in a SARC archive inside this zstd file.
 constexpr std::string_view DictionaryPack = "Pack/ZsDic.pack.zs";
-constexpr std::string_view PlacementDictionaryName = "bcett.byml.zsdic";
 
 struct Toc {
     std::string_view data;
@@ -118,7 +117,7 @@ std::string Romfs::ReadBytes(uint64_t offset, uint64_t size) {
     return data;
 }
 
-std::string PlacementDictionary(Romfs& romfs) {
+std::string Dictionary(Romfs& romfs, std::string_view name) {
     const std::string archive = Decompress(romfs.Read(std::string(DictionaryPack)));
     // A SARC header, then the SFAT node table, then the SFNT name table with names at 4-byte steps.
     if (!archive.starts_with("SARC")) {
@@ -130,12 +129,11 @@ std::string PlacementDictionary(Romfs& romfs) {
     const size_t nodes = headerSize + 0x0C;
     const size_t names = nodes + count * 0x10 + 0x08;
     for (size_t node = nodes; node < nodes + count * 0x10; node += 0x10) {
-        const size_t name = names + (ReadAt<uint32_t>(archive, node + 0x04) & 0xFFFF) * 4;
-        if (StringAt(archive, name) == PlacementDictionaryName) {
+        if (StringAt(archive, names + (ReadAt<uint32_t>(archive, node + 0x04) & 0xFFFF) * 4) == name) {
             const uint32_t start = ReadAt<uint32_t>(archive, node + 0x08);
             const uint32_t end = ReadAt<uint32_t>(archive, node + 0x0C);
             return archive.substr(dataOffset + start, end - start);
         }
     }
-    throw std::runtime_error(std::string(DictionaryPack) + " has no " + std::string(PlacementDictionaryName));
+    throw std::runtime_error(std::string(DictionaryPack) + " has no " + std::string(name));
 }

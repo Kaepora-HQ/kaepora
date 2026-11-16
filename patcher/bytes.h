@@ -1,4 +1,4 @@
-// Bounds-checked reads from the game's little-endian data.
+// Bounds-checked reads of little-endian values from the game's data.
 #pragma once
 
 #include <bit>

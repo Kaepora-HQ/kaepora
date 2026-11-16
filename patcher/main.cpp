@@ -157,9 +157,9 @@ int main(int argc, char** argv) {
         }
         const std::vector<PlannedChest> plan = ReadPlan(argv[2]);
         Romfs romfs(argv[1]);
-        const std::string dictionary = PlacementDictionary(romfs);
+        const std::string dictionary = Dictionary(romfs, "bcett.byml.zsdic");
 
-        std::map<std::string, byml::Node> placements;
+        std::map<std::string, byml::Document> placements;
         std::set<std::string> changed;
         for (const PlannedChest& chest : plan) {
             for (const std::string& path : chest.files) {
@@ -168,7 +168,7 @@ int main(int argc, char** argv) {
                     if (placement == placements.end()) {
                         placement = placements.emplace(path, byml::Parse(Decompress(romfs.Read(path), dictionary))).first;
                     }
-                    std::string& dropActor = DropActor(placement->second, chest.hash);
+                    std::string& dropActor = DropActor(placement->second.root, chest.hash);
                     if (dropActor != chest.dropActor) {
                         dropActor = chest.dropActor;
                         changed.insert(path);

@@ -2,37 +2,68 @@
 
 #include "bytes.h"
 
+#include <algorithm>
+#include <array>
 #include <cstring>
 #include <format>
 #include <map>
 #include <stdexcept>
+#include <utility>
 
 namespace byml {
 
 namespace {
 
-constexpr std::string_view Magic = "YB";
 constexpr uint16_t Version = 7;
 constexpr uint8_t StringTable = 0xC2;
 constexpr size_t HeaderSize = 0x10;
+
+std::string_view Magic(std::endian order) {
+    return order == std::endian::little ? "YB" : "BY";
+}
 
 size_t Align4(size_t size) {
     return (size + 3) & ~size_t(3);
 }
 
+// Converts a value between the machine's byte order and the file's, in either direction.
+template <typename T>
+T ToByteOrder(T value, std::endian order) {
+    if (order == std::endian::native) {
+        return value;
+    }
+    auto bytes = std::bit_cast<std::array<char, sizeof(T)>>(value);
+    std::ranges::reverse(bytes);
+    return std::bit_cast<T>(bytes);
+}
+
 struct Reader {
     std::string_view data;
+    std::endian order;
     std::vector<std::string_view> keys;
     std::vector<std::string_view> strings;
 
+    template <typename T>
+    T Read(size_t offset) const {
+        return ToByteOrder(ReadAt<T>(data, offset), order);
+    }
+
+    // A container's count and a dict entry's key index are 24-bit numbers.
+    uint32_t Read24(size_t offset) const {
+        uint32_t value = 0;
+        for (size_t i = 0; i < 3; ++i) {
+            value |= uint32_t(ReadAt<uint8_t>(data, offset + i)) << 8 * (order == std::endian::little ? i : 2 - i);
+        }
+        return value;
+    }
+
     std::vector<std::string_view> Table(uint32_t offset) const {
-        const uint32_t header = ReadAt<uint32_t>(data, offset);
-        if ((header & 0xFF) != StringTable) {
+        if (ReadAt<uint8_t>(data, offset) != StringTable) {
             throw std::runtime_error("BYML string table expected");
         }
-        std::vector<std::string_view> table(header >> 8);
+        std::vector<std::string_view> table(Read24(offset + 1));
         for (size_t i = 0; i < table.size(); ++i) {
-            table[i] = StringAt(data, offset + ReadAt<uint32_t>(data, offset + 4 + 4 * i));
+            table[i] = StringAt(data, offset + Read<uint32_t>(offset + 4 + 4 * i));
         }
         return table;
     }
@@ -46,8 +77,9 @@ struct Reader {
             case Type::Float:
             case Type::UInt:
                 return { .type = type, .scalar = value };
+            case Type::Int64:
             case Type::UInt64:
-                return { .type = type, .scalar = ReadAt<uint64_t>(data, value) };
+                return { .type = type, .scalar = Read<uint64_t>(value) };
             case Type::Array:
             case Type::Dict:
                 return Container(value);
@@ -56,23 +88,23 @@ struct Reader {
     }
 
     Node Container(uint32_t offset) const {
-        const uint32_t header = ReadAt<uint32_t>(data, offset);
-        const uint32_t count = header >> 8;
-        Node node{ .type = Type(header & 0xFF) };
+        const uint32_t count = Read24(offset + 1);
+        Node node{ .type = Type(ReadAt<uint8_t>(data, offset)) };
         if (node.type == Type::Array) {
             const size_t values = offset + 4 + Align4(count);
             for (uint32_t i = 0; i < count; ++i) {
                 node.array.push_back(
-                    Value(Type(ReadAt<uint8_t>(data, offset + 4 + i)), ReadAt<uint32_t>(data, values + 4 * i)));
+                    Value(Type(ReadAt<uint8_t>(data, offset + 4 + i)), Read<uint32_t>(values + 4 * i)));
             }
         } else if (node.type == Type::Dict) {
             for (uint32_t i = 0; i < count; ++i) {
-                const uint32_t entry = ReadAt<uint32_t>(data, offset + 4 + 8 * i);
-                node.dict.push_back({ .key = std::string(keys.at(entry & 0xFFFFFF)),
-                                      .value = Value(Type(entry >> 24), ReadAt<uint32_t>(data, offset + 8 + 8 * i)) });
+                const size_t entry = offset + 4 + 8 * i;
+                node.dict.push_back(
+                    { .key = std::string(keys.at(Read24(entry))),
+                      .value = Value(Type(ReadAt<uint8_t>(data, entry + 3)), Read<uint32_t>(entry + 4)) });
             }
         } else {
-            throw std::runtime_error(std::format("unsupported BYML container type {:#x}", header & 0xFF));
+            throw std::runtime_error(std::format("unsupported BYML container type {:#x}", uint8_t(node.type)));
         }
         return node;
     }
@@ -86,18 +118,21 @@ struct ContentLess {
 
 class Writer {
 public:
+    explicit Writer(std::endian order) : order(order) {
+    }
+
     std::string Write(const Node& root) {
         Collect(root);
         out.resize(HeaderSize);
         const uint32_t keysOffset = Table(keys);
         const uint32_t stringsOffset = Table(strings);
-        for (const uint64_t value : longs) {
+        for (const Value64& value : longs) {
             longOffsets[value] = Offset();
-            Append(value);
+            Append(value.second);
         }
         const uint32_t rootOffset = Container(root);
 
-        out.replace(0, Magic.size(), Magic);
+        out.replace(0, 2, Magic(order));
         Put<uint16_t>(2, Version);
         Put<uint32_t>(4, keysOffset);
         Put<uint32_t>(8, stringsOffset);
@@ -106,12 +141,16 @@ public:
     }
 
 private:
+    // The game's files store a 64-bit value once for each type that uses it.
+    using Value64 = std::pair<Type, uint64_t>;
+
     // Gathers the table entries and the 64-bit values in depth-first order.
     void Collect(const Node& node) {
         if (node.type == Type::String) {
             strings.emplace(node.string, 0);
-        } else if (node.type == Type::UInt64 && longOffsets.emplace(node.scalar, 0).second) {
-            longs.push_back(node.scalar);
+        } else if ((node.type == Type::Int64 || node.type == Type::UInt64) &&
+                   longOffsets.emplace(Value64(node.type, node.scalar), 0).second) {
+            longs.emplace_back(node.type, node.scalar);
         }
         for (const Node& item : node.array) {
             Collect(item);
@@ -125,7 +164,7 @@ private:
     // Writes a table of the sorted names and numbers each name by its place in it.
     uint32_t Table(std::map<std::string, uint32_t>& table) {
         const uint32_t offset = Offset();
-        Append<uint32_t>(StringTable | uint32_t(table.size()) << 8);
+        AppendHeader(StringTable, table.size());
         uint32_t position = uint32_t(4 + 4 * (table.size() + 1));
         uint32_t index = 0;
         for (auto& [name, number] : table) {
@@ -147,7 +186,7 @@ private:
             return written->second;
         }
         if (node.type == Type::Array) {
-            Append<uint32_t>(uint8_t(Type::Array) | uint32_t(node.array.size()) << 8);
+            AppendHeader(uint8_t(Type::Array), node.array.size());
             for (const Node& item : node.array) {
                 out += char(item.type);
             }
@@ -158,12 +197,13 @@ private:
                 Put(values + 4 * i, Value(node.array[i]));
             }
         } else {
-            Append<uint32_t>(uint8_t(Type::Dict) | uint32_t(node.dict.size()) << 8);
+            AppendHeader(uint8_t(Type::Dict), node.dict.size());
             const size_t entries = out.size();
             out.resize(entries + 8 * node.dict.size());
             for (size_t i = 0; i < node.dict.size(); ++i) {
                 const auto& [key, value] = node.dict[i];
-                Put<uint32_t>(entries + 8 * i, keys.at(key) | uint32_t(value.type) << 24);
+                Put24(entries + 8 * i, keys.at(key));
+                out[entries + 8 * i + 3] = char(value.type);
                 Put(entries + 8 * i + 4, Value(value));
             }
         }
@@ -174,8 +214,9 @@ private:
         switch (node.type) {
             case Type::String:
                 return strings.at(node.string);
+            case Type::Int64:
             case Type::UInt64:
-                return longOffsets.at(node.scalar);
+                return longOffsets.at({ node.type, node.scalar });
             case Type::Array:
             case Type::Dict:
                 return Container(node);
@@ -188,38 +229,55 @@ private:
         return uint32_t(out.size());
     }
 
+    // A container or string table starts with its type and its count.
+    void AppendHeader(uint8_t type, size_t count) {
+        out += char(type);
+        out.resize(out.size() + 3);
+        Put24(out.size() - 3, uint32_t(count));
+    }
+
+    void Put24(size_t offset, uint32_t value) {
+        for (size_t i = 0; i < 3; ++i) {
+            out[offset + i] = char(value >> 8 * (order == std::endian::little ? i : 2 - i));
+        }
+    }
+
     template <typename T>
     void Append(T value) {
-        out.append(reinterpret_cast<const char*>(&value), sizeof(T));
+        out.resize(out.size() + sizeof(T));
+        Put(out.size() - sizeof(T), value);
     }
 
     template <typename T>
     void Put(size_t offset, T value) {
+        value = ToByteOrder(value, order);
         std::memcpy(out.data() + offset, &value, sizeof(T));
     }
 
+    std::endian order;
     std::map<std::string, uint32_t> keys;
     std::map<std::string, uint32_t> strings;
-    std::vector<uint64_t> longs;
-    std::map<uint64_t, uint32_t> longOffsets;
+    std::vector<Value64> longs;
+    std::map<Value64, uint32_t> longOffsets;
     std::map<const Node*, uint32_t, ContentLess> offsets;
     std::string out;
 };
 
 } // namespace
 
-Node Parse(std::string_view data) {
-    if (!data.starts_with(Magic) || ReadAt<uint16_t>(data, 2) != Version) {
-        throw std::runtime_error("not a little-endian BYML version 7 file");
+Document Parse(std::string_view data) {
+    Reader reader{ .data = data,
+                   .order = data.starts_with(Magic(std::endian::big)) ? std::endian::big : std::endian::little };
+    if (!data.starts_with(Magic(reader.order)) || reader.Read<uint16_t>(2) != Version) {
+        throw std::runtime_error("not a BYML version 7 file");
     }
-    Reader reader{ .data = data };
-    reader.keys = reader.Table(ReadAt<uint32_t>(data, 4));
-    reader.strings = reader.Table(ReadAt<uint32_t>(data, 8));
-    return reader.Container(ReadAt<uint32_t>(data, 12));
+    reader.keys = reader.Table(reader.Read<uint32_t>(4));
+    reader.strings = reader.Table(reader.Read<uint32_t>(8));
+    return { .order = reader.order, .root = reader.Container(reader.Read<uint32_t>(12)) };
 }
 
-std::string Write(const Node& root) {
-    return Writer().Write(root);
+std::string Write(const Document& document) {
+    return Writer(document.order).Write(document.root);
 }
 
 } // namespace byml

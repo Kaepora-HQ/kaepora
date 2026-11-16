@@ -6,6 +6,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <string_view>
 
 class Romfs {
 public:
@@ -32,5 +33,5 @@ private:
     std::map<std::string, File> files;
 };
 
-// The zstd dictionary of the placement files.
-std::string PlacementDictionary(Romfs& romfs);
+// A zstd dictionary in the game's dictionary pack, by its name there.
+std::string Dictionary(Romfs& romfs, std::string_view name);

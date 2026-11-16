@@ -58,7 +58,7 @@ add_executable(kaepora-patch patcher/main.cpp)
 target_link_libraries(kaepora-patch PRIVATE kaepora-patch-files nlohmann_json::nlohmann_json)
 target_compile_options(kaepora-patch PRIVATE ${PATCHER_WARNINGS})
 
-add_executable(kaepora-patch-roundtrip tests/placement_roundtrip.cpp)
+add_executable(kaepora-patch-roundtrip tests/byml_roundtrip.cpp)
 target_link_libraries(kaepora-patch-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-roundtrip PRIVATE ${PATCHER_WARNINGS})
 
