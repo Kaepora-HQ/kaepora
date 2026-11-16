@@ -68,6 +68,14 @@ add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
 target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
 target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 
+# The window. Qt is found quietly, so everything else still builds where Qt is missing.
+find_package(Qt6 QUIET COMPONENTS Widgets OPTIONAL_COMPONENTS Test)
+if(Qt6_FOUND)
+    add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/window.cpp)
+    target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets)
+    target_compile_options(kaepora PRIVATE ${WARNINGS})
+endif()
+
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
@@ -94,6 +102,15 @@ if(KAEPORA_GAME_NUP)
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
+    if(Qt6Test_FOUND)
+        add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/window.cpp)
+        set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
+        target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Test)
+        target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
+        add_test(NAME window COMMAND kaepora-window-test)
+        set_tests_properties(window PROPERTIES ENVIRONMENT
+            "QT_QPA_PLATFORM=offscreen;KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};KAEPORA_MAKE_SEED=$<TARGET_FILE:kaepora-make-seed>")
+    endif()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod
             COMMAND ${PATCH_TEST} tested-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}" "${KAEPORA_TESTED_MOD}")
