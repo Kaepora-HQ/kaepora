@@ -167,6 +167,16 @@ std::vector<RemakeChest> LoadRemakeChests() {
     return chests;
 }
 
+// Saved values a new game starts with set. Each opens a locked door that SoH opens when it creates a save, and that
+// SoH's rules count open.
+static constexpr const char* startFlags[] = {
+    // The Fire Temple's lowest locked door, to the boss key loop, starts open. Logic::IsFireLoopLocked is false, so
+    // fire_temple.cpp asks no key there, and Logic::Reset counts one Fire Temple small key for it.
+    "IsChainLockDoorOpen.4189300454150217955",
+    // The Water Temple's west middle-floor door, to the jet lift, starts open. water_temple.cpp asks no key there.
+    "IsChainLockDoorOpen.2202807660383340401",
+};
+
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
@@ -185,5 +195,6 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             { { "hash", chest.hash }, { "files", chest.files }, { "drop_actor", candidates.front() } });
         candidates.pop_front();
     }
+    plan["start_flags"] = startFlags;
     return plan;
 }

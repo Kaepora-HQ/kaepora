@@ -619,5 +619,9 @@
       ],
       "drop_actor": "TBox_Rupee_Purple"
     }
+  ],
+  "start_flags": [
+    "IsChainLockDoorOpen.4189300454150217955",
+    "IsChainLockDoorOpen.2202807660383340401"
   ]
 }

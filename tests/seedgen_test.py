@@ -85,6 +85,12 @@ class SeedgenTest(unittest.TestCase):
             collections.Counter((folder(row["files"]), row["item"]) for row in SHUFFLED
                                 if row["item"] in dungeon_names))
 
+    def test_plan_opens_the_doors_the_rules_count_open(self):
+        # The Fire Temple's lowest locked door and the Water Temple's west middle-floor door.
+        _, plan = self.generate("6")
+        self.assertEqual(plan["start_flags"], ["IsChainLockDoorOpen.4189300454150217955",
+                                               "IsChainLockDoorOpen.2202807660383340401"])
+
     def test_same_seed_same_files(self):
         self.assertEqual(self.run_seedgen("5"), self.run_seedgen("5"))
 
