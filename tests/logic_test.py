@@ -82,6 +82,19 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
                                         ("Graveyard Hookshot Chest", "Green Rupee")))
 
+    def test_well_locks_each_take_both_keys(self):
+        # Both locked doors open off the middle, so either can take the first of the two keys.
+        self.assertTrue(self.reachable("Bottom of the Well GS West Inner Room"))
+        self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room"))
+        one_key = ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Bottom of the Well GS West Inner Room", one_key))
+        self.assertFalse(self.reachable("Bottom of the Well GS East Inner Room", one_key))
+
+    def test_well_hidden_pits_door_has_no_lock(self):
+        self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
+                                       ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
+                                       ("Bottom of the Well Freestanding Key", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
