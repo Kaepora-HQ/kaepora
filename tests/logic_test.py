@@ -13,6 +13,9 @@ REACH = None
 # The 10 and 30 Gold Skulltula rewards are the only wallet upgrades.
 NO_WALLET_UPGRADE = (("Kak 10 Gold Skulltula Reward", "Green Rupee"), ("Kak 30 Gold Skulltula Reward", "Green Rupee"))
 ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
+NO_HAMMER = ("Fire Temple Megaton Hammer Chest", "Green Rupee")
+NO_SILVER_GAUNTLETS = ("Spirit Temple Silver Gauntlets Chest", "Green Rupee")
+NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Green Rupee")
 
 
 class LogicTest(unittest.TestCase):
@@ -81,6 +84,45 @@ class LogicTest(unittest.TestCase):
     def test_dampes_heart_piece_needs_a_hookshot(self):
         self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
                                         ("Graveyard Hookshot Chest", "Green Rupee")))
+
+    # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
+    # tier found, and only adult Link can use them.
+
+    def test_gauntlets_are_not_the_bracelet_for_a_child(self):
+        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot open Dodongo's
+        # Cavern, as the only bomb bag is inside it.
+        child_without_bracelet = (("HF Ocarina of Time Item", "Green Rupee"), ("GC Darunias Joy", "Green Rupee"))
+        self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
+                                        ("KF Mido Top Left Chest", "Silver Gauntlets"),
+                                        ("KF Mido Top Right Chest", "Golden Gauntlets")))
+        self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
+                                       ("KF Mido Top Left Chest", "Goron's Bracelet")))
+
+    def test_gauntlets_are_not_the_bracelet_for_an_adult(self):
+        # Pushing the Forest Temple's blocks takes the bracelet.
+        gauntlets = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Golden Gauntlets"),
+                     ("KF Mido Bottom Left Chest", "Progressive Bomb Bag"))
+        self.assertTrue(self.reachable("Phantom Ganon", *gauntlets))
+        self.assertFalse(self.reachable("Phantom Ganon", *gauntlets, ("GC Darunias Joy", "Green Rupee")))
+
+    def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
+        # Only the Silver Gauntlets or the hammer clear the way to the leftmost chest of the Goron City maze.
+        self.assertTrue(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_HAMMER,
+                                       ("KF Mido Top Left Chest", "Golden Gauntlets")))
+
+    def test_silver_gauntlets_do_not_lift_what_golden_gauntlets_lift(self):
+        # Only the Golden Gauntlets clear the way to the Great Fairy fountain outside Ganon's Castle.
+        self.assertFalse(self.reachable("OGC Great Fairy Reward", NO_GOLDEN_GAUNTLETS,
+                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
+        self.assertTrue(self.reachable("OGC Great Fairy Reward", NO_GOLDEN_GAUNTLETS,
+                                       ("KF Mido Top Left Chest", "Golden Gauntlets")))
+
+    def test_the_bracelet_lifts_nothing_that_needs_gauntlets(self):
+        # Darunia gives the bracelet.
+        self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))
+        self.assertFalse(self.reachable("OGC Great Fairy Reward", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS))
+        self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
+                                       ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
     def test_well_locks_each_take_both_keys(self):
         # Both locked doors open off the middle, so either can take the first of the two keys.

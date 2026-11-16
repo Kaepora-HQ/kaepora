@@ -87,12 +87,14 @@ bool Logic::HasItem(RandomizerGet itemName) {
                    (!ctx->GetOption(RSK_PROGRESSIVE_GORON_SWORD) && Get(LOGIC_MEDIGORON));
         case RG_BIGGORON_SWORD:
             return CheckEquipment(EQUIP_FLAG_SWORD_BGS) && mSaveContext->bgsFlag;
+        // The remake keeps Goron's Bracelet in a slot of its own. The gauntlets share another, which keeps the
+        // higher tier found.
         case RG_GORONS_BRACELET:
-            return CurrentUpgrade(UPG_STRENGTH);
+            return CheckRandoInf(RAND_INF_HAS_GORONS_BRACELET);
         case RG_SILVER_GAUNTLETS:
-            return CurrentUpgrade(UPG_STRENGTH) >= 2;
+            return CheckRandoInf(RAND_INF_HAS_SILVER_GAUNTLETS) || HasItem(RG_GOLDEN_GAUNTLETS);
         case RG_GOLDEN_GAUNTLETS:
-            return CurrentUpgrade(UPG_STRENGTH) >= 3;
+            return CheckRandoInf(RAND_INF_HAS_GOLDEN_GAUNTLETS);
         case RG_PROGRESSIVE_BOMB_BAG:
         case RG_BOMB_BAG:
             return CurrentUpgrade(UPG_BOMB_BAG);
@@ -2159,6 +2161,9 @@ static constexpr std::pair<RandomizerGet, uint32_t> randInfTable[] = {
     { RG_BACK_TOWER_KEY, RAND_INF_BACK_TOWER_KEY_OBTAINED },
     { RG_HYLIA_LAB_KEY, RAND_INF_HYLIA_LAB_KEY_OBTAINED },
     { RG_FISHING_HOLE_KEY, RAND_INF_FISHING_HOLE_KEY_OBTAINED },
+    { RG_GORONS_BRACELET, RAND_INF_HAS_GORONS_BRACELET },
+    { RG_SILVER_GAUNTLETS, RAND_INF_HAS_SILVER_GAUNTLETS },
+    { RG_GOLDEN_GAUNTLETS, RAND_INF_HAS_GOLDEN_GAUNTLETS },
 };
 const std::array<uint32_t, RG_MAX> StaticData::RandoGetToRandInf = ToRandoGetArray(randInfTable, RAND_INF_MAX);
 
@@ -2373,17 +2378,6 @@ void Logic::ApplyItemEffect(Item& item, bool state) {
                         newItem = 2;
                     }
                     SetInventory(ITEM_HOOKSHOT, HookshotLookup[newItem]);
-                } break;
-                case RG_PROGRESSIVE_STRENGTH: {
-                    auto currentLevel = CurrentUpgrade(UPG_STRENGTH);
-                    if (!CheckRandoInf(RAND_INF_CAN_GRAB) && state) {
-                        SetRandoInf(RAND_INF_CAN_GRAB, true);
-                    } else if (currentLevel == 0 && !state) {
-                        SetRandoInf(RAND_INF_CAN_GRAB, false);
-                    } else {
-                        auto newLevel = currentLevel + (!state ? -1 : 1);
-                        SetUpgrade(UPG_STRENGTH, newLevel);
-                    }
                 } break;
                 case RG_PROGRESSIVE_BOMB_BAG: {
                     auto realGI = item.GetGIEntry();
@@ -2635,6 +2629,9 @@ void Logic::ApplyItemEffect(Item& item, bool state) {
                 case RG_BACK_TOWER_KEY:
                 case RG_HYLIA_LAB_KEY:
                 case RG_FISHING_HOLE_KEY:
+                case RG_GORONS_BRACELET:
+                case RG_SILVER_GAUNTLETS:
+                case RG_GOLDEN_GAUNTLETS:
                     SetRandoInf(StaticData::RandoGetToRandInf[randoGet], state);
                     break;
                 case RG_TRIFORCE_PIECE:

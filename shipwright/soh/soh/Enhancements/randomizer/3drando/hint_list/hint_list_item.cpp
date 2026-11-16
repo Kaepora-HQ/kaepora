@@ -490,19 +490,6 @@ void StaticData::HintTable_Init_Item() {
                                                        CustomMessage("the BOING! chain", /*german*/"die BOING!-Kette", /*french*/"la chaîne de BOING!")});
                                                         // /*spanish*/una cadena retráctil
 
-    hintTextTable[RHT_PROGRESSIVE_STRENGTH] = HintText(CustomMessage("a Strength Upgrade", /*german*/"eine Kraftsteigerung", /*french*/"une Amélioration de Force"),
-                                                       // /*spanish*/un aumento de fuerza
-                                                       {
-                                                       CustomMessage("something that can remove boulders", /*german*/"etwas zum Geröll entfernen", /*french*/"une chose qui enlève les rochers")
-                                                        // /*spanish*/algo que pueda quitar rocas
-                                                       }, {
-                                                       CustomMessage("power gloves", /*german*/"Krafthandschuhe€", /*french*/"une paire de gants de travail"),
-                                                        // /*spanish*/unos poderosos guanteletes
-                                                       CustomMessage("metal mittens", /*german*/"Metall-Fäustlinge€", /*french*/"une paire de mitaines"),
-                                                        // /*spanish*/unas manoplas metálicas
-                                                       CustomMessage("the heavy lifty", /*german*/"der Schwerlastheber", /*french*/"la puissance de dix hommes")});
-                                                        // /*spanish*/un levantamiento pesado
-
     hintTextTable[RHT_PROGRESSIVE_BOMB_BAG] = HintText(CustomMessage("a Bomb Bag", /*german*/"eine Bombentasche", /*french*/"un Sac de Bombes"),
                                                        // /*spanish*/un saco de bombas
                                                        {

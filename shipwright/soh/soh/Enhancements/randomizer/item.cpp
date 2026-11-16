@@ -276,26 +276,6 @@ std::shared_ptr<GetItemEntry> Item::GetGIEntry() const { // NOLINT(*-no-recursio
                     break;
             }
             break;
-        case RG_PROGRESSIVE_STRENGTH:
-            if (!logic->CheckRandoInf(RAND_INF_CAN_GRAB)) {
-                actual = RG_POWER_BRACELET;
-                break;
-            }
-            switch (logic->CurrentUpgrade(UPG_STRENGTH)) {
-                case 0:
-                    actual = RG_GORONS_BRACELET;
-                    break;
-                case 1:
-                    actual = RG_SILVER_GAUNTLETS;
-                    break;
-                case 2:
-                case 3:
-                    actual = RG_GOLDEN_GAUNTLETS;
-                    break;
-                default:
-                    break;
-            }
-            break;
         case RG_PROGRESSIVE_WALLET:
             if (!logic->CheckRandoInf(RAND_INF_HAS_WALLET)) {
                 actual = RG_CHILD_WALLET;
