@@ -22,7 +22,7 @@ struct RemakeChest {
     std::string Folder() const;
 };
 
-// The rows of remake/chests.tsv, read from the copy built into the program. Exits with a message when a table names
+// The rows of remake/chests.tsv, read from the copy built into the program. Throws when a table names
 // an unknown location or item, repeats a location or hash, or leaves out a chest location of SoH's vanilla layouts.
 std::vector<RemakeChest> LoadRemakeChests();
 

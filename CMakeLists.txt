@@ -13,11 +13,12 @@ include(shipwright/CMake/soh-cvars.cmake)
 # shipwright/ holds only the upstream files this build reads, so every source in it is compiled.
 file(GLOB_RECURSE SHIPWRIGHT_SOURCES CONFIGURE_DEPENDS shipwright/*.c shipwright/*.cpp)
 
-# Everything but the two programs' main files, compiled once for both.
+# Everything but the generator programs' main files, compiled once for all of them.
 add_library(kaepora-generator OBJECT
     generator/build_info.c
     generator/cvars.cpp
     generator/game_state.cpp
+    generator/generate.cpp
     generator/remake.cpp
     generator/setup.cpp
     generator/traps.cpp
@@ -65,6 +66,11 @@ add_executable(kaepora-patch-flow-roundtrip tests/bfevfl_roundtrip.cpp)
 target_link_libraries(kaepora-patch-flow-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-flow-roundtrip PRIVATE ${WARNINGS})
 
+# Makes seed folders with the window's MakeSeed, for the tests.
+add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
+target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
+target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
+
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
@@ -91,6 +97,12 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input size-table size-table-unchanged together gift gift-size-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
+    endforeach()
+    foreach(TEST IN ITEMS same_files_as_the_two_programs two_seeds_in_one_process same_seed_twice_in_one_process
+                          existing_folder_is_refused new_folder_in_a_missing_folder)
+        add_test(NAME make_seed_${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
+                     $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>
+                     "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod

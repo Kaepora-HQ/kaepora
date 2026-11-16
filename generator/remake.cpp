@@ -6,11 +6,10 @@
 #include "soh/util.h"
 
 #include <algorithm>
-#include <cstdio>
-#include <cstdlib>
 #include <deque>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 static constexpr char chestTable[] = {
 #embed "../remake/chests.tsv"
@@ -20,8 +19,7 @@ static constexpr char itemTable[] = {
 };
 
 [[noreturn]] static void Fail(const std::string& message) {
-    std::fprintf(stderr, "%s\n", message.c_str());
-    std::exit(1);
+    throw std::runtime_error(message);
 }
 
 static std::vector<std::vector<std::string>> ReadTable(const std::string& name, const std::string& text,

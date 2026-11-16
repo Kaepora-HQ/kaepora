@@ -7,6 +7,7 @@
 #include "setup.h"
 
 #include <cstdio>
+#include <exception>
 #include <cstdlib>
 #include <string>
 
@@ -35,7 +36,13 @@ int main(int argc, char** argv) {
     }
 
     InitializeRandomizer();
-    const std::vector<RemakeChest> chests = LoadRemakeChests();
+    std::vector<RemakeChest> chests;
+    try {
+        chests = LoadRemakeChests();
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "%s\n", e.what());
+        return 1;
+    }
     auto ctx = Rando::Context::GetInstance();
     ctx->FinalizeSettings({}, {});
     for (const RemakeChest* chest : SetUpWorld(chests)) {
