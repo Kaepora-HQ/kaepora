@@ -335,31 +335,36 @@
     "SelectedStartingAge": "Child",
     "playthrough": {
         "sphere 00": {
-            "KF Mido Top Right Chest": "Progressive Bomb Bag",
+            "KF Kokiri Sword Chest": "Boomerang",
+            "KF Mido Top Left Chest": "Mirror Shield",
+            "KF Mido Bottom Right Chest": "Kokiri Sword",
             "KF Shop Item 1": "Buy Deku Shield"
         },
         "sphere 01": {
-            "KF GS Know It All House": "Gold Skulltula Token",
-            "GC Maze Right Chest": "Kokiri Sword",
-            "GC GS Boulder Maze": "Gold Skulltula Token",
-            "Dodongos Cavern GS Side Room Near Lower Lizalfos": "Gold Skulltula Token",
-            "Dodongos Cavern GS Vines Above Stairs": "Gold Skulltula Token",
-            "DMT GS Near Kak": "Gold Skulltula Token"
-        },
-        "sphere 02": {
             "Deku Tree GS Compass Room": "Gold Skulltula Token",
-            "Deku Tree Slingshot Room Side Chest": "Progressive Slingshot",
+            "Deku Tree Slingshot Chest": "Progressive Bomb Bag",
+            "Deku Tree Map Chest": "Progressive Slingshot",
             "Deku Tree GS Basement Gate": "Gold Skulltula Token",
             "Deku Tree GS Basement Vines": "Gold Skulltula Token"
         },
-        "sphere 03": {
+        "sphere 02": {
+            "Deku Tree GS Basement Back Room": "Gold Skulltula Token",
+            "KF GS Know It All House": "Gold Skulltula Token",
+            "GC GS Boulder Maze": "Gold Skulltula Token",
+            "Dodongos Cavern GS Side Room Near Lower Lizalfos": "Gold Skulltula Token",
+            "Dodongos Cavern GS Alcove Above Stairs": "Gold Skulltula Token",
+            "Dodongos Cavern GS Vines Above Stairs": "Gold Skulltula Token",
             "Dodongos Cavern GS Back Room": "Gold Skulltula Token",
             "King Dodongo": "Goron's Ruby",
+            "DMT GS Near Kak": "Gold Skulltula Token",
             "Queen Gohma": "Kokiri's Emerald",
+            "LH GS Lab Wall": "Gold Skulltula Token",
             "LH GS Small Island": "Gold Skulltula Token",
+            "GV GS Small Bridge": "Gold Skulltula Token",
             "HC Malon Egg": "Weird Egg",
             "HC GS in Tree": "Gold Skulltula Token",
             "Market GS Guard House": "Gold Skulltula Token",
+            "Graveyard GS Wall": "Gold Skulltula Token",
             "Kak Anju as Child": "Empty Bottle",
             "Kak GS House Under Construction": "Gold Skulltula Token",
             "Kak GS Skulltula House": "Gold Skulltula Token",
@@ -370,9 +375,11 @@
             "ZR GS Tree": "Gold Skulltula Token",
             "LLR GS Tree": "Gold Skulltula Token",
             "LLR GS Rain Shed": "Gold Skulltula Token",
+            "LLR GS House Window": "Gold Skulltula Token",
+            "LLR GS Back Wall": "Gold Skulltula Token",
             "LW Gift From Saria": "Progressive Ocarina"
         },
-        "sphere 04": {
+        "sphere 03": {
             "KF GS Bean Patch": "Gold Skulltula Token",
             "LW GS Bean Patch Near Bridge": "Gold Skulltula Token",
             "LW GS Bean Patch Near Theater": "Gold Skulltula Token",
@@ -383,30 +390,21 @@
             "Song from Impa": "Zelda's Lullaby",
             "Song from Saria": "Saria's Song",
             "Kak 10 Gold Skulltula Reward": "Progressive Wallet",
-            "Kak 20 Gold Skulltula Reward": "Stone of Agony",
             "Graveyard GS Bean Patch": "Gold Skulltula Token"
         },
-        "sphere 05": {
-            "SFM Wolfos Grotto Chest": "Boomerang",
+        "sphere 04": {
             "GC Darunias Joy": "Strength Upgrade",
+            "HF GS Stone Bridge Tree Grotto": "Gold Skulltula Token",
             "HC Great Fairy Reward": "Din's Fire",
+            "Kak 30 Gold Skulltula Reward": "Progressive Wallet",
             "ZD Diving Minigame": "Progressive Scale",
             "DMT Great Fairy Reward": "Progressive Magic Meter"
         },
-        "sphere 06": {
-            "Dodongos Cavern GS Alcove Above Stairs": "Gold Skulltula Token",
-            "Deku Tree GS Basement Back Room": "Gold Skulltula Token",
-            "GV GS Small Bridge": "Gold Skulltula Token",
+        "sphere 05": {
             "LH Underwater Item": "Bottle with Ruto's Letter",
-            "LH GS Lab Wall": "Gold Skulltula Token",
-            "Graveyard GS Wall": "Gold Skulltula Token",
-            "LLR GS House Window": "Gold Skulltula Token",
-            "LLR GS Back Wall": "Gold Skulltula Token",
-            "HF GS Cow Grotto": "Gold Skulltula Token",
-            "HF GS Stone Bridge Tree Grotto": "Gold Skulltula Token"
+            "HF GS Cow Grotto": "Gold Skulltula Token"
         },
-        "sphere 07": {
-            "Kak 30 Gold Skulltula Reward": "Progressive Wallet",
+        "sphere 06": {
             "Jabu Jabus Belly GS Lobby Basement Lower": "Gold Skulltula Token",
             "Jabu Jabus Belly GS Lobby Basement Upper": "Gold Skulltula Token",
             "Jabu Jabus Belly GS Water Switch Room": "Gold Skulltula Token",
@@ -415,26 +413,21 @@
             "Barinade": "Zora's Sapphire",
             "Jabu Jabus Belly GS Near Boss": "Gold Skulltula Token"
         },
-        "sphere 08": {
+        "sphere 07": {
             "HF Ocarina of Time Item": "Progressive Ocarina",
             "Song from Ocarina of Time": "Song of Time"
         },
-        "sphere 09": {
+        "sphere 08": {
             "Song from Windmill": "Song of Storms",
             "Graveyard Hookshot Chest": "Progressive Hookshot",
             "GC Shop Item 5": "Buy Goron Tunic",
             "GC GS Center Platform": "Gold Skulltula Token",
             "Ice Cavern Iron Boots Chest": "Iron Boots",
             "ZD Shop Item 1": "Buy Zora Tunic",
-            "ZD GS Frozen Waterfall": "Gold Skulltula Token",
-            "LW GS Above Theater": "Gold Skulltula Token",
             "Market ToT Master Sword": "Master Sword"
         },
-        "sphere 10": {
-            "KF GS House of Twins": "Gold Skulltula Token",
-            "Forest Temple GS Raised Island Courtyard": "Gold Skulltula Token",
+        "sphere 09": {
             "Forest Temple Bow Chest": "Progressive Bow",
-            "Forest Temple GS Lobby": "Gold Skulltula Token",
             "Water Temple Longshot Chest": "Progressive Hookshot",
             "Fire Temple Megaton Hammer Chest": "Megaton Hammer",
             "GF 1 Torch Carpenter": "Gerudo Fortress Small Key",
@@ -442,69 +435,68 @@
             "GF Dead End Carpenter": "Gerudo Fortress Small Key",
             "GF Double Cell Carpenter": "Gerudo Fortress Small Key"
         },
-        "sphere 11": {
+        "sphere 10": {
             "GF Freed All Carpenters": "Gerudo Membership Card",
             "Forest Temple Boss Key Chest": "Forest Temple Boss Key",
             "Water Temple Boss Key Chest": "Water Temple Boss Key",
             "Fire Temple Boss Key Chest": "Fire Temple Boss Key"
         },
-        "sphere 12": {
+        "sphere 11": {
             "Phantom Ganon": "Forest Medallion",
             "Morpha": "Water Medallion",
             "Volvagia": "Fire Medallion"
         },
-        "sphere 13": {
+        "sphere 12": {
             "Sheik in Kakariko": "Nocturne of Shadow",
             "Sheik at Temple": "Prelude of Light"
         },
-        "sphere 14": {
+        "sphere 13": {
             "Bottom of the Well Lens of Truth Chest": "Lens of Truth"
         },
-        "sphere 15": {
+        "sphere 14": {
             "Sheik at Colossus": "Requiem of Spirit",
             "Shadow Temple Hover Boots Chest": "Hover Boots"
         },
-        "sphere 16": {
+        "sphere 15": {
             "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
             "Shadow Temple Boss Key Chest": "Shadow Temple Boss Key"
         },
-        "sphere 17": {
+        "sphere 16": {
             "Spirit Temple Sun Block Room Chest": "Spirit Temple Small Key",
             "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
             "Bongo Bongo": "Shadow Medallion"
         },
-        "sphere 18": {
+        "sphere 17": {
             "Spirit Temple Silver Gauntlets Chest": "Strength Upgrade"
         },
-        "sphere 19": {
+        "sphere 18": {
             "Spirit Temple Compass Chest": "Spirit Temple Boss Key",
-            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key",
-            "Spirit Temple Statue Room Hand Chest": "Mirror Shield"
+            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key"
         },
-        "sphere 20": {
+        "sphere 19": {
             "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key"
         },
-        "sphere 21": {
+        "sphere 20": {
             "Twinrova": "Spirit Medallion"
         },
-        "sphere 22": {
+        "sphere 21": {
             "Market ToT Light Arrow Cutscene": "Light Arrows"
         },
-        "sphere 23": {
+        "sphere 22": {
             "Ganon's Castle Shadow Trial Golden Gauntlets Chest": "Strength Upgrade"
         },
-        "sphere 24": {
+        "sphere 23": {
             "Ganon's Castle Tower Boss Key Chest": "Ganon's Castle Boss Key"
         },
-        "sphere 25": {
+        "sphere 24": {
             "Ganon": "Triforce"
         }
     },
     "Static Hints": {
         "Ganondorf Joke": {
             "type": "Message",
-            "message": "What about Zelda makes you think\nshe'd be a better ruler than I? I saved Lon Lon Ranch,\nfed the hungry,\nand my castle floats.",
-            "hintKey": 1394
+            "message": "I've learned this spell,\nit's really neat,\nI'll keep it later\nfor your treat!",
+            "hintKey": 1395
         },
         "ToT Altar as Child": {
             "type": "Child Altar",
@@ -539,11 +531,11 @@
         "Sheik at Colossus": "Requiem of Spirit",
         "Sheik in Kakariko": "Nocturne of Shadow",
         "Sheik at Temple": "Prelude of Light",
-        "KF Mido Top Left Chest": "Red Rupee",
-        "KF Mido Top Right Chest": "Progressive Bomb Bag",
-        "KF Mido Bottom Left Chest": "Piece of Heart",
-        "KF Mido Bottom Right Chest": "Bombs (5)",
-        "KF Kokiri Sword Chest": "Purple Rupee",
+        "KF Mido Top Left Chest": "Mirror Shield",
+        "KF Mido Top Right Chest": "Red Rupee",
+        "KF Mido Bottom Left Chest": "Purple Rupee",
+        "KF Mido Bottom Right Chest": "Kokiri Sword",
+        "KF Kokiri Sword Chest": "Boomerang",
         "KF Storms Grotto Chest": "Purple Rupee",
         "KF GS Know It All House": "Gold Skulltula Token",
         "KF GS Bean Patch": "Gold Skulltula Token",
@@ -568,7 +560,7 @@
         "LW GS Bean Patch Near Bridge": "Gold Skulltula Token",
         "LW GS Bean Patch Near Theater": "Gold Skulltula Token",
         "LW GS Above Theater": "Gold Skulltula Token",
-        "SFM Wolfos Grotto Chest": "Boomerang",
+        "SFM Wolfos Grotto Chest": "Blue Rupee",
         "SFM GS": "Gold Skulltula Token",
         "HF Ocarina of Time Item": "Progressive Ocarina",
         "HF Near Market Grotto Chest": "No Item",
@@ -689,9 +681,9 @@
             "item": "Giant's Knife",
             "price": 200
         },
-        "GC Maze Left Chest": "Red Rupee",
-        "GC Maze Right Chest": "Kokiri Sword",
-        "GC Maze Center Chest": "Purple Rupee",
+        "GC Maze Left Chest": "Piece of Heart",
+        "GC Maze Right Chest": "Purple Rupee",
+        "GC Maze Center Chest": "Deku Nuts (5)",
         "GC GS Center Platform": "Gold Skulltula Token",
         "GC GS Boulder Maze": "Gold Skulltula Token",
         "GC Shop Item 1": "Buy Bombs (5) [25]",
@@ -722,7 +714,7 @@
         "ZR GS Near Raised Grottos": "Gold Skulltula Token",
         "ZR GS Above Bridge": "Gold Skulltula Token",
         "ZD Diving Minigame": "Progressive Scale",
-        "ZD Chest": "Blue Rupee",
+        "ZD Chest": "Piece of Heart",
         "ZD King Zora Thawed": "Zora Tunic",
         "ZD Trade Prescription": "Eyeball Frog",
         "ZD GS Frozen Waterfall": "Gold Skulltula Token",
@@ -760,7 +752,7 @@
         "GV GS Bean Patch": "Gold Skulltula Token",
         "GV GS Behind Tent": "Gold Skulltula Token",
         "GV GS Pillar": "Gold Skulltula Token",
-        "GF Chest": "Purple Rupee",
+        "GF Chest": "Bombs (5)",
         "GF HBA 1000 Points": "Piece of Heart",
         "GF HBA 1500 Points": "Progressive Bow",
         "GF Freed All Carpenters": "Gerudo Membership Card",
@@ -783,11 +775,11 @@
         "Colossus GS Hill": "Gold Skulltula Token",
         "OGC Great Fairy Reward": "Double Defense",
         "HC OGC GS": "Gold Skulltula Token",
-        "Deku Tree Map Chest": "Blue Rupee",
-        "Deku Tree Slingshot Room Side Chest": "Progressive Slingshot",
-        "Deku Tree Slingshot Chest": "Deku Nuts (5)",
+        "Deku Tree Map Chest": "Progressive Slingshot",
+        "Deku Tree Slingshot Room Side Chest": "Red Rupee",
+        "Deku Tree Slingshot Chest": "Progressive Bomb Bag",
         "Deku Tree Compass Chest": "Great Deku Tree Map",
-        "Deku Tree Compass Room Side Chest": "Blue Rupee",
+        "Deku Tree Compass Room Side Chest": "Red Rupee",
         "Deku Tree Basement Chest": "Great Deku Tree Compass",
         "Deku Tree GS Compass Room": "Gold Skulltula Token",
         "Deku Tree GS Basement Vines": "Gold Skulltula Token",
@@ -797,7 +789,7 @@
         "Dodongos Cavern Map Chest": "Dodongo's Cavern Compass",
         "Dodongos Cavern Compass Chest": "Dodongo's Cavern Map",
         "Dodongos Cavern Bomb Flower Platform Chest": "Deku Shield",
-        "Dodongos Cavern Bomb Bag Chest": "Green Rupee",
+        "Dodongos Cavern Bomb Bag Chest": "Red Rupee",
         "Dodongos Cavern End Of Bridge Chest": "Deku Shield",
         "Dodongos Cavern GS Side Room Near Lower Lizalfos": "Gold Skulltula Token",
         "Dodongos Cavern GS Scarecrow": "Gold Skulltula Token",
@@ -808,7 +800,7 @@
         "Dodongos Cavern King Dodongo Heart Container": "Heart Container",
         "Jabu Jabus Belly Boomerang Chest": "Jabu-Jabu's Belly Compass",
         "Jabu Jabus Belly Map Chest": "Jabu-Jabu's Belly Map",
-        "Jabu Jabus Belly Compass Chest": "Bombchus (5)",
+        "Jabu Jabus Belly Compass Chest": "Purple Rupee",
         "Jabu Jabus Belly GS Water Switch Room": "Gold Skulltula Token",
         "Jabu Jabus Belly GS Lobby Basement Lower": "Gold Skulltula Token",
         "Jabu Jabus Belly GS Lobby Basement Upper": "Gold Skulltula Token",
@@ -913,21 +905,21 @@
         "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
         "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
         "Spirit Temple Child Climb East Chest": "No Item",
-        "Spirit Temple Map Chest": "Bombs (5)",
+        "Spirit Temple Map Chest": "Green Rupee",
         "Spirit Temple Sun Block Room Chest": "Spirit Temple Small Key",
         "Spirit Temple Silver Gauntlets Chest": "Strength Upgrade",
         "Spirit Temple Compass Chest": "Spirit Temple Boss Key",
         "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key",
-        "Spirit Temple First Mirror Left Chest": "Blue Rupee",
+        "Spirit Temple First Mirror Left Chest": "Red Rupee",
         "Spirit Temple First Mirror Right Chest": "No Item",
         "Spirit Temple Statue Room Northeast Chest": "No Item",
-        "Spirit Temple Statue Room Hand Chest": "Mirror Shield",
+        "Spirit Temple Statue Room Hand Chest": "Deku Nuts (5)",
         "Spirit Temple Near Four Armos Chest": "Spirit Temple Compass",
         "Spirit Temple Hallway Right Invisible Chest": "Spirit Temple Map",
         "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key",
-        "Spirit Temple Mirror Shield Chest": "Red Rupee",
-        "Spirit Temple Boss Key Chest": "Ice Arrows",
-        "Spirit Temple Topmost Chest": "Deku Nuts (5)",
+        "Spirit Temple Mirror Shield Chest": "Blue Rupee",
+        "Spirit Temple Boss Key Chest": "Bombs (5)",
+        "Spirit Temple Topmost Chest": "Blue Rupee",
         "Spirit Temple GS Metal Fence": "Gold Skulltula Token",
         "Spirit Temple GS Sun on Floor Room": "Gold Skulltula Token",
         "Spirit Temple GS Hall After Sun Block Room": "Gold Skulltula Token",
@@ -942,27 +934,27 @@
         "Ice Cavern GS Heart Piece Room": "Gold Skulltula Token",
         "Ice Cavern GS Push Block Room": "Gold Skulltula Token",
         "Gerudo Training Ground Lobby Left Chest": "No Item",
-        "Gerudo Training Ground Lobby Right Chest": "Piece of Heart",
-        "Gerudo Training Ground Stalfos Chest": "Training Ground Small Key",
+        "Gerudo Training Ground Lobby Right Chest": "Blue Rupee",
+        "Gerudo Training Ground Stalfos Chest": "Deku Stick (1)",
         "Gerudo Training Ground Before Heavy Block Chest": "Training Ground Small Key",
-        "Gerudo Training Ground Heavy Block First Chest": "Training Ground Small Key",
+        "Gerudo Training Ground Heavy Block First Chest": "Bombchus (5)",
         "Gerudo Training Ground Heavy Block Second Chest": "No Item",
-        "Gerudo Training Ground Heavy Block Third Chest": "Training Ground Small Key",
+        "Gerudo Training Ground Heavy Block Third Chest": "Blue Rupee",
         "Gerudo Training Ground Heavy Block Fourth Chest": "No Item",
         "Gerudo Training Ground Eye Statue Chest": "Training Ground Small Key",
-        "Gerudo Training Ground Near Scarecrow Chest": "Blue Rupee",
+        "Gerudo Training Ground Near Scarecrow Chest": "Training Ground Small Key",
         "Gerudo Training Ground Hammer Room Clear Chest": "No Item",
-        "Gerudo Training Ground Hammer Room Switch Chest": "Red Rupee",
+        "Gerudo Training Ground Hammer Room Switch Chest": "Ice Arrows",
         "Gerudo Training Ground Freestanding Key": "Training Ground Small Key",
         "Gerudo Training Ground Maze Right Central Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Right Side Chest": "Red Rupee",
-        "Gerudo Training Ground Underwater Silver Rupee Chest": "Blue Rupee",
+        "Gerudo Training Ground Underwater Silver Rupee Chest": "Training Ground Small Key",
         "Gerudo Training Ground Beamos Chest": "Bombchus (5)",
         "Gerudo Training Ground Hidden Ceiling Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Path First Chest": "Training Ground Small Key",
-        "Gerudo Training Ground Maze Path Second Chest": "Deku Stick (1)",
+        "Gerudo Training Ground Maze Path Second Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Path Third Chest": "Red Rupee",
-        "Gerudo Training Ground Maze Path Final Chest": "Red Rupee",
+        "Gerudo Training Ground Maze Path Final Chest": "Blue Rupee",
         "Ganon's Castle Forest Trial Chest": "Arrows (10)",
         "Ganon's Castle Water Trial Left Chest": "No Item",
         "Ganon's Castle Water Trial Right Chest": "Bombchus (5)",

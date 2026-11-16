@@ -33,7 +33,7 @@ Graveyard Hookshot Chest	16041366920820397198	Banc/Graveyard/Graveyard_Adult_Sta
 DMT Chest	9809508929088891725	Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs,Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 DMT Storms Grotto Chest				no	no remake chest
 GC Maze Left Chest	4402942101476009858	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
-GC Maze Right Chest	3870071239709713434	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	yes	
+GC Maze Right Chest	3870071239709713434	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	still closed in a complete save; whether it can be opened is unknown
 GC Maze Center Chest	14647422914070455120	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 DMC Upper Grotto Chest	9128916506605227251	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low; logic-differences.md O3
 ZR Open Grotto Chest				no	no remake chest
@@ -142,7 +142,7 @@ Ice Cavern Map Chest	11498802739257120175	Banc/IceCavern/IceCavern_Static.bcett.
 Ice Cavern Compass Chest	13542013937093159888	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Ice Cavern Iron Boots Chest	6859289214373847284	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_HeavyBoot	no	Sheik teaches Serenade of Water only to Link who gets the Iron Boots from this chest
 Gerudo Training Ground Lobby Left Chest	11182647876438515984	Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs		no	no Drop__DropActor
-Gerudo Training Ground Lobby Right Chest	2436665354602612279	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Gerudo Training Ground Lobby Right Chest	2436665354602612279	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Blue	no	appears only after an event, and is still closed in a complete save
 Gerudo Training Ground Stalfos Chest	13501407288943710656	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Beamos Chest	4709724720801091788	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Hidden Ceiling Chest	4320448574091221496	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
