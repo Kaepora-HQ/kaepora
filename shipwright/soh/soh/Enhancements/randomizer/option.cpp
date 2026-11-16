@@ -220,10 +220,6 @@ LocationOption::LocationOption(RandomizerCheck key_)
              RO_LOCATION_INCLUDE, false, nullptr, IMFLAG_NONE) {
 }
 
-RandomizerCheck LocationOption::GetKey() const {
-    return static_cast<RandomizerCheck>(key);
-}
-
 TrickSetting::TrickSetting(RandomizerTrick key_, const RandomizerCheckQuest quest_, const RandomizerArea area_,
                            std::set<Tricks::Tag> tags_, const std::string nameTag_)
     : Option(key_, { "Disabled", "Enabled" }, OptionCategory::Trick, "", WIDGET_CVAR_CHECKBOX, 0, false, nullptr,

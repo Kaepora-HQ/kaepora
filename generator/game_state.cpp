@@ -24,8 +24,8 @@ Vec3f sTagPointsFree[9];
 Vec3f sTagPointsOrdered[9];
 }
 
-// SoH sets these from the archives it finds at start-up. The reference spoiler came from a game with the
-// original archive and no Master Quest archive.
+// SoH sets these from the archives it finds at start-up. With the original archive and no Master Quest archive,
+// FinalizeSettings keeps every dungeon in its vanilla layout.
 OTRGlobals* OTRGlobals::Instance;
 OTRGlobals::OTRGlobals() : context(nullptr), hasMasterQuest(false), hasOriginal(true) {
 }

@@ -29,18 +29,13 @@ target_include_directories(kaepora-seedgen PRIVATE
 )
 # functions.h needs a level for game prints. 6 turns them off, as in SoH.
 target_compile_definitions(kaepora-seedgen PRIVATE LOG_LEVEL_GAME_PRINTS=6)
-# Shop prices use floating point. SoH builds without fused multiply-add, so the same seed gives the same prices.
-target_compile_options(kaepora-seedgen PRIVATE -ffp-contract=off)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS -Wno-discarded-qualifiers)
 target_link_libraries(kaepora-seedgen PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog)
 
 enable_testing()
-set(SPOILER ${PROJECT_SOURCE_DIR}/tests/fixtures/spoiler-6332265119.json)
-add_test(NAME default-settings
-    COMMAND sh -c "\"$0\" 6332265119 default.json && cmp default.json \"$1\""
-            $<TARGET_FILE:kaepora-seedgen> ${SPOILER})
-add_test(NAME settings-from-spoiler
-    COMMAND sh -c "\"$0\" 6332265119 parsed.json --settings-from \"$1\" && cmp parsed.json \"$1\""
-            $<TARGET_FILE:kaepora-seedgen> ${SPOILER})
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
+foreach(TEST IN ITEMS same_seed_same_files twenty_seeds_generate)
+    add_test(NAME ${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
+                                  $<TARGET_FILE:kaepora-seedgen> SeedgenTest.test_${TEST})
+endforeach()

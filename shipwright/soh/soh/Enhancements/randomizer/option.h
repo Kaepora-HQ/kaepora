@@ -304,7 +304,6 @@ class LocationOption : public Option {
   public:
     LocationOption() = default;
     LocationOption(RandomizerCheck key_);
-    RandomizerCheck GetKey() const;
 };
 
 class TrickSetting : public Option {

@@ -2625,10 +2625,6 @@ const std::array<std::vector<Option*>, RCAREA_INVALID>& Settings::GetExcludeLoca
     return mExcludeLocationsOptionsAreas;
 }
 
-const std::array<OptionGroup, RSG_MAX>& Settings::GetOptionGroups() {
-    return mOptionGroups;
-}
-
 const OptionGroup& Settings::GetOptionGroup(const RandomizerSettingGroupKey key) {
     return mOptionGroups[key];
 }

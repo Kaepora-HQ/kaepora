@@ -91,13 +91,6 @@ class Settings {
     const std::array<std::vector<Option*>, RCAREA_INVALID>& GetExcludeLocationsOptions() const;
 
     /**
-     * @brief Get the list of `OptionGroup`s.
-     *
-     * @return const std::array<OptionGroup, RSG_MAX>&
-     */
-    const std::array<OptionGroup, RSG_MAX>& GetOptionGroups();
-
-    /**
      * @brief Get the `OptionGroup` corresponding to the provided RandomizerSettingGroupKey
      *
      * @param key
