@@ -13,17 +13,18 @@ include(shipwright/CMake/soh-cvars.cmake)
 # shipwright/ holds only the upstream files this build reads, so every source in it is compiled.
 file(GLOB_RECURSE SHIPWRIGHT_SOURCES CONFIGURE_DEPENDS shipwright/*.c shipwright/*.cpp)
 
-# Everything but the two programs' main files, compiled once for both.
-add_library(kaepora OBJECT
+# Everything but the generator programs' main files, compiled once for all of them.
+add_library(kaepora-generator OBJECT
     generator/build_info.c
     generator/cvars.cpp
     generator/game_state.cpp
+    generator/generate.cpp
     generator/remake.cpp
     generator/setup.cpp
     generator/traps.cpp
     ${SHIPWRIGHT_SOURCES}
 )
-target_include_directories(kaepora PUBLIC
+target_include_directories(kaepora-generator PUBLIC
     .
     shipwright/soh/include
     shipwright/soh/src
@@ -32,35 +33,40 @@ target_include_directories(kaepora PUBLIC
     shipwright/libultraship/include
 )
 # functions.h needs a level for game prints. 6 turns them off, as in SoH.
-target_compile_definitions(kaepora PUBLIC LOG_LEVEL_GAME_PRINTS=6)
+target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
 # Shop prices use floating point. SoH builds without fused multiply-add, so the same seed gives the same prices.
-target_compile_options(kaepora PRIVATE -ffp-contract=off)
+target_compile_options(kaepora-generator PRIVATE -ffp-contract=off)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS -Wno-discarded-qualifiers)
-target_link_libraries(kaepora PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
+target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 add_executable(kaepora-seedgen generator/main.cpp)
-target_link_libraries(kaepora-seedgen PRIVATE kaepora)
+target_link_libraries(kaepora-seedgen PRIVATE kaepora-generator)
 
 # Answers whether a location can be reached in a given world, for the logic tests.
 add_executable(kaepora-reach generator/reach.cpp)
-target_link_libraries(kaepora-reach PRIVATE kaepora)
+target_link_libraries(kaepora-reach PRIVATE kaepora-generator)
 
 # Designated initializers leave out the members that start empty, which -Wextra would report.
-set(PATCHER_WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
+set(WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
 
-add_library(kaepora-patch-files STATIC patcher/byml.cpp patcher/compression.cpp patcher/romfs.cpp)
+add_library(kaepora-patch-files STATIC patcher/byml.cpp patcher/compression.cpp patcher/mod.cpp patcher/romfs.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
-target_link_libraries(kaepora-patch-files PRIVATE zstd::libzstd)
-target_compile_options(kaepora-patch-files PRIVATE ${PATCHER_WARNINGS})
+target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE zstd::libzstd)
+target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
 
 add_executable(kaepora-patch patcher/main.cpp)
-target_link_libraries(kaepora-patch PRIVATE kaepora-patch-files nlohmann_json::nlohmann_json)
-target_compile_options(kaepora-patch PRIVATE ${PATCHER_WARNINGS})
+target_link_libraries(kaepora-patch PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch PRIVATE ${WARNINGS})
 
 add_executable(kaepora-patch-roundtrip tests/byml_roundtrip.cpp)
 target_link_libraries(kaepora-patch-roundtrip PRIVATE kaepora-patch-files)
-target_compile_options(kaepora-patch-roundtrip PRIVATE ${PATCHER_WARNINGS})
+target_compile_options(kaepora-patch-roundtrip PRIVATE ${WARNINGS})
+
+# Makes seed folders with the window's MakeSeed, for the tests.
+add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
+target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
+target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
@@ -81,6 +87,11 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input size-table size-table-unchanged start-flags)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
+    endforeach()
+    foreach(TEST IN ITEMS same_files_as_the_two_programs existing_folder_is_refused new_folder_in_a_missing_folder)
+        add_test(NAME make_seed_${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
+                     $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>
+                     "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod
