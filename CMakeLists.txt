@@ -43,3 +43,4 @@ add_test(NAME default-settings
 add_test(NAME settings-from-spoiler
     COMMAND sh -c "\"$0\" 6332265119 parsed.json --settings-from \"$1\" && cmp parsed.json \"$1\""
             $<TARGET_FILE:kaepora-seedgen> ${SPOILER})
+add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
