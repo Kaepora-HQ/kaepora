@@ -39,6 +39,9 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
         self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
 
+    def test_crater_great_fairy_needs_magic(self):
+        self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
