@@ -17,6 +17,8 @@ static void Trap(const char* symbol) {
 TRAP(Actor_Kill)
 TRAP(Actor_Spawn)
 TRAP(Audio_PlayActorSound2)
+TRAP(CVarSetInteger)
+TRAP(CVarSetString)
 TRAP(Camera_RequestMode)
 TRAP(CollisionCheck_SetAC)
 TRAP(CollisionCheck_SetOC)

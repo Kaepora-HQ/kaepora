@@ -216,64 +216,9 @@ class Option {
      */
     void SetContextIndex(uint8_t idx);
 
-    /**
-     * @brief Hides this Option in the menu. (Not currently being used afaik, we prefer to
-     * display all the Options and visually disable the ones that aren't applicable.)
-     */
-    void Hide();
-
-    /**
-     * @brief Shows this Option in the menu if it was previously hidden.
-     */
-    void Unhide();
-
-    /**
-     * @brief Whether or not this Option is currently hidden.
-     *
-     * @return true
-     * @return false
-     */
-
-    bool IsHidden() const;
-    /**
-     * @brief Replaces the `options` vector for this Option with a new one.
-     * If the new vector is smaller than the old one and the current selected
-     * index is out of range, this function changes the selected index to the
-     * last index of the new vector.
-     *
-     * @param opts The new vector of options.
-     */
-    void ChangeOptions(std::vector<std::string> opts);
-
-    /**
-     * @brief Enables interaction with this option.
-     *
-     * "Enable" in this context refers to the ability to change the option in the
-     * settings menu. The actual value of the option is not decided by whether or not
-     * the option is "Enabled".
-     */
-    void Enable();
-
-    /**
-     * @brief Disables interaction with this option.
-     *
-     * "Disable" in this context refers to the ability to change the option in the
-     * settings menu. The actual value of the option is not decided by whether or not
-     * the option is "Disabled".
-     *
-     * @param text The tooltip text explaining why the option is disabled.
-     */
-    void Disable(std::string text);
-
     OptionCategory GetCategory() const;
 
-    void AddFlag(int imFlag_);
-    void RemoveFlag(int imFlag_);
-
     uint8_t GetValueFromText(std::string text);
-
-    void SetCallback(WidgetFunc callback);
-    void RunCallback();
 
   protected:
     Option(size_t key_, std::vector<std::string> options_, OptionCategory category_, std::string cvarName_,
@@ -284,20 +229,10 @@ class Option {
     void PopulateTextToNum();
     std::vector<std::string> options;
     uint8_t contextSelection = 0;
-    bool hidden = false;
     OptionCategory category = OptionCategory::Setting;
     std::string cvarName;
-    WidgetType widgetType;
     uint8_t defaultOption = false;
-    bool defaultHidden = false;
-    int imFlags = IMFLAG_NONE;
-    bool disabled = false;
-    std::string disabledText;
     std::unordered_map<std::string, uint8_t> optionsTextToVar = {};
-    std::shared_ptr<UIWidgets::WidgetOptions> widgetOptions;
-    struct WidgetInfo widgetInfo;
-    WidgetFunc callback;
-    std::map<int32_t, const char*> optionsMap = {};
 };
 
 class LocationOption : public Option {

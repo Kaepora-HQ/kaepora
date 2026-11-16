@@ -10,26 +10,6 @@ namespace Rando {
 class Settings {
   public:
     /**
-     * @brief Hides or Unhides the price UI of Shopsanity based on settings.
-     */
-    void HandleShopsanityPriceUI();
-
-    /**
-     * @brief Hides or Unhides the UI of Mixed Entrance Pools
-     */
-    void HandleMixedEntrancePoolsUI();
-
-    /**
-     * @brief Hides or Unhides the UI of the keyring options, and updates the max keyring count.
-     */
-    void HandleKeyringUI();
-
-    /**
-     * @brief UI Callback for handling UI state of Starting Age shuffle.
-     */
-    void HandleStartingAgeUI();
-
-    /**
      * @brief Creates the `Option` and `OptionGroup` objects. This happens after construction because certain
      * other events in the codebase need to happen before all of the `Option`s can be created.
      */
@@ -97,13 +77,6 @@ class Settings {
      * @return const OptionGroup&
      */
     const OptionGroup& GetOptionGroup(RandomizerSettingGroupKey key);
-
-    /**
-     * @brief Runs the Callback on every option, to ensure they are all
-     * hidden/unhidden and/or disabled/enabled properly after applying a
-     * preset or dropping a file.
-     */
-    void UpdateAllOptions();
 
     /**
      * @brief Parse Options from a JSON file.

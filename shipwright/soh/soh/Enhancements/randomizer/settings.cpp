@@ -36,210 +36,20 @@ std::vector<std::string> MultiVecOpts(const std::vector<std::vector<std::string>
     return options;
 }
 
-void Settings::HandleShopsanityPriceUI() {
-    bool isTycoon = CVarGetInteger(CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"), RO_GENERIC_OFF);
-    mOptions[RSK_SHOPSANITY].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-    mOptions[RSK_SHOPSANITY_PRICES].Unhide();
-    switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShopsanityPrices"), RO_PRICE_VANILLA)) {
-        case RO_PRICE_FIXED:
-            mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_NO_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_CHILD_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_ADULT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_GIANT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-            if (isTycoon ? mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].GetOptionCount() == 501
-                         : mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].GetOptionCount() == 1000) {
-                mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].ChangeOptions(isTycoon ? NumOpts(0, 999) : NumOpts(0, 500));
-            }
-            mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].Hide();
-            break;
-        case RO_PRICE_RANGE:
-            mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_NO_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_CHILD_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_ADULT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_GIANT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-            if (isTycoon ? mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].GetOptionCount() == 101
-                         : mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].GetOptionCount() == 200) {
-                mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                               : NumOpts(0, 500, 5));
-                mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                               : NumOpts(0, 500, 5));
-            }
-            mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].Unhide();
-            break;
-        case RO_PRICE_SET_BY_WALLET:
-            mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_NO_WALLET_WEIGHT].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_CHILD_WALLET_WEIGHT].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_ADULT_WALLET_WEIGHT].Unhide();
-            mOptions[RSK_SHOPSANITY_PRICES_GIANT_WALLET_WEIGHT].Unhide();
-            if (isTycoon) {
-                mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Unhide();
-            } else {
-                mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-            }
-            mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].Unhide();
-            break;
-        default:
-            mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_NO_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_CHILD_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_ADULT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_GIANT_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-            mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].Unhide();
-            break;
-    }
-}
-
 #define OPT_U8(rsk, ...) mOptions[rsk] = Option::U8(rsk, __VA_ARGS__)
 #define OPT_BOOL(rsk, ...) mOptions[rsk] = Option::Bool(rsk, __VA_ARGS__)
 #define OPT_TRICK(rsk, ...) mTrickSettings[rsk] = TrickSetting::LogicTrick(rsk, __VA_ARGS__)
-// All callbacks will be called once when the widget is Added (on boot, essentially) and
-// once when the widget is interacted with such that the value was changed.
-#define OPT_CALLBACK(rsk, body) mOptions[rsk].SetCallback([this](WidgetInfo & info) body)
-#define OPT_CALLBACK_FN(rsk, fn) mOptions[rsk].SetCallback(fn)
-
-void Settings::HandleMixedEntrancePoolsUI() {
-    bool dungeonShuffle =
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonsEntrances"), RO_DUNGEON_ENTRANCE_SHUFFLE_OFF);
-    bool bossShuffle =
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleBossEntrances"), RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF);
-    bool overworldShuffle = CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOverworldEntrances"), RO_GENERIC_OFF);
-    bool interiorShuffle = CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleInteriorsEntrances"), RO_GENERIC_OFF);
-    bool grottoShuffle = CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGrottosEntrances"), RO_GENERIC_OFF);
-    bool thievesHideoutShuffle =
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleThievesHideoutEntrances"), RO_GENERIC_OFF);
-
-    // Hide Mixed Entrances option if 1 or no applicable entrance shuffles are visible
-    if (dungeonShuffle + bossShuffle + overworldShuffle + interiorShuffle + grottoShuffle + thievesHideoutShuffle <=
-        1) {
-        mOptions[RSK_MIXED_ENTRANCE_POOLS].Hide();
-    } else {
-        mOptions[RSK_MIXED_ENTRANCE_POOLS].Unhide();
-    }
-}
-
-void Settings::HandleKeyringUI() {
-    const bool fortressKeyring =
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("FortressCarpenters"), RO_GF_CARPENTERS_NORMAL) ==
-            RO_GF_CARPENTERS_NORMAL &&
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("GerudoKeys"), RO_GERUDO_KEYS_VANILLA) != RO_GERUDO_KEYS_VANILLA;
-    const bool chestGameKeyring =
-        CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleChestMinigame"), RO_GENERIC_OFF) != RO_GENERIC_OFF;
-    const uint8_t maxKeyringCount = 8 + fortressKeyring + chestGameKeyring;
-    if (mOptions[RSK_KEYRINGS_RANDOM_COUNT].GetOptionCount() != static_cast<size_t>(maxKeyringCount) + 1) {
-        mOptions[RSK_KEYRINGS_RANDOM_COUNT].ChangeOptions(NumOpts(0, maxKeyringCount));
-    }
-    if (fortressKeyring) {
-        mOptions[RSK_KEYRINGS_GERUDO_FORTRESS].Enable();
-    } else {
-        mOptions[RSK_KEYRINGS_GERUDO_FORTRESS].Disable(
-            "Disabled because the currently selected Gerudo Fortress Carpenters\n"
-            "setting and/or Gerudo Fortress Keys setting is incompatible with\n"
-            "having a Gerudo Fortress Keyring.");
-    }
-    if (chestGameKeyring) {
-        mOptions[RSK_KEYRINGS_CHEST_GAME].Enable();
-    } else {
-        mOptions[RSK_KEYRINGS_CHEST_GAME].Disable("Disabled because Shuffle Chest Minigame is off.");
-    }
-}
-
-void Settings::HandleStartingAgeUI() {
-    // Starting Age - Disabled under very specific conditions unless it's No Logic
-    if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("NoLogic"), RO_GENERIC_OFF) == RO_GENERIC_OFF &&
-        // If Closed DoT requires OoT then we can only start as child
-        ((CVarGetInteger(CVAR_RANDOMIZER_SETTING("DoorOfTime"), RO_DOOROFTIME_CLOSED) == RO_DOOROFTIME_CLOSED &&
-          CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOcarinas"), RO_GENERIC_OFF) == RO_GENERIC_OFF) ||
-         // If Forest is Closed, we cannot start as Adult unless there's a sphere 0 entrance shuffle in Kokiri forest,
-         // or there's random spawns, as the player may saveload as child and get stuck.
-         // Grottos only lead somewhere if decoupled
-         (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ClosedForest"), RO_CLOSED_FOREST_ON) == RO_CLOSED_FOREST_ON &&
-          CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOverworldSpawns"), RO_GENERIC_OFF) == RO_GENERIC_OFF &&
-          (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGrottosEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF ||
-           CVarGetInteger(CVAR_RANDOMIZER_SETTING("DecoupleEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) &&
-          CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleInteriorsEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF &&
-          CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOverworldEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF))) {
-        mOptions[RSK_STARTING_AGE].Disable("This option is disabled due to other options making the game unbeatable.");
-    } else {
-        mOptions[RSK_STARTING_AGE].Enable();
-    }
-}
 
 void Settings::CreateOptions() {
     // clang-format off
     OPT_U8(RSK_FOREST, {"On", "Deku Only", "Off"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ClosedForest"), WIDGET_CVAR_COMBOBOX, RO_CLOSED_FOREST_ON);
-    OPT_CALLBACK(RSK_FOREST, {
-        HandleStartingAgeUI();
-    });
     OPT_U8(RSK_DOOR_OF_TIME, {"Closed", "Song only", "Open"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("DoorOfTime"), WIDGET_CVAR_COMBOBOX);
-    OPT_CALLBACK(RSK_DOOR_OF_TIME, {
-        HandleStartingAgeUI();
-    });
     OPT_U8(RSK_ZORAS_FOUNTAIN, {"Closed", "Closed as child", "Open"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ZorasFountain"));
     OPT_U8(RSK_SLEEPING_WATERFALL, {"Closed", "Open"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("SleepingWaterfall"));
     OPT_U8(RSK_JABU_OPEN, {"Closed", "Open"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("JabuJabu"));
     OPT_BOOL(RSK_LOCK_OVERWORLD_DOORS, CVAR_RANDOMIZER_SETTING("LockOverworldDoors"));
     OPT_U8(RSK_GERUDO_FORTRESS, {"Normal", "Fast", "Free"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("FortressCarpenters"));
-    OPT_CALLBACK(RSK_GERUDO_FORTRESS, {
-        HandleKeyringUI();
-    });
     OPT_U8(RSK_RAINBOW_BRIDGE, {"Vanilla", "Always open", "Stones", "Medallions", "Dungeon rewards", "Dungeons", "Tokens", "Triforce Pieces", "Greg"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("RainbowBridge"), WIDGET_CVAR_COMBOBOX, RO_BRIDGE_VANILLA, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_RAINBOW_BRIDGE, {
-        mOptions[RSK_BRIDGE_OPTIONS].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_DUNGEON_COUNT].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_TOKEN_COUNT].Hide();
-        mOptions[RSK_RAINBOW_BRIDGE_TRIFORCE_COUNT].Hide();
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("RainbowBridge"), RO_BRIDGE_VANILLA)) {
-            case RO_BRIDGE_STONES:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Unhide();
-                mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].Unhide();
-                break;
-            case RO_BRIDGE_MEDALLIONS:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Unhide();
-                mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].Unhide();
-                break;
-            case RO_BRIDGE_DUNGEON_REWARDS:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Unhide();
-                mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].Unhide();
-                break;
-            case RO_BRIDGE_DUNGEONS:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Unhide();
-                mOptions[RSK_RAINBOW_BRIDGE_DUNGEON_COUNT].Unhide();
-                break;
-            case RO_BRIDGE_TOKENS:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Hide();
-                mOptions[RSK_RAINBOW_BRIDGE_TOKEN_COUNT].Unhide();
-                break;
-            case RO_BRIDGE_TRIFORCE_PIECES:
-                mOptions[RSK_RAINBOW_BRIDGE].RemoveFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_BRIDGE_OPTIONS].Hide();
-                mOptions[RSK_RAINBOW_BRIDGE_TRIFORCE_COUNT].Unhide();
-                break;
-            default:
-                break;
-        }
-    });
     OPT_U8(RSK_RAINBOW_BRIDGE_STONE_COUNT, {NumOpts(0, 4)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StoneCount"), WIDGET_CVAR_SLIDER_INT, 3, true);
     OPT_U8(RSK_RAINBOW_BRIDGE_MEDALLION_COUNT, {NumOpts(0, 7)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MedallionCount"), WIDGET_CVAR_SLIDER_INT, 6, true);
     OPT_U8(RSK_RAINBOW_BRIDGE_REWARD_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("RewardCount"), WIDGET_CVAR_SLIDER_INT, 9, true);
@@ -247,163 +57,23 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_RAINBOW_BRIDGE_TOKEN_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("TokenCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_RAINBOW_BRIDGE_TRIFORCE_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("TriforcePieceCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_BRIDGE_OPTIONS, {"Standard Rewards", "Greg as Reward", "Greg as Wildcard"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("BridgeRewardOptions"), WIDGET_CVAR_COMBOBOX, RO_BRIDGE_STANDARD_REWARD, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_BRIDGE_OPTIONS, {
-        const uint8_t bridgeOpt = CVarGetInteger(CVAR_RANDOMIZER_SETTING("BridgeRewardOptions"), RO_BRIDGE_STANDARD_REWARD);
-        if (bridgeOpt == RO_BRIDGE_GREG_REWARD) {
-            mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].ChangeOptions(NumOpts(0, 4));
-            mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 7));
-            mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].ChangeOptions(NumOpts(0, 10));
-            mOptions[RSK_RAINBOW_BRIDGE_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 9));
-        } else {
-            mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].ChangeOptions(NumOpts(0, 3));
-            mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 6));
-            mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].ChangeOptions(NumOpts(0, 9));
-            mOptions[RSK_RAINBOW_BRIDGE_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 8));
-        }
-    });
     OPT_U8(RSK_GANONS_TRIALS, {"Skip", "Set Number", "Random Number"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonTrial"), WIDGET_CVAR_COMBOBOX, RO_GANONS_TRIALS_SET_NUMBER);
-    OPT_CALLBACK(RSK_GANONS_TRIALS, {
-        // Only show the trial count slider if Trials is set to Set Number
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("GanonTrial"), RO_GANONS_TRIALS_SET_NUMBER) ==
-            RO_GANONS_TRIALS_SET_NUMBER) {
-            mOptions[RSK_TRIAL_COUNT].Unhide();
-        } else {
-            mOptions[RSK_TRIAL_COUNT].Hide();
-        }
-    });
     OPT_U8(RSK_TRIAL_COUNT, {NumOpts(0, 6)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonTrialCount"), WIDGET_CVAR_SLIDER_INT, 6, true);
     OPT_BOOL(RSK_MEDALLION_LOCKED_TRIALS, CVAR_RANDOMIZER_SETTING("MedallionLockedTrials"));
     OPT_U8(RSK_STARTING_AGE, {"Child", "Adult", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingAge"), WIDGET_CVAR_COMBOBOX, RO_AGE_CHILD);
     OPT_U8(RSK_SELECTED_STARTING_AGE, {"Child", "Adult"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("SelectedStartingAge"), WIDGET_CVAR_COMBOBOX, RO_AGE_CHILD);
     OPT_BOOL(RSK_SHUFFLE_ENTRANCES, "");
     OPT_U8(RSK_SHUFFLE_DUNGEON_ENTRANCES, {"Off", "On", "On + Ganon"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleDungeonsEntrances"), WIDGET_CVAR_COMBOBOX, RO_DUNGEON_ENTRANCE_SHUFFLE_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_DUNGEON_ENTRANCES, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonsEntrances"), RO_DUNGEON_ENTRANCE_SHUFFLE_OFF) ==
-            RO_DUNGEON_ENTRANCE_SHUFFLE_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_DUNGEON_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_DUNGEON_ENTRANCES].Unhide();
-        }
-    });
     OPT_U8(RSK_SHUFFLE_BOSS_ENTRANCES, {"Off", "Age Restricted", "Full"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleBossEntrances"), WIDGET_CVAR_COMBOBOX, RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_BOSS_ENTRANCES, {
-        HandleMixedEntrancePoolsUI();
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleBossEntrances"), RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF) == RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF) {
-            mOptions[RSK_SHUFFLE_GANONS_TOWER_ENTRANCE].Hide();
-        } else {
-            mOptions[RSK_SHUFFLE_GANONS_TOWER_ENTRANCE].Unhide();
-        }
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleBossEntrances"), RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF) ==
-            RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_BOSS_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_BOSS_ENTRANCES].Unhide();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_GANONS_TOWER_ENTRANCE, CVAR_RANDOMIZER_SETTING("ShuffleGanonTowerEntrance"));
     OPT_BOOL(RSK_SHUFFLE_OVERWORLD_ENTRANCES, CVAR_RANDOMIZER_SETTING("ShuffleOverworldEntrances"));
-    OPT_CALLBACK(RSK_SHUFFLE_OVERWORLD_ENTRANCES, {
-        HandleMixedEntrancePoolsUI();
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOverworldEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_OVERWORLD_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_OVERWORLD_ENTRANCES].Unhide();
-        }
-
-        HandleStartingAgeUI();
-    });
     OPT_U8(RSK_SHUFFLE_INTERIOR_ENTRANCES, {"Off", "Simple", "All"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleInteriorsEntrances"), WIDGET_CVAR_COMBOBOX, RO_INTERIOR_ENTRANCE_SHUFFLE_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_INTERIOR_ENTRANCES, {
-        HandleMixedEntrancePoolsUI();
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleInteriorsEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_INTERIOR_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_INTERIOR_ENTRANCES].Unhide();
-        }
-
-        HandleStartingAgeUI();
-    });
     OPT_BOOL(RSK_SHUFFLE_THIEVES_HIDEOUT_ENTRANCES, CVAR_RANDOMIZER_SETTING("ShuffleThievesHideoutEntrances"));
-    OPT_CALLBACK(RSK_SHUFFLE_THIEVES_HIDEOUT_ENTRANCES, {
-        HandleMixedEntrancePoolsUI();
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleThievesHideoutEntrances"), RO_GENERIC_OFF) ==
-            RO_GENERIC_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_THIEVES_HIDEOUT_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_THIEVES_HIDEOUT_ENTRANCES].Unhide();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_GROTTO_ENTRANCES, CVAR_RANDOMIZER_SETTING("ShuffleGrottosEntrances"));
-    OPT_CALLBACK(RSK_SHUFFLE_GROTTO_ENTRANCES, {
-        HandleMixedEntrancePoolsUI();
-
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGrottosEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF) {
-            mOptions[RSK_MIX_GROTTO_ENTRANCES].Hide();
-        } else {
-            mOptions[RSK_MIX_GROTTO_ENTRANCES].Unhide();
-        }
-
-        HandleStartingAgeUI();
-    });
     OPT_BOOL(RSK_SHUFFLE_OWL_DROPS, CVAR_RANDOMIZER_SETTING("ShuffleOwlDrops"));
     OPT_BOOL(RSK_SHUFFLE_WARP_SONGS, CVAR_RANDOMIZER_SETTING("ShuffleWarpSongs"));
-    OPT_CALLBACK(RSK_SHUFFLE_WARP_SONGS, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleWarpSongs"), RO_GENERIC_ON)) {
-            mOptions[RSK_WARP_SONG_HINTS].Enable();
-        } else {
-            mOptions[RSK_WARP_SONG_HINTS].Disable("This option is disabled since warp song locations are not shuffled.");
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_OVERWORLD_SPAWNS, CVAR_RANDOMIZER_SETTING("ShuffleOverworldSpawns"));
-    OPT_CALLBACK(RSK_SHUFFLE_OVERWORLD_SPAWNS, {
-        HandleStartingAgeUI();
-    });
     OPT_BOOL(RSK_MIXED_ENTRANCE_POOLS, CVAR_RANDOMIZER_SETTING("MixedEntrances"));
-    OPT_CALLBACK(RSK_MIXED_ENTRANCE_POOLS, {
-        // Show mixed entrance pool options if mixed entrance pools are enabled, but only the ones that aren't off
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MixedEntrances"), RO_GENERIC_OFF) == RO_GENERIC_OFF ||
-            mOptions[RSK_MIXED_ENTRANCE_POOLS].IsHidden()) {
-            mOptions[RSK_MIXED_ENTRANCE_POOLS].AddFlag(IMFLAG_SEPARATOR_BOTTOM);
-            mOptions[RSK_MIX_DUNGEON_ENTRANCES].Hide();
-            mOptions[RSK_MIX_BOSS_ENTRANCES].Hide();
-            mOptions[RSK_MIX_OVERWORLD_ENTRANCES].Hide();
-            mOptions[RSK_MIX_INTERIOR_ENTRANCES].Hide();
-            mOptions[RSK_MIX_THIEVES_HIDEOUT_ENTRANCES].Hide();
-            mOptions[RSK_MIX_GROTTO_ENTRANCES].Hide();
-        } else {
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonsEntrances"), RO_DUNGEON_ENTRANCE_SHUFFLE_OFF) !=
-                RO_DUNGEON_ENTRANCE_SHUFFLE_OFF) {
-                mOptions[RSK_MIX_DUNGEON_ENTRANCES].Unhide();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleBossEntrances"), RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF) !=
-                RO_BOSS_ROOM_ENTRANCE_SHUFFLE_OFF) {
-                mOptions[RSK_MIX_BOSS_ENTRANCES].Unhide();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleOverworldEntrances"), RO_GENERIC_OFF) != RO_GENERIC_OFF) {
-                mOptions[RSK_MIX_OVERWORLD_ENTRANCES].Unhide();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleInteriorsEntrances"), RO_GENERIC_OFF) != RO_GENERIC_OFF) {
-                mOptions[RSK_MIX_INTERIOR_ENTRANCES].Unhide();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleThievesHideoutEntrances"), RO_GENERIC_OFF) != RO_GENERIC_OFF) {
-                mOptions[RSK_MIX_THIEVES_HIDEOUT_ENTRANCES].Unhide();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGrottosEntrances"), RO_GENERIC_OFF) != RO_GENERIC_OFF) {
-                mOptions[RSK_MIX_GROTTO_ENTRANCES].Unhide();
-            }
-        }
-    });
     OPT_BOOL(RSK_MIX_DUNGEON_ENTRANCES, CVAR_RANDOMIZER_SETTING("MixDungeons"), IMFLAG_NONE);
     OPT_BOOL(RSK_MIX_BOSS_ENTRANCES, CVAR_RANDOMIZER_SETTING("MixBosses"), IMFLAG_NONE);
     OPT_BOOL(RSK_MIX_OVERWORLD_ENTRANCES, CVAR_RANDOMIZER_SETTING("MixOverworld"), IMFLAG_NONE);
@@ -411,9 +81,6 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_MIX_THIEVES_HIDEOUT_ENTRANCES, CVAR_RANDOMIZER_SETTING("MixThievesHideout"));
     OPT_BOOL(RSK_MIX_GROTTO_ENTRANCES, CVAR_RANDOMIZER_SETTING("MixGrottos"));
     OPT_BOOL(RSK_DECOUPLED_ENTRANCES, CVAR_RANDOMIZER_SETTING("DecoupleEntrances"));
-    OPT_CALLBACK(RSK_DECOUPLED_ENTRANCES, {
-        HandleStartingAgeUI();
-    });
     OPT_U8(RSK_BOMBCHU_BAG, {"None", "Single Bag", "Progressive Bags"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("BombchuBag"), WIDGET_CVAR_COMBOBOX, RO_BOMBCHU_BAG_NONE);
     OPT_U8(RSK_ENABLE_BOMBCHU_DROPS, {"No", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("EnableBombchuDrops"), WIDGET_CVAR_COMBOBOX, RO_AMMO_DROPS_ON);
     OPT_BOOL(RSK_PROGRESSIVE_GORON_SWORD, CVAR_RANDOMIZER_SETTING("ProgressiveGoronSword"));
@@ -421,124 +88,10 @@ void Settings::CreateOptions() {
     // Triforce Hunt: the total piece count is the on/off control. Zero disables the hunt entirely; any
     // positive value adds that many Triforce Pieces to the pool and unlocks the pieces-location option.
     OPT_U8(RSK_TRIFORCE_HUNT_PIECES_TOTAL, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("TriforceHuntTotalPieces"), WIDGET_CVAR_SLIDER_INT, 0, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_TRIFORCE_HUNT_PIECES_TOTAL, {
-        const uint8_t triforceTotal = CVarGetInteger(CVAR_RANDOMIZER_SETTING("TriforceHuntTotalPieces"), 0);
-        if (triforceTotal == 0) {
-            mOptions[RSK_TRIFORCE_HUNT_PIECES_LOCATION].Hide();
-        } else {
-            mOptions[RSK_TRIFORCE_HUNT_PIECES_LOCATION].Unhide();
-        }
-        if (mOptions[RSK_RAINBOW_BRIDGE_TRIFORCE_COUNT].GetOptionCount() != static_cast<size_t>(triforceTotal) + 1) {
-            mOptions[RSK_RAINBOW_BRIDGE_TRIFORCE_COUNT].ChangeOptions(NumOpts(0, triforceTotal));
-        }
-        if (mOptions[RSK_GBK_TRIFORCE_COUNT].GetOptionCount() != static_cast<size_t>(triforceTotal) + 1) {
-            mOptions[RSK_GBK_TRIFORCE_COUNT].ChangeOptions(NumOpts(0, triforceTotal));
-        }
-        if (mOptions[RSK_GANONS_SOUL_TRIFORCE_COUNT].GetOptionCount() != static_cast<size_t>(triforceTotal) + 1) {
-            mOptions[RSK_GANONS_SOUL_TRIFORCE_COUNT].ChangeOptions(NumOpts(0, triforceTotal));
-        }
-        if (mOptions[RSK_WINCON_TRIFORCE_COUNT].GetOptionCount() != static_cast<size_t>(triforceTotal) + 1) {
-            mOptions[RSK_WINCON_TRIFORCE_COUNT].ChangeOptions(NumOpts(0, triforceTotal));
-        }
-    });
     OPT_U8(RSK_TRIFORCE_HUNT_PIECES_LOCATION, {"Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("TriforceHuntPiecesLocation"), WIDGET_CVAR_COMBOBOX, RO_TRIFORCE_HUNT_LOCATION_ANYWHERE);
     OPT_U8(RSK_MQ_DUNGEON_RANDOM, {"None", "Set Number", "Random", "Selection Only"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeons"), WIDGET_CVAR_COMBOBOX, RO_MQ_DUNGEONS_NONE, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_MQ_DUNGEON_RANDOM, {
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeons"), RO_MQ_DUNGEONS_NONE)) {
-            // If No MQ Dungeons, add a separator after the combobox and hide
-            // the count slider and the toggle for individual dungeon selections.
-            case RO_MQ_DUNGEONS_NONE:
-                mOptions[RSK_MQ_DUNGEON_COUNT].Hide();
-                mOptions[RSK_MQ_DUNGEON_SET].Hide();
-                break;
-            // If Set Number, remove the separator and show both the count slider and the
-            // individual dungeon selection toggle.
-            case RO_MQ_DUNGEONS_SET_NUMBER:
-                mOptions[RSK_MQ_DUNGEON_COUNT].Unhide();
-                mOptions[RSK_MQ_DUNGEON_SET].Unhide();
-                break;
-            // else if random number or selection only, remove the separator and only show
-            // the individual dungeon selection toggle.
-            case RO_MQ_DUNGEONS_RANDOM_NUMBER:
-                mOptions[RSK_MQ_DUNGEON_COUNT].Hide();
-                mOptions[RSK_MQ_DUNGEON_SET].Unhide();
-                break;
-            case RO_MQ_DUNGEONS_SELECTION:
-                mOptions[RSK_MQ_DUNGEON_COUNT].Hide();
-                mOptions[RSK_MQ_DUNGEON_SET].Hide();
-                break;
-            default:
-                break;
-        }
-        // Controls whether or not to show the selectors for individual dungeons.
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeons"), RO_MQ_DUNGEONS_NONE) != RO_MQ_DUNGEONS_NONE &&
-            (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeonsSelection"), RO_GENERIC_OFF) == RO_GENERIC_ON ||
-             CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeons"), RO_MQ_DUNGEONS_NONE) == RO_MQ_DUNGEONS_SELECTION)) {
-            // if showing the dungeon selectors, remove the separator after the Set Dungeons checkbox.
-            mOptions[RSK_MQ_DEKU_TREE].Unhide();
-            mOptions[RSK_MQ_DODONGOS_CAVERN].Unhide();
-            mOptions[RSK_MQ_JABU_JABU].Unhide();
-            mOptions[RSK_MQ_FOREST_TEMPLE].Unhide();
-            mOptions[RSK_MQ_FIRE_TEMPLE].Unhide();
-            mOptions[RSK_MQ_WATER_TEMPLE].Unhide();
-            mOptions[RSK_MQ_SPIRIT_TEMPLE].Unhide();
-            mOptions[RSK_MQ_SHADOW_TEMPLE].Unhide();
-            mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Unhide();
-            mOptions[RSK_MQ_ICE_CAVERN].Unhide();
-            mOptions[RSK_MQ_GTG].Unhide();
-            mOptions[RSK_MQ_GANONS_CASTLE].Unhide();
-        } else {
-            // If those are not shown, add a separator after the Set Dungeons checkbox.
-            mOptions[RSK_MQ_DEKU_TREE].Hide();
-            mOptions[RSK_MQ_DODONGOS_CAVERN].Hide();
-            mOptions[RSK_MQ_JABU_JABU].Hide();
-            mOptions[RSK_MQ_FOREST_TEMPLE].Hide();
-            mOptions[RSK_MQ_FIRE_TEMPLE].Hide();
-            mOptions[RSK_MQ_WATER_TEMPLE].Hide();
-            mOptions[RSK_MQ_SPIRIT_TEMPLE].Hide();
-            mOptions[RSK_MQ_SHADOW_TEMPLE].Hide();
-            mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Hide();
-            mOptions[RSK_MQ_ICE_CAVERN].Hide();
-            mOptions[RSK_MQ_GTG].Hide();
-            mOptions[RSK_MQ_GANONS_CASTLE].Hide();
-        }
-    });
     OPT_U8(RSK_MQ_DUNGEON_COUNT, {NumOpts(0, MAX_MQ_DUNGEON_COUNT)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonCount"), WIDGET_CVAR_SLIDER_INT, MAX_MQ_DUNGEON_COUNT, true, nullptr, IMFLAG_NONE);
     OPT_BOOL(RSK_MQ_DUNGEON_SET, {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsSelection"), WIDGET_CVAR_CHECKBOX, false, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_MQ_DUNGEON_SET, {
-        // Controls whether or not to show the selectors for individual dungeons.
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeons"), RO_MQ_DUNGEONS_NONE) != RO_MQ_DUNGEONS_NONE &&
-            (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeonsSelection"), RO_GENERIC_OFF) == RO_GENERIC_ON ||
-             CVarGetInteger(CVAR_RANDOMIZER_SETTING("MQDungeons"), RO_MQ_DUNGEONS_NONE) == RO_MQ_DUNGEONS_SELECTION)) {
-            // if showing the dungeon selectors, remove the separator after the Set Dungeons checkbox.
-            mOptions[RSK_MQ_DEKU_TREE].Unhide();
-            mOptions[RSK_MQ_DODONGOS_CAVERN].Unhide();
-            mOptions[RSK_MQ_JABU_JABU].Unhide();
-            mOptions[RSK_MQ_FOREST_TEMPLE].Unhide();
-            mOptions[RSK_MQ_FIRE_TEMPLE].Unhide();
-            mOptions[RSK_MQ_WATER_TEMPLE].Unhide();
-            mOptions[RSK_MQ_SPIRIT_TEMPLE].Unhide();
-            mOptions[RSK_MQ_SHADOW_TEMPLE].Unhide();
-            mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Unhide();
-            mOptions[RSK_MQ_ICE_CAVERN].Unhide();
-            mOptions[RSK_MQ_GTG].Unhide();
-            mOptions[RSK_MQ_GANONS_CASTLE].Unhide();
-        } else {
-            // If those are not shown, add a separator after the Set Dungeons checkbox.
-            mOptions[RSK_MQ_DEKU_TREE].Hide();
-            mOptions[RSK_MQ_DODONGOS_CAVERN].Hide();
-            mOptions[RSK_MQ_JABU_JABU].Hide();
-            mOptions[RSK_MQ_FOREST_TEMPLE].Hide();
-            mOptions[RSK_MQ_FIRE_TEMPLE].Hide();
-            mOptions[RSK_MQ_WATER_TEMPLE].Hide();
-            mOptions[RSK_MQ_SPIRIT_TEMPLE].Hide();
-            mOptions[RSK_MQ_SHADOW_TEMPLE].Hide();
-            mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Hide();
-            mOptions[RSK_MQ_ICE_CAVERN].Hide();
-            mOptions[RSK_MQ_GTG].Hide();
-            mOptions[RSK_MQ_GANONS_CASTLE].Hide();
-        }
-    });
     OPT_U8(RSK_MQ_DEKU_TREE, {"Vanilla", "Master Quest", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsDekuTree"), WIDGET_CVAR_COMBOBOX, RO_MQ_SET_VANILLA, false, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_MQ_DODONGOS_CAVERN, {"Vanilla", "Master Quest", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsDodongosCavern"), WIDGET_CVAR_COMBOBOX, RO_MQ_SET_VANILLA, false, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_MQ_JABU_JABU, {"Vanilla", "Master Quest", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsJabuJabu"), WIDGET_CVAR_COMBOBOX, RO_MQ_SET_VANILLA, false, nullptr, IMFLAG_NONE);
@@ -552,82 +105,12 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_MQ_GTG, {"Vanilla", "Master Quest", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsGTG"), WIDGET_CVAR_COMBOBOX, RO_MQ_SET_VANILLA, false, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_MQ_GANONS_CASTLE, {"Vanilla", "Master Quest", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MQDungeonsGanonsCastle"), WIDGET_CVAR_COMBOBOX, RO_MQ_SET_VANILLA);
     OPT_U8(RSK_SHUFFLE_DUNGEON_REWARDS, {"Vanilla", "End of Dungeons", "Own Dungeon", "Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleDungeonReward"), WIDGET_CVAR_COMBOBOX, RO_DUNGEON_REWARDS_END_OF_DUNGEON);
-    OPT_CALLBACK(RSK_SHUFFLE_DUNGEON_REWARDS, {
-        // Link's Pocket - Disabled when Dungeon Rewards are shuffled to End of Dungeon
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonReward"), RO_DUNGEON_REWARDS_END_OF_DUNGEON) ==
-            RO_DUNGEON_REWARDS_END_OF_DUNGEON) {
-            mOptions[RSK_LINKS_POCKET].Disable(
-                "This option is disabled because \"Dungeon Rewards\" are shuffled to \"End of Dungeons\".");
-            mOptions[RSK_LINKS_POCKET_REWARD].Enable();
-            mOptions[RSK_LINKS_POCKET_REWARD].Unhide();
-        } else {
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonReward"), RO_DUNGEON_REWARDS_END_OF_DUNGEON) ==
-                RO_DUNGEON_REWARDS_OWN_DUNGEON) {
-                mOptions[RSK_LINKS_POCKET].Enable();
-                mOptions[RSK_LINKS_POCKET_REWARD].Disable(
-                    "As \"Link's Pocket\" is set to \"Dungeon Reward\" while \"Dungeon Rewards\" is set to \"Own Dungeon\", Link's Pocket will always have the Light Medallion");
-            }else if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonReward"), RO_DUNGEON_REWARDS_END_OF_DUNGEON) ==
-                RO_DUNGEON_REWARDS_VANILLA) {
-                mOptions[RSK_LINKS_POCKET].Enable();
-                mOptions[RSK_LINKS_POCKET_REWARD].Disable(
-                    "As \"Link's Pocket\" is set to \"Dungeon Reward\" while \"Dungeon Rewards\" is set to \"Vanilla\", Link's Pocket will always have the Light Medallion");
-            } else {
-                mOptions[RSK_LINKS_POCKET].Enable();
-                mOptions[RSK_LINKS_POCKET_REWARD].Enable();
-            }
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("LinksPocket"), RO_LINKS_POCKET_DUNGEON_REWARD) == RO_LINKS_POCKET_DUNGEON_REWARD) {
-                mOptions[RSK_LINKS_POCKET_REWARD].Unhide();
-            } else {
-                mOptions[RSK_LINKS_POCKET_REWARD].Hide();
-            }
-        }
-    });
     OPT_U8(RSK_LINKS_POCKET, {"Dungeon Reward", "Advancement", "Anything", "Nothing"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("LinksPocket"), WIDGET_CVAR_COMBOBOX, RO_LINKS_POCKET_DUNGEON_REWARD);
-    OPT_CALLBACK(RSK_LINKS_POCKET, {
-        // Only show the dungeon reward type if Link's Pocket is set to Dungeon Reward and Dungeon Rewards are not Vanilla, OR Dungeon Rewards are end of dungeon
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("LinksPocket"), RO_LINKS_POCKET_DUNGEON_REWARD) == RO_LINKS_POCKET_DUNGEON_REWARD ||
-            CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDungeonReward"), RO_DUNGEON_REWARDS_END_OF_DUNGEON) == RO_DUNGEON_REWARDS_END_OF_DUNGEON) {
-            mOptions[RSK_LINKS_POCKET_REWARD].Unhide();
-        } else {
-            mOptions[RSK_LINKS_POCKET_REWARD].Hide();
-        }
-    });
     OPT_U8(RSK_LINKS_POCKET_REWARD, {"Any Reward", "Any Stone", "Any Medallion", "Light Medallion"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("LinksPocketReward"), WIDGET_CVAR_COMBOBOX, RO_LINKS_POCKET_ANY_REWARD);
     OPT_U8(RSK_SHUFFLE_SONGS, {"Off", "Song Locations", "Dungeon Rewards", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleSongs"), WIDGET_CVAR_COMBOBOX, RO_SONG_SHUFFLE_SONG_LOCATIONS);
     OPT_U8(RSK_SHOPSANITY, {"Off", "Specific Count", "Random"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("Shopsanity"), WIDGET_CVAR_COMBOBOX, RO_SHOPSANITY_OFF);
-    OPT_CALLBACK(RSK_SHOPSANITY, {
-        // Hide shopsanity prices if shopsanity is off or zero
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("Shopsanity"), RO_SHOPSANITY_OFF)) {
-            case RO_SHOPSANITY_OFF:
-                mOptions[RSK_SHOPSANITY].AddFlag(IMFLAG_SEPARATOR_BOTTOM);
-                mOptions[RSK_SHOPSANITY_COUNT].Hide();
-                mOptions[RSK_SHOPSANITY_COUNT].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_RANGE_1].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_RANGE_2].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SHOPSANITY_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                break;
-            case RO_SHOPSANITY_SPECIFIC_COUNT:
-                mOptions[RSK_SHOPSANITY_COUNT].Unhide();
-                HandleShopsanityPriceUI();
-                break;
-            case RO_SHOPSANITY_RANDOM:
-                mOptions[RSK_SHOPSANITY_COUNT].Hide();
-                HandleShopsanityPriceUI();
-                break;
-        }
-    });
     OPT_U8(RSK_SHOPSANITY_COUNT, {NumOpts(0, 8)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShopsanityCount"), WIDGET_CVAR_SLIDER_INT, 0, false, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_SHOPSANITY_PRICES, {"Vanilla", "Cheap Balanced", "Balanced", "Fixed", "Range", "Set By Wallet"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShopsanityPrices"), WIDGET_CVAR_COMBOBOX, RO_PRICE_VANILLA, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_SHOPSANITY_PRICES, {
-        HandleShopsanityPriceUI();
-    });
     OPT_U8(RSK_SHOPSANITY_PRICES_FIXED_PRICE, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShopsanityFixedPrice"), WIDGET_CVAR_SLIDER_INT, 10, true);
     OPT_U8(RSK_SHOPSANITY_PRICES_RANGE_1, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShopsanityPriceRange1"), WIDGET_CVAR_SLIDER_INT, 10, true, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_SHOPSANITY_PRICES_RANGE_2, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShopsanityPriceRange2"), WIDGET_CVAR_SLIDER_INT, 100, true, nullptr, IMFLAG_NONE);
@@ -640,154 +123,7 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_SHOP_SHIELDS_AND_TUNICS_ONLY_REFILL, CVAR_RANDOMIZER_SETTING("ShopShieldsTunicsGate"));
     OPT_U8(RSK_SHUFFLE_TOKENS, {"Off", "Dungeons", "Overworld", "All Tokens"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleTokens"), WIDGET_CVAR_COMBOBOX, RO_TOKENSANITY_OFF);
     OPT_U8(RSK_SHUFFLE_SCRUBS, {"Off", "One-Time Only", "All"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleScrubs"), WIDGET_CVAR_COMBOBOX, RO_SCRUBS_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_SCRUBS, {
-        bool isTycoon = CVarGetInteger(CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"), RO_GENERIC_OFF);
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleScrubs"), RO_SCRUBS_OFF)) {
-            case RO_SCRUBS_OFF:
-                mOptions[RSK_SCRUBS_PRICES].Hide();
-                mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Hide();
-                mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                break;
-            default:
-                mOptions[RSK_SCRUBS_PRICES].Unhide();
-                switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ScrubsPrices"), RO_PRICE_VANILLA)) {
-                    case RO_PRICE_FIXED:
-                        mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        if (isTycoon ? mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].GetOptionCount() == 501
-                                    : mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].GetOptionCount() == 1000) {
-                            mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].ChangeOptions(isTycoon ? NumOpts(0, 999)
-                                                                                        : NumOpts(0, 500));
-                        }
-                        mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Hide();
-                        break;
-                    case RO_PRICE_RANGE:
-                        mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_1].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_2].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        if (isTycoon ? mOptions[RSK_SCRUBS_PRICES_RANGE_1].GetOptionCount() == 101
-                                    : mOptions[RSK_SCRUBS_PRICES_RANGE_1].GetOptionCount() == 200) {
-                            mOptions[RSK_SCRUBS_PRICES_RANGE_1].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                    : NumOpts(0, 500, 5));
-                            mOptions[RSK_SCRUBS_PRICES_RANGE_2].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                    : NumOpts(0, 500, 5));
-                        }
-                        mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                        break;
-                    case RO_PRICE_SET_BY_WALLET:
-                        mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Unhide();
-                        if (isTycoon) {
-                            mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Unhide();
-                        } else {
-                            mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        }
-                        mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                        break;
-                    default:
-                        mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                        break;
-                }
-                break;
-        }
-    });
     OPT_U8(RSK_SCRUBS_PRICES, {"Vanilla", "Cheap Balanced", "Balanced", "Fixed", "Range", "Set By Wallet"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ScrubsPrices"), WIDGET_CVAR_COMBOBOX, RO_PRICE_VANILLA, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_SCRUBS_PRICES, {
-        bool isTycoon = CVarGetInteger(CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"), RO_GENERIC_OFF);
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ScrubsPrices"), RO_PRICE_VANILLA)) {
-            case RO_PRICE_FIXED:
-                mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                if (isTycoon ? mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].GetOptionCount() == 501
-                            : mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].GetOptionCount() == 1000) {
-                    mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].ChangeOptions(isTycoon ? NumOpts(0, 999)
-                                                                                : NumOpts(0, 500));
-                }
-                mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Hide();
-                break;
-            case RO_PRICE_RANGE:
-                mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_1].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_2].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                if (isTycoon ? mOptions[RSK_SCRUBS_PRICES_RANGE_1].GetOptionCount() == 101
-                            : mOptions[RSK_SCRUBS_PRICES_RANGE_1].GetOptionCount() == 200) {
-                    mOptions[RSK_SCRUBS_PRICES_RANGE_1].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                            : NumOpts(0, 500, 5));
-                    mOptions[RSK_SCRUBS_PRICES_RANGE_2].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                            : NumOpts(0, 500, 5));
-                }
-                mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                break;
-            case RO_PRICE_SET_BY_WALLET:
-                mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Unhide();
-                if (isTycoon) {
-                    mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Unhide();
-                } else {
-                    mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                }
-                mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                break;
-            default:
-                mOptions[RSK_SCRUBS_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_1].Hide();
-                mOptions[RSK_SCRUBS_PRICES_RANGE_2].Hide();
-                mOptions[RSK_SCRUBS_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                mOptions[RSK_SCRUBS_PRICES_AFFORDABLE].Unhide();
-                break;
-        }
-    });
     OPT_U8(RSK_SCRUBS_PRICES_FIXED_PRICE, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ScrubsFixedPrice"), WIDGET_CVAR_SLIDER_INT, 10, true);
     OPT_U8(RSK_SCRUBS_PRICES_RANGE_1, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ScrubsPriceRange1"), WIDGET_CVAR_SLIDER_INT, 10, true, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_SCRUBS_PRICES_RANGE_2, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ScrubsPriceRange2"), WIDGET_CVAR_SLIDER_INT, 100, true, nullptr, IMFLAG_NONE);
@@ -798,60 +134,18 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_SCRUBS_PRICES_TYCOON_WALLET_WEIGHT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ScrubsTycoonWalletWeight"), WIDGET_CVAR_SLIDER_INT, 10, true, nullptr, IMFLAG_NONE);
     OPT_BOOL(RSK_SCRUBS_PRICES_AFFORDABLE, CVAR_RANDOMIZER_SETTING("ScrubsPricesAffordable"));
     OPT_BOOL(RSK_SHUFFLE_BEEHIVES, CVAR_RANDOMIZER_SETTING("ShuffleBeehives"));
-    OPT_CALLBACK(RSK_SHUFFLE_BEEHIVES, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleBeehives"), RO_GENERIC_OFF)) {
-            mOptions[RSK_SLINGBOW_BREAK_BEEHIVES].Enable();
-        } else {
-            mOptions[RSK_SLINGBOW_BREAK_BEEHIVES].Disable(
-                "This option is disabled because Shuffle Beehives is not enabled.");
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_COWS, CVAR_RANDOMIZER_SETTING("ShuffleCows"));
-    OPT_CALLBACK(RSK_SHUFFLE_COWS, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleCows"), RO_GENERIC_OFF)) {
-            mOptions[RSK_MALON_HINT].Enable();
-        } else {
-            mOptions[RSK_MALON_HINT].Disable("Malon's hint points to a cow, so requires cows to be shuffled.");
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_KOKIRI_SWORD, CVAR_RANDOMIZER_SETTING("ShuffleKokiriSword"));
     OPT_BOOL(RSK_SHUFFLE_MASTER_SWORD, CVAR_RANDOMIZER_SETTING("ShuffleMasterSword"));
     OPT_BOOL(RSK_SWORDLESS_EPONA_ITEMS, CVAR_RANDOMIZER_SETTING("SwordlessEponaItems"));
     OPT_BOOL(RSK_SHUFFLE_CHILD_WALLET, CVAR_RANDOMIZER_SETTING("ShuffleChildWallet"), IMFLAG_NONE);
-    OPT_CALLBACK(RSK_SHUFFLE_CHILD_WALLET, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleChildWallet"), 0)) {
-            CVarSetInteger(CVAR_RANDOMIZER_SETTING("StartingWallet"), 0);
-            mOptions[RSK_STARTING_WALLET].Disable("Disabled because Shuffle Child's Wallet is on.");
-        } else {
-            mOptions[RSK_STARTING_WALLET].Enable();
-        }
-    });
     OPT_BOOL(RSK_INCLUDE_TYCOON_WALLET, CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"));
     OPT_BOOL(RSK_SHUFFLE_OCARINA, CVAR_RANDOMIZER_SETTING("ShuffleOcarinas"));
-    OPT_CALLBACK(RSK_SHUFFLE_OCARINA, {
-        HandleStartingAgeUI();
-    });
     OPT_BOOL(RSK_SHUFFLE_OCARINA_BUTTONS, CVAR_RANDOMIZER_SETTING("ShuffleOcarinaButtons"));
     OPT_BOOL(RSK_SHUFFLE_SWIM, CVAR_RANDOMIZER_SETTING("ShuffleSwim"));
-    OPT_CALLBACK(RSK_SHUFFLE_SWIM, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleSwim"), 0)) {
-            CVarSetInteger(CVAR_RANDOMIZER_SETTING("StartingScale"), 0);
-            mOptions[RSK_STARTING_SCALE].Disable("Disabled because Shuffle Swim is on.");
-        } else {
-            mOptions[RSK_STARTING_SCALE].Enable();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_CLIMB, CVAR_RANDOMIZER_SETTING("ShuffleClimb"));
     OPT_BOOL(RSK_SHUFFLE_CRAWL, CVAR_RANDOMIZER_SETTING("ShuffleCrawl"));
     OPT_BOOL(RSK_SHUFFLE_GRAB, CVAR_RANDOMIZER_SETTING("ShuffleGrab"));
-    OPT_CALLBACK(RSK_SHUFFLE_GRAB, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGrab"), 0)) {
-            CVarSetInteger(CVAR_RANDOMIZER_SETTING("StartingStrength"), 0);
-            mOptions[RSK_STARTING_STRENGTH].Disable("Disabled because Shuffle Grab is on.");
-        } else {
-            mOptions[RSK_STARTING_STRENGTH].Enable();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_SPEAK, CVAR_RANDOMIZER_SETTING("ShuffleSpeak"));
     OPT_U8(RSK_SHUFFLE_OPEN_CHEST, {"Off", "On", "Progressive"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleOpenChest"), WIDGET_CVAR_COMBOBOX, RO_OPEN_CHEST_OFF);
     OPT_U8(RSK_SHUFFLE_WEIRD_EGG, {"Vanilla", "Shuffled", "Skip Waking Talon"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleWeirdEgg"), WIDGET_CVAR_COMBOBOX, RO_WEIRD_EGG_VANILLA);
@@ -870,163 +164,8 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_SHUFFLE_FIRE_GORONS, CVAR_RANDOMIZER_SETTING("ShuffleFireGorons"));
     OPT_U8(RSK_SHUFFLE_SIGNS, {"Off", "Dungeons", "Overworld", "All Signs"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleSigns"), WIDGET_CVAR_COMBOBOX, RO_SHUFFLE_SIGNS_OFF);
     OPT_BOOL(RSK_SHUFFLE_FISHING_POLE, CVAR_RANDOMIZER_SETTING("ShuffleFishingPole"));
-    OPT_CALLBACK(RSK_SHUFFLE_FISHING_POLE, {
-        // Disable fishing pole hint if the fishing pole is not shuffled
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleFishingPole"), RO_GENERIC_OFF)) {
-            mOptions[RSK_FISHING_POLE_HINT].Enable();
-        } else {
-            mOptions[RSK_FISHING_POLE_HINT].Disable("This option is disabled since the fishing pole is not shuffled.");
-        }
-    });
     OPT_U8(RSK_SHUFFLE_MERCHANTS, {"Off", "Bean Merchant Only", "All But Beans", "All"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleMerchants"), WIDGET_CVAR_COMBOBOX, RO_SHUFFLE_MERCHANTS_OFF, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_SHUFFLE_MERCHANTS, {
-        bool isTycoon = CVarGetInteger(CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"), RO_GENERIC_OFF);
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleMerchants"), RO_SHUFFLE_MERCHANTS_OFF)) {
-            case RO_SHUFFLE_MERCHANTS_OFF:
-                mOptions[RSK_MERCHANT_PRICES].Hide();
-                mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Hide();
-                mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                break;
-            default:
-                mOptions[RSK_MERCHANT_PRICES].Unhide();
-                switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MerchantPrices"), RO_PRICE_VANILLA)) {
-                    case RO_PRICE_FIXED:
-                        mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        if (isTycoon ? mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].GetOptionCount() == 501
-                                    : mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].GetOptionCount() == 1000) {
-                            mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].ChangeOptions(isTycoon ? NumOpts(0, 999)
-                                                                                            : NumOpts(0, 500));
-                        }
-                        mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Hide();
-                        break;
-                    case RO_PRICE_RANGE:
-                        mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_1].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_2].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        if (isTycoon ? mOptions[RSK_MERCHANT_PRICES_RANGE_1].GetOptionCount() == 101
-                                    : mOptions[RSK_MERCHANT_PRICES_RANGE_1].GetOptionCount() == 200) {
-                            mOptions[RSK_MERCHANT_PRICES_RANGE_1].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                        : NumOpts(0, 500, 5));
-                            mOptions[RSK_MERCHANT_PRICES_RANGE_2].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                        : NumOpts(0, 500, 5));
-                        }
-                        mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                        break;
-                    case RO_PRICE_SET_BY_WALLET:
-                        mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Unhide();
-                        mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Unhide();
-                        if (isTycoon) {
-                            mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Unhide();
-                        } else {
-                            mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        }
-                        mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                        break;
-                    default:
-                        mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                        mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                        break;
-                }
-                break;
-        }
-    });
     OPT_U8(RSK_MERCHANT_PRICES, {"Vanilla", "Cheap Balanced", "Balanced", "Fixed", "Range", "Set By Wallet"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MerchantPrices"), WIDGET_CVAR_COMBOBOX, RO_PRICE_VANILLA, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_MERCHANT_PRICES, {
-        bool isTycoon = CVarGetInteger(CVAR_RANDOMIZER_SETTING("IncludeTycoonWallet"), RO_GENERIC_OFF);
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("MerchantPrices"), RO_PRICE_VANILLA)) {
-            case RO_PRICE_FIXED:
-                mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                if (isTycoon ? mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].GetOptionCount() == 501
-                            : mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].GetOptionCount() == 1000) {
-                    mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].ChangeOptions(isTycoon ? NumOpts(0, 999)
-                                                                                    : NumOpts(0, 500));
-                }
-                mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Hide();
-                break;
-            case RO_PRICE_RANGE:
-                mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_1].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_2].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                if (isTycoon ? mOptions[RSK_MERCHANT_PRICES_RANGE_1].GetOptionCount() == 101
-                            : mOptions[RSK_MERCHANT_PRICES_RANGE_1].GetOptionCount() == 200) {
-                    mOptions[RSK_MERCHANT_PRICES_RANGE_1].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                : NumOpts(0, 500, 5));
-                    mOptions[RSK_MERCHANT_PRICES_RANGE_2].ChangeOptions(isTycoon ? NumOpts(0, 995, 5)
-                                                                                : NumOpts(0, 500, 5));
-                }
-                mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                break;
-            case RO_PRICE_SET_BY_WALLET:
-                mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Unhide();
-                mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Unhide();
-                if (isTycoon) {
-                    mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Unhide();
-                } else {
-                    mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                }
-                mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                break;
-            default:
-                mOptions[RSK_MERCHANT_PRICES_FIXED_PRICE].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_1].Hide();
-                mOptions[RSK_MERCHANT_PRICES_RANGE_2].Hide();
-                mOptions[RSK_MERCHANT_PRICES_NO_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_CHILD_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_ADULT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_GIANT_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_TYCOON_WALLET_WEIGHT].Hide();
-                mOptions[RSK_MERCHANT_PRICES_AFFORDABLE].Unhide();
-                break;
-        }
-    });
     OPT_U8(RSK_MERCHANT_PRICES_FIXED_PRICE, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MerchantFixedPrice"), WIDGET_CVAR_SLIDER_INT, 10, true);
     OPT_U8(RSK_MERCHANT_PRICES_RANGE_1, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MerchantPriceRange1"), WIDGET_CVAR_SLIDER_INT, 10, true, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_MERCHANT_PRICES_RANGE_2, {NumOpts(0, 995, 5)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("MerchantPriceRange2"), WIDGET_CVAR_SLIDER_INT, 100, true, nullptr, IMFLAG_NONE);
@@ -1040,67 +179,16 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_SHUFFLE_FISHERMANS_HAT, CVAR_RANDOMIZER_SETTING("ShuffleFishermansHat"));
     OPT_BOOL(RSK_SHUFFLE_FROG_SONG_RUPEES, CVAR_RANDOMIZER_SETTING("ShuffleFrogSongRupees"));
     OPT_BOOL(RSK_SHUFFLE_ADULT_TRADE, CVAR_RANDOMIZER_SETTING("ShuffleAdultTrade"));
-    OPT_CALLBACK(RSK_SHUFFLE_ADULT_TRADE, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleAdultTrade"), RO_GENERIC_OFF)) {
-            mOptions[RSK_EARLY_GRANNYS_SHOP].Disable("This has no effect when Shuffle Adult Trade is on.");
-        } else {
-            mOptions[RSK_EARLY_GRANNYS_SHOP].Enable();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_CHEST_MINIGAME, CVAR_RANDOMIZER_SETTING("ShuffleChestMinigame"));
-    OPT_CALLBACK(RSK_SHUFFLE_CHEST_MINIGAME, {
-        HandleKeyringUI();
-    });
     OPT_BOOL(RSK_SHUFFLE_100_GS_REWARD, CVAR_RANDOMIZER_SETTING("Shuffle100GSReward"), IMFLAG_SEPARATOR_BOTTOM, WIDGET_CVAR_CHECKBOX, RO_GENERIC_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_100_GS_REWARD, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("Shuffle100GSReward"), RO_GENERIC_OFF)) {
-            mOptions[RSK_KAK_100_SKULLS_HINT].Enable();
-        } else {
-            mOptions[RSK_KAK_100_SKULLS_HINT].Disable("There is no point to hinting 100 skulls if it is not shuffled.");
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_BEAN_SOULS, CVAR_RANDOMIZER_SETTING("ShuffleBeanSouls"), IMFLAG_SEPARATOR_BOTTOM, WIDGET_CVAR_CHECKBOX, RO_GENERIC_OFF);
     OPT_U8(RSK_SHUFFLE_BOSS_SOULS, {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleBossSouls"), WIDGET_CVAR_COMBOBOX);
     OPT_BOOL(RSK_SHUFFLE_DEKU_STICK_BAG, CVAR_RANDOMIZER_SETTING("ShuffleDekuStickBag"), IMFLAG_SEPARATOR_BOTTOM, WIDGET_CVAR_CHECKBOX, RO_GENERIC_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_DEKU_STICK_BAG, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDekuStickBag"), 0)) {
-            mOptions[RSK_STARTING_STICKS].Disable("Disabled because Shuffle Deku Stick Bag is on.");
-        } else {
-            mOptions[RSK_STARTING_STICKS].Enable();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_DEKU_NUT_BAG, CVAR_RANDOMIZER_SETTING("ShuffleDekuNutBag"), IMFLAG_SEPARATOR_BOTTOM, WIDGET_CVAR_CHECKBOX, RO_GENERIC_OFF);
-    OPT_CALLBACK(RSK_SHUFFLE_DEKU_NUT_BAG, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleDekuNutBag"), 0)) {
-            mOptions[RSK_STARTING_NUTS].Disable("Disabled because Shuffle Deku Nut Bag is on.");
-        } else {
-            mOptions[RSK_STARTING_NUTS].Enable();
-        }
-    });
     OPT_U8(RSK_SHUFFLE_FREESTANDING, {"Off", "Dungeons", "Overworld", "All Items"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleFreestanding"), WIDGET_CVAR_COMBOBOX, RO_SHUFFLE_FREESTANDING_OFF);
     OPT_U8(RSK_SHUFFLE_WONDER_ITEMS, {"Off", "Dungeons", "Overworld", "All Items"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleWonderItems"), WIDGET_CVAR_COMBOBOX, RO_SHUFFLE_WONDER_ITEMS_OFF);
     OPT_U8(RSK_SHUFFLE_SILVER, {"Off", "On", "Wallet", "Start With"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleSilver"), WIDGET_CVAR_COMBOBOX, RO_SHUFFLE_SILVER_OFF);
     OPT_U8(RSK_FISHSANITY, {"Off", "Shuffle only Hyrule Loach", "Shuffle Fishing Pond", "Shuffle Overworld Fish", "Shuffle Both"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("Fishsanity"), WIDGET_CVAR_COMBOBOX, RO_FISHSANITY_OFF);
-    OPT_CALLBACK(RSK_FISHSANITY, {
-        // Hide fishing pond settings if we aren't shuffling the fishing pond
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("Fishsanity"), RO_FISHSANITY_OFF)) {
-            case RO_FISHSANITY_POND:
-            case RO_FISHSANITY_BOTH:
-                mOptions[RSK_FISHSANITY_POND_COUNT].Unhide();
-                mOptions[RSK_FISHSANITY_AGE_SPLIT].Unhide();
-                break;
-            default:
-                mOptions[RSK_FISHSANITY_POND_COUNT].Hide();
-                mOptions[RSK_FISHSANITY_AGE_SPLIT].Hide();
-        }
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("Fishsanity"), RO_FISHSANITY_OFF) == RO_FISHSANITY_HYRULE_LOACH) {
-            mOptions[RSK_LOACH_HINT].Enable();
-        } else {
-            mOptions[RSK_LOACH_HINT].Disable(
-                "Loach hint is only available with \"Fishsanity\" set to \"Shuffle only Hyrule Loach\"\nas that's the only "
-                "setting where you present the loach to the fishing pond owner.");
-        }
-    });
     OPT_U8(RSK_FISHSANITY_POND_COUNT, {NumOpts(0,17,1)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("FishsanityPondCount"), WIDGET_CVAR_SLIDER_INT, 0, true, nullptr, IMFLAG_NONE);
     OPT_BOOL(RSK_FISHSANITY_AGE_SPLIT, CVAR_RANDOMIZER_SETTING("FishsanityAgeSplit"));
     OPT_BOOL(RSK_SHUFFLE_FOUNTAIN_FAIRIES, CVAR_RANDOMIZER_SETTING("ShuffleFountainFairies"));
@@ -1111,44 +199,8 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_SHUFFLE_MAPANDCOMPASS, {"Start With", "Vanilla", "Own Dungeon", "Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingMapsCompasses"), WIDGET_CVAR_COMBOBOX, RO_DUNGEON_ITEM_LOC_OWN_DUNGEON);
     OPT_U8(RSK_KEYSANITY, {"Start With", "Vanilla", "Own Dungeon", "Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("Keysanity"), WIDGET_CVAR_COMBOBOX, RO_DUNGEON_ITEM_LOC_OWN_DUNGEON);
     OPT_U8(RSK_GERUDO_KEYS, {"Vanilla", "Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GerudoKeys"), WIDGET_CVAR_COMBOBOX, RO_GERUDO_KEYS_VANILLA);
-    OPT_CALLBACK(RSK_GERUDO_KEYS, {
-        HandleKeyringUI();
-    });
     OPT_U8(RSK_BOSS_KEYSANITY, {"Start With", "Vanilla", "Own Dungeon", "Any Dungeon", "Overworld", "Anywhere"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("BossKeysanity"), WIDGET_CVAR_COMBOBOX, RO_DUNGEON_ITEM_LOC_OWN_DUNGEON);
     OPT_U8(RSK_GANONS_BOSS_KEY, {"Vanilla", "Own Dungeon", "Start With", "Any Dungeon", "Overworld", "Anywhere", "Trigger-Stones", "Trigger-Medallions", "Trigger-Rewards", "Trigger-Dungeons", "Trigger-Tokens", "Trigger-Triforce Pieces"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleGanonBossKey"), WIDGET_CVAR_COMBOBOX, RO_GANON_BOSS_KEY_VANILLA);
-    OPT_CALLBACK(RSK_GANONS_BOSS_KEY, {
-        mOptions[RSK_GBK_OPTIONS].Hide();
-        mOptions[RSK_GBK_STONE_COUNT].Hide();
-        mOptions[RSK_GBK_MEDALLION_COUNT].Hide();
-        mOptions[RSK_GBK_REWARD_COUNT].Hide();
-        mOptions[RSK_GBK_DUNGEON_COUNT].Hide();
-        mOptions[RSK_GBK_TOKEN_COUNT].Hide();
-        mOptions[RSK_GBK_TRIFORCE_COUNT].Hide();
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGanonBossKey"), RO_GANON_BOSS_KEY_VANILLA)) {
-            case RO_GANON_BOSS_KEY_STONES:
-                mOptions[RSK_GBK_OPTIONS].Unhide();
-                mOptions[RSK_GBK_STONE_COUNT].Unhide();
-                break;
-            case RO_GANON_BOSS_KEY_MEDALLIONS:
-                mOptions[RSK_GBK_OPTIONS].Unhide();
-                mOptions[RSK_GBK_MEDALLION_COUNT].Unhide();
-                break;
-            case RO_GANON_BOSS_KEY_REWARDS:
-                mOptions[RSK_GBK_OPTIONS].Unhide();
-                mOptions[RSK_GBK_REWARD_COUNT].Unhide();
-                break;
-            case RO_GANON_BOSS_KEY_DUNGEONS:
-                mOptions[RSK_GBK_OPTIONS].Unhide();
-                mOptions[RSK_GBK_DUNGEON_COUNT].Unhide();
-                break;
-            case RO_GANON_BOSS_KEY_TOKENS:
-                mOptions[RSK_GBK_TOKEN_COUNT].Unhide();
-                break;
-            case RO_GANON_BOSS_KEY_TRIFORCE_PIECES:
-                mOptions[RSK_GBK_TRIFORCE_COUNT].Unhide();
-                break;
-        }
-    });
     OPT_U8(RSK_GBK_STONE_COUNT, {NumOpts(0, 4)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkStoneCount"), WIDGET_CVAR_SLIDER_INT, 3, true);
     OPT_U8(RSK_GBK_MEDALLION_COUNT, {NumOpts(0, 7)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkMedallionCount"), WIDGET_CVAR_SLIDER_INT, 6, true);
     OPT_U8(RSK_GBK_REWARD_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkRewardCount"), WIDGET_CVAR_SLIDER_INT, 9, true);
@@ -1156,54 +208,7 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_GBK_TOKEN_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkTokenCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_GBK_TRIFORCE_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkTriforceCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_GBK_OPTIONS, {"Standard Reward", "Greg as Reward", "Greg as Wildcard"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GbkRewardOptions"), WIDGET_CVAR_COMBOBOX, RO_CHECK_TRIGGER_STANDARD_REWARD);
-    OPT_CALLBACK(RSK_GBK_OPTIONS, {
-        const uint8_t gbkOpts = CVarGetInteger(CVAR_RANDOMIZER_SETTING("GbkRewardOptions"), RO_CHECK_TRIGGER_STANDARD_REWARD);
-        if (gbkOpts == RO_CHECK_TRIGGER_GREG_REWARD) {
-            mOptions[RSK_GBK_STONE_COUNT].ChangeOptions(NumOpts(0, 4));
-            mOptions[RSK_GBK_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 7));
-            mOptions[RSK_GBK_REWARD_COUNT].ChangeOptions(NumOpts(0, 10));
-            mOptions[RSK_GBK_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 9));
-        } else {
-            mOptions[RSK_GBK_STONE_COUNT].ChangeOptions(NumOpts(0, 3));
-            mOptions[RSK_GBK_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 6));
-            mOptions[RSK_GBK_REWARD_COUNT].ChangeOptions(NumOpts(0, 9));
-            mOptions[RSK_GBK_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 8));
-        }
-    });
     OPT_U8(RSK_GANONS_SOUL, {"Start With", "Any Dungeon", "Overworld", "Anywhere", "Trigger-Stones", "Trigger-Medallions", "Trigger-Rewards", "Trigger-Dungeons", "Trigger-Tokens", "Trigger-Triforce Pieces"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleGanonsSoul"), WIDGET_CVAR_COMBOBOX, RO_GANONS_SOUL_STARTWITH);
-    OPT_CALLBACK(RSK_GANONS_SOUL, {
-        mOptions[RSK_GANONS_SOUL_OPTIONS].Hide();
-        mOptions[RSK_GANONS_SOUL_STONE_COUNT].Hide();
-        mOptions[RSK_GANONS_SOUL_MEDALLION_COUNT].Hide();
-        mOptions[RSK_GANONS_SOUL_REWARD_COUNT].Hide();
-        mOptions[RSK_GANONS_SOUL_DUNGEON_COUNT].Hide();
-        mOptions[RSK_GANONS_SOUL_TOKEN_COUNT].Hide();
-        mOptions[RSK_GANONS_SOUL_TRIFORCE_COUNT].Hide();
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleGanonsSoul"), RO_GANONS_SOUL_STARTWITH)) {
-            case RO_GANONS_SOUL_STONES:
-                mOptions[RSK_GANONS_SOUL_OPTIONS].Unhide();
-                mOptions[RSK_GANONS_SOUL_STONE_COUNT].Unhide();
-                break;
-            case RO_GANONS_SOUL_MEDALLIONS:
-                mOptions[RSK_GANONS_SOUL_OPTIONS].Unhide();
-                mOptions[RSK_GANONS_SOUL_MEDALLION_COUNT].Unhide();
-                break;
-            case RO_GANONS_SOUL_REWARDS:
-                mOptions[RSK_GANONS_SOUL_OPTIONS].Unhide();
-                mOptions[RSK_GANONS_SOUL_REWARD_COUNT].Unhide();
-                break;
-            case RO_GANONS_SOUL_DUNGEONS:
-                mOptions[RSK_GANONS_SOUL_OPTIONS].Unhide();
-                mOptions[RSK_GANONS_SOUL_DUNGEON_COUNT].Unhide();
-                break;
-            case RO_GANONS_SOUL_TOKENS:
-                mOptions[RSK_GANONS_SOUL_TOKEN_COUNT].Unhide();
-                break;
-            case RO_GANONS_SOUL_TRIFORCE_PIECES:
-                mOptions[RSK_GANONS_SOUL_TRIFORCE_COUNT].Unhide();
-                break;
-        }
-    });
     OPT_U8(RSK_GANONS_SOUL_STONE_COUNT, {NumOpts(0, 4)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulStoneCount"), WIDGET_CVAR_SLIDER_INT, 3, true);
     OPT_U8(RSK_GANONS_SOUL_MEDALLION_COUNT, {NumOpts(0, 7)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulMedallionCount"), WIDGET_CVAR_SLIDER_INT, 6, true);
     OPT_U8(RSK_GANONS_SOUL_REWARD_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulRewardCount"), WIDGET_CVAR_SLIDER_INT, 9, true);
@@ -1211,54 +216,7 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_GANONS_SOUL_TOKEN_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulTokenCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_GANONS_SOUL_TRIFORCE_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulTriforceCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_GANONS_SOUL_OPTIONS, {"Standard Reward", "Greg as Reward", "Greg as Wildcard"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GanonsSoulRewardOptions"), WIDGET_CVAR_COMBOBOX, RO_CHECK_TRIGGER_STANDARD_REWARD);
-    OPT_CALLBACK(RSK_GANONS_SOUL_OPTIONS, {
-        const uint8_t soulOpts = CVarGetInteger(CVAR_RANDOMIZER_SETTING("GanonsSoulRewardOptions"), RO_CHECK_TRIGGER_STANDARD_REWARD);
-        if (soulOpts == RO_CHECK_TRIGGER_GREG_REWARD) {
-            mOptions[RSK_GANONS_SOUL_STONE_COUNT].ChangeOptions(NumOpts(0, 4));
-            mOptions[RSK_GANONS_SOUL_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 7));
-            mOptions[RSK_GANONS_SOUL_REWARD_COUNT].ChangeOptions(NumOpts(0, 10));
-            mOptions[RSK_GANONS_SOUL_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 9));
-        } else {
-            mOptions[RSK_GANONS_SOUL_STONE_COUNT].ChangeOptions(NumOpts(0, 3));
-            mOptions[RSK_GANONS_SOUL_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 6));
-            mOptions[RSK_GANONS_SOUL_REWARD_COUNT].ChangeOptions(NumOpts(0, 9));
-            mOptions[RSK_GANONS_SOUL_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 8));
-        }
-    });
     OPT_U8(RSK_WINCON, {"Defeat Ganon", "Anywhere", "Trigger-Stones", "Trigger-Medallions", "Trigger-Rewards", "Trigger-Dungeons", "Trigger-Tokens", "Trigger-Triforce Pieces"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleWincon"), WIDGET_CVAR_COMBOBOX, RO_WINCON_DEFEAT_GANON);
-    OPT_CALLBACK(RSK_WINCON, {
-        mOptions[RSK_WINCON_OPTIONS].Hide();
-        mOptions[RSK_WINCON_STONE_COUNT].Hide();
-        mOptions[RSK_WINCON_MEDALLION_COUNT].Hide();
-        mOptions[RSK_WINCON_REWARD_COUNT].Hide();
-        mOptions[RSK_WINCON_DUNGEON_COUNT].Hide();
-        mOptions[RSK_WINCON_TOKEN_COUNT].Hide();
-        mOptions[RSK_WINCON_TRIFORCE_COUNT].Hide();
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleWincon"), RO_WINCON_DEFEAT_GANON)) {
-            case RO_WINCON_STONES:
-                mOptions[RSK_WINCON_OPTIONS].Unhide();
-                mOptions[RSK_WINCON_STONE_COUNT].Unhide();
-                break;
-            case RO_WINCON_MEDALLIONS:
-                mOptions[RSK_WINCON_OPTIONS].Unhide();
-                mOptions[RSK_WINCON_MEDALLION_COUNT].Unhide();
-                break;
-            case RO_WINCON_REWARDS:
-                mOptions[RSK_WINCON_OPTIONS].Unhide();
-                mOptions[RSK_WINCON_REWARD_COUNT].Unhide();
-                break;
-            case RO_WINCON_DUNGEONS:
-                mOptions[RSK_WINCON_OPTIONS].Unhide();
-                mOptions[RSK_WINCON_DUNGEON_COUNT].Unhide();
-                break;
-            case RO_WINCON_TOKENS:
-                mOptions[RSK_WINCON_TOKEN_COUNT].Unhide();
-                break;
-            case RO_WINCON_TRIFORCE_PIECES:
-                mOptions[RSK_WINCON_TRIFORCE_COUNT].Unhide();
-                break;
-        }
-    });
     OPT_U8(RSK_WINCON_STONE_COUNT, {NumOpts(0, 4)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconStoneCount"), WIDGET_CVAR_SLIDER_INT, 3, true);
     OPT_U8(RSK_WINCON_MEDALLION_COUNT, {NumOpts(0, 7)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconMedallionCount"), WIDGET_CVAR_SLIDER_INT, 6, true);
     OPT_U8(RSK_WINCON_REWARD_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconRewardCount"), WIDGET_CVAR_SLIDER_INT, 9, true);
@@ -1266,66 +224,7 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_WINCON_TOKEN_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconTokenCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_WINCON_TRIFORCE_COUNT, {NumOpts(0, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconTriforceCount"), WIDGET_CVAR_SLIDER_INT, 100, true);
     OPT_U8(RSK_WINCON_OPTIONS, {"Standard Reward", "Greg as Reward", "Greg as Wildcard"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("WinconRewardOptions"), WIDGET_CVAR_COMBOBOX, RO_CHECK_TRIGGER_STANDARD_REWARD);
-    OPT_CALLBACK(RSK_WINCON_OPTIONS, {
-        const uint8_t winconOpts = CVarGetInteger(CVAR_RANDOMIZER_SETTING("WinconRewardOptions"), RO_CHECK_TRIGGER_STANDARD_REWARD);
-        if (winconOpts == RO_CHECK_TRIGGER_GREG_REWARD) {
-            mOptions[RSK_WINCON_STONE_COUNT].ChangeOptions(NumOpts(0, 4));
-            mOptions[RSK_WINCON_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 7));
-            mOptions[RSK_WINCON_REWARD_COUNT].ChangeOptions(NumOpts(0, 10));
-            mOptions[RSK_WINCON_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 9));
-        } else {
-            mOptions[RSK_WINCON_STONE_COUNT].ChangeOptions(NumOpts(0, 3));
-            mOptions[RSK_WINCON_MEDALLION_COUNT].ChangeOptions(NumOpts(0, 6));
-            mOptions[RSK_WINCON_REWARD_COUNT].ChangeOptions(NumOpts(0, 9));
-            mOptions[RSK_WINCON_DUNGEON_COUNT].ChangeOptions(NumOpts(0, 8));
-        }
-    });
     OPT_U8(RSK_KEYRINGS, {"Off", "Random", "Count", "Selection"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleKeyRings"), WIDGET_CVAR_COMBOBOX, RO_KEYRINGS_OFF);
-    OPT_CALLBACK(RSK_KEYRINGS, {
-        switch (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShuffleKeyRings"), RO_KEYRINGS_OFF)) {
-            case RO_KEYRINGS_COUNT:
-                // Show count slider.
-                mOptions[RSK_KEYRINGS_RANDOM_COUNT].Unhide();
-                mOptions[RSK_KEYRINGS_GERUDO_FORTRESS].Hide();
-                mOptions[RSK_KEYRINGS_FOREST_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_FIRE_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_WATER_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_SPIRIT_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_SHADOW_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_BOTTOM_OF_THE_WELL].Hide();
-                mOptions[RSK_KEYRINGS_GTG].Hide();
-                mOptions[RSK_KEYRINGS_GANONS_CASTLE].Hide();
-                mOptions[RSK_KEYRINGS_CHEST_GAME].Hide();
-                break;
-            case RO_KEYRINGS_SELECTION:
-                // Show checkboxes for each dungeon with keys.
-                mOptions[RSK_KEYRINGS_RANDOM_COUNT].Hide();
-                mOptions[RSK_KEYRINGS_GERUDO_FORTRESS].Unhide();
-                mOptions[RSK_KEYRINGS_FOREST_TEMPLE].Unhide();
-                mOptions[RSK_KEYRINGS_FIRE_TEMPLE].Unhide();
-                mOptions[RSK_KEYRINGS_WATER_TEMPLE].Unhide();
-                mOptions[RSK_KEYRINGS_SPIRIT_TEMPLE].Unhide();
-                mOptions[RSK_KEYRINGS_SHADOW_TEMPLE].Unhide();
-                mOptions[RSK_KEYRINGS_BOTTOM_OF_THE_WELL].Unhide();
-                mOptions[RSK_KEYRINGS_GTG].Unhide();
-                mOptions[RSK_KEYRINGS_GANONS_CASTLE].Unhide();
-                mOptions[RSK_KEYRINGS_CHEST_GAME].Unhide();
-                break;
-            default:
-                mOptions[RSK_KEYRINGS_RANDOM_COUNT].Hide();
-                mOptions[RSK_KEYRINGS_GERUDO_FORTRESS].Hide();
-                mOptions[RSK_KEYRINGS_FOREST_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_FIRE_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_WATER_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_SPIRIT_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_SHADOW_TEMPLE].Hide();
-                mOptions[RSK_KEYRINGS_BOTTOM_OF_THE_WELL].Hide();
-                mOptions[RSK_KEYRINGS_GTG].Hide();
-                mOptions[RSK_KEYRINGS_GANONS_CASTLE].Hide();
-                mOptions[RSK_KEYRINGS_CHEST_GAME].Hide();
-                break;
-        }
-    });
     OPT_U8(RSK_KEYRINGS_RANDOM_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleKeyRingsRandomCount"), WIDGET_CVAR_SLIDER_INT, 8);
     OPT_U8(RSK_KEYRINGS_GERUDO_FORTRESS, {"No", "Random", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleKeyRingsGerudoFortress"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_KEYRINGS_FOREST_TEMPLE, {"No", "Random", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("ShuffleKeyRingsForestTemple"), WIDGET_CVAR_COMBOBOX, 0);
@@ -1344,25 +243,8 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_SKIP_EPONA_RACE, {"Don't Skip", "Skip"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("SkipEponaRace"), WIDGET_CVAR_CHECKBOX, RO_GENERIC_DONT_SKIP);
     OPT_BOOL(RSK_SKIP_PLANTING_BEANS, CVAR_RANDOMIZER_SETTING("SkipPlantingBeans"));
     OPT_U8(RSK_BIG_POE_COUNT, {NumOpts(0, 10)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("BigPoeTargetCount"), WIDGET_CVAR_SLIDER_INT, 10);
-    OPT_CALLBACK(RSK_BIG_POE_COUNT, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("BigPoeTargetCount"), 10) == 0) {
-            mOptions[RSK_BIG_POES_HINT].Disable("Poe Collector will just give you the item instead with 0 big poes.");
-        } else {
-            mOptions[RSK_BIG_POES_HINT].Enable();
-        }
-    });
     OPT_BOOL(RSK_SHUFFLE_MASKS, CVAR_RANDOMIZER_SETTING("ShuffleMasks"));
     OPT_U8(RSK_GOSSIP_STONE_HINTS, {"No Hints", "Need Nothing", "Mask of Truth", "Stone of Agony"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GossipStoneHints"), WIDGET_CVAR_COMBOBOX, RO_GOSSIP_STONES_NEED_NOTHING, false, nullptr, IMFLAG_NONE);
-    OPT_CALLBACK(RSK_GOSSIP_STONE_HINTS, {
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("GossipStoneHints"), RO_GOSSIP_STONES_NEED_NOTHING) ==
-            RO_GOSSIP_STONES_NONE) {
-            mOptions[RSK_HINT_CLARITY].Hide();
-            mOptions[RSK_HINT_DISTRIBUTION].Hide();
-        } else {
-            mOptions[RSK_HINT_CLARITY].Unhide();
-            mOptions[RSK_HINT_DISTRIBUTION].Unhide();
-        }
-    });
     OPT_U8(RSK_HINT_CLARITY, {"Obscure", "Ambiguous", "Clear"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("HintClarity"), WIDGET_CVAR_COMBOBOX, RO_HINT_CLARITY_CLEAR, true, nullptr, IMFLAG_INDENT);
     OPT_U8(RSK_HINT_DISTRIBUTION, {"Useless", "Balanced", "Strong", "Very Strong"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("HintDistribution"), WIDGET_CVAR_COMBOBOX, RO_HINT_DIST_BALANCED, true, nullptr, IMFLAG_UNINDENT);
     OPT_BOOL(RSK_TOT_ALTAR_HINT, {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("AltarHint"), WIDGET_CVAR_CHECKBOX, RO_GENERIC_ON, false, nullptr, IMFLAG_INDENT);
@@ -1477,54 +359,8 @@ void Settings::CreateOptions() {
     // TODO: Remainder of Starting Items
     OPT_BOOL(RSK_NO_LOGIC, CVAR_RANDOMIZER_SETTING("NoLogic"));
     OPT_BOOL(RSK_ALL_CHECKS_REACHABLE, CVAR_RANDOMIZER_SETTING("AllChecksReachable"));
-    OPT_CALLBACK(RSK_NO_LOGIC, {
-        HandleStartingAgeUI();
-        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("NoLogic"), RO_GENERIC_OFF) == RO_GENERIC_ON) {
-            mOptions[RSK_ALL_CHECKS_REACHABLE].Disable("This option has been disabled because No Logic is enabled.");
-            if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("ShopsanityCount"), 0) > 7) {
-                CVarSetInteger(CVAR_RANDOMIZER_SETTING("ShopsanityCount"), 7);
-            }
-        } else {
-            mOptions[RSK_ALL_CHECKS_REACHABLE].Enable();
-        }
-    });
     OPT_BOOL(RSK_SKULLS_SUNS_SONG, CVAR_RANDOMIZER_SETTING("GsExpectSunsSong"));
     OPT_U8(RSK_DAMAGE_MULTIPLIER, {"x1/2", "x1", "x2", "x4", "x8", "x16", "OHKO"}, OptionCategory::Setting, "", WIDGET_CVAR_SLIDER_INT, RO_DAMAGE_MULTIPLIER_DEFAULT);
-    // Don't show any MQ options if both quests aren't available
-    if (!(OTRGlobals::Instance->HasMasterQuest() && OTRGlobals::Instance->HasOriginal())) {
-        mOptions[RSK_MQ_DUNGEON_RANDOM].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_DUNGEON_COUNT].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_DUNGEON_SET].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_DEKU_TREE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_DODONGOS_CAVERN].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_JABU_JABU].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_FOREST_TEMPLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_FIRE_TEMPLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_WATER_TEMPLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_SPIRIT_TEMPLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_SHADOW_TEMPLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_ICE_CAVERN].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_GTG].Disable("This option has been disabled because only one type of O2R has been loaded");
-        mOptions[RSK_MQ_GANONS_CASTLE].Disable("This option has been disabled because only one type of O2R has been loaded");
-    } else {
-        // If any MQ Options are available, show the MQ Dungeon Randomization Combobox
-        mOptions[RSK_MQ_DUNGEON_RANDOM].Enable();
-        mOptions[RSK_MQ_DUNGEON_COUNT].Enable();
-        mOptions[RSK_MQ_DUNGEON_SET].Enable();
-        mOptions[RSK_MQ_DEKU_TREE].Enable();
-        mOptions[RSK_MQ_DODONGOS_CAVERN].Enable();
-        mOptions[RSK_MQ_JABU_JABU].Enable();
-        mOptions[RSK_MQ_FOREST_TEMPLE].Enable();
-        mOptions[RSK_MQ_FIRE_TEMPLE].Enable();
-        mOptions[RSK_MQ_WATER_TEMPLE].Enable();
-        mOptions[RSK_MQ_SPIRIT_TEMPLE].Enable();
-        mOptions[RSK_MQ_SHADOW_TEMPLE].Enable();
-        mOptions[RSK_MQ_BOTTOM_OF_THE_WELL].Enable();
-        mOptions[RSK_MQ_ICE_CAVERN].Enable();
-        mOptions[RSK_MQ_GTG].Enable();
-        mOptions[RSK_MQ_GANONS_CASTLE].Enable();
-    }
     // clang-format on
 
     StaticData::optionNameToEnum = PopulateOptionNameToEnum();
@@ -2629,12 +1465,6 @@ const OptionGroup& Settings::GetOptionGroup(const RandomizerSettingGroupKey key)
     return mOptionGroups[key];
 }
 
-void Settings::UpdateAllOptions() {
-    for (auto& option : mOptions) {
-        option.RunCallback();
-    }
-}
-
 void Context::FinalizeSettings(const std::set<RandomizerCheck>& excludedLocations,
                                const std::set<RandomizerTrick>& enabledTricks) {
     // With certain access settings, the seed is only beatable if Starting Age is set to Child.
@@ -3204,7 +2034,6 @@ void Settings::RandomizeAllSettings() {
         if (!option.GetCVarName().empty()) {
             CVarSetInteger(option.GetCVarName().c_str(), randomIndex);
         }
-        option.RunCallback();
     }
 }
 

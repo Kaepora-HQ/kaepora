@@ -134,46 +134,8 @@ void Option::SetContextIndex(uint8_t idx) {
     }
 }
 
-void Option::Hide() {
-    hidden = true;
-}
-
-void Option::Unhide() {
-    hidden = false;
-}
-
-bool Option::IsHidden() const {
-    return hidden;
-}
-
-void Option::ChangeOptions(std::vector<std::string> opts) {
-    if (GetOptionIndex() >= opts.size()) {
-        CVarSetInteger(cvarName.c_str(), static_cast<uint8_t>(opts.size() - 1));
-    }
-    options = std::move(opts);
-}
-
-void Option::Enable() {
-    disabled = false;
-}
-
-void Option::Disable(std::string text) {
-    if (!disabled || disabledText != text) {
-        disabled = true;
-        disabledText = std::move(text);
-    }
-}
-
 OptionCategory Option::GetCategory() const {
     return this->category;
-}
-
-void Option::AddFlag(const int imFlag_) {
-    imFlags |= imFlag_;
-}
-
-void Option::RemoveFlag(const int imFlag_) {
-    imFlags &= ~imFlag_;
 }
 
 uint8_t Option::GetValueFromText(const std::string text) {
@@ -189,29 +151,14 @@ uint8_t Option::GetValueFromText(const std::string text) {
 Option::Option(size_t key_, std::vector<std::string> options_, OptionCategory category_, std::string cvarName_,
                WidgetType widgetType_, uint8_t defaultOption_, bool defaultHidden_, WidgetFunc callback_, int imFlags_)
     : key(key_), options(std::move(options_)), category(category_), cvarName(std::move(cvarName_)),
-      widgetType(widgetType_), defaultOption(defaultOption_), defaultHidden(defaultHidden_), imFlags(imFlags_),
-      callback(callback_) {
+      defaultOption(defaultOption_) {
     contextSelection = defaultOption;
-    hidden = defaultHidden;
-    for (size_t i = 0; i < options.size(); i++) {
-        optionsMap.emplace(static_cast<int32_t>(i), options[i].c_str());
-    }
     PopulateTextToNum();
 }
 
 void Option::PopulateTextToNum() {
     for (uint8_t count = 0; count < options.size(); count++) {
         optionsTextToVar[options[count]] = count;
-    }
-}
-
-void Option::SetCallback(WidgetFunc callback) {
-    this->callback = callback;
-}
-
-void Option::RunCallback() {
-    if (callback != nullptr) {
-        this->callback(widgetInfo);
     }
 }
 
