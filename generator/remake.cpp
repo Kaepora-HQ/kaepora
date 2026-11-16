@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
+#include <deque>
 #include <map>
 #include <set>
 
@@ -164,4 +165,25 @@ std::vector<RemakeChest> LoadRemakeChests() {
         }
     }
     return chests;
+}
+
+nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {
+    std::map<RandomizerGet, std::deque<std::string>> names;
+    for (const RemakeChest& chest : chests) {
+        if (chest.shuffled) {
+            names[chest.sohItem].push_back(chest.item);
+        }
+    }
+    nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
+    for (const RemakeChest& chest : chests) {
+        if (!chest.shuffled) {
+            continue;
+        }
+        RandomizerGet placed = Rando::Context::GetInstance()->GetItemLocation(chest.location)->GetPlacedRandomizerGet();
+        std::deque<std::string>& candidates = names.at(placed);
+        plan["chests"].push_back(
+            { { "hash", chest.hash }, { "files", chest.files }, { "drop_actor", candidates.front() } });
+        candidates.pop_front();
+    }
+    return plan;
 }
