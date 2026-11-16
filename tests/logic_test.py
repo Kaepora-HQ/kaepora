@@ -211,6 +211,20 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
         self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
 
+    def test_shadow_temple_hover_boots_chest_needs_no_hover_boots(self):
+        # On a first visit the corridor floor falls under Link, and he climbs out of the pit on Dead Hand's side. The
+        # Nocturne of Shadow, the only way into the temple, warps him out.
+        no_hover_boots = ("Shadow Temple Hover Boots Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots))
+
+    def test_shadow_temple_fifth_lock_guards_the_boss_key(self):
+        # The four other locks stand on the way to the maze, so the boss key room takes all five keys. The door before
+        # the boss has no lock.
+        self.assertTrue(self.reachable("Shadow Temple Boss Key Chest"))
+        boss_key_for_last_key = ("Shadow Temple Invisible Floormaster Chest", "Shadow Temple Boss Key")
+        self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", boss_key_for_last_key))
+        self.assertTrue(self.reachable("Bongo Bongo", boss_key_for_last_key))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

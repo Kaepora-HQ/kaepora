@@ -109,22 +109,22 @@ Spirit Temple Hallway Right Invisible Chest	9143177002861777924	Banc/SpiritTempl
 Spirit Temple Hallway Left Invisible Chest	14040210993541550542	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Spirit Temple Boss Key Chest	16272168033146555902	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Spirit Temple Topmost Chest	13828480906010430010	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_BombBundle_Small	yes	
-Shadow Temple Map Chest	13528903653876646082	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	dungeon with changed locks and keys
-Shadow Temple Hover Boots Chest	14535080241831873137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_HoverBoot	no	dungeon with changed locks and keys
-Shadow Temple Compass Chest	1733372171176975157	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	no	dungeon with changed locks and keys
-Shadow Temple Early Silver Rupee Chest	1111717451118505545	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Shadow Temple Invisible Blades Invisible Chest	3718790579351798247	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
+Shadow Temple Map Chest	13528903653876646082	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
+Shadow Temple Hover Boots Chest	14535080241831873137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_HoverBoot	yes	
+Shadow Temple Compass Chest	1733372171176975157	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
+Shadow Temple Early Silver Rupee Chest	1111717451118505545	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	The remake moves this chest to a new side room behind the invisible scythe room.
+Shadow Temple Invisible Blades Invisible Chest	3718790579351798247	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	The remake moves this chest to a new side room behind the invisible scythe room.
+Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	The remake's falling spikes room has two of SoH's three chests, and which one it lacks is not known.
 Shadow Temple Falling Spikes Upper Chest				no	no remake chest
-Shadow Temple Falling Spikes Switch Chest	5781953901224064730	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
+Shadow Temple Falling Spikes Switch Chest	5781953901224064730	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Shadow Temple Invisible Spikes Chest				no	no remake chest
-Shadow Temple Wind Hint Chest	12345747231768877602	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item; dungeon with changed locks and keys
-Shadow Temple After Wind Enemy Chest	5681107746948738726	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Green	no	dungeon with changed locks and keys
-Shadow Temple After Wind Hidden Chest	169081039115821925	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Shadow Temple Spike Walls Left Chest	9852624243105848451	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Tbox_MagicJar_Large	no	Tbox_MagicJar_Large has no SoH item; dungeon with changed locks and keys
-Shadow Temple Boss Key Chest	9221365632831348137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
-Shadow Temple Invisible Floormaster Chest	17902550525792072472	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
+Shadow Temple Wind Hint Chest	12345747231768877602	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
+Shadow Temple After Wind Enemy Chest	5681107746948738726	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Green	yes	
+Shadow Temple After Wind Hidden Chest	169081039115821925	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Shadow Temple Spike Walls Left Chest	9852624243105848451	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Tbox_MagicJar_Large	no	Tbox_MagicJar_Large has no SoH item
+Shadow Temple Boss Key Chest	9221365632831348137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
+Shadow Temple Invisible Floormaster Chest	17902550525792072472	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Bottom of the Well Front Left Fake Wall Chest	8975637636514249074	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
 Bottom of the Well Front Center Bombable Chest	5429815628949128345	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Right Bottom Fake Wall Chest	8397646530660039355	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_SmallKey	yes	

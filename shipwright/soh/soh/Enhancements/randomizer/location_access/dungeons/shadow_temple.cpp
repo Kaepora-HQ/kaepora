@@ -65,6 +65,8 @@ void RegionTable_Init_ShadowTemple() {
     }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        // The corridor floor falls under Link, and he climbs out of the pit on Dead Hand's side. The way back takes the
+        // Hover Boots, or the warp song every Link here holds: the Nocturne of Shadow is the only way into the temple.
         ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              true),
     });
 
@@ -389,7 +391,7 @@ void RegionTable_Init_ShadowTemple() {
         ENTRANCE(RR_SHADOW_TEMPLE_BEYOND_BOAT,   (logic->Get(LOGIC_SHADOW_BRIDGE_BEYOND_BOAT_LOWERED) && (logic->IsAdult || (ctx->GetTrickOption(RT_SHADOW_BUNNY_STATUE) && logic->BunnyHood() && logic->CanJumpslash()))) ||
                                                      logic->CanMeleeRecoilHover(RECOIL_HAMMER)),
         ENTRANCE(RR_SHADOW_TEMPLE_BROKEN_PILLAR, logic->IsAdult && logic->CanUse(RG_SONG_OF_TIME)),
-        ENTRANCE(RR_SHADOW_TEMPLE_PRE_BOSS_ROOM, logic->SmallKeys(SCENE_SHADOW_TEMPLE, 5)),
+        ENTRANCE(RR_SHADOW_TEMPLE_PRE_BOSS_ROOM, true),
     });
 
     areaTable[RR_SHADOW_TEMPLE_BROKEN_PILLAR] = Region("Shadow Temple Broken Pillar", SCENE_SHADOW_TEMPLE, {}, {
@@ -406,7 +408,7 @@ void RegionTable_Init_ShadowTemple() {
         ENTRANCE(RR_SHADOW_TEMPLE_BEYOND_BOAT,      true),
         ENTRANCE(RR_SHADOW_TEMPLE_X_CROSS,          true),
         ENTRANCE(RR_SHADOW_TEMPLE_THREE_SKULL_JARS, true),
-        ENTRANCE(RR_SHADOW_TEMPLE_WOODEN_SPIKES,    true),
+        ENTRANCE(RR_SHADOW_TEMPLE_WOODEN_SPIKES,    logic->SmallKeys(SCENE_SHADOW_TEMPLE, 5)),
     });
 
     areaTable[RR_SHADOW_TEMPLE_X_CROSS] = Region("Shadow Temple X-Cross", SCENE_SHADOW_TEMPLE, {}, {
@@ -435,12 +437,12 @@ void RegionTable_Init_ShadowTemple() {
         LOCATION(RC_SHADOW_TEMPLE_SPIKE_WALLS_POT_1,            logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_SHADOW_TEMPLE_MAZE, true),
+        ENTRANCE(RR_SHADOW_TEMPLE_MAZE, logic->SmallKeys(SCENE_SHADOW_TEMPLE, 5)),
     });
 
     areaTable[RR_SHADOW_TEMPLE_PRE_BOSS_ROOM] = Region("Shadow Temple Pre Boss Room", SCENE_SHADOW_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_SHADOW_TEMPLE_ACROSS_CHASM, logic->SmallKeys(SCENE_SHADOW_TEMPLE, 5)),
+        ENTRANCE(RR_SHADOW_TEMPLE_ACROSS_CHASM, true),
         ENTRANCE(RR_SHADOW_TEMPLE_BOSS_DOOR,    (ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)) && (logic->CanUse(RG_HOVER_BOOTS) || (logic->BunnyHood() && logic->IsAdult))),
     });
 
