@@ -151,7 +151,8 @@ void RegionTable_Init_GoronCity() {
         LOCATION(RC_GC_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_GC_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
+        // The game sells the Goron Tunic only to adult Link.
+        LOCATION(RC_GC_SHOP_ITEM_5, logic->IsAdult && logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_GORON) && GetCheckPrice() <= GetWalletCapacity()),
