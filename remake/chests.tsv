@@ -66,20 +66,20 @@ Forest Temple Bow Chest	11082303891540711688	Banc/ForestTemple/ForestTemple_Stat
 Forest Temple Red Poe Chest	3433400840978782007	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Forest Temple Blue Poe Chest	6948525240950728236	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Forest Temple Basement Chest	9038700938965170329	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Large	yes	
-Fire Temple Near Boss Chest	5634724236470386190	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Flare Dancer Chest	8757492004108970488	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Fire Temple Boss Key Chest	14060099092170010696	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
-Fire Temple Big Lava Room Blocked Door Chest	1705064956286753527	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Big Lava Room Lower Open Door Chest	3949488292768750868	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Boulder Maze Lower Chest	9634924691849556346	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Boulder Maze Upper Chest	3688520809244472975	Banc/FireTemple/FireTemple_Dynamic.bcett.byml.zs	Item_Dungeon_Map	no	dungeon with changed locks and keys
-Fire Temple Boulder Maze Side Room Chest	12567412825200613393	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Boulder Maze Shortcut Chest	16785682308850448108	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Scarecrow Chest	862385681502746018	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	no	dungeon with changed locks and keys
-Fire Temple Map Chest	16713240760352215634	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	no	dungeon with changed locks and keys
-Fire Temple Compass Chest	12945617941305968586	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Highest Goron Chest	10521366928524045067	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Fire Temple Megaton Hammer Chest	12083259659219538030	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Hammer	no	dungeon with changed locks and keys
+Fire Temple Near Boss Chest	5634724236470386190	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Flare Dancer Chest	8757492004108970488	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
+Fire Temple Boss Key Chest	14060099092170010696	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
+Fire Temple Big Lava Room Blocked Door Chest	1705064956286753527	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Big Lava Room Lower Open Door Chest	3949488292768750868	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Boulder Maze Lower Chest	3688520809244472975	Banc/FireTemple/FireTemple_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	
+Fire Temple Boulder Maze Upper Chest	9634924691849556346	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Boulder Maze Side Room Chest	12567412825200613393	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Boulder Maze Shortcut Chest	16785682308850448108	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Scarecrow Chest	862385681502746018	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
+Fire Temple Map Chest	16713240760352215634	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
+Fire Temple Compass Chest	12945617941305968586	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Highest Goron Chest	10521366928524045067	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Fire Temple Megaton Hammer Chest	12083259659219538030	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Hammer	yes	
 Water Temple Map Chest	16384925224245172970	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	dungeon with changed locks and keys
 Water Temple Compass Chest	16490222392193949581	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
 Water Temple Torches Chest	18099019250896853049	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys

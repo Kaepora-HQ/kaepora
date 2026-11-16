@@ -225,6 +225,27 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", boss_key_for_last_key))
         self.assertTrue(self.reachable("Bongo Bongo", boss_key_for_last_key))
 
+    def test_fire_temple_locks_take_one_key_more_each(self):
+        # A new game starts with the lowest locked door open, and seven locks take a key. Four stand before the narrow
+        # path room. Its door into the fire wall chase has no lock, so the chase door into the maze is the fifth. The
+        # Song of Time cage door and the remake's lock into the Flare Dancer room come last, in either order.
+        def without(*chests):
+            return [(f"Fire Temple {chest} Chest", "Green Rupee") for chest in chests]
+        # The lower boulder maze holds the map. The walkway above it, reached through the chase, holds a key, which
+        # cannot open the narrow path room's door before it.
+        self.assertTrue(self.reachable("Fire Temple Boulder Maze Upper Chest"))
+        self.assertFalse(self.reachable("Fire Temple Boulder Maze Upper Chest", *without("Boulder Maze Side Room")))
+        self.assertTrue(self.reachable("Fire Temple Compass Chest", *without("Boulder Maze Shortcut")))
+        self.assertFalse(self.reachable("Fire Temple Compass Chest",
+                                        *without("Boulder Maze Shortcut", "Boulder Maze Upper")))
+        # With a hammer and Hover Boots found outside, Link crosses the maze platforms to the Flare Dancer door without
+        # opening the cage door.
+        outside = (("KF Mido Top Left Chest", "Megaton Hammer"), ("KF Mido Top Right Chest", "Hover Boots"))
+        only_six_keys = without("Compass", "Highest Goron")
+        self.assertTrue(self.reachable("Fire Temple Flame Maze Right Pot 1", *outside, *only_six_keys))
+        self.assertFalse(self.reachable("Fire Temple Megaton Hammer Chest", *outside, *only_six_keys))
+        self.assertTrue(self.reachable("Fire Temple Megaton Hammer Chest", *outside, *without("Highest Goron")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
