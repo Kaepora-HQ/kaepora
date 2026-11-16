@@ -1,0 +1,64 @@
+remake_item	soh_item
+Item_Arrow_Ice	Ice Arrows
+Item_BombBag_Small	Progressive Bomb Bag
+Item_BombBundle_Small	Bombs (5)
+Item_BombchuBundle_Small	Bombchus (5)
+Item_Boomerang	Boomerang
+Item_DekuStickBundle_Small	Deku Stick (1)
+Item_Dungeon_BossKey	Fire Temple Boss Key
+Item_Dungeon_BossKey	Forest Temple Boss Key
+Item_Dungeon_BossKey	Ganon's Castle Boss Key
+Item_Dungeon_BossKey	Shadow Temple Boss Key
+Item_Dungeon_BossKey	Spirit Temple Boss Key
+Item_Dungeon_BossKey	Water Temple Boss Key
+Item_Dungeon_Compass	Bottom of the Well Compass
+Item_Dungeon_Compass	Dodongo's Cavern Compass
+Item_Dungeon_Compass	Fire Temple Compass
+Item_Dungeon_Compass	Forest Temple Compass
+Item_Dungeon_Compass	Great Deku Tree Compass
+Item_Dungeon_Compass	Ice Cavern Compass
+Item_Dungeon_Compass	Jabu-Jabu's Belly Compass
+Item_Dungeon_Compass	Shadow Temple Compass
+Item_Dungeon_Compass	Spirit Temple Compass
+Item_Dungeon_Map	Bottom of the Well Map
+Item_Dungeon_Map	Dodongo's Cavern Map
+Item_Dungeon_Map	Fire Temple Map
+Item_Dungeon_Map	Forest Temple Map
+Item_Dungeon_Map	Great Deku Tree Map
+Item_Dungeon_Map	Ice Cavern Map
+Item_Dungeon_Map	Jabu-Jabu's Belly Map
+Item_Dungeon_Map	Shadow Temple Map
+Item_Dungeon_Map	Spirit Temple Map
+Item_Dungeon_Map	Water Temple Map
+Item_Dungeon_SmallKey	Bottom of the Well Small Key
+Item_Dungeon_SmallKey	Fire Temple Small Key
+Item_Dungeon_SmallKey	Forest Temple Small Key
+Item_Dungeon_SmallKey	Shadow Temple Small Key
+Item_Dungeon_SmallKey	Spirit Temple Small Key
+Item_Dungeon_SmallKey	Training Ground Small Key
+Item_Dungeon_SmallKey	Water Temple Small Key
+Item_Gauntlet_Gold	Strength Upgrade
+Item_Gauntlet_Silver	Strength Upgrade
+Item_GlassTruth	Lens of Truth
+Item_Hammer	Megaton Hammer
+Item_HeavyBoot	Iron Boots
+Item_Hookshot	Progressive Hookshot
+Item_HoverBoot	Hover Boots
+Item_Longshot	Progressive Hookshot
+Item_Range_Bow	Progressive Bow
+Item_Range_SlingShot	Progressive Slingshot
+Item_ScrubBusinessSeed	
+Item_Shield_Mirror	Mirror Shield
+Item_Sword_Kokiri	Kokiri Sword
+Obj_Heart_Piece	Piece of Heart
+Obj_MiniGame_SmallKey	Chest Game Small Key
+TBox_ArrowBundle_Large	Arrows (30)
+TBox_ArrowBundle_Medium	Arrows (10)
+TBox_DekuNutBundle	Deku Nuts (5)
+TBox_Rupee_Blue	Blue Rupee
+TBox_Rupee_Green	Green Rupee
+TBox_Rupee_Purple	Purple Rupee
+TBox_Rupee_Red	Red Rupee
+TBox_Shield_Deku	Deku Shield
+TBox_Shield_Hylian	Hylian Shield
+Tbox_MagicJar_Large	
