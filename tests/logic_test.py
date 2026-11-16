@@ -12,6 +12,7 @@ import unittest
 REACH = None
 # The 10 and 30 Gold Skulltula rewards are the only wallet upgrades.
 NO_WALLET_UPGRADE = (("Kak 10 Gold Skulltula Reward", "Green Rupee"), ("Kak 30 Gold Skulltula Reward", "Green Rupee"))
+ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
 
 
 class LogicTest(unittest.TestCase):
@@ -41,10 +42,24 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
         self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
 
+    def test_a_tunic_needs_the_largest_wallet(self):
+        # Each tunic costs 600.
+        for location in ("ZD Shop Item 1", "GC Shop Item 5"):
+            self.assertFalse(self.reachable(location, ONE_WALLET_UPGRADE))
+            self.assertTrue(self.reachable(location))
+        # The price belongs to the shop slot, so it holds whatever is placed there.
+        self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
+
     def test_shops_charge_the_remakes_prices(self):
         # A fish costs 50 at the Market Potion Shop. 20 bombchus cost 240.
         self.assertTrue(self.reachable("Market Potion Shop Item 8", *NO_WALLET_UPGRADE))
         self.assertFalse(self.reachable("Market Bombchu Shop Item 5", *NO_WALLET_UPGRADE))
+
+    def test_wallets_hold_200_then_500(self):
+        # A poe costs 200 at the Market Potion Shop. 15 bombchus cost 210 and 30 cost 300.
+        self.assertTrue(self.reachable("Market Potion Shop Item 7", *NO_WALLET_UPGRADE))
+        self.assertFalse(self.reachable("Market Bombchu Shop Item 7", *NO_WALLET_UPGRADE))
+        self.assertTrue(self.reachable("Market Bombchu Shop Item 8", ONE_WALLET_UPGRADE))
 
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))

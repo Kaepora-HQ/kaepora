@@ -113,15 +113,14 @@ uint16_t GetCheckPrice(RandomizerCheck check /* = RC_UNKNOWN_CHECK */) {
     return itemLoc->GetPrice();
 }
 
+// The remake's three wallets.
 uint16_t GetWalletCapacity() {
-    if (logic->HasItem(RG_TYCOON_WALLET)) {
-        return 999;
-    } else if (logic->HasItem(RG_GIANT_WALLET)) {
-        return 500;
+    if (logic->HasItem(RG_GIANT_WALLET)) {
+        return 1000;
     } else if (logic->HasItem(RG_ADULT_WALLET)) {
-        return 200;
+        return 500;
     } else if (logic->HasItem(RG_CHILD_WALLET)) {
-        return 99;
+        return 200;
     }
     return 0;
 }
