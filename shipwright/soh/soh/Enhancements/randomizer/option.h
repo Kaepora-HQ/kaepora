@@ -179,7 +179,6 @@ class Option {
      * @return const std::string&
      */
     const std::string& GetName() const;
-    const std::string& GetDescription() const;
 
     /**
      * @brief Get the text of the Option value of the selected index.
@@ -267,8 +266,6 @@ class Option {
     void Disable(std::string text);
 
     OptionCategory GetCategory() const;
-
-    void AddWidget(WidgetPath& path);
 
     void AddFlag(int imFlag_);
     void RemoveFlag(int imFlag_);
@@ -482,7 +479,6 @@ class OptionGroup {
 
     const std::string& GetDescription() const;
 
-    void AddWidgets(WidgetPath& path) const;
     void Disable();
     void Enable();
 

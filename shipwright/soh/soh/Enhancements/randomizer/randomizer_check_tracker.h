@@ -2,32 +2,8 @@
 
 #include <nlohmann/json.hpp>
 #include "randomizerTypes.h"
-#include "soh/SohGui/UIWidgets.hpp"
 
 namespace CheckTracker {
-
-class CheckTrackerSettingsWindow final : public Ship::GuiWindow {
-  public:
-    using GuiWindow::GuiWindow;
-    ~CheckTrackerSettingsWindow(){};
-
-  protected:
-    void InitElement() override{};
-    void DrawElement() override;
-    void UpdateElement() override{};
-};
-
-class CheckTrackerWindow final : public Ship::GuiWindow {
-  public:
-    using GuiWindow::GuiWindow;
-    void Draw() override;
-    ~CheckTrackerWindow(){};
-
-  protected:
-    void InitElement() override;
-    void DrawElement() override;
-    void UpdateElement() override;
-};
 
 // Converts an index into a Little Endian bitmask, as follows:
 // 00: 0000000100000000
