@@ -90,7 +90,7 @@ Water Temple Cracked Wall Chest				no	no remake chest
 Water Temple Boss Key Chest	10378828369334876242	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Water Temple Longshot Chest	18059711820131847165	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Longshot	yes	
 Water Temple River Chest				no	no remake chest
-Spirit Temple Silver Gauntlets Chest	2490063409521505179	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Gauntlet_Silver	no	a tier above Goron's Bracelet; opened after the Golden Gauntlets it may lower strength
+Spirit Temple Silver Gauntlets Chest	2490063409521505179	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Gauntlet_Silver	yes	
 Spirit Temple Mirror Shield Chest	10012167258643363548	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Shield_Mirror	yes	
 Spirit Temple Child Bridge Chest	5309180490719879013	Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
 Spirit Temple Child Early Torches Chest	5703423643219134246	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
@@ -167,7 +167,7 @@ Ganon's Castle Forest Trial Chest	16913531450403950487	Banc/InsideGanonCastle/In
 Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
 Ganon's Castle Water Trial Right Chest	14404733996390762670	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	Item_BombchuBundle_Small	yes	
 Ganon's Castle Shadow Trial Front Chest	18277713685010400796	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
-Ganon's Castle Shadow Trial Golden Gauntlets Chest	17657623307936361670	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Gauntlet_Gold	no	a tier above Goron's Bracelet; the Silver Gauntlets opened after it may lower strength
+Ganon's Castle Shadow Trial Golden Gauntlets Chest	17657623307936361670	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Gauntlet_Gold	yes	
 Ganon's Castle Spirit Trial Crystal Switch Chest	7899179288432849355	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 Ganon's Castle Spirit Trial Invisible Chest				no	no remake chest
 Ganon's Castle Light Trial First Left Chest	1029712040059298120	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
