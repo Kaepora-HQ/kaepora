@@ -127,7 +127,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     Romfs romfs(nup);
     const std::string dictionary = Dictionary(romfs, "bcett.byml.zsdic");
 
-    std::map<std::string, byml::Node> placements;
+    std::map<std::string, byml::Document> placements;
     std::set<std::string> changed;
     for (const PlannedChest& chest : plan.chests) {
         for (const std::string& path : chest.files) {
@@ -136,7 +136,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 if (placement == placements.end()) {
                     placement = placements.emplace(path, byml::Parse(Decompress(romfs.Read(path), dictionary))).first;
                 }
-                std::string& dropActor = DropActor(placement->second, chest.hash);
+                std::string& dropActor = DropActor(placement->second.root, chest.hash);
                 if (dropActor != chest.dropActor) {
                     dropActor = chest.dropActor;
                     changed.insert(path);
