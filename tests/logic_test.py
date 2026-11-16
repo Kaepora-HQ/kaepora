@@ -46,6 +46,10 @@ class LogicTest(unittest.TestCase):
         # With no Goron's Bracelet and the only bomb bag inside it, Dodongo's Cavern stays shut.
         self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
 
+    def test_biggorons_sword_needs_the_whole_trade_chain(self):
+        self.assertTrue(self.reachable("DMT Trade Claim Check"))
+        self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
