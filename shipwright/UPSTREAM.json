@@ -1,0 +1,16 @@
+{
+  "Shipwright": {
+    "url": "https://github.com/HarbourMasters/Shipwright.git",
+    "branch": "develop",
+    "imported": "051e497dbdf6e68ca06ff4e0c7a0afd061109129",
+    "reviewed": "051e497dbdf6e68ca06ff4e0c7a0afd061109129",
+    "path": "shipwright"
+  },
+  "libultraship": {
+    "url": "https://github.com/kenix3/libultraship.git",
+    "branch": "port-maintenance",
+    "imported": "da6daf1a50a5e46d6641408d52227e31e85e46df",
+    "reviewed": "da6daf1a50a5e46d6641408d52227e31e85e46df",
+    "path": "shipwright/libultraship"
+  }
+}
