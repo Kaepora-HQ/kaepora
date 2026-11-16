@@ -1,5 +1,5 @@
-// A plan as a mod: each placement file the plan changes, and the size table if a file outgrows its entry, at their
-// paths in the game's RomFS.
+// A plan as a mod: each placement file the plan changes, the size table if a file outgrows its entry, and the game
+// data list if the plan names start flags, at their paths in the game's RomFS.
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -19,6 +19,7 @@ struct PlannedChest {
 
 struct Plan {
     std::vector<PlannedChest> chests;
+    std::vector<std::string> startFlags; // names of saved Bools a new game starts with set
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

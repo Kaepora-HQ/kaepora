@@ -6,6 +6,7 @@
 #include "romfs.h"
 
 #include <algorithm>
+#include <bit>
 #include <charconv>
 #include <cstring>
 #include <format>
@@ -29,7 +30,7 @@ static PlannedChest ParseChest(const nlohmann::json& chest) {
 
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
-    Plan plan;
+    Plan plan{ .startFlags = json.at("start_flags").get<std::vector<std::string>>() };
     for (size_t i = 0; i < chests.size(); ++i) {
         try {
             plan.chests.push_back(ParseChest(chests[i]));
@@ -123,6 +124,61 @@ static bool RaiseSize(std::string& table, std::string_view path, size_t size) {
     throw std::runtime_error(std::format("{}: the size table has no entry for this file", path));
 }
 
+// A new game starts with the defaults this list gives every saved value.
+constexpr std::string_view GameDataListPath = "GameData/GameDataList.Product.110.byml.zs";
+
+// MurmurHash3 x86_32 with seed 0. The game data list keys each value by this hash of its name.
+static uint32_t Murmur3(std::string_view name) {
+    const auto mix = [](uint32_t k) { return std::rotl(k * 0xCC9E2D51, 15) * 0x1B873593; };
+    const size_t blocks = name.size() / 4 * 4;
+    uint32_t hash = 0;
+    for (size_t i = 0; i < blocks; i += 4) {
+        hash = std::rotl(hash ^ mix(ReadAt<uint32_t>(name, i)), 13) * 5 + 0xE6546B64;
+    }
+    uint32_t tail = 0;
+    for (size_t i = blocks; i < name.size(); ++i) {
+        tail |= uint32_t(uint8_t(name[i])) << 8 * (i - blocks);
+    }
+    hash ^= mix(tail) ^ uint32_t(name.size());
+    hash = (hash ^ hash >> 16) * 0x85EBCA6B;
+    hash = (hash ^ hash >> 13) * 0xC2B2AE35;
+    return hash ^ hash >> 16;
+}
+
+// The game data list with the default of each named Bool set to true, compressed as the game's own copy is. A Bool's
+// default sits inside its entry, so the list keeps its size and still fits its size table entry.
+static std::string StartFlagList(Romfs& romfs, const std::vector<std::string>& names) {
+    try {
+        const std::string dictionary = Dictionary(romfs, "zs.zsdic");
+        byml::Document list = byml::Parse(Decompress(romfs.Read(std::string(GameDataListPath)), dictionary));
+        byml::Node* data = Find(list.root, "Data");
+        byml::Node* bools = data == nullptr ? nullptr : Find(*data, "Bool");
+        if (bools == nullptr) {
+            throw std::runtime_error("the list has no Data.Bool");
+        }
+        for (const std::string& name : names) {
+            const uint32_t hash = Murmur3(name);
+            const auto entry = std::ranges::find_if(bools->array, [&](byml::Node& candidate) {
+                const byml::Node* candidateHash = Find(candidate, "Hash");
+                return candidateHash != nullptr && candidateHash->scalar == hash;
+            });
+            byml::Node* value = entry == bools->array.end() ? nullptr : Find(*entry, "DefaultValue");
+            if (value == nullptr || value->type != byml::Type::Bool) {
+                throw std::runtime_error(
+                    std::format("start flag \"{}\" is not a true-or-false value in the list", name));
+            }
+            if (value->scalar != 0) {
+                throw std::runtime_error(
+                    std::format("start flag \"{}\" is already true by default, or is listed twice", name));
+            }
+            value->scalar = 1;
+        }
+        return Compress(byml::Write(list), dictionary);
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::format("{}: {}", GameDataListPath, e.what()));
+    }
+}
+
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
     Romfs romfs(nup);
     const std::string dictionary = Dictionary(romfs, "bcett.byml.zsdic");
@@ -157,6 +213,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
     if (tableChanged) {
         mod.emplace(SizeTablePath, Compress(table));
+    }
+    if (!plan.startFlags.empty()) {
+        mod.emplace(GameDataListPath, StartFlagList(romfs, plan.startFlags));
     }
     return mod;
 }

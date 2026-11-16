@@ -73,14 +73,20 @@ add_test(NAME logic COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/logic_test.py
 # The game's container is Nintendo's data and stays out of git, so the tests that read it need its path.
 set(KAEPORA_GAME_NUP "" CACHE FILEPATH "The game's .nup container, read by the patcher tests")
 set(KAEPORA_TESTED_MOD "" CACHE FILEPATH "The placement file of the chest-swap mod tested in the game")
+set(KAEPORA_TESTED_START_MOD "" CACHE FILEPATH "The game data list of the start-flag mod tested in the game")
 set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
-    foreach(test larger-plan bad-input size-table size-table-unchanged)
+    foreach(test larger-plan bad-input size-table size-table-unchanged start-flags)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod
             COMMAND ${PATCH_TEST} tested-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}" "${KAEPORA_TESTED_MOD}")
+    endif()
+    if(KAEPORA_TESTED_START_MOD)
+        add_test(NAME patch-tested-start-mod
+            COMMAND ${PATCH_TEST} tested-start-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_START_MOD}")
     endif()
 endif()
