@@ -265,7 +265,7 @@ void RegionTable_Init_FireTemple() {
         //Exits
         ENTRANCE(RR_FIRE_TEMPLE_BIG_LAVA_ROOM,      logic->TakeDamage()),
         ENTRANCE(RR_FIRE_TEMPLE_BOULDER_MAZE_LOWER, logic->SmallKeys(SCENE_FIRE_TEMPLE, 5)),
-        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CHASE,    logic->SmallKeys(SCENE_FIRE_TEMPLE, 6)),
+        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CHASE,    true),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CAGE,     logic->CanHitEyeTargets()),
     });
 
@@ -276,7 +276,7 @@ void RegionTable_Init_FireTemple() {
         LOCATION(RC_FIRE_TEMPLE_FIRE_WALL_EXIT_HEART, logic->FireTimer() >= 16),
     }, {
         //Exits
-        ENTRANCE(RR_FIRE_TEMPLE_NARROW_PATH_ROOM,     logic->FireTimer() >= 24 && logic->SmallKeys(SCENE_FIRE_TEMPLE, 6)),
+        ENTRANCE(RR_FIRE_TEMPLE_NARROW_PATH_ROOM,     logic->FireTimer() >= 24),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CAGE,       logic->FireTimer() >= 16 && logic->IsAdult),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_UPPER_DOOR, logic->FireTimer() >= 24 && logic->IsAdult),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_SIDE_DOOR,  logic->FireTimer() >= 16 && (logic->IsAdult || (logic->CanMidairDamageBoost() && logic->CanUse(RG_BOTTLE_WITH_FAIRY)))),
@@ -296,7 +296,7 @@ void RegionTable_Init_FireTemple() {
     }, {
         //Exits
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CHASE, true),
-        ENTRANCE(RR_FIRE_TEMPLE_CORRIDOR,        logic->SmallKeys(SCENE_FIRE_TEMPLE, 7)),
+        ENTRANCE(RR_FIRE_TEMPLE_CORRIDOR,        logic->SmallKeys(SCENE_FIRE_TEMPLE, 6)),
     });
 
     //firetimer for entering this area from RR_FIRE_TEMPLE_FIRE_WALL_CHASE is handled there
@@ -358,7 +358,7 @@ void RegionTable_Init_FireTemple() {
 
     areaTable[RR_FIRE_TEMPLE_CORRIDOR] = Region("Fire Temple Corridor", SCENE_FIRE_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_SIDE_DOOR, logic->SmallKeys(SCENE_FIRE_TEMPLE, 7)),
+        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_SIDE_DOOR, logic->SmallKeys(SCENE_FIRE_TEMPLE, 6)),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_MAZE_MAIN,      true),
     });
 
@@ -443,12 +443,12 @@ void RegionTable_Init_FireTemple() {
         LOCATION(RC_FIRE_TEMPLE_FLAME_MAZE_RIGHT_POT_4, logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_FIRE_TEMPLE_3F_FLARE_DANCER, logic->HasExplosives()),
+        ENTRANCE(RR_FIRE_TEMPLE_3F_FLARE_DANCER, logic->SmallKeys(SCENE_FIRE_TEMPLE, 8)),
     });
 
     areaTable[RR_FIRE_TEMPLE_3F_FLARE_DANCER] = Region("Fire Temple 3F Flare Dancer", SCENE_FIRE_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FIRE_TEMPLE_FIRE_MAZE_PAST_WALL,   AnyAgeTime([]{return logic->CanKillEnemy(RE_FLARE_DANCER);})),
+        ENTRANCE(RR_FIRE_TEMPLE_FIRE_MAZE_PAST_WALL,   AnyAgeTime([]{return logic->CanKillEnemy(RE_FLARE_DANCER);}) && logic->SmallKeys(SCENE_FIRE_TEMPLE, 8)),
         ENTRANCE(RR_FIRE_TEMPLE_ABOVE_3F_FLARE_DANCER, AnyAgeTime([]{return logic->CanKillEnemy(RE_FLARE_DANCER);})),
     });
 
