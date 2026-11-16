@@ -246,6 +246,39 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Fire Temple Megaton Hammer Chest", *outside, *only_six_keys))
         self.assertTrue(self.reachable("Fire Temple Megaton Hammer Chest", *outside, *without("Highest Goron")))
 
+    # A new game starts with the Water Temple's west middle-floor door open. Three locks take a key, the waterfall,
+    # boulders and central pillar doors. Each opens off the main hall, so any of them can be the third opened.
+
+    def test_water_temple_waterfall_door_takes_the_third_key(self):
+        # The door at the top of the waterfall room has no lock. Before the temple's own Longshot, Link reaches three
+        # keys: the bow target key needs it.
+        self.assertTrue(self.reachable("Water Temple Longshot Chest"))
+        self.assertFalse(self.reachable("Water Temple Longshot Chest", ("Water Temple Dragon Chest", "Green Rupee")))
+
+    def test_water_temple_boulders_door_takes_the_third_key(self):
+        # The door into the boss key room has no lock. A Longshot found outside crosses the spike moat and reaches the
+        # bow target key before any lock.
+        longshot = ("KF Mido Top Left Chest", "Progressive Hookshot")
+        no_dragon_key = ("Water Temple Dragon Chest", "Green Rupee")
+        no_torches_key = ("Water Temple Torches Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Water Temple Boss Key Chest", longshot, no_dragon_key))
+        self.assertFalse(self.reachable("Water Temple Boss Key Chest", longshot, no_dragon_key, no_torches_key))
+
+    def test_water_temple_central_pillar_door_takes_the_third_key(self):
+        # With no bow and no fire source, Link raises the water to the middle only through this door, and reaches two
+        # keys before it.
+        no_fire = (("Forest Temple Bow Chest", "Green Rupee"), ("HC Great Fairy Reward", "Green Rupee"))
+        self.assertFalse(self.reachable("Water Temple Central Pillar Chest", *no_fire))
+        self.assertTrue(self.reachable("Water Temple Central Pillar Chest", *no_fire,
+                                       ("Water Temple GS Behind Gate", "Water Temple Small Key")))
+
+    def test_water_temple_bow_target_chest_needs_the_longshot(self):
+        # An arrow in the eye opens the gate to the chest's room, and it shuts before the Hover Boots get Link there.
+        self.assertTrue(self.reachable("Water Temple Central Bow Target Chest"))
+        self.assertFalse(self.reachable("Water Temple Central Bow Target Chest",
+                                        ("Water Temple Longshot Chest", "Green Rupee"),
+                                        ("KF Mido Top Left Chest", "Hover Boots")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
