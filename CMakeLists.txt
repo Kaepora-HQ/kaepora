@@ -78,7 +78,7 @@ set(KAEPORA_TESTED_MOD "" CACHE FILEPATH "The placement file of the chest-swap m
 set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
-    foreach(test larger-plan bad-input)
+    foreach(test larger-plan bad-input size-table size-table-unchanged)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     if(KAEPORA_TESTED_MOD)

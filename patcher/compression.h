@@ -8,4 +8,4 @@
 std::string Decompress(std::string_view frame, std::string_view dictionary = {});
 
 // Compresses into one frame with the header the game's own files have.
-std::string Compress(std::string_view data, std::string_view dictionary);
+std::string Compress(std::string_view data, std::string_view dictionary = {});

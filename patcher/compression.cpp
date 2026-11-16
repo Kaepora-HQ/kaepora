@@ -31,8 +31,8 @@ std::string Decompress(std::string_view frame, std::string_view dictionary) {
 std::string Compress(std::string_view data, std::string_view dictionary) {
     std::string frame(ZSTD_compressBound(data.size()), '\0');
     const std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> context(ZSTD_createCCtx(), ZSTD_freeCCtx);
-    // libzstd's defaults give the frame header the game's files have: the content size, the dictionary ID, and no
-    // checksum.
+    // libzstd's defaults give the frame header the game's files have: the content size, the dictionary ID when there
+    // is a dictionary, and no checksum.
     frame.resize(Check(ZSTD_compress_usingDict(context.get(), frame.data(), frame.size(), data.data(), data.size(),
                                                dictionary.data(), dictionary.size(), Level)));
     return frame;

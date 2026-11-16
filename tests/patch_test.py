@@ -1,7 +1,7 @@
 """End-to-end tests of kaepora-patch on the game's own placement files.
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
-       python3 -I tests/patch_test.py larger-plan|bad-input <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
 reader bug in either shows as a difference.
@@ -13,19 +13,23 @@ import struct
 import subprocess
 import sys
 import tempfile
+import zlib
 from compression import zstd
 
 DEKU_STATIC = "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
 FOREST_DYNAMIC = "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
+WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
+SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
+LONGSHOT_CHEST = 18059711820131847165
 # A Forest Temple chest whose actor has no Dynamic.Drop__DropActor.
 FOREST_CHEST_WITHOUT_DROP = 15117164073907033527
 UINT64 = 0xD5
 
 
 class Game:
-    """The update package's RomFS, which holds every placement file and the dictionary pack."""
+    """The update package's RomFS, which holds every placement file, the dictionary pack and the size table."""
 
     def __init__(self, nup):
         self.nup = nup
@@ -160,11 +164,16 @@ ROTATED = [
 KEPT = (9038700938965170329, [FOREST_DYNAMIC])
 
 
+def rotated(game):
+    """The ROTATED chests, each given the next one's item."""
+    items = [actor(game.placement(game.read(files[0])), h)["Dynamic"]["Drop__DropActor"] for h, files in ROTATED]
+    assert len(set(items)) == len(items), items
+    return [(h, files, items[(i + 1) % len(items)]) for i, (h, files) in enumerate(ROTATED)]
+
+
 def larger_plan(patch, game):
     originals = {path: game.placement(game.read(path)) for _, files in ROTATED + [KEPT] for path in files}
-    items = [actor(originals[files[0]], h)["Dynamic"]["Drop__DropActor"] for h, files in ROTATED]
-    assert len(set(items)) == len(items), items
-    chests = [(h, files, items[(i + 1) % len(items)]) for i, (h, files) in enumerate(ROTATED)]
+    chests = rotated(game)
     kept_hash, kept_files = KEPT
     chests.append((kept_hash, kept_files, actor(originals[kept_files[0]], kept_hash)["Dynamic"]["Drop__DropActor"]))
 
@@ -180,6 +189,67 @@ def larger_plan(patch, game):
                 if path in files:
                     actor(expected, h)["Dynamic"]["Drop__DropActor"] = drop_actor
             assert game.placement((tmp / "mod" / "romfs" / path).read_bytes()) == expected, path
+
+
+def read_size_table(data):
+    """A decompressed RESTBL size table: its header, its (CRC-32, size) entries in order, and the name entries."""
+    assert data[:6] == b"RESTBL" and struct.unpack_from("<I", data, 6)[0] == 1, data[:10]
+    end = 22 + 8 * struct.unpack_from("<I", data, 14)[0]
+    return data[:22], list(struct.iter_unpack("<II", data[22:end])), data[end:]
+
+
+def size_key(path):
+    """The size table keys a file by the CRC-32 of its path without the .zs."""
+    return zlib.crc32(path.removesuffix(".zs").encode())
+
+
+def load_size(size):
+    """The size table entry the game gives each of its placement files, from the file's decompressed size."""
+    return (size + 31) // 32 * 32 + 264
+
+
+def placement_sizes(game, tmp, paths):
+    """The decompressed size of each placement file in the mod, by its size table key."""
+    romfs = tmp / "mod" / "romfs"
+    return {size_key(p): len(zstd.decompress((romfs / p).read_bytes(), zstd_dict=game.dictionary)) for p in paths}
+
+
+def size_table_entries(patch, game):
+    # The rotated chests keep their files' sizes rounded up to 32 bytes. The new item grows the Water Temple file past
+    # what its entry lets the game load.
+    chests = rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]
+    game_frame = game.read(SIZE_TABLE)
+    header, entries, names = read_size_table(zstd.decompress(game_frame))
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, plan(chests), tmp)
+        assert result.returncode == 0, result.stderr
+        changed = sorted({path for _, files, _ in chests for path in files})
+        assert written(tmp) == changed + [SIZE_TABLE], written(tmp)
+        sizes = placement_sizes(game, tmp, changed)
+        frame = (tmp / "mod" / "romfs" / SIZE_TABLE).read_bytes()
+    game_sizes = dict(entries)
+    assert [p for p in changed if load_size(sizes[size_key(p)]) > game_sizes[size_key(p)]] == [WATER_STATIC]
+    # Each written file's entry is large enough for its size, and every other byte of the table is the game's.
+    expected = [(key, max(size, load_size(sizes[key])) if key in sizes else size) for key, size in entries]
+    assert read_size_table(zstd.decompress(frame)) == (header, expected, names)
+    # Single segment, content size in the header, no checksum, and no dictionary, as in the game's own table.
+    assert frame[4] == game_frame[4], (frame[4], game_frame[4])
+    assert zstd.get_frame_info(frame).dictionary_id == zstd.get_frame_info(game_frame).dictionary_id
+
+
+def size_table_unchanged(patch, game):
+    _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    game_sizes = dict(entries)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, plan(rotated(game)), tmp)
+        assert result.returncode == 0, result.stderr
+        changed = sorted({path for _, files in ROTATED for path in files})
+        sizes = placement_sizes(game, tmp, changed)
+        # Every written file still fits its entry, so the table is left out.
+        assert all(load_size(size) <= game_sizes[key] for key, size in sizes.items()), sizes
+        assert written(tmp) == changed, written(tmp)
 
 
 def bad_input(patch, game):
@@ -227,7 +297,14 @@ def bad_input(patch, game):
 def main():
     test, patch, nup, *rest = sys.argv[1:]
     game = Game(nup)
-    {"tested-mod": tested_mod, "larger-plan": larger_plan, "bad-input": bad_input}[test](patch, game, *rest)
+    tests = {
+        "tested-mod": tested_mod,
+        "larger-plan": larger_plan,
+        "bad-input": bad_input,
+        "size-table": size_table_entries,
+        "size-table-unchanged": size_table_unchanged,
+    }
+    tests[test](patch, game, *rest)
     print(f"{test} passed")
 
 
