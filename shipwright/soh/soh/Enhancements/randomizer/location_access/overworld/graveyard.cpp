@@ -99,7 +99,8 @@ void RegionTable_Init_Graveyard() {
     }, {
         //Locations
         LOCATION(RC_GRAVEYARD_HOOKSHOT_CHEST,              logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanOpenLargeChest()),
-        LOCATION(RC_GRAVEYARD_DAMPE_RACE_FREESTANDING_POH, (logic->IsAdult || ctx->GetTrickOption(RT_GY_CHILD_DAMPE_RACE_POH) || logic->BunnyHood()) && logic->HasItem(RG_SPEAK_HYLIAN)),
+        // Dampe's race ends at the heart piece only for Link who owns a hookshot.
+        LOCATION(RC_GRAVEYARD_DAMPE_RACE_FREESTANDING_POH, (logic->IsAdult || ctx->GetTrickOption(RT_GY_CHILD_DAMPE_RACE_POH) || logic->BunnyHood()) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->HasItem(RG_HOOKSHOT)),
         LOCATION(RC_GY_DAMPES_GRAVE_POT_1,                 logic->CanBreakPots()),
         LOCATION(RC_GY_DAMPES_GRAVE_POT_2,                 logic->CanBreakPots()),
         LOCATION(RC_GY_DAMPES_GRAVE_POT_3,                 logic->CanBreakPots()),
