@@ -87,26 +87,6 @@ std::vector<RandomizerCheck> Rando::StaticData::GetGossipStoneLocations() {
     return gossipStoneLocations;
 }
 
-std::vector<RandomizerCheck> Rando::StaticData::GetShopLocations() {
-    std::vector<RandomizerCheck> shopLocations = {};
-    for (Location& location : locationTable) {
-        if (location.GetRCType() == RCTYPE_SHOP && location.GetRandomizerCheck() != RC_UNKNOWN_CHECK) {
-            shopLocations.push_back(location.GetRandomizerCheck());
-        }
-    }
-    return shopLocations;
-}
-
-std::vector<RandomizerCheck> Rando::StaticData::GetAllDungeonLocations() {
-    auto ctx = Rando::Context::GetInstance();
-    std::vector<RandomizerCheck> dungeonLocations;
-    for (const auto dungeon : ctx->GetDungeons()->GetDungeonList()) {
-        std::vector<RandomizerCheck> dungeonLoc = dungeon->GetDungeonLocations();
-        dungeonLocations.insert(dungeonLocations.end(), dungeonLoc.begin(), dungeonLoc.end());
-    }
-    return dungeonLocations;
-}
-
 std::vector<RandomizerCheck> Rando::StaticData::GetFountainFairyLocations() {
     std::vector<RandomizerCheck> fairyLocations = {};
     for (Location& location : locationTable) {

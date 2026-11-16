@@ -45,12 +45,6 @@ class DungeonInfo {
     RandomizerSettingKey GetMQSetting() const;
     std::span<const uint8_t> GetDoorFlags() const;
     void SetDungeonKnown(bool known);
-    void PlaceVanillaMap() const;
-    void PlaceVanillaCompass() const;
-    void PlaceVanillaBossKey() const;
-    void PlaceVanillaSmallKeys() const;
-    std::vector<RandomizerCheck> GetDungeonLocations() const;
-    std::vector<RandomizerCheck> locations;
 
   private:
     std::string name;

@@ -19,7 +19,6 @@ struct TrickName {
 };
 TrickName GetTrapName(RandomizerGet id, RandoIceTrapNames iceTrapNamesOption, uint64_t* state = nullptr);
 RandomizerGet GetTrapTrickModel(uint64_t* state = nullptr);
-bool ShouldJunkItemBeTrap();
 void BuildIceTrapMessage(CustomMessage& msg, GetItemEntry getItemEntry);
 } // namespace Traps
 } // namespace Rando

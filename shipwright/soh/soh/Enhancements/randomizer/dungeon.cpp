@@ -209,61 +209,6 @@ void DungeonInfo::SetDungeonKnown(bool known) {
     isDungeonModeKnown = known;
 }
 
-void DungeonInfo::PlaceVanillaMap() const {
-    if (map == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto mapLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_MAP;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(mapLocation, map);
-}
-
-void DungeonInfo::PlaceVanillaCompass() const {
-    if (compass == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto compassLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_COMPASS;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(compassLocation, compass);
-}
-
-void DungeonInfo::PlaceVanillaBossKey() const {
-    if (bossKey == RG_NONE || bossKey == RG_GANONS_CASTLE_BOSS_KEY) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto bossKeyLocation = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_BOSS_KEY;
-    })[0];
-    Context::GetInstance()->PlaceItemInLocation(bossKeyLocation, bossKey);
-}
-
-void DungeonInfo::PlaceVanillaSmallKeys() const {
-    if (smallKey == RG_NONE) {
-        return;
-    }
-
-    auto dungeonLocations = GetDungeonLocations();
-    const auto smallKeyLocations = FilterFromPool(dungeonLocations, [](const RandomizerCheck loc) {
-        return StaticData::GetLocation(loc)->GetRCType() == RCTYPE_SMALL_KEY;
-    });
-    for (const auto location : smallKeyLocations) {
-        Context::GetInstance()->PlaceItemInLocation(location, smallKey);
-    }
-}
-
-// Gets the chosen dungeon locations for a playthrough (so either MQ or Vanilla)
-std::vector<RandomizerCheck> DungeonInfo::GetDungeonLocations() const {
-    return locations;
-}
-
 Dungeons::Dungeons() {
     dungeonList[DEKU_TREE] =
         DungeonInfo("Deku Tree", RHT_DEKU_TREE, RG_DEKU_TREE_MAP, RG_DEKU_TREE_COMPASS, RG_NONE, RG_NONE, RG_NONE,

@@ -2,10 +2,12 @@
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/settings.h"
 #include "soh/Enhancements/randomizer/static_data.h"
-#include "soh/Enhancements/randomizer/3drando/menu.hpp"
+#include "soh/Enhancements/randomizer/3drando/playthrough.hpp"
 #include "soh/Enhancements/Lang/Lang.h"
 #include "soh/OTRGlobals.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
+#include "soh/util.h"
+#include "remake.h"
 #include <nlohmann/json.hpp>
 
 #include <cstdio>
@@ -72,21 +74,25 @@ static void Initialize() {
     ctx->AddExcludedOptions();
 }
 
-// GenerateRandomizerImgui without its window calls. It reads excluded locations and enabled tricks from console
-// variables that nothing sets here, so both sets are empty.
-static bool Generate(const std::string& seed) {
+// No location is excluded and no trick is enabled, so both sets are empty.
+static bool Generate(const std::string& seed, const std::vector<RemakeChest>& chests) {
     Rando::Settings::GetInstance()->SetAllToContext();
-    return GenerateRandomizer({}, {}, seed);
+    auto ctx = Rando::Context::GetInstance();
+    ctx->SetSeedString(seed);
+    ctx->SetSeed(SohUtils::Hash(seed));
+    ctx->ClearItemLocations();
+    return Playthrough::Playthrough_Init(ctx->GetSeed(), {}, {}, chests) > 0;
 }
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
+    if (argc != 3 || argv[1][0] == '\0') {
         std::fprintf(stderr, "usage: %s <seed> <spoiler.json>\n", argv[0]);
         return 2;
     }
 
     Initialize();
-    if (!Generate(argv[1])) {
+    const std::vector<RemakeChest> chests = LoadRemakeChests();
+    if (!Generate(argv[1], chests)) {
         std::fprintf(stderr, "generation failed\n");
         return 1;
     }

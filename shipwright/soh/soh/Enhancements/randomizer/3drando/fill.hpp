@@ -2,6 +2,7 @@
 
 #include "../location_access.h"
 #include "../entrance.h"
+#include "generator/remake.h"
 
 #include <vector>
 
@@ -55,8 +56,7 @@ struct GetAccessibleLocationsStruct {
 };
 
 void ClearProgress();
-void VanillaFill();
-int Fill();
+int Fill(const std::vector<RemakeChest>& chests);
 void SetAreas();
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);

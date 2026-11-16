@@ -1815,13 +1815,6 @@ RandomizerGet Rando::Traps::GetTrapTrickModel(uint64_t* state) {
     return trickModel;
 }
 
-bool Rando::Traps::ShouldJunkItemBeTrap() {
-    auto ctx = Rando::Context::GetInstance();
-    return ctx->GetOption(RSK_ICE_TRAP_PERCENT).IsNot(0) &&
-           (ctx->GetOption(RSK_ICE_TRAP_PERCENT).Is(100) ||
-            Random(0, 100) < ctx->GetOption(RSK_ICE_TRAP_PERCENT).Get());
-}
-
 static const char* const englishIceTrapMessages[] = {
     "You are a #FOOL#!",
     "You are a #FOWL#!",
