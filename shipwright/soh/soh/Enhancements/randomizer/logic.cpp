@@ -2028,18 +2028,10 @@ bool Logic::CanTriggerWincon() {
     }
 }
 
-// The remake moved locks and keys in the Water Temple, so SoH's key rules do not describe it. Its chests stay as the
-// unmodified game has them and the player walks it as designed, so its small keys count as held.
 // Ganon's Castle has one small key and one locked door. The key lies in a chest SoH has no location for, in the room
 // the locked door leads out of, so it is within reach of anyone who stands at that door.
 static bool SmallKeysHeld(SceneID scene) {
-    switch (scene) {
-        case SCENE_WATER_TEMPLE:
-        case SCENE_INSIDE_GANONS_CASTLE:
-            return true;
-        default:
-            return false;
-    }
+    return scene == SCENE_INSIDE_GANONS_CASTLE;
 }
 
 bool Logic::SmallKeys(SceneID scene, uint8_t requiredAmount) {
