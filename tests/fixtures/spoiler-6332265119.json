@@ -421,7 +421,6 @@
         "sphere 09": {
             "Forest Temple Bow Chest": "Progressive Bow",
             "Water Temple Longshot Chest": "Progressive Hookshot",
-            "Bottom of the Well Lens of Truth Chest": "Lens of Truth",
             "Fire Temple Megaton Hammer Chest": "Megaton Hammer",
             "GF 1 Torch Carpenter": "Gerudo Fortress Small Key",
             "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
@@ -435,45 +434,53 @@
             "Fire Temple Boss Key Chest": "Fire Temple Boss Key"
         },
         "sphere 11": {
-            "Sheik at Colossus": "Requiem of Spirit",
             "Phantom Ganon": "Forest Medallion",
             "Morpha": "Water Medallion",
             "Volvagia": "Fire Medallion"
         },
         "sphere 12": {
-            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
-            "Sheik in Kakariko": "Nocturne of Shadow"
+            "Sheik in Kakariko": "Nocturne of Shadow",
+            "Sheik at Temple": "Prelude of Light"
         },
         "sphere 13": {
-            "Shadow Temple Hover Boots Chest": "Hover Boots",
-            "Spirit Temple Sun Block Room Chest": "Spirit Temple Small Key",
-            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key"
+            "Bottom of the Well Lens of Truth Chest": "Lens of Truth"
         },
         "sphere 14": {
-            "Shadow Temple Boss Key Chest": "Shadow Temple Boss Key",
-            "Spirit Temple Silver Gauntlets Chest": "Strength Upgrade"
+            "Sheik at Colossus": "Requiem of Spirit",
+            "Shadow Temple Hover Boots Chest": "Hover Boots"
         },
         "sphere 15": {
-            "Spirit Temple Compass Chest": "Spirit Temple Boss Key",
-            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key",
-            "Bongo Bongo": "Shadow Medallion"
+            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
+            "Shadow Temple Boss Key Chest": "Shadow Temple Boss Key"
         },
         "sphere 16": {
-            "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key"
+            "Spirit Temple Sun Block Room Chest": "Spirit Temple Small Key",
+            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
+            "Bongo Bongo": "Shadow Medallion"
         },
         "sphere 17": {
-            "Twinrova": "Spirit Medallion"
+            "Spirit Temple Silver Gauntlets Chest": "Strength Upgrade"
         },
         "sphere 18": {
-            "Market ToT Light Arrow Cutscene": "Light Arrows"
+            "Spirit Temple Compass Chest": "Spirit Temple Boss Key",
+            "Spirit Temple Early Adult Right Chest": "Spirit Temple Small Key"
         },
         "sphere 19": {
-            "Ganon's Castle Shadow Trial Golden Gauntlets Chest": "Strength Upgrade"
+            "Spirit Temple Hallway Left Invisible Chest": "Spirit Temple Small Key"
         },
         "sphere 20": {
-            "Ganon's Castle Tower Boss Key Chest": "Ganon's Castle Boss Key"
+            "Twinrova": "Spirit Medallion"
         },
         "sphere 21": {
+            "Market ToT Light Arrow Cutscene": "Light Arrows"
+        },
+        "sphere 22": {
+            "Ganon's Castle Shadow Trial Golden Gauntlets Chest": "Strength Upgrade"
+        },
+        "sphere 23": {
+            "Ganon's Castle Tower Boss Key Chest": "Ganon's Castle Boss Key"
+        },
+        "sphere 24": {
             "Ganon": "Triforce"
         }
     },
