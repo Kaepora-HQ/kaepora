@@ -2034,7 +2034,6 @@ bool Logic::CanTriggerWincon() {
 // unmodified game has them and the player walks them as designed, so their small keys count as held.
 static bool SmallKeysHeld(SceneID scene) {
     switch (scene) {
-        case SCENE_FOREST_TEMPLE:
         case SCENE_FIRE_TEMPLE:
         case SCENE_WATER_TEMPLE:
         case SCENE_SHADOW_TEMPLE:
