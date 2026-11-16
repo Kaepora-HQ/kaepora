@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 static void Trap(const char* symbol) {
-    std::fprintf(stderr, "kaepora-seedgen: called game-only function %s\n", symbol);
+    std::fprintf(stderr, "called game-only function %s\n", symbol);
     std::abort();
 }
 

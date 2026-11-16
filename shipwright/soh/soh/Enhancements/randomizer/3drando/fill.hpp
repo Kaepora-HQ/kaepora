@@ -56,6 +56,7 @@ struct GetAccessibleLocationsStruct {
 };
 
 void ClearProgress();
+std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests);
 int Fill(const std::vector<RemakeChest>& chests);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);
