@@ -105,7 +105,8 @@ void RegionTable_Init_DeathMountainTrail() {
         //Exits
         ENTRANCE(RR_DEATH_MOUNTAIN_ROCKFALL,  true),
         ENTRANCE(RR_DMC_UPPER_ENTRY,          true),
-        ENTRANCE(RR_DMT_OWL_FLIGHT,           logic->IsChild && (logic->HasItem(RG_SPEAK_DEKU) || logic->HasItem(RG_SPEAK_GERUDO) || logic->HasItem(RG_SPEAK_GORON) || logic->HasItem(RG_SPEAK_KOKIRI) || logic->HasItem(RG_SPEAK_HYLIAN) || logic->HasItem(RG_SPEAK_ZORA))),
+        // The owl flies Link down only once he has magic.
+        ENTRANCE(RR_DMT_OWL_FLIGHT,           logic->IsChild && logic->HasItem(RG_MAGIC_SINGLE) && (logic->HasItem(RG_SPEAK_DEKU) || logic->HasItem(RG_SPEAK_GERUDO) || logic->HasItem(RG_SPEAK_GORON) || logic->HasItem(RG_SPEAK_KOKIRI) || logic->HasItem(RG_SPEAK_HYLIAN) || logic->HasItem(RG_SPEAK_ZORA))),
         ENTRANCE(RR_DMT_GREAT_FAIRY_FOUNTAIN, AnyAgeTime([]{return logic->BlastOrSmash();})),
     });
 
