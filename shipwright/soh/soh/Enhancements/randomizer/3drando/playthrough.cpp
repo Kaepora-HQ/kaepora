@@ -1,23 +1,18 @@
 #include <spdlog/spdlog.h>
-#include <libultraship/bridge/consolevariablebridge.h>
 
 #include "playthrough.hpp"
 #include "fill.hpp"
 #include "../location_access.h"
 #include "../rng.h"
 #include "spoiler_log.hpp"
-#include "soh/Enhancements/randomizer/settings.h"
-#include "variables.h"
-#include "soh/cvar_prefixes.h"
-#include "../option.h"
 #include "soh/Enhancements/debugger/performanceTimer.h"
 
 namespace Playthrough {
 
 int Playthrough_Init(uint32_t seed, std::set<RandomizerCheck> excludedLocations,
                      std::set<RandomizerTrick> enabledTricks) {
-    // initialize the RNG with just the seed in case any settings need to be
-    // resolved to something random
+    // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
+    // the seed and on what generation does, not on how the options are listed.
     Random_Init(seed);
 
     auto ctx = Rando::Context::GetInstance();
@@ -30,40 +25,7 @@ int Playthrough_Init(uint32_t seed, std::set<RandomizerCheck> excludedLocations,
     StopPerformanceTimer(PT_REGION_RESET);
 
     ctx->FinalizeSettings(excludedLocations, enabledTricks);
-    // once the settings have been finalized turn them into a string for hashing
-    std::string settingsStr;
-    auto& optionGroups = Rando::Settings::GetInstance()->GetOptionGroups();
-    for (size_t i = 0; i < RSG_MAX; i++) {
-        auto& optionGroup = optionGroups[i];
-        // don't go through non-menus
-        if (optionGroup.GetContainsType() == Rando::OptionGroupType::SUBGROUP) {
-            continue;
-        }
-
-        for (Rando::Option* option : optionGroup.GetOptions()) {
-            if (option->GetCategory() != Rando::OptionCategory::Toggle) {
-                if (option->GetOptionCount() > 0) {
-                    if (i >= RSG_EXCLUDES_KOKIRI_FOREST && i <= RSG_EXCLUDES_GANONS_CASTLE) {
-                        auto locationOption = static_cast<Rando::LocationOption*>(option);
-                        settingsStr += option->GetOptionText(ctx->GetLocationOption(locationOption->GetKey()).Get());
-                    } else if (i == RSG_TRICKS) {
-                        auto trickOption = static_cast<Rando::TrickSetting*>(option);
-                        settingsStr += option->GetOptionText(ctx->GetTrickOption(trickOption->GetKey()).Get());
-                    } else {
-                        settingsStr += option->GetOptionText(ctx->GetOption(option->GetKey()).Get());
-                    }
-                }
-            }
-        }
-    }
-
-    if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("DontGenerateSpoiler"), 0)) {
-        settingsStr += (char*)gBuildVersion;
-    }
-
-    uint32_t finalHash = SohUtils::Hash(std::to_string(ctx->GetSeed()) + settingsStr);
-    Random_Init(finalHash);
-    ctx->SetHash(std::to_string(finalHash));
+    ctx->SetHash(std::to_string(seed));
 
     int ret = Fill();
     if (ret < 0) {

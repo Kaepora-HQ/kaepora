@@ -74,26 +74,19 @@ static void Initialize() {
 
 // GenerateRandomizerImgui without its window calls. It reads excluded locations and enabled tricks from console
 // variables that nothing sets here, so both sets are empty.
-static bool Generate(const std::string& seed, const char* settingsFrom) {
-    if (settingsFrom == nullptr) {
-        Rando::Settings::GetInstance()->SetAllToContext();
-    } else {
-        Rando::Settings::GetInstance()->ParseJson(nlohmann::json::parse(std::ifstream(settingsFrom)));
-    }
+static bool Generate(const std::string& seed) {
+    Rando::Settings::GetInstance()->SetAllToContext();
     return GenerateRandomizer({}, {}, seed);
 }
 
 int main(int argc, char** argv) {
-    const char* settingsFrom = nullptr;
-    if (argc == 5 && std::string(argv[3]) == "--settings-from") {
-        settingsFrom = argv[4];
-    } else if (argc != 3) {
-        std::fprintf(stderr, "usage: %s <seed> <output.json> [--settings-from <spoiler.json>]\n", argv[0]);
+    if (argc != 3) {
+        std::fprintf(stderr, "usage: %s <seed> <spoiler.json>\n", argv[0]);
         return 2;
     }
 
     Initialize();
-    if (!Generate(argv[1], settingsFrom)) {
+    if (!Generate(argv[1])) {
         std::fprintf(stderr, "generation failed\n");
         return 1;
     }
