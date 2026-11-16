@@ -50,6 +50,12 @@ class LogicTest(unittest.TestCase):
         # The price belongs to the shop slot, so it holds whatever is placed there.
         self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
 
+    def test_a_potion_shop_is_never_the_first_blue_fire(self):
+        self.assertTrue(self.reachable("Market Potion Shop Item 2"))
+        # Without the Ocarina of Time, Link never becomes adult, and only adult Link reaches other Blue Fire.
+        self.assertFalse(self.reachable("Market Potion Shop Item 2", ("HF Ocarina of Time Item", "Green Rupee"),
+                                        ("KF Mido Top Left Chest", "Empty Bottle")))
+
     def test_shops_charge_the_remakes_prices(self):
         # A fish costs 50 at the Market Potion Shop. 20 bombchus cost 240.
         self.assertTrue(self.reachable("Market Potion Shop Item 8", *NO_WALLET_UPGRADE))
