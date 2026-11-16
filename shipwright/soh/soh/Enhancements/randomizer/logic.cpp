@@ -464,6 +464,7 @@ bool Logic::ItemUseAllowed(RandomizerGet itemName) {
         case SCENE_GORON_SHOP:
         case SCENE_ZORA_SHOP:
         case SCENE_POTION_SHOP_KAKARIKO:
+        case SCENE_POTION_SHOP_MARKET:
         case SCENE_BOMBCHU_SHOP:
         case SCENE_HAPPY_MASK_SHOP:
         case SCENE_LINKS_HOUSE:
