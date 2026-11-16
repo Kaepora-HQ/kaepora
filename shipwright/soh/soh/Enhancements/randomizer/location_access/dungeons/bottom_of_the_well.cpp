@@ -66,8 +66,8 @@ void RegionTable_Init_BottomOfTheWell() {
         //Exits
         ENTRANCE(RR_BOTW_PERIMETER,       ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
         ENTRANCE(RR_BOTW_PIT_CAGE,        (ctx->GetTrickOption(RT_BOTW_PITS) || logic->CanUse(RG_HOVER_BOOTS)) && (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH))),
-        ENTRANCE(RR_BOTW_SKULL_WALL_ROOM, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3)),
-        ENTRANCE(RR_BOTW_INVISIBLE_PATH,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3)),
+        ENTRANCE(RR_BOTW_SKULL_WALL_ROOM, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
+        ENTRANCE(RR_BOTW_INVISIBLE_PATH,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
         ENTRANCE(RR_BOTW_B3_OOZE,         true),
         ENTRANCE(RR_BOTW_B3_PLATFORM,     ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
     });
@@ -85,7 +85,7 @@ void RegionTable_Init_BottomOfTheWell() {
     areaTable[RR_BOTW_CORNER_CRAWLSPACE] = Region("Bottom of the Well Corner Crawlspace", SCENE_BOTTOM_OF_THE_WELL, {}, {}, {
         //Exits
         ENTRANCE(RR_BOTW_PERIMETER,        logic->CanUse(RG_CRAWL)),
-        ENTRANCE(RR_BOTW_HIDDEN_PITS_ROOM, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3)),
+        ENTRANCE(RR_BOTW_HIDDEN_PITS_ROOM, true),
     });
 
     //Passing through this area needs lens, but entering doesn't, so that the fire keese can be killed without crossing the pits if enemy drops are ever shuffled
@@ -95,7 +95,7 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTTOM_OF_THE_WELL_FIRE_KEESE_POT_1, logic->CanBreakPots() && (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH))),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_CORNER_CRAWLSPACE, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3) && (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH))),
+        ENTRANCE(RR_BOTW_CORNER_CRAWLSPACE, ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
         ENTRANCE(RR_BOTW_LOCKED_CAGE,       ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
         //not sure if this lens check is needed, these holes are a bit too easy to find, but it matches existing logic
         ENTRANCE(RR_BOTW_B3_BOMB_FLOWERS,   ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
@@ -129,7 +129,7 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTTOM_OF_THE_WELL_GS_WEST_INNER_ROOM, logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_MIDDLE, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3)),
+        ENTRANCE(RR_BOTW_MIDDLE, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
     });
 
     areaTable[RR_BOTW_INVISIBLE_PATH] = Region("Bottom of the Well Invisible Path", SCENE_BOTTOM_OF_THE_WELL, {}, {
@@ -137,7 +137,7 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTTOM_OF_THE_WELL_GS_EAST_INNER_ROOM, logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_MIDDLE,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 3)),
+        ENTRANCE(RR_BOTW_MIDDLE,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
         ENTRANCE(RR_BOTW_B3_OOZE, true),
     });
 
@@ -216,10 +216,9 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTW_SE_OOZE_SILVER,                   true),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_LADDER_DOOR,      logic->CanClimbHighLadder()),
-        //It's possible to abuse boulder's limited range of collision detection to detonate the flowers through the boulder with bow, but this is a glitch
-        //the exact range is just past the furthest away plank in the green goo section
-        ENTRANCE(RR_BOTW_B3_BOMB_FLOWERS,  AnyAgeTime([]{return logic->BlastOrSmash() || logic->CanUse(RG_DINS_FIRE) || (ctx->GetTrickOption(RT_BOTW_BASEMENT) && logic->CanUse(RG_STICKS)) || (ctx->GetTrickOption(RT_BOULDER_COLLISION) && logic->CanUse(RG_FAIRY_BOW));})),
+        // The door out stays barred until all five silver rupees are taken, and one lies behind the rocks before the Map Chest.
+        ENTRANCE(RR_BOTW_LADDER_DOOR,      AnyAgeTime([]{return logic->BlastOrSmash();}) && logic->CanClimbHighLadder()),
+        ENTRANCE(RR_BOTW_B3_BOMB_FLOWERS,  AnyAgeTime([]{return logic->BlastOrSmash();})),
         ENTRANCE(RR_BOTW_B3_BLOCKED_GRASS, AnyAgeTime([]{return logic->BlastOrSmash();})),
         ENTRANCE(RR_BOTW_B3_CHEST_AREA,    AnyAgeTime([]{return logic->BlastOrSmash();})),
     });
@@ -247,9 +246,10 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTW_BOULDER_6, logic->HasItem(RG_GORONS_BRACELET)),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_B3_OOZE,          logic->CanDetonateUprightBombFlower()),
-        ENTRANCE(RR_BOTW_B3_BLOCKED_GRASS, logic->HasItem(RG_GORONS_BRACELET)),
-        ENTRANCE(RR_BOTW_B3_CHEST_AREA,    logic->HasItem(RG_GORONS_BRACELET)),
+        // The remake has no bomb flower here, so leaving this area takes breaking a rock.
+        ENTRANCE(RR_BOTW_B3_OOZE,          AnyAgeTime([]{return logic->BlastOrSmash();})),
+        ENTRANCE(RR_BOTW_B3_BLOCKED_GRASS, AnyAgeTime([]{return logic->BlastOrSmash();})),
+        ENTRANCE(RR_BOTW_B3_CHEST_AREA,    AnyAgeTime([]{return logic->BlastOrSmash();})),
     });
 
     areaTable[RR_BOTW_B3_BLOCKED_GRASS] = Region("Bottom of the Well B3 Blocked Grass", SCENE_BOTTOM_OF_THE_WELL, {}, {
@@ -265,7 +265,7 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTTOM_OF_THE_WELL_BASEMENT_BEHIND_ROCKS_GRASS_9, logic->CanCutShrubs()),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_B3_OOZE, AnyAgeTime([]{return logic->BlastOrSmash() || logic->HasItem(RG_GORONS_BRACELET);})),
+        ENTRANCE(RR_BOTW_B3_OOZE, AnyAgeTime([]{return logic->BlastOrSmash();})),
     });
 
     areaTable[RR_BOTW_B3_CHEST_AREA] = Region("Bottom of the Well B3 Chest Area", SCENE_BOTTOM_OF_THE_WELL, {}, {

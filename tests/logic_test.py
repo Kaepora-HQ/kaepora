@@ -167,6 +167,36 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_well_locks_each_take_both_keys(self):
+        # Both locked doors open off the middle, so either can take the first of the two keys.
+        self.assertTrue(self.reachable("Bottom of the Well GS West Inner Room"))
+        self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room"))
+        one_key = ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Bottom of the Well GS West Inner Room", one_key))
+        self.assertFalse(self.reachable("Bottom of the Well GS East Inner Room", one_key))
+
+    def test_well_hidden_pits_door_has_no_lock(self):
+        self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
+                                       ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
+                                       ("Bottom of the Well Freestanding Key", "Green Rupee")))
+
+    def test_well_map_chest_needs_an_explosive(self):
+        # A child breaks the rocks in front of the basement's Map Chest only with an explosive. The basement has no bomb
+        # flower, and Din's Fire leaves the rocks standing. Without the only bomb bag, Link reaches neither the Goron's
+        # Ruby nor the Zora's Sapphire nor a magic meter, so they come from elsewhere, with Din's Fire.
+        kit = (("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
+               ("KF Mido Bottom Right Chest", "Progressive Magic Meter"), ("KF Mido Top Right Chest", "Din's Fire"))
+        self.assertFalse(self.reachable("Bottom of the Well Map Chest",
+                                        ("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), *kit))
+        self.assertTrue(self.reachable("Bottom of the Well Map Chest", *kit))
+        # Without the bracelet a child uses no bomb, but a bombchu needs no strength. Adult Link's Silver Gauntlets push
+        # the Forest Temple's blocks and open Dodongo's Cavern, where the bomb bag lies. Without the bracelet, a child
+        # reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come from elsewhere.
+        self.assertTrue(self.reachable("Bottom of the Well Map Chest", ("GC Darunias Joy", "Green Rupee"),
+                                       ("KF Mido Top Left Chest", "Silver Gauntlets"),
+                                       ("KF Mido Top Right Chest", "Goron's Ruby"),
+                                       ("KF Mido Bottom Left Chest", "Zora's Sapphire")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

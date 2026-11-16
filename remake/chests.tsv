@@ -125,18 +125,18 @@ Shadow Temple After Wind Hidden Chest	169081039115821925	Banc/ShadowTemple/Shado
 Shadow Temple Spike Walls Left Chest	9852624243105848451	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Tbox_MagicJar_Large	no	Tbox_MagicJar_Large has no SoH item; dungeon with changed locks and keys
 Shadow Temple Boss Key Chest	9221365632831348137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
 Shadow Temple Invisible Floormaster Chest	17902550525792072472	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Bottom of the Well Front Left Fake Wall Chest	8975637636514249074	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Bottom of the Well Front Center Bombable Chest	5429815628949128345	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
-Bottom of the Well Right Bottom Fake Wall Chest	8397646530660039355	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Bottom of the Well Compass Chest	14911602953212243797	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Compass	no	dungeon with changed locks and keys
-Bottom of the Well Center Skulltula Chest	631709185320708287	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
-Bottom of the Well Back Left Bombable Chest	10905582354954996284	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Bottom of the Well Lens of Truth Chest	16654774376625985726	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	Item_GlassTruth	no	dungeon with changed locks and keys
-Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low; dungeon with changed locks and keys
-Bottom of the Well Underwater Front Chest	12988877782812797760	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
+Bottom of the Well Front Left Fake Wall Chest	8975637636514249074	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
+Bottom of the Well Front Center Bombable Chest	5429815628949128345	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Bottom of the Well Right Bottom Fake Wall Chest	8397646530660039355	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Bottom of the Well Compass Chest	14911602953212243797	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Compass	yes	
+Bottom of the Well Center Skulltula Chest	631709185320708287	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Bottom of the Well Back Left Bombable Chest	10905582354954996284	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
+Bottom of the Well Lens of Truth Chest	16654774376625985726	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	Item_GlassTruth	yes	
+Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	the remake's one invisible chest stands in the room before Dead Hand's; what opens that room's shutter on a first visit is not seen
+Bottom of the Well Underwater Front Chest	12988877782812797760	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Underwater Left Chest				no	no remake chest
-Bottom of the Well Map Chest	9466613428674883506	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Map	no	dungeon with changed locks and keys
-Bottom of the Well Fire Keese Chest	874970148260328653	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute; dungeon with changed locks and keys
+Bottom of the Well Map Chest	9466613428674883506	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	
+Bottom of the Well Fire Keese Chest	874970148260328653	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
 Bottom of the Well Like Like Chest				no	no remake chest
 Ice Cavern Map Chest	11498802739257120175	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Ice Cavern Compass Chest	13542013937093159888	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
