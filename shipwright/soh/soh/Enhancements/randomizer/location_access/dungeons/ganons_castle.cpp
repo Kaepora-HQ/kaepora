@@ -988,10 +988,7 @@ void RegionTable_Init_GanonsCastle() {
         ENTRANCE(RR_GANONS_TOWER_FLOOR_2, true),
     });
 
-    areaTable[RR_GANONS_TOWER_FLOOR_2] = Region("Ganon's Tower Floor 2", SCENE_GANONS_TOWER, {}, {
-        //Locations
-        LOCATION(RC_GANONS_TOWER_BOSS_KEY_CHEST, logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 2) && logic->CanOpenLargeChest()),
-    }, {
+    areaTable[RR_GANONS_TOWER_FLOOR_2] = Region("Ganon's Tower Floor 2", SCENE_GANONS_TOWER, {}, {}, {
         //Exits
         ENTRANCE(RR_GANONS_TOWER_STAIRS_2, AnyAgeTime([]{return logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 2);})),
         ENTRANCE(RR_GANONS_TOWER_STAIRS_3, AnyAgeTime([]{return logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 2);})),
@@ -1003,7 +1000,10 @@ void RegionTable_Init_GanonsCastle() {
         ENTRANCE(RR_GANONS_TOWER_FLOOR_3, true),
     });
 
-    areaTable[RR_GANONS_TOWER_FLOOR_3] = Region("Ganon's Tower Floor 3", SCENE_GANONS_TOWER, {}, {}, {
+    areaTable[RR_GANONS_TOWER_FLOOR_3] = Region("Ganon's Tower Floor 3", SCENE_GANONS_TOWER, {}, {
+        //Locations
+        LOCATION(RC_GANONS_TOWER_BOSS_KEY_CHEST, logic->CanKillEnemy(RE_IRON_KNUCKLE, ED_CLOSE, true, 2) && logic->CanOpenLargeChest()),
+    }, {
         //Exits
         ENTRANCE(RR_GANONS_TOWER_STAIRS_3, AnyAgeTime([]{return logic->CanKillEnemy(RE_IRON_KNUCKLE, ED_CLOSE, true, 2);})),
         ENTRANCE(RR_GANONS_TOWER_STAIRS_4, AnyAgeTime([]{return logic->CanKillEnemy(RE_IRON_KNUCKLE, ED_CLOSE, true, 2);})),

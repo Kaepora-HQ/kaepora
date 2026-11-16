@@ -162,19 +162,19 @@ Gerudo Training Ground Heavy Block First Chest	6897789835137994741	Banc/GerudoTr
 Gerudo Training Ground Heavy Block Second Chest	11754783663699171680	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 Gerudo Training Ground Heavy Block Third Chest	5329807728555596183	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Heavy Block Fourth Chest	7881496104962067240	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	no Drop__DropActor
-Ganon's Castle Tower Boss Key Chest	17092385671602176550	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
-Ganon's Castle Forest Trial Chest	16913531450403950487	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_ArrowBundle_Medium	no	dungeon with changed locks and keys
-Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor; dungeon with changed locks and keys
-Ganon's Castle Water Trial Right Chest	14404733996390762670	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	Item_BombchuBundle_Small	no	dungeon with changed locks and keys
-Ganon's Castle Shadow Trial Front Chest	18277713685010400796	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Medium	no	dungeon with changed locks and keys
-Ganon's Castle Shadow Trial Golden Gauntlets Chest	17657623307936361670	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Gauntlet_Gold	no	dungeon with changed locks and keys
-Ganon's Castle Spirit Trial Crystal Switch Chest	7899179288432849355	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item; dungeon with changed locks and keys
+Ganon's Castle Tower Boss Key Chest	17092385671602176550	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
+Ganon's Castle Forest Trial Chest	16913531450403950487	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
+Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Water Trial Right Chest	14404733996390762670	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	Item_BombchuBundle_Small	yes	
+Ganon's Castle Shadow Trial Front Chest	18277713685010400796	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
+Ganon's Castle Shadow Trial Golden Gauntlets Chest	17657623307936361670	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Gauntlet_Gold	no	a tier above Goron's Bracelet; the Silver Gauntlets opened after it may lower strength
+Ganon's Castle Spirit Trial Crystal Switch Chest	7899179288432849355	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 Ganon's Castle Spirit Trial Invisible Chest				no	no remake chest
-Ganon's Castle Light Trial First Left Chest	1029712040059298120	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
-Ganon's Castle Light Trial Second Left Chest	17726220643880970879	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor; dungeon with changed locks and keys
-Ganon's Castle Light Trial Third Left Chest	7461796063704896255	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
-Ganon's Castle Light Trial First Right Chest	5732331492537302993	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor; dungeon with changed locks and keys
-Ganon's Castle Light Trial Second Right Chest	14046623154429024571	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	dungeon with changed locks and keys
-Ganon's Castle Light Trial Third Right Chest	11406545451127340703	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor; dungeon with changed locks and keys
-Ganon's Castle Light Trial Invisible Enemies Chest	14962432460641118089	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
-Ganon's Castle Light Trial Lullaby Chest	4733634471038136588	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Green	no	dungeon with changed locks and keys
+Ganon's Castle Light Trial First Left Chest	1029712040059298120	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Ganon's Castle Light Trial Second Left Chest	17726220643880970879	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial Third Left Chest	7461796063704896255	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Ganon's Castle Light Trial First Right Chest	5732331492537302993	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial Second Right Chest	14046623154429024571	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
+Ganon's Castle Light Trial Third Right Chest	11406545451127340703	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial Invisible Enemies Chest	14962432460641118089	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
+Ganon's Castle Light Trial Lullaby Chest	4733634471038136588	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Green	yes	
