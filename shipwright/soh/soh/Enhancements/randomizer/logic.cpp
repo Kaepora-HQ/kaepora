@@ -2034,7 +2034,6 @@ static bool SmallKeysHeld(SceneID scene) {
     switch (scene) {
         case SCENE_FIRE_TEMPLE:
         case SCENE_WATER_TEMPLE:
-        case SCENE_SHADOW_TEMPLE:
         case SCENE_INSIDE_GANONS_CASTLE:
             return true;
         default:
