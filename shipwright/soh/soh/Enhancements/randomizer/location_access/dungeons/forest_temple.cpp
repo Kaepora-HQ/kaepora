@@ -27,12 +27,12 @@ void RegionTable_Init_ForestTemple() {
     }, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_ENTRYWAY,                true),
-        ENTRANCE(RR_FOREST_TEMPLE_OVERGROWN_HALLWAY_LOWER, true),
+        ENTRANCE(RR_FOREST_TEMPLE_OVERGROWN_HALLWAY_LOWER, logic->SmallKeys(SCENE_FOREST_TEMPLE, 1)),
     });
 
     areaTable[RR_FOREST_TEMPLE_OVERGROWN_HALLWAY_LOWER] = Region("Forest Temple Overgrown Hallway Lower", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_TREES,                   true),
+        ENTRANCE(RR_FOREST_TEMPLE_TREES,                   logic->SmallKeys(SCENE_FOREST_TEMPLE, 1)),
         ENTRANCE(RR_FOREST_TEMPLE_OVERGROWN_HALLWAY_UPPER, logic->CanPassEnemy(RE_BIG_SKULLTULA)),
     });
 
@@ -60,7 +60,7 @@ void RegionTable_Init_ForestTemple() {
         ENTRANCE(RR_FOREST_TEMPLE_NORTH_HALLWAY,           true),
         ENTRANCE(RR_FOREST_TEMPLE_NW_COURTYARD_LOWER,      logic->CanUse(RG_SONG_OF_TIME) || logic->IsChild),
         ENTRANCE(RR_FOREST_TEMPLE_NE_COURTYARD_LOWER,      logic->CanUse(RG_FAIRY_BOW) || logic->CanUse(RG_FAIRY_SLINGSHOT)),
-        ENTRANCE(RR_FOREST_TEMPLE_RED_DOORMAT_HALLWAY,     logic->SmallKeys(SCENE_FOREST_TEMPLE, 1)),
+        ENTRANCE(RR_FOREST_TEMPLE_RED_DOORMAT_HALLWAY,     logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
         //RECOIL_HAMMER works but is probably too much for simple.
         ENTRANCE(RR_FOREST_TEMPLE_LOBBY_LEDGE,             logic->IsAdult && logic->CanBombRecoilHover()),
         ENTRANCE(RR_FOREST_TEMPLE_BASEMENT,                logic->Get(LOGIC_FOREST_MEG)),
@@ -253,7 +253,7 @@ void RegionTable_Init_ForestTemple() {
 
     areaTable[RR_FOREST_TEMPLE_RED_DOORMAT_HALLWAY] = Region("Forest Temple West Hallway", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_LOBBY,                       logic->SmallKeys(SCENE_FOREST_TEMPLE, 1)),
+        ENTRANCE(RR_FOREST_TEMPLE_LOBBY,                       logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
         ENTRANCE(RR_FOREST_TEMPLE_RED_DOORMAT_HALLWAY_DOORMAT, logic->CanPassEnemy(RE_BIG_SKULLTULA)),
     });
 
@@ -297,8 +297,8 @@ void RegionTable_Init_ForestTemple() {
     areaTable[RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_TOP] = Region("Forest Temple Block Push Room Top", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_UPPER_BLOCK_PUSH_ROOM,   true),
-        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED,      logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
-        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_STRAIGHTENED, logic->CanHitEyeTargets() && logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
+        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED,      logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
+        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_STRAIGHTENED, logic->CanHitEyeTargets() && logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
     });
 
     areaTable[RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_COURTYARD_ALCOVE] = Region("Forest Temple Block Push Room Courtyard Alcove", SCENE_FOREST_TEMPLE, {}, {}, {
@@ -309,8 +309,8 @@ void RegionTable_Init_ForestTemple() {
 
     areaTable[RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED] = Region("Forest Temple NW Hallway Twisted", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_TOP, logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
-        ENTRANCE(RR_FOREST_TEMPLE_RED_POE_ROOM,        logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
+        ENTRANCE(RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_TOP, logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
+        ENTRANCE(RR_FOREST_TEMPLE_RED_POE_ROOM,        true),
     });
 
     areaTable[RR_FOREST_TEMPLE_NW_HALLWAY_STRAIGHTENED] = Region("Forest Temple NW Hallway Straightened", SCENE_FOREST_TEMPLE, {}, {
@@ -319,7 +319,7 @@ void RegionTable_Init_ForestTemple() {
     }, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_BELOW_BOSS_KEY_CHEST, true),
-        ENTRANCE(RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_TOP,  logic->SmallKeys(SCENE_FOREST_TEMPLE, 2)),
+        ENTRANCE(RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_TOP,  logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
     });
 
     areaTable[RR_FOREST_TEMPLE_RED_POE_ROOM] = Region("Forest Temple Red Poe Room", SCENE_FOREST_TEMPLE, {
@@ -330,7 +330,7 @@ void RegionTable_Init_ForestTemple() {
         LOCATION(RC_FOREST_TEMPLE_RED_POE_CHEST, logic->Get(LOGIC_FOREST_JOELLE) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED, logic->SmallKeys(SCENE_FOREST_TEMPLE, 3)),
+        ENTRANCE(RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED, true),
         ENTRANCE(RR_FOREST_TEMPLE_UPPER_STALFOS,       true),
     });
 
@@ -348,7 +348,7 @@ void RegionTable_Init_ForestTemple() {
     }, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_RED_POE_ROOM,  logic->Get(LOGIC_FOREST_CLEAR_BETWEEN_JOELLE_AND_BETH) && logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 3)),
-        ENTRANCE(RR_FOREST_TEMPLE_BLUE_POE_ROOM, logic->Get(LOGIC_FOREST_CLEAR_BETWEEN_JOELLE_AND_BETH) && logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 3)),
+        ENTRANCE(RR_FOREST_TEMPLE_BLUE_POE_ROOM, logic->Get(LOGIC_FOREST_CLEAR_BETWEEN_JOELLE_AND_BETH) && logic->CanKillEnemy(RE_STALFOS, ED_CLOSE, true, 3) && logic->SmallKeys(SCENE_FOREST_TEMPLE, 4)),
     });
 
     areaTable[RR_FOREST_TEMPLE_BLUE_POE_ROOM] = Region("Forest Temple Blue Poe Room", SCENE_FOREST_TEMPLE, {
@@ -362,13 +362,13 @@ void RegionTable_Init_ForestTemple() {
         LOCATION(RC_FOREST_TEMPLE_BLUE_POE_POT_3, logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_UPPER_STALFOS,            true),
-        ENTRANCE(RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED, logic->SmallKeys(SCENE_FOREST_TEMPLE, 4)),
+        ENTRANCE(RR_FOREST_TEMPLE_UPPER_STALFOS,            logic->SmallKeys(SCENE_FOREST_TEMPLE, 4)),
+        ENTRANCE(RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED, true),
     });
 
     areaTable[RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED] = Region("Forest Temple NE Hallway Straightened", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
-        ENTRANCE(RR_FOREST_TEMPLE_BLUE_POE_ROOM,   logic->SmallKeys(SCENE_FOREST_TEMPLE, 4)),
+        ENTRANCE(RR_FOREST_TEMPLE_BLUE_POE_ROOM,   true),
         ENTRANCE(RR_FOREST_TEMPLE_FROZEN_EYE_ROOM, logic->SmallKeys(SCENE_FOREST_TEMPLE, 5)),
     });
 

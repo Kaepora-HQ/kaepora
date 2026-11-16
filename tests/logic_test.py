@@ -95,6 +95,20 @@ class LogicTest(unittest.TestCase):
                                        ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
                                        ("Bottom of the Well Freestanding Key", "Green Rupee")))
 
+    def test_forest_temple_locks_form_one_chain(self):
+        # Five locked doors stand one behind the other: after the first room, into the west hallway, at the top of the
+        # block push rooms, into the Blue Poe room and into the frozen eye room. Each takes one key more than the last.
+        def without(*chests):
+            return [(f"Forest Temple {chest} Chest", "Green Rupee") for chest in chests]
+        self.assertFalse(self.reachable("Forest Temple First Stalfos Chest", *without("First Room")))
+        # The temple's own bow lies behind the third door. One found outside hits the eye switches before it.
+        bow = ("KF Mido Top Left Chest", "Progressive Bow")
+        self.assertFalse(self.reachable("Forest Temple Eye Switch Chest", bow, *without("First Stalfos", "Well")))
+        self.assertFalse(self.reachable("Forest Temple Boss Key Chest", bow, *without("Well", "Floormaster")))
+        self.assertTrue(self.reachable("Forest Temple Boss Key Chest", bow, *without("Floormaster", "Red Poe")))
+        self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
+        self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

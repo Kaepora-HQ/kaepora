@@ -53,19 +53,19 @@ Dodongos Cavern End Of Bridge Chest	7524527082521156886	Banc/DodongoCavern/Dodon
 Jabu Jabus Belly Map Chest	14933854942830098290	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Map	no	pairing confidence low; logic-differences.md J1
 Jabu Jabus Belly Compass Chest	3510516276638146208	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Jabu Jabus Belly Boomerang Chest	5527401621172639818	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Boomerang	yes	
-Forest Temple First Room Chest	1171460703078800858	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Forest Temple First Stalfos Chest	14776684749746592758	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	dungeon with changed locks and keys
+Forest Temple First Room Chest	1171460703078800858	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Forest Temple First Stalfos Chest	14776684749746592758	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	logic-differences.md F4
 Forest Temple Map Chest				no	no remake chest
-Forest Temple Well Chest	6449977980406424425	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Forest Temple Falling Ceiling Room Chest	15117164073907033527	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs		no	no Drop__DropActor; dungeon with changed locks and keys
-Forest Temple Eye Switch Chest	15920957434854338961	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	no	dungeon with changed locks and keys
-Forest Temple Boss Key Chest	5306318520835485827	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
-Forest Temple Floormaster Chest	7535137041266964235	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Forest Temple Bow Chest	11082303891540711688	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Range_Bow	no	dungeon with changed locks and keys
-Forest Temple Red Poe Chest	3433400840978782007	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
-Forest Temple Blue Poe Chest	6948525240950728236	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	no	dungeon with changed locks and keys
-Forest Temple Basement Chest	9038700938965170329	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Large	no	dungeon with changed locks and keys
+Forest Temple Well Chest	6449977980406424425	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Forest Temple Falling Ceiling Room Chest	15117164073907033527	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs		no	no Drop__DropActor
+Forest Temple Eye Switch Chest	15920957434854338961	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
+Forest Temple Boss Key Chest	5306318520835485827	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
+Forest Temple Floormaster Chest	7535137041266964235	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Forest Temple Bow Chest	11082303891540711688	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Range_Bow	yes	
+Forest Temple Red Poe Chest	3433400840978782007	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Forest Temple Blue Poe Chest	6948525240950728236	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
+Forest Temple Basement Chest	9038700938965170329	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Large	yes	
 Fire Temple Near Boss Chest	5634724236470386190	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	dungeon with changed locks and keys
 Fire Temple Flare Dancer Chest	8757492004108970488	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	dungeon with changed locks and keys
 Fire Temple Boss Key Chest	14060099092170010696	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	no	dungeon with changed locks and keys
