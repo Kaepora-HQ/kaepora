@@ -386,7 +386,6 @@
         },
         "sphere 04": {
             "GC Darunias Joy": "Strength Upgrade",
-            "GC Shop Item 5": "Buy Goron Tunic",
             "HF GS Stone Bridge Tree Grotto": "Gold Skulltula Token",
             "HC Great Fairy Reward": "Din's Fire",
             "Kak 30 Gold Skulltula Reward": "Progressive Wallet",
@@ -396,8 +395,7 @@
         },
         "sphere 05": {
             "LH Underwater Item": "Bottle with Ruto's Letter",
-            "HF GS Cow Grotto": "Gold Skulltula Token",
-            "ZD Shop Item 1": "Buy Zora Tunic"
+            "HF GS Cow Grotto": "Gold Skulltula Token"
         },
         "sphere 06": {
             "Jabu Jabus Belly GS Lobby Basement Lower": "Gold Skulltula Token",
@@ -415,7 +413,9 @@
         "sphere 08": {
             "Song from Windmill": "Song of Storms",
             "Graveyard Hookshot Chest": "Progressive Hookshot",
+            "GC Shop Item 5": "Buy Goron Tunic",
             "GC GS Center Platform": "Gold Skulltula Token",
+            "ZD Shop Item 1": "Buy Zora Tunic",
             "Market ToT Master Sword": "Master Sword"
         },
         "sphere 09": {
