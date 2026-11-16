@@ -50,6 +50,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("DMT Trade Claim Check"))
         self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee")))
 
+    def test_dampes_heart_piece_needs_a_hookshot(self):
+        self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
+                                        ("Graveyard Hookshot Chest", "Green Rupee")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
