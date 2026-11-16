@@ -92,6 +92,19 @@ class SeedgenTest(unittest.TestCase):
         for seed in range(100, 120):
             self.generate(str(seed))
 
+    def test_spirit_dungeon_items_stay_out_of_the_colossus(self):
+        # SoH counts these two chests as Spirit Temple locations, but they stand in the Desert Colossus, and the game
+        # credits a key, map or compass to the scene Link stands in.
+        colossus = ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"]
+        spirit = {"Spirit Temple Small Key", "Spirit Temple Boss Key", "Spirit Temple Map", "Spirit Temple Compass"}
+        placed = collections.Counter()
+        for seed in range(200, 220):
+            spoiler, _ = self.generate(str(seed))
+            placed.update(spoiler["locations"][name] for name in colossus)
+        self.assertFalse(spirit & placed.keys())
+        # Other items still land there.
+        self.assertGreater(len(placed), len(colossus))
+
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)
         self.assertEqual(spoiler, (FIXTURES / f"spoiler-{FIXED_SEED}.json").read_bytes())
