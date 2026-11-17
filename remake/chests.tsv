@@ -36,7 +36,7 @@ Kak Redead Grotto Chest				no	no remake chest
 Kak Open Grotto Chest	12902291359202819102	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Kak Lookout Chest	13080955777249750889	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	yes	
 Kak Lookout Chest	11929552275106311978	Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	yes	
-Graveyard Shield Grave Chest	16912540161937823130	Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs	TBox_Shield_Hylian	no	Drop__CheckActor and Drop__DropActor_Substitute
+Graveyard Shield Grave Chest	16912540161937823130	Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs	TBox_Shield_Hylian	yes	
 Graveyard Heart Piece Grave Chest	9622128545943056087	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs	Obj_Heart_Piece	no	pairing confidence low
 Graveyard Royal Family's Tomb Chest				no	no remake chest
 Graveyard Hookshot Chest	16041366920820397198	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	Item_Hookshot	no	The race goal holds four alternate chests (this one, a heart piece, a red rupee and a blue rupee), and which one each race leaves is not known.
@@ -59,9 +59,9 @@ Deku Tree Slingshot Room Side Chest	13027331340815880287	Banc/InsideTheDekuTree/
 Dodongos Cavern Boss Room Chest				no	no remake chest
 Dodongos Cavern Map Chest	8291119063305855945	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	
 Dodongos Cavern Compass Chest	17531994809974271603	Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
-Dodongos Cavern Bomb Flower Platform Chest	11582649900854566065	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
+Dodongos Cavern Bomb Flower Platform Chest	11582649900854566065	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	yes	
 Dodongos Cavern Bomb Bag Chest	12161709650443144121	Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs	Item_BombBag_Small	yes	
-Dodongos Cavern End Of Bridge Chest	7524527082521156886	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
+Dodongos Cavern End Of Bridge Chest	7524527082521156886	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	yes	
 Jabu Jabus Belly Map Chest	14933854942830098290	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Jabu Jabus Belly Compass Chest	3510516276638146208	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Jabu Jabus Belly Boomerang Chest	5527401621172639818	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Boomerang	yes	
@@ -70,7 +70,7 @@ Forest Temple First Stalfos Chest	14776684749746592758	Banc/ForestTemple/ForestT
 Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Forest Temple Map Chest				no	no remake chest
 Forest Temple Well Chest	6449977980406424425	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Forest Temple Falling Ceiling Room Chest	15117164073907033527	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs		no	no Drop__DropActor
+Forest Temple Falling Ceiling Room Chest	15117164073907033527	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs	Tbox_MagicJar_Large	yes	
 Forest Temple Eye Switch Chest	15920957434854338961	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
 Forest Temple Boss Key Chest	5306318520835485827	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Forest Temple Floormaster Chest	7535137041266964235	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
@@ -106,12 +106,12 @@ Water Temple Longshot Chest	18059711820131847165	Banc/WaterTemple/WaterTemple_St
 Water Temple River Chest				no	no remake chest
 Spirit Temple Silver Gauntlets Chest	2490063409521505179	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Gauntlet_Silver	no	a tier above Goron's Bracelet; opened after the Golden Gauntlets it may lower strength
 Spirit Temple Mirror Shield Chest	10012167258643363548	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Item_Shield_Mirror	yes	
-Spirit Temple Child Bridge Chest	5309180490719879013	Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
+Spirit Temple Child Bridge Chest	5309180490719879013	Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs	TBox_Shield_Deku	yes	
 Spirit Temple Child Early Torches Chest	5703423643219134246	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Spirit Temple Compass Chest	15633505270333176438	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Spirit Temple Early Adult Right Chest	4277978357934400600	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Spirit Temple First Mirror Left Chest	12909857529499414969	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_BombBundle_Small	yes	
-Spirit Temple First Mirror Right Chest	876108895472176682	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs		no	no Drop__DropActor
+Spirit Temple First Mirror Right Chest	876108895472176682	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Spirit Temple Map Chest	13852283723126411131	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Spirit Temple Child Climb North Chest	1501288453962537671	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_BombchuBundle_Small	yes	
 Spirit Temple Child Climb East Chest				no	no remake chest
@@ -150,24 +150,24 @@ Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/Bot
 Bottom of the Well Underwater Front Chest	12988877782812797760	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Underwater Left Chest				no	no remake chest
 Bottom of the Well Map Chest	9466613428674883506	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	
-Bottom of the Well Fire Keese Chest	874970148260328653	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
+Bottom of the Well Fire Keese Chest	874970148260328653	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	TBox_Shield_Deku	yes	
 Bottom of the Well Like Like Chest				no	no remake chest
 Ice Cavern Map Chest	11498802739257120175	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Ice Cavern Compass Chest	13542013937093159888	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Ice Cavern Iron Boots Chest	6859289214373847284	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_HeavyBoot	yes	
-Gerudo Training Ground Lobby Left Chest	11182647876438515984	Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs		no	no Drop__DropActor
+Gerudo Training Ground Lobby Left Chest	11182647876438515984	Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs	Tbox_MagicJar_Large	yes	
 Gerudo Training Ground Lobby Right Chest	2436665354602612279	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Gerudo Training Ground Stalfos Chest	13501407288943710656	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Beamos Chest	4709724720801091788	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Hidden Ceiling Chest	4320448574091221496	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Maze Path First Chest	10696620323243142689	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
 Gerudo Training Ground Maze Path Second Chest	8186301369655588602	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
-Gerudo Training Ground Maze Path Third Chest	10743352138513225188	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	no	Drop__CheckActor and Drop__DropActor_Substitute
+Gerudo Training Ground Maze Path Third Chest	10743352138513225188	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Gerudo Training Ground Maze Path Final Chest	1941083939696166170	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Arrow_Ice	yes	
 Gerudo Training Ground Maze Right Central Chest	196331300747102419	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_BombchuBundle_Small	yes	
-Gerudo Training Ground Maze Right Side Chest	11683433230229591151	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	no	Drop__CheckActor and Drop__DropActor_Substitute
+Gerudo Training Ground Maze Right Side Chest	11683433230229591151	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Gerudo Training Ground Underwater Silver Rupee Chest	3717705376223508790	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Gerudo Training Ground Hammer Room Clear Chest	4961588221597286817	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	no Drop__DropActor; Drop__CheckActor and Drop__DropActor_Substitute
+Gerudo Training Ground Hammer Room Clear Chest	4961588221597286817	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	checks what Link owns and names no item, and no chest of both kinds is seen to give a placed item
 Gerudo Training Ground Hammer Room Switch Chest	4372363658229299619	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Eye Statue Chest	11563468890171962383	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Near Scarecrow Chest	9911316961118170383	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
@@ -175,22 +175,22 @@ Gerudo Training Ground Before Heavy Block Chest	4519534997122863169	Banc/GerudoT
 Gerudo Training Ground Heavy Block First Chest	6897789835137994741	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Gerudo Training Ground Heavy Block Second Chest	11754783663699171680	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Gerudo Training Ground Heavy Block Third Chest	5329807728555596183	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Gerudo Training Ground Heavy Block Fourth Chest	7881496104962067240	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	no Drop__DropActor
+Gerudo Training Ground Heavy Block Fourth Chest	7881496104962067240	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Gerudo Training Ground Heavy Block Cracked Wall Chest	3750231902048775592	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_BombBundle_Small	yes	
 Gerudo Training Ground Freestanding Key	1883068192328530224	Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Ganon's Castle Tower Boss Key Chest	17092385671602176550	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Ganon's Castle Forest Trial Chest	16913531450403950487	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
-Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Ganon's Castle Water Trial Right Chest	14404733996390762670	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	Item_BombchuBundle_Small	yes	
 Ganon's Castle Shadow Trial Front Chest	18277713685010400796	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
 Ganon's Castle Shadow Trial Golden Gauntlets Chest	17657623307936361670	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Gauntlet_Gold	no	a tier above Goron's Bracelet; the Silver Gauntlets opened after it may lower strength
 Ganon's Castle Spirit Trial Crystal Switch Chest	7899179288432849355	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Ganon's Castle Spirit Trial Invisible Chest				no	no remake chest
 Ganon's Castle Light Trial First Left Chest	1029712040059298120	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
-Ganon's Castle Light Trial Second Left Chest	17726220643880970879	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial Second Left Chest	17726220643880970879	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Ganon's Castle Light Trial Third Left Chest	7461796063704896255	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
-Ganon's Castle Light Trial First Right Chest	5732331492537302993	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial First Right Chest	5732331492537302993	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Ganon's Castle Light Trial Second Right Chest	14046623154429024571	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
-Ganon's Castle Light Trial Third Right Chest	11406545451127340703	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
+Ganon's Castle Light Trial Third Right Chest	11406545451127340703	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Ganon's Castle Light Trial Invisible Enemies Chest	14962432460641118089	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Ganon's Castle Light Trial Lullaby Chest	4733634471038136588	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Green	yes	

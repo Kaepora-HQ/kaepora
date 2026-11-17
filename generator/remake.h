@@ -18,8 +18,8 @@ struct RemakeChest {
     // Usually one. The files keep a few chests once in each of two versions of a scene, under two hashes, and both
     // give the location's item. Every file is in one Banc folder.
     std::vector<Actor> actors;
-    // The chest's Drop__DropActor, empty when it has none, and the SoH item it stands for. RG_NONE means the logic
-    // sees nothing there.
+    // What the chest gives, by its remake name (remake/README.md), empty when the table names nothing, and the SoH item
+    // it stands for. RG_NONE means the logic sees nothing there.
     std::string item;
     RandomizerGet sohItem;
     bool shuffled;
