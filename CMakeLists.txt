@@ -40,8 +40,6 @@ target_include_directories(kaepora-generator PUBLIC
 target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
 # The version goes to the one file that writes it into the spoiler log, so a new version rebuilds that file alone.
 set_source_files_properties(generator/generate.cpp PROPERTIES COMPILE_DEFINITIONS "KAEPORA_VERSION=\"${PROJECT_VERSION}\"")
-# Shop prices use floating point. SoH builds without fused multiply-add, so the same seed gives the same prices.
-target_compile_options(kaepora-generator PRIVATE -ffp-contract=off)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
