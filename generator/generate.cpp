@@ -7,7 +7,9 @@
 #include "remake.h"
 #include "setup.h"
 
+#include <algorithm>
 #include <format>
+#include <iterator>
 #include <stdexcept>
 
 // Adds the location's name and the name of the item placed there.
@@ -16,11 +18,11 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
         Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedItemName().GetEnglish();
 }
 
-// Kaepora's version, the seed, the item in each shuffled chest in table order, then the spheres of the route the logic
-// found to finish the seed.
-static std::string SpoilerLog(const std::string& seed, const std::vector<RemakeChest>& chests) {
+static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
+                              const std::vector<RemakeChest>& chests) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
+                                   { "settings", ToJson(settings) },
                                    { "locations", nlohmann::ordered_json::object() },
                                    { "playthrough", nlohmann::ordered_json::object() } };
     for (const RemakeChest& chest : chests) {
@@ -37,12 +39,34 @@ static std::string SpoilerLog(const std::string& seed, const std::vector<RemakeC
     return log.dump(4) + "\n";
 }
 
-GeneratedSeed Generate(const std::string& seed) {
+static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) {
+    const auto dungeon = std::ranges::find(Dungeons, chest.Folder(), &Dungeon::folder);
+    if (dungeon != std::end(Dungeons) && !settings.shuffledDungeons.contains(*dungeon)) {
+        return true;
+    }
+    switch (Rando::StaticData::RetrieveItem(chest.sohItem).GetItemType()) {
+        case ITEMTYPE_SMALLKEY:
+        case ITEMTYPE_BOSSKEY:
+            return settings.keys == DungeonItems::InTheirOwnChests;
+        case ITEMTYPE_MAP:
+        case ITEMTYPE_COMPASS:
+            return settings.mapsAndCompasses == DungeonItems::InTheirOwnChests;
+        default:
+            return false;
+    }
+}
+
+GeneratedSeed Generate(const std::string& seed, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
-    static const std::vector<RemakeChest> chests = LoadRemakeChests();
+    static const std::vector<RemakeChest> table = LoadRemakeChests();
 
-    SetUnmodifiedGameOptions();
+    std::vector<RemakeChest> chests = table;
+    for (RemakeChest& chest : chests) {
+        chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
+    }
+
+    SetOptions(settings.lens);
     auto ctx = Rando::Context::GetInstance();
     ctx->SetSeed(SohUtils::Hash(seed));
     ctx->ClearItemLocations();
@@ -50,5 +74,5 @@ GeneratedSeed Generate(const std::string& seed) {
     if (Playthrough::Playthrough_Init(ctx->GetSeed(), {}, {}, chests) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    return { SpoilerLog(seed, chests), RemakePlan(seed, chests) };
+    return { SpoilerLog(seed, settings, chests), RemakePlan(seed, chests) };
 }

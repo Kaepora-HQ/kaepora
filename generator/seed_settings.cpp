@@ -1,0 +1,54 @@
+#include "seed_settings.h"
+
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+
+template <typename Value, size_t Size>
+static Value Parse(const std::pair<Value, std::string_view> (&choices)[Size], const std::string& setting,
+                   const nlohmann::json& words) {
+    const auto found =
+        std::ranges::find(choices, words.get<std::string>(), &std::pair<Value, std::string_view>::second);
+    if (found == std::end(choices)) {
+        throw std::runtime_error(setting + ": unknown value " + words.dump());
+    }
+    return found->first;
+}
+
+nlohmann::ordered_json ToJson(const SeedSettings& settings) {
+    nlohmann::ordered_json dungeons = nlohmann::ordered_json::array();
+    for (const Dungeon& dungeon : Dungeons) {
+        if (settings.shuffledDungeons.contains(dungeon)) {
+            dungeons.push_back(dungeon.name);
+        }
+    }
+    return { { ShuffledDungeonsSetting, dungeons },
+             { KeysSetting, Words(DungeonItemsChoices, settings.keys) },
+             { MapsAndCompassesSetting, Words(DungeonItemsChoices, settings.mapsAndCompasses) },
+             { LensSetting, Words(LensChoices, settings.lens) } };
+}
+
+SeedSettings ParseSeedSettings(const nlohmann::json& json) {
+    SeedSettings settings;
+    for (const auto& [setting, value] : json.items()) {
+        if (setting == ShuffledDungeonsSetting) {
+            settings.shuffledDungeons.clear();
+            for (const nlohmann::json& name : value) {
+                const auto dungeon = std::ranges::find(Dungeons, name.get<std::string>(), &Dungeon::name);
+                if (dungeon == std::end(Dungeons)) {
+                    throw std::runtime_error(setting + ": unknown dungeon " + name.dump());
+                }
+                settings.shuffledDungeons.insert(*dungeon);
+            }
+        } else if (setting == KeysSetting) {
+            settings.keys = Parse(DungeonItemsChoices, setting, value);
+        } else if (setting == MapsAndCompassesSetting) {
+            settings.mapsAndCompasses = Parse(DungeonItemsChoices, setting, value);
+        } else if (setting == LensSetting) {
+            settings.lens = Parse(LensChoices, setting, value);
+        } else {
+            throw std::runtime_error("unknown setting \"" + setting + "\"");
+        }
+    }
+    return settings;
+}

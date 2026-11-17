@@ -542,6 +542,9 @@ bool Logic::BAllowed() {
 // Can the passed in item be used?
 // RANDOTODO catch magic items explicitly and add an assert on miss.
 bool Logic::CanUse(RandomizerGet itemName) {
+    if (itemName == RG_LENS_OF_TRUTH && !LensNeeded) {
+        return true;
+    }
     if (!HasItem(itemName))
         return false;
 

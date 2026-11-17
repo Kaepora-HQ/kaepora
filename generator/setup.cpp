@@ -1,6 +1,7 @@
 #include "setup.h"
 
 #include "soh/Enhancements/randomizer/SeedContext.h"
+#include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/settings.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/Lang/Lang.h"
@@ -274,12 +275,13 @@ void InitializeRandomizer() {
     Rando::StaticData::RegisterFireGoronLocations();
     Rando::StaticData::InitHashMaps();
     ctx->AddExcludedOptions();
-    SetUnmodifiedGameOptions();
 }
 
-void SetUnmodifiedGameOptions() {
+void SetOptions(Lens lens) {
     Rando::Settings::GetInstance()->SetAllToContext();
+    auto ctx = Rando::Context::GetInstance();
     for (auto [key, value] : unmodifiedGame) {
-        Rando::Context::GetInstance()->GetOption(key).Set(value);
+        ctx->GetOption(key).Set(value);
     }
+    ctx->GetLogic()->LensNeeded = lens == Lens::Needed;
 }

@@ -17,12 +17,13 @@ static void Write(const char* path, const std::string& text) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 4 || argv[1][0] == '\0') {
-        std::fprintf(stderr, "usage: %s <seed> <spoiler.json> <plan.json>\n", argv[0]);
+    if (argc < 4 || argc > 5 || argv[1][0] == '\0') {
+        std::fprintf(stderr, "usage: %s <seed> <spoiler.json> <plan.json> [<settings>]\n", argv[0]);
         return 2;
     }
     try {
-        const GeneratedSeed seed = Generate(argv[1]);
+        const SeedSettings settings = argc == 5 ? ParseSeedSettings(nlohmann::json::parse(argv[4])) : SeedSettings{};
+        const GeneratedSeed seed = Generate(argv[1], settings);
         Write(argv[2], seed.spoilerLog);
         Write(argv[3], seed.plan.dump(2) + "\n");
     } catch (const std::exception& e) {

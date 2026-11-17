@@ -35,6 +35,7 @@ class Logic {
 
     bool CalculatingAvailableChecks = false;
     bool ACProcessUndiscoveredExits = false;
+    bool LensNeeded = true;
 
     SaveContext* mSaveContext = nullptr;
     Logic();

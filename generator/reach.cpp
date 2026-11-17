@@ -30,14 +30,15 @@ static RandomizerGet Item(const std::string& name) {
 }
 
 int main(int argc, char** argv) {
-    if (argc % 2 != 0) {
-        std::fprintf(stderr, "usage: %s <location> [<location> <item>]...\n", argv[0]);
+    if (argc < 3 || argc % 2 != 1) {
+        std::fprintf(stderr, "usage: %s <settings> <location> [<location> <item>]...\n", argv[0]);
         return 2;
     }
 
     InitializeRandomizer();
     std::vector<RemakeChest> chests;
     try {
+        SetOptions(ParseSeedSettings(nlohmann::json::parse(argv[1])).lens);
         chests = LoadRemakeChests();
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());
@@ -48,10 +49,10 @@ int main(int argc, char** argv) {
     for (const RemakeChest* chest : SetUpWorld(chests)) {
         ctx->GetItemLocation(chest->location)->SetPlacedItem(chest->sohItem);
     }
-    for (int i = 2; i < argc; i += 2) {
+    for (int i = 3; i < argc; i += 2) {
         ctx->GetItemLocation(Location(argv[i]))->SetPlacedItem(Item(argv[i + 1]));
     }
-    RandomizerCheck target = Location(argv[1]);
+    RandomizerCheck target = Location(argv[2]);
 
     ctx->GetLogic()->Reset();
     ReachabilitySearch({});

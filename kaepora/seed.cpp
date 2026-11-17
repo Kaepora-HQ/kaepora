@@ -8,12 +8,13 @@
 #include <stdexcept>
 #include <system_error>
 
-void MakeSeed(const std::string& seed, const std::filesystem::path& nup, const std::filesystem::path& seedDir) {
+void MakeSeed(const std::string& seed, const SeedSettings& settings, const std::filesystem::path& nup,
+              const std::filesystem::path& seedDir) {
     // A file left by another seed would stay in the mod, so the folder must be new.
     if (std::filesystem::exists(seedDir)) {
         throw std::runtime_error(std::format("{}: already exists", seedDir.string()));
     }
-    const GeneratedSeed generated = Generate(seed);
+    const GeneratedSeed generated = Generate(seed, settings);
     const std::map<std::string, std::string> files = ModFiles(nup, ParsePlan(generated.plan));
     try {
         for (const auto& [path, data] : files) {

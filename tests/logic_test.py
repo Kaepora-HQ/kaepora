@@ -5,6 +5,7 @@ Each test places items at locations, leaves every other location as the unmodifi
 Link can ever collect what is at one location. Names are SoH's English names.
 """
 
+import json
 import subprocess
 import sys
 import unittest
@@ -20,13 +21,16 @@ NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Gr
 NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 # Dampe's race gives the first hookshot. The Water Temple's Longshot chest lies past places that need one.
 NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
+# The well holds the only Lens of Truth.
+NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 
 
 class LogicTest(unittest.TestCase):
-    def reachable(self, location, *placed):
+    def reachable(self, location, *placed, settings=None):
         """Whether Link can collect what is at location, with each (location, item) pair in placed."""
-        result = subprocess.run([REACH, location, *(name for pair in placed for name in pair)],
-                                capture_output=True, text=True)
+        args = [json.dumps(settings or {}), location, *(name for pair in placed for name in pair)]
+        result = subprocess.run([REACH, *args], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(result.stdout, ("yes\n", "no\n"))
         return result.stdout == "yes\n"
@@ -213,9 +217,13 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Bottom of the Well GS East Inner Room", one_key))
 
     def test_well_east_inner_room_skulltula_needs_no_lens(self):
-        # Link finds his way around the hidden pit between the door and the skulltula without the Lens of Truth.
-        no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
-        self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room", no_lens))
+        for settings in ({"Lens of Truth": "Needed"}, LENS_NEVER_NEEDED):
+            self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room", NO_LENS, settings=settings))
+
+    def test_lens_never_needed_waives_every_rule_that_asks_for_it(self):
+        for location in ("Bottom of the Well Compass Chest", "Market Treasure Chest Game Reward", "Bongo Bongo"):
+            self.assertFalse(self.reachable(location, NO_LENS), location)
+            self.assertTrue(self.reachable(location, NO_LENS, settings=LENS_NEVER_NEEDED), location)
 
     def test_well_hidden_pits_door_has_no_lock(self):
         self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
