@@ -966,6 +966,11 @@ static std::vector<RandomizerCheck> OutOfReachWithStrength(const std::vector<Rem
     for (RandomizerGet item : strength) {
         Rando::StaticData::RetrieveItem(item).ApplyEffect();
     }
+    // Before Link uses a bombchu, a Deku Stick or a Deku Nut, the logic asks for a place to get more, and for a bomb
+    // bag with a bombchu. In the game he uses what a chest gave him, and a bombchu with no bag.
+    for (LogicVal source : { LOGIC_BUY_BOMBCHUS, LOGIC_STICK_ACCESS, LOGIC_NUT_ACCESS }) {
+        logic->Set(source, true);
+    }
     ReachabilitySearch({});
     for (Rando::ItemLocation* location : givers) {
         location->SaveDelayedItem();

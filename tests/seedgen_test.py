@@ -47,6 +47,8 @@ EVERY_KEY = [("Link's Pocket", item) for item in (
                                             "Gerudo Fortress", "Ganon's Castle", "Chest Game")),
     *(f"{dungeon} Boss Key" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
                                             "Shadow Temple", "Ganon's Castle")))]
+# The logic asks for a bomb bag and a place to buy bombchus before Link uses one, and the game asks for neither.
+BOMBCHUS = [("Link's Pocket", "Buy Bombchu (10)"), ("Link's Pocket", "Progressive Bomb Bag")]
 # The game pays each chest of these locations on its own.
 KEPT_TWICE = {location for location, rows in collections.Counter(row["location"] for row in SHUFFLED).items()
               if rows > 1}
@@ -277,7 +279,7 @@ class SeedgenTest(unittest.TestCase):
         def without(*left_out):
             return {"Shuffled dungeons": [name for name in DUNGEONS if name not in left_out]}
 
-        for seed, settings in (("5029", {}), ("5032", {}), ("5038", {}), ("5022", {}), ("70217", {}),
+        for seed, settings in (("5029", {}), ("5032", {}), ("5038", {}), ("5022", {}), ("70217", {}), ("5015", {}),
                                ("947011", {"Shuffled dungeons": ["Ganon's Castle"]}),
                                ("5107", without("Spirit Temple")),
                                ("75021", {"Small and boss keys": "In their own chests"}),
@@ -294,10 +296,10 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual("Golden Gauntlets" in where,
                              "Ganon's Castle" in settings.get("Shuffled dungeons", DUNGEONS))
             self.assertTrue(reach.reachable(golden, *placed, settings=settings), seed)
-            for keys in ([], EVERY_KEY):
-                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *keys, settings=settings), seed)
-                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *keys, settings=settings), seed)
-                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *keys,
+            for held in ([], EVERY_KEY + BOMBCHUS):
+                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *held, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *held, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *held,
                                                  settings=settings), seed)
             self.assertFalse({silver, golden} & KEPT_TWICE, seed)
             spheres = {item: sphere for sphere, steps in spoiler["playthrough"].items() for item in steps.values()}
