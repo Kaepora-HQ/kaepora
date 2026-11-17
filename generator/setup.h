@@ -1,4 +1,3 @@
-// SoH's randomizer start-up, shared by the generator and the logic test program.
 #pragma once
 
 #include "seed_settings.h"
