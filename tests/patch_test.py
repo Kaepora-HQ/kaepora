@@ -512,10 +512,9 @@ def load_size(size, overhead=264):
 EVENT_FLOW_OVERHEAD = 272
 
 
-def placement_sizes(game, tmp, paths):
+def placement_sizes(game, mod, paths):
     """The decompressed size of each placement file in the mod, by its size table key."""
-    romfs = tmp / "mod" / "romfs"
-    return {size_key(p): len(zstd.decompress((romfs / p).read_bytes(), zstd_dict=game.dictionary)) for p in paths}
+    return {size_key(p): len(zstd.decompress(mod[p], zstd_dict=game.dictionary)) for p in paths}
 
 
 def size_table_entries(patch, game):
@@ -524,36 +523,27 @@ def size_table_entries(patch, game):
     chests = rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]
     game_frame = game.read(SIZE_TABLE)
     header, entries, names = read_size_table(zstd.decompress(game_frame))
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan(chests), tmp)
-        assert result.returncode == 0, result.stderr
-        changed = sorted({path for _, files, _ in chests for path in files})
-        assert written(tmp) == changed + [SIZE_TABLE], written(tmp)
-        sizes = placement_sizes(game, tmp, changed)
-        frame = (tmp / "mod" / "romfs" / SIZE_TABLE).read_bytes()
+    mod = patched(patch, game, plan(chests))
+    changed = sorted({path for _, files, _ in chests for path in files})
+    assert sorted(mod) == changed + [SIZE_TABLE], sorted(mod)
+    sizes = placement_sizes(game, mod, changed)
     game_sizes = dict(entries)
     assert [p for p in changed if load_size(sizes[size_key(p)]) > game_sizes[size_key(p)]] == [WATER_STATIC]
     # Each written file's entry is large enough for its size, and every other byte of the table is the game's.
     expected = [(key, max(size, load_size(sizes[key])) if key in sizes else size) for key, size in entries]
-    assert read_size_table(zstd.decompress(frame)) == (header, expected, names)
-    # Single segment, content size in the header, no checksum, and no dictionary, as in the game's own table.
-    assert frame[4] == game_frame[4], (frame[4], game_frame[4])
-    assert zstd.get_frame_info(frame).dictionary_id == zstd.get_frame_info(game_frame).dictionary_id
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
+    assert_same_frame_header(mod[SIZE_TABLE], game_frame)
 
 
 def size_table_unchanged(patch, game):
     _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
     game_sizes = dict(entries)
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan(rotated(game)), tmp)
-        assert result.returncode == 0, result.stderr
-        changed = sorted({path for _, files in ROTATED for path in files})
-        sizes = placement_sizes(game, tmp, changed)
-        # Every written file still fits its entry, so the table is left out.
-        assert all(load_size(size) <= game_sizes[key] for key, size in sizes.items()), sizes
-        assert written(tmp) == changed, written(tmp)
+    mod = patched(patch, game, plan(rotated(game)))
+    changed = sorted({path for _, files in ROTATED for path in files})
+    sizes = placement_sizes(game, mod, changed)
+    # Every written file still fits its entry, so the table is left out.
+    assert all(load_size(size) <= game_sizes[key] for key, size in sizes.items()), sizes
+    assert sorted(mod) == changed, sorted(mod)
 
 
 def gift(patch, game):
