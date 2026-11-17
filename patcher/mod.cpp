@@ -75,17 +75,21 @@ static byml::Node* Find(byml::Node& dict, std::string_view key) {
     return entry == dict.dict.end() ? nullptr : &entry->value;
 }
 
+static byml::Node* FindHash(byml::Node& array, uint64_t hash) {
+    const auto found = std::ranges::find_if(array.array, [&](byml::Node& item) {
+        const byml::Node* itemHash = Find(item, "Hash");
+        return itemHash != nullptr && itemHash->scalar == hash;
+    });
+    return found == array.array.end() ? nullptr : &*found;
+}
+
 static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     byml::Node* actors = Find(placement, "Actors");
-    if (actors != nullptr) {
-        for (byml::Node& actor : actors->array) {
-            const byml::Node* actorHash = Find(actor, "Hash");
-            if (actorHash != nullptr && actorHash->scalar == hash) {
-                return actor;
-            }
-        }
+    byml::Node* actor = actors == nullptr ? nullptr : FindHash(*actors, hash);
+    if (actor == nullptr) {
+        throw std::runtime_error("no actor in the file has this hash");
     }
-    throw std::runtime_error("no actor in the file has this hash");
+    return *actor;
 }
 
 // A chest gives its Dynamic.Drop__DropActor. One without it gives a refill of what Link is lowest on, so the item is
@@ -209,12 +213,8 @@ static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, co
             throw std::runtime_error("the list has no Data.Bool");
         }
         for (const std::string& name : names) {
-            const uint32_t hash = Murmur3(name);
-            const auto entry = std::ranges::find_if(bools->array, [&](byml::Node& candidate) {
-                const byml::Node* candidateHash = Find(candidate, "Hash");
-                return candidateHash != nullptr && candidateHash->scalar == hash;
-            });
-            byml::Node* value = entry == bools->array.end() ? nullptr : Find(*entry, "DefaultValue");
+            byml::Node* entry = FindHash(*bools, Murmur3(name));
+            byml::Node* value = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
             if (value == nullptr || value->type != byml::Type::Bool) {
                 throw std::runtime_error(
                     std::format("start flag \"{}\" is not a true-or-false value in the list", name));
