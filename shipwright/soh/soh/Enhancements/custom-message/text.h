@@ -12,7 +12,6 @@ class Text {
     const std::string& GetEnglish() const;
     const std::string& GetFrench() const;
     const std::string& GetGerman() const;
-    const std::string& GetForLanguage(uint8_t language) const;
 
     bool operator==(const Text& right) const;
     bool operator==(const std::string& right) const;
@@ -20,12 +19,6 @@ class Text {
 
     void Replace(const std::string& oldStr, const std::string& newStr);
     void Replace(const std::string& oldStr, const Text& newText);
-
-    void ReplaceRandomVowel(uint64_t* randState = nullptr);
-
-    void DuplicateRandomLetter(uint64_t* randState = nullptr);
-
-    void FillMissingTranslations();
 
     std::string english = "";
     std::string french = "";

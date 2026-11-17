@@ -1,6 +1,6 @@
 """End-to-end tests of kaepora-seedgen against the tables in remake/.
 
-Usage: python3 -I tests/seedgen_test.py <kaepora-seedgen> [test name ...]
+Usage: python3 -I tests/seedgen_test.py <kaepora-seedgen> <Kaepora's version> [test name ...]
 Writes its seeds into a temporary folder under the current directory.
 """
 
@@ -8,6 +8,7 @@ import collections
 import csv
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
 FIXED_SEED = "6332265119"
 SEEDGEN = None
+VERSION = None
 
 
 def read_tsv(name):
@@ -32,6 +34,15 @@ ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.t
 
 def folder(path):
     return path.split("/")[1]
+
+
+def without_version(log):
+    """The spoiler log's text without the line of Kaepora's version, which changes with every release."""
+    return re.sub(rb'^    "kaepora": ".*",\n', b"", log, count=1, flags=re.MULTILINE)
+
+
+def playthrough_steps(log):
+    return {location: item for sphere in log["playthrough"].values() for location, item in sphere.items()}
 
 
 class SeedgenTest(unittest.TestCase):
@@ -57,9 +68,12 @@ class SeedgenTest(unittest.TestCase):
         shuffled = {row["location"] for row in SHUFFLED}
         self.assertEqual(first["locations"].keys(), second["locations"].keys())
         self.assertLessEqual(shuffled, first["locations"].keys())
-        for location, item in first["locations"].items():
-            if location not in shuffled:
-                self.assertEqual(item, second["locations"][location], location)
+        # The log names an unshuffled location only where the playthrough steps on it.
+        first_steps, second_steps = playthrough_steps(first), playthrough_steps(second)
+        unshuffled = (first_steps.keys() & second_steps.keys()) - shuffled
+        self.assertTrue(unshuffled)
+        for location in unshuffled:
+            self.assertEqual(first_steps[location], second_steps[location], location)
         self.assertTrue(any(first["locations"][name] != second["locations"][name] for name in shuffled))
 
     def test_plan_lists_each_shuffled_chest(self):
@@ -88,6 +102,15 @@ class SeedgenTest(unittest.TestCase):
                                 if e["drop_actor"] in dungeon_names),
             collections.Counter((folder(row["files"]), row["item"]) for row in SHUFFLED
                                 if row["item"] in dungeon_names))
+
+    def test_spoiler_log_lists_the_shuffled_locations_and_the_route(self):
+        spoiler, _ = self.generate("Kaepora")
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "locations", "playthrough"])
+        self.assertEqual(spoiler["kaepora"], VERSION)
+        self.assertEqual(spoiler["seed"], "Kaepora")
+        # A location whose chest the files keep twice is listed once.
+        self.assertEqual(list(spoiler["locations"]), list(dict.fromkeys(row["location"] for row in SHUFFLED)))
+        self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
         # The Fire Temple's lowest locked door and the Water Temple's west middle-floor door.
@@ -136,9 +159,9 @@ class SeedgenTest(unittest.TestCase):
             self.generate(str(seed))
 
     def test_spirit_dungeon_items_stay_out_of_the_colossus(self):
-        # SoH counts these two chests as Spirit Temple locations, but they stand in the Desert Colossus, and the game
-        # credits a key, map or compass to the scene Link stands in.
-        colossus = ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"]
+        # SoH counts this chest as a Spirit Temple location, but it stands in the Desert Colossus, and the game credits
+        # a key, map or compass to the scene Link stands in.
+        colossus = ["Spirit Temple Mirror Shield Chest"]
         spirit = {"Spirit Temple Small Key", "Spirit Temple Boss Key", "Spirit Temple Map", "Spirit Temple Compass"}
         placed = collections.Counter()
         for seed in range(200, 220):
@@ -150,10 +173,11 @@ class SeedgenTest(unittest.TestCase):
 
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)
-        self.assertEqual(spoiler, (FIXTURES / f"spoiler-{FIXED_SEED}.json").read_bytes())
+        self.assertEqual(without_version(spoiler),
+                         without_version((FIXTURES / f"spoiler-{FIXED_SEED}.json").read_bytes()))
         self.assertEqual(plan, (FIXTURES / f"plan-{FIXED_SEED}.json").read_bytes())
 
 
 if __name__ == "__main__":
-    SEEDGEN = sys.argv[1]
-    unittest.main(argv=[sys.argv[0], *sys.argv[2:]])
+    SEEDGEN, VERSION = sys.argv[1:3]
+    unittest.main(argv=[sys.argv[0], *sys.argv[3:]])

@@ -2736,20 +2736,6 @@ std::string StaticData::SerializeExcludedLocations(const std::set<RandomizerChec
     return value;
 }
 
-std::vector<RandomizerGet> StaticData::normalBottles = {
-    RG_EMPTY_BOTTLE,
-    RG_BOTTLE_WITH_MILK,
-    RG_BOTTLE_WITH_RED_POTION,
-    RG_BOTTLE_WITH_GREEN_POTION,
-    RG_BOTTLE_WITH_BLUE_POTION,
-    RG_BOTTLE_WITH_FAIRY,
-    RG_BOTTLE_WITH_FISH,
-    RG_BOTTLE_WITH_BUGS,
-    RG_BOTTLE_WITH_POE,
-    RG_BOTTLE_WITH_BIG_POE,
-    RG_BOTTLE_WITH_BLUE_FIRE,
-};
-
 std::vector<RandomizerGet> StaticData::beanSouls = {
     RG_DEATH_MOUNTAIN_CRATER_BEAN_SOUL,
     RG_DEATH_MOUNTAIN_TRAIL_BEAN_SOUL,

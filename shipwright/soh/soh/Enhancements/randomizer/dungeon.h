@@ -19,7 +19,6 @@ class DungeonInfo {
     DungeonInfo();
     ~DungeonInfo();
 
-    const std::string& GetName() const;
     void SetMQ();
     void ClearMQ();
     bool IsMQ() const;
@@ -43,7 +42,6 @@ class DungeonInfo {
     void SetDungeonKnown(bool known);
 
   private:
-    std::string name;
     RandomizerHintTextKey hintKey;
     RandomizerGet map;
     RandomizerGet compass;

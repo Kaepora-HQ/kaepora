@@ -987,7 +987,6 @@ int Fill(const std::vector<RemakeChest>& chests) {
             PareDownPlaythrough(lateLocations);
             SPDLOG_INFO("Calculating Playthrough Done");
 
-            ctx->CreateItemOverrides();
             ctx->GetEntranceShuffler()->CreateEntranceOverrides();
 
             SPDLOG_DEBUG("Number of retries {}", retries);

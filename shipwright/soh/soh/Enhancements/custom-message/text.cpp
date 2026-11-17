@@ -1,5 +1,4 @@
 #include "text.h"
-#include "soh/ShipUtils.h"
 #include <functional>
 #include "z64.h"
 
@@ -18,15 +17,6 @@ static bool IsMissing(const std::string& translation) {
     return translation.empty() || translation == TODO_TRANSLATE;
 }
 
-// Use English where a translation is missing, so text never shows "TranslateThis"
-void Text::FillMissingTranslations() {
-    for (std::string* translation : { &french, &german, &spanish }) {
-        if (IsMissing(*translation)) {
-            *translation = english;
-        }
-    }
-}
-
 const std::string& Text::GetEnglish() const {
     return english;
 }
@@ -37,19 +27,6 @@ const std::string& Text::GetFrench() const {
 
 const std::string& Text::GetGerman() const {
     return IsMissing(german) ? english : german;
-}
-
-const std::string& Text::GetForLanguage(uint8_t language) const {
-    switch (language) {
-        case 0:
-            return GetEnglish();
-        case 2:
-            return GetFrench();
-        case 1:
-            return GetGerman();
-        default:
-            return GetEnglish();
-    }
 }
 
 bool Text::operator==(const Text& right) const {
@@ -82,65 +59,4 @@ void Text::Replace(const std::string& oldStr, const Text& newText) {
     replaceAll(english, oldStr, newText.GetEnglish());
     replaceAll(french, oldStr, newText.GetFrench());
     replaceAll(german, oldStr, newText.GetGerman());
-}
-
-static bool isAsciiVowel(char c) {
-    return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'A' || c == 'E' || c == 'I' || c == 'O' ||
-           c == 'U';
-}
-
-static bool isAsciiLetter(char c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-// Uniformly picks one position where pred holds, in a single pass. npos if nothing matches.
-static size_t randomMatch(const std::string& target, bool (*pred)(char), uint64_t* randState) {
-    uint32_t seen = 0;
-    size_t pos = std::string::npos;
-
-    for (size_t i = 0; i < target.size(); ++i) {
-        if (pred(target[i]) && ShipUtils::Random(0, ++seen, randState) == 0) {
-            pos = i;
-        }
-    }
-
-    return pos;
-}
-
-static void replaceRandomVowel(std::string& target, uint64_t* randState) {
-    size_t pos = randomMatch(target, isAsciiVowel, randState);
-
-    if (pos == std::string::npos) {
-        return;
-    }
-
-    static constexpr char vowels[] = { 'a', 'e', 'i', 'o', 'u' };
-    bool upper = target[pos] >= 'A' && target[pos] <= 'Z';
-    char oldVowel = upper ? target[pos] + ('a' - 'A') : target[pos];
-
-    // don't replace vowel with itself
-    uint32_t idx = ShipUtils::Random(0, 4, randState);
-    idx += vowels[idx] >= oldVowel;
-
-    target[pos] = upper ? vowels[idx] - ('a' - 'A') : vowels[idx];
-}
-
-void Text::ReplaceRandomVowel(uint64_t* randState) {
-    for (std::string& str : { std::ref(english), std::ref(french), std::ref(german), std::ref(spanish) }) {
-        replaceRandomVowel(str, randState);
-    }
-}
-
-static void duplicateRandomLetter(std::string& target, uint64_t* randState) {
-    size_t pos = randomMatch(target, isAsciiLetter, randState);
-
-    if (pos != std::string::npos) {
-        target.insert(pos + 1, 1, target[pos]);
-    }
-}
-
-void Text::DuplicateRandomLetter(uint64_t* randState) {
-    for (std::string& str : { std::ref(english), std::ref(french), std::ref(german), std::ref(spanish) }) {
-        duplicateRandomLetter(str, randState);
-    }
 }

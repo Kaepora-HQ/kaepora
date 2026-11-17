@@ -18,8 +18,7 @@ Item::Item(const RandomizerGet randomizerGet_, Text name_, const ItemType type_,
            const int16_t chestAnimation_, const GetItemCategory category_, const uint16_t modIndex_, Text article_,
            const std::string color_, const uint16_t price_)
     : randomizerGet(randomizerGet_), name(std::move(name_)), type(type_), getItemId(getItemId_),
-      advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_),
-      article(std::move(article_)), color(std::move(color_)) {
+      advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_), color(std::move(color_)) {
 
     if (modIndex_ == MOD_RANDOMIZER || getItemId > 0x7D) {
         giEntry = std::make_shared<GetItemEntry>(GetItemEntry{
@@ -38,8 +37,7 @@ Item::Item(const RandomizerGet randomizerGet_, Text name_, const ItemType type_,
            const bool advancement_, LogicVal logicVal_, const RandomizerHintTextKey hintKey_,
            const GetItemCategory category_, Text article_, const std::string color_, const uint16_t price_)
     : randomizerGet(randomizerGet_), name(std::move(name_)), type(type_), getItemId(getItemId_),
-      advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_),
-      article(std::move(article_)), color(std::move(color_)) {
+      advancement(advancement_), logicVal(logicVal_), hintKey(hintKey_), category(category_), color(std::move(color_)) {
 }
 
 void Item::ApplyEffect() const {
@@ -58,10 +56,6 @@ void Item::UndoEffect() const {
 
 const Text& Item::GetName() const {
     return name;
-}
-
-const Text& Item::GetArticle() const {
-    return article;
 }
 
 const std::string& Item::GetColor() const {

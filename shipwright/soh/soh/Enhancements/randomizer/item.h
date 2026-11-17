@@ -43,7 +43,6 @@ class Item {
     void UndoEffect() const;
 
     const Text& GetName() const;
-    const Text& GetArticle() const;
     const std::string& GetColor() const;
     bool IsAdvancement() const;
     int GetItemID() const;
@@ -74,7 +73,6 @@ class Item {
     LogicVal logicVal;
     RandomizerHintTextKey hintKey;
     GetItemCategory category;
-    Text article;
     std::string color;
     bool playthrough = false;
     std::shared_ptr<GetItemEntry> giEntry;

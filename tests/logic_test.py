@@ -2,7 +2,7 @@
 
 Usage: python3 -I tests/logic_test.py <kaepora-reach> [test name ...]
 Each test places items at locations, leaves every other location as the unmodified game has it, and asks whether
-Link can ever collect what is at one location. Names are those of the spoiler log.
+Link can ever collect what is at one location. Names are SoH's English names.
 """
 
 import subprocess

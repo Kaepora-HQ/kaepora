@@ -10,7 +10,7 @@ namespace Rando {
 class Settings {
   public:
     /**
-     * @brief Creates the `Option` and `OptionGroup` objects. This happens after construction because certain
+     * @brief Creates the `Option` objects. This happens after construction because certain
      * other events in the codebase need to happen before all of the `Option`s can be created.
      */
     void CreateOptions();
@@ -48,13 +48,6 @@ class Settings {
     int GetRandomizerTrickByName(const std::string& name);
 
     /**
-     * @brief Returns a reference to the entire array of options.
-     *
-     * @return const std::array<Option, RSK_MAX>&
-     */
-    const std::array<Option, RSK_MAX>& GetAllOptions() const;
-
-    /**
      * @brief Get a list of Location Exclude `Option`s for the given
      * RandomizerCheckArea
      *
@@ -64,27 +57,11 @@ class Settings {
     std::vector<Option*>& GetExcludeOptionsForArea(RandomizerCheckArea area);
 
     /**
-     * @brief Get a reference to all of the Exclude Location `Option` lists.
-     *
-     * @return const std::array<std::vector<Option*>, RCAREA_INVALID>&
-     */
-    const std::array<std::vector<Option*>, RCAREA_INVALID>& GetExcludeLocationsOptions() const;
-
-    /**
-     * @brief Get the `OptionGroup` corresponding to the provided RandomizerSettingGroupKey
-     *
-     * @param key
-     * @return const OptionGroup&
-     */
-    const OptionGroup& GetOptionGroup(RandomizerSettingGroupKey key);
-
-    /**
      * @brief Parse Options from a JSON file.
      *
      * @param spoilerFileJson
      */
     void ParseJson(const nlohmann::json& spoilerFileJson);
-    std::map<RandomizerArea, std::vector<RandomizerTrick>> mTricksByArea = {};
 
     /**
      * @brief Assigns a Rando::Context instance to this settings instance
@@ -113,7 +90,6 @@ class Settings {
     static std::shared_ptr<Settings> mInstance;
     std::shared_ptr<Context> mContext = nullptr;
     std::array<Option, RSK_MAX> mOptions = {};
-    std::array<OptionGroup, RSG_MAX> mOptionGroups = {};
     std::array<TrickSetting, RT_MAX> mTrickSettings = {};
     std::array<std::vector<Option*>, RCAREA_INVALID> mExcludeLocationsOptionsAreas = {};
     std::unordered_map<std::string, RandomizerTrick> mTrickNameToEnum;

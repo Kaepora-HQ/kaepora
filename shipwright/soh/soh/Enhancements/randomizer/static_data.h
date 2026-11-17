@@ -78,7 +78,6 @@ class StaticData {
     static std::unordered_map<std::string, RandomizerCheck> excludedLocationToEnum;
     static std::set<RandomizerCheck> ParseExcludedLocations(const std::string& value);
     static std::string SerializeExcludedLocations(const std::set<RandomizerCheck>& locations);
-    static std::vector<RandomizerGet> normalBottles;
     static std::vector<RandomizerGet> beanSouls;
     static std::vector<RandomizerGet> overworldKeys;
     static std::vector<RandomizerGet> silverRupees;

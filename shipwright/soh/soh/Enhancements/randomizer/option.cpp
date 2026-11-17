@@ -61,10 +61,6 @@ size_t Option::GetOptionCount() const {
     return options.size();
 }
 
-RandomizerSettingKey Option::GetKey() const {
-    return static_cast<RandomizerSettingKey>(key);
-}
-
 #pragma region Lang
 
 const static std::string namePostfix = ".name";
@@ -72,7 +68,6 @@ const static std::string namePostfix = ".name";
 const static std::string settingPrefix = "randomizer.settings.";
 const static std::string trickPrefix = "randomizer.tricks.";
 
-const static std::string empty = "";
 const static std::string error = "[ERROR]";
 
 static const std::string& MakeSettingName(RandomizerSettingKey key) {
@@ -110,16 +105,6 @@ uint8_t Option::GetOptionIndex() const {
 
 uint8_t Option::GetMenuOptionDefault() const {
     return defaultOption;
-}
-
-const std::string& Option::GetOptionText(size_t index) const {
-    if (options.empty()) {
-        return empty;
-    }
-    if (index >= options.size()) {
-        index = options.size() - 1;
-    }
-    return options[index];
 }
 
 const std::string& Option::GetCVarName() const {
@@ -171,7 +156,7 @@ TrickSetting::TrickSetting(RandomizerTrick key_, const RandomizerCheckQuest ques
                            std::set<Tricks::Tag> tags_, const std::string nameTag_)
     : Option(key_, { "Disabled", "Enabled" }, OptionCategory::Trick, "", WIDGET_CVAR_CHECKBOX, 0, false, nullptr,
              IMFLAG_NONE),
-      mQuest(quest_), mArea(area_), mNameTag(nameTag_), mTags(std::move(tags_)) {
+      mQuest(quest_), mNameTag(nameTag_), mTags(std::move(tags_)) {
 }
 
 TrickSetting TrickSetting::LogicTrick(RandomizerTrick key_, RandomizerCheckQuest quest_, RandomizerArea area_,
@@ -187,10 +172,6 @@ RandomizerCheckQuest TrickSetting::GetQuest() const {
     return mQuest;
 }
 
-RandomizerArea TrickSetting::GetArea() const {
-    return mArea;
-}
-
 std::string TrickSetting::GetNameTag() const {
     return mNameTag;
 }
@@ -201,63 +182,5 @@ bool TrickSetting::HasTag(const Tricks::Tag tag) const {
 
 const std::set<Tricks::Tag>& TrickSetting::GetTags() const {
     return mTags;
-}
-
-OptionGroup::OptionGroup(std::string name, std::vector<Option*> options, const OptionGroupType groupType,
-                         const WidgetContainerType containerType, std::string description)
-    : mName(std::move(name)), mOptions(std::move(options)), mGroupType(groupType), mContainerType(containerType),
-      mDescription(std::move(description)) {
-}
-
-OptionGroup::OptionGroup(std::string name, std::vector<OptionGroup*> subGroups, const OptionGroupType groupType,
-                         const WidgetContainerType containerType, std::string description)
-    : mName(std::move(name)), mSubGroups(std::move(subGroups)), mGroupType(groupType),
-      mContainsType(OptionGroupType::SUBGROUP), mContainerType(containerType), mDescription(std::move(description)) {
-}
-
-OptionGroup OptionGroup::SubGroup(std::string name, std::vector<Option*> options,
-                                  const WidgetContainerType containerType, std::string description) {
-    return { std::move(name), std::move(options), OptionGroupType::SUBGROUP, containerType, std::move(description) };
-}
-
-OptionGroup OptionGroup::SubGroup(std::string name, std::vector<OptionGroup*> subGroups,
-                                  const WidgetContainerType containerType, std::string description) {
-    return { std::move(name), std::move(subGroups), OptionGroupType::SUBGROUP, containerType, std::move(description) };
-}
-
-const std::string& OptionGroup::GetName() const {
-    return mName;
-}
-
-const std::vector<Option*>& OptionGroup::GetOptions() const {
-    return mOptions;
-}
-
-const std::vector<OptionGroup*>& OptionGroup::GetSubGroups() const {
-    return mSubGroups;
-}
-
-OptionGroupType OptionGroup::GetGroupType() const {
-    return mGroupType;
-}
-
-OptionGroupType OptionGroup::GetContainsType() const {
-    return mContainsType;
-}
-
-WidgetContainerType OptionGroup::GetContainerType() const {
-    return mContainerType;
-}
-
-const std::string& OptionGroup::GetDescription() const {
-    return mDescription;
-}
-
-void OptionGroup::Enable() {
-    mDisabled = false;
-}
-
-void OptionGroup::Disable() {
-    mDisabled = true;
 }
 } // namespace Rando

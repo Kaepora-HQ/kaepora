@@ -41,8 +41,7 @@ class Context {
     bool IsLocationShuffled(RandomizerCheck locKey);
     ItemOverride& GetItemOverride(RandomizerCheck locKey);
     ItemOverride& GetItemOverride(size_t locKey);
-    void PlaceItemInLocation(RandomizerCheck locKey, RandomizerGet item, bool applyEffectImmediately = false,
-                             bool setHidden = false);
+    void PlaceItemInLocation(RandomizerCheck locKey, RandomizerGet item, bool applyEffectImmediately = false);
     std::vector<RandomizerCheck> allLocations;
     void AddLocation(RandomizerCheck loc, std::vector<RandomizerCheck>* destination = nullptr);
     template <typename Container>
@@ -53,7 +52,6 @@ class Context {
     void LocationReset();
     void ClearItemLocations();
     void ItemReset();
-    void CreateItemOverrides();
     bool IsSeedGenerated() const;
     void SetSeedGenerated(bool seedGenerated = true);
     bool IsSpoilerLoaded() const;
@@ -87,7 +85,6 @@ class Context {
     static Sprite* GetSeedTexture(uint8_t index);
     OptionValue& GetOption(RandomizerSettingKey key);
     OptionValue& GetTrickOption(RandomizerTrick key);
-    OptionValue& GetLocationOption(RandomizerCheck key);
 
     /**
      * @brief Gets the resolved GBK check condition.
@@ -118,53 +115,9 @@ class Context {
     std::map<RandomizerCheck, ItemOverride> overrides = {};
     std::vector<std::vector<RandomizerCheck>> playthroughLocations = {};
     std::vector<RandomizerCheck> everyPossibleLocation = {};
-    std::set<RandomizerGet> possibleIceTrapModels = {};
-    std::unordered_map<RandomizerCheck, RandomizerGet> iceTrapModels = {};
-    std::array<uint8_t, 5> hashIconIndexes = {};
     bool playthroughBeatable = false;
     bool allLocationsReachable = false;
 
-    /**
-     * @brief Get the hash for the current seed.
-     *
-     * @return std::string
-     */
-    std::string GetHash() const;
-
-    /**
-     * @brief Get the Seed String
-     *
-     * @return const std::string&
-     */
-    const std::string& GetSeedString() const;
-
-    /**
-     * @brief Set the Seed String
-     *
-     * @param seedString
-     */
-    void SetSeedString(std::string seedString);
-
-    /**
-     * @brief Get the Seed
-     *
-     * @return const uint32_t
-     */
-    uint32_t GetSeed() const;
-
-    /**
-     * @brief Set the Seed
-     *
-     * @param seed
-     */
-    void SetSeed(uint32_t seed);
-
-    /**
-     * @brief Set the Seed Hash for the current seed.
-     *
-     * @param hash
-     */
-    void SetHash(std::string hash);
     uint8_t GetBombchuCapacity();
     void HandleGetBombchuBag();
 
@@ -183,8 +136,5 @@ class Context {
     std::shared_ptr<Kaleido> mKaleido;
     bool mSeedGenerated = false;
     bool mSpoilerLoaded = false;
-    std::string mHash;
-    std::string mSeedString;
-    uint32_t mFinalSeed = 0;
 };
 } // namespace Rando

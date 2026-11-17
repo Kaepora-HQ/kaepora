@@ -167,26 +167,11 @@ class Option {
     size_t GetOptionCount() const;
 
     /**
-     * @brief Get the Key Option
-     *
-     * @return const RandomizerSettingKey
-     */
-    RandomizerSettingKey GetKey() const;
-
-    /**
      * @brief Get the name of the Option.
      *
      * @return const std::string&
      */
     const std::string& GetName() const;
-
-    /**
-     * @brief Get the text of the Option value of the selected index.
-     *
-     * @param index
-     * @return const std::string&
-     */
-    const std::string& GetOptionText(size_t index) const;
 
     /**
      * @brief Get the CVar name for this Option.
@@ -267,13 +252,6 @@ class TrickSetting : public Option {
     RandomizerCheckQuest GetQuest() const;
 
     /**
-     * @brief Get the Area this trick is used in
-     *
-     * @return RandomizerArea
-     */
-    RandomizerArea GetArea() const;
-
-    /**
      * @brief Get the NameTag of the trick
      *
      * @return std::string
@@ -294,136 +272,7 @@ class TrickSetting : public Option {
     TrickSetting(RandomizerTrick key_, RandomizerCheckQuest quest_, RandomizerArea area_, std::set<Tricks::Tag> tags_,
                  const std::string nameTag_);
     RandomizerCheckQuest mQuest;
-    RandomizerArea mArea;
     std::string mNameTag;
     std::set<Tricks::Tag> mTags;
-};
-
-enum class OptionGroupType {
-    DEFAULT,
-    SUBGROUP,
-};
-
-enum class WidgetContainerType {
-    BASIC,   /** Barebones container, just lists the options within. */
-    SECTION, /** Similar to Barebones, but has a header with the section name. */
-    COLUMN,  /** Signifies the container should be the start of new column within a table. */
-    TABLE,   /** Signifies the container is a table (should contain other subgroups with type column)*/
-    TABBED,  /** Signifies this container's contents should be contained within a tabbed interface. */
-};
-
-class OptionGroup {
-  public:
-    OptionGroup() = default;
-
-    /**
-     * @brief Construct a new Option Group containing a list of `Option` pointers.
-     *
-     * @param name The name of this Option Group. Appears in the spoiler/patch file in front each option it contains.
-     * @param options A vector of Option pointers
-     * @param groupType `DEFAULT` if this group is not contained within any other groups, `SUBGROUP` if it is a
-     * subgroup of another group.
-     * @param containerType Specifies the type of container this widget should render as in ImGui.
-     * @param description A description that can appear in a tooltip in ImGui.
-     */
-    OptionGroup(std::string name, std::vector<Option*> options, OptionGroupType groupType = OptionGroupType::DEFAULT,
-                WidgetContainerType containerType = WidgetContainerType::BASIC, std::string description = "");
-
-    /**
-     * @brief Construct a new Option Group containing a list of `OptionGroup` pointers.
-     *
-     * @param name The name of this option group. Appears in the spoiler/patch file.
-     * @param subGroups A vector of OptionGroup pointers that will be subgroups of this group.
-     * @param groupType `DEFAULT` if this group is not contained within any other groups, `SUBGROUP` if it is a
-     * subgroup of another group.
-     * @param containerType Specifies the type of container this widget should render as in ImGui.
-     * @param description A description that can appear in a tooltip in ImGui.
-     */
-    OptionGroup(std::string name, std::vector<OptionGroup*> subGroups,
-                OptionGroupType groupType = OptionGroupType::DEFAULT,
-                WidgetContainerType containerType = WidgetContainerType::BASIC, std::string description = "");
-
-    /**
-     * @brief Convenience function for constructing an OptionGroup of groupType `SUBGROUP` with
-     * containsType of `DEFAULT` (contains `Option`s).
-     *
-     * @param name The name of this option group. Appears in the spoiler/patch file.
-     * @param options A vector of Option pointers.
-     * @param containerType Specifies the type of container this widget should render as in ImGui.
-     * @param description A description that can appear in a tooltip in ImGui.
-     * @return OptionGroup
-     */
-    static OptionGroup SubGroup(std::string name, std::vector<Option*> options,
-                                WidgetContainerType containerType = WidgetContainerType::BASIC,
-                                std::string description = "");
-
-    /**
-     * @brief Convenience function for constructing an OptionGroup of groupType `SUBGROUP` with
-     * containsType of `SUBGROUP` (contains other `OptionGroup`s)
-     *
-     * @param name The name of this option group. Appears in the spoiler/patch file.
-     * @param subGroups A vector of OptionGroup pointers.
-     * @param containerType Specifies the type of container this widget should render as in ImGui.
-     * @param description A description that can appear in a tooltip in ImGui.
-     * @return OptionGroup
-     */
-    static OptionGroup SubGroup(std::string name, std::vector<OptionGroup*> subGroups,
-                                WidgetContainerType containerType = WidgetContainerType::BASIC,
-                                std::string description = "");
-
-    /**
-     * @brief Get the name of the OptionGroup.
-     *
-     * @return const std::string&
-     */
-    const std::string& GetName() const;
-
-    /**
-     * @brief Get the list of `Option`s contained within this `OptionGroup`.
-     *
-     * @return const std::vector<Option*>&
-     */
-    const std::vector<Option*>& GetOptions() const;
-
-    /**
-     * @brief Get the list of `OptionGroup`s contained within this `OptionGroup`.
-     *
-     * @return const std::vector<OptionGroup*>&
-     */
-    const std::vector<OptionGroup*>& GetSubGroups() const;
-
-    /**
-     * @brief Get the Group Type of this `OptionGroup`. `DEFAULT` means this group is not contained
-     * within any other groups, while `SUBGROUP` means that it is contained within at least one other.
-     * `OptionGroup`.
-     *
-     * @return OptionGroupType
-     */
-    OptionGroupType GetGroupType() const;
-
-    /**
-     * @brief Get the type of values contained in this `OptionGroup`. `DEFAULT` means this group contains
-     * `Options`, and `SUBGROUP` means this group contains other `OptionGroup`s.
-     *
-     * @return OptionGroupType
-     */
-    OptionGroupType GetContainsType() const;
-
-    WidgetContainerType GetContainerType() const;
-
-    const std::string& GetDescription() const;
-
-    void Disable();
-    void Enable();
-
-  private:
-    std::string mName;
-    std::vector<Option*> mOptions;
-    std::vector<OptionGroup*> mSubGroups;
-    OptionGroupType mGroupType = OptionGroupType::DEFAULT;
-    OptionGroupType mContainsType = OptionGroupType::DEFAULT;
-    WidgetContainerType mContainerType = WidgetContainerType::BASIC;
-    std::string mDescription;
-    bool mDisabled = false;
 };
 } // namespace Rando

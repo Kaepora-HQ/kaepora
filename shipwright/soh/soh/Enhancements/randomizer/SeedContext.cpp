@@ -11,8 +11,6 @@
 #include "macros.h"
 #include "soh/util.h"
 #include "../kaleido.h"
-#include "soh/Enhancements/randomizer/Traps.h"
-#include "soh/Enhancements/randomizer/rng.h"
 #include "soh/Enhancements/randomizer/randomizer_check_tracker.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 #include "soh/Enhancements/randomizer/trial.h"
@@ -86,7 +84,7 @@ ItemOverride& Context::GetItemOverride(size_t locKey) {
 }
 
 void Context::PlaceItemInLocation(const RandomizerCheck locKey, const RandomizerGet item,
-                                  const bool applyEffectImmediately, const bool setHidden) {
+                                  const bool applyEffectImmediately) {
     const auto loc = GetItemLocation(locKey);
     SPDLOG_DEBUG("{} placed at {}", StaticData::RetrieveItem(item).GetName().GetEnglish(),
                  StaticData::GetLocation(locKey)->GetName());
@@ -98,9 +96,6 @@ void Context::PlaceItemInLocation(const RandomizerCheck locKey, const Randomizer
     // TODO? Show Progress
 
     loc->SetPlacedItem(item);
-    if (setHidden) {
-        loc->SetHidden(true);
-    }
 }
 
 void Context::AddLocation(const RandomizerCheck loc, std::vector<RandomizerCheck>* destination) {
@@ -285,27 +280,6 @@ void Context::LocationReset() {
     }
 }
 
-void Context::CreateItemOverrides() {
-    SPDLOG_DEBUG("NOW CREATING OVERRIDES");
-    for (RandomizerCheck locKey : allLocations) {
-        const auto loc = StaticData::GetLocation(locKey);
-        // If this is an ice trap, store the disguise model in iceTrapModels
-        const auto itemLoc = GetItemLocation(locKey);
-        if (itemLoc->GetPlacedRandomizerGet() == RG_ICE_TRAP) {
-            ItemOverride val(locKey, Traps::GetTrapTrickModel(&rando_state));
-            iceTrapModels[locKey] = val.LooksLike();
-            Traps::TrickName trickName = Traps::GetTrapName(
-                val.LooksLike(), static_cast<RandoIceTrapNames>(mOptions[RSK_ICE_TRAP_NAMES].Get()), &rando_state);
-            val.SetTrickName(trickName.name);
-            val.SetTrickArticle(trickName.article);
-            // If this is ice trap is in a shop, change the name based on what the model will look like
-            overrides[locKey] = val;
-        }
-        SPDLOG_DEBUG("{}: {}", loc->GetName(), itemLoc->GetPlacedItemName().GetEnglish());
-    }
-    SPDLOG_DEBUG("Overrides Created: {}", std::to_string(overrides.size()));
-}
-
 bool Context::IsSeedGenerated() const {
     return mSeedGenerated;
 }
@@ -373,7 +347,6 @@ void Context::ParseHashIconIndexesJson(const nlohmann::json& spoilerFileJson) {
     nlohmann::json hashJson = spoilerFileJson.value("file_hash", nlohmann::json());
     int index = 0;
     for (auto it = hashJson.begin(); it != hashJson.end(); ++it) {
-        hashIconIndexes[index] = gSeedTextures[it.value()].id;
         index++;
     }
 }
@@ -389,12 +362,6 @@ void Context::ParseItemLocationsJson(const nlohmann::json& spoilerFileJson) {
                     itemLocationTable[rc].SetPlacedItem(StaticData::itemNameToEnum[itemit.value().get<std::string>()]);
                 } else if (itemit.key() == "price") {
                     itemLocationTable[rc].SetCustomPrice(itemit.value().get<uint16_t>());
-                } else if (itemit.key() == "model") {
-                    overrides[rc] = ItemOverride(rc, StaticData::itemNameToEnum[itemit.value().get<std::string>()]);
-                } else if (itemit.key() == "trickName") {
-                    overrides[rc].SetTrickName(Text(itemit.value().get<std::string>()));
-                } else if (itemit.key() == "trickArticle") {
-                    overrides[rc].SetTrickArticle(Text(itemit.value().get<std::string>()));
                 }
             }
         } else {
@@ -461,10 +428,6 @@ OptionValue& Context::GetTrickOption(const RandomizerTrick key) {
     return mTrickOptions[key];
 }
 
-OptionValue& Context::GetLocationOption(const RandomizerCheck key) {
-    return itemLocationTable[key].GetExcludedOption();
-}
-
 RandoOptionCheckTrigger Context::GBKCondition() const {
     return mGBKCondition;
 }
@@ -494,14 +457,6 @@ std::shared_ptr<Kaleido> Context::GetKaleido() {
         mKaleido = std::make_shared<Kaleido>();
     }
     return mKaleido;
-}
-
-std::string Context::GetHash() const {
-    return mHash;
-}
-
-void Context::SetHash(std::string hash) {
-    mHash = std::move(hash);
 }
 
 uint8_t Context::GetBombchuCapacity() {
@@ -552,21 +507,5 @@ void Context::HandleGetBombchuBag() {
             }
             return;
     }
-}
-
-const std::string& Context::GetSeedString() const {
-    return mSeedString;
-}
-
-void Context::SetSeedString(std::string seedString) {
-    mSeedString = std::move(seedString);
-}
-
-uint32_t Context::GetSeed() const {
-    return mFinalSeed;
-}
-
-void Context::SetSeed(const uint32_t seed) {
-    mFinalSeed = seed;
 }
 } // namespace Rando

@@ -16,17 +16,13 @@ DungeonInfo::DungeonInfo(std::string name_, const RandomizerHintTextKey hintKey_
                          const RandomizerSettingKey mqSetting_, const SceneID scene_,
                          const std::vector<uint8_t> vanillaDoorFlags_, const std::vector<uint8_t> randoDoorFlags_,
                          const std::vector<uint8_t> MQDoorFlags_)
-    : name(std::move(name_)), hintKey(hintKey_), map(map_), compass(compass_), smallKey(smallKey_), bossKey(bossKey_),
+    : hintKey(hintKey_), map(map_), compass(compass_), smallKey(smallKey_), bossKey(bossKey_),
       vanillaKeyCount(vanillaKeyCount_), mqKeyCount(mqKeyCount_), mqSetting(mqSetting_), scene(scene_),
       vanillaDoorFlags(vanillaDoorFlags_), randoDoorFlags(randoDoorFlags_), MQDoorFlags(MQDoorFlags_) {
 }
 DungeonInfo::DungeonInfo() : hintKey(RHT_NONE), map(RG_NONE), compass(RG_NONE), smallKey(RG_NONE), bossKey(RG_NONE) {
 }
 DungeonInfo::~DungeonInfo() = default;
-
-const std::string& DungeonInfo::GetName() const {
-    return name;
-}
 
 void DungeonInfo::SetMQ() {
     masterQuest = true;
@@ -306,14 +302,8 @@ size_t Dungeons::GetDungeonListSize() const {
 }
 
 void Dungeons::ParseJson(const nlohmann::json& spoilerFileJson) {
-    nlohmann::json mqDungeonsJson = spoilerFileJson.value("masterQuestDungeons", nlohmann::json());
-
     for (auto& dungeon : dungeonList) {
         dungeon.ClearMQ();
-
-        if (std::find(mqDungeonsJson.begin(), mqDungeonsJson.end(), dungeon.GetName()) != mqDungeonsJson.end()) {
-            dungeon.SetMQ();
-        }
     }
 }
 } // namespace Rando

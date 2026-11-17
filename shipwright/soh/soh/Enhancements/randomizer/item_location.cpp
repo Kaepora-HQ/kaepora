@@ -83,10 +83,6 @@ void ItemLocation::SetPrice(const uint16_t price_) {
     price = price_;
 }
 
-bool ItemLocation::HasCustomPrice() const {
-    return hasCustomPrice;
-}
-
 bool ItemLocation::CanBePurchased() const {
     const RandomizerCheckType checkType = StaticData::GetLocation(rc)->GetRCType();
     return checkType == RCTYPE_SHOP || checkType == RCTYPE_SCRUB || checkType == RCTYPE_MERCHANT;
@@ -119,20 +115,8 @@ bool ItemLocation::GetIsSkipped() {
     return isSkipped;
 }
 
-bool ItemLocation::IsHidden() const {
-    return hidden;
-}
-
-void ItemLocation::SetHidden(const bool hidden_) {
-    hidden = hidden_;
-}
-
 bool ItemLocation::IsExcluded() {
     return excludedOption.Is(RO_LOCATION_EXCLUDE);
-}
-
-OptionValue& ItemLocation::GetExcludedOption() {
-    return excludedOption;
 }
 
 void ItemLocation::SetExcludedOption(uint8_t val) {
@@ -152,7 +136,6 @@ void ItemLocation::ResetVariables() {
     delayedItem = RG_NONE;
     price = 0;
     hasCustomPrice = false;
-    hidden = false;
     status = RCSHOW_UNCHECKED;
     isSkipped = false;
     isAvailable = false;

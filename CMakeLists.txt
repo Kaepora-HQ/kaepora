@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(kaepora LANGUAGES C CXX)
+project(kaepora VERSION 0.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,7 +19,6 @@ file(GLOB_RECURSE SHIPWRIGHT_SOURCES CONFIGURE_DEPENDS shipwright/*.c shipwright
 
 # Everything but the generator programs' main files, compiled once for all of them.
 add_library(kaepora-generator OBJECT
-    generator/build_info.c
     generator/cvars.cpp
     generator/game_state.cpp
     generator/generate.cpp
@@ -38,6 +37,8 @@ target_include_directories(kaepora-generator PUBLIC
 )
 # functions.h needs a level for game prints. 6 turns them off, as in SoH.
 target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
+# The version goes to the one file that writes it into the spoiler log, so a new version rebuilds that file alone.
+set_source_files_properties(generator/generate.cpp PROPERTIES COMPILE_DEFINITIONS "KAEPORA_VERSION=\"${PROJECT_VERSION}\"")
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
@@ -103,12 +104,13 @@ endif()
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
+                     spoiler_log_lists_the_shuffled_locations_and_the_route
                      plan_opens_the_doors_the_rules_count_open same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      the_crate_heart_piece_and_the_training_ground_key_are_shuffled
                      fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
-                                  $<TARGET_FILE:kaepora-seedgen> SeedgenTest.test_${TEST})
+                                  $<TARGET_FILE:kaepora-seedgen> ${PROJECT_VERSION} SeedgenTest.test_${TEST})
 endforeach()
 add_test(NAME logic COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/logic_test.py $<TARGET_FILE:kaepora-reach>)
 
