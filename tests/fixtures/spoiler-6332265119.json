@@ -1,6 +1,25 @@
 {
     "kaepora": "0.0.0",
     "seed": "6332265119",
+    "settings": {
+        "Shuffled dungeons": [
+            "Deku Tree",
+            "Dodongo's Cavern",
+            "Jabu-Jabu's Belly",
+            "Forest Temple",
+            "Fire Temple",
+            "Water Temple",
+            "Shadow Temple",
+            "Spirit Temple",
+            "Bottom of the Well",
+            "Ice Cavern",
+            "Gerudo Training Ground",
+            "Ganon's Castle"
+        ],
+        "Small and boss keys": "Anywhere in their dungeon",
+        "Maps and compasses": "Anywhere in their dungeon",
+        "Lens of Truth": "Needed"
+    },
     "locations": {
         "KF Kokiri Sword Chest": "Purple Rupee",
         "KF Mido Top Left Chest": "Progressive Slingshot",

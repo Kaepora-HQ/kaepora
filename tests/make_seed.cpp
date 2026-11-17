@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     }
     try {
         for (int i = 1; i < argc; i += 3) {
-            MakeSeed(argv[i], argv[i + 1], argv[i + 2]);
+            MakeSeed(argv[i], {}, argv[i + 1], argv[i + 2]);
         }
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());

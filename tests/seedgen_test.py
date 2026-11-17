@@ -33,6 +33,14 @@ SHUFFLED = [row for row in read_tsv("chests.tsv") if row["shuffled"] == "yes"]
 # What each shuffled location holds in the unmodified game. A location whose chest the files keep twice counts once.
 POOL = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
 ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.tsv")}
+DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
+            "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
+            "Ganon's Castle"]
+DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
+                    "Maps and compasses": "Anywhere in their dungeon", "Lens of Truth": "Needed"}
+KEYS = {"Item_Dungeon_SmallKey", "Item_Dungeon_BossKey"}
+MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
+GOLDEN_GAUNTLETS_CHEST = "Ganon's Castle Shadow Trial Golden Gauntlets Chest"
 EVERY_KEY = [("Link's Pocket", item) for item in (
     *(f"{dungeon} Key Ring" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
                                             "Shadow Temple", "Bottom of the Well", "Training Ground",
@@ -64,17 +72,37 @@ class SeedgenTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(dir=".")
         self.addCleanup(self.tmp.cleanup)
 
-    def run_seedgen(self, seed):
+    def run_seedgen(self, seed, settings=None):
         out = pathlib.Path(self.tmp.name) / seed
         out.mkdir(exist_ok=True)
         spoiler, plan = out / "spoiler.json", out / "plan.json"
-        result = subprocess.run([SEEDGEN, seed, spoiler, plan], capture_output=True, text=True)
+        args = [] if settings is None else [json.dumps(settings)]
+        result = subprocess.run([SEEDGEN, seed, spoiler, plan, *args], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         return spoiler.read_bytes(), plan.read_bytes()
 
-    def generate(self, seed):
-        spoiler, plan = self.run_seedgen(seed)
+    def generate(self, seed, settings=None):
+        spoiler, plan = self.run_seedgen(seed, settings)
         return json.loads(spoiler), json.loads(plan)
+
+    def assert_kept_in_place(self, kept, settings, seeds, *, on_route):
+        rows = {row["hash"]: row for row in SHUFFLED}
+        kept_locations = {row["location"] for row in kept}
+        pool = collections.Counter({row["location"]: row["item"] for row in SHUFFLED
+                                    if row["location"] not in kept_locations}.values())
+        items = {row["location"]: row["item"] for row in kept}
+        stepped = set()
+        for seed in seeds:
+            spoiler, plan = self.generate(seed, settings)
+            planned = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+            self.assertFalse(kept_locations & planned.keys())
+            self.assertFalse(kept_locations & spoiler["locations"].keys())
+            self.assertEqual(collections.Counter(planned.values()), pool)
+            for location, item in playthrough_steps(spoiler).items():
+                if location in items:
+                    self.assertIn((items[location], item), ITEM_PAIRS, location)
+                    stepped.add(location)
+        self.assertEqual(bool(stepped), on_route)
 
     def test_only_shuffled_chests_change(self):
         first, _ = self.generate("1")
@@ -119,9 +147,11 @@ class SeedgenTest(unittest.TestCase):
 
     def test_spoiler_log_lists_the_shuffled_locations_and_the_route(self):
         spoiler, _ = self.generate("Kaepora")
-        self.assertEqual(list(spoiler), ["kaepora", "seed", "locations", "playthrough"])
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
         self.assertEqual(spoiler["kaepora"], VERSION)
         self.assertEqual(spoiler["seed"], "Kaepora")
+        self.assertEqual(spoiler["settings"], DEFAULT_SETTINGS)
+        self.assertEqual(list(spoiler["settings"]), list(DEFAULT_SETTINGS))
         # A location whose chest the files keep twice is listed once.
         self.assertEqual(list(spoiler["locations"]), list(dict.fromkeys(row["location"] for row in SHUFFLED)))
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
@@ -185,22 +215,92 @@ class SeedgenTest(unittest.TestCase):
         # Other items still land there.
         self.assertGreater(len(placed), len(colossus))
 
+    def test_spoiler_log_records_the_settings(self):
+        settings = {"Shuffled dungeons": ["Fire Temple", "Deku Tree"], "Small and boss keys": "In their own chests",
+                    "Maps and compasses": "In their own chests", "Lens of Truth": "Never needed"}
+        spoiler, _ = self.generate("9", settings)
+        self.assertEqual(spoiler["settings"], {**settings, "Shuffled dungeons": ["Deku Tree", "Fire Temple"]})
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
+
+    def test_default_settings_are_the_settings_left_out(self):
+        self.assertEqual(self.run_seedgen("10", DEFAULT_SETTINGS), self.run_seedgen("10"))
+        self.assertEqual(self.run_seedgen("10", {}), self.run_seedgen("10"))
+
+    def test_an_unknown_setting_is_refused(self):
+        out = pathlib.Path(self.tmp.name)
+        for settings, message in (({"Lens of Truth": "Sometimes"}, "Sometimes"),
+                                  ({"Shuffled dungeons": ["Deku Tree", "Hyrule Castle"]}, "Hyrule Castle"),
+                                  ({"Forest": "Open"}, "Forest")):
+            result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(message, result.stderr)
+            self.assertFalse((out / "spoiler.json").exists())
+
+    def test_a_dungeon_left_out_keeps_its_chests(self):
+        left_out = {"Forest Temple": "ForestTemple", "Deku Tree": "InsideTheDekuTree"}
+        kept = [row for row in SHUFFLED if folder(row["files"]) in left_out.values()]
+        self.assertTrue(kept)
+        settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in left_out]}
+        self.assert_kept_in_place(kept, settings, [str(seed) for seed in range(300, 310)], on_route=True)
+
+    def test_keys_stay_in_their_own_chests(self):
+        kept = [row for row in SHUFFLED if row["item"] in KEYS]
+        self.assertTrue(kept)
+        self.assert_kept_in_place(kept, {"Small and boss keys": "In their own chests"},
+                                  [str(seed) for seed in range(310, 320)], on_route=True)
+
+    def test_maps_and_compasses_stay_in_their_own_chests(self):
+        kept = [row for row in SHUFFLED if row["item"] in MAPS_AND_COMPASSES]
+        self.assertTrue(kept)
+        self.assert_kept_in_place(kept, {"Maps and compasses": "In their own chests"},
+                                  [str(seed) for seed in range(320, 330)], on_route=False)
+
+    def test_lens_never_needed_leaves_the_lens_off_the_route(self):
+        for seed in range(330, 345):
+            needed, _ = self.generate(str(seed))
+            never, _ = self.generate(str(seed), {"Lens of Truth": "Never needed"})
+            self.assertIn("Lens of Truth", playthrough_steps(needed).values())
+            self.assertNotIn("Lens of Truth", playthrough_steps(never).values())
+            self.assertIn("Bongo Bongo", playthrough_steps(never))
+
+    def test_every_setting_changed_at_once(self):
+        settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
+                    "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests",
+                    "Lens of Truth": "Never needed"}
+        for seed in range(400, 500):
+            spoiler, _ = self.generate(str(seed), settings)
+            self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
+
     def test_strength_items_come_in_rising_order(self):
         no_bracelet = ("GC Darunias Joy", "Green Rupee")
         bracelet_at_start = ("Link's Pocket", "Goron's Bracelet")
 
-        for seed in ("5029", "5032", "5038", "5022", "70217", "5015"):
-            spoiler, _ = self.generate(seed)
+        def without(*left_out):
+            return {"Shuffled dungeons": [name for name in DUNGEONS if name not in left_out]}
+
+        for seed, settings in (("5029", {}), ("5032", {}), ("5038", {}), ("5022", {}), ("70217", {}), ("5015", {}),
+                               ("947011", {"Shuffled dungeons": ["Ganon's Castle"]}),
+                               ("5107", without("Spirit Temple")),
+                               ("75021", {"Small and boss keys": "In their own chests"}),
+                               ("73421", {**without("Dodongo's Cavern", "Water Temple", "Shadow Temple",
+                                                    "Spirit Temple", "Ice Cavern"),
+                                          "Small and boss keys": "In their own chests",
+                                          "Maps and compasses": "In their own chests"}),
+                               ("5002", without("Ganon's Castle"))):
+            spoiler, _ = self.generate(seed, settings)
             placed = list(spoiler["locations"].items())
             where = {item: location for location, item in placed}
             silver = where["Silver Gauntlets"]
-            golden = where["Golden Gauntlets"]
-            self.assertTrue(reach.reachable(golden, *placed), seed)
+            golden = where.get("Golden Gauntlets", GOLDEN_GAUNTLETS_CHEST)
+            self.assertEqual("Golden Gauntlets" in where,
+                             "Ganon's Castle" in settings.get("Shuffled dungeons", DUNGEONS))
+            self.assertTrue(reach.reachable(golden, *placed, settings=settings), seed)
             for held in ([], EVERY_KEY + BOMBCHUS):
-                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *held), seed)
-                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *held), seed)
-                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *held),
-                                 seed)
+                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *held, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *held, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *held,
+                                                 settings=settings), seed)
             self.assertFalse({silver, golden} & KEPT_TWICE, seed)
             spheres = {item: sphere for sphere, steps in spoiler["playthrough"].items() for item in steps.values()}
             self.assertLess(spheres["Goron's Bracelet"], spheres["Silver Gauntlets"], seed)

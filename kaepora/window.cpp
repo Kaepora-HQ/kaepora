@@ -191,7 +191,7 @@ void Window::createSeed() {
     auto error = std::make_shared<QString>();
     making = QThread::create([seed, nup, folder, error] {
         try {
-            MakeSeed(seed.toStdString(), nup, folder);
+            MakeSeed(seed.toStdString(), {}, nup, folder);
         } catch (const std::exception& e) {
             *error = QString::fromUtf8(e.what());
         }

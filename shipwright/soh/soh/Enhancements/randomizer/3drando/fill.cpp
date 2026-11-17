@@ -946,8 +946,12 @@ static void PlaceGauntlets(const std::vector<RemakeChest>& chests) {
     for (const auto& [gauntlets, places] : { std::pair{ RG_GOLDEN_GAUNTLETS, needSilver },
                                              std::pair{ RG_SILVER_GAUNTLETS, needBracelet } }) {
         auto found = std::ranges::find(itemPool, gauntlets);
-        itemPool.erase(found);
-        AssumedFill({ gauntlets }, places);
+        // A pair the settings keep stays in its own chest. The Golden Gauntlets' chest needs Silver strength under
+        // every setting, and the Silver Gauntlets' chest is always shuffled.
+        if (found != itemPool.end()) {
+            itemPool.erase(found);
+            AssumedFill({ gauntlets }, places);
+        }
     }
 }
 
