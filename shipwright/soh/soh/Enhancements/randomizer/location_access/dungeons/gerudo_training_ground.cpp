@@ -96,18 +96,19 @@ void RegionTable_Init_GerudoTrainingGround() {
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_BOULDER_ROOM,           true),
     });
 
-    areaTable[RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM_UPPER] = Region("Gerudo Training Ground Heavy Block Room Upper", SCENE_GERUDO_TRAINING_GROUND, {
-        //Events
-        // The room links the barred door behind the heavy block to an eye switch in a recess high above it.
-        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, logic->CanHitEyeTargets()),
-    }, {}, {
+    areaTable[RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM_UPPER] = Region("Gerudo Training Ground Heavy Block Room Upper", SCENE_GERUDO_TRAINING_GROUND, {}, {}, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM, ctx->GetTrickOption(RT_LENS_GTG) || logic->CanUse(RG_LENS_OF_TRUTH)),
         //you can recoil hover on top of the block, but it's not simple
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_EYE_STATUE_UPPER, true),
     });
 
-    areaTable[RR_GERUDO_TRAINING_GROUND_BEHIND_HEAVY_BLOCK] = Region("Gerudo Training Ground Behind Heavy Block", SCENE_GERUDO_TRAINING_GROUND, {}, {}, {
+    areaTable[RR_GERUDO_TRAINING_GROUND_BEHIND_HEAVY_BLOCK] = Region("Gerudo Training Ground Behind Heavy Block", SCENE_GERUDO_TRAINING_GROUND, {
+        //Events
+        // The room links the barred door to an eye switch in a recess high above it. An arrow from the floor in front
+        // of the door hits it, with or without the Lens of Truth.
+        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, logic->CanHitEyeTargets()),
+    }, {}, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM, logic->Get(LOGIC_GTG_PUSHED_HEAVY_BLOCK)),
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_LIKE_LIKE_ROOM,   logic->Get(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK)),

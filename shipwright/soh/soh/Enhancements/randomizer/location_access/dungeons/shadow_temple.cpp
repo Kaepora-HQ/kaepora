@@ -65,8 +65,9 @@ void RegionTable_Init_ShadowTemple() {
     }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, true),
-        // The floor of the corridor to Dead Hand's room falls away, and only the Hover Boots cross it back.
-        ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              logic->CanUse(RG_HOVER_BOOTS)),
+        // The corridor floor falls under Link, and he climbs out of the pit on Dead Hand's side. The way back takes the
+        // Hover Boots, or the warp song every Link here holds: the Nocturne of Shadow is the only way into the temple.
+        ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              true),
     });
 
     areaTable[RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE_ROOM] = Region("Shadow Temple Whispering Walls Side Room", SCENE_SHADOW_TEMPLE, {}, {

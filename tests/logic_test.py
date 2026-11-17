@@ -179,6 +179,14 @@ class LogicTest(unittest.TestCase):
         bow = ("KF Mido Bottom Left Chest", "Progressive Bow")
         self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, bow, *outside))
 
+    def test_training_ground_door_behind_the_heavy_block_needs_no_lens(self):
+        # An arrow from the floor in front of the barred door, behind the pushed block, hits the eye above it with the
+        # Lens of Truth off. The well holds the only Lens. Without it the wasteland stays shut, so the gauntlets that push
+        # the block come from elsewhere.
+        no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_lens,
+                                       ("KF Mido Top Left Chest", "Silver Gauntlets")))
+
     def test_training_ground_lobby_left_chest_needs_no_eye_hit(self):
         # The invisible left chest stands there from the start. The eye switch shows only the right one.
         no_bow = ("Forest Temple Bow Chest", "Green Rupee")
@@ -223,21 +231,19 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
         self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
 
-    def test_shadow_temple_hover_boots_chest_needs_the_hover_boots(self):
-        # The corridor to the chest's room is a pit, and only the Hover Boots cross it back.
+    def test_shadow_temple_hover_boots_chest_needs_no_hover_boots(self):
+        # On a first visit the corridor floor falls under Link, and he climbs out of the pit on Dead Hand's side. The
+        # Nocturne of Shadow, the only way into the temple, warps him out.
         no_hover_boots = ("Shadow Temple Hover Boots Chest", "Green Rupee")
-        self.assertFalse(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots))
-        self.assertTrue(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots,
-                                       ("KF Mido Top Left Chest", "Hover Boots")))
+        self.assertTrue(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots))
 
     def test_shadow_temple_fifth_lock_guards_the_boss_key(self):
         # The four other locks stand on the way to the maze, so the boss key room takes all five keys. The door before
-        # the boss has no lock. The temple needs Hover Boots that its own chest cannot give.
-        hover_boots = ("KF Mido Top Left Chest", "Hover Boots")
-        self.assertTrue(self.reachable("Shadow Temple Boss Key Chest", hover_boots))
+        # the boss has no lock.
+        self.assertTrue(self.reachable("Shadow Temple Boss Key Chest"))
         boss_key_for_last_key = ("Shadow Temple Invisible Floormaster Chest", "Shadow Temple Boss Key")
-        self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", hover_boots, boss_key_for_last_key))
-        self.assertTrue(self.reachable("Bongo Bongo", hover_boots, boss_key_for_last_key))
+        self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", boss_key_for_last_key))
+        self.assertTrue(self.reachable("Bongo Bongo", boss_key_for_last_key))
 
     def test_fire_temple_locks_take_one_key_more_each(self):
         # A new game starts with the lowest locked door open, and seven locks take a key. Four stand before the narrow

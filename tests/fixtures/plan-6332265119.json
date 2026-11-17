@@ -63,7 +63,7 @@
         "Banc/SacredForestMeadow/SacredForestMeadow_Adult_Static.bcett.byml.zs",
         "Banc/SacredForestMeadow/SacredForestMeadow_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "Item_GlassTruth"
     },
     {
       "hash": "17023457248274633121",
@@ -77,14 +77,14 @@
       "files": [
         "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "9891111455604007674",
       "files": [
         "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_DekuNutBundle"
     },
     {
       "hash": "17445672702269453589",
@@ -92,21 +92,21 @@
         "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs",
         "Banc/HyruleField/HyruleField_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_DekuNutBundle"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "18413589940135955604",
       "files": [
         "Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_HoverBoot"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "6205043616869463865",
       "files": [
         "Banc/GerudoValley/GerudoValley_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_HoverBoot"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "15856256242099990922",
@@ -114,7 +114,7 @@
         "Banc/GerudoValley/GerudoValley_Adult_Static.bcett.byml.zs",
         "Banc/GerudoValley/GerudoValley_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_GlassTruth"
+      "drop_actor": "Item_ScrubBusinessSeed"
     },
     {
       "hash": "12343753510713797715",
@@ -138,21 +138,21 @@
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs",
         "Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "13080955777249750889",
       "files": [
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "11929552275106311978",
       "files": [
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "16912540161937823130",
@@ -160,7 +160,7 @@
         "Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "9809508929088891725",
@@ -168,7 +168,7 @@
         "Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_ArrowBundle_Large"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "4402942101476009858",
@@ -176,7 +176,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_ArrowBundle_Medium"
+      "drop_actor": "TBox_ArrowBundle_Large"
     },
     {
       "hash": "3870071239709713434",
@@ -184,7 +184,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_ArrowBundle_Medium"
     },
     {
       "hash": "14647422914070455120",
@@ -192,7 +192,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "1158729434763801603",
@@ -208,7 +208,7 @@
         "Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs",
         "Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_DekuStickBundle_Small"
     },
     {
       "hash": "8838426083116998768",
@@ -216,7 +216,7 @@
         "Banc/ZoraRiver/ZoraRiver_Adult_Dynamic.bcett.byml.zs",
         "Banc/ZoraRiver/ZoraRiver_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_ScrubBusinessSeed"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "3130048366421939233",
@@ -230,7 +230,7 @@
       "files": [
         "Banc/ZoraFountain/ZoraFountain_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_DekuStickBundle_Small"
+      "drop_actor": "Item_HoverBoot"
     },
     {
       "hash": "8579518566955184384",
