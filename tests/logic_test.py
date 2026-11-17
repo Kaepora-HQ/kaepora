@@ -81,6 +81,13 @@ class LogicTest(unittest.TestCase):
         # With no Goron's Bracelet and the only bomb bag inside it, Dodongo's Cavern stays shut.
         self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
 
+    def test_dodongos_cavern_opens_to_the_bomb_flower_above_it(self):
+        # Bombs from the bag do not break the rock at the mouth. The fruit of the bomb flower on the ledge above does,
+        # and picking the flower takes the bracelet's strength.
+        child_with_bombs_without_bracelet = (NEVER_ADULT, ("GC Darunias Joy", "Green Rupee"),
+                                             ("KF Mido Top Left Chest", "Progressive Bomb Bag"))
+        self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_with_bombs_without_bracelet))
+
     def test_biggorons_sword_needs_the_whole_trade_chain(self):
         self.assertTrue(self.reachable("DMT Trade Claim Check"))
         self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee")))
@@ -113,11 +120,13 @@ class LogicTest(unittest.TestCase):
 
     def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
         # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
-        # either tier of gauntlets puts above the bracelet's.
+        # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child cannot open Dodongo's Cavern,
+        # so the Goron's Ruby comes from elsewhere.
         for gauntlets in ("Silver Gauntlets", "Golden Gauntlets"):
             self.assertTrue(self.reachable("Phantom Ganon", ("GC Darunias Joy", "Green Rupee"),
                                            ("KF Mido Top Left Chest", gauntlets),
-                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag")))
+                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag"),
+                                           ("KF Mido Top Right Chest", "Goron's Ruby")))
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Only the Silver Gauntlets or the hammer clear the way to the leftmost chest of the Goron City maze.
