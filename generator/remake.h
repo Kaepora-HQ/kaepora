@@ -1,4 +1,3 @@
-// The remake's chests, from the tables in remake/.
 #pragma once
 
 #include "soh/Enhancements/randomizer/randomizerEnums.h"

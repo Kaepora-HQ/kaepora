@@ -22,7 +22,6 @@ static constexpr char itemTable[] = {
     throw std::runtime_error(message);
 }
 
-// The rows of a tab-separated table after its header, each with as many fields as the header has.
 static std::vector<std::vector<std::string>> ReadTable(const std::string& name, const std::string& text,
                                                        const std::string& header) {
     std::vector<std::string> lines = SohUtils::StringSplit(text, "\n");
@@ -70,8 +69,7 @@ static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
     return items;
 }
 
-// A remake key, map or compass names no dungeon: the chest gives the one of the dungeon it stands in. So a remake
-// name with several SoH items picks the one that belongs to the location's dungeon, and RG_NONE when none does.
+// A remake key, map or compass names no dungeon: the chest gives the one of the dungeon it stands in.
 static RandomizerGet ResolveItem(const std::vector<RandomizerGet>& candidates, RandomizerCheck rc) {
     if (candidates.size() == 1) {
         return candidates.front();

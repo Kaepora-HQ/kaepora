@@ -903,8 +903,8 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     return shuffled;
 }
 
-// A remake key, map or compass names no dungeon: the chest gives the one of the scene it stands in. So these move only
-// between shuffled chests in the same Banc folder. Keys go first, as maps and compasses open nothing.
+// A remake key, map or compass names no dungeon: the chest gives the one of the scene it stands in. Keys go first, as
+// maps and compasses open nothing.
 static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     std::map<std::string, std::vector<const RemakeChest*>> byFolder;
     for (const RemakeChest* chest : shuffled) {
@@ -1108,12 +1108,14 @@ int Fill(const std::vector<RemakeChest>& chests) {
 
         StartPerformanceTimer(PT_ADVANCEMENT_ITEMS);
         SPDLOG_INFO("Shuffling Advancement Items");
+        // Then place the rest of the advancement items
         std::vector<RandomizerGet> advancementItems = FilterAndEraseFromPool(
             itemPool, [](const auto i) { return Rando::StaticData::RetrieveItem(i).IsAdvancement(); });
         AssumedFill(advancementItems, shuffledLocations);
         StopPerformanceTimer(PT_ADVANCEMENT_ITEMS);
 
         StartPerformanceTimer(PT_REMAINING_ITEMS);
+        // Fast fill for the rest of the pool
         SPDLOG_INFO("Shuffling Remaining Items");
         FastFill(std::move(itemPool), GetEmptyLocations(shuffledLocations));
         StopPerformanceTimer(PT_REMAINING_ITEMS);
