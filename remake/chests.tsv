@@ -132,7 +132,7 @@ Bottom of the Well Compass Chest	14911602953212243797	Banc/BottomOfTheWell/Botto
 Bottom of the Well Center Skulltula Chest	631709185320708287	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Back Left Bombable Chest	10905582354954996284	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
 Bottom of the Well Lens of Truth Chest	16654774376625985726	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	Item_GlassTruth	yes	
-Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low
+Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	the remake's one invisible chest stands in the room before Dead Hand's; what opens that room's shutter on a first visit is not seen
 Bottom of the Well Underwater Front Chest	12988877782812797760	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Underwater Left Chest				no	no remake chest
 Bottom of the Well Map Chest	9466613428674883506	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	
