@@ -13,7 +13,8 @@ of a scene, under two hashes: both rows name the same item, and both chests give
   `Drop__DropActor`. A plain chest with no `Drop__DropActor` gives a refill of whatever Link is lowest on, and stands
   here as a Large Magic Jar (`Tbox_MagicJar_Large`), the refill one of them gave in the game. Empty for a chest that
   gives nothing a row can name: a trap chest, or a chest that checks what Link owns and names no item.
-- `shuffled`: `yes` or `no`. A shuffled chest takes part in the shuffle; every other location keeps its item.
+- `shuffled`: `yes` or `no`. A `yes` chest takes part in the shuffle unless the seed's settings keep it in place;
+  every other location keeps its item.
 - `note`: why a row is not shuffled.
 
 `items.tsv` maps each remake item name to the SoH item it stands for, by SoH's English name. A remake key, map or
