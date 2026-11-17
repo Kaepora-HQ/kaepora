@@ -25,6 +25,8 @@ def read_tsv(name):
 
 
 SHUFFLED = [row for row in read_tsv("chests.tsv") if row["shuffled"] == "yes"]
+# What each shuffled location holds in the unmodified game. A location whose chest the files keep twice counts once.
+POOL = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
 ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.tsv")}
 
 
@@ -68,8 +70,10 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(planned.keys(), {row["hash"] for row in SHUFFLED})
         for row in SHUFFLED:
             self.assertEqual(planned[row["hash"]]["files"], row["files"].split(","))
-        self.assertEqual(collections.Counter(entry["drop_actor"] for entry in plan["chests"]),
-                         collections.Counter(row["item"] for row in SHUFFLED))
+        # A location whose chest the files keep twice writes its one item to both, so names count once per location.
+        rows = {row["hash"]: row for row in SHUFFLED}
+        by_location = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+        self.assertEqual(collections.Counter(by_location.values()), POOL)
 
     def test_plan_matches_spoiler(self):
         spoiler, plan = self.generate("4")
@@ -94,13 +98,22 @@ class SeedgenTest(unittest.TestCase):
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
         spoiler, _ = self.generate("7")
-        pool = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
         placed = collections.Counter(spoiler["locations"][location]
                                      for location in {row["location"] for row in SHUFFLED})
         for remake, soh in (("Item_ScrubBusinessSeed", "Business Scrub Seed"),
                             ("Tbox_MagicJar_Large", "Large Magic Jar")):
-            self.assertGreater(pool[remake], 0, remake)
-            self.assertEqual(placed[soh], pool[remake], soh)
+            self.assertGreater(POOL[remake], 0, remake)
+            self.assertEqual(placed[soh], POOL[remake], soh)
+
+    def test_a_chest_kept_twice_holds_one_item(self):
+        # The Kakariko lookout chest stands in both versions of the adult village, and the Gerudo Valley storms grotto
+        # chest in the child and the adult files, each under its own hash.
+        _, plan = self.generate("8")
+        names = {entry["hash"]: entry["drop_actor"] for entry in plan["chests"]}
+        for first, second in (("13080955777249750889", "11929552275106311978"),
+                              ("18413589940135955604", "6205043616869463865")):
+            self.assertIn(first, names)
+            self.assertEqual(names[first], names[second])
 
     def test_same_seed_same_files(self):
         self.assertEqual(self.run_seedgen("5"), self.run_seedgen("5"))

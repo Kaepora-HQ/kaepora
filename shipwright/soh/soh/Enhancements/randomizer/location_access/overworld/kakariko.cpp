@@ -17,6 +17,8 @@ void RegionTable_Init_Kakariko() {
         LOCATION(RC_SHEIK_IN_KAKARIKO,                     logic->IsAdult && logic->HasItem(RG_FOREST_MEDALLION) && logic->HasItem(RG_FIRE_MEDALLION) && logic->HasItem(RG_WATER_MEDALLION)),
         LOCATION(RC_KAK_ANJU_AS_ADULT,                     logic->IsAdult && logic->AtDay && logic->HasItem(RG_SPEAK_HYLIAN)),
         LOCATION(RC_KAK_TRADE_POCKET_CUCCO,                logic->IsAdult && logic->AtDay && (logic->CanUse(RG_POCKET_EGG) && logic->Get(LOGIC_WAKE_UP_ADULT_TALON))),
+        // The lookout stands only in the adult village, and the Longshot gets Link up to it.
+        LOCATION(RC_KAK_LOOKOUT_CHEST,                     logic->IsAdult && logic->CanUse(RG_LONGSHOT) && logic->HasItem(RG_OPEN_CHEST)),
         //Can kill lower kak skulls with pots
         LOCATION(RC_KAK_GS_HOUSE_UNDER_CONSTRUCTION,       logic->IsChild && logic->CanGetNightTimeGS() && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))),
         LOCATION(RC_KAK_GS_SKULLTULA_HOUSE,                logic->IsChild && logic->CanGetNightTimeGS() && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))),

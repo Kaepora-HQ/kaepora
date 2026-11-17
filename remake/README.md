@@ -2,7 +2,9 @@
 
 The generator builds these into the program and checks them when it starts.
 
-`chests.tsv` has one row per SoH chest location of the vanilla dungeon layouts:
+`chests.tsv` has a row for every SoH chest location of the vanilla dungeon layouts. A location has a second row where
+the files keep its chest once in each of two versions of a scene, under two hashes: both rows name the same item, and
+both chests give the location's item.
 
 - `location`: the SoH location, by its spoiler log name.
 - `hash` and `files`: the remake chest's actor hash, and the romfs scene files that place it, comma separated. Both
