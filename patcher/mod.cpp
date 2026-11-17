@@ -75,7 +75,6 @@ static byml::Node* Find(byml::Node& dict, std::string_view key) {
     return entry == dict.dict.end() ? nullptr : &entry->value;
 }
 
-// The actor with this hash.
 static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     byml::Node* actors = Find(placement, "Actors");
     if (actors != nullptr) {
