@@ -8,9 +8,32 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # Release builds keep assert on, so a broken invariant stops the program instead of writing a bad seed.
 add_compile_options(-UNDEBUG)
 
-find_package(nlohmann_json REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(zstd REQUIRED)
+if(WIN32)
+    # Windows has no packages of these. EXCLUDE_FROM_ALL keeps their install rules out of the package.
+    include(FetchContent)
+    set(ZSTD_BUILD_SHARED OFF)
+    set(ZSTD_BUILD_PROGRAMS OFF)
+    set(ZSTD_BUILD_TESTS OFF)
+    FetchContent_Declare(nlohmann_json EXCLUDE_FROM_ALL SYSTEM
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+        URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa)
+    FetchContent_Declare(spdlog EXCLUDE_FROM_ALL SYSTEM
+        URL https://github.com/gabime/spdlog/archive/refs/tags/v1.17.0.tar.gz
+        URL_HASH SHA256=d8862955c6d74e5846b3f580b1605d2428b11d97a410d86e2fb13e857cd3a744)
+    FetchContent_Declare(zstd EXCLUDE_FROM_ALL SYSTEM
+        URL https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+        URL_HASH SHA256=eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3
+        SOURCE_SUBDIR build/cmake)
+    FetchContent_MakeAvailable(nlohmann_json spdlog zstd)
+    set(ZSTD_LIBRARY libzstd_static)
+else()
+    find_package(nlohmann_json REQUIRED)
+    find_package(spdlog REQUIRED)
+    find_package(zstd REQUIRED)
+    # zstd before 1.5.6, as on Ubuntu 24.04, names only its shared and static targets.
+    set(ZSTD_LIBRARY zstd::libzstd_shared)
+endif()
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 include(shipwright/CMake/soh-cvars.cmake)
 
@@ -25,7 +48,7 @@ add_library(kaepora-generator OBJECT
     generator/remake.cpp
     generator/seed_settings.cpp
     generator/setup.cpp
-    generator/traps.cpp
+    $<IF:$<PLATFORM_ID:Windows>,generator/traps_windows.cpp,generator/traps.cpp>
     ${SHIPWRIGHT_SOURCES}
 )
 target_include_directories(kaepora-generator PUBLIC
@@ -55,14 +78,18 @@ target_link_libraries(kaepora-seedgen PRIVATE kaepora-generator)
 add_executable(kaepora-reach generator/reach.cpp)
 target_link_libraries(kaepora-reach PRIVATE kaepora-generator)
 
-# Designated initializers leave out the members that start empty, which -Wextra would report.
-set(WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
+# Designated initializers leave out the members that start empty, which -Wextra would report. clang-cl reads -Wall as
+# -Weverything, and its /W4 is Clang's -Wall -Wextra.
+if(MSVC)
+    set(WARNINGS /W4 -Wpedantic -Wno-missing-field-initializers)
+else()
+    set(WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
+endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp patcher/mod.cpp
                                        patcher/romfs.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
-# zstd before 1.5.6, as on Ubuntu 24.04, names only its shared and static targets.
-target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE zstd::libzstd_shared)
+target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
 
 add_executable(kaepora-patch patcher/main.cpp)
@@ -103,7 +130,7 @@ if(Qt6_FOUND)
 endif()
 
 enable_testing()
-add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
+add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route
                      plan_opens_the_doors_the_rules_count_open same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
@@ -114,11 +141,12 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      maps_and_compasses_stay_in_their_own_chests lens_never_needed_leaves_the_lens_off_the_route
                      every_setting_changed_at_once strength_items_come_in_rising_order seed_text_ignores_case
                      fixed_seed_matches_fixture)
-    add_test(NAME ${TEST} COMMAND python3 -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
+    add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
 endforeach()
-add_test(NAME logic COMMAND python3 -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py $<TARGET_FILE:kaepora-reach>)
+add_test(NAME logic COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py
+                            $<TARGET_FILE:kaepora-reach>)
 
 if(Qt6Test_FOUND)
     add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
@@ -143,7 +171,7 @@ set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with an item value added to two chests that named none")
 set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
-set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
+set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
@@ -155,7 +183,8 @@ if(KAEPORA_GAME_NUP)
                 ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json)
     foreach(TEST IN ITEMS same_files_as_the_two_programs two_seeds_in_one_process same_seed_twice_in_one_process
                           existing_folder_is_refused new_folder_in_a_missing_folder)
-        add_test(NAME make_seed_${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
+        add_test(NAME make_seed_${TEST}
+                 COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
@@ -188,4 +217,10 @@ if(KAEPORA_GAME_NUP)
             COMMAND ${PATCH_TEST} tested-gift-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_GIFT_MOD}")
     endif()
+endif()
+
+# Windows finds a program's libraries beside it or on PATH, so the tests find Qt's on PATH.
+if(WIN32 AND Qt6Test_FOUND)
+    get_property(tests DIRECTORY PROPERTY TESTS)
+    set_property(TEST ${tests} PROPERTY ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 endif()

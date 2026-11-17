@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
         for (const auto& [path, data] : ModFiles(argv[1], plan)) {
             const std::filesystem::path out = modDir / "romfs" / path;
             WriteFile(out, data);
-            std::printf("%s\n", out.c_str());
+            std::printf("%s\n", out.string().c_str());
         }
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());
