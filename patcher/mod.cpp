@@ -1,5 +1,6 @@
 #include "mod.h"
 
+#include "bfevfl.h"
 #include "byml.h"
 #include "bytes.h"
 #include "compression.h"
@@ -13,6 +14,7 @@
 #include <fstream>
 #include <set>
 #include <stdexcept>
+#include <tuple>
 
 static PlannedChest ParseChest(const nlohmann::json& chest) {
     const std::string hash = chest.at("hash").get<std::string>();
@@ -28,14 +30,41 @@ static PlannedChest ParseChest(const nlohmann::json& chest) {
     return planned;
 }
 
+static PlannedGift ParseGift(const nlohmann::json& gift) {
+    PlannedGift planned{ .flow = gift.at("flow").get<std::string>(),
+                         .event = gift.at("event").get<std::string>(),
+                         .param = gift.at("param").get<std::string>(),
+                         .item = gift.at("item").get<std::string>() };
+    if (planned.item.empty()) {
+        throw std::runtime_error("item must not be empty");
+    }
+    return planned;
+}
+
+static std::string Name(const PlannedGift& gift) {
+    return std::format("{} {} in {}", gift.event, gift.param, gift.flow);
+}
+
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
+    const auto gifts = json.at("gifts").get<std::vector<nlohmann::json>>();
     Plan plan{ .startFlags = json.at("start_flags").get<std::vector<std::string>>() };
     for (size_t i = 0; i < chests.size(); ++i) {
         try {
             plan.chests.push_back(ParseChest(chests[i]));
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("chests[{}]: {}", i, e.what()));
+        }
+    }
+    std::set<std::tuple<std::string, std::string, std::string>> given;
+    for (size_t i = 0; i < gifts.size(); ++i) {
+        try {
+            const PlannedGift& gift = plan.gifts.emplace_back(ParseGift(gifts[i]));
+            if (!given.emplace(gift.flow, gift.event, gift.param).second) {
+                throw std::runtime_error(std::format("{} is listed twice", Name(gift)));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("gifts[{}]: {}", i, e.what()));
         }
     }
     return plan;
@@ -124,23 +153,26 @@ static std::string ReadSizeTable(Romfs& romfs) {
     }
 }
 
+// The game's own size table entries are a file's decompressed size rounded up to a multiple of 32, plus an overhead
+// for its kind of file.
+constexpr size_t PlacementOverhead = 264;
+constexpr size_t EventFlowOverhead = 272;
+
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
 // the entry changed.
-static bool RaiseSize(std::string& table, std::string_view path, size_t size) {
-    // The game silently skips a file that is too large for its entry, and loads one that is smaller. Its own entries
-    // are the size rounded up to a multiple of 32, plus 264.
-    constexpr size_t Overhead = 264;
+static bool RaiseSize(std::string& table, std::string_view path, size_t size, size_t overhead) {
+    // The game silently skips a file that is too large for its entry, and loads one that is smaller.
     constexpr size_t Alignment = 32;
 
     const uint32_t key = Crc32(path.substr(0, path.size() - std::strlen(".zs")));
     const size_t end = SizeTableHeaderSize + ReadAt<uint32_t>(table, 0x0E) * SizeTableEntrySize;
     for (size_t entry = SizeTableHeaderSize; entry < end; entry += SizeTableEntrySize) {
         if (ReadAt<uint32_t>(table, entry) == key) {
-            const uint32_t value = uint32_t((size + Alignment - 1) / Alignment * Alignment + Overhead);
+            const uint32_t value = uint32_t(AlignUp(size, Alignment) + overhead);
             if (ReadAt<uint32_t>(table, entry + 4) >= value) {
                 return false;
             }
-            std::memcpy(table.data() + entry + 4, &value, sizeof(value));
+            WriteAt(table, entry + 4, value);
             return true;
         }
     }
@@ -170,9 +202,8 @@ static uint32_t Murmur3(std::string_view name) {
 
 // The game data list with the default of each named Bool set to true, compressed as the game's own copy is. A Bool's
 // default sits inside its entry, so the list keeps its size and still fits its size table entry.
-static std::string StartFlagList(Romfs& romfs, const std::vector<std::string>& names) {
+static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, const std::vector<std::string>& names) {
     try {
-        const std::string dictionary = Dictionary(romfs, "zs.zsdic");
         byml::Document list = byml::Parse(Decompress(romfs.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
         byml::Node* bools = data == nullptr ? nullptr : Find(*data, "Bool");
@@ -224,19 +255,41 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
+    const std::string zsDictionary = Dictionary(romfs, "zs.zsdic");
+    std::map<std::string, bfevfl::Flow> flows;
+    std::set<std::string> changedFlows;
+    for (const PlannedGift& gift : plan.gifts) {
+        try {
+            auto flow = flows.find(gift.flow);
+            if (flow == flows.end()) {
+                flow = flows.emplace(gift.flow, bfevfl::Parse(Decompress(romfs.Read(gift.flow), zsDictionary))).first;
+            }
+            if (bfevfl::SetString(flow->second, gift.event, gift.param, gift.item)) {
+                changedFlows.insert(gift.flow);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("gift {}: {}", Name(gift), e.what()));
+        }
+    }
+
     std::map<std::string, std::string> mod;
     std::string table = ReadSizeTable(romfs);
     bool tableChanged = false;
     for (const std::string& path : changed) {
         const std::string data = byml::Write(placements.at(path));
-        tableChanged |= RaiseSize(table, path, data.size());
+        tableChanged |= RaiseSize(table, path, data.size(), PlacementOverhead);
         mod.emplace(path, Compress(data, dictionary));
+    }
+    for (const std::string& path : changedFlows) {
+        const std::string data = bfevfl::Write(flows.at(path));
+        tableChanged |= RaiseSize(table, path, data.size(), EventFlowOverhead);
+        mod.emplace(path, Compress(data, zsDictionary));
     }
     if (tableChanged) {
         mod.emplace(SizeTablePath, Compress(table));
     }
     if (!plan.startFlags.empty()) {
-        mod.emplace(GameDataListPath, StartFlagList(romfs, plan.startFlags));
+        mod.emplace(GameDataListPath, StartFlagList(romfs, zsDictionary, plan.startFlags));
     }
     return mod;
 }
