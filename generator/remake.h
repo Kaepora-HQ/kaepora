@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-// A SoH chest location and the remake chest it is. Where the remake has no chest, actors is empty.
+// A SoH location and the remake chest it is. Where the remake has no chest, actors is empty.
 struct RemakeChest {
     // One actor that places the chest: its hash, and the romfs paths of the scene files that hold it.
     struct Actor {

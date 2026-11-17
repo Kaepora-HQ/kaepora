@@ -104,9 +104,8 @@ std::vector<RemakeChest> LoadRemakeChests() {
         const std::string& shuffled = row[4];
 
         auto location = Rando::StaticData::locationNameToEnum.find(name);
-        if (location == Rando::StaticData::locationNameToEnum.end() ||
-            Rando::StaticData::GetLocation(location->second)->GetActorID() != ACTOR_EN_BOX) {
-            Fail(where + "\"" + name + "\" is not a SoH chest location");
+        if (location == Rando::StaticData::locationNameToEnum.end()) {
+            Fail(where + "\"" + name + "\" is not a SoH location");
         }
         if (hash.empty() != files.empty() || (hash.empty() && !item.empty())) {
             Fail(where + "a row with no remake chest leaves hash, files and item empty");

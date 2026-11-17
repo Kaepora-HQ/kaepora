@@ -105,6 +105,7 @@ add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstr
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      plan_opens_the_doors_the_rules_count_open same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
+                     the_crate_heart_piece_and_the_training_ground_key_are_shuffled
                      fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> SeedgenTest.test_${TEST})
