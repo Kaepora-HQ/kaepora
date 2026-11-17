@@ -251,8 +251,7 @@ void InitializeRandomizer() {
     Rando::Settings::GetInstance()->AssignContext(ctx);
     Rando::StaticData::InitItemTable();
 
-    auto settings = Rando::Settings::GetInstance();
-    settings->CreateOptions();
+    Rando::Settings::GetInstance()->CreateOptions();
 
     Rando::StaticData::RegisterSongLocations();
     Rando::StaticData::RegisterBeehiveLocations();
