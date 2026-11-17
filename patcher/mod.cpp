@@ -157,20 +157,18 @@ static std::string ReadSizeTable(Romfs& romfs) {
 
 // The game's own size table entries are a file's decompressed size rounded up to a multiple of 32, plus an overhead
 // for its kind of file.
+constexpr size_t SizeAlignment = 32;
 constexpr size_t PlacementOverhead = 264;
 constexpr size_t EventFlowOverhead = 272;
 
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
-// the entry changed.
+// the entry changed. The game silently skips a file that is too large for its entry, and loads one that is smaller.
 static bool RaiseSize(std::string& table, std::string_view path, size_t size, size_t overhead) {
-    // The game silently skips a file that is too large for its entry, and loads one that is smaller.
-    constexpr size_t Alignment = 32;
-
     const uint32_t key = Crc32(path.substr(0, path.size() - std::strlen(".zs")));
     const size_t end = SizeTableHeaderSize + ReadAt<uint32_t>(table, 0x0E) * SizeTableEntrySize;
     for (size_t entry = SizeTableHeaderSize; entry < end; entry += SizeTableEntrySize) {
         if (ReadAt<uint32_t>(table, entry) == key) {
-            const uint32_t value = uint32_t(AlignUp(size, Alignment) + overhead);
+            const uint32_t value = uint32_t(AlignUp(size, SizeAlignment) + overhead);
             if (ReadAt<uint32_t>(table, entry + 4) >= value) {
                 return false;
             }
