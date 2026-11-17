@@ -86,6 +86,18 @@ if(Qt6_FOUND)
     add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/window.cpp)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
+
+    # The window is the one program that installs, with its desktop file, its icon, and the licences of the code
+    # built into it.
+    include(GNUInstallDirs)
+    install(TARGETS kaepora)
+    install(FILES dist/io.github.pixelhabits.kaepora.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+    install(FILES dist/io.github.pixelhabits.kaepora.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+    install(FILES dist/io.github.pixelhabits.kaepora.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
+    install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/kaepora)
+    install(FILES shipwright/libultraship/LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/libultraship)
+    install(FILES shipwright/soh/soh/Enhancements/randomizer/3drando/LICENSE.md
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/oot-randomizer)
 endif()
 
 enable_testing()
