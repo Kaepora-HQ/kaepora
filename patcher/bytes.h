@@ -33,7 +33,7 @@ constexpr size_t AlignUp(size_t size, size_t alignment) {
 
 // The zero-terminated string that starts at the offset.
 inline std::string_view StringAt(std::string_view data, size_t offset) {
-    const size_t end = offset < data.size() ? data.find('\0', offset) : std::string_view::npos;
+    const size_t end = data.find('\0', offset);
     if (end == std::string_view::npos) {
         throw std::runtime_error("string runs past the end of the data");
     }
