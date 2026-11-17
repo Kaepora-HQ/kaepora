@@ -94,6 +94,15 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
                                         ("Graveyard Hookshot Chest", "Green Rupee")))
 
+    def test_kokiri_forest_storms_grotto_chest_needs_the_scrubs_beaten(self):
+        # Beating the three Deku Scrub brothers takes a shield to send their nuts back. Without the bow, adult Link never
+        # finishes the Forest Temple and never returns to child, so only a Hylian Shield does it.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        no_hylian_shield = (("Market Bazaar Item 1", "Green Rupee"), ("Kak Bazaar Item 1", "Green Rupee"),
+                            ("Graveyard Shield Grave Chest", "Green Rupee"))
+        self.assertTrue(self.reachable("KF Storms Grotto Chest", no_bow))
+        self.assertFalse(self.reachable("KF Storms Grotto Chest", no_bow, *no_hylian_shield))
+
     # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
     # tier found, and only adult Link can use them.
 

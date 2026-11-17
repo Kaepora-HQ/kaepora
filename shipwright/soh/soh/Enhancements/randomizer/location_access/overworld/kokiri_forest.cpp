@@ -263,7 +263,8 @@ void RegionTable_Init_KokiriForest() {
 
     areaTable[RR_KF_STORMS_GROTTO] = Region("KF Storms Grotto", SCENE_GROTTOS, grottoEvents, {
         //Locations
-        LOCATION(RC_KF_STORMS_GROTTO_CHEST,                  logic->HasItem(RG_OPEN_CHEST)),
+        // The chest appears once Link beats the three Deku Scrub brothers here, the same puzzle as before Gohma.
+        LOCATION(RC_KF_STORMS_GROTTO_CHEST,                  logic->CanReflectNuts() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_KF_STORMS_GROTTO_FISH,                   logic->HasBottle()),
         LOCATION(RC_KF_STORMS_GROTTO_GOSSIP_STONE_FAIRY,     logic->CallGossipFairy()),
         LOCATION(RC_KF_STORMS_GROTTO_GOSSIP_STONE_FAIRY_BIG, logic->CanUse(RG_SONG_OF_STORMS)),
