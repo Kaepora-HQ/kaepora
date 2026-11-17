@@ -313,21 +313,32 @@ def written(tmp):
     return sorted(p.relative_to(romfs).as_posix() for p in romfs.rglob("*") if p.is_file())
 
 
+def patched(patch, game, plan):
+    """The files kaepora-patch writes for the plan, by their path in the mod's romfs."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, plan, tmp)
+        assert result.returncode == 0, result.stderr
+        romfs = tmp / "mod" / "romfs"
+        return {p.relative_to(romfs).as_posix(): p.read_bytes() for p in romfs.rglob("*") if p.is_file()}
+
+
+def assert_same_frame_header(ours, theirs):
+    """The frame header descriptor and dictionary ID match: single segment, content size in the header, no
+    checksum."""
+    assert ours[4] == theirs[4], (ours[4], theirs[4])
+    assert zstd.get_frame_info(ours).dictionary_id == zstd.get_frame_info(theirs).dictionary_id
+
+
 def tested_mod(patch, game, mod_file):
     """The one-chest change the game accepted: the Deku Tree Slingshot chest gives the Hookshot."""
     tested = pathlib.Path(mod_file).read_bytes()
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([(SLINGSHOT_CHEST, [DEKU_STATIC], "Item_Hookshot")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == [DEKU_STATIC], written(tmp)
-        ours = (tmp / "mod" / "romfs" / DEKU_STATIC).read_bytes()
-    # The frame header descriptor and dictionary ID match: content size in the header, one segment, no checksum.
-    assert ours[4] == tested[4], (ours[4], tested[4])
-    assert zstd.get_frame_info(ours).dictionary_id == zstd.get_frame_info(tested).dictionary_id
+    mod = patched(patch, game, plan([(SLINGSHOT_CHEST, [DEKU_STATIC], "Item_Hookshot")]))
+    assert sorted(mod) == [DEKU_STATIC], sorted(mod)
+    assert_same_frame_header(mod[DEKU_STATIC], tested)
     # The tested mod wrote Item_Hookshot over Item_Range_SlingShot in the string table and padded it with zero bytes.
     # The game's own files never pad a string, so the bytes differ and the parsed content must match.
-    assert game.placement(ours) == game.placement(tested)
+    assert game.placement(mod[DEKU_STATIC]) == game.placement(tested)
 
 
 def tested_start_mod(patch, game, mod_file):
@@ -436,18 +447,15 @@ def larger_plan(patch, game):
     kept_hash, kept_files = KEPT
     chests.append((kept_hash, kept_files, actor(originals[kept_files[0]], kept_hash)["Dynamic"]["Drop__DropActor"]))
 
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan(chests), tmp)
-        assert result.returncode == 0, result.stderr
-        changed = sorted({path for _, files in ROTATED for path in files})
-        assert written(tmp) == changed, written(tmp)
-        for path in changed:
-            expected = originals[path]
-            for h, files, drop_actor in chests:
-                if path in files:
-                    actor(expected, h)["Dynamic"]["Drop__DropActor"] = drop_actor
-            assert game.placement((tmp / "mod" / "romfs" / path).read_bytes()) == expected, path
+    mod = patched(patch, game, plan(chests))
+    changed = sorted({path for _, files in ROTATED for path in files})
+    assert sorted(mod) == changed, sorted(mod)
+    for path in changed:
+        expected = originals[path]
+        for h, files, drop_actor in chests:
+            if path in files:
+                actor(expected, h)["Dynamic"]["Drop__DropActor"] = drop_actor
+        assert game.placement(mod[path]) == expected, path
 
 
 def together(patch, game):
@@ -670,7 +678,8 @@ def seed_plan(patch, game, plan_file):
 
 def bad_input(patch, game):
     # Each plan starts with a valid change, so a program that wrote as it went would leave a file behind.
-    valid = {"hash": str(SLINGSHOT_CHEST), "files": [DEKU_STATIC], "drop_actor": "Item_Hookshot"}
+    good = plan([(SLINGSHOT_CHEST, [DEKU_STATIC], "Item_Hookshot")])
+    valid = good["chests"][0]
     missing = "Banc/Nowhere/Nowhere_Static.bcett.byml.zs"
     cases = {
         "not this shape": (
