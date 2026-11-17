@@ -287,7 +287,6 @@ def event_flow(data):
 
 
 def gift_parameter(flow, event, param):
-    """The value of the event's parameter in a parsed flow."""
     _, _, (names, values), *_ = next(e for e in flow["events"] if e[0] == event)
     return values[[name for _, name in names[1:]].index(param)]
 
