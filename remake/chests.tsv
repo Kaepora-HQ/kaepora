@@ -110,7 +110,7 @@ Spirit Temple Hallway Left Invisible Chest	14040210993541550542	Banc/SpiritTempl
 Spirit Temple Boss Key Chest	16272168033146555902	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Spirit Temple Topmost Chest	13828480906010430010	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Item_BombBundle_Small	yes	
 Shadow Temple Map Chest	13528903653876646082	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
-Shadow Temple Hover Boots Chest	14535080241831873137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_HoverBoot	no	the remake has a Hover Boots tutorial room with a falling floor before it; whether Link can leave without the boots is unknown
+Shadow Temple Hover Boots Chest	14535080241831873137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_HoverBoot	yes	
 Shadow Temple Compass Chest	1733372171176975157	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Shadow Temple Early Silver Rupee Chest	1111717451118505545	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	logic-differences.md S2

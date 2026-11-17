@@ -186,13 +186,21 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
         self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
 
+    def test_shadow_temple_hover_boots_chest_needs_the_hover_boots(self):
+        # The corridor to the chest's room is a pit, and only the Hover Boots cross it back.
+        no_hover_boots = ("Shadow Temple Hover Boots Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots))
+        self.assertTrue(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots,
+                                       ("KF Mido Top Left Chest", "Hover Boots")))
+
     def test_shadow_temple_fifth_lock_guards_the_boss_key(self):
         # The four other locks stand on the way to the maze, so the boss key room takes all five keys. The door before
-        # the boss has no lock.
-        self.assertTrue(self.reachable("Shadow Temple Boss Key Chest"))
+        # the boss has no lock. The temple needs Hover Boots that its own chest cannot give.
+        hover_boots = ("KF Mido Top Left Chest", "Hover Boots")
+        self.assertTrue(self.reachable("Shadow Temple Boss Key Chest", hover_boots))
         boss_key_for_last_key = ("Shadow Temple Invisible Floormaster Chest", "Shadow Temple Boss Key")
-        self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", boss_key_for_last_key))
-        self.assertTrue(self.reachable("Bongo Bongo", boss_key_for_last_key))
+        self.assertFalse(self.reachable("Shadow Temple Boss Key Chest", hover_boots, boss_key_for_last_key))
+        self.assertTrue(self.reachable("Bongo Bongo", hover_boots, boss_key_for_last_key))
 
     def test_fire_temple_locks_take_one_key_more_each(self):
         # A new game starts with the lowest locked door open, and seven locks take a key. Four stand before the narrow

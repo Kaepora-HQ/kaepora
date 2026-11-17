@@ -65,7 +65,8 @@ void RegionTable_Init_ShadowTemple() {
     }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, true),
-        ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              true),
+        // The floor of the corridor to Dead Hand's room falls away, and only the Hover Boots cross it back.
+        ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              logic->CanUse(RG_HOVER_BOOTS)),
     });
 
     areaTable[RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE_ROOM] = Region("Shadow Temple Whispering Walls Side Room", SCENE_SHADOW_TEMPLE, {}, {
