@@ -335,8 +335,10 @@ private slots:
     }
 
     void aSeedCutShortCanBeMadeAgain() {
-        // What making a seed leaves when the program ends half way: a folder with no spoiler log.
+        // What making a seed leaves when the program ends half way: its files, and its spoiler log cut short under the
+        // name it has until it is written in full.
         Write(library + "/7/romfs/Pack/Other.pack.zs", "other");
+        Write(library + "/7/spoiler.json.part", "{\"seed\": \"7\", \"sett");
         window = std::make_unique<Window>();
         window->show();
         QCOMPARE(listed(), QStringList{});
@@ -345,6 +347,7 @@ private slots:
         QCOMPARE(listed(), QStringList{ "7" });
         QVERIFY(QFileInfo(library + "/7/spoiler.json").isFile());
         QVERIFY(!QFileInfo::exists(library + "/7/romfs/Pack/Other.pack.zs"));
+        QVERIFY(!QFileInfo::exists(library + "/7/spoiler.json.part"));
     }
 
     void settingsGoIntoTheSeed() {
