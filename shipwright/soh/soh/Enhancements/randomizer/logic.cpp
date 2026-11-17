@@ -2030,14 +2030,10 @@ bool Logic::CanTriggerWincon() {
     }
 }
 
-// Ganon's Castle has one small key and one locked door. The key lies in a chest SoH has no location for, in the room
-// the locked door leads out of, so it is within reach of anyone who stands at that door.
-static bool SmallKeysHeld(SceneID scene) {
-    return scene == SCENE_INSIDE_GANONS_CASTLE;
-}
-
 bool Logic::SmallKeys(SceneID scene, uint8_t requiredAmount) {
-    if (HasItem(RG_SKELETON_KEY) || SmallKeysHeld(scene)) {
+    // Ganon's Castle has one small key and one locked door. The key lies in a chest SoH has no location for, in the
+    // room the locked door leads out of, so it is within reach of anyone who stands at that door.
+    if (HasItem(RG_SKELETON_KEY) || scene == SCENE_INSIDE_GANONS_CASTLE) {
         return true;
     }
     return GetSmallKeyCount(scene) >= requiredAmount;
