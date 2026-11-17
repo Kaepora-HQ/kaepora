@@ -286,9 +286,13 @@ def event_flow(data):
     return flow
 
 
-def gift_parameter(flow, event, param):
+def give(flow, gift, old, new):
+    """Changes the item that the gift's call names in a parsed flow from old to new."""
+    _, event, param = gift
     _, _, (names, values), *_ = next(e for e in flow["events"] if e[0] == event)
-    return values[[name for _, name in names[1:]].index(param)]
+    parameter = values[[name for _, name in names[1:]].index(param)]
+    assert parameter == [5, old], parameter
+    parameter[1] = new
 
 
 def actor(placement, hash):
@@ -306,11 +310,6 @@ def run(patch, game, plan, tmp):
     plan_path = tmp / "plan.json"
     plan_path.write_text(json.dumps(plan))
     return subprocess.run([patch, game.nup, plan_path, tmp / "mod"], capture_output=True, text=True)
-
-
-def written(tmp):
-    romfs = tmp / "mod" / "romfs"
-    return sorted(p.relative_to(romfs).as_posix() for p in romfs.rglob("*") if p.is_file())
 
 
 def patched(patch, game, plan):
@@ -344,17 +343,11 @@ def tested_mod(patch, game, mod_file):
 def tested_start_mod(patch, game, mod_file):
     """The start state the game accepted: two lock records and one Mido's House chest record start set."""
     tested = pathlib.Path(mod_file).read_bytes()
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([], [FIRE_LOCK, WATER_LOCK, MIDO_CHEST]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == [GAME_DATA_LIST], written(tmp)
-        ours = (tmp / "mod" / "romfs" / GAME_DATA_LIST).read_bytes()
-    game_frame = game.read(GAME_DATA_LIST)
-    # Single segment, content size in the header, no checksum, and the same dictionary, as in the game's own list.
-    assert ours[4] == game_frame[4], (ours[4], game_frame[4])
-    info, game_info = zstd.get_frame_info(ours), zstd.get_frame_info(game_frame)
-    assert (info.decompressed_size, info.dictionary_id) == (game_info.decompressed_size, game_info.dictionary_id)
+    mod = patched(patch, game, plan([], [FIRE_LOCK, WATER_LOCK, MIDO_CHEST]))
+    assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
+    ours, game_frame = mod[GAME_DATA_LIST], game.read(GAME_DATA_LIST)
+    assert_same_frame_header(ours, game_frame)
+    assert zstd.get_frame_info(ours).decompressed_size == zstd.get_frame_info(game_frame).decompressed_size
     assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(
         tested, zstd_dict=game.zs_dictionary)
 
@@ -384,15 +377,10 @@ def tested_gift_mod(patch, game, romfs):
     """The gift the game accepted: with the Boomerang in the call that gives the Market potion shop child's bottle, she
     gave the Boomerang."""
     tested = (pathlib.Path(romfs) / SHOP_CHILD_FLOW).read_bytes()
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == [SHOP_CHILD_FLOW], written(tmp)
-        ours = (tmp / "mod" / "romfs" / SHOP_CHILD_FLOW).read_bytes()
-    # Single segment, content size in the header, no checksum, and the same dictionary, as in the tested file.
-    assert ours[4] == tested[4], (ours[4], tested[4])
-    assert zstd.get_frame_info(ours).dictionary_id == zstd.get_frame_info(tested).dictionary_id
+    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
+    assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
+    ours = mod[SHOP_CHILD_FLOW]
+    assert_same_frame_header(ours, tested)
     assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
 
 
@@ -459,15 +447,7 @@ def together(patch, game):
              plan([], flags)]
     whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "gifts", "start_flags")}
     whole["seed"] = "1"
-    files = []
-    with tempfile.TemporaryDirectory() as tmp:
-        for i, part in enumerate(parts + [whole]):
-            folder = pathlib.Path(tmp) / str(i)
-            folder.mkdir()
-            result = run(patch, game, part, folder)
-            assert result.returncode == 0, result.stderr
-            files.append({path: (folder / "mod" / "romfs" / path).read_bytes() for path in written(folder)})
-    *alone, combined = files
+    *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     chest_table, gift_table = (read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone[:2])
     header, entries, names = read_size_table(zstd.decompress(combined.pop(SIZE_TABLE)))
     assert (header, names) == (chest_table[0], chest_table[2])
@@ -542,58 +522,37 @@ def gift(patch, game):
     """A gift written into its flow: read apart from the patcher, the flow is the game's with the one parameter
     changed. The Boomerang's name keeps the flow inside its size table entry, so the table is left out."""
     _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == [SHOP_CHILD_FLOW], written(tmp)
-        data = zstd.decompress((tmp / "mod" / "romfs" / SHOP_CHILD_FLOW).read_bytes(), zstd_dict=game.zs_dictionary)
+    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
+    assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
+    data = zstd.decompress(mod[SHOP_CHILD_FLOW], zstd_dict=game.zs_dictionary)
     assert load_size(len(data), EVENT_FLOW_OVERHEAD) <= dict(entries)[size_key(SHOP_CHILD_FLOW)]
     expected = game.event_flow(game.read(SHOP_CHILD_FLOW))
-    parameter = gift_parameter(expected, *BOTTLE_GIFT[1:])
-    assert parameter == [5, "Item_Bottle"], parameter
-    parameter[1] = "Item_Boomerang"
+    give(expected, BOTTLE_GIFT, "Item_Bottle", "Item_Boomerang")
     assert event_flow(data) == expected
 
     # The item the flow already gives changes nothing, so nothing is written.
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Bottle")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == [], written(tmp)
+    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Bottle")]))
+    assert sorted(mod) == [], sorted(mod)
 
     # A shorter name leaves the flow no larger, so the size table is left out, and the flow reads as the game's with
     # that name. The same holds for a name whose text ends on an 8-byte boundary.
     for site, old, new in ((DINS_FIRE_GIFT, "Item_DinFire", "Item_Hammer"),
                            (NAYRUS_LOVE_GIFT, "Item_NayruLove", "Item_Hammer")):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp = pathlib.Path(tmp)
-            result = run(patch, game, plan([], gifts=[(*site, new)]), tmp)
-            assert result.returncode == 0, result.stderr
-            assert written(tmp) == [site[0]], written(tmp)
-            data = zstd.decompress((tmp / "mod" / "romfs" / site[0]).read_bytes(), zstd_dict=game.zs_dictionary)
+        mod = patched(patch, game, plan([], gifts=[(*site, new)]))
+        assert sorted(mod) == [site[0]], sorted(mod)
         expected = game.event_flow(game.read(site[0]))
-        parameter = gift_parameter(expected, *site[1:])
-        assert parameter == [5, old], parameter
-        parameter[1] = new
-        assert event_flow(data) == expected
+        give(expected, site, old, new)
+        assert game.event_flow(mod[site[0]]) == expected
 
     # Two gifts in one flow, in either order of the plan: both are written.
     gifts = [(*COJIRO_GIFT, "Item_Boomerang"), (*POCKET_EGG_GIFT, "Item_Gauntlet_Silver")]
     expected = game.event_flow(game.read(ANJU_FLOW))
-    for site, old, new in ((COJIRO_GIFT, "Item_CojiroCucco", "Item_Boomerang"),
-                           (POCKET_EGG_GIFT, "Item_PocketEgg", "Item_Gauntlet_Silver")):
-        parameter = gift_parameter(expected, *site[1:])
-        assert parameter == [5, old], parameter
-        parameter[1] = new
+    give(expected, COJIRO_GIFT, "Item_CojiroCucco", "Item_Boomerang")
+    give(expected, POCKET_EGG_GIFT, "Item_PocketEgg", "Item_Gauntlet_Silver")
     for order in (gifts, gifts[::-1]):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp = pathlib.Path(tmp)
-            result = run(patch, game, plan([], gifts=order), tmp)
-            assert result.returncode == 0, result.stderr
-            assert ANJU_FLOW in written(tmp), written(tmp)
-            data = zstd.decompress((tmp / "mod" / "romfs" / ANJU_FLOW).read_bytes(), zstd_dict=game.zs_dictionary)
-        assert event_flow(data) == expected
+        mod = patched(patch, game, plan([], gifts=order))
+        assert ANJU_FLOW in mod, sorted(mod)
+        assert game.event_flow(mod[ANJU_FLOW]) == expected
 
 
 def gift_size_table(patch, game):
@@ -602,20 +561,15 @@ def gift_size_table(patch, game):
     changed."""
     path = DINS_FIRE_GIFT[0]
     header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([], gifts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == sorted([path, SIZE_TABLE]), written(tmp)
-        data = zstd.decompress((tmp / "mod" / "romfs" / path).read_bytes(), zstd_dict=game.zs_dictionary)
-        table = zstd.decompress((tmp / "mod" / "romfs" / SIZE_TABLE).read_bytes())
+    mod = patched(patch, game, plan([], gifts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]))
+    assert sorted(mod) == sorted([path, SIZE_TABLE]), sorted(mod)
+    data = zstd.decompress(mod[path], zstd_dict=game.zs_dictionary)
+    table = zstd.decompress(mod[SIZE_TABLE])
     needed = load_size(len(data), EVENT_FLOW_OVERHEAD)
     assert needed > dict(entries)[size_key(path)], needed
     assert read_size_table(table) == (header, [(k, needed if k == size_key(path) else v) for k, v in entries], names)
     expected = game.event_flow(game.read(path))
-    parameter = gift_parameter(expected, *DINS_FIRE_GIFT[1:])
-    assert parameter == [5, "Item_DinFire"], parameter
-    parameter[1] = "Item_HeavyBoot"
+    give(expected, DINS_FIRE_GIFT, "Item_DinFire", "Item_HeavyBoot")
     assert event_flow(data) == expected
 
 
@@ -675,8 +629,7 @@ def bad_input(patch, game):
             {"hash": str(KOKIRI_SWORD_CHEST), "files": [FOREST_DYNAMIC], "drop_actor": "Item_Hookshot"},
             [str(KOKIRI_SWORD_CHEST), FOREST_DYNAMIC]),
     }
-    plans = {name: ({"seed": "1", "chests": [valid, chest], "gifts": [], "start_flags": []}, named)
-             for name, (chest, named) in cases.items()}
+    plans = {name: (good | {"chests": [valid, chest]}, named) for name, (chest, named) in cases.items()}
     plans["no gifts"] = ({"seed": "1", "chests": [valid], "start_flags": []}, ["plan.json", "gifts"])
     plans["no start_flags"] = ({"seed": "1", "chests": [valid], "gifts": []}, ["plan.json", "start_flags"])
     valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "item": "Item_Boomerang"}
@@ -702,7 +655,7 @@ def bad_input(patch, game):
             dict(rupees, item="Item_Boomerang"), ["Event40 Value", rupees["flow"], "not a string"]),
     }
     for name, (entry, named) in gifts.items():
-        plans[name] = ({"seed": "1", "chests": [valid], "gifts": [valid_gift, entry], "start_flags": []}, named)
+        plans[name] = (good | {"gifts": [valid_gift, entry]}, named)
     values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
     assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
     assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)
@@ -712,7 +665,7 @@ def bad_input(patch, game):
         "flag already true": (IS_CHILD, "already true"),
     }
     for name, (flag, reason) in flags.items():
-        plans[name] = ({"seed": "1", "chests": [valid], "gifts": [], "start_flags": [FIRE_LOCK, flag]}, [flag, reason])
+        plans[name] = (good | {"start_flags": [FIRE_LOCK, flag]}, [flag, reason])
     for name, (bad_plan, named) in plans.items():
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)
@@ -725,7 +678,7 @@ def bad_input(patch, game):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         (tmp / "mod").mkdir()
-        result = run(patch, game, {"seed": "1", "chests": [valid], "gifts": [], "start_flags": []}, tmp)
+        result = run(patch, game, good, tmp)
         assert result.returncode != 0, "mod folder exists"
         assert str(tmp / "mod") in result.stderr, result.stderr
         assert not any((tmp / "mod").iterdir())
