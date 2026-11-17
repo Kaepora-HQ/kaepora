@@ -115,18 +115,33 @@ if(Qt6_FOUND)
     add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp kaepora/window.cpp)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
+    set_target_properties(kaepora PROPERTIES WIN32_EXECUTABLE ON)
 
-    # The window is the one program that installs, with its desktop file, its icon, and the licences of the code
-    # built into it.
-    include(GNUInstallDirs)
-    install(TARGETS kaepora)
-    install(FILES dist/io.github.pixelhabits.kaepora.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-    install(FILES dist/io.github.pixelhabits.kaepora.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
-    install(FILES dist/io.github.pixelhabits.kaepora.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
-    install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/kaepora)
-    install(FILES shipwright/libultraship/LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/libultraship)
-    install(FILES shipwright/soh/soh/Enhancements/randomizer/3drando/LICENSE.md
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/oot-randomizer)
+    # The window is the one program that installs, with the licences of the code built into it. On Windows it sits at
+    # the top of the folder, beside the Visual C++ runtime, as Windows looks for a program's libraries in its own folder
+    # first. tools/package-windows.sh adds Qt there.
+    if(WIN32)
+        set(LICENSES licenses)
+        install(TARGETS kaepora DESTINATION .)
+        set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+        include(InstallRequiredSystemLibraries)
+        install(FILES ${nlohmann_json_SOURCE_DIR}/LICENSE.MIT DESTINATION ${LICENSES}/nlohmann_json)
+        install(FILES ${spdlog_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/spdlog)
+        install(FILES ${spdlog_SOURCE_DIR}/include/spdlog/fmt/bundled/fmt.license.rst DESTINATION ${LICENSES}/fmt)
+        install(FILES ${zstd_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/zstd)
+    else()
+        include(GNUInstallDirs)
+        set(LICENSES ${CMAKE_INSTALL_DATADIR}/licenses)
+        install(TARGETS kaepora)
+        install(FILES dist/io.github.pixelhabits.kaepora.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+        install(FILES dist/io.github.pixelhabits.kaepora.svg
+                DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+        install(FILES dist/io.github.pixelhabits.kaepora.png
+                DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
+    endif()
+    install(FILES LICENSE DESTINATION ${LICENSES}/kaepora)
+    install(FILES shipwright/libultraship/LICENSE DESTINATION ${LICENSES}/libultraship)
+    install(FILES shipwright/soh/soh/Enhancements/randomizer/3drando/LICENSE.md DESTINATION ${LICENSES}/oot-randomizer)
 endif()
 
 enable_testing()

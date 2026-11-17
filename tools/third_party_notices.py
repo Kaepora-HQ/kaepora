@@ -1,15 +1,23 @@
-"""Write THIRD_PARTY_NOTICES at the top of a Linux package folder, with the licence texts it names, from what the
-folder holds.
+"""Write THIRD_PARTY_NOTICES at the top of a package folder, with the licence texts it names, from what the folder
+holds.
 
 Usage: python3 -I tools/third_party_notices.py <package folder> <Qt> <AppImage runtime>
+On Windows: python -I tools/third_party_notices.py --windows <package folder> <Qt>
 
-Runs on Ubuntu, after linuxdeploy has filled the folder. Each Qt file in the folder is looked up in Qt's SBOMs, which
-also name the code from other projects built into it; each other library is looked up with dpkg; the runtime's parts
-come from the notice the runtime carries. A library or a runtime part that none of these accounts for stops the script.
+On Linux it runs on Ubuntu, after linuxdeploy has filled the folder. Each Qt file in the folder is looked up in Qt's
+SBOMs, which also name the code from other projects built into it; each other library is looked up with dpkg; the
+runtime's parts come from the notice the runtime carries. A library or a runtime part that none of these accounts for
+stops the script.
+
+On Windows it runs in the Visual Studio environment the build used, after the install rules and windeployqt have filled
+the folder. Qt is looked up as on Linux, and every other library must be a Visual C++ runtime library of that
+environment. The code from other projects built into kaepora.exe has its licence in licenses/, where the install rules
+put it.
 """
 
 import hashlib
 import json
+import os
 import pathlib
 import platform
 import re
@@ -39,8 +47,8 @@ QT_COMMERCIAL = "LicenseRef-Qt-Commercial"
 
 
 def stem(path):
-    """A library or plugin path without its .so suffix and version, as both the folder and Qt's SBOMs name it."""
-    return re.sub(r"\.so(\.[\d.]+)?$", "", path.removeprefix("./"))
+    """A library or plugin path without its suffix and version, as both the folder and Qt's SBOMs name it."""
+    return re.sub(r"\.so(\.[\d.]+)?$|\.dll$", "", path.removeprefix("./"))
 
 
 def license_ids(expression):
@@ -56,10 +64,10 @@ def fetch(url):
         return response.read()
 
 
-def qt(folder, qt_root, texts):
-    usr = folder / "usr"
-    shipped = {stem(str(path.relative_to(usr))) for path in [*usr.glob("lib/libQt6*"), *usr.glob("plugins/**/*.so")]}
-    sboms = folder / "usr/share/licenses/qt"
+def qt(folder, qt_root, texts, shipped, licenses, where):
+    """shipped maps each Qt file in the folder, named as in Qt's SBOMs without its suffix, to its path in the folder;
+    where says where the folder keeps Qt's libraries and plugins."""
+    sboms = folder / licenses / "qt"
     sboms.mkdir(parents=True)
     found, modules, parts, not_lgpl, extracted = set(), [], {}, [], {}
     for path in sorted((qt_root / "sbom").glob("*.spdx.json")):
@@ -93,8 +101,8 @@ def qt(folder, qt_root, texts):
                 title = re.sub(r"^.*_Attribution_|^Bundled", "", package["name"])
                 parts[(title.lower(), package.get("versionInfo"), package["licenseConcluded"])] = title, package
         extracted |= {e["licenseId"]: e["extractedText"] for e in sbom["hasExtractedLicensingInfos"]}
-    if shipped - found:
-        sys.exit(f"Qt's SBOMs do not list {sorted(shipped - found)}")
+    if shipped.keys() - found:
+        sys.exit(f"Qt's SBOMs do not list {sorted(shipped.keys() - found)}")
 
     version = next(ref["referenceLocator"].split(":")[5] for ref in modules[0]["externalRefs"]
                    if ref["referenceLocator"].startswith("cpe:2.3:a:qt:qt:"))
@@ -102,9 +110,9 @@ def qt(folder, qt_root, texts):
         f"Qt {version}",
         "",
         f"Kaepora uses Qt under the GNU Lesser General Public License version 3 ({QT_LICENSE}), which adds to",
-        "the GNU General Public License version 3 (GPL-3.0-only). Qt is linked as shared libraries: its libraries are",
-        f"in usr/lib and its plugins in usr/plugins, and you can replace them with your own build of Qt {version}.",
-        "Qt's SBOMs, in usr/share/licenses/qt, list each Qt file here with its licence.",
+        "the GNU General Public License version 3 (GPL-3.0-only). Qt is linked as shared libraries, which you can",
+        f"replace with your own build of Qt {version}: {where}.",
+        f"Qt's SBOMs, in {licenses}/qt, list each Qt file here with its licence.",
         "",
         "Source:",
     ]
@@ -117,7 +125,7 @@ def qt(folder, qt_root, texts):
         chosen = sorted(license_ids(expression) - {QT_COMMERCIAL})
         texts.update(chosen)
         lines += ["", f"Qt's SBOM does not offer this file under the LGPL, so it is used under {' or '.join(chosen)}:",
-                  f"  usr/{path}.so: {expression}"]
+                  f"  {shipped[path]}: {expression}"]
     lines += ["", "Code from other projects built into these Qt files, as Qt's SBOMs list it:"]
     for _, (title, package) in sorted(parts.items()):
         version_info = package.get("versionInfo", "unknown")
@@ -215,13 +223,33 @@ def runtime(path, texts):
     ]
 
 
-def main():
-    folder, qt_root, runtime_path = map(pathlib.Path, sys.argv[1:4])
-    texts = set()
-    qt_lines, extracted = qt(folder, qt_root, texts)
-    sections = [qt_lines, icu(folder, qt_root), ubuntu(folder, qt_root), runtime(runtime_path, texts)]
+def visual_cpp(folder, qt_files):
+    redist = pathlib.Path(os.environ["VCToolsRedistDir"])
+    runtime = next(redist.glob("x64/Microsoft.VC*.CRT"))
+    libraries = sorted(path.relative_to(folder).as_posix() for path in folder.rglob("*.dll"))
+    others = [name for name in libraries if name not in qt_files.values()]
+    for name in others:
+        if not (runtime / name).is_file() or (runtime / name).read_bytes() != (folder / name).read_bytes():
+            sys.exit(f"{name} is neither Qt nor a Visual C++ runtime library from {runtime}")
+    return [
+        f"Microsoft Visual C++ runtime {redist.name}",
+        "",
+        "These libraries are Microsoft's Visual C++ runtime, which the Visual Studio licence terms let a Visual Studio",
+        "user redistribute with a program (https://visualstudio.microsoft.com/license-terms/):",
+        f"  {', '.join(others)}",
+    ]
 
-    spdx = folder / "usr/share/licenses/spdx"
+
+def built_in(folder):
+    lines = ["Built into kaepora.exe", "", "Code from these projects is built into kaepora.exe. Each one's licence:"]
+    for project in sorted((folder / "licenses").iterdir()):
+        if project.name not in ("kaepora", "qt", "spdx"):
+            lines += [f"  {project.name}: licenses/{project.name}/{file.name}" for file in sorted(project.iterdir())]
+    return lines
+
+
+def write(folder, licenses, sections, texts, extracted, notices):
+    spdx = folder / licenses / "spdx"
     spdx.mkdir()
     for license in sorted(texts):
         text = extracted[license].encode() if license in extracted else fetch(SPDX_TEXT.format(license))
@@ -230,12 +258,50 @@ def main():
     header = [
         "Third-party notices for Kaepora",
         "",
-        "Kaepora is under the MIT License, in usr/share/licenses/kaepora/LICENSE. This package also holds the software",
+        f"Kaepora is under the MIT License, in {licenses}/kaepora/LICENSE. This package also holds the software",
         "below, each under its own licence. Paths are relative to the folder that holds this file. A licence named by",
-        "its SPDX identifier, such as MIT, has its text in usr/share/licenses/spdx/<identifier>.txt.",
+        f"its SPDX identifier, such as MIT, has its text in {licenses}/spdx/<identifier>.txt.",
     ]
     text = "\n\n\n".join("\n".join(section) for section in [header, *sections]) + "\n"
-    (folder / "THIRD_PARTY_NOTICES").write_text(text)
+    (folder / notices).write_text(text)
+
+
+def linux(folder, qt_root, runtime_path):
+    usr = folder / "usr"
+    shipped = {stem(str(path.relative_to(usr))): f"usr/{path.relative_to(usr)}"
+               for path in [*usr.glob("lib/libQt6*"), *usr.glob("plugins/**/*.so")]}
+    licenses = "usr/share/licenses"
+    texts = set()
+    qt_lines, extracted = qt(folder, qt_root, texts, shipped, licenses,
+                             "its libraries are in usr/lib and its plugins in usr/plugins")
+    sections = [qt_lines, icu(folder, qt_root), ubuntu(folder, qt_root), runtime(runtime_path, texts)]
+    write(folder, licenses, sections, texts, extracted, "THIRD_PARTY_NOTICES")
+
+
+def windows(folder, qt_root):
+    # Qt's SBOMs name its libraries under bin/ and its plugins under plugins/; the package keeps both beside
+    # kaepora.exe, the plugins in their folders.
+    shipped = {}
+    for path in folder.rglob("*.dll"):
+        name = path.relative_to(folder).as_posix()
+        if path.parent != folder:
+            shipped[f"plugins/{stem(name)}"] = name
+        elif path.name.startswith("Qt6"):
+            shipped[f"bin/{stem(name)}"] = name
+    texts = set()
+    sections = [built_in(folder)]
+    qt_lines, extracted = qt(folder, qt_root, texts, shipped, "licenses",
+                             "its libraries and its plugin folders are beside kaepora.exe")
+    sections = [qt_lines, visual_cpp(folder, shipped), *sections]
+    # A .txt file opens in a text editor on Windows.
+    write(folder, "licenses", sections, texts, extracted, "THIRD_PARTY_NOTICES.txt")
+
+
+def main():
+    if sys.argv[1] == "--windows":
+        windows(*map(pathlib.Path, sys.argv[2:4]))
+    else:
+        linux(*map(pathlib.Path, sys.argv[1:4]))
 
 
 if __name__ == "__main__":
