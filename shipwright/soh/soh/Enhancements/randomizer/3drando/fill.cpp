@@ -957,13 +957,14 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     std::vector<const RemakeChest*> shuffled;
     itemPool.clear();
     for (RandomizerCheck loc : ctx->allLocations) {
-        if (Rando::StaticData::GetLocation(loc)->GetActorID() != ACTOR_EN_BOX) {
+        auto chest = chestAt.find(loc);
+        if (chest == chestAt.end()) {
             ctx->GetItemLocation(loc)->PlaceVanillaItem();
-        } else if (const RemakeChest* chest = chestAt.at(loc); chest->shuffled) {
-            shuffled.push_back(chest);
-            itemPool.push_back(chest->sohItem);
+        } else if (chest->second->shuffled) {
+            shuffled.push_back(chest->second);
+            itemPool.push_back(chest->second->sohItem);
         } else {
-            ctx->GetItemLocation(loc)->SetPlacedItem(chest->sohItem);
+            ctx->GetItemLocation(loc)->SetPlacedItem(chest->second->sohItem);
         }
     }
     // SoH leaves these out of the seed's checks while their shuffle is off, but its logic still collects their items.
