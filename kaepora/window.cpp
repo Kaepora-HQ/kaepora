@@ -244,7 +244,7 @@ void Window::createSeed() {
              QString("A seed named %1 is already in the list. Type another seed, or use that one.").arg(seed));
         return;
     }
-    const std::filesystem::path folder = Path(inLibrary.filePath());
+    const std::filesystem::path folder = inLibrary.filesystemFilePath();
     // What is left here is part of a seed that was cut short while this program made it, in its own library.
     std::error_code ignored;
     std::filesystem::remove_all(folder, ignored);
