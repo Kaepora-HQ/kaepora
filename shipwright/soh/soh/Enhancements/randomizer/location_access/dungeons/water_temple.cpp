@@ -138,9 +138,9 @@ void RegionTable_Init_WaterTemple() {
                                                       logic->Water3FCentralToHighEmblem()),
         //hookshot + jumpslash can make it up through the platform slit as adult, is easier with WL_MID but still possible on WL_LOW, but it's a trick
         ENTRANCE(RR_WATER_TEMPLE_3F_CENTRAL_LM,       logic->CanUse(RG_LONGSHOT)),
-        ENTRANCE(RR_WATER_TEMPLE_BLOCK_LOOP,          logic->CanHitEyeTargets() && (logic->CanUse(RG_LONGSHOT) || logic->CanUse(RG_HOVER_BOOTS) ||
-                                                          //the one point on hitting the eye makes it impossible to use chus for this.
-                                                          (logic->BunnyHood() && (logic->IsAdult || (logic->CanUse(RG_BOMB_BAG) && logic->CanMegajump()))))),
+        // An arrow in the eye opens the gate to the room, and it shuts again before anything but the Longshot gets Link
+        // through. Inside, the chest takes the hookshot and the block.
+        ENTRANCE(RR_WATER_TEMPLE_BLOCK_LOOP,          logic->CanUse(RG_FAIRY_BOW) && logic->CanUse(RG_LONGSHOT)),
     });
 
     areaTable[RR_WATER_TEMPLE_SIDE_TOWER_1F] = Region("Water Temple Side Tower 1F", SCENE_WATER_TEMPLE, {
@@ -168,21 +168,16 @@ void RegionTable_Init_WaterTemple() {
         //Events
         EVENT_ACCESS(LOGIC_WATER_LOW,       logic->CanUse(RG_ZELDAS_LULLABY)),
         EVENT_ACCESS(LOGIC_WATER_COULD_LOW, true),
-    }, {}, {
+    }, {
+        //Locations
+        // The map chest stands here at the top of the tower, with no enemy before it.
+        LOCATION(RC_WATER_TEMPLE_MAP_CHEST, logic->CanOpenLargeChest()),
+    }, {
         //Exits
         //trick: with WL_HIGH, chu cracked wall from here, then open underwater chest
         ENTRANCE(RR_WATER_TEMPLE_MAIN,          logic->WaterLevel(WL_LOW) || (logic->WaterTimer() >= 24 && logic->CanUse(RG_IRON_BOOTS))),
         ENTRANCE(RR_WATER_TEMPLE_SIDE_TOWER_2F, logic->WaterLevel(WL_LOW_OR_MID) && ((logic->CanUse(RG_HOVER_BOOTS) && ctx->GetTrickOption(RT_WATER_CRACKED_WALL_HOVERS)) || ctx->GetTrickOption(RT_WATER_CRACKED_WALL)) ||
                                                 logic->WaterLevel(WL_MID) && logic->HasItem(RG_BRONZE_SCALE)),
-        ENTRANCE(RR_WATER_TEMPLE_4_SPIKES_ROOM, true),
-    });
-
-    areaTable[RR_WATER_TEMPLE_4_SPIKES_ROOM] = Region("Water Temple 4 Spikes Room", SCENE_WATER_TEMPLE, {}, {
-        //Locations
-        LOCATION(RC_WATER_TEMPLE_MAP_CHEST, AnyAgeTime([]{return logic->CanKillEnemy(RE_SPIKE, ED_CLOSE, true, 4);}) && logic->CanOpenLargeChest()),
-    }, {
-        //Exits
-        ENTRANCE(RR_WATER_TEMPLE_LOW_EMBLEM, AnyAgeTime([]{return logic->CanKillEnemy(RE_SPIKE, ED_CLOSE, true, 4);})),
     });
 
     areaTable[RR_WATER_TEMPLE_CRACKED_WALL] = Region("Water Temple Cracked Wall", SCENE_WATER_TEMPLE, {}, {
@@ -195,12 +190,13 @@ void RegionTable_Init_WaterTemple() {
 
     areaTable[RR_WATER_TEMPLE_TORCH_ROOM] = Region("Water Temple Torch Room", SCENE_WATER_TEMPLE, {}, {
         //Locations
-        LOCATION(RC_WATER_TEMPLE_TORCHES_CHEST, AnyAgeTime([]{return (logic->WaterLevel(WL_LOW) && logic->CanKillEnemy(RE_SHELL_BLADE, ED_CLOSE, true, 3) && logic->HasItem(RG_OPEN_CHEST)) ||
+        // Three Spikes guard the room, and the chest appears once they are beaten.
+        LOCATION(RC_WATER_TEMPLE_TORCHES_CHEST, AnyAgeTime([]{return (logic->WaterLevel(WL_LOW) && logic->CanKillEnemy(RE_SPIKE, ED_CLOSE, true, 3) && logic->HasItem(RG_OPEN_CHEST)) ||
                                                                                            logic->CanOpenUnderwaterChest();})),
     }, {
         //Exits
         ENTRANCE(RR_WATER_TEMPLE_SIDE_TOWER_1F, ((logic->WaterLevel(WL_LOW) || logic->CanUse(RG_IRON_BOOTS)) &&
-                                                AnyAgeTime([]{return (logic->WaterLevel(WL_LOW) && logic->CanKillEnemy(RE_SHELL_BLADE, ED_CLOSE, true, 3)) ||
+                                                AnyAgeTime([]{return (logic->WaterLevel(WL_LOW) && logic->CanKillEnemy(RE_SPIKE, ED_CLOSE, true, 3)) ||
                                                                                            logic->CanUse(RG_HOOKSHOT);}))),
     });
 

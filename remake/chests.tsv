@@ -80,11 +80,11 @@ Fire Temple Map Chest	16713240760352215634	Banc/FireTemple/FireTemple_Static.bce
 Fire Temple Compass Chest	12945617941305968586	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Fire Temple Highest Goron Chest	10521366928524045067	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Fire Temple Megaton Hammer Chest	12083259659219538030	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Hammer	yes	
-Water Temple Map Chest	16384925224245172970	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	logic-differences.md W7
-Water Temple Compass Chest	16490222392193949581	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	logic-differences.md W6
-Water Temple Torches Chest	18099019250896853049	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	logic-differences.md W7
+Water Temple Map Chest	16384925224245172970	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
+Water Temple Compass Chest	16490222392193949581	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Water Temple Torches Chest	18099019250896853049	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Water Temple Dragon Chest	2503861086004941173	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Water Temple Central Bow Target Chest	3693930347660122883	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	no	pairing confidence low; logic-differences.md W8
+Water Temple Central Bow Target Chest	3693930347660122883	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Water Temple Central Pillar Chest	11682974908842171598	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Water Temple Cracked Wall Chest				no	no remake chest
 Water Temple Boss Key Chest	10378828369334876242	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	

@@ -229,6 +229,13 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Water Temple Central Pillar Chest", *no_fire,
                                        ("Water Temple GS Behind Gate", "Water Temple Small Key")))
 
+    def test_water_temple_bow_target_chest_needs_the_longshot(self):
+        # An arrow in the eye opens the gate to the chest's room, and it shuts before the Hover Boots get Link there.
+        self.assertTrue(self.reachable("Water Temple Central Bow Target Chest"))
+        self.assertFalse(self.reachable("Water Temple Central Bow Target Chest",
+                                        ("Water Temple Longshot Chest", "Green Rupee"),
+                                        ("KF Mido Top Left Chest", "Hover Boots")))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]

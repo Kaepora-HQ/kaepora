@@ -999,9 +999,6 @@ bool Logic::CanKillEnemy(RandomizerEnemy enemy, EnemyDistance distance, bool wal
             return CanUse(RG_MASTER_SWORD) || CanUse(RG_BIGGORON_SWORD) || CanUse(RG_MEGATON_HAMMER) ||
                    CanUse(RG_STICKS) || HasExplosives() || CanUse(RG_HOOKSHOT) || CanUse(RG_DINS_FIRE) ||
                    CanUse(RG_FIRE_ARROWS);
-        case RE_SHELL_BLADE:
-            return CanJumpslash() || HasExplosives() || CanUse(RG_HOOKSHOT) || CanUse(RG_FAIRY_BOW) ||
-                   CanUse(RG_DINS_FIRE);
         case RE_SPIKE:
             return CanUse(RG_MASTER_SWORD) || CanUse(RG_BIGGORON_SWORD) || CanUse(RG_MEGATON_HAMMER) ||
                    CanUse(RG_STICKS) || HasExplosives() || CanUse(RG_HOOKSHOT) || CanUse(RG_FAIRY_BOW) ||
@@ -1240,7 +1237,6 @@ bool Logic::CanAvoidEnemy(RandomizerEnemy enemy, EnemyDistance distance, bool gr
         case RE_ARMOS:
         case RE_GREEN_BUBBLE:
         case RE_FREEZARD:
-        case RE_SHELL_BLADE:
         case RE_SPIKE:
         case RE_BIG_OCTO:
         case RE_GIBDO:
