@@ -1,0 +1,3 @@
+# A checkout keeps LF in every text file, Windows included: the build embeds the remake tables, and the tests compare
+# files byte for byte.
+* text=auto eol=lf
