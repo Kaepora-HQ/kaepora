@@ -123,6 +123,6 @@ void Lang::LoadLangs() {
     static const unsigned char enUS[] = {
 #embed "../../../assets/custom/lang/en_US.json"
     };
-    langs.insert_or_assign("en_US", nlohmann::json::parse(std::begin(enUS), std::end(enUS), nullptr, true, true));
+    langs.insert_or_assign(DEFAULT_LANGUAGE, nlohmann::json::parse(std::begin(enUS), std::end(enUS)));
     initialized = true;
 }
