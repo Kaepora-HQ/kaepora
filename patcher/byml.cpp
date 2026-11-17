@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstring>
 #include <format>
 #include <map>
 #include <stdexcept>
@@ -246,8 +245,7 @@ private:
 
     template <typename T>
     void Put(size_t offset, T value) {
-        value = ToByteOrder(value, order);
-        std::memcpy(out.data() + offset, &value, sizeof(T));
+        WriteAt(out, offset, ToByteOrder(value, order));
     }
 
     std::endian order;
