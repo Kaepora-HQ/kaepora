@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kaepora
+GenericName=Item Randomizer
+Comment=Create randomizer seeds and put one in the emulator's mods folder
+Icon=io.github.pixelhabits.kaepora
+TryExec=kaepora
+Exec=kaepora
+Categories=Game;Qt;
+Keywords=Randomizer;Seed;
+StartupWMClass=kaepora

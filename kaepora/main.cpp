@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
     // QSettings names the settings file after these.
     QApplication::setOrganizationName("kaepora");
     QApplication::setApplicationName("kaepora");
+    // Names the desktop file, so the desktop shows the window with its icon.
+    QApplication::setDesktopFileName("io.github.pixelhabits.kaepora");
     Window window;
     window.show();
     return app.exec();
