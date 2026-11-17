@@ -19,8 +19,8 @@ void RegionTable_Init_HyruleField() {
         LOCATION(RC_HF_SOUTHWEST_POE_CHEST,        logic->IsAdult && logic->Get(LOGIC_WATER_TEMPLE_CLEAR) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_SOUTH_POE_CHEST,            logic->IsAdult && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_NORTH_POE_CHEST,            logic->IsAdult && logic->HasItem(RG_OPEN_CHEST)),
-        // Getting up the ruined tower may take the hookshot.
-        LOCATION(RC_HF_TOWER_CHEST,                logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_OPEN_CHEST)),
+        // From the tower floor, the Longshot latches onto vines below an opening high up, and Link climbs them to the top.
+        LOCATION(RC_HF_TOWER_CHEST,                logic->CanUse(RG_LONGSHOT) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),

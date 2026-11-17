@@ -323,9 +323,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("HF Southwest Poe Chest"))
         self.assertFalse(self.reachable("HF Southwest Poe Chest", ("Water Temple Boss Key Chest", "Green Rupee")))
 
-    def test_hyrule_field_tower_chest_needs_the_hookshot(self):
+    def test_hyrule_field_tower_chest_needs_the_longshot(self):
+        # From the tower floor, the Longshot latches onto vines below an opening high up, and Link climbs them.
         self.assertTrue(self.reachable("HF Tower Chest"))
-        self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))
+        self.assertFalse(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
 
     def test_crater_hammer_grotto_chest_needs_the_hammer(self):
         self.assertTrue(self.reachable("DMC Hammer Grotto Chest"))
