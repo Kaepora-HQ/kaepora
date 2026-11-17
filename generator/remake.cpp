@@ -45,7 +45,6 @@ std::string RemakeChest::Folder() const {
     return file.substr(start, file.find('/', start) - start);
 }
 
-// Remake item name to the SoH items it stands for, from remake/items.tsv.
 static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
     std::map<std::string, std::vector<RandomizerGet>> items;
     size_t line = 1;
