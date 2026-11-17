@@ -873,8 +873,6 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
     } while (unsuccessfulPlacement);
 }
 
-// The remake lets a mod change only which item a chest holds. Every location keeps what the unmodified game gives
-// there, and the items of the shuffled chests make up the pool: nothing added, nothing removed.
 static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests) {
     auto ctx = Rando::Context::GetInstance();
     std::map<RandomizerCheck, const RemakeChest*> chestAt;
