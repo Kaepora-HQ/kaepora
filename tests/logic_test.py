@@ -16,6 +16,8 @@ ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
 NO_HAMMER = ("Fire Temple Megaton Hammer Chest", "Green Rupee")
 NO_SILVER_GAUNTLETS = ("Spirit Temple Silver Gauntlets Chest", "Green Rupee")
 NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Green Rupee")
+# Without the Ocarina of Time, Link never becomes adult.
+NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 
 
 class LogicTest(unittest.TestCase):
@@ -40,7 +42,6 @@ class LogicTest(unittest.TestCase):
                                         ("Forest Temple Bow Chest", "Green Rupee")))
 
     def test_only_adult_link_buys_a_tunic(self):
-        # Without the Ocarina of Time, Link never becomes adult.
         never_adult = ("HF Ocarina of Time Item", "Green Rupee")
         self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
         self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
@@ -74,8 +75,16 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
     def test_bombchu_shop_opens_after_dodongos_cavern(self):
-        # With no Goron's Bracelet and the only bomb bag inside it, Dodongo's Cavern stays shut.
+        # Without Goron's Bracelet, child Link cannot open Dodongo's Cavern, so he never wins the Goron's Ruby inside
+        # it and never becomes adult.
         self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
+
+    def test_dodongos_cavern_opens_to_the_bomb_flower_above_it(self):
+        # Bombs from the bag do not break the rock at the mouth. The fruit of the bomb flower on the ledge above does,
+        # and picking the flower takes the bracelet's strength.
+        child_with_bombs_without_bracelet = (NEVER_ADULT, ("GC Darunias Joy", "Green Rupee"),
+                                             ("KF Mido Top Left Chest", "Progressive Bomb Bag"))
+        self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_with_bombs_without_bracelet))
 
     def test_biggorons_sword_needs_the_whole_trade_chain(self):
         self.assertTrue(self.reachable("DMT Trade Claim Check"))
@@ -89,8 +98,8 @@ class LogicTest(unittest.TestCase):
     # tier found, and only adult Link can use them.
 
     def test_gauntlets_are_not_the_bracelet_for_a_child(self):
-        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot open Dodongo's
-        # Cavern, as the only bomb bag is inside it.
+        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot pick the bomb
+        # flower whose fruit opens Dodongo's Cavern.
         child_without_bracelet = (("HF Ocarina of Time Item", "Green Rupee"), ("GC Darunias Joy", "Green Rupee"))
         self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                         ("KF Mido Top Left Chest", "Silver Gauntlets"),
@@ -100,11 +109,13 @@ class LogicTest(unittest.TestCase):
 
     def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
         # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
-        # either tier of gauntlets puts above the bracelet's.
+        # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child cannot open Dodongo's Cavern,
+        # so the Goron's Ruby comes from elsewhere.
         for gauntlets in ("Silver Gauntlets", "Golden Gauntlets"):
             self.assertTrue(self.reachable("Phantom Ganon", ("GC Darunias Joy", "Green Rupee"),
                                            ("KF Mido Top Left Chest", gauntlets),
-                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag")))
+                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag"),
+                                           ("KF Mido Top Right Chest", "Goron's Ruby")))
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Only the Silver Gauntlets or the hammer clear the way to the leftmost chest of the Goron City maze.

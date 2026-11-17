@@ -63,7 +63,9 @@ void RegionTable_Init_DeathMountainTrail() {
         ENTRANCE(RR_KAK_BEHIND_GATE,          true),
         ENTRANCE(RR_GORON_CITY,               true),
         ENTRANCE(RR_DEATH_MOUNTAIN_ROCKFALL,  AnyAgeTime([]{return logic->BlastOrSmash();}) || (logic->IsAdult && ((logic->BeanPlanted(LOGIC_PLANT_DEATH_MOUNTAIN_TRAIL_BEAN) && logic->HasItem(RG_GORONS_BRACELET)) || (logic->CanUse(RG_HOVER_BOOTS) && ctx->GetTrickOption(RT_DMT_CLIMB_HOVERS))))),
-        ENTRANCE(RR_DODONGOS_CAVERN_ENTRYWAY, logic->HasExplosives() || logic->HasItem(RG_GORONS_BRACELET) || logic->IsAdult),
+        // Only the fruit of the bomb flower on the ledge above breaks the rock at the mouth, and picking the flower takes
+        // the bracelet's strength. The rock does not stand on adult Link's trail.
+        ENTRANCE(RR_DODONGOS_CAVERN_ENTRYWAY, logic->HasItem(RG_GORONS_BRACELET) || logic->IsAdult),
         ENTRANCE(RR_DMT_STORMS_GROTTO,        logic->CanOpenStormsGrotto()),
     });
 
