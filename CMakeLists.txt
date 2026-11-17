@@ -114,7 +114,7 @@ target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
-                           kaepora/window.cpp)
+                           kaepora/window.cpp $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
     set_target_properties(kaepora PROPERTIES WIN32_EXECUTABLE ON)

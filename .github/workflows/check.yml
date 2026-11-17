@@ -226,6 +226,24 @@ jobs:
             exit 1
           fi
 
+      # Antivirus heuristics count a program without a version resource against it.
+      - name: Check the window carries its icon and version
+        shell: pwsh
+        run: |
+          $resources = & "$env:LLVM_ROOT/bin/llvm-readobj.exe" --coff-resources build/kaepora.exe
+          foreach ($line in 'Type: GROUP_ICON', 'Name: IDI_ICON1', 'Type: VERSIONINFO') {
+            if (-not ($resources -match [regex]::Escape($line))) {
+              throw "kaepora.exe has no resource with $line"
+            }
+          }
+          $header = Select-String -Path build/include/version.h -Pattern 'KAEPORA_VERSION "(.*)"'
+          $expected = $header.Matches[0].Groups[1].Value
+          $info = (Get-Item build/kaepora.exe).VersionInfo
+          if ($info.FileVersion -ne $expected -or $info.ProductVersion -ne $expected) {
+            throw "kaepora.exe says version $($info.ProductVersion), not $expected"
+          }
+          "kaepora.exe carries its icon and version $expected"
+
       # The package carries Qt's Schannel plugin and not its OpenSSL one, which Qt would prefer, so the tests use
       # Schannel too.
       - name: Leave Qt's OpenSSL plugin out of the tests
