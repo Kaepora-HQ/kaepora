@@ -159,7 +159,6 @@ std::unordered_map<std::string, RandomizerTrick> StaticData::trickToEnum = {
     { "152", RT_SHADOW_MQ_INVISIBLE_BLADES },
     { "153", RT_SHADOW_MQ_HUGE_PIT },
     { "154", RT_SHADOW_MQ_WINDY_WALKWAY },
-    { "155", RT_LENS_SPIRIT },
     { "156", RT_SPIRIT_CHILD_CHU },
     { "157", RT_SPIRIT_WEST_LEDGE },
     { "158", RT_SPIRIT_LOWER_ADULT_SWITCH },

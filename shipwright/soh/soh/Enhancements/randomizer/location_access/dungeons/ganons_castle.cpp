@@ -43,7 +43,8 @@ void RegionTable_Init_GanonsCastle() {
                                                                (logic->Get(LOGIC_SHADOW_TRIAL_CLEAR) || ctx->GetTrial(TK_SHADOW_TRIAL)->IsSkipped()) &&
                                                                (logic->Get(LOGIC_SPIRIT_TRIAL_CLEAR) || ctx->GetTrial(TK_SPIRIT_TRIAL)->IsSkipped()) &&
                                                                (logic->Get(LOGIC_LIGHT_TRIAL_CLEAR)  || ctx->GetTrial(TK_LIGHT_TRIAL)->IsSkipped())),
-        ENTRANCE(RR_GANONS_CASTLE_DEKU_SCRUBS,  ctx->GetTrickOption(RT_LENS_GANON) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        // Link opens invisible chests and walks through illusion walls without the Lens of Truth.
+        ENTRANCE(RR_GANONS_CASTLE_DEKU_SCRUBS,  true),
     });
 
     areaTable[RR_GANONS_CASTLE_DEKU_SCRUBS] = Region("Ganon's Castle Deku Scrubs", SCENE_INSIDE_GANONS_CASTLE, {
@@ -400,7 +401,7 @@ void RegionTable_Init_GanonsCastle() {
     areaTable[RR_GANONS_CASTLE_SPIRIT_TRIAL_AFTER_SWITCH] = Region("Ganon's Castle Spirit Trial After Switch", SCENE_INSIDE_GANONS_CASTLE, {}, {
         //Locations
         LOCATION(RC_GANONS_CASTLE_SPIRIT_TRIAL_CRYSTAL_SWITCH_CHEST, logic->CanHitSwitch() && logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_GANONS_CASTLE_SPIRIT_TRIAL_INVISIBLE_CHEST,      (ctx->GetTrickOption(RT_LENS_GANON) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_GANONS_CASTLE_SPIRIT_TRIAL_INVISIBLE_CHEST,      logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_GANONS_CASTLE_SPIRIT_TRIAL_BEFORE_SWITCH, true),
