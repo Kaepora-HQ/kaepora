@@ -37,25 +37,25 @@
         "GV Crate Freestanding PoH": "Lens of Truth",
         "GF Chest": "Purple Rupee",
         "Wasteland Chest": "Blue Rupee",
-        "Kak Open Grotto Chest": "Blue Rupee",
+        "Kak Open Grotto Chest": "Green Rupee",
         "Kak Lookout Chest": "Large Magic Jar",
-        "Graveyard Shield Grave Chest": "Red Rupee",
-        "DMT Chest": "Blue Rupee",
-        "GC Maze Left Chest": "Red Rupee",
-        "GC Maze Right Chest": "Blue Rupee",
+        "Graveyard Shield Grave Chest": "Blue Rupee",
+        "DMT Chest": "Red Rupee",
+        "GC Maze Left Chest": "Blue Rupee",
+        "GC Maze Right Chest": "Red Rupee",
         "GC Maze Center Chest": "Megaton Hammer",
         "DMC Upper Grotto Chest": "Ice Arrows",
         "DMC Hammer Grotto Chest": "Business Scrub Seed",
         "ZR Open Grotto Chest": "Piece of Heart",
-        "ZD Chest": "Boomerang",
+        "ZD Chest": "Blue Rupee",
         "ZF Scarecrow Chest": "Red Rupee",
         "Deku Tree Map Chest": "Progressive Bomb Bag",
-        "Deku Tree Compass Chest": "Progressive Hookshot",
+        "Deku Tree Compass Chest": "Red Rupee",
         "Deku Tree Compass Room Side Chest": "Red Rupee",
         "Deku Tree Basement Chest": "Great Deku Tree Compass",
         "Deku Tree Slingshot Chest": "Great Deku Tree Map",
         "Deku Tree Slingshot Room Side Chest": "Bombs (5)",
-        "Dodongos Cavern Map Chest": "Red Rupee",
+        "Dodongos Cavern Map Chest": "Boomerang",
         "Dodongos Cavern Compass Chest": "Purple Rupee",
         "Dodongos Cavern Bomb Flower Platform Chest": "Dodongo's Cavern Map",
         "Dodongos Cavern Bomb Bag Chest": "Dodongo's Cavern Compass",
@@ -67,27 +67,27 @@
         "Forest Temple First Stalfos Chest": "Business Scrub Seed",
         "Forest Temple Raised Island Courtyard Chest": "Forest Temple Small Key",
         "Forest Temple Well Chest": "Business Scrub Seed",
-        "Forest Temple Falling Ceiling Room Chest": "Red Rupee",
+        "Forest Temple Falling Ceiling Room Chest": "Purple Rupee",
         "Forest Temple Eye Switch Chest": "Forest Temple Small Key",
         "Forest Temple Boss Key Chest": "Forest Temple Compass",
         "Forest Temple Floormaster Chest": "Forest Temple Small Key",
         "Forest Temple Bow Chest": "Forest Temple Small Key",
         "Forest Temple Red Poe Chest": "Forest Temple Map",
-        "Forest Temple Blue Poe Chest": "Mirror Shield",
+        "Forest Temple Blue Poe Chest": "Red Rupee",
         "Forest Temple Basement Chest": "Forest Temple Boss Key",
-        "Fire Temple Near Boss Chest": "Purple Rupee",
+        "Fire Temple Near Boss Chest": "Blue Rupee",
         "Fire Temple Flare Dancer Chest": "Fire Temple Small Key",
         "Fire Temple Boss Key Chest": "Fire Temple Small Key",
         "Fire Temple Big Lava Room Blocked Door Chest": "Fire Temple Boss Key",
         "Fire Temple Big Lava Room Lower Open Door Chest": "Fire Temple Small Key",
-        "Fire Temple Boulder Maze Lower Chest": "Blue Rupee",
+        "Fire Temple Boulder Maze Lower Chest": "Purple Rupee",
         "Fire Temple Boulder Maze Upper Chest": "Fire Temple Compass",
         "Fire Temple Boulder Maze Side Room Chest": "Fire Temple Small Key",
         "Fire Temple Boulder Maze Shortcut Chest": "Fire Temple Small Key",
         "Fire Temple Scarecrow Chest": "Fire Temple Small Key",
         "Fire Temple Scarecrow Ledge Left Chest": "Bombchus (5)",
-        "Fire Temple Scarecrow Ledge Right Chest": "Green Rupee",
-        "Fire Temple Map Chest": "Purple Rupee",
+        "Fire Temple Scarecrow Ledge Right Chest": "Progressive Hookshot",
+        "Fire Temple Map Chest": "Red Rupee",
         "Fire Temple Compass Chest": "Fire Temple Small Key",
         "Fire Temple Highest Goron Chest": "Fire Temple Small Key",
         "Fire Temple Megaton Hammer Chest": "Fire Temple Map",
@@ -95,35 +95,35 @@
         "Water Temple Compass Chest": "Water Temple Map",
         "Water Temple Torches Chest": "Water Temple Small Key",
         "Water Temple Dragon Chest": "Water Temple Small Key",
-        "Water Temple Central Bow Target Chest": "Deku Shield",
-        "Water Temple Central Pillar Chest": "Red Rupee",
+        "Water Temple Central Bow Target Chest": "Arrows (30)",
+        "Water Temple Central Pillar Chest": "Deku Shield",
         "Water Temple Boss Key Chest": "Water Temple Boss Key",
         "Water Temple Longshot Chest": "Water Temple Small Key",
-        "Spirit Temple Silver Gauntlets Chest": "Red Rupee",
+        "Spirit Temple Silver Gauntlets Chest": "Business Scrub Seed",
         "Spirit Temple Mirror Shield Chest": "Iron Boots",
-        "Spirit Temple Child Bridge Chest": "Red Rupee",
+        "Spirit Temple Child Bridge Chest": "Blue Rupee",
         "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key",
         "Spirit Temple Compass Chest": "Spirit Temple Small Key",
-        "Spirit Temple Early Adult Right Chest": "Business Scrub Seed",
+        "Spirit Temple Early Adult Right Chest": "Blue Rupee",
         "Spirit Temple First Mirror Left Chest": "Spirit Temple Small Key",
-        "Spirit Temple Map Chest": "Blue Rupee",
+        "Spirit Temple Map Chest": "Red Rupee",
         "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
         "Spirit Temple Sun Block Room Chest": "Spirit Temple Map",
-        "Spirit Temple Statue Room Hand Chest": "Blue Rupee",
+        "Spirit Temple Statue Room Hand Chest": "Red Rupee",
         "Spirit Temple Near Four Armos Chest": "Spirit Temple Small Key",
         "Spirit Temple Hallway Right Invisible Chest": "Spirit Temple Compass",
-        "Spirit Temple Hallway Left Invisible Chest": "Red Rupee",
+        "Spirit Temple Hallway Left Invisible Chest": "Deku Nuts (5)",
         "Spirit Temple Boss Key Chest": "Spirit Temple Boss Key",
-        "Spirit Temple Topmost Chest": "Deku Nuts (5)",
+        "Spirit Temple Topmost Chest": "Arrows (10)",
         "Shadow Temple Map Chest": "Shadow Temple Map",
-        "Shadow Temple Hover Boots Chest": "Arrows (30)",
+        "Shadow Temple Hover Boots Chest": "Bombs (5)",
         "Shadow Temple Compass Chest": "Shadow Temple Small Key",
         "Shadow Temple Early Silver Rupee Chest": "Shadow Temple Compass",
         "Shadow Temple Falling Spikes Switch Chest": "Shadow Temple Small Key",
         "Shadow Temple Wind Hint Chest": "Shadow Temple Small Key",
-        "Shadow Temple After Wind Enemy Chest": "Bombs (5)",
+        "Shadow Temple After Wind Enemy Chest": "Deku Shield",
         "Shadow Temple After Wind Hidden Chest": "Shadow Temple Small Key",
-        "Shadow Temple Spike Walls Left Chest": "Deku Shield",
+        "Shadow Temple Spike Walls Left Chest": "Red Rupee",
         "Shadow Temple Boss Key Chest": "Bombchus (5)",
         "Shadow Temple Invisible Floormaster Chest": "Shadow Temple Boss Key",
         "Bottom of the Well Front Left Fake Wall Chest": "Large Magic Jar",
@@ -138,10 +138,10 @@
         "Bottom of the Well Fire Keese Chest": "Red Rupee",
         "Ice Cavern Map Chest": "Ice Cavern Map",
         "Ice Cavern Compass Chest": "Ice Cavern Compass",
-        "Ice Cavern Iron Boots Chest": "Arrows (10)",
-        "Gerudo Training Ground Lobby Left Chest": "Hylian Shield",
+        "Ice Cavern Iron Boots Chest": "Hylian Shield",
+        "Gerudo Training Ground Lobby Left Chest": "Blue Rupee",
         "Gerudo Training Ground Lobby Right Chest": "Training Ground Small Key",
-        "Gerudo Training Ground Stalfos Chest": "Blue Rupee",
+        "Gerudo Training Ground Stalfos Chest": "Progressive Bow",
         "Gerudo Training Ground Beamos Chest": "Training Ground Small Key",
         "Gerudo Training Ground Hidden Ceiling Chest": "Training Ground Small Key",
         "Gerudo Training Ground Maze Path First Chest": "Training Ground Small Key",
@@ -154,9 +154,9 @@
         "Gerudo Training Ground Hammer Room Switch Chest": "Business Scrub Seed",
         "Gerudo Training Ground Eye Statue Chest": "Training Ground Small Key",
         "Gerudo Training Ground Near Scarecrow Chest": "Bombs (5)",
-        "Gerudo Training Ground Before Heavy Block Chest": "Progressive Bow",
+        "Gerudo Training Ground Before Heavy Block Chest": "Red Rupee",
         "Gerudo Training Ground Heavy Block First Chest": "Golden Gauntlets",
-        "Gerudo Training Ground Heavy Block Second Chest": "Red Rupee",
+        "Gerudo Training Ground Heavy Block Second Chest": "Mirror Shield",
         "Gerudo Training Ground Heavy Block Third Chest": "Green Rupee",
         "Gerudo Training Ground Heavy Block Cracked Wall Chest": "Training Ground Small Key",
         "Gerudo Training Ground Freestanding Key": "Deku Stick (1)",
@@ -179,7 +179,6 @@
             "KF Shop Item 1": "Buy Deku Shield"
         },
         "sphere 01": {
-            "Deku Tree Compass Chest": "Progressive Hookshot",
             "Deku Tree GS Compass Room": "Gold Skulltula Token",
             "Deku Tree Map Chest": "Progressive Bomb Bag",
             "Deku Tree GS Basement Gate": "Gold Skulltula Token",
@@ -220,7 +219,6 @@
         "sphere 04": {
             "HC Great Fairy Reward": "Din's Fire",
             "ZD Diving Minigame": "Progressive Scale",
-            "ZD Chest": "Boomerang",
             "ZR GS Ladder": "Gold Skulltula Token",
             "DMC GS Crate": "Gold Skulltula Token",
             "DMT Great Fairy Reward": "Progressive Magic Meter",
@@ -228,6 +226,7 @@
             "Dodongos Cavern GS Vines Above Stairs": "Gold Skulltula Token",
             "Dodongos Cavern GS Back Room": "Gold Skulltula Token",
             "King Dodongo": "Goron's Ruby",
+            "Dodongos Cavern Map Chest": "Boomerang",
             "DMT GS Bean Patch": "Gold Skulltula Token",
             "DMT GS Near Kak": "Gold Skulltula Token",
             "GC Maze Center Chest": "Megaton Hammer",
@@ -261,105 +260,110 @@
             "Song from Ocarina of Time": "Song of Time"
         },
         "sphere 08": {
-            "Kak GS Above Impas House": "Gold Skulltula Token",
             "Graveyard Hookshot Chest": "Progressive Hookshot",
             "DMT GS Falling Rocks Path": "Gold Skulltula Token",
             "DMT GS Above Dodongos Cavern": "Gold Skulltula Token",
             "GC Shop Item 5": "Buy Goron Tunic",
-            "Fire Temple Boss Key Chest": "Fire Temple Small Key",
-            "Fire Temple GS Boss Key Loop": "Gold Skulltula Token",
             "GC GS Center Platform": "Gold Skulltula Token",
-            "ZR GS Near Raised Grottos": "Gold Skulltula Token",
             "ZD Shop Item 1": "Buy Zora Tunic",
-            "Forest Temple First Room Chest": "Forest Temple Small Key",
+            "ZD GS Frozen Waterfall": "Gold Skulltula Token",
+            "LW GS Above Theater": "Gold Skulltula Token",
             "Market ToT Master Sword": "Master Sword",
             "GF Double Cell Carpenter": "Gerudo Fortress Small Key",
-            "GF Dead End Carpenter": "Gerudo Fortress Small Key",
             "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
             "GF 1 Torch Carpenter": "Gerudo Fortress Small Key"
         },
         "sphere 09": {
-            "Fire Temple Big Lava Room Blocked Door Chest": "Fire Temple Boss Key",
-            "Forest Temple Raised Island Courtyard Chest": "Forest Temple Small Key",
-            "GF Freed All Carpenters": "Gerudo Membership Card"
+            "Forest Temple First Room Chest": "Forest Temple Small Key",
+            "Fire Temple Boss Key Chest": "Fire Temple Small Key",
+            "Fire Temple Flare Dancer Chest": "Fire Temple Small Key",
+            "GF Dead End Carpenter": "Gerudo Fortress Small Key"
         },
         "sphere 10": {
-            "Spirit Temple Compass Chest": "Spirit Temple Small Key",
-            "Sheik at Colossus": "Requiem of Spirit",
-            "Gerudo Training Ground Maze Right Central Chest": "Hover Boots",
-            "Gerudo Training Ground Before Heavy Block Chest": "Progressive Bow"
+            "GF Freed All Carpenters": "Gerudo Membership Card",
+            "Forest Temple Raised Island Courtyard Chest": "Forest Temple Small Key",
+            "Fire Temple Big Lava Room Lower Open Door Chest": "Fire Temple Small Key",
+            "Fire Temple Big Lava Room Blocked Door Chest": "Fire Temple Boss Key"
         },
         "sphere 11": {
-            "Volvagia": "Fire Medallion",
-            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key",
-            "Gerudo Training Ground Heavy Block First Chest": "Golden Gauntlets",
-            "Forest Temple Floormaster Chest": "Forest Temple Small Key",
-            "Forest Temple Eye Switch Chest": "Forest Temple Small Key"
+            "Gerudo Training Ground Maze Right Central Chest": "Hover Boots",
+            "Gerudo Training Ground Stalfos Chest": "Progressive Bow",
+            "Fire Temple Boulder Maze Side Room Chest": "Fire Temple Small Key"
         },
         "sphere 12": {
-            "Forest Temple Blue Poe Chest": "Mirror Shield",
-            "Forest Temple Bow Chest": "Forest Temple Small Key"
+            "Volvagia": "Fire Medallion",
+            "Spirit Temple Compass Chest": "Spirit Temple Small Key",
+            "Sheik at Colossus": "Requiem of Spirit",
+            "Gerudo Training Ground Heavy Block First Chest": "Golden Gauntlets",
+            "Gerudo Training Ground Heavy Block Second Chest": "Mirror Shield",
+            "Forest Temple Floormaster Chest": "Forest Temple Small Key",
+            "Forest Temple Eye Switch Chest": "Forest Temple Small Key",
+            "Fire Temple Scarecrow Ledge Right Chest": "Progressive Hookshot"
         },
         "sphere 13": {
-            "Forest Temple Basement Chest": "Forest Temple Boss Key"
+            "Forest Temple Bow Chest": "Forest Temple Small Key",
+            "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key"
         },
         "sphere 14": {
-            "Phantom Ganon": "Forest Medallion"
+            "Forest Temple Basement Chest": "Forest Temple Boss Key"
         },
         "sphere 15": {
-            "Sheik at Temple": "Prelude of Light"
+            "Phantom Ganon": "Forest Medallion"
         },
         "sphere 16": {
-            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key"
+            "Sheik at Temple": "Prelude of Light"
         },
         "sphere 17": {
-            "Spirit Temple First Mirror Left Chest": "Spirit Temple Small Key"
+            "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key"
         },
         "sphere 18": {
+            "Spirit Temple First Mirror Left Chest": "Spirit Temple Small Key"
+        },
+        "sphere 19": {
             "Spirit Temple Near Four Armos Chest": "Spirit Temple Small Key",
             "Spirit Temple Mirror Shield Chest": "Iron Boots"
         },
-        "sphere 19": {
+        "sphere 20": {
             "Water Temple Map Chest": "Water Temple Small Key",
             "Water Temple Torches Chest": "Water Temple Small Key",
             "Water Temple Dragon Chest": "Water Temple Small Key",
             "Spirit Temple Boss Key Chest": "Spirit Temple Boss Key"
         },
-        "sphere 20": {
+        "sphere 21": {
             "Water Temple Boss Key Chest": "Water Temple Boss Key",
             "Twinrova": "Spirit Medallion"
         },
-        "sphere 21": {
+        "sphere 22": {
             "Morpha": "Water Medallion"
         },
-        "sphere 22": {
+        "sphere 23": {
             "Sheik in Kakariko": "Nocturne of Shadow"
         },
-        "sphere 23": {
+        "sphere 24": {
             "Shadow Temple Compass Chest": "Shadow Temple Small Key"
         },
-        "sphere 24": {
+        "sphere 25": {
             "Shadow Temple Falling Spikes Switch Chest": "Shadow Temple Small Key"
         },
-        "sphere 25": {
+        "sphere 26": {
             "Shadow Temple Freestanding Key": "Shadow Temple Small Key"
         },
-        "sphere 26": {
+        "sphere 27": {
             "Shadow Temple After Wind Hidden Chest": "Shadow Temple Small Key"
         },
-        "sphere 27": {
+        "sphere 28": {
             "Shadow Temple Invisible Floormaster Chest": "Shadow Temple Boss Key"
         },
-        "sphere 28": {
+        "sphere 29": {
             "Bongo Bongo": "Shadow Medallion"
         },
-        "sphere 29": {
+        "sphere 30": {
             "Market ToT Light Arrow Cutscene": "Light Arrows"
         },
-        "sphere 30": {
+        "sphere 31": {
             "Ganon's Castle Light Trial Third Left Chest": "Ganon's Castle Boss Key"
         },
-        "sphere 31": {
+        "sphere 32": {
             "Ganon": "Triforce"
         }
     }

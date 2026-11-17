@@ -138,7 +138,7 @@
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs",
         "Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "13080955777249750889",
@@ -160,7 +160,7 @@
         "Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "9809508929088891725",
@@ -168,7 +168,7 @@
         "Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "4402942101476009858",
@@ -176,7 +176,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "3870071239709713434",
@@ -184,7 +184,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "14647422914070455120",
@@ -223,7 +223,7 @@
       "files": [
         "Banc/ZoraDomain/ZoraDomain_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Boomerang"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "15055117029957340138",
@@ -244,7 +244,7 @@
       "files": [
         "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Longshot"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "11368028582977069031",
@@ -279,7 +279,7 @@
       "files": [
         "Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_Boomerang"
     },
     {
       "hash": "17531994809974271603",
@@ -363,7 +363,7 @@
       "files": [
         "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "15920957434854338961",
@@ -405,7 +405,7 @@
       "files": [
         "Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Shield_Mirror"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "9038700938965170329",
@@ -419,7 +419,7 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "8757492004108970488",
@@ -454,7 +454,7 @@
       "files": [
         "Banc/FireTemple/FireTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "9634924691849556346",
@@ -496,14 +496,14 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "Item_Longshot"
     },
     {
       "hash": "16713240760352215634",
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "12945617941305968586",
@@ -559,14 +559,14 @@
       "files": [
         "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Deku"
+      "drop_actor": "TBox_ArrowBundle_Large"
     },
     {
       "hash": "11682974908842171598",
       "files": [
         "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Shield_Deku"
     },
     {
       "hash": "10378828369334876242",
@@ -588,7 +588,7 @@
         "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs",
         "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_ScrubBusinessSeed"
     },
     {
       "hash": "10012167258643363548",
@@ -603,7 +603,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "5703423643219134246",
@@ -624,7 +624,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_ScrubBusinessSeed"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "12909857529499414969",
@@ -638,7 +638,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "1501288453962537671",
@@ -659,7 +659,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "12042193296697281461",
@@ -680,7 +680,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_DekuNutBundle"
     },
     {
       "hash": "16272168033146555902",
@@ -694,7 +694,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_DekuNutBundle"
+      "drop_actor": "TBox_ArrowBundle_Medium"
     },
     {
       "hash": "13528903653876646082",
@@ -708,7 +708,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_ArrowBundle_Large"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "1733372171176975157",
@@ -743,7 +743,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "TBox_Shield_Deku"
     },
     {
       "hash": "169081039115821925",
@@ -757,7 +757,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Deku"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "9221365632831348137",
@@ -862,14 +862,14 @@
       "files": [
         "Banc/IceCavern/IceCavern_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_ArrowBundle_Medium"
+      "drop_actor": "TBox_Shield_Hylian"
     },
     {
       "hash": "11182647876438515984",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Hylian"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "2436665354602612279",
@@ -883,7 +883,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_Range_Bow"
     },
     {
       "hash": "4709724720801091788",
@@ -974,7 +974,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Range_Bow"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "6897789835137994741",
@@ -988,7 +988,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_Shield_Mirror"
     },
     {
       "hash": "5329807728555596183",

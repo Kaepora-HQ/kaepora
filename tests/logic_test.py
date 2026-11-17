@@ -133,6 +133,15 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("DMT Chest", *adult_without_strength,
                                        ("KF Mido Top Right Chest", "Silver Gauntlets")))
 
+    def test_a_bombchu_needs_no_strength(self):
+        # The logic counts bombchus only with a bomb bag and a place to buy them, here a Mido's House chest. The rock
+        # before the Death Mountain Trail chest takes a bomb, a bombchu or the hammer.
+        child_with_bombs_without_bracelet = (NEVER_ADULT, ("GC Darunias Joy", "Green Rupee"),
+                                             ("KF Mido Top Left Chest", "Progressive Bomb Bag"))
+        self.assertFalse(self.reachable("DMT Chest", *child_with_bombs_without_bracelet))
+        self.assertTrue(self.reachable("DMT Chest", *child_with_bombs_without_bracelet,
+                                       ("KF Mido Top Right Chest", "Buy Bombchu (10)")))
+
     def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
         # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
         # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child reaches neither the Goron's
@@ -337,10 +346,9 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("HF Southwest Poe Chest"))
         self.assertFalse(self.reachable("HF Southwest Poe Chest", ("Water Temple Boss Key Chest", "Green Rupee")))
 
-    def test_hyrule_field_tower_chest_needs_the_longshot(self):
-        # From the tower floor, the Longshot latches onto vines below an opening high up, and Link climbs them.
-        self.assertTrue(self.reachable("HF Tower Chest"))
-        self.assertFalse(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
+    def test_hyrule_field_tower_chest_needs_the_hookshot(self):
+        self.assertTrue(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
+        self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))
 
     def test_crater_hammer_grotto_chest_needs_the_hammer(self):
         self.assertTrue(self.reachable("DMC Hammer Grotto Chest"))
