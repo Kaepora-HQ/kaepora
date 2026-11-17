@@ -121,7 +121,7 @@
       "files": [
         "Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "8825521833684392638",
@@ -129,7 +129,7 @@
         "Banc/HountedWasteland/HountedWasteland_Adult_Static.bcett.byml.zs",
         "Banc/HountedWasteland/HountedWasteland_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "12902291359202819102",
@@ -160,7 +160,7 @@
         "Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_BombBag_Small"
     },
     {
       "hash": "9809508929088891725",
@@ -168,7 +168,7 @@
         "Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_Boomerang"
     },
     {
       "hash": "4402942101476009858",
@@ -192,7 +192,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Hammer"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "1158729434763801603",
@@ -223,7 +223,7 @@
       "files": [
         "Banc/ZoraDomain/ZoraDomain_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "15055117029957340138",
@@ -237,7 +237,7 @@
       "files": [
         "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBag_Small"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "9284193025315608699",
@@ -279,7 +279,7 @@
       "files": [
         "Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Boomerang"
+      "drop_actor": "Item_Gauntlet_Silver"
     },
     {
       "hash": "17531994809974271603",
@@ -314,21 +314,21 @@
       "files": [
         "Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Dungeon_Map"
+      "drop_actor": "Item_Hammer"
     },
     {
       "hash": "3510516276638146208",
       "files": [
         "Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Gauntlet_Silver"
+      "drop_actor": "Item_Dungeon_Compass"
     },
     {
       "hash": "5527401621172639818",
       "files": [
         "Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Dungeon_Compass"
+      "drop_actor": "Item_Dungeon_Map"
     },
     {
       "hash": "1171460703078800858",
