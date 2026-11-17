@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-// Decompresses one frame. A frame whose header names a dictionary needs that dictionary.
+// A frame whose header names a dictionary needs that dictionary.
 std::string Decompress(std::string_view frame, std::string_view dictionary = {});
 
 // Compresses into one frame with the header the game's own files have.

@@ -21,7 +21,6 @@ public:
     // Throws if the RomFS has no file at this path.
     std::string Read(const std::string& path);
 
-    // Every file, by its path in the RomFS.
     const std::map<std::string, File>& Files() const {
         return files;
     }

@@ -1,4 +1,3 @@
-// The only source that uses libzstd.
 #include "compression.h"
 
 #include <zstd.h>
@@ -6,7 +5,6 @@
 #include <memory>
 #include <stdexcept>
 
-// The level of the chest-swap mod the game accepted.
 constexpr int Level = 19;
 
 static size_t Check(size_t result) {
