@@ -1,5 +1,7 @@
 #include "new_version.h"
 
+#include "version.h"
+
 #include <QCheckBox>
 #include <QDateTime>
 #include <QDesktopServices>

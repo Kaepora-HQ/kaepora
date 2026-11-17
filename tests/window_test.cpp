@@ -1,6 +1,7 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
 #include "kaepora/window.h"
+#include "version.h"
 
 #include <QApplication>
 #include <QCheckBox>

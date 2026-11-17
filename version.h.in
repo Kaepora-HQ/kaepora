@@ -1,0 +1,3 @@
+// kaepora/kaepora.rc includes this file, so it holds only #define lines the resource compiler reads.
+#define KAEPORA_VERSION "@PROJECT_VERSION@"
+#define KAEPORA_VERSION_NUMBERS @PROJECT_VERSION_MAJOR@, @PROJECT_VERSION_MINOR@, @PROJECT_VERSION_PATCH@, 0

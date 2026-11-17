@@ -6,6 +6,7 @@
 #include "soh/util.h"
 #include "remake.h"
 #include "setup.h"
+#include "version.h"
 
 #include <algorithm>
 #include <cctype>

@@ -51,8 +51,11 @@ add_library(kaepora-generator OBJECT
     $<IF:$<PLATFORM_ID:Windows>,generator/traps_windows.cpp,generator/traps.cpp>
     ${SHIPWRIGHT_SOURCES}
 )
+# configure_file rewrites version.h only when its text changes, so a new version rebuilds only its includers.
+configure_file(version.h.in include/version.h @ONLY)
 target_include_directories(kaepora-generator PUBLIC
     .
+    ${PROJECT_BINARY_DIR}/include
     shipwright/soh/include
     shipwright/soh/src
     shipwright/soh/assets
@@ -61,9 +64,6 @@ target_include_directories(kaepora-generator PUBLIC
 )
 # functions.h needs a level for game prints. 6 turns them off, as in SoH.
 target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
-# The version goes only to the files that use it, so a new version rebuilds those alone.
-set_source_files_properties(generator/generate.cpp kaepora/new_version.cpp tests/window_test.cpp
-                            PROPERTIES COMPILE_DEFINITIONS "KAEPORA_VERSION=\"${PROJECT_VERSION}\"")
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
