@@ -12,5 +12,4 @@ The generator builds these into the program and checks them when it starts.
 - `note`: why a row is not shuffled.
 
 `items.tsv` maps each remake item name to the SoH item it stands for, by spoiler log name. A remake key, map or
-compass names no dungeon, so it has one row per dungeon, and a chest takes the one of its own dungeon. An empty SoH
-item means the logic sees nothing there.
+compass names no dungeon, so it has one row per dungeon, and a chest takes the one of its own dungeon.

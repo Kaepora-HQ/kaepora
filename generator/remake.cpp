@@ -44,7 +44,6 @@ std::string RemakeChest::Folder() const {
     return files.front().substr(start, files.front().find('/', start) - start);
 }
 
-// Remake item name to the SoH items it stands for, from remake/items.tsv. An empty list means no SoH item exists.
 static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
     std::map<std::string, std::vector<RandomizerGet>> items;
     size_t line = 1;
@@ -55,18 +54,11 @@ static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
         if (name.empty()) {
             Fail(where + "no remake item");
         }
-        bool seen = items.contains(name);
-        std::vector<RandomizerGet>& candidates = items[name];
-        if (seen && (sohName.empty() || candidates.empty())) {
-            Fail(where + "\"" + name + "\" stands for no SoH item on one row and for one on another");
-        }
-        if (sohName.empty()) {
-            continue;
-        }
         auto found = Rando::StaticData::itemNameToEnum.find(sohName);
         if (found == Rando::StaticData::itemNameToEnum.end() || found->second == RG_NONE) {
             Fail(where + "unknown SoH item \"" + sohName + "\"");
         }
+        std::vector<RandomizerGet>& candidates = items[name];
         if (std::ranges::find(candidates, found->second) != candidates.end()) {
             Fail(where + "repeats a row");
         }
@@ -81,7 +73,7 @@ static RandomizerGet ResolveItem(const std::vector<RandomizerGet>& candidates, R
         return candidates.front();
     }
     const Rando::Location* location = Rando::StaticData::GetLocation(rc);
-    if (candidates.empty() || !location->IsDungeon()) {
+    if (!location->IsDungeon()) {
         return RG_NONE;
     }
     const Rando::DungeonInfo* dungeon =
@@ -144,7 +136,7 @@ std::vector<RemakeChest> LoadRemakeChests() {
                 Fail(where + "unknown remake item \"" + item + "\"");
             }
             chest.sohItem = ResolveItem(candidates->second, chest.location);
-            if (chest.sohItem == RG_NONE && !candidates->second.empty()) {
+            if (chest.sohItem == RG_NONE) {
                 Fail(where + "no SoH item for \"" + item + "\" in this location's dungeon");
             }
         }

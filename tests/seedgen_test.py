@@ -91,6 +91,17 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["start_flags"], ["IsChainLockDoorOpen.4189300454150217955",
                                                "IsChainLockDoorOpen.2202807660383340401"])
 
+    def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
+        # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
+        spoiler, _ = self.generate("7")
+        pool = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
+        placed = collections.Counter(spoiler["locations"][location]
+                                     for location in {row["location"] for row in SHUFFLED})
+        for remake, soh in (("Item_ScrubBusinessSeed", "Business Scrub Seed"),
+                            ("Tbox_MagicJar_Large", "Large Magic Jar")):
+            self.assertGreater(pool[remake], 0, remake)
+            self.assertEqual(placed[soh], pool[remake], soh)
+
     def test_same_seed_same_files(self):
         self.assertEqual(self.run_seedgen("5"), self.run_seedgen("5"))
 

@@ -47,7 +47,7 @@ Item_HoverBoot	Hover Boots
 Item_Longshot	Progressive Hookshot
 Item_Range_Bow	Progressive Bow
 Item_Range_SlingShot	Progressive Slingshot
-Item_ScrubBusinessSeed	
+Item_ScrubBusinessSeed	Business Scrub Seed
 Item_Shield_Mirror	Mirror Shield
 Item_Sword_Kokiri	Kokiri Sword
 Obj_Heart_Piece	Piece of Heart
@@ -61,4 +61,4 @@ TBox_Rupee_Purple	Purple Rupee
 TBox_Rupee_Red	Red Rupee
 TBox_Shield_Deku	Deku Shield
 TBox_Shield_Hylian	Hylian Shield
-Tbox_MagicJar_Large	
+Tbox_MagicJar_Large	Large Magic Jar
