@@ -1,4 +1,3 @@
-// Bounds-checked reads and writes of little-endian values in the game's data.
 #pragma once
 
 #include <bit>
@@ -28,7 +27,6 @@ void WriteAt(std::string& data, size_t offset, T value) {
     std::memcpy(data.data() + offset, &value, sizeof(T));
 }
 
-// The size rounded up to a multiple of the alignment.
 constexpr size_t AlignUp(size_t size, size_t alignment) {
     return (size + alignment - 1) / alignment * alignment;
 }
