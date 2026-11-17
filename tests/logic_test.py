@@ -139,6 +139,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_training_ground_heavy_block_second_chest_needs_the_eye_hit(self):
+        # Without the bow, the Forest Temple and so the well's Lens of Truth are out of reach, so the gauntlets and the
+        # Lens come from elsewhere.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        outside = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Lens of Truth"))
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
+        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
+
     def test_well_locks_each_take_both_keys(self):
         # Both locked doors open off the middle, so either can take the first of the two keys.
         self.assertTrue(self.reachable("Bottom of the Well GS West Inner Room"))
