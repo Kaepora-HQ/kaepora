@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/fraunces/full.css';
+
+@theme {
+  --color-midnight: oklch(0.223 0.051 266);
+  --color-dusk: oklch(0.301 0.072 266);
+  --color-silhouette: oklch(0.17 0.04 266);
+  --color-starlight: oklch(0.957 0.02 277);
+  --color-mist: oklch(0.773 0.05 271.1);
+  --color-moon: oklch(0.873 0.114 89.4);
+  --color-moon-bright: oklch(0.96 0.05 95);
+
+  --font-serif: 'Fraunces Variable', serif;
+
+  --spacing-gutter: clamp(1.25rem, 0.5rem + 3vw, 3rem);
+  --spacing-section: clamp(4rem, 2rem + 6vw, 8rem);
+
+  --text-display: clamp(2.5rem, 1.1rem + 5.6vw, 6rem);
+  --text-display--line-height: 1;
+  --text-title: clamp(2rem, 1.2rem + 3vw, 3.25rem);
+  --text-title--line-height: 1.05;
+  --text-heading: clamp(1.4rem, 1.15rem + 0.9vw, 1.9rem);
+  --text-heading--line-height: 1.15;
+  --text-lead: clamp(1.125rem, 1rem + 0.5vw, 1.4rem);
+  --text-lead--line-height: 1.5;
+  --text-body: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --text-body--line-height: 1.6;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --animate-blink: blink 260ms var(--ease-out) 1.6s 1;
+
+  @keyframes blink {
+    50% {
+      scale: 1 0.1;
+    }
+  }
+}
+
+/* Tailwind's own hover already waits for (hover: hover). Samsung phones, and
+   some other Android phones in older Chrome, report hover on a touchscreen, so
+   hover styles here also wait for a fine pointer. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+@utility storybook {
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+@utility press {
+  @apply active:scale-97 motion-safe:transition-[scale,background-color,border-color,color] motion-safe:duration-150;
+}
+
+@utility moon-button {
+  @apply press rounded-full bg-moon font-semibold text-midnight hover:bg-moon-bright;
+}
+
+@utility tap-target {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, (100% - 44px) / 2);
+  }
+}
+
+@utility quiet-link {
+  @apply press rounded-full px-3 py-1.5 hover:bg-starlight/10 hover:text-starlight;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-midnight);
+  }
+
+  body {
+    @apply bg-midnight font-serif text-body text-starlight antialiased;
+    font-optical-sizing: auto;
+    text-wrap: pretty;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: max(2px, 0.08em) solid var(--color-moon);
+    outline-offset: 0.25em;
+  }
+}
+
+@layer components {
+  .changelog {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .changelog h2 {
+    @apply mbs-8 text-lead font-semibold;
+  }
+
+  .changelog h2:first-child {
+    @apply mbs-0;
+  }
+
+  .changelog h3 {
+    @apply font-semibold text-mist;
+  }
+
+  .changelog ul {
+    @apply flex list-disc flex-col gap-1.5 ps-6 marker:text-moon;
+  }
+
+  .changelog a {
+    @apply underline decoration-mist/40 underline-offset-4 hover:decoration-starlight;
+  }
+}
