@@ -193,6 +193,8 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             { { "hash", chest.hash }, { "files", chest.files }, { "drop_actor", candidates.front() } });
         candidates.pop_front();
     }
+    // No item an event flow gives is shuffled.
+    plan["gifts"] = nlohmann::ordered_json::array();
     plan["start_flags"] = startFlags;
     return plan;
 }

@@ -1,5 +1,5 @@
-// A plan as a mod: each placement file the plan changes, the size table if a file outgrows its entry, and the game
-// data list if the plan names start flags, at their paths in the game's RomFS.
+// A plan as a mod: each placement file and event flow the plan changes, the size table if a file outgrows its entry,
+// and the game data list if the plan names start flags, at their paths in the game's RomFS.
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -17,8 +17,17 @@ struct PlannedChest {
     std::string dropActor;
 };
 
+// A character hands the item over in a call of an event flow, which names the item in a string parameter.
+struct PlannedGift {
+    std::string flow;  // RomFS path of the event flow
+    std::string event; // name of the event whose call gives the item
+    std::string param; // name of the call's parameter that names the item
+    std::string item;
+};
+
 struct Plan {
     std::vector<PlannedChest> chests;
+    std::vector<PlannedGift> gifts;
     std::vector<std::string> startFlags; // names of saved Bools a new game starts with set
 };
 

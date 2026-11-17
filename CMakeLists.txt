@@ -83,11 +83,13 @@ set(KAEPORA_TESTED_SUBSTITUTE_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with one item in a chest's item and substitute values")
 set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with an item value added to two chests that named none")
+set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
 set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
-    foreach(test larger-plan bad-input size-table size-table-unchanged start-flags)
+    foreach(test larger-plan bad-input size-table size-table-unchanged together gift gift-size-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     if(KAEPORA_TESTED_MOD)
@@ -108,5 +110,10 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-added-item-mod
             COMMAND ${PATCH_TEST} tested-added-item-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_ADDED_ITEM_MOD}")
+    endif()
+    if(KAEPORA_TESTED_GIFT_MOD)
+        add_test(NAME patch-tested-gift-mod
+            COMMAND ${PATCH_TEST} tested-gift-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_GIFT_MOD}")
     endif()
 endif()

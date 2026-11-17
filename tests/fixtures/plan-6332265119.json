@@ -390,6 +390,7 @@
       "drop_actor": "Item_Dungeon_SmallKey"
     }
   ],
+  "gifts": [],
   "start_flags": [
     "IsChainLockDoorOpen.4189300454150217955",
     "IsChainLockDoorOpen.2202807660383340401"

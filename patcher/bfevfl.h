@@ -1,5 +1,6 @@
-// BFEVFL version 4, the game's event flows, kept as the bytes they were read from with the place of every pointer
-// field.
+// BFEVFL version 4, the game's event flows, as far as the patcher changes them: a string parameter of a flowchart's
+// event. The file stays the bytes it was read from, with the place of every pointer field, so a string can change
+// length and everything after it moves.
 #pragma once
 
 #include <cstdint>
@@ -15,6 +16,10 @@ struct Flow {
 };
 
 Flow Parse(std::string_view data);
+
+// Sets the string parameter of the named event to the value. Returns whether it changed. Throws, saying what is
+// missing, when the flow has no such event or parameter, or the parameter holds no string.
+bool SetString(Flow& flow, std::string_view event, std::string_view param, std::string_view value);
 
 // The file with its relocation table, laid out as the game's own files are.
 std::string Write(const Flow& flow);
