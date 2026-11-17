@@ -10,7 +10,6 @@ int main(int argc, char** argv) {
     // Qt takes the user's locale when the application starts. The generator handles text as the C locale does, the
     // locale its command-line tools run in.
     std::setlocale(LC_ALL, "C");
-    // QSettings names the settings file after these.
     QApplication::setOrganizationName("kaepora");
     QApplication::setApplicationName("kaepora");
     // Names the desktop file, so the desktop shows the window with its icon.

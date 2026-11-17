@@ -26,7 +26,6 @@
 
 using Files = QMap<QString, QByteArray>;
 
-// Every file under the folder, by its path there.
 static Files FilesIn(const QString& folder) {
     Files files;
     for (const auto& file :
@@ -111,7 +110,6 @@ private:
         return nullptr;
     }
 
-    // The message box the window has open.
     QMessageBox* box() const {
         for (QMessageBox* box : window->findChildren<QMessageBox*>()) {
             if (box->isVisible()) {
