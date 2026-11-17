@@ -38,12 +38,6 @@ class ItemLocation {
     RandomizerCheckStatus GetCheckStatus();
     void SetIsSkipped(bool isSkipped_);
     bool GetIsSkipped();
-    bool IsHintable() const;
-    void SetAsHintable();
-    bool IsAHintAccessible() const;
-    void SetHintAccesible();
-    const std::vector<RandomizerHint>& GetHintedBy() const;
-    void AddHintedBy(RandomizerHint hintKey);
     bool IsHidden() const;
     bool IsExcluded();
     OptionValue& GetExcludedOption();
@@ -51,19 +45,12 @@ class ItemLocation {
     void SetHidden(bool hidden_);
     bool IsVisible() const;
     void SetVisible(bool visibleInImGui_);
-    bool IsWothCandidate() const;
-    void SetWothCandidate();
-    bool IsFoolishCandidate() const;
-    void SetBarrenCandidate();
     void ResetVariables();
     bool IsAvailable() const;
     void SetAvailable(bool isAvailable_);
 
   private:
     RandomizerCheck rc;
-    std::vector<RandomizerHint> hintedBy = {};
-    bool hintAccesible = false;
-    bool isHintable = false;
     bool addedToPool = false;
     RandomizerGet placedItem = RG_NONE;
     RandomizerGet delayedItem = RG_NONE;
@@ -74,8 +61,6 @@ class ItemLocation {
     bool hasCustomPrice = false;
     bool hidden = false;
     bool visibleInImGui = false;
-    bool wothCandidate = false;
-    bool barrenCandidate = false;
     RandomizerCheckStatus status = RCSHOW_UNCHECKED;
     bool isSkipped = false;
     bool isAvailable = false;

@@ -155,30 +155,6 @@ bool ItemLocation::GetIsSkipped() {
     return isSkipped;
 }
 
-bool ItemLocation::IsHintable() const {
-    return isHintable && !hidden;
-}
-
-void ItemLocation::SetAsHintable() {
-    isHintable = true;
-}
-
-bool ItemLocation::IsAHintAccessible() const {
-    return hintAccesible;
-}
-
-void ItemLocation::SetHintAccesible() {
-    hintAccesible = true;
-}
-
-const std::vector<RandomizerHint>& ItemLocation::GetHintedBy() const {
-    return hintedBy;
-}
-
-void ItemLocation::AddHintedBy(const RandomizerHint hintKey) {
-    hintedBy.push_back(hintKey);
-}
-
 bool ItemLocation::IsHidden() const {
     return hidden;
 }
@@ -206,34 +182,13 @@ void ItemLocation::SetVisible(const bool visibleInImGui_) {
     visibleInImGui = visibleInImGui_;
 }
 
-bool ItemLocation::IsWothCandidate() const {
-    return wothCandidate;
-}
-
-void ItemLocation::SetWothCandidate() {
-    wothCandidate = true;
-}
-
-bool ItemLocation::IsFoolishCandidate() const {
-    return barrenCandidate;
-}
-
-void ItemLocation::SetBarrenCandidate() {
-    barrenCandidate = true;
-}
-
 void ItemLocation::ResetVariables() {
     addedToPool = false;
     placedItem = RG_NONE;
     delayedItem = RG_NONE;
-    isHintable = false;
-    hintAccesible = false;
-    hintedBy = {};
     price = 0;
     hasCustomPrice = false;
     hidden = false;
-    wothCandidate = false;
-    barrenCandidate = false;
     areas = {};
     status = RCSHOW_UNCHECKED;
     isSkipped = false;

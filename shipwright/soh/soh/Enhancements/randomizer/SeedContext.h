@@ -2,7 +2,6 @@
 
 #include "randomizerTypes.h"
 #include "item_override.h"
-#include "hint.h"
 #include "item_location.h"
 
 #include <memory>
@@ -37,8 +36,6 @@ class Context {
     static std::shared_ptr<Context> CreateInstance();
     static std::shared_ptr<Context> GetInstance();
     void InitStaticData();
-    Hint* GetHint(RandomizerHint hintKey);
-    void AddHint(const RandomizerHint hintId, const Hint hint);
     ItemLocation* GetItemLocation(RandomizerCheck locKey);
     ItemLocation* GetItemLocation(size_t locKey);
     bool IsLocationShuffled(RandomizerCheck locKey);
@@ -58,7 +55,6 @@ class Context {
     void LocationReset();
     void ClearItemLocations();
     void ItemReset();
-    void HintReset();
     void CreateItemOverrides();
     bool IsSeedGenerated() const;
     void SetSeedGenerated(bool seedGenerated = true);
@@ -121,8 +117,6 @@ class Context {
     void ParseSpoiler(const char* spoilerFileName);
     void ParseHashIconIndexesJson(const nlohmann::json& spoilerFileJson);
     void ParseItemLocationsJson(const nlohmann::json& spoilerFileJson);
-    void WriteHintJson(nlohmann::ordered_json& spoilerFileJson);
-    void ParseHintJson(const nlohmann::json& spoilerFileJson);
     void ParseTricksJson(const nlohmann::json& spoilerFileJson);
     std::map<RandomizerCheck, ItemOverride> overrides = {};
     std::vector<std::vector<RandomizerCheck>> playthroughLocations = {};
@@ -132,7 +126,6 @@ class Context {
     std::array<uint8_t, 5> hashIconIndexes = {};
     bool playthroughBeatable = false;
     bool allLocationsReachable = false;
-    RandomizerArea GetAreaFromString(std::string str);
 
     /**
      * @brief Get the hash for the current seed.
@@ -180,7 +173,6 @@ class Context {
 
   private:
     static std::weak_ptr<Context> mContext;
-    std::array<Hint, RH_MAX> hintTable = {};
     std::array<ItemLocation, RC_MAX> itemLocationTable = {};
     std::array<OptionValue, RSK_MAX> mOptions;
     std::array<OptionValue, RT_MAX> mTrickOptions;

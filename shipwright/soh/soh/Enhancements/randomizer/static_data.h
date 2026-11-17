@@ -25,10 +25,6 @@ class StaticData {
 
   public:
     static void InitItemTable();
-    static void HintTable_Init();
-    static void HintTable_Init_Item();
-    static void HintTable_Init_Exclude_Overworld();
-    static void HintTable_Init_Exclude_Dungeon();
     static Item& RetrieveItem(const RandomizerGet rgid);
     static Item& ItemFromGIID(const int giid);
     static std::array<Item, RG_MAX>&
@@ -36,16 +32,11 @@ class StaticData {
     static void InitLocationTable();
     static Location* GetLocation(RandomizerCheck locKey);
     static std::array<Rando::Location, RC_MAX>& GetLocationTable();
-    static std::unordered_map<std::string, uint32_t>
-    PopulateTranslationMap(const std::unordered_map<uint32_t, CustomMessage>& input);
-    static std::unordered_map<std::string, uint32_t>
-    PopulateTranslationMap(const std::unordered_map<uint32_t, RandomizerHintTextKey>& input);
     static std::multimap<std::tuple<s16, s16, s32>, RandomizerCheck> CheckFromActorMultimap;
     static std::vector<RandomizerCheck> dungeonRewardLocations;
     static std::vector<RandomizerCheck> GetScrubLocations();
     static std::vector<RandomizerCheck> GetMerchantLocations();
     static std::vector<RandomizerCheck> GetAdultTradeLocations();
-    static std::vector<RandomizerCheck> GetGossipStoneLocations();
     static std::vector<RandomizerCheck> GetStaticHintLocations();
     static std::vector<RandomizerCheck> GetPondFishLocations();
     static std::vector<RandomizerCheck> GetOverworldFishLocations();
@@ -79,17 +70,9 @@ class StaticData {
     static uint16_t oldVerGossipStoneStart;
     static std::unordered_map<std::string, RandomizerCheck> locationNameToEnum;
     static std::unordered_map<std::string, RandomizerGet> itemNameToEnum;
-    static std::unordered_map<uint32_t, CustomMessage> hintNames;
-    static std::unordered_map<std::string, uint32_t> hintNameToEnum;
-    static std::unordered_map<uint32_t, CustomMessage> hintTypeNames;
-    static std::unordered_map<std::string, uint32_t> hintTypeNameToEnum;
     static std::unordered_map<RandomizerCheck, RandomizerHint> gossipStoneCheckToHint;
-    static std::unordered_map<uint32_t, RandomizerHintTextKey> areaNames;
-    static std::unordered_map<std::string, uint32_t> areaNameToEnum;
     static std::unordered_map<uint32_t, RandomizerHintTextKey> trialData;
-    static std::unordered_map<std::string, uint32_t> trialNameToEnum;
     static std::unordered_map<std::string, RandomizerSettingKey> optionNameToEnum;
-    static std::unordered_map<RandomizerHint, StaticHintInfo> staticHintInfoMap;
     static std::unordered_map<u32, RandomizerHint> stoneParamsToHint;
     static std::unordered_map<u32, RandomizerHint> grottoChestParamsToHint;
     static std::unordered_map<RandomizerGet, RandomizerCheckArea> silverToArea;
@@ -98,7 +81,6 @@ class StaticData {
     static std::unordered_map<std::string, RandomizerCheck> excludedLocationToEnum;
     static std::set<RandomizerCheck> ParseExcludedLocations(const std::string& value);
     static std::string SerializeExcludedLocations(const std::set<RandomizerCheck>& locations);
-    static std::array<HintText, RHT_MAX> hintTextTable;
     static std::vector<RandomizerGet> normalBottles;
     static std::vector<RandomizerGet> beanSouls;
     static std::vector<RandomizerGet> overworldKeys;

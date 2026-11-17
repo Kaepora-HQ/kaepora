@@ -10,10 +10,6 @@ TrialInfo::TrialInfo(RandomizerHintTextKey nameKey_, TrialKey trialKey_)
 TrialInfo::TrialInfo() = default;
 TrialInfo::~TrialInfo() = default;
 
-CustomMessage TrialInfo::GetName() const {
-    return StaticData::hintTextTable[nameKey].GetHintMessage();
-}
-
 RandomizerHintTextKey TrialInfo::GetNameKey() const {
     return nameKey;
 }
@@ -71,20 +67,6 @@ std::vector<TrialInfo*> Trials::GetTrialList() {
 
 size_t Trials::GetTrialListSize() const {
     return mTrials.size();
-}
-
-void Trials::ParseJson(const nlohmann::json& spoilerFileJson) {
-    nlohmann::json trialsJson = spoilerFileJson.value("requiredTrials", nlohmann::json());
-
-    for (auto& trial : mTrials) {
-        trial.SetAsSkipped();
-
-        for (auto nameInLang : trial.GetName().GetAllMessages(MF_CLEAN)) {
-            if (std::find(trialsJson.begin(), trialsJson.end(), nameInLang) != trialsJson.end()) {
-                trial.SetAsRequired();
-            }
-        }
-    }
 }
 
 std::unordered_map<uint32_t, RandomizerHintTextKey> Trials::GetAllTrialHintHeys() const {

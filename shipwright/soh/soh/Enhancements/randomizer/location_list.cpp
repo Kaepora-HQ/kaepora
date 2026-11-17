@@ -77,16 +77,6 @@ std::vector<RandomizerCheck> Rando::StaticData::GetAdultTradeLocations() {
     return tradeLocations;
 }
 
-std::vector<RandomizerCheck> Rando::StaticData::GetGossipStoneLocations() {
-    std::vector<RandomizerCheck> gossipStoneLocations = {};
-    for (Location& location : locationTable) {
-        if (location.GetRCType() == RCTYPE_GOSSIP_STONE && location.GetRandomizerCheck() != RC_UNKNOWN_CHECK) {
-            gossipStoneLocations.push_back(location.GetRandomizerCheck());
-        }
-    }
-    return gossipStoneLocations;
-}
-
 std::vector<RandomizerCheck> Rando::StaticData::GetFountainFairyLocations() {
     std::vector<RandomizerCheck> fairyLocations = {};
     for (Location& location : locationTable) {

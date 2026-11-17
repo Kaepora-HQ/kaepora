@@ -5,7 +5,7 @@
 
 #include "soh/Enhancements/custom-message/text.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
-#include "3drando/hints.hpp"
+#include "soh/Enhancements/custom-message/CustomMessageManager.h"
 
 enum ItemType {
     ITEMTYPE_ITEM,
@@ -61,7 +61,6 @@ class Item {
     bool IsMajorItem() const;
     bool IsShieldOrTunic() const;
     RandomizerHintTextKey GetHintKey() const;
-    const HintText& GetHint() const;
     GetItemCategory GetCategory();
     bool operator==(const Item& right) const;
     bool operator!=(const Item& right) const;

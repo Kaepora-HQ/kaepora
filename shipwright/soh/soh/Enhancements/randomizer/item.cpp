@@ -479,10 +479,6 @@ RandomizerHintTextKey Item::GetHintKey() const {
     return hintKey;
 }
 
-const HintText& Item::GetHint() const {
-    return StaticData::hintTextTable[hintKey];
-}
-
 GetItemCategory Item::GetCategory() {
     return category;
 }
