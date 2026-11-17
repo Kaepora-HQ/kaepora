@@ -67,8 +67,7 @@ PriceSettingsStruct merchantPrices = {
 
 // Adult Link becomes child again only by putting the Master Sword back, which the unmodified game allows once Sheik has
 // taught him the Prelude of Light. So child Link first reaches all he can alone. Then adult Link goes on alone with what
-// child Link found, and child Link comes back with the Prelude of Light. The search calls this when it has nothing left
-// to find, and goes on if it returns true.
+// child Link found, and child Link comes back with the Prelude of Light.
 static bool TimeTravel(GetAccessibleLocationsStruct& gals) {
     Region* root = RegionTable(RR_ROOT);
     Region* doorOfTime = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME);
