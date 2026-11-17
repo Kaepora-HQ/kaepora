@@ -41,7 +41,10 @@ export QMAKE=$qt/bin/qmake
 # offscreen plugin lets the check below start the window without a display.
 export EXTRA_QT_MODULES=waylandcompositor
 export EXTRA_PLATFORM_PLUGINS='libqwayland-egl.so;libqwayland-generic.so;libqoffscreen.so'
-"$linuxdeploy" --appdir "$appdir" --plugin qt
+# Qt's TLS plugin looks for OpenSSL by name at the first HTTPS request, so no library lists it as a dependency. The
+# package carries Ubuntu's, so every player runs the OpenSSL the check below proves. Without it, each system decides
+# which OpenSSL major runs inside the window.
+"$linuxdeploy" --appdir "$appdir" --plugin qt --library /usr/lib/x86_64-linux-gnu/libssl.so.3
 
 # The Qt plugin's release wraps AppRun in a script with a hook that sets QT_QPA_PLATFORMTHEME=gtk2 on GNOME and XFCE.
 # Qt 6 has no gtk2 theme, and the setting would replace a theme the player chose, for the window and for the emulator it
@@ -67,21 +70,27 @@ diff -r --no-dereference "$root" "$appdir"
 
 # Starts the AppImage's window on Qt's offscreen platform with nothing in the environment that points at a library or a
 # plugin, so it finds only what the package holds and the base system, then checks where each library it loaded came
-# from.
+# from. Qt's HTTP/2 log names each response that arrives whole, whatever its status, so the line below shows the
+# window's request to GitHub went through.
 mkdir "$work/home"
-env -i HOME="$work/home" QT_QPA_PLATFORM=offscreen "$root/AppRun" &
+finished='qt.network.http2: stream 1 closed'
+env -i HOME="$work/home" QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
+    QT_LOGGING_RULES=qt.network.http2.debug=true "$root/AppRun" 2> "$work/window.log" &
 pid=$!
-for _ in $(seq 50); do
-    if grep -q '/libqoffscreen\.so$' "/proc/$pid/maps" 2> /dev/null; then
+for _ in $(seq 150); do
+    if grep -qxF "$finished" "$work/window.log"; then
         break
     fi
     sleep 0.2
 done
-# Long enough for the window to show and its event loop to start.
-sleep 2
 if ! kill -0 "$pid" 2> /dev/null; then
     echo "The packaged window stopped" >&2
     wait "$pid"
+    exit 1
+fi
+if ! grep -qxF "$finished" "$work/window.log"; then
+    echo "The packaged window's request to GitHub did not finish:" >&2
+    cat "$work/window.log" >&2
     exit 1
 fi
 loaded=$(awk '$6 ~ /\.so(\.|$)/ { print $6 }' "/proc/$pid/maps" | sort -u)
@@ -95,6 +104,8 @@ echo "and these from the system:"
 echo "$outside"
 grep -qxF "$root/usr/lib/libQt6Widgets.so.6" <<< "$inside"
 grep -qxF "$root/usr/plugins/platforms/libqoffscreen.so" <<< "$inside"
+grep -qxF "$root/usr/plugins/tls/libqopensslbackend.so" <<< "$inside"
+grep -qxF "$root/usr/lib/libssl.so.3" <<< "$inside"
 # Each library that the window or a library it loaded from the package asks for, and that the package holds, came from
 # the package. The package also holds libraries that only the system's own libraries ask for, because linuxdeploy copies
 # everything ldd lists; the system's copies serve those.

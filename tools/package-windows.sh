@@ -15,10 +15,11 @@ trap 'rm -rf "$work"' EXIT
 folder=$work/kaepora
 
 cmake --install "$build" --prefix "$folder"
-# The window needs the Windows platform plugin and a style. The plugin types skipped here would bring Qt Network and
-# Qt Svg, which it does not use.
+# The window needs the Windows platform plugin, a style, and the TLS plugins for its HTTPS request. windeployqt leaves
+# out the OpenSSL one, so the request uses Windows' own TLS through Schannel. The plugin types skipped here would bring
+# Qt Svg, which the window does not use.
 "$qt/bin/windeployqt.exe" --release --no-translations --no-compiler-runtime --no-opengl-sw --no-system-d3d-compiler \
-    --no-system-dxc-compiler --skip-plugin-types generic,iconengines,imageformats,networkinformation,tls \
+    --no-system-dxc-compiler --skip-plugin-types generic,iconengines,imageformats,networkinformation \
     "$folder/kaepora.exe"
 python -I "$(dirname "${BASH_SOURCE[0]}")/third_party_notices.py" --windows "$folder" "$qt"
 

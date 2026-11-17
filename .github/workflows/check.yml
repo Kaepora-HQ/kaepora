@@ -226,6 +226,11 @@ jobs:
             exit 1
           fi
 
+      # The package carries Qt's Schannel plugin and not its OpenSSL one, which Qt would prefer, so the tests use
+      # Schannel too.
+      - name: Leave Qt's OpenSSL plugin out of the tests
+        run: rm "$QT_ROOT_DIR/plugins/tls/qopensslbackend.dll"
+
       # The window tests make their certificate with the openssl command.
       - name: Run tests
         run: |
