@@ -4,13 +4,24 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
+    inputs:
+      ref:
+        description: The release's commit, which can be older than the commit that started the run
+        type: string
+        required: false
+      version:
+        description: The release's version, which the AppImage carries in place of the build number
+        type: string
+        required: false
 
 permissions:
   contents: read
 
-# A newer push cancels a pull request's run; main runs finish so each merge saves its compiler cache.
+# A newer push cancels a pull request's run; main runs finish so each merge saves its compiler cache. A called workflow
+# takes the caller's name in github.workflow, so a release's build and this workflow's own run never share a group.
 concurrency:
-  group: check-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -38,6 +49,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
 
       - name: Install Linux dependencies
         run: |
@@ -116,7 +128,11 @@ jobs:
           retention-days: 7
 
       - name: Package
-        run: tools/package-linux.sh build "kaepora-$GITHUB_SHA-linux-x86_64" "build-$GITHUB_RUN_NUMBER-${GITHUB_SHA::7}"
+        env:
+          VERSION: ${{ inputs.version }}
+        run: >-
+          tools/package-linux.sh build "kaepora-$GITHUB_SHA-linux-x86_64"
+          "${VERSION:-build-$GITHUB_RUN_NUMBER-${GITHUB_SHA::7}}"
 
       - name: Upload packages
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -152,6 +168,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
 
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
@@ -294,6 +311,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
           sparse-checkout: tools/check-windows-package.ps1
           sparse-checkout-cone-mode: false
 
