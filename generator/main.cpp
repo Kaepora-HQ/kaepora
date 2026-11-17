@@ -6,8 +6,9 @@
 #include <stdexcept>
 #include <string>
 
+// In binary mode, so the files hold the same bytes on every system.
 static void Write(const char* path, const std::string& text) {
-    std::ofstream out(path);
+    std::ofstream out(path, std::ios::binary);
     out << text;
     out.close();
     if (!out) {
