@@ -41,10 +41,8 @@ GameInteractor* GameInteractor::Instance = nullptr;
 ItemTableManager* ItemTableManager::Instance = nullptr;
 
 // The generator reads settings through the in-game Randomizer object; the rest of it is game-only.
-Randomizer::Randomizer() {
-}
-Randomizer::~Randomizer() {
-}
+Randomizer::Randomizer() = default;
+Randomizer::~Randomizer() = default;
 u8 Randomizer::GetRandoSettingValue(RandomizerSettingKey randoSettingKey) {
     return Rando::Context::GetInstance()->GetOption(randoSettingKey).Get();
 }
