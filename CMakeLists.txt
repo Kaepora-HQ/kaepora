@@ -47,7 +47,8 @@ target_link_libraries(kaepora-reach PRIVATE kaepora-generator)
 # Designated initializers leave out the members that start empty, which -Wextra would report.
 set(WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
 
-add_library(kaepora-patch-files STATIC patcher/byml.cpp patcher/compression.cpp patcher/mod.cpp patcher/romfs.cpp)
+add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp patcher/mod.cpp
+                                       patcher/romfs.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE zstd::libzstd)
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
@@ -59,6 +60,10 @@ target_compile_options(kaepora-patch PRIVATE ${WARNINGS})
 add_executable(kaepora-patch-roundtrip tests/byml_roundtrip.cpp)
 target_link_libraries(kaepora-patch-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-roundtrip PRIVATE ${WARNINGS})
+
+add_executable(kaepora-patch-flow-roundtrip tests/bfevfl_roundtrip.cpp)
+target_link_libraries(kaepora-patch-flow-roundtrip PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch-flow-roundtrip PRIVATE ${WARNINGS})
 
 enable_testing()
 add_test(NAME upstream-tool COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
@@ -81,6 +86,7 @@ set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
 set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
+    add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input size-table size-table-unchanged start-flags)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
