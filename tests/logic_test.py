@@ -152,6 +152,13 @@ class LogicTest(unittest.TestCase):
         # The chest stands beyond the basement below the holes, and no tentacle stands in the way.
         self.assertTrue(self.reachable("Jabu Jabus Belly Map Chest", ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")))
 
+    def test_invisible_chests_and_illusion_walls_need_no_lens(self):
+        # An invisible chest opens for Link who walks up to it, and Link walks through an illusion wall.
+        no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Gerudo Training Ground Hidden Ceiling Chest", no_lens))
+        self.assertTrue(self.reachable("Bottom of the Well Front Left Fake Wall Chest", no_lens))
+        self.assertTrue(self.reachable("Shadow Temple Map Chest", no_lens))
+
     def test_well_locks_each_take_both_keys(self):
         # Both locked doors open off the middle, so either can take the first of the two keys.
         self.assertTrue(self.reachable("Bottom of the Well GS West Inner Room"))

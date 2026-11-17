@@ -23,7 +23,8 @@ void RegionTable_Init_ShadowTemple() {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_ENTRYWAY,               (ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)) &&
                                                               (logic->CanUse(RG_HOVER_BOOTS) || logic->CanUse(RG_HOOKSHOT) || logic->CanMegajump())),
-        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        // Link opens invisible chests and walks through illusion walls without the Lens of Truth.
+        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, true),
         ENTRANCE(RR_SHADOW_TEMPLE_FIRST_BEAMOS,           AnyAgeTime([]{return logic->HasItem(RG_POWER_BRACELET) && (logic->CanUse(RG_HOVER_BOOTS) || (ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)));}) &&
                                                               (logic->CanUse(RG_HOVER_BOOTS) || (logic->IsAdult && logic->BunnyHood()) || logic->CanMegajump())),
     });
@@ -38,11 +39,10 @@ void RegionTable_Init_ShadowTemple() {
     }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_BEGINNING,             true),
-        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE, ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
-        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_END,  ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE, true),
+        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_END,  true),
     });
 
-    // shares RR_SHADOW_TEMPLE_WHISPERING_WALLS_START area with pots, but handles lens access for reaching door at start
     areaTable[RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE] = Region("Shadow Temple Whispering Walls Side", SCENE_SHADOW_TEMPLE, {
         //Events
         EVENT_ACCESS(LOGIC_NUT_ACCESS, logic->CanBreakPots()),
@@ -52,7 +52,7 @@ void RegionTable_Init_ShadowTemple() {
         LOCATION(RC_SHADOW_TEMPLE_WHISPERING_WALLS_POT_2, logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START,     ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START,     true),
         ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_SIDE_ROOM, true),
     });
 
@@ -64,7 +64,7 @@ void RegionTable_Init_ShadowTemple() {
         LOCATION(RC_SHADOW_TEMPLE_NEAR_DEAD_HAND_POT_1,   logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_SHADOW_TEMPLE_WHISPERING_WALLS_START, true),
         ENTRANCE(RR_SHADOW_TEMPLE_DEAD_HAND,              true),
     });
 
@@ -207,7 +207,7 @@ void RegionTable_Init_ShadowTemple() {
     areaTable[RR_SHADOW_TEMPLE_INVISIBLE_SPINNING_BLADES] = Region("Shadow Temple Invisible Spinning Blades", SCENE_SHADOW_TEMPLE, {}, {
         //Locations
         LOCATION(RC_SHADOW_TEMPLE_INVISIBLE_BLADES_VISIBLE_CHEST,   logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanKillEnemy(RE_KEESE) && logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_SHADOW_TEMPLE_INVISIBLE_BLADES_INVISIBLE_CHEST, logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanKillEnemy(RE_KEESE) && (ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_SHADOW_TEMPLE_INVISIBLE_BLADES_INVISIBLE_CHEST, logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanKillEnemy(RE_KEESE) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_SHADOW_TEMPLE_GS_LIKE_LIKE_ROOM,                AnyAgeTime([]{return logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanKillEnemy(RE_KEESE);}) && ((logic->IsAdult && logic->CanKillEnemy(RE_GOLD_SKULLTULA, ED_SHORT_JUMPSLASH)) || logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG))),
         //We cannot repeat the MQ invisible blades trick for these hearts as the like-like does not respawn if the room is cleared
         LOCATION(RC_SHADOW_TEMPLE_INVISIBLE_BLADES_LEFT_HEART,      (logic->CanUse(RG_SONG_OF_TIME) && logic->IsAdult) || logic->CanUse(RG_BOOMERANG)),
@@ -325,7 +325,7 @@ void RegionTable_Init_ShadowTemple() {
     areaTable[RR_SHADOW_TEMPLE_ROOM_TO_BOAT] = Region("Shadow Temple Room to Boat", SCENE_SHADOW_TEMPLE, {}, {
         //Locations
         LOCATION(RC_SHADOW_TEMPLE_AFTER_WIND_ENEMY_CHEST,  logic->CanKillEnemy(RE_GIBDO, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_SHADOW_TEMPLE_AFTER_WIND_HIDDEN_CHEST, (ctx->GetTrickOption(RT_LENS_SHADOW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasExplosives() && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_SHADOW_TEMPLE_AFTER_WIND_HIDDEN_CHEST, logic->HasExplosives() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_SHADOW_TEMPLE_AFTER_WIND_POT_1,        logic->CanBreakPots()),
         LOCATION(RC_SHADOW_TEMPLE_AFTER_WIND_POT_2,        logic->CanBreakPots()),
     }, {

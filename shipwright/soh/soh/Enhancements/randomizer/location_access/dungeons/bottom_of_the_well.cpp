@@ -31,8 +31,9 @@ void RegionTable_Init_BottomOfTheWell() {
         EVENT_ACCESS(LOGIC_BOTW_LOWERED_WATER, logic->CanUse(RG_ZELDAS_LULLABY)),
     }, {
         //Locations
-        LOCATION(RC_BOTTOM_OF_THE_WELL_FRONT_LEFT_FAKE_WALL_CHEST,   (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_BOTTOM_OF_THE_WELL_RIGHT_BOTTOM_FAKE_WALL_CHEST, (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
+        // Link opens invisible chests and walks through illusion walls without the Lens of Truth.
+        LOCATION(RC_BOTTOM_OF_THE_WELL_FRONT_LEFT_FAKE_WALL_CHEST,   logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_BOTTOM_OF_THE_WELL_RIGHT_BOTTOM_FAKE_WALL_CHEST, logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_BOTTOM_OF_THE_WELL_FRONT_CENTER_BOMBABLE_CHEST,  logic->HasExplosives() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_BOTTOM_OF_THE_WELL_BACK_LEFT_BOMBABLE_CHEST,     logic->HasExplosives() && (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_BOTTOM_OF_THE_WELL_UNDERWATER_FRONT_CHEST,       (logic->Get(LOGIC_BOTW_LOWERED_WATER) && logic->HasItem(RG_OPEN_CHEST)) || logic->CanOpenUnderwaterChest()),
@@ -43,9 +44,9 @@ void RegionTable_Init_BottomOfTheWell() {
     }, {
         //Exits
         ENTRANCE(RR_BOTW_CORRIDOR,          logic->CanPassEnemy(RE_BIG_SKULLTULA)),
-        ENTRANCE(RR_BOTW_MIDDLE,            ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_BOTW_MIDDLE,            true),
         ENTRANCE(RR_BOTW_PIT_CAGE,          ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
-        ENTRANCE(RR_BOTW_HIDDEN_POTS,       ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_BOTW_HIDDEN_POTS,       true),
         ENTRANCE(RR_BOTW_CORNER_CRAWLSPACE, logic->CanUse(RG_CRAWL)),
         //Climb always needed in case water is lowered out of logic
         ENTRANCE(RR_BOTW_BEHIND_MOAT,           ((logic->Get(LOGIC_BOTW_LOWERED_WATER) && (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT))) || logic->HasItem(RG_BRONZE_SCALE) ||
@@ -57,14 +58,13 @@ void RegionTable_Init_BottomOfTheWell() {
         ENTRANCE(RR_BOTW_B3_BLOCKED_GRASS,  ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
     });
 
-    //This region combines the Middle with the perimeter's hidden areas. If a warp puts Link into the middle without crossing the perimeter or using lens, it will need it's own region
     areaTable[RR_BOTW_MIDDLE] = Region("Bottom of the Well Middle", SCENE_BOTTOM_OF_THE_WELL, {}, {
         //Locations
         //You can just barely pass the spider on the right side without damage or items, but it's probably tight enough to count as as a trick
         LOCATION(RC_BOTTOM_OF_THE_WELL_CENTER_SKULLTULA_CHEST, (logic->CanPassEnemy(RE_BIG_SKULLTULA) || logic->TakeDamage()) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_PERIMETER,       ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_BOTW_PERIMETER,       true),
         ENTRANCE(RR_BOTW_PIT_CAGE,        (ctx->GetTrickOption(RT_BOTW_PITS) || logic->CanUse(RG_HOVER_BOOTS)) && (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH))),
         ENTRANCE(RR_BOTW_SKULL_WALL_ROOM, logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
         ENTRANCE(RR_BOTW_INVISIBLE_PATH,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
@@ -79,7 +79,7 @@ void RegionTable_Init_BottomOfTheWell() {
         LOCATION(RC_BOTTOM_OF_THE_WELL_LEFT_SIDE_POT_3, logic->CanBreakPots()),
     }, {
         //Exits
-        ENTRANCE(RR_BOTW_PERIMETER, ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)),
+        ENTRANCE(RR_BOTW_PERIMETER, true),
     });
 
     areaTable[RR_BOTW_CORNER_CRAWLSPACE] = Region("Bottom of the Well Corner Crawlspace", SCENE_BOTTOM_OF_THE_WELL, {}, {}, {
@@ -134,7 +134,8 @@ void RegionTable_Init_BottomOfTheWell() {
 
     areaTable[RR_BOTW_INVISIBLE_PATH] = Region("Bottom of the Well Invisible Path", SCENE_BOTTOM_OF_THE_WELL, {}, {
         //Locations
-        LOCATION(RC_BOTTOM_OF_THE_WELL_GS_EAST_INNER_ROOM, logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
+        // A hidden pit lies between the door and the skulltula.
+        LOCATION(RC_BOTTOM_OF_THE_WELL_GS_EAST_INNER_ROOM, (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
     }, {
         //Exits
         ENTRANCE(RR_BOTW_MIDDLE,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),
@@ -179,7 +180,7 @@ void RegionTable_Init_BottomOfTheWell() {
     areaTable[RR_BOTW_DEAD_HAND_ROOM] = Region("Bottom of the Well Dead Hand Room", SCENE_BOTTOM_OF_THE_WELL, {}, {
         //Locations
         LOCATION(RC_BOTTOM_OF_THE_WELL_LENS_OF_TRUTH_CHEST, logic->CanKillEnemy(RE_DEAD_HAND) && logic->CanOpenLargeChest()),
-        LOCATION(RC_BOTTOM_OF_THE_WELL_INVISIBLE_CHEST,     (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_BOTTOM_OF_THE_WELL_INVISIBLE_CHEST,     logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_BOTW_NEAR_BOSS_UPPER, logic->CanKillEnemy(RE_DEAD_HAND)),
