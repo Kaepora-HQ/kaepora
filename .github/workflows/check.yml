@@ -98,8 +98,11 @@ jobs:
           test -x build/kaepora
 
       # The tests that read the game file are registered only when KAEPORA_GAME_NUP names it, and it never comes here.
+      # The window tests make their certificate with the openssl command.
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure --no-tests=error --parallel "$(nproc)"
+        run: |
+          command -v openssl
+          ctest --test-dir build --output-on-failure --no-tests=error --parallel "$(nproc)"
 
       - name: Make the seeds to compare with Windows
         run: python3 -I tests/same_seeds.py build/kaepora-seedgen seeds
@@ -223,8 +226,11 @@ jobs:
             exit 1
           fi
 
+      # The window tests make their certificate with the openssl command.
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure --no-tests=error --parallel "$NUMBER_OF_PROCESSORS"
+        run: |
+          command -v openssl
+          ctest --test-dir build --output-on-failure --no-tests=error --parallel "$NUMBER_OF_PROCESSORS"
 
       - name: Make the seeds to compare with Linux
         run: python -I tests/same_seeds.py build/kaepora-seedgen.exe seeds

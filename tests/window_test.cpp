@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDateTime>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDirListing>
 #include <QJsonArray>
@@ -13,17 +15,49 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkProxy>
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalSpy>
+#include <QSslCertificate>
+#include <QSslConfiguration>
+#include <QSslKey>
+#include <QSslSocket>
 #include <QStandardPaths>
+#include <QTcpServer>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTreeWidget>
 
+#include <functional>
 #include <memory>
 
 using Files = QMap<QString, QByteArray>;
+
+constexpr char LatestPath[] = "/PixelHabits/kaepora/releases/latest/download/latest.json";
+constexpr char ReleasePage[] = "https://github.com/PixelHabits/kaepora/releases/tag/v99.0.0";
+
+static QByteArray Latest(const QString& version, const QString& page = ReleasePage) {
+    return QJsonDocument(QJsonObject{ { "version", version }, { "url", page } }).toJson();
+}
+
+static QByteArray Answer(const QByteArray& status, const QByteArray& body, const QByteArray& headers = {}) {
+    return "HTTP/1.1 " + status + "\r\n" + headers + "Content-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" +
+           body;
+}
+
+static QByteArray Ok(const QByteArray& body) {
+    return Answer("200 OK", body);
+}
+
+// What GitHub sends Qt for a release file that does not exist.
+static const QByteArray NotFound = Answer("404 Not Found", R"({"error":"Not Found"})");
+
+// GitHub's first redirect for the newest release's file, to the same file under the release's tag.
+static const QByteArray ToTheTag =
+    Answer("302 Found", {}, "Location: https://github.com/PixelHabits/kaepora/releases/download/v99.0.0/latest.json\r\n");
 
 static Files FilesIn(const QString& folder) {
     Files files;
@@ -37,9 +71,13 @@ static Files FilesIn(const QString& folder) {
     return files;
 }
 
-static QJsonObject ReadJson(const QString& path) {
+static QByteArray Read(const QString& path) {
     QFile file(path);
-    return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object() : QJsonObject();
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
+static QJsonObject ReadJson(const QString& path) {
+    return QJsonDocument::fromJson(Read(path)).object();
 }
 
 static void Write(const QString& path, const QByteArray& data) {
@@ -50,25 +88,98 @@ static void Write(const QString& path, const QByteArray& data) {
     }
 }
 
+// Stands in for GitHub as Qt's proxy for this process. An HTTPS request opens a tunnel to it with CONNECT, and it
+// answers over TLS with a certificate for github.com that this process trusts.
+class FakeGitHub : public QTcpServer {
+public:
+    QByteArray answer;
+    int requests = 0;
+    // Runs when the request for latest.json arrives, before its answer goes out.
+    std::function<void()> requested;
+
+    explicit FakeGitHub(const QString& folder) {
+        // An RSA key, since Qt's Schannel backend, the one Windows uses, can serve only an RSA or a DSA key.
+        QProcess openssl;
+        openssl.start("openssl", { "req", "-x509", "-newkey", "rsa:2048", "-noenc", "-subj", "/CN=github.com",
+                                   "-addext", "subjectAltName=DNS:github.com", "-keyout", folder + "/github.key",
+                                   "-out", folder + "/github.pem" });
+        if (!openssl.waitForFinished() || openssl.exitCode() != 0) {
+            qFatal("openssl made no certificate: %s", openssl.readAllStandardError().constData());
+        }
+        certificate = QSslCertificate(Read(folder + "/github.pem"));
+        key = QSslKey(Read(folder + "/github.key"), QSsl::Rsa);
+        listen(QHostAddress::LocalHost);
+        QNetworkProxy::setApplicationProxy({ QNetworkProxy::HttpProxy, serverAddress().toString(), serverPort() });
+        QSslConfiguration tls = QSslConfiguration::defaultConfiguration();
+        tls.addCaCertificate(certificate);
+        QSslConfiguration::setDefaultConfiguration(tls);
+    }
+
+protected:
+    void incomingConnection(qintptr descriptor) override {
+        auto* socket = new QSslSocket(this);
+        socket->setSocketDescriptor(descriptor);
+        socket->setLocalCertificate(certificate);
+        socket->setPrivateKey(key);
+        connect(socket, &QSslSocket::readyRead, socket, [this, socket] {
+            // A request ends with an empty line.
+            if (!socket->peek(socket->bytesAvailable()).contains("\r\n\r\n")) {
+                return;
+            }
+            const QByteArray request = socket->readAll();
+            const bool offline = answer.isEmpty();
+            if (!socket->isEncrypted() && offline) {
+                socket->disconnectFromHost();
+            } else if (!socket->isEncrypted()) {
+                socket->write("HTTP/1.1 200 Connection established\r\n\r\n");
+                socket->startServerEncryption();
+            } else {
+                ++requests;
+                const bool latest = request.startsWith(QByteArray("GET ") + LatestPath + ' ');
+                if (latest && requested) {
+                    requested();
+                }
+                socket->write(latest ? answer : NotFound);
+            }
+        });
+    }
+
+private:
+    QSslCertificate certificate;
+    QSslKey key;
+};
+
 class WindowTest : public QObject {
     Q_OBJECT
 
 public:
-    explicit WindowTest(const QString& home) : mods(home + "/mods") {
+    explicit WindowTest(const QString& home) : mods(home + "/mods"), github(home) {
+        QDesktopServices::setUrlHandler("https", this, "openUrl");
+    }
+
+    ~WindowTest() override {
+        QDesktopServices::unsetUrlHandler("https");
+    }
+
+    Q_INVOKABLE void openUrl(const QUrl& url) {
+        opened << url;
     }
 
 private:
     // Making a seed takes about a second and a half.
     static constexpr int MakeTimeout = 60'000;
+    static constexpr int NoRequestWait = 1000;
 
     const QString game = qEnvironmentVariable("KAEPORA_GAME_NUP");
     const QString library = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kaepora/seeds";
     const QString mods;
+    FakeGitHub github;
+    QList<QUrl> opened;
     std::unique_ptr<Window> window;
 
     QPushButton* button(const QString& text) const {
         for (QPushButton* button : window->findChildren<QPushButton*>()) {
-            if (button->window() == window.get() && button->text() == text) {
+            if (button->window() == window.get() && button->isVisible() && button->text() == text) {
                 return button;
             }
         }
@@ -88,7 +199,18 @@ private:
     }
 
     bool shows(const QString& text) const {
-        return label(text) != nullptr;
+        const QLabel* found = label(text);
+        return found != nullptr && found->isVisible();
+    }
+
+    QStringList texts() const {
+        QStringList texts;
+        for (const QLabel* label : window->findChildren<QLabel*>()) {
+            if (label->isVisible()) {
+                texts << label->text();
+            }
+        }
+        return texts;
     }
 
     QLabel* label(const QString& text) const {
@@ -198,6 +320,15 @@ private:
         dialogButton("OK")->click();
     }
 
+    bool openAndAsk(const QByteArray& answer) {
+        github.answer = answer;
+        QSettings().remove("lastVersionCheck");
+        window = std::make_unique<Window>();
+        window->show();
+        QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
+        return replies.wait();
+    }
+
 private slots:
     void init() {
         QDir(library).removeRecursively();
@@ -207,6 +338,11 @@ private slots:
         settings.clear();
         settings.setValue("gameFile", game);
         settings.setValue("modsFolder", mods);
+        settings.setValue("lastVersionCheck", QDateTime::currentDateTimeUtc());
+        github.answer = NotFound;
+        github.requests = 0;
+        github.requested = nullptr;
+        opened.clear();
         window = std::make_unique<Window>();
         window->show();
     }
@@ -488,6 +624,95 @@ private slots:
             QCOMPARE(make.exitCode(), 0);
             QCOMPARE(FilesIn(library + "/" + seed), FilesIn(alone.filePath(seed)));
         }
+    }
+
+    void aNewerVersionShowsTheNotice() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QVERIFY(shows("Kaepora 99.0.0 is out."));
+        button("Download")->click();
+        QCOMPARE(opened, QList<QUrl>{ QUrl(ReleasePage) });
+        QCOMPARE(github.requests, 1);
+    }
+
+    void quietOutcomesShowNothing_data() {
+        QTest::addColumn<QByteArray>("answer");
+        QTest::newRow("offline") << QByteArray();
+        QTest::newRow("no release yet") << NotFound;
+        QTest::newRow("not JSON") << Ok("<!DOCTYPE html>");
+        QTest::newRow("a version that is not a number") << Ok(Latest("v99.0.0"));
+        QTest::newRow("a page on another site")
+            << Ok(Latest("99.0.0", "https://example.com/PixelHabits/kaepora/releases/tag/v99.0.0"));
+        QTest::newRow("a page of another repository")
+            << Ok(Latest("99.0.0", "https://github.com/someone/kaepora/releases/tag/v99.0.0"));
+        QTest::newRow("a path out of the releases")
+            << Ok(Latest("99.0.0", "https://github.com/PixelHabits/kaepora/releases/tag/../../../someone/kaepora"));
+        QTest::newRow("the version running") << Ok(Latest(KAEPORA_VERSION));
+    }
+
+    void quietOutcomesShowNothing() {
+        QFETCH(QByteArray, answer);
+        const QStringList quiet = texts();
+        QVERIFY(openAndAsk(answer));
+        QCOMPARE(texts(), quiet);
+        QVERIFY(button("Download") == nullptr);
+        QVERIFY(box() == nullptr);
+    }
+
+    void theBoxTurnsTheCheckOff() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        auto* check = window->findChild<QCheckBox*>();
+        QCOMPARE(check->text(), QString("Check for new versions"));
+        QVERIFY(check->isChecked());
+        check->click();
+        QVERIFY(!shows("Kaepora 99.0.0 is out."));
+        QVERIFY(button("Download") == nullptr);
+
+        QSettings().remove("lastVersionCheck");
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(!window->findChild<QCheckBox*>()->isChecked());
+        QVERIFY(button("Download") == nullptr);
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(github.requests, 1);
+    }
+
+    void aDayPassesBetweenRequests() {
+        const QDateTime now = QDateTime::currentDateTimeUtc();
+        QSettings().setValue("lastVersionCheck", now.addSecs(-23 * 60 * 60));
+        window = std::make_unique<Window>();
+        window->show();
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(github.requests, 0);
+
+        QSettings().setValue("lastVersionCheck", now.addSecs(-25 * 60 * 60));
+        window = std::make_unique<Window>();
+        window->show();
+        QTRY_COMPARE(github.requests, 1);
+    }
+
+    void aNewerVersionIsRememberedUntilItRuns() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Kaepora 99.0.0 is out."));
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(github.requests, 1);
+
+        QSettings().setValue("latestRelease", QString::fromUtf8(Latest(KAEPORA_VERSION)));
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(button("Download") == nullptr);
+    }
+
+    void untickingStopsARequestInFlight() {
+        github.requested = [this] {
+            // The offscreen platform warns when a window shows. From the request on, nothing may.
+            QTest::failOnWarning();
+            window->findChild<QCheckBox*>()->click();
+        };
+        QVERIFY(openAndAsk(ToTheTag));
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(github.requests, 1);
     }
 };
 

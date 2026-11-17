@@ -1,6 +1,7 @@
 #include "window.h"
 
 #include "mod.h"
+#include "new_version.h"
 #include "seed.h"
 #include "settings_dialog.h"
 
@@ -195,6 +196,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     auto* layout = new QVBoxLayout(this);
     layout->addLayout(form);
     layout->addWidget(status);
+    layout->addWidget(NewVersionRow());
 
     connect(seedField, &QLineEdit::textChanged, this, &Window::updateButtons);
     connect(random, &QPushButton::clicked, this, [this] {

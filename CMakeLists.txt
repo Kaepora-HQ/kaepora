@@ -61,8 +61,9 @@ target_include_directories(kaepora-generator PUBLIC
 )
 # functions.h needs a level for game prints. 6 turns them off, as in SoH.
 target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
-# The version goes to the one file that writes it into the spoiler log, so a new version rebuilds that file alone.
-set_source_files_properties(generator/generate.cpp PROPERTIES COMPILE_DEFINITIONS "KAEPORA_VERSION=\"${PROJECT_VERSION}\"")
+# The version goes only to the files that use it, so a new version rebuilds those alone.
+set_source_files_properties(generator/generate.cpp kaepora/new_version.cpp tests/window_test.cpp
+                            PROPERTIES COMPILE_DEFINITIONS "KAEPORA_VERSION=\"${PROJECT_VERSION}\"")
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
@@ -110,10 +111,11 @@ target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-
 target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
-find_package(Qt6 QUIET COMPONENTS Widgets OPTIONAL_COMPONENTS Test)
+find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
-    add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp kaepora/window.cpp)
-    target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets)
+    add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
+                           kaepora/window.cpp)
+    target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
     set_target_properties(kaepora PROPERTIES WIN32_EXECUTABLE ON)
 
@@ -164,15 +166,20 @@ add_test(NAME logic COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/te
                             $<TARGET_FILE:kaepora-reach>)
 
 if(Qt6Test_FOUND)
-    add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
-                                       kaepora/window.cpp)
+    add_executable(kaepora-window-test tests/window_test.cpp kaepora/new_version.cpp kaepora/seed.cpp
+                                       kaepora/settings_dialog.cpp kaepora/window.cpp)
     set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
-    target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Test)
+    target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network
+                                                      Qt6::Test)
     target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
     # The window's tests that make no seed need no game file.
-    foreach(TEST IN ITEMS lichiisModsFolderIsTheDefault)
+    foreach(TEST IN ITEMS lichiisModsFolderIsTheDefault aNewerVersionShowsTheNotice quietOutcomesShowNothing
+                          theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
+                          untickingStopsARequestInFlight)
         add_test(NAME window_${TEST} COMMAND kaepora-window-test ${TEST})
-        set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+        # On Windows, QTest writes to the debugger rather than to stderr when no console is attached, as under ctest.
+        set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT
+                             "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
     endforeach()
 endif()
 
