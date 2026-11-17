@@ -43,7 +43,6 @@ class LogicTest(unittest.TestCase):
                                         ("Forest Temple Bow Chest", "Green Rupee")))
 
     def test_only_adult_link_buys_a_tunic(self):
-        # Without the Ocarina of Time, Link never becomes adult.
         never_adult = ("HF Ocarina of Time Item", "Green Rupee")
         self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
         self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
