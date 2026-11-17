@@ -2232,17 +2232,5 @@ static std::string ReplaceItemName(const char* c_str, GetItemEntry getItemEntry)
 }
 
 void Rando::Traps::BuildIceTrapMessage(CustomMessage& msg, GetItemEntry getItemEntry) {
-    if (CVarGetInteger(CVAR_GENERAL("LetItSnow"), 0)) {
-        msg = CustomMessage(
-            /*english*/ "This year for Christmas, all you get is #COAL#!",
-            /*german*/ "Dieses Jahr gibt es nur #SOCKEN#! %rFröhliche Weihnachten%w!",
-            /*french*/ "Pour Noël, cette année, tu n'auras que du #CHARBON#! %rJoyeux Noël%w!", { QM_BLUE });
-    } else {
-        msg = CustomMessage(ReplaceItemName(ShipUtils::RandomElement(englishIceTrapMessages), getItemEntry),
-                            ReplaceItemName(ShipUtils::RandomElement(germanIceTrapMessages), getItemEntry),
-                            ReplaceItemName(ShipUtils::RandomElement(frenchIceTrapMessages), getItemEntry),
-                            { QM_BLUE, QM_BLUE, QM_BLUE });
-    }
-
     msg.AutoFormat();
 }

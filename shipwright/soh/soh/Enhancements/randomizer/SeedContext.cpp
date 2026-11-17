@@ -9,7 +9,6 @@
 #include "rando_hash.h"
 #include "fishsanity.h"
 #include "macros.h"
-#include "3drando/hints.hpp"
 #include "soh/util.h"
 #include "../kaleido.h"
 #include "soh/Enhancements/randomizer/Traps.h"
@@ -42,10 +41,6 @@ Context::Context() {
     mTrials = std::make_shared<Trials>();
 }
 
-RandomizerArea Context::GetAreaFromString(std::string str) {
-    return (RandomizerArea)StaticData::areaNameToEnum[str];
-}
-
 int Context::CountEmptyLocations(const bool countShops) {
     auto ctx = Rando::Context::GetInstance();
     return static_cast<int>(count_if(allLocations.begin(), allLocations.end(), [ctx, countShops](const auto loc) {
@@ -55,11 +50,6 @@ int Context::CountEmptyLocations(const bool countShops) {
 }
 
 void Context::InitStaticData() {
-    StaticData::HintTable_Init();
-    StaticData::trialNameToEnum = StaticData::PopulateTranslationMap(StaticData::trialData);
-    StaticData::hintNameToEnum = StaticData::PopulateTranslationMap(StaticData::hintNames);
-    StaticData::hintTypeNameToEnum = StaticData::PopulateTranslationMap(StaticData::hintTypeNames);
-    StaticData::areaNameToEnum = StaticData::PopulateTranslationMap(StaticData::areaNames);
     StaticData::InitLocationTable();
 }
 
@@ -75,14 +65,6 @@ std::shared_ptr<Context> Context::CreateInstance() {
 
 std::shared_ptr<Context> Context::GetInstance() {
     return mContext.lock();
-}
-
-Hint* Context::GetHint(const RandomizerHint hintKey) {
-    return &hintTable[hintKey];
-}
-
-void Context::AddHint(const RandomizerHint hintId, const Hint hint) {
-    hintTable[hintId] = hint; // RANDOTODO this should probably be an rvalue
 }
 
 ItemLocation* Context::GetItemLocation(const RandomizerCheck locKey) {
@@ -329,15 +311,6 @@ void Context::LocationReset() {
     }
 }
 
-void Context::HintReset() {
-    for (const RandomizerCheck il : StaticData::GetGossipStoneLocations()) {
-        GetItemLocation(il)->ResetVariables();
-    }
-    for (Hint& hint : hintTable) {
-        hint.ResetVariables();
-    }
-}
-
 void Context::CreateItemOverrides() {
     SPDLOG_DEBUG("NOW CREATING OVERRIDES");
     for (RandomizerCheck locKey : allLocations) {
@@ -420,9 +393,7 @@ void Context::ParseSpoiler(const char* spoilerFileName) {
         ParseItemLocationsJson(spoilerFileJson);
         ParseTricksJson(spoilerFileJson);
         mEntranceShuffler->ParseJson(spoilerFileJson);
-        ParseHintJson(spoilerFileJson);
         mDungeons->ParseJson(spoilerFileJson);
-        mTrials->ParseJson(spoilerFileJson);
         mSpoilerLoaded = true;
         mSeedGenerated = false;
     } catch (...) { SPDLOG_ERROR("Failed to load Spoiler File: {}", spoilerFileName); }
@@ -460,26 +431,6 @@ void Context::ParseItemLocationsJson(const nlohmann::json& spoilerFileJson) {
             itemLocationTable[rc].SetPlacedItem(StaticData::itemNameToEnum[it.value().get<std::string>()]);
         }
     }
-}
-
-void Context::WriteHintJson(nlohmann::ordered_json& spoilerFileJson) {
-    for (Hint hint : hintTable) {
-        hint.logHint(spoilerFileJson);
-    }
-}
-
-void Context::ParseHintJson(const nlohmann::json& spoilerFileJson) {
-    nlohmann::json gossipHintsJson = spoilerFileJson.value("Gossip Stone Hints", nlohmann::json());
-    for (auto hintData : gossipHintsJson.items()) {
-        RandomizerHint hint = (RandomizerHint)StaticData::hintNameToEnum[hintData.key()];
-        AddHint(hint, Hint(hint, hintData.value()));
-    }
-    nlohmann::json staticHintsJson = spoilerFileJson.value("Static Hints", nlohmann::json());
-    for (auto hintData : staticHintsJson.items()) {
-        RandomizerHint hint = (RandomizerHint)StaticData::hintNameToEnum[hintData.key()];
-        AddHint(hint, Hint(hint, hintData.value()));
-    }
-    CreateStaticHints();
 }
 
 void Context::ParseTricksJson(const nlohmann::json& spoilerFileJson) {

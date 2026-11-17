@@ -13,11 +13,8 @@ class TrialInfo {
     TrialInfo();
     ~TrialInfo();
 
-    CustomMessage GetName() const;
     RandomizerHintTextKey GetNameKey() const;
-    TrialKey GetTrialKey() const;
     bool IsSkipped() const;
-    bool IsRequired() const;
     void SetAsRequired();
     void SetAsSkipped();
 
@@ -36,7 +33,6 @@ class Trials {
     void RequireAll();
     std::vector<TrialInfo*> GetTrialList();
     size_t GetTrialListSize() const;
-    void ParseJson(const nlohmann::json& spoilerFileJson);
     std::unordered_map<uint32_t, RandomizerHintTextKey> GetAllTrialHintHeys() const;
 
   private:

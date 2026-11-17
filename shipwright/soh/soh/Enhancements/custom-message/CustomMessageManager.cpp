@@ -74,23 +74,6 @@ CustomMessage::CustomMessage(std::string english_, std::string german_, std::str
     messages[LANGUAGE_FRA] = std::move(french_);
 }
 
-CustomMessage::CustomMessage(std::string english_, std::string german_, std::string french_,
-                             std::vector<std::string> colors_, std::vector<bool> capital_, TextBoxType type_,
-                             TextBoxPosition position_) {
-    messages[LANGUAGE_ENG] = std::move(english_);
-    messages[LANGUAGE_GER] = std::move(german_);
-    messages[LANGUAGE_FRA] = std::move(french_);
-    colors = std::move(colors_);
-    capital = std::move(capital_);
-    type = type_;
-    position = position_;
-}
-
-CustomMessage::CustomMessage(std::string english_, TextBoxType type_, TextBoxPosition position_)
-    : type(type_), position(position_) {
-    messages[LANGUAGE_ENG] = std::move(english_);
-}
-
 CustomMessage::CustomMessage(std::string english_, std::vector<std::string> colors_, std::vector<bool> capital_,
                              TextBoxType type_, TextBoxPosition position_) {
     messages[LANGUAGE_ENG] = std::move(english_);
@@ -98,13 +81,6 @@ CustomMessage::CustomMessage(std::string english_, std::vector<std::string> colo
     capital = std::move(capital_);
     type = type_;
     position = position_;
-}
-
-CustomMessage::CustomMessage(Text text, TextBoxType type_, TextBoxPosition position_)
-    : type(type_), position(position_) {
-    messages[LANGUAGE_ENG] = text.GetEnglish();
-    messages[LANGUAGE_GER] = text.GetGerman();
-    messages[LANGUAGE_FRA] = text.GetFrench();
 }
 
 typedef struct {
@@ -133,7 +109,6 @@ CustomMessage CustomMessage::LoadVanillaMessageTableEntry(uint16_t textId) {
             TextBoxType type = static_cast<TextBoxType>(msgEntry->typePos >> 4);
             // uint8_t icon = msgEntry->segment[1];
             std::string message = std::string(msgEntry->segment, msgEntry->msgSize);
-            msg = CustomMessage(message, type, position);
             // msg.Format(static_cast<ItemID>(icon));
             return msg;
         }
@@ -154,22 +129,9 @@ const std::string CustomMessage::GetFrench(MessageFormat format) const {
     return GetForLanguage(LANGUAGE_FRA, format);
 }
 
-const std::string CustomMessage::GetForCurrentLanguage(MessageFormat format) const {
-    return GetForLanguage(
-        ((Language)gSaveContext.language == LANGUAGE_JPN) ? LANGUAGE_ENG : (Language)gSaveContext.language, format);
-}
-
 const std::string CustomMessage::GetForLanguage(uint8_t language, MessageFormat format) const {
     std::string output = !messages[language].starts_with(TODO_TRANSLATE) ? messages[language] : messages[LANGUAGE_ENG];
     ProcessMessageFormat(output, format);
-    return output;
-}
-
-const std::vector<std::string> CustomMessage::GetAllMessages(MessageFormat format) const {
-    std::vector<std::string> output = messages;
-    for (auto& str : output) {
-        ProcessMessageFormat(str, format);
-    }
     return output;
 }
 
@@ -185,15 +147,8 @@ void CustomMessage::ProcessMessageFormat(std::string& str, MessageFormat format)
     }
 }
 
-const std::vector<bool>& CustomMessage::GetCapital() const {
-    return capital;
-}
-
 void CustomMessage::SetCapital(std::vector<bool> capital_) {
     capital = std::move(capital_);
-}
-const std::vector<std::string>& CustomMessage::GetColors() const {
-    return colors;
 }
 
 void CustomMessage::SetColors(std::vector<std::string> colors_) {
@@ -204,10 +159,6 @@ const TextBoxType& CustomMessage::GetTextBoxType() const {
     return type;
 }
 
-void CustomMessage::SetTextBoxType(TextBoxType boxType) {
-    type = boxType;
-}
-
 const TextBoxPosition& CustomMessage::GetTextBoxPosition() const {
     return position;
 }
@@ -216,27 +167,9 @@ void CustomMessage::SetTextBoxPosition(TextBoxPosition boxPos) {
     position = boxPos;
 }
 
-CustomMessage CustomMessage::operator+(const CustomMessage& right) const {
-    std::vector<std::string> newColors = colors;
-    SohUtils::AppendVector(newColors, right.GetColors());
-    std::vector<bool> newCapital = capital;
-    SohUtils::AppendVector(newCapital, right.GetCapital());
-    return CustomMessage(messages[LANGUAGE_ENG] + right.GetEnglish(MF_RAW),
-                         messages[LANGUAGE_GER] + right.GetGerman(MF_RAW),
-                         messages[LANGUAGE_FRA] + right.GetFrench(MF_RAW), newColors, newCapital, type, position);
-}
-
 CustomMessage CustomMessage::operator+(const std::string& right) const {
     return CustomMessage(messages[LANGUAGE_ENG] + right, messages[LANGUAGE_GER] + right,
                          messages[LANGUAGE_FRA] + right);
-}
-
-void CustomMessage::operator+=(const CustomMessage& right) {
-    messages[LANGUAGE_ENG] += right.GetEnglish(MF_RAW);
-    messages[LANGUAGE_GER] += right.GetGerman(MF_RAW);
-    messages[LANGUAGE_FRA] += right.GetFrench(MF_RAW);
-    SohUtils::AppendVector(colors, right.GetColors());
-    SohUtils::AppendVector(capital, right.GetCapital());
 }
 
 void CustomMessage::operator+=(const std::string& right) {
@@ -285,30 +218,6 @@ void CustomMessage::LoadIntoFont() {
     }
 }
 
-void CustomMessage::Replace(std::string&& oldStr, std::string&& newStr) {
-    for (std::string& str : messages) {
-        size_t position = str.find(oldStr);
-        while (position != std::string::npos) {
-            str.replace(position, oldStr.length(), newStr);
-            position = str.find(oldStr, position + 1);
-        }
-    }
-}
-
-void CustomMessage::Replace(std::string&& oldStr, CustomMessage newMessage) {
-    for (uint8_t language = 0; language < LANGUAGE_MAX - 1; language++) {
-        size_t position = messages[language].find(oldStr);
-        std::string newMsg = newMessage.messages[language];
-        if (language != LANGUAGE_ENG && newMsg == TODO_TRANSLATE) {
-            newMsg = newMessage.messages[LANGUAGE_ENG];
-        }
-        while (position != std::string::npos) {
-            messages[language].replace(position, oldStr.length(), newMsg);
-            position = messages[language].find(oldStr);
-        }
-    }
-}
-
 void CustomMessage::Format(ItemID iid) {
     for (std::string& str : messages) {
         str.insert(0, ITEM_OBTAINED(iid));
@@ -326,12 +235,6 @@ void CustomMessage::Format(ItemID iid) {
     *this += MESSAGE_END();
 }
 
-void CustomMessage::Format() {
-    for (std::string& str : messages) {
-        FormatString(str);
-    }
-}
-
 void CustomMessage::AutoFormat() {
     for (std::string& str : messages) {
         AutoFormatString(str);
@@ -343,13 +246,6 @@ void CustomMessage::AutoFormat(ItemID iid) {
         str.insert(0, ITEM_OBTAINED(iid));
     }
     AutoFormat();
-    Replace(WAIT_FOR_INPUT(), WAIT_FOR_INPUT() + ITEM_OBTAINED(iid));
-}
-
-void CustomMessage::Clean() {
-    for (std::string& str : messages) {
-        CleanString(str);
-    }
 }
 
 void CustomMessage::Encode() {
@@ -637,59 +533,6 @@ void CustomMessage::AutoFormatString(std::string& str) const {
     str += MESSAGE_END();
 }
 
-void CustomMessage::InsertNumber(uint8_t num) {
-    for (std::string& str : messages) {
-        size_t firstBar = str.find('|');
-        if (firstBar != std::string::npos) {
-            size_t secondBar = str.find('|', firstBar + 1);
-            if (secondBar != std::string::npos) {
-                size_t thirdBar = str.find('|', secondBar + 1);
-                if (thirdBar != std::string::npos) {
-                    if (num == 1) {
-                        str.erase(secondBar, thirdBar - secondBar);
-                    } else {
-                        str.erase(firstBar, secondBar - firstBar);
-                    }
-                }
-            }
-        }
-    }
-    // remove the remaining bar
-    Replace("|", "");
-    Replace("[[d]]", std::to_string(num));
-}
-
-void CustomMessage::SetSingularPlural() {
-    for (std::string& str : messages) {
-        size_t firstBar = str.find('|');
-        if (firstBar != std::string::npos) {
-            size_t euroSign = str.find("€");
-            size_t secondBar = str.find('|', firstBar + 1);
-            if (secondBar != std::string::npos) {
-                size_t thirdBar = str.find('|', secondBar + 1);
-                if (thirdBar != std::string::npos) {
-                    if (euroSign == std::string::npos) {
-                        str.erase(secondBar, thirdBar - secondBar);
-                    } else {
-                        str.erase(firstBar, secondBar - firstBar);
-                    }
-                }
-            }
-        }
-    }
-    // remove the remaining bar
-    Replace("|", "");
-    Replace("€", "");
-}
-
-void CustomMessage::Capitalize() {
-    for (std::string& str : messages) {
-        if (!str.empty()) {
-            str[0] = std::toupper(str[0]);
-        }
-    }
-}
-
 void CustomMessage::ReplaceSpecialCharacters(std::string& str) const {
     // add special characters
     for (const auto& specialCharacterPair : textBoxSpecialCharacters) {
@@ -761,16 +604,6 @@ void CustomMessage::ReplaceAltarIcons(std::string& str) const {
     }
 }
 
-void CustomMessage::InsertNames(std::vector<CustomMessage> toInsert) {
-    for (uint8_t a = 0; a < toInsert.size(); a++) {
-        CustomMessage temp = toInsert[a];
-        if (capital.size() > a && capital[a]) {
-            temp.Capitalize();
-        }
-        Replace("[[" + std::to_string(a + 1) + "]]", temp);
-    }
-}
-
 std::string CustomMessage::MESSAGE_END() {
     return "\x02"s;
 }
@@ -787,20 +620,12 @@ std::string CustomMessage::COLOR(std::string x) {
     return "\x05"s + x;
 }
 
-std::string CustomMessage::POINTS(std::string x) {
-    return "\x1E"s + x;
-}
-
 std::string CustomMessage::WAIT_FOR_INPUT() {
     return "\x04"s;
 }
 
 std::string CustomMessage::PLAYER_NAME() {
     return "\x0F"s;
-}
-
-std::string CustomMessage::TWO_WAY_CHOICE() {
-    return "\x1B"s;
 }
 
 std::string CustomMessage::THREE_WAY_CHOICE() {
@@ -840,12 +665,8 @@ CustomMessage CustomMessageManager::RetrieveMessage(const std::string& tableID, 
     }
     CustomMessage message = foundMessage->second;
 
-    if (format == MF_FORMATTED) {
-        message.Format();
-    } else if (format == MF_AUTO_FORMAT) {
+    if (format == MF_AUTO_FORMAT) {
         message.AutoFormat();
-    } else if (format == MF_CLEAN) {
-        message.Clean();
     } else if (format == MF_ENCODE) {
         message.Encode();
     }

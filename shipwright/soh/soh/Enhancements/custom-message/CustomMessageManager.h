@@ -42,15 +42,9 @@ class CustomMessage {
     CustomMessage() = default;
     CustomMessage(std::string english_, std::string german_, std::string french_,
                   TextBoxType type_ = TEXTBOX_TYPE_BLACK, TextBoxPosition position_ = TEXTBOX_POS_BOTTOM);
-    CustomMessage(std::string english_, std::string german_, std::string french_, std::vector<std::string> colors_,
-                  std::vector<bool> capital_ = {}, TextBoxType type_ = TEXTBOX_TYPE_BLACK,
-                  TextBoxPosition position_ = TEXTBOX_POS_BOTTOM);
-    CustomMessage(std::string english_, TextBoxType type_ = TEXTBOX_TYPE_BLACK,
-                  TextBoxPosition position_ = TEXTBOX_POS_BOTTOM);
     // RANDOTODO trying to declare this with capital and type causes ambiguity with the first signature
     CustomMessage(std::string english_, std::vector<std::string> colors_, std::vector<bool> capital_ = {},
                   TextBoxType type_ = TEXTBOX_TYPE_BLACK, TextBoxPosition position_ = TEXTBOX_POS_BOTTOM);
-    CustomMessage(Text text, TextBoxType type_ = TEXTBOX_TYPE_BLACK, TextBoxPosition position_ = TEXTBOX_POS_BOTTOM);
 
     static CustomMessage LoadVanillaMessageTableEntry(uint16_t textId);
 
@@ -58,62 +52,28 @@ class CustomMessage {
     static std::string ITEM_OBTAINED(uint8_t x);
     static std::string NEWLINE();
     static std::string COLOR(std::string x);
-    static std::string POINTS(std::string x); // HIGH_SCORE is also a macro
     static std::string WAIT_FOR_INPUT();
     static std::string PLAYER_NAME();
-    static std::string TWO_WAY_CHOICE();
     static std::string THREE_WAY_CHOICE();
 
     const std::string GetEnglish(MessageFormat format = MF_FORMATTED) const;
     const std::string GetFrench(MessageFormat format = MF_FORMATTED) const;
     const std::string GetGerman(MessageFormat format = MF_FORMATTED) const;
-    const std::string GetForCurrentLanguage(MessageFormat format = MF_FORMATTED) const;
     const std::string GetForLanguage(uint8_t language, MessageFormat format = MF_FORMATTED) const;
-    const std::vector<std::string> GetAllMessages(MessageFormat format = MF_FORMATTED) const;
     void ProcessMessageFormat(std::string& str, MessageFormat format) const;
-    const std::vector<std::string>& GetColors() const;
     void SetColors(std::vector<std::string> colors_);
-    const std::vector<bool>& GetCapital() const;
     void SetCapital(std::vector<bool> capital_);
     const TextBoxType& GetTextBoxType() const;
-    void SetTextBoxType(TextBoxType boxType);
     const TextBoxPosition& GetTextBoxPosition() const;
     void SetTextBoxPosition(TextBoxPosition boxPos);
 
-    CustomMessage operator+(const CustomMessage& right) const;
     CustomMessage operator+(const std::string& right) const;
     void operator+=(const std::string& right);
-    void operator+=(const CustomMessage& right);
     bool operator==(const CustomMessage& operand) const;
     bool operator==(const std::string& operand) const;
     bool operator!=(const CustomMessage& right) const;
 
     void LoadIntoFont();
-
-    /**
-     * @brief Finds an instance of oldStr in each language of the CustomMessage
-     * and replaces it with newStr. Typically used for dynamic variable replacement
-     * (i.e. gameplay stats, skulltula count)
-     *
-     * @param oldStr the string to be replaced
-     * @param newStr the string to replace with
-     */
-    void Replace(std::string&& oldStr, std::string&& newStr);
-
-    /**
-     * @brief Finds an instance of oldStr in each language of the CustomMessage,
-     * and replaces it with the corresponding string in the provided CustomMessage.
-     * Typically used for dynamic variable replacement (i.e. gameplay stats, skulltula count)
-     *
-     * @param oldStr the string to be replaced
-     * @param newMessage the message containing the new strings.
-     */
-    void Replace(std::string&& oldStr, CustomMessage newMessage);
-
-    /**
-     * @brief Capitalizes the first letter of the string for each language.
-     */
-    void Capitalize();
 
     /**
      * @brief Replaces special characters (things like diacritics for non-english langugages)
@@ -137,11 +97,6 @@ class CustomMessage {
     void ReplaceAltarIcons(std::string& str) const;
 
     /**
-     * @brief Replaces [[1]] style variable strings with the provided vector of customMessages
-     */
-    void InsertNames(std::vector<CustomMessage> toInsert);
-
-    /**
      * @brief Replaces various symbols with the control codes necessary to
      * display them in OoT's textboxes. i.e. special characters, colors, newlines,
      * wait for input, etc. Also adds the item icon to each page of the textbox.
@@ -151,40 +106,11 @@ class CustomMessage {
     void Format(ItemID iid);
 
     /**
-     * @brief Replaces [[d]] in text with the supplied number, and if plural
-     * options exist (2 blocks of text surrounded by |) choose the former if it 1,
-     * and the latter otherwise, deleting the other and the |'s.
-     *
-     * @param num the number to insert.
-     */
-    void InsertNumber(uint8_t num);
-
-    /**
-     * @brief A € sign at the end of an item name signals that it is plural.
-     * If a hint text has |singular|plural| forms specified, the unused one get's deleted.
-     * If no € sign is present, the singular form is used.
-     */
-    void SetSingularPlural();
-
-    /**
-     * @brief Replaces various symbols with the control codes necessary to
-     * display them in OoT's textboxes. i.e. special characters, colors, newlines,
-     * wait for input, etc.
-     */
-    void Format();
-
-    /**
      * @brief formats the message specifically to fit in OoT's
      * textboxes, and use it's formatting.
      */
     void AutoFormat();
     void AutoFormat(ItemID iid);
-
-    /**
-     * @brief Removes all OoT formatting from the message,
-     * making it a good form for writing into spoiler logs.
-     */
-    void Clean();
 
     /**
      * @brief Replaces variable characters with fixed ones to store the sata in string form

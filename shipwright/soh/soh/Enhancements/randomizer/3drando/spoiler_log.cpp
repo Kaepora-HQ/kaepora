@@ -4,7 +4,6 @@
 #include "../static_data.h"
 #include "../settings.h"
 #include "../entrance.h"
-#include "../trial.h"
 #include "pool_functions.hpp"
 #include "soh/Enhancements/randomizer/randomizer_entrance_tracker.h"
 #include <nlohmann/json.hpp>
@@ -27,10 +26,6 @@ using json = nlohmann::ordered_json;
 using namespace Rando;
 
 json jsonData;
-std::map<RandomizerHintTextKey, Rando::ItemLocation*> hintedLocations;
-
-extern std::array<std::string, 17> hintCategoryNames;
-extern Region* GetHintRegion(uint32_t);
 
 namespace {
 std::string placementtxt;
@@ -199,15 +194,8 @@ static void WriteMasterQuestDungeons() {
     }
 }
 
-// Writes the required trials to the spoiler log, if there are any.
 static void WriteChosenOptions() {
     auto ctx = Rando::Context::GetInstance();
-    for (const auto& trial : ctx->GetTrials()->GetTrialList()) {
-        if (trial->IsRequired()) {
-            std::string trialName = trial->GetName().GetForCurrentLanguage(MF_CLEAN);
-            jsonData["requiredTrials"].push_back(RemoveLineBreaks(trialName));
-        }
-    }
     if (ctx->GetOption(RSK_SELECTED_STARTING_AGE).Is(RO_AGE_ADULT)) {
         jsonData["SelectedStartingAge"] = "Adult";
     } else {
@@ -270,10 +258,6 @@ static void WriteAllLocations() {
             jsonData["locations"][Rando::StaticData::GetLocation(location->GetRandomizerCheck())->GetName()]["price"] =
                 location->GetPrice();
         }
-        if (location->IsAHintAccessible()) {
-            hintedLocations.emplace(Rando::StaticData::GetLocation(key)->GetHintKey(), location);
-        }
-
         if (location->GetPlacedRandomizerGet() == RG_ICE_TRAP) {
             auto& locationJson =
                 jsonData["locations"][Rando::StaticData::GetLocation(location->GetRandomizerCheck())->GetName()];
@@ -317,7 +301,6 @@ void SpoilerLog_Write() {
     ctx->playthroughLocations.clear();
     ctx->playthroughBeatable = false;
 
-    ctx->WriteHintJson(jsonData);
     WriteShuffledEntrances();
     WriteAllLocations();
 }

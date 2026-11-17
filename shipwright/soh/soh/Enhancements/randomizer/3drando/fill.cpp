@@ -4,7 +4,6 @@
 #include "../SeedContext.h"
 #include "item_pool.hpp"
 #include "starting_inventory.hpp"
-#include "hints.hpp"
 #include "../rng.h"
 #include "shops.hpp"
 #include "pool_functions.hpp"
@@ -761,70 +760,6 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
 }
 
-// Very similar to PareDownPlaythrough except it sets WotH candidacy of Way of the Hero items
-// Way of the Hero items are more specific than playthrough items in that they are items which *must*
-//  be obtained to logically be able to complete the seed, rather than playthrough items which
-//  are just possible items you *can* collect to complete the seed.
-static void CalculateWotH() {
-    auto ctx = Rando::Context::GetInstance();
-    // size - 1 so Triforce is not counted
-    for (size_t i = 0; i < ctx->playthroughLocations.size() - 1; i++) {
-        for (size_t j = 0; j < ctx->playthroughLocations[i].size(); j++) {
-            // If removing this item and no other item caused the game to become unbeatable, then it is strictly
-            // necessary, so add it unless it is in Links Pocket or an isolated place.
-            auto itemLoc = ctx->GetItemLocation(ctx->playthroughLocations[i][j]);
-            if (itemLoc->IsHintable() && itemLoc->GetFirstArea() > RA_LINKS_POCKET &&
-                !IsBeatableWithout(ctx->playthroughLocations[i][j], true)) {
-                itemLoc->SetWothCandidate();
-            }
-        }
-    }
-    ctx->playthroughBeatable = true;
-    logic->Reset();
-    ReachabilitySearch(ctx->allLocations);
-}
-
-static bool FindIfBarren(Rando::ItemLocation* itemLoc, const std::array<bool, RA_MAX>& NotBarren) {
-    for (auto locArea : itemLoc->GetAreas()) {
-        if (NotBarren[locArea]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// Calculate barren locations and assign Barren Candidacy to all locations inside those areas
-static void CalculateBarren() {
-    auto ctx = Rando::Context::GetInstance();
-    std::array<bool, RA_MAX>
-        NotBarren = {}; // I would invert this but the "initialise all as true" syntax wasn't working
-    // Isolated Areas and Link's Pocket are never Hinted Barren
-    NotBarren[RA_NONE] = true;
-    NotBarren[RA_LINKS_POCKET] = true;
-
-    // When shop shields/tunics are gated behind finding a shield, those items become relevant, so
-    // regions holding a shield or tunic should not be hinted foolish.
-    const bool shieldTunicGate = ctx->GetOption(RSK_SHOP_SHIELDS_AND_TUNICS_ONLY_REFILL).Is(RO_GENERIC_ON);
-
-    for (RandomizerCheck loc : ctx->allLocations) {
-        Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);
-        for (auto locArea : itemLoc->GetAreas()) {
-            // If a location has a major item or is a way of the hero location, it is not barren
-            if (NotBarren[locArea] == false && (itemLoc->GetPlacedItem().IsMajorItem() || itemLoc->IsWothCandidate() ||
-                                                (shieldTunicGate && itemLoc->GetPlacedItem().IsShieldOrTunic()))) {
-                NotBarren[locArea] = true;
-            }
-        }
-    }
-
-    for (RandomizerCheck loc : ctx->allLocations) {
-        Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);
-        if (FindIfBarren(itemLoc, NotBarren)) {
-            itemLoc->SetBarrenCandidate();
-        }
-    }
-}
-
 // Will place things completely randomly, no logic checks are performed
 static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerCheck> locations,
                      bool endOnItemsEmpty = false) {
@@ -836,7 +771,6 @@ static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerChe
         }
 
         RandomizerCheck loc = RandomElement(locations, true);
-        ctx->GetItemLocation(loc)->SetAsHintable();
         ctx->PlaceItemInLocation(loc, RandomElement(items, true));
     }
 }
@@ -848,8 +782,7 @@ static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerChe
 | This method helps distribution of items locked behind many requirements.
 | - OoT Randomizer
 */
-static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vector<RandomizerCheck>& allowedLocations,
-                        bool setLocationsAsHintable = false) {
+static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vector<RandomizerCheck>& allowedLocations) {
     auto ctx = Rando::Context::GetInstance();
     if (items.size() > allowedLocations.size()) {
         SPDLOG_ERROR("ERROR: MORE ITEMS THAN LOCATIONS IN GIVEN LISTS");
@@ -927,13 +860,6 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
             RandomizerCheck selectedLocation = RandomElement(accessibleLocations);
             ctx->PlaceItemInLocation(selectedLocation, item);
             attemptedLocations.push_back(selectedLocation);
-
-            // This tells us the location went through the randomization algorithm
-            // to distinguish it from locations which did not or that the player already
-            // knows
-            if (setLocationsAsHintable) {
-                ctx->GetItemLocation(selectedLocation)->SetAsHintable();
-            }
 
             // If ACR is off, then we check beatability after placing the item.
             // If the game is beatable, then we can stop placing items with logic.
@@ -1211,8 +1137,8 @@ static void RandomizeDungeonItems() {
     }
 
     // Randomize Any Dungeon and Overworld pools
-    AssumedFill(anyDungeonItems, anyDungeonLocations, true);
-    AssumedFill(overworldItems, ctx->overworldLocations, true);
+    AssumedFill(anyDungeonItems, anyDungeonLocations);
+    AssumedFill(overworldItems, ctx->overworldLocations);
 
     // Randomize maps and compasses after since they're not advancement items
     for (auto dungeon : ctx->GetDungeons()->GetDungeonList()) {
@@ -1220,12 +1146,12 @@ static void RandomizeDungeonItems() {
             auto mapAndCompassItems = FilterAndEraseFromPool(itemPool, [dungeon](const RandomizerGet i) {
                 return i == dungeon->GetMap() || i == dungeon->GetCompass();
             });
-            AssumedFill(mapAndCompassItems, anyDungeonLocations, true);
+            AssumedFill(mapAndCompassItems, anyDungeonLocations);
         } else if (ctx->GetOption(RSK_SHUFFLE_MAPANDCOMPASS).Is(RO_DUNGEON_ITEM_LOC_OVERWORLD)) {
             auto mapAndCompassItems = FilterAndEraseFromPool(itemPool, [dungeon](const RandomizerGet i) {
                 return i == dungeon->GetMap() || i == dungeon->GetCompass();
             });
-            AssumedFill(mapAndCompassItems, ctx->overworldLocations, true);
+            AssumedFill(mapAndCompassItems, ctx->overworldLocations);
         }
     }
 }
@@ -1272,7 +1198,6 @@ void VanillaFill() {
     // Finish up
     ctx->CreateItemOverrides();
     ctx->GetEntranceShuffler()->CreateEntranceOverrides();
-    CreateWarpSongTexts();
 }
 
 void ClearProgress() {
@@ -1440,7 +1365,7 @@ int Fill() {
                 });
             }
 
-            AssumedFill(songs, songLocations, true);
+            AssumedFill(songs, songLocations);
         }
 
         // Then place dungeon items that are assigned to restrictive location pools
@@ -1456,7 +1381,7 @@ int Fill() {
         // Then place the rest of the advancement items
         std::vector<RandomizerGet> remainingAdvancementItems = FilterAndEraseFromPool(
             itemPool, [](const auto i) { return Rando::StaticData::RetrieveItem(i).IsAdvancement(); });
-        AssumedFill(remainingAdvancementItems, ctx->allLocations, true);
+        AssumedFill(remainingAdvancementItems, ctx->allLocations);
         StopPerformanceTimer(PT_ADVANCEMENT_ITEMS);
 
         StartPerformanceTimer(PT_REMAINING_ITEMS);
@@ -1474,14 +1399,6 @@ int Fill() {
             StartPerformanceTimer(PT_PARE_DOWN_PLAYTHROUGH);
             PareDownPlaythrough(lateLocations);
             StopPerformanceTimer(PT_PARE_DOWN_PLAYTHROUGH);
-
-            StartPerformanceTimer(PT_WOTH);
-            CalculateWotH();
-            StopPerformanceTimer(PT_WOTH);
-
-            StartPerformanceTimer(PT_FOOLISH);
-            CalculateBarren();
-            StopPerformanceTimer(PT_FOOLISH);
             SPDLOG_INFO("Calculating Playthrough Done");
 
             StartPerformanceTimer(PT_OVERRIDES);
@@ -1489,10 +1406,6 @@ int Fill() {
             ctx->GetEntranceShuffler()->CreateEntranceOverrides();
             StopPerformanceTimer(PT_OVERRIDES);
 
-            StartPerformanceTimer(PT_HINTS);
-            CreateAllHints();
-            CreateWarpSongTexts();
-            StopPerformanceTimer(PT_HINTS);
             SPDLOG_DEBUG("Number of retries {}", retries);
             return 1;
         }

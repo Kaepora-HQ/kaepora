@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "3drando/spoiler_log.hpp"
-#include "3drando/hints.hpp"
+#include "soh/Enhancements/custom-message/CustomMessageManager.h"
 
 #include "z64actor_enum.h"
 #include "z64scene.h"
@@ -95,15 +95,12 @@ class Location {
     ActorID GetActorID() const;
     int32_t GetActorParams() const;
     SceneID GetScene() const;
-    RandomizerHintTextKey GetHintKey() const;
-    HintText* GetHint();
     const std::string& GetName() const;
     const std::string& GetShortName() const;
     bool IsDungeon() const;
     bool IsOverworld() const;
     bool IsShop() const;
     bool IsVanillaCompletion() const;
-    const HintText& GetHint() const;
     RandomizerGet GetVanillaItem() const;
     int16_t GetVanillaPrice() const;
     Option* GetExcludedOption();

@@ -1,9 +1,6 @@
-#include <spdlog/spdlog.h>
-
 #include "item_location.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "SeedContext.h"
-#include "rng.h"
 
 namespace Rando {
 ItemLocation::ItemLocation() : rc(RC_UNKNOWN_CHECK) {
@@ -80,26 +77,6 @@ const std::set<RandomizerArea>& ItemLocation::GetAreas() const {
     return areas;
 }
 
-RandomizerArea ItemLocation::GetFirstArea() const {
-    if (areas.empty()) {
-        assert(false);
-        return RA_NONE;
-    } else {
-        return *areas.begin();
-    }
-}
-
-RandomizerArea ItemLocation::GetRandomArea() const {
-    if (areas.empty()) {
-        SPDLOG_DEBUG("Attempted to get random area of location with no areas: ");
-        SPDLOG_DEBUG("{}", Rando::StaticData::GetLocation(rc)->GetName());
-        assert(false);
-        return RA_NONE;
-    } else {
-        return RandomElementFromSet(areas);
-    }
-}
-
 void ItemLocation::PlaceVanillaItem() {
     placedItem = StaticData::GetLocation(rc)->GetVanillaItem();
 }
@@ -159,30 +136,6 @@ bool ItemLocation::GetIsSkipped() {
     return isSkipped;
 }
 
-bool ItemLocation::IsHintable() const {
-    return isHintable && !hidden;
-}
-
-void ItemLocation::SetAsHintable() {
-    isHintable = true;
-}
-
-bool ItemLocation::IsAHintAccessible() const {
-    return hintAccesible;
-}
-
-void ItemLocation::SetHintAccesible() {
-    hintAccesible = true;
-}
-
-const std::vector<RandomizerHint>& ItemLocation::GetHintedBy() const {
-    return hintedBy;
-}
-
-void ItemLocation::AddHintedBy(const RandomizerHint hintKey) {
-    hintedBy.push_back(hintKey);
-}
-
 bool ItemLocation::IsHidden() const {
     return hidden;
 }
@@ -210,34 +163,13 @@ void ItemLocation::SetVisible(const bool visibleInImGui_) {
     visibleInImGui = visibleInImGui_;
 }
 
-bool ItemLocation::IsWothCandidate() const {
-    return wothCandidate;
-}
-
-void ItemLocation::SetWothCandidate() {
-    wothCandidate = true;
-}
-
-bool ItemLocation::IsFoolishCandidate() const {
-    return barrenCandidate;
-}
-
-void ItemLocation::SetBarrenCandidate() {
-    barrenCandidate = true;
-}
-
 void ItemLocation::ResetVariables() {
     addedToPool = false;
     placedItem = RG_NONE;
     delayedItem = RG_NONE;
-    isHintable = false;
-    hintAccesible = false;
-    hintedBy = {};
     price = 0;
     hasCustomPrice = false;
     hidden = false;
-    wothCandidate = false;
-    barrenCandidate = false;
     areas = {};
     status = RCSHOW_UNCHECKED;
     isSkipped = false;

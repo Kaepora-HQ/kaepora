@@ -35,14 +35,6 @@ SceneID Rando::Location::GetScene() const {
     return scene;
 }
 
-RandomizerHintTextKey Rando::Location::GetHintKey() const {
-    return hintKey;
-}
-
-HintText* Rando::Location::GetHint() {
-    return &StaticData::hintTextTable[hintKey];
-}
-
 const std::string& Rando::Location::GetName() const {
     return spoilerName;
 }
@@ -69,10 +61,6 @@ bool Rando::Location::IsShop() const {
 
 bool Rando::Location::IsVanillaCompletion() const {
     return isVanillaCompletion;
-}
-
-const HintText& Rando::Location::GetHint() const {
-    return StaticData::hintTextTable[hintKey];
 }
 
 RandomizerGet Rando::Location::GetVanillaItem() const {

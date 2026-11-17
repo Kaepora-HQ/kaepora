@@ -204,15 +204,6 @@ class Region {
         return areas;
     }
 
-    RandomizerArea GetFirstArea() const {
-        if (areas.empty()) {
-            assert(false);
-            return RA_NONE;
-        } else {
-            return *areas.begin();
-        }
-    }
-
     void ReplaceAreas(std::set<RandomizerArea> newAreas) {
         areas = newAreas;
     }

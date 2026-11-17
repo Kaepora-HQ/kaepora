@@ -18,7 +18,6 @@ int Playthrough_Init(uint32_t seed, std::set<RandomizerCheck> excludedLocations,
     auto ctx = Rando::Context::GetInstance();
     ctx->overrides.clear();
     ctx->ItemReset();
-    ctx->HintReset();
     ctx->GetLogic()->Reset();
     StartPerformanceTimer(PT_REGION_RESET);
     Regions::AccessReset();

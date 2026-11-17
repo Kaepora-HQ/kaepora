@@ -34,10 +34,6 @@ template <typename Container> const auto& RandomElement(const Container& contain
     return ShipUtils::RandomElement(container, &rando_state);
 }
 
-template <typename T> const T RandomElementFromSet(const std::set<T>& set) {
-    return ShipUtils::RandomElementFromSet(set, &rando_state);
-}
-
 // Shuffle items within a vector or array
 template <typename T> void Shuffle(std::vector<T>& vector) {
     ShipUtils::Shuffle(vector, &rando_state);

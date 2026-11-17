@@ -10,11 +10,6 @@ Text::Text(std::string english_, std::string french_, std::string german_)
     spanish = english;
 }
 
-Text::Text(std::string english_, std::string french_, std::string german_, std::string spanish_)
-    : english(std::move(english_)), french(std::move(french_)), german(std::move(german_)),
-      spanish(std::move(spanish_)) {
-}
-
 Text::Text(std::string english_) : english(std::move(english_)), french(""), german(""), spanish("") {
     french = spanish = german = english;
 }
@@ -44,10 +39,6 @@ const std::string& Text::GetGerman() const {
     return IsMissing(german) ? english : german;
 }
 
-const std::string& Text::GetSpanish() const {
-    return IsMissing(spanish) ? english : spanish;
-}
-
 const std::string& Text::GetForLanguage(uint8_t language) const {
     switch (language) {
         case 0:
@@ -59,24 +50,6 @@ const std::string& Text::GetForLanguage(uint8_t language) const {
         default:
             return GetEnglish();
     }
-}
-
-Text Text::operator+(const Text& right) const {
-    return Text{
-        english + right.GetEnglish(),
-        french + right.GetFrench(),
-        german + right.GetGerman(),
-        spanish + right.GetSpanish(),
-    };
-}
-
-Text Text::operator+(const std::string& right) const {
-    return Text{
-        english + right,
-        french + right,
-        german + right,
-        spanish + right,
-    };
 }
 
 bool Text::operator==(const Text& right) const {
@@ -109,7 +82,6 @@ void Text::Replace(const std::string& oldStr, const Text& newText) {
     replaceAll(english, oldStr, newText.GetEnglish());
     replaceAll(french, oldStr, newText.GetFrench());
     replaceAll(german, oldStr, newText.GetGerman());
-    replaceAll(spanish, oldStr, newText.GetSpanish());
 }
 
 static bool isAsciiVowel(char c) {
