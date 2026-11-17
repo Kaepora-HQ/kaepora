@@ -46,24 +46,49 @@ static byml::Node* Find(byml::Node& dict, std::string_view key) {
     return entry == dict.dict.end() ? nullptr : &entry->value;
 }
 
-// The Dynamic.Drop__DropActor string of the actor with this hash.
-static std::string& DropActor(byml::Node& placement, uint64_t hash) {
+static byml::Node* FindHash(byml::Node& array, uint64_t hash) {
+    const auto found = std::ranges::find_if(array.array, [&](byml::Node& item) {
+        const byml::Node* itemHash = Find(item, "Hash");
+        return itemHash != nullptr && itemHash->scalar == hash;
+    });
+    return found == array.array.end() ? nullptr : &*found;
+}
+
+static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     byml::Node* actors = Find(placement, "Actors");
-    if (actors != nullptr) {
-        for (byml::Node& actor : actors->array) {
-            const byml::Node* actorHash = Find(actor, "Hash");
-            if (actorHash == nullptr || actorHash->scalar != hash) {
-                continue;
-            }
-            byml::Node* dynamic = Find(actor, "Dynamic");
-            byml::Node* dropActor = dynamic == nullptr ? nullptr : Find(*dynamic, "Drop__DropActor");
-            if (dropActor == nullptr || dropActor->type != byml::Type::String) {
-                throw std::runtime_error("the chest's actor has no Dynamic.Drop__DropActor to set");
-            }
-            return dropActor->string;
-        }
+    byml::Node* actor = actors == nullptr ? nullptr : FindHash(*actors, hash);
+    if (actor == nullptr) {
+        throw std::runtime_error("no actor in the file has this hash");
     }
-    throw std::runtime_error("no actor in the file has this hash");
+    return *actor;
+}
+
+// A chest gives its Dynamic.Drop__DropActor. One without it gives a refill of what Link is lowest on, so the item is
+// added, in key order as the game's dicts are. One with a Drop__DropActor_Substitute gives that instead to Link who
+// owns its Drop__CheckActor, so the substitute takes the item too. Returns whether the actor changed.
+static bool SetItem(byml::Node& chest, const std::string& item) {
+    byml::Node* dynamic = Find(chest, "Dynamic");
+    if (dynamic == nullptr) {
+        throw std::runtime_error("the chest's actor has no Dynamic values");
+    }
+    const std::string dropActor = "Drop__DropActor";
+    const auto at = std::ranges::lower_bound(dynamic->dict, dropActor, {}, &byml::Entry::key);
+    if (at == dynamic->dict.end() || at->key != dropActor) {
+        dynamic->dict.insert(at, { .key = dropActor, .value = { .type = byml::Type::String } });
+    }
+    bool changed = false;
+    for (const std::string& key : { dropActor, std::string("Drop__DropActor_Substitute") }) {
+        byml::Node* value = Find(*dynamic, key);
+        if (value == nullptr) {
+            continue;
+        }
+        if (value->type != byml::Type::String) {
+            throw std::runtime_error(std::format("the chest's Dynamic.{} is not a string", key));
+        }
+        changed |= value->string != item;
+        value->string = item;
+    }
+    return changed;
 }
 
 // The game reads the update's size table and ignores the base game's.
@@ -157,12 +182,8 @@ static std::string StartFlagList(Romfs& romfs, const std::vector<std::string>& n
             throw std::runtime_error("the list has no Data.Bool");
         }
         for (const std::string& name : names) {
-            const uint32_t hash = Murmur3(name);
-            const auto entry = std::ranges::find_if(bools->array, [&](byml::Node& candidate) {
-                const byml::Node* candidateHash = Find(candidate, "Hash");
-                return candidateHash != nullptr && candidateHash->scalar == hash;
-            });
-            byml::Node* value = entry == bools->array.end() ? nullptr : Find(*entry, "DefaultValue");
+            byml::Node* entry = FindHash(*bools, Murmur3(name));
+            byml::Node* value = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
             if (value == nullptr || value->type != byml::Type::Bool) {
                 throw std::runtime_error(
                     std::format("start flag \"{}\" is not a true-or-false value in the list", name));
@@ -192,9 +213,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 if (placement == placements.end()) {
                     placement = placements.emplace(path, byml::Parse(Decompress(romfs.Read(path), dictionary))).first;
                 }
-                std::string& dropActor = DropActor(placement->second.root, chest.hash);
-                if (dropActor != chest.dropActor) {
-                    dropActor = chest.dropActor;
+                if (SetItem(Actor(placement->second.root, chest.hash), chest.dropActor)) {
                     changed.insert(path);
                 }
             } catch (const std::exception& e) {

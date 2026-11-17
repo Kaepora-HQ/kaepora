@@ -2,6 +2,8 @@
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
+       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod <kaepora-patch> <game.nup> \
+           <tested mod's romfs folder>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|start-flags \
            <kaepora-patch> <game.nup>
 
@@ -19,15 +21,21 @@ import zlib
 from compression import zstd
 
 DEKU_STATIC = "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
+DODONGO_DYNAMIC = "Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs"
 FOREST_DYNAMIC = "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
+TRAINING_GROUND_DYNAMIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs"
 WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
 SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
 LONGSHOT_CHEST = 18059711820131847165
-# A Forest Temple chest whose actor has no Dynamic.Drop__DropActor.
+# Dodongo's Cavern chests that give their Drop__DropActor_Substitute to a Link who owns their Drop__CheckActor.
+BRIDGE_CHEST = 7524527082521156886
+PLATFORM_CHEST = 11582649900854566065
+# Chests whose actor has no Dynamic.Drop__DropActor, in the Forest Temple and the Training Ground lobby.
 FOREST_CHEST_WITHOUT_DROP = 15117164073907033527
+LOBBY_CHEST_WITHOUT_DROP = 11182647876438515984
 BOOL = 0xD0
 INT64 = 0xD4
 UINT64 = 0xD5
@@ -200,6 +208,45 @@ def tested_start_mod(patch, game, mod_file):
         tested, zstd_dict=game.zs_dictionary)
 
 
+def ordered(node):
+    """A parsed BYML value with each dict as the list of its entries in file order, so the key order counts."""
+    if isinstance(node, dict):
+        return [(key, ordered(value)) for key, value in node.items()]
+    if isinstance(node, list):
+        return [ordered(item) for item in node]
+    return node
+
+
+def tested_substitute_mod(patch, game, romfs):
+    """The chest that checks what Link owns, as the game accepted it: with the Boomerang in both its item and its
+    substitute values, the Dodongo's Cavern bridge chest gave the Boomerang to Link with and without the Deku Shield."""
+    tested = game.placement((pathlib.Path(romfs) / DODONGO_DYNAMIC).read_bytes())
+    # The tested file also changed the platform chest in a way the patcher does not, so that actor is the game's.
+    game_platform = actor(game.placement(game.read(DODONGO_DYNAMIC)), PLATFORM_CHEST)
+    tested["Actors"] = [game_platform if a["Hash"] == (UINT64, PLATFORM_CHEST) else a for a in tested["Actors"]]
+    mod = patched(patch, game, plan([(BRIDGE_CHEST, [DODONGO_DYNAMIC], "Item_Boomerang")]))
+    assert DODONGO_DYNAMIC in mod, sorted(mod)
+    assert ordered(game.placement(mod[DODONGO_DYNAMIC])) == ordered(tested)
+
+
+def tested_added_item_mod(patch, game, romfs):
+    """The chests that name no item, as the game accepted them: with a Drop__DropActor added, the Forest Temple falling
+    ceiling chest and the Training Ground lobby left chest each gave the Boomerang. Both files outgrew their size table
+    entries."""
+    romfs = pathlib.Path(romfs)
+    chests = [(FOREST_CHEST_WITHOUT_DROP, FOREST_DYNAMIC), (LOBBY_CHEST_WITHOUT_DROP, TRAINING_GROUND_DYNAMIC)]
+    ours = patched(patch, game, plan([(h, [path], "Item_Boomerang") for h, path in chests]))
+    assert sorted(ours) == sorted([FOREST_DYNAMIC, TRAINING_GROUND_DYNAMIC, SIZE_TABLE]), sorted(ours)
+    # The tested files were written with the patcher's BYML writer, so the decompressed files match byte for byte.
+    for _, path in chests:
+        assert zstd.decompress(ours[path], zstd_dict=game.dictionary) == zstd.decompress(
+            (romfs / path).read_bytes(), zstd_dict=game.dictionary), path
+    ours_sizes = dict(read_size_table(zstd.decompress(ours[SIZE_TABLE]))[1])
+    tested_sizes = dict(read_size_table(zstd.decompress((romfs / SIZE_TABLE).read_bytes()))[1])
+    for _, path in chests:
+        assert ours_sizes[size_key(path)] == tested_sizes[size_key(path)], path
+
+
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
 ROTATED = [
     (KOKIRI_SWORD_CHEST, ["Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs",
@@ -330,9 +377,6 @@ def bad_input(patch, game):
         "hash not in the file": (
             {"hash": str(KOKIRI_SWORD_CHEST), "files": [FOREST_DYNAMIC], "drop_actor": "Item_Hookshot"},
             [str(KOKIRI_SWORD_CHEST), FOREST_DYNAMIC]),
-        "no Drop__DropActor": (
-            {"hash": str(FOREST_CHEST_WITHOUT_DROP), "files": [FOREST_DYNAMIC], "drop_actor": "Item_Hookshot"},
-            [str(FOREST_CHEST_WITHOUT_DROP), FOREST_DYNAMIC]),
     }
     plans = {name: ({"seed": "1", "chests": [valid, chest], "start_flags": []}, named)
              for name, (chest, named) in cases.items()}
@@ -371,6 +415,8 @@ def main():
     tests = {
         "tested-mod": tested_mod,
         "tested-start-mod": tested_start_mod,
+        "tested-substitute-mod": tested_substitute_mod,
+        "tested-added-item-mod": tested_added_item_mod,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
         "size-table": size_table_entries,
