@@ -425,7 +425,6 @@ KEPT = (9038700938965170329, [FOREST_DYNAMIC])
 
 
 def rotated(game):
-    """The ROTATED chests, each given the next one's item."""
     items = [actor(game.placement(game.read(files[0])), h)["Dynamic"]["Drop__DropActor"] for h, files in ROTATED]
     assert len(set(items)) == len(items), items
     return [(h, files, items[(i + 1) % len(items)]) for i, (h, files) in enumerate(ROTATED)]
