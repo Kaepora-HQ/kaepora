@@ -171,6 +171,8 @@ void RegionTable_Init_GerudoValley() {
         LOCATION(RC_GV_DEKU_SCRUB_GROTTO_REAR,    logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GV_DEKU_SCRUB_GROTTO_FRONT,   logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GV_DEKU_SCRUB_GROTTO_BEEHIVE, logic->CanBreakUpperBeehives()),
+        // An invisible chest, which opens without the Lens of Truth.
+        LOCATION(RC_GV_STORMS_GROTTO_CHEST,       logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_GV_FORTRESS_SIDE, true),

@@ -14,6 +14,13 @@ void RegionTable_Init_HyruleField() {
         LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
         LOCATION(RC_SONG_FROM_OCARINA_OF_TIME,     logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
         LOCATION(RC_HF_POND_STORMS_FAIRY,          logic->CanUse(RG_SONG_OF_STORMS)),
+        // Only the adult field has the three chests with a Poe beside them. Reaching the south-west one may take the
+        // refilled lake.
+        LOCATION(RC_HF_SOUTHWEST_POE_CHEST,        logic->IsAdult && logic->Get(LOGIC_WATER_TEMPLE_CLEAR) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_HF_SOUTH_POE_CHEST,            logic->IsAdult && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_HF_NORTH_POE_CHEST,            logic->IsAdult && logic->HasItem(RG_OPEN_CHEST)),
+        // From the tower floor, the hookshot latches onto vines that end on the chest's terrace.
+        LOCATION(RC_HF_TOWER_CHEST,                logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),

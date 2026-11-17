@@ -18,6 +18,8 @@ NO_SILVER_GAUNTLETS = ("Spirit Temple Silver Gauntlets Chest", "Green Rupee")
 NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Green Rupee")
 # Without the Ocarina of Time, Link never becomes adult.
 NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
+# Dampe's race gives the first hookshot. The Water Temple's Longshot chest lies past places that need one.
+NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 
 
 class LogicTest(unittest.TestCase):
@@ -321,6 +323,44 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Water Temple Central Bow Target Chest",
                                         ("Water Temple Longshot Chest", "Green Rupee"),
                                         ("KF Mido Top Left Chest", "Hover Boots")))
+
+    # Chests SoH has no location for.
+
+    def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):
+        # Adult Link rides the platform that grows from the magic bean planted by the bridge.
+        self.assertTrue(self.reachable("LW Bridge Chest"))
+        self.assertFalse(self.reachable("LW Bridge Chest", ("ZR Magic Bean Salesman", "Green Rupee")))
+        self.assertFalse(self.reachable("LW Bridge Chest", NEVER_ADULT))
+
+    def test_kakariko_lookout_chest_needs_the_longshot(self):
+        self.assertTrue(self.reachable("Kak Lookout Chest"))
+        self.assertFalse(self.reachable("Kak Lookout Chest", ("Water Temple Longshot Chest", "Green Rupee")))
+
+    def test_zoras_fountain_scarecrow_chest_needs_the_hookshot(self):
+        self.assertTrue(self.reachable("ZF Scarecrow Chest"))
+        self.assertFalse(self.reachable("ZF Scarecrow Chest", NO_HOOKSHOT))
+
+    def test_gerudo_valley_storms_grotto_chest_needs_the_song_of_storms(self):
+        self.assertTrue(self.reachable("GV Storms Grotto Chest"))
+        self.assertFalse(self.reachable("GV Storms Grotto Chest", ("Song from Windmill", "Green Rupee")))
+
+    def test_hyrule_field_poe_chests_need_adult_link(self):
+        for chest in ("HF South Poe Chest", "HF North Poe Chest"):
+            self.assertTrue(self.reachable(chest))
+            self.assertFalse(self.reachable(chest, NEVER_ADULT))
+
+    def test_hyrule_field_southwest_poe_chest_needs_the_lake_refilled(self):
+        # Beating Morpha refills the lake, and Morpha's door takes the Water Temple's boss key.
+        self.assertTrue(self.reachable("HF Southwest Poe Chest"))
+        self.assertFalse(self.reachable("HF Southwest Poe Chest", ("Water Temple Boss Key Chest", "Green Rupee")))
+
+    def test_hyrule_field_tower_chest_needs_the_hookshot(self):
+        self.assertTrue(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
+        self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))
+
+    def test_crater_hammer_grotto_chest_needs_the_hammer(self):
+        self.assertTrue(self.reachable("DMC Hammer Grotto Chest"))
+        self.assertFalse(self.reachable("DMC Hammer Grotto Chest", NO_HAMMER))
 
 
 if __name__ == "__main__":

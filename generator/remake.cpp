@@ -40,8 +40,9 @@ static std::vector<std::vector<std::string>> ReadTable(const std::string& name, 
 }
 
 std::string RemakeChest::Folder() const {
-    size_t start = files.front().find('/') + 1;
-    return files.front().substr(start, files.front().find('/', start) - start);
+    const std::string& file = actors.front().files.front();
+    size_t start = file.find('/') + 1;
+    return file.substr(start, file.find('/', start) - start);
 }
 
 static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
@@ -90,7 +91,7 @@ static RandomizerGet ResolveItem(const std::vector<RandomizerGet>& candidates, R
 std::vector<RemakeChest> LoadRemakeChests() {
     const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
     std::vector<RemakeChest> chests;
-    std::set<RandomizerCheck> locations;
+    std::map<RandomizerCheck, size_t> locations;
     std::set<std::string> hashes;
     size_t line = 1;
     for (const auto& row : ReadTable("remake/chests.tsv", { chestTable, sizeof chestTable },
@@ -107,9 +108,6 @@ std::vector<RemakeChest> LoadRemakeChests() {
             Rando::StaticData::GetLocation(location->second)->GetActorID() != ACTOR_EN_BOX) {
             Fail(where + "\"" + name + "\" is not a SoH chest location");
         }
-        if (!locations.insert(location->second).second) {
-            Fail(where + "repeats the location \"" + name + "\"");
-        }
         if (hash.empty() != files.empty() || (hash.empty() && !item.empty())) {
             Fail(where + "a row with no remake chest leaves hash, files and item empty");
         }
@@ -121,29 +119,37 @@ std::vector<RemakeChest> LoadRemakeChests() {
             Fail(where + "shuffled is neither yes nor no");
         }
 
-        RemakeChest chest{ location->second, hash, {}, item, RG_NONE, shuffled == "yes" };
-        if (!files.empty()) {
-            chest.files = SohUtils::StringSplit(files, ",");
+        auto [index, added] = locations.try_emplace(location->second, chests.size());
+        if (added) {
+            RemakeChest chest{ location->second, {}, item, RG_NONE, shuffled == "yes" };
+            if (!item.empty()) {
+                auto candidates = items.find(item);
+                if (candidates == items.end()) {
+                    Fail(where + "unknown remake item \"" + item + "\"");
+                }
+                chest.sohItem = ResolveItem(candidates->second, chest.location);
+                if (chest.sohItem == RG_NONE) {
+                    Fail(where + "no SoH item for \"" + item + "\" in this location's dungeon");
+                }
+            }
+            if (chest.shuffled && chest.sohItem == RG_NONE) {
+                Fail(where + "a shuffled chest needs a remake chest whose item stands for a SoH item");
+            }
+            chests.push_back(std::move(chest));
+        } else if (hash.empty() || chests[index->second].actors.empty() || item != chests[index->second].item ||
+                   (shuffled == "yes") != chests[index->second].shuffled) {
+            Fail(where + "repeats the location \"" + name + "\" for anything but another copy of its chest");
         }
-        for (const std::string& file : chest.files) {
+        if (hash.empty()) {
+            continue;
+        }
+        RemakeChest& chest = chests[index->second];
+        chest.actors.push_back({ hash, SohUtils::StringSplit(files, ",") });
+        for (const std::string& file : chest.actors.back().files) {
             if (!file.starts_with("Banc/" + chest.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
                 Fail(where + "\"" + file + "\" is not a scene file in the chest's Banc folder");
             }
         }
-        if (!item.empty()) {
-            auto candidates = items.find(item);
-            if (candidates == items.end()) {
-                Fail(where + "unknown remake item \"" + item + "\"");
-            }
-            chest.sohItem = ResolveItem(candidates->second, chest.location);
-            if (chest.sohItem == RG_NONE) {
-                Fail(where + "no SoH item for \"" + item + "\" in this location's dungeon");
-            }
-        }
-        if (chest.shuffled && chest.sohItem == RG_NONE) {
-            Fail(where + "a shuffled chest needs a remake chest whose item stands for a SoH item");
-        }
-        chests.push_back(std::move(chest));
     }
 
     for (const Rando::Location& location : Rando::StaticData::GetLocationTable()) {
@@ -179,8 +185,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
         RandomizerGet placed = Rando::Context::GetInstance()->GetItemLocation(chest.location)->GetPlacedRandomizerGet();
         std::deque<std::string>& candidates = names.at(placed);
-        plan["chests"].push_back(
-            { { "hash", chest.hash }, { "files", chest.files }, { "drop_actor", candidates.front() } });
+        for (const RemakeChest::Actor& actor : chest.actors) {
+            plan["chests"].push_back(
+                { { "hash", actor.hash }, { "files", actor.files }, { "drop_actor", candidates.front() } });
+        }
         candidates.pop_front();
     }
     // No item an event flow gives is shuffled.

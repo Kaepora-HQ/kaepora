@@ -118,6 +118,7 @@ void RegionTable_Init_ZorasFountain() {
     areaTable[RR_ZF_ROCK] = Region("ZF Rock", SCENE_ZORAS_FOUNTAIN, {}, {
         //Locations
         //Has a wonder item
+        LOCATION(RC_ZF_SCARECROW_CHEST, logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_ZORAS_FOUNTAIN, true),

@@ -423,6 +423,8 @@ void RegionTable_Init_DeathMountainCrater() {
         LOCATION(RC_DMC_DEKU_SCRUB_GROTTO_RIGHT,  logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_DMC_DEKU_SCRUB_GROTTO_CENTER, logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_DMC_HAMMER_GROTTO_BEEHIVE,    logic->CanBreakUpperBeehives()),
+        // The chest appears once the grotto's two Dinolfos are beaten.
+        LOCATION(RC_DMC_HAMMER_GROTTO_CHEST,      logic->CanKillEnemy(RE_DINOLFOS, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_DMC_POT_GROTTO_ENTRY, true),
