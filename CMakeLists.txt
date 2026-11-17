@@ -45,6 +45,9 @@ target_compile_options(kaepora-generator PRIVATE -ffp-contract=off)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
+# Clang takes #embed in C++ as an extension and warns at each use.
+set_source_files_properties(generator/remake.cpp shipwright/soh/soh/Enhancements/Lang/Lang.cpp PROPERTIES
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:Clang>:-Wno-c23-extensions>)
 target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 add_executable(kaepora-seedgen generator/main.cpp)
