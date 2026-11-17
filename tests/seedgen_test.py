@@ -1,6 +1,6 @@
 """End-to-end tests of kaepora-seedgen against the tables in remake/.
 
-Usage: python3 -I tests/seedgen_test.py <kaepora-seedgen> <Kaepora's version> [test name ...]
+Usage: python3 -I -B tests/seedgen_test.py <kaepora-seedgen> <kaepora-reach> <Kaepora's version> [test name ...]
 Writes its seeds into a temporary folder under the current directory.
 """
 
@@ -13,6 +13,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import reach  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -30,6 +33,17 @@ SHUFFLED = [row for row in read_tsv("chests.tsv") if row["shuffled"] == "yes"]
 # What each shuffled location holds in the unmodified game. A location whose chest the files keep twice counts once.
 POOL = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
 ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.tsv")}
+EVERY_KEY = [("Link's Pocket", item) for item in (
+    *(f"{dungeon} Key Ring" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
+                                            "Shadow Temple", "Bottom of the Well", "Training Ground",
+                                            "Gerudo Fortress", "Ganon's Castle", "Chest Game")),
+    *(f"{dungeon} Boss Key" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
+                                            "Shadow Temple", "Ganon's Castle")))]
+# The logic asks for a place to buy bombchus before Link uses one, and the game does not. Both ask for the bomb bag.
+BOMBCHUS = [("Link's Pocket", "Buy Bombchu (10)"), ("Link's Pocket", "Progressive Bomb Bag")]
+# The game pays each chest of these locations on its own.
+KEPT_TWICE = {location for location, rows in collections.Counter(row["location"] for row in SHUFFLED).items()
+              if rows > 1}
 
 
 def folder(path):
@@ -159,9 +173,9 @@ class SeedgenTest(unittest.TestCase):
             self.generate(str(seed))
 
     def test_spirit_dungeon_items_stay_out_of_the_colossus(self):
-        # SoH counts this chest as a Spirit Temple location, but it stands in the Desert Colossus, and the game credits
-        # a key, map or compass to the scene Link stands in.
-        colossus = ["Spirit Temple Mirror Shield Chest"]
+        # SoH counts these two chests as Spirit Temple locations, but they stand in the Desert Colossus, and the game
+        # credits a key, map or compass to the scene Link stands in.
+        colossus = ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"]
         spirit = {"Spirit Temple Small Key", "Spirit Temple Boss Key", "Spirit Temple Map", "Spirit Temple Compass"}
         placed = collections.Counter()
         for seed in range(200, 220):
@@ -171,6 +185,27 @@ class SeedgenTest(unittest.TestCase):
         # Other items still land there.
         self.assertGreater(len(placed), len(colossus))
 
+    def test_strength_items_come_in_rising_order(self):
+        no_bracelet = ("GC Darunias Joy", "Green Rupee")
+        bracelet_at_start = ("Link's Pocket", "Goron's Bracelet")
+
+        for seed in ("5029", "5032", "5038", "5022", "70217", "5015"):
+            spoiler, _ = self.generate(seed)
+            placed = list(spoiler["locations"].items())
+            where = {item: location for location, item in placed}
+            silver = where["Silver Gauntlets"]
+            golden = where["Golden Gauntlets"]
+            self.assertTrue(reach.reachable(golden, *placed), seed)
+            for held in ([], EVERY_KEY + BOMBCHUS):
+                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *held), seed)
+                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *held), seed)
+                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *held),
+                                 seed)
+            self.assertFalse({silver, golden} & KEPT_TWICE, seed)
+            spheres = {item: sphere for sphere, steps in spoiler["playthrough"].items() for item in steps.values()}
+            self.assertLess(spheres["Goron's Bracelet"], spheres["Silver Gauntlets"], seed)
+            self.assertLess(spheres["Silver Gauntlets"], spheres["Golden Gauntlets"], seed)
+
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)
         self.assertEqual(without_version(spoiler),
@@ -179,5 +214,5 @@ class SeedgenTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    SEEDGEN, VERSION = sys.argv[1:3]
-    unittest.main(argv=[sys.argv[0], *sys.argv[3:]])
+    SEEDGEN, reach.PROGRAM, VERSION = sys.argv[1:4]
+    unittest.main(argv=[sys.argv[0], *sys.argv[4:]])

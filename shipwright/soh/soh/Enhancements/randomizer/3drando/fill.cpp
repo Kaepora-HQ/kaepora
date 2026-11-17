@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <initializer_list>
 #include <vector>
 #include <list>
 #include <map>
@@ -877,6 +878,79 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     }
 }
 
+static bool IsStrength(RandomizerGet item) {
+    return item == RG_GORONS_BRACELET || item == RG_SILVER_GAUNTLETS || item == RG_GOLDEN_GAUNTLETS;
+}
+
+// The shuffled locations Link cannot reach with no strength item but the given ones. He holds every key and every item
+// of the shuffled and the kept chests, so a rule that counts more keys than the game asks for, or a kept item behind a
+// rule stricter than the game, cannot make a place look out of reach.
+static std::vector<RandomizerCheck> OutOfReachWithStrength(const std::vector<RemakeChest>& chests,
+                                                           std::initializer_list<RandomizerGet> strength) {
+    auto ctx = Rando::Context::GetInstance();
+    std::set<RandomizerCheck> kept;
+    for (const RemakeChest& chest : chests) {
+        if (!chest.shuffled) {
+            kept.insert(chest.location);
+        }
+    }
+    logic->Reset();
+    std::vector<Rando::ItemLocation*> givers;
+    for (RandomizerCheck loc : ctx->allLocations) {
+        Rando::ItemLocation* location = ctx->GetItemLocation(loc);
+        RandomizerGet item = location->GetPlacedRandomizerGet();
+        ItemType type = location->GetPlacedItem().GetItemType();
+        if (IsStrength(item)) {
+            location->DelayItem();
+            givers.push_back(location);
+        } else if (item != RG_NONE && (kept.contains(loc) || type == ITEMTYPE_SMALLKEY ||
+                                       type == ITEMTYPE_FORTRESS_SMALLKEY || type == ITEMTYPE_BOSSKEY)) {
+            location->GetPlacedItem().ApplyEffect();
+        }
+    }
+    for (RandomizerGet item : itemPool) {
+        if (!IsStrength(item)) {
+            Rando::StaticData::RetrieveItem(item).ApplyEffect();
+        }
+    }
+    for (RandomizerGet item : strength) {
+        Rando::StaticData::RetrieveItem(item).ApplyEffect();
+    }
+    // Before Link uses a bombchu, a Deku Stick or a Deku Nut, the logic asks for a place to get more, and the game
+    // does not.
+    for (LogicVal source : { LOGIC_BUY_BOMBCHUS, LOGIC_STICK_ACCESS, LOGIC_NUT_ACCESS }) {
+        logic->Set(source, true);
+    }
+    ReachabilitySearch({});
+    for (Rando::ItemLocation* location : givers) {
+        location->SaveDelayedItem();
+    }
+    std::vector<RandomizerCheck> outOfReach;
+    for (const RemakeChest& chest : chests) {
+        // The game pays each chest of a location kept twice, and a second pair of Silver Gauntlets would lower the
+        // level.
+        if (chest.shuffled && chest.actors.size() == 1 && !ctx->GetItemLocation(chest.location)->IsAddedToPool()) {
+            outOfReach.push_back(chest.location);
+        }
+    }
+    return outOfReach;
+}
+
+// The remake sets Link's lift level to the grade of the strength item he picks up, whatever he held before, and lifting
+// reads that level. Darunia gives the only bracelet.
+static void PlaceGauntlets(const std::vector<RemakeChest>& chests) {
+    const std::vector<RandomizerCheck> needBracelet = OutOfReachWithStrength(chests, {});
+    const std::vector<RandomizerCheck> needSilver = OutOfReachWithStrength(chests, { RG_GORONS_BRACELET });
+    // The Golden Gauntlets go first, while the Silver Gauntlets are still in the pool, which AssumedFill counts as
+    // held.
+    for (const auto& [gauntlets, places] : { std::pair{ RG_GOLDEN_GAUNTLETS, needSilver },
+                                             std::pair{ RG_SILVER_GAUNTLETS, needBracelet } }) {
+        auto found = std::ranges::find(itemPool, gauntlets);
+        itemPool.erase(found);
+        AssumedFill({ gauntlets }, places);
+    }
+}
+
 // Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests what
 // the unmodified game gives there. The shuffled chests' items make up the item pool. Returns the shuffled chests.
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests) {
@@ -966,6 +1040,9 @@ int Fill(const std::vector<RemakeChest>& chests) {
         for (const RemakeChest* chest : shuffled) {
             shuffledLocations.push_back(chest->location);
         }
+
+        SPDLOG_INFO("Placing the Gauntlets...");
+        PlaceGauntlets(chests);
 
         SPDLOG_INFO("Shuffling and Placing Dungeon Items...");
         PlaceDungeonItems(shuffled);

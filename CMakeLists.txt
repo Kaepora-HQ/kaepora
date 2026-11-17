@@ -108,11 +108,13 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      plan_opens_the_doors_the_rules_count_open same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      the_crate_heart_piece_and_the_training_ground_key_are_shuffled
+                     strength_items_come_in_rising_order
                      fixed_seed_matches_fixture)
-    add_test(NAME ${TEST} COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
-                                  $<TARGET_FILE:kaepora-seedgen> ${PROJECT_VERSION} SeedgenTest.test_${TEST})
+    add_test(NAME ${TEST} COMMAND python3 -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
+                                  $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
+                                  SeedgenTest.test_${TEST})
 endforeach()
-add_test(NAME logic COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/logic_test.py $<TARGET_FILE:kaepora-reach>)
+add_test(NAME logic COMMAND python3 -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py $<TARGET_FILE:kaepora-reach>)
 
 # The game's container is Nintendo's data and stays out of git, so the tests that read it need its path.
 set(KAEPORA_GAME_NUP "" CACHE FILEPATH "The game's .nup container, read by the patcher tests")
