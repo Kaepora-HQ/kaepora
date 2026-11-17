@@ -643,17 +643,12 @@ def seed_plan(patch, game, plan_file):
     assert kinds == {"no item", "substitute"}, kinds
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, seed, tmp)
-        assert result.returncode == 0, result.stderr
-        assert sorted(set(written(tmp)) - {SIZE_TABLE, GAME_DATA_LIST}) == changed, written(tmp)
-        for path in changed:
-            ours = game.placement((tmp / "mod" / "romfs" / path).read_bytes())
-            assert ordered(ours) == ordered(expected[path]), path
-        sizes = placement_sizes(game, tmp, changed)
-        mod_table = tmp / "mod" / "romfs" / SIZE_TABLE
-        table = mod_table.read_bytes() if mod_table.exists() else game.read(SIZE_TABLE)
+    mod = patched(patch, game, seed)
+    assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == changed, sorted(mod)
+    for path in changed:
+        assert ordered(game.placement(mod[path])) == ordered(expected[path]), path
+    sizes = placement_sizes(game, mod, changed)
+    table = mod[SIZE_TABLE] if SIZE_TABLE in mod else game.read(SIZE_TABLE)
     entries = dict(read_size_table(zstd.decompress(table))[1])
     assert all(load_size(size) <= entries[key] for key, size in sizes.items()), sizes
 
