@@ -298,6 +298,24 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("DMC Hammer Grotto Chest"))
         self.assertFalse(self.reachable("DMC Hammer Grotto Chest", NO_HAMMER))
 
+    def test_fire_temple_scarecrow_ledge_chests_need_what_the_scarecrow_chest_needs(self):
+        # Both stand beside the Scarecrow Chest from the start. The way up takes the scarecrow's song and a hookshot.
+        for chest in ("Fire Temple Scarecrow Ledge Left Chest", "Fire Temple Scarecrow Ledge Right Chest"):
+            self.assertTrue(self.reachable(chest))
+            self.assertFalse(self.reachable(chest, NO_HOOKSHOT))
+
+    def test_training_ground_cracked_wall_chest_needs_explosives(self):
+        # The only bomb bag lies in Dodongo's Cavern, and bombchus count only with a bag. Without one, Link reaches
+        # neither the Goron's Ruby nor the Zora's Sapphire nor a magic meter, so those come from elsewhere, with the
+        # gauntlets and the Lens of Truth that the way into the room takes.
+        way_in = (("KF Mido Top Right Chest", "Silver Gauntlets"), ("KF Mido Bottom Right Chest", "Lens of Truth"))
+        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
+                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
+                       ("KF Storms Grotto Chest", "Progressive Magic Meter"), *way_in)
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Cracked Wall Chest", *way_in))
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Third Chest", *no_bomb_bag))
+        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Cracked Wall Chest", *no_bomb_bag))
+
 
 if __name__ == "__main__":
     REACH = sys.argv[1]
