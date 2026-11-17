@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.6.0/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "initial-version": "0.1.0",
+      "bump-minor-pre-major": true,
+      "include-component-in-tag": false,
+      "draft": true,
+      "force-tag-creation": true,
+      "extra-files": ["CMakeLists.txt"],
+      "exclude-paths": ["web"],
+      "pull-request-header": "The next Kaepora release. RELEASING.md lists what to check before you merge it.",
+      "pull-request-footer": "Merging this pull request tags the release and starts its build."
+    }
+  }
+}

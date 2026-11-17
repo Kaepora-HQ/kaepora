@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(kaepora VERSION 0.0.0 LANGUAGES C CXX)
+project(kaepora VERSION 0.0.0 LANGUAGES C CXX) # x-release-please-version
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
