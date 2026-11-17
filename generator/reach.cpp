@@ -1,6 +1,6 @@
 // Answers one question about the logic: with the given items at the given locations, and every other location holding
-// what the unmodified game gives there, can Link ever collect what is at the target location? Prints yes or no. Link
-// holds every item given for Link's Pocket from the start.
+// what the unmodified game gives there, can Link ever collect what is at the target location? Link holds every item
+// given for Link's Pocket from the start.
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/randomizer/3drando/fill.hpp"
