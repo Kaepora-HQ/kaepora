@@ -146,10 +146,10 @@ class SeedgenTest(unittest.TestCase):
                                 if row["item"] in dungeon_names))
 
     def test_spoiler_log_lists_the_shuffled_locations_and_the_route(self):
-        spoiler, _ = self.generate("Kaepora")
+        spoiler, _ = self.generate("KAEPORA")
         self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
         self.assertEqual(spoiler["kaepora"], VERSION)
-        self.assertEqual(spoiler["seed"], "Kaepora")
+        self.assertEqual(spoiler["seed"], "KAEPORA")
         self.assertEqual(spoiler["settings"], DEFAULT_SETTINGS)
         self.assertEqual(list(spoiler["settings"]), list(DEFAULT_SETTINGS))
         # A location whose chest the files keep twice is listed once.
@@ -305,6 +305,13 @@ class SeedgenTest(unittest.TestCase):
             spheres = {item: sphere for sphere, steps in spoiler["playthrough"].items() for item in steps.values()}
             self.assertLess(spheres["Goron's Bracelet"], spheres["Silver Gauntlets"], seed)
             self.assertLess(spheres["Silver Gauntlets"], spheres["Golden Gauntlets"], seed)
+
+    def test_seed_text_ignores_case(self):
+        upper = self.run_seedgen("OWL")
+        self.assertEqual(self.run_seedgen("owl"), upper)
+        self.assertEqual(self.run_seedgen("oWl"), upper)
+        spoiler, plan = map(json.loads, upper)
+        self.assertEqual((spoiler["seed"], plan["seed"]), ("OWL", "OWL"))
 
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)

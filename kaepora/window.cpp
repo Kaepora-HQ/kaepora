@@ -87,6 +87,21 @@ static SeedSettings RememberedSettings() {
 }
 
 namespace {
+// Seed text ignores case, so the field shows it as the generator reads it, in upper case.
+class UpperCaseSeedValidator : public QRegularExpressionValidator {
+public:
+    using QRegularExpressionValidator::QRegularExpressionValidator;
+
+    State validate(QString& input, int& pos) const override {
+        for (QChar& c : input) {
+            if (c >= u'a' && c <= u'z') {
+                c = c.toUpper();
+            }
+        }
+        return QRegularExpressionValidator::validate(input, pos);
+    }
+};
+
 class ElidedLabel : public QLabel {
 public:
     ElidedLabel() {
@@ -134,7 +149,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
                           [this] { return QFileDialog::getOpenFileName(this, "Choose the emulator"); });
 
     seedField = new QLineEdit;
-    seedField->setValidator(new QRegularExpressionValidator(QRegularExpression(SeedPattern), seedField));
+    seedField->setValidator(new UpperCaseSeedValidator(QRegularExpression(SeedPattern), seedField));
     auto* random = new QPushButton("Random");
     auto* settingsButton = new QPushButton("Settings…");
     createButton = new QPushButton("Create seed");

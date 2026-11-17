@@ -290,6 +290,14 @@ private slots:
         QCOMPARE(listed(), QStringList{ "7" });
     }
 
+    void seedTextIgnoresCase() {
+        QVERIFY(create("owl"));
+        QCOMPARE(listed(), QStringList{ "OWL" });
+        QCOMPARE(ReadJson(library + "/OWL/spoiler.json")["seed"].toString(), QString("OWL"));
+        QVERIFY(!create("OWL"));
+        QVERIFY(box()->text().contains("seed named OWL"));
+    }
+
     void deleteLeavesAnotherSeedInUse() {
         QVERIFY(create("7"));
         QVERIFY(create("8"));

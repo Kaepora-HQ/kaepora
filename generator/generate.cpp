@@ -8,6 +8,7 @@
 #include "setup.h"
 
 #include <algorithm>
+#include <cctype>
 #include <format>
 #include <iterator>
 #include <stdexcept>
@@ -55,10 +56,13 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
     }
 }
 
-GeneratedSeed Generate(const std::string& seed, const SeedSettings& settings) {
+GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> table = LoadRemakeChests();
+
+    std::string seed = text;
+    std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
     std::vector<RemakeChest> chests = table;
     for (RemakeChest& chest : chests) {

@@ -12,5 +12,6 @@ struct GeneratedSeed {
 };
 
 // Places the items for the seed and proves the seed can be finished. Starts SoH's randomizer on the first call.
-// Throws when the seed cannot be generated. The randomizer is one global state, so calls must not overlap.
-GeneratedSeed Generate(const std::string& seed, const SeedSettings& settings);
+// Seed text ignores case: the seed is the text in upper case, so owl and OWL are one seed, OWL. Throws when the seed
+// cannot be generated. The randomizer is one global state, so calls must not overlap.
+GeneratedSeed Generate(const std::string& text, const SeedSettings& settings);
