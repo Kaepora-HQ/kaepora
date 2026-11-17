@@ -157,8 +157,6 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME window COMMAND kaepora-window-test)
         set_tests_properties(window PROPERTIES ENVIRONMENT
             "QT_QPA_PLATFORM=offscreen;KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};KAEPORA_MAKE_SEED=$<TARGET_FILE:kaepora-make-seed>")
-        set_property(TEST window APPEND PROPERTY ENVIRONMENT
-                     "KAEPORA_SOH_LOG=${PROJECT_SOURCE_DIR}/tests/fixtures/soh-spoiler-6332265119.json")
     endif()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod

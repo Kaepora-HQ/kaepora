@@ -29,8 +29,8 @@
 #include <algorithm>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <system_error>
 
@@ -73,18 +73,17 @@ static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
 }
 
-static std::optional<SeedSettings> ReadSettings(const QByteArray& text, const char* pointer) {
-    try {
-        const nlohmann::json json = nlohmann::json::parse(text.toStdString());
-        return ParseSeedSettings(json.at(nlohmann::json::json_pointer(pointer)));
-    } catch (const std::exception&) {
-        return std::nullopt;
-    }
+static SeedSettings SettingsOf(const QString& folder) {
+    return ParseSeedSettings(nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings"));
 }
 
-static std::optional<SeedSettings> SettingsOf(const QString& folder) {
-    QFile log(folder + "/spoiler.json");
-    return log.open(QIODevice::ReadOnly) ? ReadSettings(log.readAll(), "/settings") : std::nullopt;
+// The settings the window remembers between runs, or the defaults when there are none it can read.
+static SeedSettings RememberedSettings() {
+    try {
+        return ParseSeedSettings(nlohmann::json::parse(QSettings().value(SettingsKey).toByteArray()));
+    } catch (const std::exception&) {
+        return {};
+    }
 }
 
 namespace {
@@ -145,7 +144,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     seedRow->addWidget(settingsButton);
     seedRow->addWidget(createButton);
     form->addRow("Seed", seedRow);
-    newSeedSettings = ReadSettings(QSettings().value(SettingsKey).toByteArray(), "").value_or(SeedSettings{});
+    newSeedSettings = RememberedSettings();
     settingsSummary = new ElidedLabel;
     showSettings();
     form->addRow("Settings", settingsSummary);
@@ -376,12 +375,9 @@ void Window::refresh(QString select) {
         if (!IsWholeSeed(folder)) {
             continue;
         }
-        const std::optional<SeedSettings> made = SettingsOf(folder.filePath());
-        auto* item = new QTreeWidgetItem(
-            seeds, { seed == inUse ? seed + " (in use)" : seed, made ? Summary(*made) : "Made by another version" });
-        if (made) {
-            item->setToolTip(1, Details(*made));
-        }
+        const SeedSettings made = SettingsOf(folder.filePath());
+        auto* item = new QTreeWidgetItem(seeds, { seed == inUse ? seed + " (in use)" : seed, Summary(made) });
+        item->setToolTip(1, Details(made));
         item->setData(0, Qt::UserRole, folder.absoluteFilePath());
         if (seed == select) {
             seeds->setCurrentItem(item);

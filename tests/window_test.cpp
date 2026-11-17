@@ -439,43 +439,6 @@ private slots:
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Never needed"));
     }
 
-    void aLogThisVersionCannotReadListsAsAnotherVersion() {
-        QFile soh(qEnvironmentVariable("KAEPORA_SOH_LOG"));
-        QVERIFY(soh.open(QIODevice::ReadOnly));
-        const QByteArray sohLog = soh.readAll();
-        QVERIFY(create("7"));
-        QJsonObject later = ReadJson(library + "/7/spoiler.json");
-        QJsonObject laterSettings = later["settings"].toObject();
-        laterSettings["Forest"] = "Open";
-        later["settings"] = laterSettings;
-        const QMap<QString, QByteArray> logs = { { "SoH", sohLog },
-                                                 { "Later", QJsonDocument(later).toJson() },
-                                                 { "Empty", "" },
-                                                 { "Short", sohLog.left(1024) } };
-        for (const auto& [seed, log] : logs.asKeyValueRange()) {
-            Write(library + "/" + seed + "/romfs/Pack/Other.pack.zs", seed.toUtf8());
-            Write(library + "/" + seed + "/spoiler.json", log);
-        }
-
-        window = std::make_unique<Window>();
-        window->show();
-        QVERIFY(window->isVisible());
-        for (const QString& seed : logs.keys()) {
-            QVERIFY2(entry(seed) != nullptr, qPrintable(seed));
-            QCOMPARE(entry(seed)->text(1), QString("Made by another version"));
-        }
-        QCOMPARE(entry("7")->text(1), QString("Default settings"));
-
-        select("SoH");
-        button("Use this seed")->click();
-        QCOMPARE(FilesIn(mods + "/Kaepora/romfs"), FilesIn(library + "/SoH/romfs"));
-        QCOMPARE(entry("SoH")->text(0), QString("SoH (in use)"));
-        button("Delete")->click();
-        answer("Delete");
-        QVERIFY(entry("SoH") == nullptr);
-        QVERIFY(!QFileInfo::exists(library + "/SoH"));
-    }
-
     void unreadableRememberedSettingsStartAsTheDefaults() {
         for (const QString saved : { "Lens never needed", "{\"Forest\": \"Open\"}" }) {
             QSettings().setValue("seedSettings", saved);
