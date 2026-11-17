@@ -1,4 +1,3 @@
-// One seed, generated in memory, for kaepora-seedgen and the window.
 #pragma once
 
 #include "seed_settings.h"

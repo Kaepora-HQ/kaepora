@@ -1,4 +1,3 @@
-// Generates one seed and writes its spoiler log and the plan the patcher reads.
 #include "generate.h"
 
 #include <cstdio>

@@ -140,7 +140,6 @@ static uint32_t Crc32(std::string_view data) {
     return ~crc;
 }
 
-// The size table, decompressed.
 static std::string ReadSizeTable(Romfs& romfs) {
     try {
         std::string table = Decompress(romfs.Read(std::string(SizeTablePath)));

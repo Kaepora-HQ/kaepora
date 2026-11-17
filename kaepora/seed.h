@@ -1,4 +1,3 @@
-// A seed's folder: the mod and the spoiler log of one seed.
 #pragma once
 
 #include "generator/seed_settings.h"

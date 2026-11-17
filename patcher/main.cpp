@@ -1,4 +1,3 @@
-// Writes a plan into a mod folder.
 #include "mod.h"
 
 #include <cstdio>

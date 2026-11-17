@@ -14,7 +14,6 @@ MAKE_SEED = SEEDGEN = PATCH = NUP = None
 
 
 def files(folder):
-    """Every file under the folder, by its path there."""
     return {p.relative_to(folder).as_posix(): p.read_bytes() for p in sorted(folder.rglob("*")) if p.is_file()}
 
 
