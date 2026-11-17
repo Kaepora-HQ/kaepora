@@ -3,6 +3,8 @@ project(kaepora VERSION 0.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Release builds keep assert on, so a broken invariant stops the program instead of writing a bad seed.
+add_compile_options(-UNDEBUG)
 
 find_package(nlohmann_json REQUIRED)
 find_package(spdlog REQUIRED)
