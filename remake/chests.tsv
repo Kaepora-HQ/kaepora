@@ -4,8 +4,8 @@ KF Mido Top Left Chest	12786193094758345086	Banc/KokiriForest/KokiriForest_Adult
 KF Mido Top Right Chest	9725242744547055868	Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs,Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 KF Mido Bottom Left Chest	10831981390482426294	Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs,Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Green	yes	
 KF Mido Bottom Right Chest	4555665598794293658	Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs,Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
-KF Storms Grotto Chest	4349272251343787229	Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs,Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low; logic-differences.md O3
-LW Near Shortcuts Grotto Chest	17479747339356189279	Banc/LostWood/LostWood_Adult_Dynamic.bcett.byml.zs,Banc/LostWood/LostWood_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low
+KF Storms Grotto Chest	14818888396401495482	Banc/KokiriForest/KokiriForest_Adult_Static.bcett.byml.zs,Banc/KokiriForest/KokiriForest_Child_Static.bcett.byml.zs	TBox_Rupee_Green	yes	
+LW Near Shortcuts Grotto Chest				no	no remake chest
 SFM Wolfos Grotto Chest	7995233962349162969	Banc/SacredForestMeadow/SacredForestMeadow_Adult_Static.bcett.byml.zs,Banc/SacredForestMeadow/SacredForestMeadow_Child_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
 HF Southeast Grotto Chest				no	no remake chest
 HF Open Grotto Chest				no	no remake chest
@@ -24,8 +24,8 @@ Market Chest Game Second Room Key	5350594583391365806	Banc/Market/Market_Child_S
 Market Chest Game Third Room Key	12763522142548402103	Banc/Market/Market_Child_Static.bcett.byml.zs	Obj_MiniGame_SmallKey	no	Treasure Chest Game
 Market Chest Game Fourth Room Key	6478285350658826847	Banc/Market/Market_Child_Static.bcett.byml.zs	Obj_MiniGame_SmallKey	no	Treasure Chest Game
 Market Chest Game Fifth Room Key	18239509117326156183	Banc/Market/Market_Child_Static.bcett.byml.zs	Obj_MiniGame_SmallKey	no	Treasure Chest Game
-Kak Redead Grotto Chest	12902291359202819102	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	no	pairing confidence low
-Kak Open Grotto Chest	13080955777249750889	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low
+Kak Redead Grotto Chest				no	no remake chest
+Kak Open Grotto Chest	12902291359202819102	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Graveyard Shield Grave Chest	16912540161937823130	Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs	TBox_Shield_Hylian	no	Drop__CheckActor and Drop__DropActor_Substitute
 Graveyard Heart Piece Grave Chest	9622128545943056087	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs	Obj_Heart_Piece	no	pairing confidence low
 Graveyard Royal Family's Tomb Chest				no	no remake chest
@@ -35,8 +35,8 @@ DMT Storms Grotto Chest				no	no remake chest
 GC Maze Left Chest	4402942101476009858	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
 GC Maze Right Chest	3870071239709713434	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	still closed in a complete save; whether it can be opened is unknown
 GC Maze Center Chest	14647422914070455120	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
-DMC Upper Grotto Chest	9128916506605227251	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low; logic-differences.md O3
-ZR Open Grotto Chest				no	no remake chest
+DMC Upper Grotto Chest	1158729434763801603	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Dynamic.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
+ZR Open Grotto Chest	8838426083116998768	Banc/ZoraRiver/ZoraRiver_Adult_Dynamic.bcett.byml.zs,Banc/ZoraRiver/ZoraRiver_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 ZD Chest	3130048366421939233	Banc/ZoraDomain/ZoraDomain_Child_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
 Deku Tree Map Chest	8579518566955184384	Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Deku Tree Compass Chest	9284193025315608699	Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
