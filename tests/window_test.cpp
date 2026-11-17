@@ -439,21 +439,6 @@ private slots:
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Never needed"));
     }
 
-    void aSeedWithNoSettingsInItsLogListsWithTheDefaults() {
-        QVERIFY(create("7"));
-        QJsonObject log = ReadJson(library + "/7/spoiler.json");
-        QVERIFY(log.contains("settings"));
-        log.remove("settings");
-        Write(library + "/7/spoiler.json", QJsonDocument(log).toJson());
-        chooseForestOutKeysInChestsLensNeverNeeded();
-        dialogButton("OK")->click();
-
-        window = std::make_unique<Window>();
-        window->show();
-        QCOMPARE(listed(), QStringList{ "7" });
-        QCOMPARE(listed(1), QStringList{ "Default settings" });
-    }
-
     void aLogThisVersionCannotReadListsAsAnotherVersion() {
         QFile soh(qEnvironmentVariable("KAEPORA_SOH_LOG"));
         QVERIFY(soh.open(QIODevice::ReadOnly));

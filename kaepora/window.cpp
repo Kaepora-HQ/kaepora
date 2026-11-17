@@ -76,7 +76,7 @@ static QString SeedOf(const QTreeWidgetItem* item) {
 static std::optional<SeedSettings> ReadSettings(const QByteArray& text, const char* pointer) {
     try {
         const nlohmann::json json = nlohmann::json::parse(text.toStdString());
-        return ParseSeedSettings(json.value(nlohmann::json::json_pointer(pointer), nlohmann::json::object()));
+        return ParseSeedSettings(json.at(nlohmann::json::json_pointer(pointer)));
     } catch (const std::exception&) {
         return std::nullopt;
     }
