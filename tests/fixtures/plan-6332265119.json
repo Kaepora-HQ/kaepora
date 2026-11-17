@@ -84,7 +84,7 @@
       "files": [
         "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Longshot"
+      "drop_actor": "Item_Range_Bow"
     },
     {
       "hash": "17445672702269453589",
@@ -114,7 +114,7 @@
         "Banc/GerudoValley/GerudoValley_Adult_Static.bcett.byml.zs",
         "Banc/GerudoValley/GerudoValley_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_Longshot"
     },
     {
       "hash": "12343753510713797715",
@@ -138,21 +138,21 @@
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs",
         "Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "13080955777249750889",
       "files": [
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Range_Bow"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "11929552275106311978",
       "files": [
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Range_Bow"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "9809508929088891725",
@@ -160,7 +160,7 @@
         "Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "4402942101476009858",
@@ -168,7 +168,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "3870071239709713434",
@@ -176,7 +176,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "14647422914070455120",
@@ -184,7 +184,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "1158729434763801603",
@@ -192,7 +192,7 @@
         "Banc/DeathMountainCrater/DeathMountainCrater_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainCrater/DeathMountainCrater_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "9128916506605227251",
@@ -208,21 +208,21 @@
         "Banc/ZoraRiver/ZoraRiver_Adult_Dynamic.bcett.byml.zs",
         "Banc/ZoraRiver/ZoraRiver_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "3130048366421939233",
       "files": [
         "Banc/ZoraDomain/ZoraDomain_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "15055117029957340138",
       "files": [
         "Banc/ZoraFountain/ZoraFountain_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Tbox_MagicJar_Large"
     },
     {
       "hash": "8579518566955184384",
@@ -460,14 +460,14 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Tbox_MagicJar_Large"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "17001858340376096722",
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "16713240760352215634",

@@ -146,11 +146,13 @@ class LogicTest(unittest.TestCase):
 
     def test_training_ground_heavy_block_second_chest_needs_the_eye_hit(self):
         # Without the bow, the Forest Temple and so the well's Lens of Truth are out of reach, so the gauntlets and the
-        # Lens come from elsewhere.
+        # Lens come from elsewhere. The barred door into the room of all four chests opens to an eye hit as well.
         no_bow = ("Forest Temple Bow Chest", "Green Rupee")
         outside = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Lens of Truth"))
-        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
+        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
         self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
+        bow = ("KF Mido Bottom Left Chest", "Progressive Bow")
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, bow, *outside))
 
     def test_jabu_jabu_map_chest_needs_no_boomerang(self):
         # The chest stands beyond the basement below the holes, and no tentacle stands in the way.

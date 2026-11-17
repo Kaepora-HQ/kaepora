@@ -97,7 +97,8 @@ void RegionTable_Init_GerudoTrainingGround() {
 
     areaTable[RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM_UPPER] = Region("Gerudo Training Ground Heavy Block Room Upper", SCENE_GERUDO_TRAINING_GROUND, {
         //Events
-        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, true),
+        // The room links the barred door behind the heavy block to an eye switch in a recess high above it.
+        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, logic->CanHitEyeTargets()),
     }, {}, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM, ctx->GetTrickOption(RT_LENS_GTG) || logic->CanUse(RG_LENS_OF_TRUTH)),
