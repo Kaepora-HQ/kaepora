@@ -375,13 +375,9 @@ def tested_substitute_mod(patch, game, romfs):
     # The tested file also changed the platform chest in a way the patcher does not, so that actor is the game's.
     game_platform = actor(game.placement(game.read(DODONGO_DYNAMIC)), PLATFORM_CHEST)
     tested["Actors"] = [game_platform if a["Hash"] == (UINT64, PLATFORM_CHEST) else a for a in tested["Actors"]]
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([(BRIDGE_CHEST, [DODONGO_DYNAMIC], "Item_Boomerang")]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert DODONGO_DYNAMIC in written(tmp), written(tmp)
-        ours = game.placement((tmp / "mod" / "romfs" / DODONGO_DYNAMIC).read_bytes())
-    assert ordered(ours) == ordered(tested)
+    mod = patched(patch, game, plan([(BRIDGE_CHEST, [DODONGO_DYNAMIC], "Item_Boomerang")]))
+    assert DODONGO_DYNAMIC in mod, sorted(mod)
+    assert ordered(game.placement(mod[DODONGO_DYNAMIC])) == ordered(tested)
 
 
 def tested_gift_mod(patch, game, romfs):
@@ -406,12 +402,8 @@ def tested_added_item_mod(patch, game, romfs):
     entries."""
     romfs = pathlib.Path(romfs)
     chests = [(FOREST_CHEST_WITHOUT_DROP, FOREST_DYNAMIC), (LOBBY_CHEST_WITHOUT_DROP, TRAINING_GROUND_DYNAMIC)]
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        result = run(patch, game, plan([(h, [path], "Item_Boomerang") for h, path in chests]), tmp)
-        assert result.returncode == 0, result.stderr
-        assert written(tmp) == sorted([FOREST_DYNAMIC, TRAINING_GROUND_DYNAMIC, SIZE_TABLE]), written(tmp)
-        ours = {path: (tmp / "mod" / "romfs" / path).read_bytes() for path in [p for _, p in chests] + [SIZE_TABLE]}
+    ours = patched(patch, game, plan([(h, [path], "Item_Boomerang") for h, path in chests]))
+    assert sorted(ours) == sorted([FOREST_DYNAMIC, TRAINING_GROUND_DYNAMIC, SIZE_TABLE]), sorted(ours)
     # The tested files were written with the patcher's BYML writer, so the decompressed files match byte for byte.
     for _, path in chests:
         assert zstd.decompress(ours[path], zstd_dict=game.dictionary) == zstd.decompress(
