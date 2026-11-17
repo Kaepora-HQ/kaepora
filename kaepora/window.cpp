@@ -264,7 +264,7 @@ void Window::useSeed() {
 
 void Window::openSpoilerLog() {
     const QString log = FolderOf(seeds->currentItem()) + "/spoiler.json";
-    Ask(this, "The spoiler log shows where every item is. Open it?", "Open spoiler log", [this, log] {
+    Ask(this, "The spoiler log shows where every shuffled item is. Open it?", "Open spoiler log", [this, log] {
         if (!QDesktopServices::openUrl(QUrl::fromLocalFile(log))) {
             Tell(this, QMessageBox::Warning, "No program opened the spoiler log.");
         }

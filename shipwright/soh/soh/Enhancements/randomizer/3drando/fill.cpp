@@ -1136,7 +1136,6 @@ int Fill(const std::vector<RemakeChest>& chests) {
             SPDLOG_INFO("Calculating Playthrough Done");
 
             StartPerformanceTimer(PT_OVERRIDES);
-            ctx->CreateItemOverrides();
             ctx->GetEntranceShuffler()->CreateEntranceOverrides();
             StopPerformanceTimer(PT_OVERRIDES);
 

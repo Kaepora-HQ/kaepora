@@ -1,10 +1,5 @@
 #pragma once
 
-#include <array>
-#include <string>
-
-using RandomizerHash = std::array<std::string, 5>;
-
 // RANDOTODO this is primarily used by the check tracker now, and should probably be moved
 typedef enum {
     SPOILER_CHK_NONE,
@@ -17,7 +12,3 @@ typedef enum {
     SPOILER_CHK_GRAVEDIGGER,
     SPOILER_CHK_RANDOMIZER_INF,
 } SpoilerCollectionCheckType;
-
-void GenerateHash();
-
-void SpoilerLog_Write();
