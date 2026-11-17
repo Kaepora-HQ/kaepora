@@ -142,7 +142,7 @@ Ice Cavern Map Chest	11498802739257120175	Banc/IceCavern/IceCavern_Static.bcett.
 Ice Cavern Compass Chest	13542013937093159888	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Ice Cavern Iron Boots Chest	6859289214373847284	Banc/IceCavern/IceCavern_Static.bcett.byml.zs	Item_HeavyBoot	no	Sheik teaches Serenade of Water only to Link who gets the Iron Boots from this chest
 Gerudo Training Ground Lobby Left Chest	11182647876438515984	Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs		no	no Drop__DropActor
-Gerudo Training Ground Lobby Right Chest	2436665354602612279	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Blue	no	appears only after an event, and is still closed in a complete save
+Gerudo Training Ground Lobby Right Chest	2436665354602612279	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Gerudo Training Ground Stalfos Chest	13501407288943710656	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Beamos Chest	4709724720801091788	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Hidden Ceiling Chest	4320448574091221496	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
