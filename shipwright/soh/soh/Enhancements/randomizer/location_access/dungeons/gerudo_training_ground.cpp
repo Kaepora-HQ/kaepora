@@ -120,6 +120,8 @@ void RegionTable_Init_GerudoTrainingGround() {
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_SECOND_CHEST, logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanHitEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_THIRD_CHEST,  logic->CanPassEnemy(RE_LIKE_LIKE) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_FOURTH_CHEST, logic->HasItem(RG_OPEN_CHEST)),
+        // Behind a cracked wall, with a Like Like in front of it.
+        LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_CRACKED_WALL_CHEST, logic->CanPassEnemy(RE_LIKE_LIKE) && logic->HasExplosives() && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_BEHIND_HEAVY_BLOCK, true),

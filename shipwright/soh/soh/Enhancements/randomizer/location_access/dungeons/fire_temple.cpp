@@ -349,6 +349,9 @@ void RegionTable_Init_FireTemple() {
     areaTable[RR_FIRE_TEMPLE_5F_RUINS] = Region("Fire Temple 5F Ruins", SCENE_FIRE_TEMPLE, {}, {
         //Locations
         LOCATION(RC_FIRE_TEMPLE_SCARECROW_CHEST,  logic->HasItem(RG_OPEN_CHEST)),
+        // Two more chests stand beside it from the start, left and right as Link faces them from the room.
+        LOCATION(RC_FIRE_TEMPLE_SCARECROW_LEDGE_LEFT_CHEST,  logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_FIRE_TEMPLE_SCARECROW_LEDGE_RIGHT_CHEST, logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_FIRE_TEMPLE_GS_SCARECROW_TOP, logic->CanKillEnemy(RE_GOLD_SKULLTULA, ED_BOMB_THROW)),
     }, {
         //Exits

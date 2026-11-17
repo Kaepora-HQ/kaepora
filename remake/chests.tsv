@@ -87,6 +87,8 @@ Fire Temple Boulder Maze Upper Chest	9634924691849556346	Banc/FireTemple/FireTem
 Fire Temple Boulder Maze Side Room Chest	12567412825200613393	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Fire Temple Boulder Maze Shortcut Chest	16785682308850448108	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Fire Temple Scarecrow Chest	862385681502746018	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
+Fire Temple Scarecrow Ledge Left Chest	15073195886628236505	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
+Fire Temple Scarecrow Ledge Right Chest	17001858340376096722	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Fire Temple Map Chest	16713240760352215634	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Fire Temple Compass Chest	12945617941305968586	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Fire Temple Highest Goron Chest	10521366928524045067	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
@@ -173,6 +175,7 @@ Gerudo Training Ground Heavy Block First Chest	6897789835137994741	Banc/GerudoTr
 Gerudo Training Ground Heavy Block Second Chest	11754783663699171680	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Gerudo Training Ground Heavy Block Third Chest	5329807728555596183	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Heavy Block Fourth Chest	7881496104962067240	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	no Drop__DropActor
+Gerudo Training Ground Heavy Block Cracked Wall Chest	3750231902048775592	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_BombBundle_Small	yes	
 Ganon's Castle Tower Boss Key Chest	17092385671602176550	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	Item_Dungeon_BossKey	yes	
 Ganon's Castle Forest Trial Chest	16913531450403950487	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_ArrowBundle_Medium	yes	
 Ganon's Castle Water Trial Left Chest	3253191540272036329	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	no Drop__DropActor
