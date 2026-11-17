@@ -2,6 +2,7 @@
 
 #include "mod.h"
 #include "seed.h"
+#include "settings_dialog.h"
 
 #include <QDesktopServices>
 #include <QDir>
@@ -11,15 +12,17 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListWidget>
 #include <QMessageBox>
+#include <QPainter>
 #include <QProcess>
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QRegularExpressionValidator>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QStyle>
 #include <QThread>
+#include <QTreeWidget>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -27,6 +30,7 @@
 #include <exception>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <system_error>
 
@@ -42,6 +46,8 @@ constexpr char SeedFile[] = "seed.txt";
 
 // Where Lichii looks for this game's mods, under the user's data folder.
 constexpr char LichiiMods[] = "lichii/load/0400486024DEC000";
+
+constexpr char SettingsKey[] = "seedSettings";
 
 static bool IsSeed(const QString& text) {
     static const QRegularExpression pattern(QRegularExpression::anchoredPattern(SeedPattern));
@@ -59,12 +65,43 @@ static bool IsWholeSeed(const QFileInfo& folder) {
 }
 
 // The seed's folder in the library, as the list found it.
-static QString FolderOf(const QListWidgetItem* item) {
-    return item->data(Qt::UserRole).toString();
+static QString FolderOf(const QTreeWidgetItem* item) {
+    return item->data(0, Qt::UserRole).toString();
 }
 
-static QString SeedOf(const QListWidgetItem* item) {
+static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
+}
+
+static std::optional<SeedSettings> ReadSettings(const QByteArray& text, const char* pointer) {
+    try {
+        const nlohmann::json json = nlohmann::json::parse(text.toStdString());
+        return ParseSeedSettings(json.value(nlohmann::json::json_pointer(pointer), nlohmann::json::object()));
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+}
+
+static std::optional<SeedSettings> SettingsOf(const QString& folder) {
+    QFile log(folder + "/spoiler.json");
+    return log.open(QIODevice::ReadOnly) ? ReadSettings(log.readAll(), "/settings") : std::nullopt;
+}
+
+namespace {
+class ElidedLabel : public QLabel {
+public:
+    ElidedLabel() {
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        const QRect area = contentsRect();
+        style()->drawItemText(&painter, area, alignment(), palette(), isEnabled(),
+                              fontMetrics().elidedText(text(), Qt::ElideRight, area.width()), foregroundRole());
+    }
+};
 }
 
 // Message boxes open window-modal and return at once, so the window's events go on while one is open.
@@ -100,14 +137,23 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     seedField = new QLineEdit;
     seedField->setValidator(new QRegularExpressionValidator(QRegularExpression(SeedPattern), seedField));
     auto* random = new QPushButton("Random");
+    auto* settingsButton = new QPushButton("Settings…");
     createButton = new QPushButton("Create seed");
     auto* seedRow = new QHBoxLayout;
     seedRow->addWidget(seedField);
     seedRow->addWidget(random);
+    seedRow->addWidget(settingsButton);
     seedRow->addWidget(createButton);
     form->addRow("Seed", seedRow);
+    newSeedSettings = ReadSettings(QSettings().value(SettingsKey).toByteArray(), "").value_or(SeedSettings{});
+    settingsSummary = new ElidedLabel;
+    showSettings();
+    form->addRow("Settings", settingsSummary);
 
-    seeds = new QListWidget;
+    seeds = new QTreeWidget;
+    seeds->setColumnCount(2);
+    seeds->setHeaderHidden(true);
+    seeds->setRootIsDecorated(false);
     useButton = new QPushButton("Use this seed");
     spoilerButton = new QPushButton("Open spoiler log");
     deleteButton = new QPushButton("Delete");
@@ -135,8 +181,9 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
         }
         seedField->setText(seed);
     });
+    connect(settingsButton, &QPushButton::clicked, this, &Window::chooseSettings);
     connect(createButton, &QPushButton::clicked, this, &Window::createSeed);
-    connect(seeds, &QListWidget::currentItemChanged, this, &Window::updateButtons);
+    connect(seeds, &QTreeWidget::currentItemChanged, this, &Window::updateButtons);
     connect(useButton, &QPushButton::clicked, this, &Window::useSeed);
     connect(spoilerButton, &QPushButton::clicked, this, &Window::openSpoilerLog);
     connect(deleteButton, &QPushButton::clicked, this, &Window::deleteSeed);
@@ -175,6 +222,19 @@ QLineEdit* Window::addPathRow(QFormLayout* form, const QString& label, const QSt
     return field;
 }
 
+void Window::chooseSettings() {
+    ChooseSettings(this, newSeedSettings, [this](const SeedSettings& chosen) {
+        newSeedSettings = chosen;
+        QSettings().setValue(SettingsKey, QString::fromStdString(ToJson(newSeedSettings).dump()));
+        showSettings();
+    });
+}
+
+void Window::showSettings() {
+    settingsSummary->setText(Summary(newSeedSettings));
+    settingsSummary->setToolTip(Details(newSeedSettings));
+}
+
 void Window::createSeed() {
     const QString seed = seedField->text();
     const std::filesystem::path nup = Path(gameFile->text());
@@ -189,9 +249,9 @@ void Window::createSeed() {
     std::error_code ignored;
     std::filesystem::remove_all(folder, ignored);
     auto error = std::make_shared<QString>();
-    making = QThread::create([seed, nup, folder, error] {
+    making = QThread::create([seed, settings = newSeedSettings, nup, folder, error] {
         try {
-            MakeSeed(seed.toStdString(), {}, nup, folder);
+            MakeSeed(seed.toStdString(), settings, nup, folder);
         } catch (const std::exception& e) {
             *error = QString::fromUtf8(e.what());
         }
@@ -316,12 +376,19 @@ void Window::refresh(QString select) {
         if (!IsWholeSeed(folder)) {
             continue;
         }
-        auto* item = new QListWidgetItem(seed == inUse ? seed + " (in use)" : seed, seeds);
-        item->setData(Qt::UserRole, folder.absoluteFilePath());
+        const std::optional<SeedSettings> made = SettingsOf(folder.filePath());
+        auto* item = new QTreeWidgetItem(
+            seeds, { seed == inUse ? seed + " (in use)" : seed, made ? Summary(*made) : "Made by another version" });
+        if (made) {
+            item->setToolTip(1, Details(*made));
+        }
+        item->setData(0, Qt::UserRole, folder.absoluteFilePath());
         if (seed == select) {
             seeds->setCurrentItem(item);
         }
     }
+    seeds->resizeColumnToContents(0);
+    seeds->setColumnWidth(0, seeds->columnWidth(0) + seeds->fontMetrics().horizontalAdvance("MM"));
     status->setText(making != nullptr ? "Creating seed…"
                     : inUse.isEmpty() ? "No seed in use"
                                       : "Seed " + inUse + " is in use");
