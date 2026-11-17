@@ -1,0 +1,105 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push cancels a pull request's run; main runs finish so each merge saves its compiler cache.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Ubuntu 24.04's default compilers, GCC 13 and Clang 18, cannot compile #embed. This is the newest Clang that Ubuntu
+  # 24.04 packages itself.
+  LLVM_VERSION: "20"
+  QT_VERSION: "6.8.3"
+
+jobs:
+  linux:
+    name: Linux build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 1G
+      CCACHE_COMPILERCHECK: content
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            "clang-$LLVM_VERSION" ninja-build nlohmann-json3-dev libspdlog-dev libzstd-dev
+          "clang-$LLVM_VERSION" --version
+
+      # Ubuntu's ccache 4.9 does not see the files #embed reads, so an edited remake table would come back as a stale
+      # cached object. From 4.14, ccache compiles a file that uses #embed through the preprocessor.
+      - name: Install ccache
+        run: |
+          archive="$RUNNER_TEMP/ccache.tar.xz"
+          curl -fsSL -o "$archive" \
+            https://github.com/ccache/ccache/releases/download/v4.14.3/ccache-4.14.3-linux-x86_64-glibc.tar.xz
+          echo "c94a5688546883eee4c87764b34fa2eb18a4879421a51589c37538aed6312dfc  $archive" | sha256sum -c
+          tar -xJf "$archive" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/ccache-4.14.3-linux-x86_64-glibc" >> "$GITHUB_PATH"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+
+      # Objects are keyed by content, so the newest cache of this branch or main always helps. Restored and saved
+      # separately so a test failure still keeps the compiled objects.
+      - name: Restore compiler objects
+        id: compiler-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: clang${{ env.LLVM_VERSION }}-qt${{ env.QT_VERSION }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            clang${{ env.LLVM_VERSION }}-qt${{ env.QT_VERSION }}-${{ runner.os }}-
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          "-DCMAKE_C_COMPILER=clang-$LLVM_VERSION"
+          "-DCMAKE_CXX_COMPILER=clang++-$LLVM_VERSION"
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          "-DCMAKE_PREFIX_PATH=$QT_ROOT_DIR"
+
+      # CMakeLists.txt leaves the window out quietly where it finds no Qt.
+      - name: Build
+        run: |
+          ccache --zero-stats
+          cmake --build build
+          ccache --show-stats
+          test -x build/kaepora
+
+      # The tests that read the game file are registered only when KAEPORA_GAME_NUP names it, and it never comes here.
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure --no-tests=error --parallel "$(nproc)"
+
+      - name: Save compiler objects
+        if: always() && steps.compiler-cache.outcome == 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
