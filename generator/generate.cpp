@@ -12,7 +12,6 @@
 #include <iterator>
 #include <stdexcept>
 
-// Adds the location's name and the name of the item placed there.
 static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck location) {
     placements[Rando::StaticData::GetLocation(location)->GetName()] =
         Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedItemName().GetEnglish();

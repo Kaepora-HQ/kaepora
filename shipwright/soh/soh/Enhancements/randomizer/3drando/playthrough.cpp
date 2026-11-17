@@ -27,7 +27,6 @@ int Playthrough_Init(uint32_t seed, std::set<RandomizerCheck> excludedLocations,
     if (ret < 0) {
         return ret;
     }
-    // The playthrough stays in the context, where the spoiler log reads it.
     return 1;
 }
 
