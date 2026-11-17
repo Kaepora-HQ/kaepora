@@ -50,7 +50,7 @@ Dodongos Cavern Compass Chest	17531994809974271603	Banc/DodongoCavern/DodongoCav
 Dodongos Cavern Bomb Flower Platform Chest	11582649900854566065	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
 Dodongos Cavern Bomb Bag Chest	12161709650443144121	Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs	Item_BombBag_Small	yes	
 Dodongos Cavern End Of Bridge Chest	7524527082521156886	Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs	TBox_Shield_Deku	no	Drop__CheckActor and Drop__DropActor_Substitute
-Jabu Jabus Belly Map Chest	14933854942830098290	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Map	no	pairing confidence low; logic-differences.md J1
+Jabu Jabus Belly Map Chest	14933854942830098290	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Jabu Jabus Belly Compass Chest	3510516276638146208	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Jabu Jabus Belly Boomerang Chest	5527401621172639818	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Boomerang	yes	
 Forest Temple First Room Chest	1171460703078800858	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	

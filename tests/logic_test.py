@@ -147,6 +147,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
         self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
 
+    def test_jabu_jabu_map_chest_needs_no_boomerang(self):
+        # The chest stands beyond the basement below the holes, and no tentacle stands in the way.
+        self.assertTrue(self.reachable("Jabu Jabus Belly Map Chest", ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")))
+
     def test_well_locks_each_take_both_keys(self):
         # Both locked doors open off the middle, so either can take the first of the two keys.
         self.assertTrue(self.reachable("Bottom of the Well GS West Inner Room"))
