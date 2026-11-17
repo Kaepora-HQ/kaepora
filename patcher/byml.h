@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace byml {
@@ -33,7 +34,8 @@ struct Node {
     std::vector<Node> array;
     std::vector<Entry> dict; // in key order
 
-    std::strong_ordering operator<=>(const Node&) const = default;
+    bool operator==(const Node&) const = default;
+    std::strong_ordering operator<=>(const Node&) const;
 };
 
 struct Entry {
@@ -42,6 +44,13 @@ struct Entry {
 
     std::strong_ordering operator<=>(const Entry&) const = default;
 };
+
+// Member by member, as a defaulted <=> would. Clang cannot default it: inside Node, Entry is incomplete, and defaulted
+// after Entry, the comparison recurses into itself through std::vector<Node>.
+inline std::strong_ordering Node::operator<=>(const Node& other) const {
+    return std::tie(type, scalar, string, array, dict) <=>
+           std::tie(other.type, other.scalar, other.string, other.array, other.dict);
+}
 
 struct Document {
     std::endian order;

@@ -3,6 +3,8 @@ project(kaepora VERSION 0.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# The code uses no C++ modules. Scanning for them would need clang-scan-deps, which Ubuntu packages apart from Clang.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # Release builds keep assert on, so a broken invariant stops the program instead of writing a bad seed.
 add_compile_options(-UNDEBUG)
 
@@ -40,7 +42,8 @@ set_source_files_properties(generator/generate.cpp PROPERTIES COMPILE_DEFINITION
 # Shop prices use floating point. SoH builds without fused multiply-add, so the same seed gives the same prices.
 target_compile_options(kaepora-generator PRIVATE -ffp-contract=off)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
-set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS -Wno-discarded-qualifiers)
+set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
+    $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
 target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 add_executable(kaepora-seedgen generator/main.cpp)
@@ -55,7 +58,8 @@ set(WARNINGS -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
 
 add_library(kaepora-patch-files STATIC patcher/byml.cpp patcher/compression.cpp patcher/mod.cpp patcher/romfs.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
-target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE zstd::libzstd)
+# zstd before 1.5.6, as on Ubuntu 24.04, names only its shared and static targets.
+target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE zstd::libzstd_shared)
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
 
 add_executable(kaepora-patch patcher/main.cpp)
