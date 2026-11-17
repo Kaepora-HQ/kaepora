@@ -222,7 +222,8 @@ static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, co
                     std::format("start flag \"{}\" is not a true-or-false value in the list", name));
             }
             if (value->scalar != 0) {
-                throw std::runtime_error(std::format("start flag \"{}\" is already true by default, or is listed twice", name));
+                throw std::runtime_error(
+                    std::format("start flag \"{}\" is already true by default, or is listed twice", name));
             }
             value->scalar = 1;
         }
@@ -231,7 +232,6 @@ static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, co
         throw std::runtime_error(std::format("{}: {}", GameDataListPath, e.what()));
     }
 }
-
 
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
     Romfs romfs(nup);
