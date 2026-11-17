@@ -20,7 +20,9 @@ void MakeSeed(const std::string& seed, const SeedSettings& settings, const std::
         for (const auto& [path, data] : files) {
             WriteFile(seedDir / "romfs" / path, data);
         }
-        WriteFile(seedDir / "spoiler.json", generated.spoilerLog);
+        // The log makes the folder a whole seed, so it takes its name only once it is written in full.
+        WriteFile(seedDir / "spoiler.json.part", generated.spoilerLog);
+        std::filesystem::rename(seedDir / "spoiler.json.part", seedDir / "spoiler.json");
     } catch (...) {
         // The folder did not exist, so everything in it is this call's.
         std::error_code ignored;
