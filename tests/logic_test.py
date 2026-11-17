@@ -118,14 +118,30 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                        ("KF Mido Top Left Chest", "Goron's Bracelet")))
 
+    def test_a_bomb_needs_the_bracelets_strength(self):
+        # Link takes a bomb out of the bag only at the strength the bracelet gives, or adult Link's gauntlets give. The
+        # rock before the Death Mountain Trail chest takes a bomb or the hammer.
+        no_bracelet = ("GC Darunias Joy", "Green Rupee")
+        bomb_bag = ("KF Mido Top Left Chest", "Progressive Bomb Bag")
+        self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
+        self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, bomb_bag))
+        # Without the bracelet, a child reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come from
+        # elsewhere for Link to become adult.
+        adult_without_strength = (NO_HAMMER, bomb_bag, no_bracelet, NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS,
+                                  ("KF Mido Bottom Left Chest", "Goron's Ruby"),
+                                  ("KF Mido Bottom Right Chest", "Zora's Sapphire"))
+        self.assertFalse(self.reachable("DMT Chest", *adult_without_strength))
+        self.assertTrue(self.reachable("DMT Chest", *adult_without_strength,
+                                       ("KF Mido Top Right Chest", "Silver Gauntlets")))
+
     def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
         # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
-        # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child cannot open Dodongo's Cavern,
-        # so the Goron's Ruby comes from elsewhere.
+        # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child reaches neither the Goron's
+        # Ruby nor the Zora's Sapphire, so they come from elsewhere.
         for gauntlets in ("Silver Gauntlets", "Golden Gauntlets"):
             self.assertTrue(self.reachable("Phantom Ganon", ("GC Darunias Joy", "Green Rupee"),
                                            ("KF Mido Top Left Chest", gauntlets),
-                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag"),
+                                           ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
                                            ("KF Mido Top Right Chest", "Goron's Ruby")))
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):

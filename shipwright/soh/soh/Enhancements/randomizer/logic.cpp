@@ -620,14 +620,15 @@ bool Logic::CanUse(RandomizerGet itemName) {
             return IsChild /* || StickAsAdult;*/ && Get(LOGIC_STICK_ACCESS);
         case RG_DEKU_SHIELD:
             return IsChild; // || DekuShieldAsAdult;
+        // Link takes a bomb out only once his strength is at the bracelet's level. Bombchus are held to the same.
         case RG_PROGRESSIVE_BOMB_BAG:
         case RG_BOMB_BAG:
-            return true; // AmmoCanDrop || Get(LOGIC_BUY_BOMB)
+            return HasItem(RG_GORONS_BRACELET);
         case RG_PROGRESSIVE_BOMBCHU_BAG:
         case RG_BOMBCHU_5:
         case RG_BOMBCHU_10:
         case RG_BOMBCHU_20:
-            return BombchuRefill() && BombchusEnabled();
+            return BombchuRefill() && BombchusEnabled() && HasItem(RG_GORONS_BRACELET);
         case RG_WEIRD_EGG:
         case RG_RUTOS_LETTER:
             return IsChild;
