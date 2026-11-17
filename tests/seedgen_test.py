@@ -1,6 +1,6 @@
 """End-to-end tests of kaepora-seedgen against the tables in remake/.
 
-Usage: python3 -I tests/seedgen_test.py <kaepora-seedgen> <Kaepora's version> [test name ...]
+Usage: python3 -I -B tests/seedgen_test.py <kaepora-seedgen> <kaepora-reach> <Kaepora's version> [test name ...]
 Writes its seeds into a temporary folder under the current directory.
 """
 
@@ -13,6 +13,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import reach  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -37,6 +40,16 @@ DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywh
                     "Maps and compasses": "Anywhere in their dungeon", "Lens of Truth": "Needed"}
 KEYS = {"Item_Dungeon_SmallKey", "Item_Dungeon_BossKey"}
 MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
+GOLDEN_GAUNTLETS_CHEST = "Ganon's Castle Shadow Trial Golden Gauntlets Chest"
+EVERY_KEY = [("Link's Pocket", item) for item in (
+    *(f"{dungeon} Key Ring" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
+                                            "Shadow Temple", "Bottom of the Well", "Training Ground",
+                                            "Gerudo Fortress", "Ganon's Castle", "Chest Game")),
+    *(f"{dungeon} Boss Key" for dungeon in ("Forest Temple", "Fire Temple", "Water Temple", "Spirit Temple",
+                                            "Shadow Temple", "Ganon's Castle")))]
+# The game pays each chest of these locations on its own.
+KEPT_TWICE = {location for location, rows in collections.Counter(row["location"] for row in SHUFFLED).items()
+              if rows > 1}
 
 
 def folder(path):
@@ -257,6 +270,40 @@ class SeedgenTest(unittest.TestCase):
             spoiler, _ = self.generate(str(seed), settings)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
 
+    def test_strength_items_come_in_rising_order(self):
+        no_bracelet = ("GC Darunias Joy", "Green Rupee")
+        bracelet_at_start = ("Link's Pocket", "Goron's Bracelet")
+
+        def without(*left_out):
+            return {"Shuffled dungeons": [name for name in DUNGEONS if name not in left_out]}
+
+        for seed, settings in (("5029", {}), ("5032", {}), ("5038", {}), ("5022", {}), ("70217", {}),
+                               ("947011", {"Shuffled dungeons": ["Ganon's Castle"]}),
+                               ("5107", without("Spirit Temple")),
+                               ("75021", {"Small and boss keys": "In their own chests"}),
+                               ("73421", {**without("Dodongo's Cavern", "Water Temple", "Shadow Temple",
+                                                    "Spirit Temple", "Ice Cavern"),
+                                          "Small and boss keys": "In their own chests",
+                                          "Maps and compasses": "In their own chests"}),
+                               ("5002", without("Ganon's Castle"))):
+            spoiler, _ = self.generate(seed, settings)
+            placed = list(spoiler["locations"].items())
+            where = {item: location for location, item in placed}
+            silver = where["Silver Gauntlets"]
+            golden = where.get("Golden Gauntlets", GOLDEN_GAUNTLETS_CHEST)
+            self.assertEqual("Golden Gauntlets" in where,
+                             "Ganon's Castle" in settings.get("Shuffled dungeons", DUNGEONS))
+            self.assertTrue(reach.reachable(golden, *placed, settings=settings), seed)
+            for keys in ([], EVERY_KEY):
+                self.assertFalse(reach.reachable(silver, *placed, no_bracelet, *keys, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, no_bracelet, *keys, settings=settings), seed)
+                self.assertFalse(reach.reachable(golden, *placed, (silver, "Green Rupee"), bracelet_at_start, *keys,
+                                                 settings=settings), seed)
+            self.assertFalse({silver, golden} & KEPT_TWICE, seed)
+            spheres = {item: sphere for sphere, steps in spoiler["playthrough"].items() for item in steps.values()}
+            self.assertLess(spheres["Goron's Bracelet"], spheres["Silver Gauntlets"], seed)
+            self.assertLess(spheres["Silver Gauntlets"], spheres["Golden Gauntlets"], seed)
+
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)
         self.assertEqual(without_version(spoiler),
@@ -265,5 +312,5 @@ class SeedgenTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    SEEDGEN, VERSION = sys.argv[1:3]
-    unittest.main(argv=[sys.argv[0], *sys.argv[3:]])
+    SEEDGEN, reach.PROGRAM, VERSION = sys.argv[1:4]
+    unittest.main(argv=[sys.argv[0], *sys.argv[4:]])

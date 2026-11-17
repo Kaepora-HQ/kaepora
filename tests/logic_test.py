@@ -1,16 +1,17 @@
 """Questions to the logic, answered by kaepora-reach.
 
-Usage: python3 -I tests/logic_test.py <kaepora-reach> [test name ...]
+Usage: python3 -I -B tests/logic_test.py <kaepora-reach> [test name ...]
 Each test places items at locations, leaves every other location as the unmodified game has it, and asks whether
 Link can ever collect what is at one location. Names are SoH's English names.
 """
 
-import json
-import subprocess
+import pathlib
 import sys
 import unittest
 
-REACH = None
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import reach  # noqa: E402
+
 # The 10 and 30 Gold Skulltula rewards are the only wallet upgrades.
 NO_WALLET_UPGRADE = (("Kak 10 Gold Skulltula Reward", "Green Rupee"), ("Kak 30 Gold Skulltula Reward", "Green Rupee"))
 ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
@@ -27,13 +28,7 @@ LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 
 
 class LogicTest(unittest.TestCase):
-    def reachable(self, location, *placed, settings=None):
-        """Whether Link can collect what is at location, with each (location, item) pair in placed."""
-        args = [json.dumps(settings or {}), location, *(name for pair in placed for name in pair)]
-        result = subprocess.run([REACH, *args], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(result.stdout, ("yes\n", "no\n"))
-        return result.stdout == "yes\n"
+    reachable = staticmethod(reach.reachable)
 
     def test_placed_items_change_the_answer(self):
         self.assertTrue(self.reachable("Queen Gohma"))
@@ -371,5 +366,5 @@ class LogicTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    REACH = sys.argv[1]
+    reach.PROGRAM = sys.argv[1]
     unittest.main(argv=[sys.argv[0], *sys.argv[2:]])
