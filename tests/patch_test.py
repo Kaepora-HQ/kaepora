@@ -4,6 +4,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
        python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod <kaepora-patch> <game.nup> \
            <tested mod's romfs folder>
+       python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|start-flags \
            <kaepora-patch> <game.nup>
 
@@ -373,6 +374,45 @@ def size_table_unchanged(patch, game):
         assert written(tmp) == changed, written(tmp)
 
 
+def seed_plan(patch, game, plan_file):
+    """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
+    substitute where it has one, and as an added value where it names none. Each fits the size table entry the game
+    reads."""
+    seed = json.loads(pathlib.Path(plan_file).read_text())
+    expected, kinds = {}, set()
+    for chest in seed["chests"]:
+        for path in chest["files"]:
+            if path not in expected:
+                expected[path] = game.placement(game.read(path))
+            dynamic = actor(expected[path], int(chest["hash"]))["Dynamic"]
+            if "Drop__DropActor" not in dynamic:
+                kinds.add("no item")
+            if "Drop__DropActor_Substitute" in dynamic:
+                kinds.add("substitute")
+                dynamic["Drop__DropActor_Substitute"] = chest["drop_actor"]
+            dynamic["Drop__DropActor"] = chest["drop_actor"]
+            # The game's dicts are in key order, and an added value takes its place in it.
+            entries = sorted(dynamic.items())
+            dynamic.clear()
+            dynamic.update(entries)
+    assert kinds == {"no item", "substitute"}, kinds
+    changed = sorted(path for path, placement in expected.items()
+                     if ordered(placement) != ordered(game.placement(game.read(path))))
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, seed, tmp)
+        assert result.returncode == 0, result.stderr
+        assert sorted(set(written(tmp)) - {SIZE_TABLE, GAME_DATA_LIST}) == changed, written(tmp)
+        for path in changed:
+            ours = game.placement((tmp / "mod" / "romfs" / path).read_bytes())
+            assert ordered(ours) == ordered(expected[path]), path
+        sizes = placement_sizes(game, tmp, changed)
+        mod_table = tmp / "mod" / "romfs" / SIZE_TABLE
+        table = mod_table.read_bytes() if mod_table.exists() else game.read(SIZE_TABLE)
+    entries = dict(read_size_table(zstd.decompress(table))[1])
+    assert all(load_size(size) <= entries[key] for key, size in sizes.items()), sizes
+
+
 def bad_input(patch, game):
     # Each plan starts with a valid change, so a program that wrote as it went would leave a file behind.
     valid = {"hash": str(SLINGSHOT_CHEST), "files": [DEKU_STATIC], "drop_actor": "Item_Hookshot"}
@@ -433,6 +473,7 @@ def main():
         "tested-start-mod": tested_start_mod,
         "tested-substitute-mod": tested_substitute_mod,
         "tested-added-item-mod": tested_added_item_mod,
+        "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
         "size-table": size_table_entries,

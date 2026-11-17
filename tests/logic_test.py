@@ -154,6 +154,12 @@ class LogicTest(unittest.TestCase):
         bow = ("KF Mido Bottom Left Chest", "Progressive Bow")
         self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, bow, *outside))
 
+    def test_training_ground_lobby_left_chest_needs_no_eye_hit(self):
+        # The invisible left chest stands there from the start. The eye switch shows only the right one.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Gerudo Training Ground Lobby Left Chest", no_bow))
+        self.assertFalse(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow))
+
     def test_jabu_jabu_map_chest_needs_no_boomerang(self):
         # The chest stands beyond the basement below the holes, and no tentacle stands in the way.
         self.assertTrue(self.reachable("Jabu Jabus Belly Map Chest", ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")))

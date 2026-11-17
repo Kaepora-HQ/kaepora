@@ -18,7 +18,8 @@ void RegionTable_Init_GerudoTrainingGround() {
 
     areaTable[RR_GERUDO_TRAINING_GROUND_LOBBY] = Region("Gerudo Training Ground Lobby", SCENE_GERUDO_TRAINING_GROUND, {}, {
         //Locations
-        LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_LEFT_CHEST,      logic->CanHitEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
+        // The invisible left chest stands there from the start. The eye switch shows only the right one.
+        LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_LEFT_CHEST,      logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_RIGHT_CHEST,     logic->CanHitEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_ENTRANCE_STORMS_FAIRY, logic->CanUse(RG_SONG_OF_STORMS)),
     }, {
