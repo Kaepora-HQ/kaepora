@@ -85,7 +85,7 @@ target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
 find_package(Qt6 QUIET COMPONENTS Widgets OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
-    add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/window.cpp)
+    add_executable(kaepora kaepora/main.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp kaepora/window.cpp)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
 
@@ -147,7 +147,8 @@ if(KAEPORA_GAME_NUP)
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(Qt6Test_FOUND)
-        add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/window.cpp)
+        add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
+                                           kaepora/window.cpp)
         set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
         target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Test)
         target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})

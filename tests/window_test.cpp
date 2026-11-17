@@ -3,10 +3,15 @@
 #include "kaepora/window.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialog>
 #include <QDirListing>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListWidget>
 #include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
@@ -14,8 +19,8 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTreeWidget>
 
-#include <algorithm>
 #include <memory>
 
 using Files = QMap<QString, QByteArray>;
@@ -30,6 +35,11 @@ static Files FilesIn(const QString& folder) {
         }
     }
     return files;
+}
+
+static QJsonObject ReadJson(const QString& path) {
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object() : QJsonObject();
 }
 
 static void Write(const QString& path, const QByteArray& data) {
@@ -65,21 +75,38 @@ private:
         return nullptr;
     }
 
-    QListWidget* list() const {
-        return window->findChild<QListWidget*>();
+    QTreeWidget* list() const {
+        return window->findChild<QTreeWidget*>();
     }
 
-    QStringList listed() const {
+    QStringList listed(int column = 0) const {
         QStringList texts;
-        for (int row = 0; row < list()->count(); ++row) {
-            texts << list()->item(row)->text();
+        for (int row = 0; row < list()->topLevelItemCount(); ++row) {
+            texts << list()->topLevelItem(row)->text(column);
         }
         return texts;
     }
 
     bool shows(const QString& text) const {
-        const QList<QLabel*> labels = window->findChildren<QLabel*>();
-        return std::ranges::any_of(labels, [&](const QLabel* label) { return label->text() == text; });
+        return label(text) != nullptr;
+    }
+
+    QLabel* label(const QString& text) const {
+        for (QLabel* label : window->findChildren<QLabel*>()) {
+            if (label->text() == text) {
+                return label;
+            }
+        }
+        return nullptr;
+    }
+
+    QTreeWidgetItem* entry(const QString& seed) const {
+        for (int row = 0; row < list()->topLevelItemCount(); ++row) {
+            if (list()->topLevelItem(row)->text(0).split(' ').front() == seed) {
+                return list()->topLevelItem(row);
+            }
+        }
+        return nullptr;
     }
 
     QMessageBox* box() const {
@@ -107,6 +134,50 @@ private:
                QTest::qWaitFor([&] { return create->isEnabled(); }, MakeTimeout);
     }
 
+    QDialog* dialog() const {
+        for (QDialog* dialog : window->findChildren<QDialog*>()) {
+            if (dialog->isVisible() && dialog->windowTitle() == "Seed settings") {
+                return dialog;
+            }
+        }
+        return nullptr;
+    }
+
+    QPushButton* dialogButton(const QString& text) const {
+        for (QPushButton* button : dialog()->findChildren<QPushButton*>()) {
+            if (button->text() == text) {
+                return button;
+            }
+        }
+        return nullptr;
+    }
+
+    QCheckBox* dungeon(const QString& name) const {
+        for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
+            if (box->text() == name) {
+                return box;
+            }
+        }
+        return nullptr;
+    }
+
+    QComboBox* choice(const QString& label) const {
+        for (QLabel* text : dialog()->findChildren<QLabel*>()) {
+            if (text->text() == label) {
+                return qobject_cast<QComboBox*>(text->buddy());
+            }
+        }
+        return nullptr;
+    }
+
+    void chooseForestOutKeysInChestsLensNeverNeeded() {
+        button("Settings…")->click();
+        QVERIFY(dialog() != nullptr);
+        dungeon("Forest Temple")->click();
+        choice("Small and boss keys")->setCurrentText("In their own chests");
+        choice("Lens of Truth")->setCurrentText("Never needed");
+    }
+
     void answer(const QString& text) {
         for (QAbstractButton* answer : box()->buttons()) {
             if (answer->text() == text) {
@@ -116,11 +187,15 @@ private:
     }
 
     void select(const QString& seed) {
-        for (int row = 0; row < list()->count(); ++row) {
-            if (list()->item(row)->text().split(' ').front() == seed) {
-                list()->setCurrentRow(row);
-            }
+        list()->setCurrentItem(entry(seed));
+    }
+
+    void leaveOut(const QStringList& dungeons) {
+        button("Settings…")->click();
+        for (const QString& name : dungeons) {
+            dungeon(name)->setChecked(false);
         }
+        dialogButton("OK")->click();
     }
 
 private slots:
@@ -143,7 +218,7 @@ private slots:
     void createSeed() {
         QVERIFY(create("7"));
         QCOMPARE(listed(), QStringList{ "7" });
-        QCOMPARE(list()->currentItem()->text(), QString("7"));
+        QCOMPARE(list()->currentItem()->text(0), QString("7"));
         QVERIFY(shows("No seed in use"));
         QVERIFY(QFileInfo(library + "/7/romfs").isDir());
         QVERIFY(QFileInfo(library + "/7/spoiler.json").isFile());
@@ -273,6 +348,107 @@ private slots:
         QVERIFY(QFileInfo(library + "/7/spoiler.json").isFile());
         QVERIFY(!QFileInfo::exists(library + "/7/romfs/Pack/Other.pack.zs"));
         QVERIFY(!QFileInfo::exists(library + "/7/spoiler.json.part"));
+    }
+
+    void settingsGoIntoTheSeed() {
+        QVERIFY(shows("Default settings"));
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        QVERIFY(dialog() == nullptr);
+        const QString summary = "Forest Temple not shuffled, keys in their own chests, Lens never needed";
+        const QString details = "Shuffled dungeons: All but Forest Temple\n"
+                                "Small and boss keys: In their own chests\n"
+                                "Maps and compasses: Anywhere in their dungeon\n"
+                                "Lens of Truth: Never needed";
+        QVERIFY(shows(summary));
+        QCOMPARE(label(summary)->toolTip(), details);
+
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Small and boss keys"].toString(), QString("In their own chests"));
+        QCOMPARE(settings["Maps and compasses"].toString(), QString("Anywhere in their dungeon"));
+        QCOMPARE(settings["Lens of Truth"].toString(), QString("Never needed"));
+        QCOMPARE(settings["Shuffled dungeons"].toArray().size(), 11);
+        QVERIFY(!settings["Shuffled dungeons"].toArray().contains(QString("Forest Temple")));
+        QCOMPARE(listed(1), QStringList{ summary });
+        QCOMPARE(entry("7")->toolTip(1), details);
+    }
+
+    void cancelChangesNothing() {
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("Cancel")->click();
+        QVERIFY(dialog() == nullptr);
+        QVERIFY(shows("Default settings"));
+
+        button("Settings…")->click();
+        QVERIFY(dungeon("Forest Temple")->isChecked());
+        QCOMPARE(choice("Small and boss keys")->currentText(), QString("Anywhere in their dungeon"));
+        QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
+        dialogButton("Cancel")->click();
+        QVERIFY(create("7"));
+        QCOMPARE(listed(1), QStringList{ "Default settings" });
+    }
+
+    void defaultsSetsEveryControlBack() {
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        choice("Maps and compasses")->setCurrentText("In their own chests");
+        dialogButton("Defaults")->click();
+        for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
+            QVERIFY(box->isChecked());
+        }
+        for (const QString label : { "Small and boss keys", "Maps and compasses" }) {
+            QCOMPARE(choice(label)->currentText(), QString("Anywhere in their dungeon"));
+        }
+        QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("Default settings"));
+    }
+
+    void theSummaryNamesUpToThreeDungeonsLeftOut() {
+        leaveOut({ "Water Temple" });
+        QVERIFY(shows("Water Temple not shuffled"));
+        leaveOut({ "Fire Temple" });
+        QVERIFY(shows("Fire Temple and Water Temple not shuffled"));
+        leaveOut({ "Shadow Temple" });
+        QVERIFY(shows("Fire Temple, Water Temple and Shadow Temple not shuffled"));
+        leaveOut({ "Deku Tree" });
+        QVERIFY(shows("8 of 12 dungeons shuffled"));
+    }
+
+    void longSettingsLeaveTheWindowWidth() {
+        const int least = window->minimumSizeHint().width();
+        const int width = window->width();
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        choice("Maps and compasses")->setCurrentText("In their own chests");
+        dialogButton("OK")->click();
+        QVERIFY(shows("Forest Temple not shuffled, keys in their own chests, maps and compasses in their own chests, "
+                      "Lens never needed"));
+        // The layout takes the new text into account once the window's events run.
+        QCoreApplication::processEvents();
+        QCOMPARE(window->minimumSizeHint().width(), least);
+        QCOMPARE(window->width(), width);
+    }
+
+    void settingsAreRemembered() {
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Forest Temple not shuffled, keys in their own chests, Lens never needed"));
+        button("Settings…")->click();
+        QVERIFY(!dungeon("Forest Temple")->isChecked());
+        QCOMPARE(choice("Small and boss keys")->currentText(), QString("In their own chests"));
+        QCOMPARE(choice("Maps and compasses")->currentText(), QString("Anywhere in their dungeon"));
+        QCOMPARE(choice("Lens of Truth")->currentText(), QString("Never needed"));
+    }
+
+    void unreadableRememberedSettingsStartAsTheDefaults() {
+        for (const QString saved : { "Lens never needed", "{\"Forest\": \"Open\"}" }) {
+            QSettings().setValue("seedSettings", saved);
+            window = std::make_unique<Window>();
+            window->show();
+            QVERIFY2(shows("Default settings"), qPrintable(saved));
+        }
     }
 
     void twoSeedsInARow() {
