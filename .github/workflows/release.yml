@@ -1,0 +1,238 @@
+# The website's download buttons and the window's update notice read GitHub's latest release, so a release stays a
+# draft until every file is attached to it. Each run on main finishes the draft of the version in main's manifest, if
+# there is one. So a repeated or later run finishes what an earlier run left, and changes nothing once it is public.
+name: release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/check.yml
+      - .github/workflows/release.yml
+      - .release-please-manifest.json
+      - release-please-config.json
+      - tools/release-draft.sh
+      - tools/release-files.sh
+
+permissions:
+  contents: read
+
+# One run on main at a time, so two runs never work on one draft together. The called check.yml takes this workflow's
+# name in its own group, so the two groups must differ.
+concurrency:
+  group: ${{ github.event_name == 'push' && 'release' || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  # The steps, not the job, are skipped on a pull request: a skipped job would skip every job after it.
+  release-please:
+    name: Release pull request, and the draft to finish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      commit: ${{ steps.draft.outputs.commit }}
+      version: ${{ steps.draft.outputs.version }}
+    steps:
+      - name: Update the release pull request, or tag and draft the release it merged
+        if: github.event_name == 'push'
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+
+      - name: Check out the script
+        if: github.event_name == 'push'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: tools/release-draft.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Find the draft to finish
+        id: draft
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/release-draft.sh main >> "$GITHUB_OUTPUT"
+
+  check:
+    name: Build and test
+    needs: release-please
+    if: github.event_name == 'pull_request' || needs.release-please.outputs.commit != ''
+    uses: ./.github/workflows/check.yml
+    with:
+      ref: ${{ needs.release-please.outputs.commit }}
+      version: ${{ needs.release-please.outputs.version }}
+
+  # The release environment holds the Azure IDs and admits only main, and Azure trusts only tokens of jobs in that
+  # environment, so a pull request's run cannot sign.
+  sign:
+    name: Sign and zip the Windows package
+    needs: check
+    runs-on: windows-2022
+    timeout-minutes: 15
+    environment: ${{ github.event_name == 'push' && 'release' || '' }}
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-windows-x86_64.zip
+          skip-decompress: true
+
+      - name: Unzip the package
+        shell: pwsh
+        run: Expand-Archive kaepora-windows-x86_64.zip -DestinationPath kaepora
+
+      - name: Log in to Azure
+        if: github.event_name == 'push'
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The signing action finds the Azure login through the Azure CLI.
+      - name: Sign kaepora.exe
+        if: github.event_name == 'push'
+        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+        with:
+          endpoint: https://eus.codesigning.azure.net
+          signing-account-name: alsup-innovations
+          certificate-profile-name: public-trust
+          files: ${{ github.workspace }}\kaepora\kaepora.exe
+          exclude-environment-credential: true
+
+      - name: Check the signature
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          $signature = Get-AuthenticodeSignature kaepora/kaepora.exe
+          if ($signature.Status -ne 'Valid') {
+            throw "kaepora.exe's signature is $($signature.Status): $($signature.StatusMessage)"
+          }
+          "kaepora.exe is signed by $($signature.SignerCertificate.Subject)"
+
+      - name: Zip the package
+        shell: bash
+        run: |
+          mkdir signed
+          (cd kaepora && cmake -E tar cf ../signed/kaepora-windows-x86_64.zip --format=zip -- *)
+
+      - name: Upload the release's package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: kaepora-windows-x86_64-release
+          path: signed/kaepora-windows-x86_64.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  windows-package:
+    name: Signed Windows package on a fresh runner
+    needs: [release-please, sign]
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out the check script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.commit }}
+          sparse-checkout: tools/check-windows-package.ps1
+          sparse-checkout-cone-mode: false
+
+      - name: Download the package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-windows-x86_64-release
+
+      - name: Start the window from the unzipped package
+        shell: pwsh
+        run: tools/check-windows-package.ps1 kaepora-windows-x86_64.zip
+
+  files:
+    name: Release files
+    needs: [release-please, check, sign]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the version and the script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.commit }}
+          sparse-checkout: |
+            .release-please-manifest.json
+            CMakeLists.txt
+            tools/release-files.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Download the Linux packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-linux-x86_64-${{ github.sha }}
+
+      - name: Download the release's Windows package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-windows-x86_64-release
+          path: signed
+
+      - name: Name the files and write SHA256SUMS and latest.json
+        run: >-
+          tools/release-files.sh release
+          "kaepora-$GITHUB_SHA-linux-x86_64.AppImage" "kaepora-$GITHUB_SHA-linux-x86_64.tar.gz"
+          signed/kaepora-windows-x86_64.zip
+
+      - name: Upload the release files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: release/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  publish:
+    name: Publish the release
+    needs: [release-please, files, windows-package]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      COMMIT: ${{ needs.release-please.outputs.commit }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.release-please.outputs.version }}
+    steps:
+      - name: Check out the script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: tools/release-draft.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Download the release files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: release
+
+      # Asks again now, as a repeated job keeps the answer its run had at the start.
+      - name: Upload the files to the draft and publish it
+        run: |
+          draft=$(tools/release-draft.sh main)
+          if [ "$draft" != "$(printf 'commit=%s\nversion=%s' "$COMMIT" "$VERSION")" ]; then
+            echo "v$VERSION is no longer the draft to finish, so this run changes nothing"
+            exit 0
+          fi
+          gh release upload "v$VERSION" --clobber release/*
+          gh release edit "v$VERSION" --draft=false --latest
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .html_url)
+          test "$latest" = "$(jq -r .url release/latest.json)"
