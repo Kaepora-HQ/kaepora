@@ -127,9 +127,9 @@ Shadow Temple Map Chest	13528903653876646082	Banc/ShadowTemple/ShadowTemple_Stat
 Shadow Temple Hover Boots Chest	14535080241831873137	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_HoverBoot	yes	
 Shadow Temple Compass Chest	1733372171176975157	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Shadow Temple Early Silver Rupee Chest	1111717451118505545	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	logic-differences.md S2
-Shadow Temple Invisible Blades Invisible Chest	3718790579351798247	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	logic-differences.md S2
-Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	logic-differences.md S2
+Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	The remake moves this chest to a new side room behind the invisible scythe room.
+Shadow Temple Invisible Blades Invisible Chest	3718790579351798247	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	no	The remake moves this chest to a new side room behind the invisible scythe room.
+Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	The remake's falling spikes room has two of SoH's three chests, and which one it lacks is not known.
 Shadow Temple Falling Spikes Upper Chest				no	no remake chest
 Shadow Temple Falling Spikes Switch Chest	5781953901224064730	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Shadow Temple Invisible Spikes Chest				no	no remake chest
