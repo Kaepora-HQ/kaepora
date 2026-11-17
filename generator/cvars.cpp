@@ -1,5 +1,4 @@
-// In-memory console variable store. It starts empty, so every CVarGet* returns the caller's default until
-// something sets it, as with a fresh SoH configuration file.
+// The console variables start empty, as in a fresh SoH configuration file.
 #include <libultraship/bridge/consolevariablebridge.h>
 
 #include <map>

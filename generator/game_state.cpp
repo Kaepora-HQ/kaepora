@@ -11,7 +11,6 @@ extern "C" {
 
 // Zero-filled, so the language is LANGUAGE_ENG, as on a fresh File Select screen.
 SaveContext gSaveContext;
-// No scene is loaded while a seed generates.
 PlayState* gPlayState = nullptr;
 
 // Game data that only the in-game halves of the compiled files reference.
