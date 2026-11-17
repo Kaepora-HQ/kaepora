@@ -22,10 +22,6 @@ std::string_view Magic(std::endian order) {
     return order == std::endian::little ? "YB" : "BY";
 }
 
-size_t Align4(size_t size) {
-    return (size + 3) & ~size_t(3);
-}
-
 // Converts a value between the machine's byte order and the file's, in either direction.
 template <typename T>
 T ToByteOrder(T value, std::endian order) {
@@ -91,7 +87,7 @@ struct Reader {
         const uint32_t count = Read24(offset + 1);
         Node node{ .type = Type(ReadAt<uint8_t>(data, offset)) };
         if (node.type == Type::Array) {
-            const size_t values = offset + 4 + Align4(count);
+            const size_t values = offset + 4 + AlignUp(count, 4);
             for (uint32_t i = 0; i < count; ++i) {
                 node.array.push_back(
                     Value(Type(ReadAt<uint8_t>(data, offset + 4 + i)), Read<uint32_t>(values + 4 * i)));
@@ -176,7 +172,7 @@ private:
         for (const auto& [name, number] : table) {
             out.append(name.c_str(), name.size() + 1);
         }
-        out.resize(Align4(out.size()));
+        out.resize(AlignUp(out.size(), 4));
         return offset;
     }
 
@@ -190,7 +186,7 @@ private:
             for (const Node& item : node.array) {
                 out += char(item.type);
             }
-            out.resize(Align4(out.size()));
+            out.resize(AlignUp(out.size(), 4));
             const size_t values = out.size();
             out.resize(values + 4 * node.array.size());
             for (size_t i = 0; i < node.array.size(); ++i) {
