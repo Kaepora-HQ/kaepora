@@ -88,9 +88,9 @@ bool Logic::HasItem(RandomizerGet itemName) {
         case RG_BIGGORON_SWORD:
             return CheckEquipment(EQUIP_FLAG_SWORD_BGS) && mSaveContext->bgsFlag;
         // The remake keeps Goron's Bracelet in a slot of its own. The gauntlets share another, which keeps the
-        // higher tier found.
+        // higher tier found. Lifting reads one strength level, which adult Link's gauntlets put above the bracelet's.
         case RG_GORONS_BRACELET:
-            return CheckRandoInf(RAND_INF_HAS_GORONS_BRACELET);
+            return CheckRandoInf(RAND_INF_HAS_GORONS_BRACELET) || CanUse(RG_SILVER_GAUNTLETS);
         case RG_SILVER_GAUNTLETS:
             return CheckRandoInf(RAND_INF_HAS_SILVER_GAUNTLETS) || HasItem(RG_GOLDEN_GAUNTLETS);
         case RG_GOLDEN_GAUNTLETS:

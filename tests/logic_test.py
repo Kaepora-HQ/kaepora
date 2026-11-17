@@ -107,12 +107,13 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                        ("KF Mido Top Left Chest", "Goron's Bracelet")))
 
-    def test_gauntlets_are_not_the_bracelet_for_an_adult(self):
-        # Pushing the Forest Temple's blocks takes the bracelet.
-        gauntlets = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Golden Gauntlets"),
-                     ("KF Mido Bottom Left Chest", "Progressive Bomb Bag"))
-        self.assertTrue(self.reachable("Phantom Ganon", *gauntlets))
-        self.assertFalse(self.reachable("Phantom Ganon", *gauntlets, ("GC Darunias Joy", "Green Rupee")))
+    def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
+        # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
+        # either tier of gauntlets puts above the bracelet's.
+        for gauntlets in ("Silver Gauntlets", "Golden Gauntlets"):
+            self.assertTrue(self.reachable("Phantom Ganon", ("GC Darunias Joy", "Green Rupee"),
+                                           ("KF Mido Top Left Chest", gauntlets),
+                                           ("KF Mido Bottom Left Chest", "Progressive Bomb Bag")))
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Only the Silver Gauntlets or the hammer clear the way to the leftmost chest of the Goron City maze.
