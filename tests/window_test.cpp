@@ -21,7 +21,6 @@
 #include <QTest>
 #include <QTreeWidget>
 
-#include <algorithm>
 #include <memory>
 
 using Files = QMap<QString, QByteArray>;
