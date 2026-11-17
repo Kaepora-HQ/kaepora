@@ -1,6 +1,6 @@
 """Write generator/traps.cpp: a trap for each function the compiled objects need and nothing defines.
 
-Usage: python3 -I tools/gen_traps.py <debug-build-dir>/CMakeFiles/kaepora.dir generator/traps.cpp
+Usage: python3 -I tools/gen_traps.py <debug-build-dir>/CMakeFiles/kaepora-generator.dir generator/traps.cpp
 
 The imported sources hold game and GUI code next to the generator code. The generator never calls that code,
 but the linker still needs a definition for every function it references. Each trap aborts with the symbol name.
