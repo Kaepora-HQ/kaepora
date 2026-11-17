@@ -176,6 +176,24 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_training_ground_heavy_block_second_chest_needs_the_eye_hit(self):
+        # Without the bow, the Forest Temple and so the well's Lens of Truth are out of reach, so the gauntlets and the
+        # Lens come from elsewhere. The barred door into the room of all four chests opens to an eye hit as well.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        outside = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Lens of Truth"))
+        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
+        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
+        bow = ("KF Mido Bottom Left Chest", "Progressive Bow")
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, bow, *outside))
+
+    def test_training_ground_door_behind_the_heavy_block_needs_no_lens(self):
+        # An arrow from the floor in front of the barred door, behind the pushed block, hits the eye above it with the
+        # Lens of Truth off. The well holds the only Lens. Without it the wasteland stays shut, so the gauntlets that push
+        # the block come from elsewhere.
+        no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_lens,
+                                       ("KF Mido Top Left Chest", "Silver Gauntlets")))
+
     def test_invisible_chests_and_illusion_walls_need_no_lens(self):
         # An invisible chest opens for Link who walks up to it, and Link walks through an illusion wall.
         no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
