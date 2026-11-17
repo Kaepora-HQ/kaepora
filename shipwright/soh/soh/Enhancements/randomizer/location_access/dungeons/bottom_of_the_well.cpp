@@ -134,8 +134,8 @@ void RegionTable_Init_BottomOfTheWell() {
 
     areaTable[RR_BOTW_INVISIBLE_PATH] = Region("Bottom of the Well Invisible Path", SCENE_BOTTOM_OF_THE_WELL, {}, {
         //Locations
-        // A hidden pit lies between the door and the skulltula.
-        LOCATION(RC_BOTTOM_OF_THE_WELL_GS_EAST_INNER_ROOM, (ctx->GetTrickOption(RT_LENS_BOTW) || logic->CanUse(RG_LENS_OF_TRUTH)) && logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
+        // A hidden pit lies between the door and the skulltula, and Link finds his way around it without the Lens of Truth.
+        LOCATION(RC_BOTTOM_OF_THE_WELL_GS_EAST_INNER_ROOM, logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
     }, {
         //Exits
         ENTRANCE(RR_BOTW_MIDDLE,  logic->SmallKeys(SCENE_BOTTOM_OF_THE_WELL, 2)),

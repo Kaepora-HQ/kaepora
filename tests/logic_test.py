@@ -212,6 +212,11 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Bottom of the Well GS West Inner Room", one_key))
         self.assertFalse(self.reachable("Bottom of the Well GS East Inner Room", one_key))
 
+    def test_well_east_inner_room_skulltula_needs_no_lens(self):
+        # Link finds his way around the hidden pit between the door and the skulltula without the Lens of Truth.
+        no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room", no_lens))
+
     def test_well_hidden_pits_door_has_no_lock(self):
         self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
                                        ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
