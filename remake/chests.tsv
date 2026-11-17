@@ -55,7 +55,7 @@ Jabu Jabus Belly Compass Chest	3510516276638146208	Banc/InsideJabuJabuBelly/Insi
 Jabu Jabus Belly Boomerang Chest	5527401621172639818	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Boomerang	yes	
 Forest Temple First Room Chest	1171460703078800858	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Forest Temple First Stalfos Chest	14776684749746592758	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	no	logic-differences.md F4
+Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Forest Temple Map Chest				no	no remake chest
 Forest Temple Well Chest	6449977980406424425	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Forest Temple Falling Ceiling Room Chest	15117164073907033527	Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs		no	no Drop__DropActor
