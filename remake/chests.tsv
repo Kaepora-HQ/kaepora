@@ -33,7 +33,7 @@ Graveyard Hookshot Chest	16041366920820397198	Banc/Graveyard/Graveyard_Adult_Sta
 DMT Chest	9809508929088891725	Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs,Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	Item_ScrubBusinessSeed has no SoH item
 DMT Storms Grotto Chest				no	no remake chest
 GC Maze Left Chest	4402942101476009858	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
-GC Maze Right Chest	3870071239709713434	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	a ring of boulders only the Silver Gauntlets lift guards it; SoH's rule asks for explosives or the hammer instead
+GC Maze Right Chest	3870071239709713434	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	yes	
 GC Maze Center Chest	14647422914070455120	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 DMC Upper Grotto Chest	9128916506605227251	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs	TBox_Rupee_Purple	no	pairing confidence low; logic-differences.md O3
 ZR Open Grotto Chest				no	no remake chest
