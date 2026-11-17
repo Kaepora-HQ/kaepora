@@ -94,6 +94,10 @@ add_test(NAME logic COMMAND python3 -I ${PROJECT_SOURCE_DIR}/tests/logic_test.py
 set(KAEPORA_GAME_NUP "" CACHE FILEPATH "The game's .nup container, read by the patcher tests")
 set(KAEPORA_TESTED_MOD "" CACHE FILEPATH "The placement file of the chest-swap mod tested in the game")
 set(KAEPORA_TESTED_START_MOD "" CACHE FILEPATH "The game data list of the start-flag mod tested in the game")
+set(KAEPORA_TESTED_SUBSTITUTE_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with one item in a chest's item and substitute values")
+set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with an item value added to two chests that named none")
 set(PATCH_TEST python3 -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -123,5 +127,15 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-start-mod
             COMMAND ${PATCH_TEST} tested-start-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_START_MOD}")
+    endif()
+    if(KAEPORA_TESTED_SUBSTITUTE_MOD)
+        add_test(NAME patch-tested-substitute-mod
+            COMMAND ${PATCH_TEST} tested-substitute-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_SUBSTITUTE_MOD}")
+    endif()
+    if(KAEPORA_TESTED_ADDED_ITEM_MOD)
+        add_test(NAME patch-tested-added-item-mod
+            COMMAND ${PATCH_TEST} tested-added-item-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_ADDED_ITEM_MOD}")
     endif()
 endif()
