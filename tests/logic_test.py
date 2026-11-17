@@ -77,7 +77,8 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
     def test_bombchu_shop_opens_after_dodongos_cavern(self):
-        # With no Goron's Bracelet and the only bomb bag inside it, Dodongo's Cavern stays shut.
+        # Without Goron's Bracelet, child Link cannot open Dodongo's Cavern, so he never wins the Goron's Ruby inside
+        # it and never becomes adult.
         self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
 
     def test_dodongos_cavern_opens_to_the_bomb_flower_above_it(self):
@@ -108,8 +109,8 @@ class LogicTest(unittest.TestCase):
     # tier found, and only adult Link can use them.
 
     def test_gauntlets_are_not_the_bracelet_for_a_child(self):
-        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot open Dodongo's
-        # Cavern, as the only bomb bag is inside it.
+        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot pick the bomb
+        # flower whose fruit opens Dodongo's Cavern.
         child_without_bracelet = (("HF Ocarina of Time Item", "Green Rupee"), ("GC Darunias Joy", "Green Rupee"))
         self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                         ("KF Mido Top Left Chest", "Silver Gauntlets"),
