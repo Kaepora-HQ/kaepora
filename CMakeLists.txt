@@ -120,6 +120,19 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
 endforeach()
 add_test(NAME logic COMMAND python3 -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py $<TARGET_FILE:kaepora-reach>)
 
+if(Qt6Test_FOUND)
+    add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
+                                       kaepora/window.cpp)
+    set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Test)
+    target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
+    # The window's tests that make no seed need no game file.
+    foreach(TEST IN ITEMS lichiisModsFolderIsTheDefault)
+        add_test(NAME window_${TEST} COMMAND kaepora-window-test ${TEST})
+        set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+    endforeach()
+endif()
+
 # The game's container is Nintendo's data and stays out of git, so the tests that read it need its path.
 set(KAEPORA_GAME_NUP "" CACHE FILEPATH "The game's .nup container, read by the patcher tests")
 set(KAEPORA_TESTED_MOD "" CACHE FILEPATH "The placement file of the chest-swap mod tested in the game")
@@ -147,11 +160,6 @@ if(KAEPORA_GAME_NUP)
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(Qt6Test_FOUND)
-        add_executable(kaepora-window-test tests/window_test.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
-                                           kaepora/window.cpp)
-        set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
-        target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Test)
-        target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
         add_test(NAME window COMMAND kaepora-window-test)
         set_tests_properties(window PROPERTIES ENVIRONMENT
             "QT_QPA_PLATFORM=offscreen;KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};KAEPORA_MAKE_SEED=$<TARGET_FILE:kaepora-make-seed>")

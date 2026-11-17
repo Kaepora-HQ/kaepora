@@ -44,7 +44,7 @@ constexpr char ModName[] = "Kaepora";
 constexpr char CopyingFile[] = "seed.copying";
 constexpr char SeedFile[] = "seed.txt";
 
-// Where Lichii looks for this game's mods, under the user's data folder.
+// Where Lichii looks for this game's mods, under its data folder.
 constexpr char LichiiMods[] = "lichii/load/0400486024DEC000";
 
 constexpr char SettingsKey[] = "seedSettings";
@@ -52,6 +52,16 @@ constexpr char SettingsKey[] = "seedSettings";
 static bool IsSeed(const QString& text) {
     static const QRegularExpression pattern(QRegularExpression::anchoredPattern(SeedPattern));
     return pattern.match(text).hasMatch();
+}
+
+// Lichii keeps its data in %APPDATA% on Windows, and in the user's data folder elsewhere.
+static QString LichiiModsFolder() {
+#ifdef Q_OS_WIN
+    const QString folder = QDir(qEnvironmentVariable("APPDATA")).filePath(LichiiMods);
+    return QFileInfo(folder).isDir() ? folder : QString();
+#else
+    return QStandardPaths::locate(QStandardPaths::GenericDataLocation, LichiiMods, QStandardPaths::LocateDirectory);
+#endif
 }
 
 static std::filesystem::path Path(const QString& path) {
@@ -142,8 +152,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     modsFolder = addPathRow(form, "Mods folder", "modsFolder", &QFileInfo::isDir,
                             [this] { return QFileDialog::getExistingDirectory(this, "Choose the mods folder"); });
     if (modsFolder->text().isEmpty()) {
-        modsFolder->setText(
-            QStandardPaths::locate(QStandardPaths::GenericDataLocation, LichiiMods, QStandardPaths::LocateDirectory));
+        modsFolder->setText(LichiiModsFolder());
     }
     emulator = addPathRow(form, "Emulator (optional)", "emulator", &QFileInfo::isFile,
                           [this] { return QFileDialog::getOpenFileName(this, "Choose the emulator"); });

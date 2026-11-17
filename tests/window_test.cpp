@@ -215,6 +215,23 @@ private slots:
         window.reset();
     }
 
+    void lichiisModsFolderIsTheDefault() {
+#ifdef Q_OS_WIN
+        const QDir data(qEnvironmentVariable("APPDATA"));
+#else
+        const QDir data(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+#endif
+        const QString lichii = data.filePath("lichii/load/0400486024DEC000");
+        QVERIFY(QDir().mkpath(lichii));
+        QSettings().remove("modsFolder");
+        window = std::make_unique<Window>();
+        QStringList paths;
+        for (QLineEdit* field : window->findChildren<QLineEdit*>()) {
+            paths << field->text();
+        }
+        QVERIFY2(paths.contains(lichii), qPrintable(paths.join(", ")));
+    }
+
     void createSeed() {
         QVERIFY(create("7"));
         QCOMPARE(listed(), QStringList{ "7" });
@@ -482,6 +499,11 @@ int main(int argc, char** argv) {
     }
     qputenv("HOME", home.path().toUtf8());
     QStandardPaths::setTestModeEnabled(true);
+    // Test mode does not move the Windows registry, so the settings go to a file in the temporary folder. On Windows
+    // the window looks for Lichii's data in APPDATA, which points there too.
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, home.path());
+    qputenv("APPDATA", home.path().toUtf8());
     QApplication app(argc, argv);
     QApplication::setOrganizationName("kaepora");
     QApplication::setApplicationName("kaepora");
