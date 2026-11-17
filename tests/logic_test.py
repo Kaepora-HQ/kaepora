@@ -194,6 +194,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_lens,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_jabu_jabu_map_chest_needs_no_boomerang(self):
+        # The chest stands beyond the basement below the holes, and no tentacle stands in the way.
+        self.assertTrue(self.reachable("Jabu Jabus Belly Map Chest", ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")))
+
     def test_invisible_chests_and_illusion_walls_need_no_lens(self):
         # An invisible chest opens for Link who walks up to it, and Link walks through an illusion wall.
         no_lens = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")

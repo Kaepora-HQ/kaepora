@@ -49,6 +49,8 @@ void RegionTable_Init_JabuJabusBelly() {
 
     areaTable[RR_JABU_JABUS_BELLY_HOLES_BASEMENT] = Region("Jabu Jabus Belly Holes Basement", SCENE_JABU_JABU, {}, {
         //Locations
+        // The map chest stands in the room beyond this basement, with no tentacle or switch in the way.
+        LOCATION(RC_JABU_JABUS_BELLY_MAP_CHEST,               logic->CanOpenLargeChest()),
         LOCATION(RC_JABU_JABUS_BELLY_GS_LOBBY_BASEMENT_LOWER, logic->HookshotOrBoomerang()),
         LOCATION(RC_JABU_JABUS_BELLY_GS_LOBBY_BASEMENT_UPPER, logic->HookshotOrBoomerang()),
     }, {
@@ -155,10 +157,7 @@ void RegionTable_Init_JabuJabusBelly() {
     areaTable[RR_JABU_JABUS_BELLY_FORK_WEST] = Region("Jabu Jabus Belly Fork West", SCENE_JABU_JABU, {
         //Events
         EVENT_ACCESS(LOGIC_JABU_WEST_TENTACLE, logic->CanKillEnemy(RE_TENTACLE, ED_BOOMERANG)),
-    }, {
-        //Locations
-        LOCATION(RC_JABU_JABUS_BELLY_MAP_CHEST, logic->Get(LOGIC_JABU_WEST_TENTACLE) && logic->CanOpenLargeChest()),
-    }, {
+    }, {}, {
         //Exits
         ENTRANCE(RR_JABU_JABUS_BELLY_FORKED_CORRIDOR, true),
     });
