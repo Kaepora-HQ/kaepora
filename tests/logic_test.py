@@ -393,6 +393,15 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Bomb Bag Chest", no_bow, no_longshot, second_hookshot,
                                        *adult_only))
 
+    def test_adult_link_walks_between_the_colossus_hands(self):
+        # From the Mirror Shield hand an adult walks to the Silver Gauntlets hand, so he needs neither the Longshot nor
+        # the fifth key there. The Hover Boots cross the wasteland in the Longshot's place.
+        four_keys = ("Spirit Temple Near Four Armos Chest", "Green Rupee")
+        hover_boots_no_longshot = (("Water Temple Longshot Chest", "Green Rupee"),
+                                   ("KF Mido Bottom Left Chest", "Hover Boots"))
+        self.assertTrue(self.reachable("Spirit Temple Silver Gauntlets Chest", SILVER_GAUNTLETS_AT_START, four_keys,
+                                       *hover_boots_no_longshot))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):

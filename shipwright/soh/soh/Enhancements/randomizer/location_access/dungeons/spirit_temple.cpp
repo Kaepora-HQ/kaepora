@@ -494,7 +494,8 @@ void RegionTable_Init_SpiritTemple() {
     }, {
         //Exits
         ENTRANCE(RR_SPIRIT_TEMPLE_LEFT_HAND_EXIT,   true),
-        ENTRANCE(RR_SPIRIT_TEMPLE_OUTER_RIGHT_HAND, logic->CanUse(RG_LONGSHOT)),
+        // Adult Link walks to the other hand.
+        ENTRANCE(RR_SPIRIT_TEMPLE_OUTER_RIGHT_HAND, logic->IsAdult),
         ENTRANCE(RR_DESERT_COLOSSUS,                true),
         ENTRANCE(RR_DESERT_COLOSSUS_ARCH,           (logic->CanJumpslash() && logic->CanMegajump(true) && logic->EffectiveHealth() > 24) || logic->CanBunnyMegaJumpslash()),
     });

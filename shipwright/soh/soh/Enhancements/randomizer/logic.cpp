@@ -3213,11 +3213,10 @@ bool Logic::CouldMQSpirit4KeyWestHand() {
 // With 3 keys, you cannot lock adult out of leaving spirit onto the hands and jumping down, as you would have to
 // open the west hand door and then adult could climb through sun block room to jump down from there
 // This requires that adult can complete both routes
-// If we have the longshot, we can also guarantee access to the outer west hand as you can longshot from the east hand
-// to the west Implies CanKillEnemy(RE_IRON_KNUCKLE)
+// Adult Link also walks from the east hand to the west in the remake.
 bool Logic::OuterWestHandLogic() {
     return HasExplosives() && (HasItem(RG_CLIMB) || CanUse(RG_LONGSHOT)) && HasItem(RG_POWER_BRACELET) &&
-           SmallKeys(SCENE_SPIRIT_TEMPLE, HasItem(RG_LONGSHOT) ? 3 : 5);
+           SmallKeys(SCENE_SPIRIT_TEMPLE, 3);
 }
 
 bool Logic::OuterWestHandMQLogic() {
