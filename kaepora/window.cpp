@@ -56,15 +56,17 @@ static bool IsSeed(const QString& text) {
     return pattern.match(text).hasMatch();
 }
 
-// Lichii keeps its data in %APPDATA% on Windows, and in the user's data folder elsewhere. The game's folder in its load
-// folder can be missing until a mod is put there, and putting a seed in use makes it.
+// Lichii keeps its data in %APPDATA% on Windows. Elsewhere, macOS included, it keeps it in XDG_DATA_HOME when that is an
+// absolute path, and in ~/.local/share otherwise. The game's folder in its load folder can be missing until a mod is put
+// there, and putting a seed in use makes it.
 static QString LichiiModsFolder() {
 #ifdef Q_OS_WIN
-    const QString load = QDir(qEnvironmentVariable("APPDATA")).filePath(LichiiLoad);
+    const QString data = qEnvironmentVariable("APPDATA");
 #else
-    const QString load =
-        QStandardPaths::locate(QStandardPaths::GenericDataLocation, LichiiLoad, QStandardPaths::LocateDirectory);
+    const QString xdg = qEnvironmentVariable("XDG_DATA_HOME");
+    const QString data = QDir::isAbsolutePath(xdg) ? xdg : QDir::home().filePath(".local/share");
 #endif
+    const QString load = QDir(data).filePath(LichiiLoad);
     return QFileInfo(load).isDir() ? QDir(load).filePath(GameId) : QString();
 }
 

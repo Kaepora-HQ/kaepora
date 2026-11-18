@@ -359,7 +359,7 @@ private slots:
 #ifdef Q_OS_WIN
         const QDir data(qEnvironmentVariable("APPDATA"));
 #else
-        const QDir data(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+        const QDir data(QDir::home().filePath(".local/share"));
 #endif
         // A fresh Lichii has its load folder, but no folder in it for the game until a mod is put there.
         QVERIFY(QDir().mkpath(data.filePath("lichii/load")));
@@ -778,11 +778,12 @@ int main(int argc, char** argv) {
     // this HOME has none. With this set, it makes a keychain of its own in the temporary folder.
     qputenv("QT_SSL_USE_TEMPORARY_KEYCHAIN", "1");
     QStandardPaths::setTestModeEnabled(true);
-    // Test mode does not move the Windows registry, so the settings go to a file in the temporary folder. On Windows
-    // the window looks for Lichii's data in APPDATA, which points there too.
+    // Test mode does not move the Windows registry, so the settings go to a file in the temporary folder. Lichii's data
+    // is looked for there too: in APPDATA on Windows, and under HOME elsewhere.
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, home.path());
     qputenv("APPDATA", home.path().toUtf8());
+    qunsetenv("XDG_DATA_HOME");
     QApplication app(argc, argv);
     QApplication::setOrganizationName("kaepora");
     QApplication::setApplicationName("kaepora");
