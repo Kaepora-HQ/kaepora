@@ -6,8 +6,8 @@ release-please keeps one pull request open, titled `chore(main): release <versio
 
 Squash-merge the release pull request. `.github/workflows/release.yml` runs on every push to `main`, one run at a time. On the merge's push, release-please tags the merge commit `v<version>` and creates the release as a draft. Every run then looks for a draft of the version in `main`'s manifest. While there is one, the run:
 
-1. Builds and tests the draft's tagged commit on Linux and Windows, with the jobs of `check.yml`.
-2. Signs `kaepora.exe` and zips the Windows package again.
+1. Builds and tests the draft's tagged commit on Linux, Windows and macOS, with the jobs of `check.yml`.
+2. Signs `kaepora.exe` and zips the Windows package again. The macOS app keeps the ad hoc signature its build gave it.
 3. Starts the signed package on a fresh Windows runner.
 4. Writes `SHA256SUMS` and `latest.json`.
 5. Uploads the files to the draft and publishes it.
