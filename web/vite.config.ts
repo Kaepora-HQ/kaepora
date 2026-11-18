@@ -13,14 +13,23 @@ function changelog(): Plugin {
     configResolved: (config) => {
       file = resolve(config.root, '../CHANGELOG.md')
     },
+    // Vite's dev server watches a file outside its root only once it exists.
+    configureServer: (server) => {
+      server.watcher.add(file)
+    },
     resolveId: (source) => (source === 'virtual:changelog' ? id : undefined),
     async load(loading) {
       if (loading !== id) return
-      this.addWatchFile(file)
       const markdown = Bun.file(file)
       if (!(await markdown.exists())) return 'export default null'
+      this.addWatchFile(file)
       const html = Bun.markdown.html((await markdown.text()).replace(/^# Changelog\s*/, ''))
       return `export default ${JSON.stringify(html)}`
+    },
+    hotUpdate({ type, file: changed }) {
+      if (type !== 'create' || changed !== file) return
+      const module = this.environment.moduleGraph.getModuleById(id)
+      return module ? [module] : undefined
     },
   }
 }
