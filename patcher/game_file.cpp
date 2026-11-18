@@ -3,6 +3,8 @@
 #include "bytes.h"
 #include "compression.h"
 
+#include <format>
+#include <optional>
 #include <stdexcept>
 #include <string_view>
 
@@ -20,6 +22,10 @@ constexpr uint32_t NoDir = 0xFFFFFFFF;
 constexpr uint8_t BasePackage = 0;
 constexpr uint8_t UpdatePackage = 1;
 constexpr uint8_t RawCodec = 0;
+
+constexpr std::string_view NsoMagic = "NSO0";
+constexpr size_t BuildIdOffset = 0x40;
+constexpr size_t BuildIdSize = 0x20;
 
 // The dictionaries sit in a SARC archive inside this zstd file.
 constexpr std::string_view DictionaryPack = "Pack/ZsDic.pack.zs";
@@ -93,6 +99,38 @@ GameFile::GameFile(const std::filesystem::path& path) : nup(path, std::ios::bina
                 reader.Walk(romfs, "", files);
             }
         }
+    }
+
+    // The emulator boots the program of the update with the highest version, or the base package's when that update
+    // has none.
+    std::optional<size_t> base;
+    std::optional<size_t> update;
+    for (uint32_t i = 0; i < packages; ++i) {
+        const size_t package = TocHeaderSize + i * PackageSize;
+        const uint8_t kind = ReadAt<uint8_t>(toc, package + 0x18);
+        if (kind == BasePackage && !base) {
+            base = package;
+        } else if (kind == UpdatePackage &&
+                   (!update || ReadAt<uint32_t>(toc, package + 0x14) > ReadAt<uint32_t>(toc, *update + 0x14))) {
+            update = package;
+        }
+    }
+    const auto exefs = [&](std::optional<size_t> package) {
+        return package ? ReadAt<uint32_t>(toc, *package + 0x0C) : NoDir;
+    };
+    std::map<std::string, File> program;
+    reader.Walk(exefs(update) != NoDir ? exefs(update) : exefs(base), "", program);
+    const auto main = program.find("main");
+    if (main == program.end()) {
+        throw std::runtime_error(path.string() + ": the container holds no program the emulator boots");
+    }
+    const std::string header = ReadBytes(main->second.offset, BuildIdOffset + BuildIdSize);
+    if (!header.starts_with(NsoMagic)) {
+        throw std::runtime_error(path.string() + ": the container's program is not an NSO");
+    }
+    const std::string_view id = std::string_view(header).substr(BuildIdOffset);
+    for (const char byte : id.substr(0, id.find_last_not_of('\0') + 1)) {
+        programBuildId += std::format("{:02X}", uint8_t(byte));
     }
 }
 

@@ -232,6 +232,11 @@ static std::string StartFlagList(GameFile& game, const std::string& dictionary, 
 
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
     GameFile game(nup);
+    // With a program of another build the game would run without the lift level patch.
+    if (game.ProgramBuildId() != PatchedBuildId) {
+        throw std::runtime_error(
+            "This game file is another version of the game. Kaepora works only with version 2.0.0.");
+    }
     const std::string dictionary = Dictionary(game, "bcett.byml.zsdic");
 
     std::map<std::string, byml::Document> placements;

@@ -35,7 +35,8 @@ struct Plan {
 // Throws, naming the part, when the plan is not the shape the generator writes.
 Plan ParsePlan(const nlohmann::json& json);
 
-// The mod's files by their path in the mod's folder. Throws when the game's files do not hold what the plan changes.
+// The mod's files by their path in the mod's folder. Throws when the game file holds another version of the game, or
+// when its files do not hold what the plan changes.
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan);
 
 // Writes the data to the file at the path, making its folders.

@@ -8,8 +8,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-strength-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
-       python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift \
-           <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
+           other-version <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -53,6 +53,10 @@ NAYRUS_LOVE_GIFT = ("Event/EventFlow/Dm_FairyFountain_Nayru.bfevfl.zs", "Event16
 ANJU_FLOW = "Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs"
 COJIRO_GIFT = (ANJU_FLOW, "Event234", "ReveiveItem")
 POCKET_EGG_GIFT = (ANJU_FLOW, "Event264", "ReveiveItem")
+BASE_PACKAGE = 0
+UPDATE_PACKAGE = 1
+NSO_HEADER_SIZE = 0x100
+OTHER_VERSION = "This game file is another version of the game. Kaepora works only with version 2.0.0."
 BOOL = 0xD0
 INT64 = 0xD4
 UINT64 = 0xD5
@@ -76,6 +80,7 @@ class Game:
             toc_offset, toc_size = struct.unpack_from("<QQ", f.read(0x18), 8)
             f.seek(toc_offset)
             toc = f.read(toc_size)
+        self.toc_end = toc_offset + toc_size
         _, package_count, dir_count, file_count, pool = struct.unpack_from("<IIQQQ", toc)
         dirs = 0x30 + 0x40 * package_count
         files = dirs + 0x18 * dir_count
@@ -85,19 +90,24 @@ class Game:
             offset, length = struct.unpack_from("<II", toc, record)
             return toc[pool + offset:pool + offset + length].decode()
 
-        self.files = {}
-
-        def walk(d, prefix):
+        def walk(d, prefix, into):
             first, count = struct.unpack_from("<II", toc, dirs + 0x18 * d + 8)
             for child in struct.unpack_from(f"<{count}I", toc, children + 4 * first):
                 if child < dir_count:
-                    walk(child, prefix + name(dirs + 0x18 * child) + "/")
+                    walk(child, prefix + name(dirs + 0x18 * child) + "/", into)
                 else:
                     record = files + 0x50 * (child - dir_count)
-                    self.files[prefix + name(record)] = struct.unpack_from("<QQ", toc, record + 8)
+                    into[prefix + name(record)] = struct.unpack_from("<QQ", toc, record + 8)
 
-        update = next(0x30 + 0x40 * i for i in range(package_count) if toc[0x30 + 0x40 * i + 0x18] == 1)
-        walk(struct.unpack_from("<I", toc, update + 0x10)[0], "")
+        packages = [0x30 + 0x40 * i for i in range(package_count)]
+        self.files = {}
+        update = next(p for p in packages if toc[p + 0x18] == UPDATE_PACKAGE)
+        walk(struct.unpack_from("<I", toc, update + 0x10)[0], "", self.files)
+        self.program_offsets = {}
+        for package in packages:
+            exefs = {}
+            walk(struct.unpack_from("<I", toc, package + 0xC)[0], "", exefs)
+            self.program_offsets[toc[package + 0x18]] = exefs["main"][1]
         dictionaries = zstd.decompress(self.read("Pack/ZsDic.pack.zs"))
         self.dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"bcett.byml.zsdic"))
         self.zs_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"zs.zsdic"))
@@ -651,6 +661,28 @@ def seed_plan(patch, game, plan_file):
     assert all(load_size(size) <= entries[key] for key, size in sizes.items()), sizes
 
 
+def other_version(patch, game):
+    """The game file with the base game's program where the update's is: a program of another build, as a game file of
+    another version holds."""
+    with open(game.nup, "rb") as f:
+        head = f.read(game.toc_end)
+        f.seek(game.program_offsets[BASE_PACKAGE])
+        base_program = f.read(NSO_HEADER_SIZE)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        other = tmp / "other.nup"
+        with open(other, "wb") as f:
+            f.write(head)
+            f.seek(game.program_offsets[UPDATE_PACKAGE])
+            f.write(base_program)
+        plan_path = tmp / "plan.json"
+        plan_path.write_text(json.dumps(plan([])))
+        result = subprocess.run([patch, other, plan_path, tmp / "mod"], capture_output=True, text=True)
+        assert result.returncode == 1, result.stderr
+        assert result.stderr == OTHER_VERSION + "\n", result.stderr
+        assert not (tmp / "mod").exists()
+
+
 def bad_input(patch, game):
     # Each plan starts with a valid change, so a program that wrote as it went would leave a file behind.
     good = plan([(SLINGSHOT_CHEST, [DEKU_STATIC], "Item_Hookshot")])
@@ -742,6 +774,7 @@ def main():
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
+        "other-version": other_version,
         "size-table": size_table_entries,
         "size-table-unchanged": size_table_unchanged,
         "together": together,
