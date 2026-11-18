@@ -410,6 +410,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Forest Temple Floormaster Chest"))
         self.assertFalse(self.reachable("Forest Temple Floormaster Chest", no_bow, hover_boots))
 
+    def test_forest_temple_blue_poe_room_east_door_waits_for_beth(self):
+        # The east door opens once Beth dies, and she comes out only to the bow. Din's Fire would melt the frozen eye
+        # beyond the door in the bow's place. Two of the temple's keys lie behind the bow, so two more lie outside.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        two_keys = (("KF Mido Top Left Chest", "Forest Temple Small Key"),
+                    ("KF Mido Top Right Chest", "Forest Temple Small Key"))
+        self.assertFalse(self.reachable("Forest Temple Falling Ceiling Room Chest", no_bow, *two_keys))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):

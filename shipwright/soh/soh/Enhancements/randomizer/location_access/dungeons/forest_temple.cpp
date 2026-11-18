@@ -362,7 +362,7 @@ void RegionTable_Init_ForestTemple() {
     }, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_UPPER_STALFOS,            logic->SmallKeys(SCENE_FOREST_TEMPLE, 4)),
-        ENTRANCE(RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED, true),
+        ENTRANCE(RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED, logic->Get(LOGIC_FOREST_BETH)),
     });
 
     areaTable[RR_FOREST_TEMPLE_NE_HALLWAY_STRAIGHTENED] = Region("Forest Temple NE Hallway Straightened", SCENE_FOREST_TEMPLE, {}, {}, {
