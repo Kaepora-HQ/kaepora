@@ -396,6 +396,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("DMC Hammer Grotto Chest"))
         self.assertFalse(self.reachable("DMC Hammer Grotto Chest", NO_HAMMER))
 
+    def test_dodongos_cavern_lobby_alcove_chest_needs_a_blast(self):
+        # Beside the map chest, behind a cracked wall that no bomb flower stands near. The bracelet alone opens the way
+        # to the map chest, and only Dodongo's Cavern holds a bomb bag.
+        no_blast = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), NO_HAMMER)
+        self.assertTrue(self.reachable("Dodongos Cavern Lobby Alcove Chest"))
+        self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *no_blast))
+        self.assertFalse(self.reachable("Dodongos Cavern Lobby Alcove Chest", *no_blast))
+
     def test_fire_temple_scarecrow_ledge_chests_need_what_the_scarecrow_chest_needs(self):
         # Both stand beside the Scarecrow Chest from the start. The way up takes the scarecrow's song and a hookshot.
         for chest in ("Fire Temple Scarecrow Ledge Left Chest", "Fire Temple Scarecrow Ledge Right Chest"):
