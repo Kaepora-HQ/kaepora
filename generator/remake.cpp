@@ -35,6 +35,9 @@ static constexpr unsigned char chestHintTable[] = {
 static constexpr unsigned char junkTable[] = {
 #embed "../remake/junk_hints.tsv"
 };
+static constexpr unsigned char shopTable[] = {
+#embed "../remake/shops.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -209,7 +212,8 @@ static std::string ItemPhrase(const std::string& where, const std::vector<std::s
     return article.empty() ? name : article + " " + name;
 }
 
-RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests) {
+RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests,
+                                      const std::vector<RemakeShopSlot>& shops) {
     RemakeHintTables tables;
     size_t line = 1;
     for (const auto& row : ReadTable("remake/stones.tsv", stoneTable, "label\tlocation")) {
@@ -277,30 +281,86 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests) {
                  "remake/item_names.tsv, or its area no name in remake/places.tsv");
         }
     }
-    if (shuffled.size() != tables.chestSentences.size()) {
-        Fail("remake/chest_hints.tsv has a sentence for a location that is not a shuffled chest");
+    for (const RemakeShopSlot& slot : shops) {
+        shuffled.insert(slot.location);
+        const Rando::Location* location = Rando::StaticData::GetLocation(slot.location);
+        if (!tables.chestSentences.contains(slot.location) || !tables.places.contains(location->GetArea())) {
+            Fail("\"" + location->GetName() + "\" has no sentence in remake/chest_hints.tsv, or its area no name in " +
+                 "remake/places.tsv");
+        }
+    }
+    for (const auto& [location, sentence] : tables.chestSentences) {
+        if (!shuffled.contains(location)) {
+            Fail("remake/chest_hints.tsv: \"" + Rando::StaticData::GetLocation(location)->GetName() +
+                 "\" is neither a shuffled chest nor a shop slot that can be shuffled");
+        }
     }
     return tables;
 }
 
-std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests) {
+std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
+                                                         const std::vector<RemakeShopSlot>& shops) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
             names[chest.sohItem].push_back(chest.item);
         }
     }
+    names[ShopFiller].insert(names[ShopFiller].end(), shops.size(), std::string(ShopFillerName));
     std::map<RandomizerCheck, std::string> placed;
+    const auto place = [&](RandomizerCheck location) {
+        RandomizerGet item = Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedRandomizerGet();
+        std::deque<std::string>& candidates = names.at(item);
+        placed.emplace(location, candidates.front());
+        candidates.pop_front();
+    };
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
-            RandomizerGet item =
-                Rando::Context::GetInstance()->GetItemLocation(chest.location)->GetPlacedRandomizerGet();
-            std::deque<std::string>& candidates = names.at(item);
-            placed.emplace(chest.location, candidates.front());
-            candidates.pop_front();
+            place(chest.location);
         }
     }
+    for (const RemakeShopSlot& slot : shops) {
+        place(slot.location);
+    }
     return placed;
+}
+
+std::vector<RemakeShopSlot> LoadRemakeShops() {
+    std::vector<RemakeShopSlot> slots;
+    std::set<RandomizerCheck> locations;
+    size_t line = 1;
+    for (const auto& row :
+         ReadTable("remake/shops.tsv", shopTable, "location\tnumber\tslot\tshopkeepers\tshelves\tgoods")) {
+        const std::string where = "remake/shops.tsv line " + std::to_string(++line) + ": ";
+        const auto location = Rando::StaticData::locationNameToEnum.find(row[0]);
+        if (location == Rando::StaticData::locationNameToEnum.end() ||
+            Rando::StaticData::GetLocation(location->second)->GetRCType() != RCTYPE_SHOP ||
+            !locations.insert(location->second).second) {
+            Fail(where + "\"" + row[0] + "\" is not a SoH shop location, or repeats");
+        }
+        if (row[1].size() != 1 || row[1][0] < '1' || row[1][0] > '8') {
+            Fail(where + "the number is not 1 to 8");
+        }
+        if (row[2].size() != 1 || row[2][0] < '0' || row[2][0] > '7') {
+            Fail(where + "the slot is not 0 to 7");
+        }
+        RemakeShopSlot slot{ .location = location->second, .number = row[1][0] - '0', .slot = row[2][0] - '0' };
+        for (const std::string& cell : SohUtils::StringSplit(row[3], ",")) {
+            const size_t colon = cell.find(':');
+            slot.shopkeepers.push_back({ .actor = cell.substr(0, colon), .goodsList = cell.substr(colon + 1) });
+        }
+        for (const std::string& cell : SohUtils::StringSplit(row[4], ",")) {
+            const size_t colon = cell.rfind(':');
+            slot.shelves.push_back({ .file = cell.substr(0, colon), .hash = cell.substr(colon + 1) });
+        }
+        slots.push_back(std::move(slot));
+    }
+    for (const Rando::Location& location : Rando::StaticData::GetLocationTable()) {
+        if (location.GetRCType() == RCTYPE_SHOP && !locations.contains(location.GetRandomizerCheck())) {
+            Fail("remake/shops.tsv: no row for the SoH shop location \"" + location.GetName() + "\"");
+        }
+    }
+    return slots;
 }
 
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the
@@ -416,7 +476,8 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 }
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<RemakeShopSlot>& shops, const SeedSettings& settings,
+                                  const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
@@ -437,5 +498,21 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
     }
     plan["shops"] = nlohmann::ordered_json::array();
+    for (const RemakeShopSlot& slot : shops) {
+        const Rando::ItemLocation* location = Rando::Context::GetInstance()->GetItemLocation(slot.location);
+        nlohmann::ordered_json shopkeepers = nlohmann::ordered_json::array();
+        for (const RemakeShopSlot::Shopkeeper& keeper : slot.shopkeepers) {
+            shopkeepers.push_back({ { "actor", keeper.actor }, { "goods_list", keeper.goodsList } });
+        }
+        nlohmann::ordered_json shelves = nlohmann::ordered_json::array();
+        for (const RemakeShopSlot::Shelf& shelf : slot.shelves) {
+            shelves.push_back({ { "file", shelf.file }, { "hash", shelf.hash } });
+        }
+        plan["shops"].push_back({ { "shopkeepers", shopkeepers },
+                                  { "slot", slot.slot },
+                                  { "shelves", shelves },
+                                  { "item", items.at(slot.location) },
+                                  { "price", location->GetPrice() } });
+    }
     return plan;
 }

@@ -247,6 +247,8 @@ void RegionTable_Init_KokiriForest() {
 
     areaTable[RR_KF_KOKIRI_SHOP] = Region("KF Kokiri Shop", SCENE_KOKIRI_SHOP, {}, {
         //Locations
+        // The game holds back items 3 and 5 to 8, all refills, until Link has met the Deku Tree. The patcher lifts that
+        // gate from a shuffled slot, which then sells from the start.
         LOCATION(RC_KF_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_KOKIRI) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_KF_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_KOKIRI) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_KF_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_KOKIRI) && GetCheckPrice() <= GetWalletCapacity()),

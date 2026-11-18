@@ -1,5 +1,6 @@
 // Answers one question about the logic: with the given items at the given locations, and every other location holding
-// what the unmodified game gives there, can Link ever collect what is at the target location?
+// what the unmodified game gives there, can Link ever collect what is at the target location? A shop slot's item may
+// come as the spoiler log gives it, with the slot's price.
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/randomizer/3drando/fill.hpp"
@@ -33,7 +34,8 @@ static RandomizerGet Item(const std::string& name) {
 
 int main(int argc, char** argv) {
     if (argc < 3 || argc % 2 != 1) {
-        std::fprintf(stderr, "usage: %s <settings> <location> [<location> <item>]...\n", argv[0]);
+        std::fprintf(stderr, "usage: %s <settings> <location> [<location> <item or {\"item\", \"price\"}>]...\n",
+                     argv[0]);
         return 2;
     }
 
@@ -48,7 +50,7 @@ int main(int argc, char** argv) {
     }
     auto ctx = Rando::Context::GetInstance();
     ctx->FinalizeSettings({}, enabledTricks);
-    for (const RemakeChest* chest : SetUpWorld(chests)) {
+    for (const RemakeChest* chest : SetUpWorld(chests, {})) {
         ctx->GetItemLocation(chest->location)->SetPlacedItem(chest->sohItem);
     }
     bool pocketTaken = false;
@@ -58,7 +60,14 @@ int main(int argc, char** argv) {
             std::fprintf(stderr, "Link's Pocket takes one item, and it was given two\n");
             return 2;
         }
-        ctx->GetItemLocation(location)->SetPlacedItem(Item(argv[i + 1]));
+        Rando::ItemLocation* placed = ctx->GetItemLocation(location);
+        if (argv[i + 1][0] == '{') {
+            const nlohmann::json sale = nlohmann::json::parse(argv[i + 1]);
+            placed->SetPlacedItem(Item(sale.at("item").get<std::string>()));
+            placed->SetCustomPrice(sale.at("price").get<uint16_t>());
+        } else {
+            placed->SetPlacedItem(Item(argv[i + 1]));
+        }
     }
     RandomizerCheck target = Location(argv[2]);
 

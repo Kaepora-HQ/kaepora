@@ -47,7 +47,40 @@ codes the game puts before a noun.
 
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
-is SoH's English sentence with the remake's place names. Every other sentence is written in the same style.
+is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
+slot that "Shop goods" can shuffle has a row too, with SoH's one sentence for its shop.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
+
+`shops.tsv` has a row for each of SoH's 64 shop locations, by shop and then by item number. Each row is one slot of a
+remake shop. With "Shop goods" at "Four per shop shuffled", items 5 to 8 of each shop are shuffled, the four that SoH's
+shopsanity takes at that count. Each shuffled slot adds a Red Rupee to the pool and takes one of SoH's cheap balanced
+prices, 0 to 95 rupees. Every other slot keeps the game's goods and price.
+
+- `location`: the SoH location, by SoH's English name for it.
+- `number`: the location's item number in its shop, 1 to 8, as SoH numbers them.
+- `slot`: the slot's index, 0 to 7, in each shopkeeper's goods list.
+- `shopkeepers`: each shopkeeper actor that sells the slot, with the goods list in its pack, as `actor:goods list`,
+  comma separated. Each pack holds its own copy of the list, so the patcher edits each. Each shopkeeper counts its own
+  sales, so a shuffled slot sells its item once from each.
+- `shelves`: the shelf actor that shows the slot in each scene, as `file:hash`, comma separated.
+- `goods`: the goods actor that the game sells in the slot.
+
+Seen in the game:
+
+- A slot sells another goods actor at its own price, once, and stays sold out after a reload.
+- A Kokiri Shop slot sells from the start once the patcher lifts its gate on meeting the Deku Tree, from the shopkeeper
+  who stands until then too.
+- A child can buy an adult's item: the Market Bazaar sold him the Silver Gauntlets.
+
+Read from the game's data and not yet seen:
+
+- A day passing leaves a sold slot sold out, since its count's reset type is 0 where the game's is 2.
+- The Bombchu Shop's shopkeeper stands only once Link has the Goron Ruby.
+- The Goron Shop refuses a child a tunic by its name: the shop's flow compares the chosen goods with the two tunics,
+  then asks whether Link is a child. GC Shop Item 5 still asks for adult Link until that is seen.
+
+The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus out of shops. A shop may refuse
+arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the
+four items fall under is unknown.

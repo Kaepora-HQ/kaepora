@@ -12,7 +12,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values|shop|new-actors <kaepora-patch> <game.nup>
+           other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -20,6 +20,7 @@ reader bug in either shows as a difference. Expected message texts are built fro
 from the patcher's tags.
 """
 
+import csv
 import itertools
 import json
 import pathlib
@@ -762,6 +763,27 @@ def shop(patch, game):
     assert game.game_data_list(mod[GAME_DATA_LIST]) == data
 
 
+def shop_table(patch, game):
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "shops.tsv", newline="") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    slots = []
+    for row in rows:
+        shopkeepers = [tuple(cell.split(":")) for cell in row["shopkeepers"].split(",")]
+        shelves = [(path, int(h)) for path, h in (cell.rsplit(":", 1) for cell in row["shelves"].split(","))]
+        slots.append((shopkeepers, int(row["slot"]), shelves))
+    mod = patched(patch, game, plan([], shops=[(slot, "TBox_Shield_Hylian", 5) for slot in slots]))
+    sold = {}
+    for row, (shopkeepers, index, shelves) in zip(rows, slots):
+        for keeper, goods_list in shopkeepers:
+            path = f"Pack/Actor/{keeper}.pack.zs"
+            member = f"Component/ShopParam/{goods_list}.game__component__ShopParam.bgyml"
+            assert byml(game.pack(game.read(path))[member])["GoodsList"][index]["Actor"] == goods(row["goods"]), row
+            assert byml(game.pack(mod[path])[member])["GoodsList"][index]["Actor"] == goods("Shop_Weapon_Shield_Hylian")
+            sold[keeper, index] = row["location"]
+        for path, h in shelves:
+            assert actor(game.placement(game.read(path)), h)["Gyaml"] == row["goods"], (row["location"], h)
+            assert actor(game.placement(mod[path]), h)["Gyaml"] == "Shop_Weapon_Shield_Hylian", (row["location"], h)
+    assert len(rows) == 64 and len(sold) == 12 * 8, (len(rows), len(sold))
 def tested_new_actor_mod(patch, game, romfs):
     """A slot that sells the Megaton Hammer adds the goods actor the game showed and sold: its pack, its rows in the
     three actor tables and their size table entries are the tested mod's."""
@@ -1237,6 +1259,7 @@ def main():
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
         "shop": shop,
+        "shop-table": shop_table,
         "new-actors": new_actors,
         "tested-new-actor-mod": tested_new_actor_mod,
     }

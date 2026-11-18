@@ -62,6 +62,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
+    if (settings.shops == Shops::FourPerShopShuffled) {
+        changed << "shop goods shuffled";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -96,6 +99,7 @@ QString Details(const SeedSettings& settings) {
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
+                        Line(ShopsSetting, QString::fromUtf8(Words(ShopsChoices, settings.shops))),
                         Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))),
                         Line(GossipStonesSetting,
                              QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones))) }
@@ -164,10 +168,12 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     QComboBox* forest = Choice(ForestChoices);
     QComboBox* bridge = Choice(BridgeChoices);
     QComboBox* trials = Choice(TrialsChoices);
+    QComboBox* shops = Choice(ShopsChoices);
     auto* worldForm = new QFormLayout;
     worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
     worldForm->addRow(QString::fromUtf8(BridgeSetting), bridge);
     worldForm->addRow(QString::fromUtf8(TrialsSetting), trials);
+    worldForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     auto* worldGroup = new QGroupBox("World");
     worldGroup->setLayout(worldForm);
 
@@ -205,6 +211,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(forest, shown.forest);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
+        Select(shops, shown.shops);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
     };
@@ -225,6 +232,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.forest = Selected<Forest>(forest);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
+        shown.shops = Selected<Shops>(shops);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);
         chosen(shown);

@@ -38,7 +38,7 @@ If you get stuck, **Open spoiler log** shows where every item went and one route
 ## What a seed changes
 
 - **Chests.** A seed moves the items that chests hold. Songs, gifts from characters, shop goods and Gold Skulltula tokens stay where the game has them.
-- **Settings.** You choose which dungeons are shuffled, whether keys, maps and compasses stay in their own chests or move within their dungeon, and whether the Lens of Truth is ever needed. You can also change how the game starts: an open Kokiri Forest, the Rainbow Bridge already standing, no trials in Ganon's Castle, doors that need no keys, and every map and compass from the start.
+- **Settings.** You choose which dungeons are shuffled, whether keys, maps and compasses stay in their own chests or move within their dungeon, whether four goods in every shop join the shuffle, and whether the Lens of Truth is ever needed. You can also change how the game starts: an open Kokiri Forest, the Rainbow Bridge already standing, no trials in Ganon's Castle, doors that need no keys, and every map and compass from the start.
 - **Strength.** In the unmodified game, a weaker strength item picked up after a stronger one lowers what Link can lift. With a seed it never goes down.
 - **A few doors and story steps.** Four dungeon doors start open, and three story scenes no longer set a quest back. Without these changes, some orders of play would leave a seed that cannot be finished.
 

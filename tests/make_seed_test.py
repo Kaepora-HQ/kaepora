@@ -4,6 +4,7 @@ Usage: python3 -I tests/make_seed_test.py <kaepora-make-seed> <kaepora-seedgen> 
            [test name ...]
 """
 
+import json
 import pathlib
 import subprocess
 import sys
@@ -38,6 +39,15 @@ class MakeSeedTest(unittest.TestCase):
         result = self.make_seeds(("7", self.tmp / "seed"))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(files(self.tmp / "seed"), {**files(mod), "spoiler.json": spoiler.read_bytes()})
+
+    def test_a_seed_with_shop_goods_shuffled_is_patched(self):
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Shop goods": "Four per shop shuffled"})
+        result = subprocess.run([SEEDGEN, "19", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(json.loads(plan.read_text())["shops"]), 32)
 
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:

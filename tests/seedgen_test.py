@@ -44,16 +44,22 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Lens of Truth": "Needed", "Gossip stones": "Give hints"}
+                    "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
-    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Lens of Truth": "Never needed"}
+    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
+    "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
+SHOP_SLOTS = read_tsv("shops.tsv")
+# SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, so four per shop are items 5 to 8.
+SHUFFLED_SHOP_SLOTS = [row for row in SHOP_SLOTS if int(row["number"]) >= 5]
+SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
+KEPT_FROM_SHOPS = {"Item_Range_Bow", "Item_Range_SlingShot", "Item_BombBag_Small", "Item_BombchuBundle_Small"}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -98,6 +104,13 @@ def without_version(log):
     return re.sub(rb'^    "kaepora": ".*",\n', b"", log, count=1, flags=re.MULTILINE)
 
 
+def shop_slot(row):
+    return {"shopkeepers": [dict(zip(("actor", "goods_list"), cell.split(":")))
+                            for cell in row["shopkeepers"].split(",")],
+            "slot": int(row["slot"]),
+            "shelves": [dict(zip(("file", "hash"), cell.split(":"))) for cell in row["shelves"].split(",")]}
+
+
 def playthrough_steps(log):
     return {location: item for sphere in log["playthrough"].values() for location, item in sphere.items()}
 
@@ -114,7 +127,13 @@ def plain(text):
 
 def placed_remake_items(plan):
     rows = {row["hash"]: row["location"] for row in SHUFFLED}
-    return {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
+    placed = {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
+    return placed | {row["location"]: entry["item"] for row, entry in zip(SHUFFLED_SHOP_SLOTS, plan["shops"])}
+
+
+def spoiler_item(placed):
+    """The item of a spoiler log's location, which for a shop slot comes with its price."""
+    return placed["item"] if isinstance(placed, dict) else placed
 
 
 class SeedgenTest(unittest.TestCase):
@@ -219,20 +238,37 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("Kak 10 Gold Skulltula Reward", steps)
         self.assertNotIn("Kak 30 Gold Skulltula Reward", steps)
 
-    def test_route_steps_are_in_reach_in_their_sphere(self):
-        # Link follows the route sphere by sphere, holding what the spheres before gave him, and a shuffled chest off
-        # the route holds nothing that counts. In seed 1, the pruning drops what three steps counted on in an earlier
-        # sphere.
-        log, _ = self.generate("1")
+    def route_out_of_reach(self, log):
+        """The route's steps Link cannot reach in their sphere. He follows the route sphere by sphere, holding what the
+        spheres before gave him, and a shuffled location off the route holds nothing that counts. A shop slot keeps
+        its price."""
         spheres = [list(steps) for steps in log["playthrough"].values()]
         route = {step for steps in spheres for step in steps}
-        chests = [(chest, item if chest in route else "Green Rupee") for chest, item in log["locations"].items()]
+
+        def nothing(location):
+            placed = log["locations"].get(location)
+            return {"item": "Green Rupee", "price": placed["price"]} if isinstance(placed, dict) else "Green Rupee"
+
+        placed = [(location, item if location in route else nothing(location))
+                  for location, item in log["locations"].items()]
         out_of_reach = []
         for number, steps in enumerate(spheres):
-            later = [(step, "Green Rupee") for sphere in spheres[number:] for step in sphere]
+            later = [(step, nothing(step)) for sphere in spheres[number:] for step in sphere]
             out_of_reach += [f"sphere {number:02}: {step}" for step in steps
-                             if not reach.reachable(step, *chests, *later, settings=log["settings"])]
-        self.assertEqual(out_of_reach, [])
+                             if not reach.reachable(step, *placed, *later, settings=log["settings"])]
+        return out_of_reach
+
+    def test_route_steps_are_in_reach_in_their_sphere(self):
+        # In seed 1, the pruning drops what three steps counted on in an earlier sphere.
+        log, _ = self.generate("1")
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_a_route_that_buys_from_shops_is_in_reach_in_its_sphere(self):
+        # Seed 3's route buys the Hookshot, the Megaton Hammer and the Mirror Shield at shuffled slots.
+        log, _ = self.generate("3", SHOPS_SHUFFLED)
+        self.assertTrue(any(isinstance(log["locations"].get(step), dict)
+                            for steps in log["playthrough"].values() for step in steps))
+        self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
         _, plan = self.generate("6")
@@ -399,6 +435,33 @@ class SeedgenTest(unittest.TestCase):
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
 
+    def test_four_goods_per_shop_shuffled(self):
+        spoiler, plan = self.generate("19", SHOPS_SHUFFLED)
+        self.assertEqual(spoiler["settings"]["Shop goods"], "Four per shop shuffled")
+        self.assertEqual([{key: entry[key] for key in ("shopkeepers", "slot", "shelves")} for entry in plan["shops"]],
+                         [shop_slot(row) for row in SHUFFLED_SHOP_SLOTS])
+        for row, entry in zip(SHUFFLED_SHOP_SLOTS, plan["shops"]):
+            placed = spoiler["locations"][row["location"]]
+            self.assertEqual(list(placed), ["item", "price"], row["location"])
+            self.assertIn((entry["item"], placed["item"]), ITEM_PAIRS, row["location"])
+            # SoH's cheap balanced prices.
+            self.assertEqual(entry["price"], placed["price"])
+            self.assertIn(entry["price"], range(0, 100, 5))
+        kept = {row["location"] for row in SHOP_SLOTS} - {row["location"] for row in SHUFFLED_SHOP_SLOTS}
+        self.assertFalse(kept & spoiler["locations"].keys())
+        rows = {row["hash"]: row for row in SHUFFLED}
+        chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+        self.assertEqual(collections.Counter(chests.values()) + collections.Counter(e["item"] for e in plan["shops"]),
+                         POOL + collections.Counter({"TBox_Rupee_Red": len(SHUFFLED_SHOP_SLOTS)}))
+
+    def test_shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse(self):
+        sold = collections.Counter()
+        for seed in range(500, 520):
+            spoiler, plan = self.generate(str(seed), SHOPS_SHUFFLED)
+            self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
+            sold.update(entry["item"] for entry in plan["shops"])
+        self.assertFalse(sold.keys() & (KEPT_FROM_SHOPS | KEYS | MAPS_AND_COMPASSES), sold)
+
     def test_seed_text_ignores_case(self):
         upper = self.run_seedgen("OWL")
         self.assertEqual(self.run_seedgen("owl"), upper)
@@ -445,7 +508,8 @@ class SeedgenTest(unittest.TestCase):
                     area = places[found[1]]
                     chests = [location for location in spoiler["locations"] if place_of(location) == area]
                     self.assertTrue(chests)
-                    self.assertFalse(SOH_MAJOR_ITEMS & {spoiler["locations"][location] for location in chests})
+                    self.assertFalse(SOH_MAJOR_ITEMS
+                                     & {spoiler_item(spoiler["locations"][location]) for location in chests})
                     self.assertTrue(all(reach.reachable("Ganon", *placed, (location, "Green Rupee"),
                                                         settings=spoiler["settings"])
                                         for location in steps if location in chests))
@@ -459,6 +523,10 @@ class SeedgenTest(unittest.TestCase):
                     self.assertIn(found[2], items_at(area))
                 else:
                     self.fail("not a hint")
+
+    def test_hints_name_shop_goods_truly(self):
+        # Seed 4 hints at a shuffled shop slot by its sentence.
+        self.assert_hints_are_true("4", SHOPS_SHUFFLED)
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):

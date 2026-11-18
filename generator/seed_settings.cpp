@@ -28,6 +28,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { ForestSetting, Words(ForestChoices, settings.forest) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
+             { ShopsSetting, Words(ShopsChoices, settings.shops) },
              { LensSetting, Words(LensChoices, settings.lens) },
              { GossipStonesSetting, Words(GossipStonesChoices, settings.gossipStones) } };
 }
@@ -54,6 +55,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.bridge = Parse(BridgeChoices, setting, value);
         } else if (setting == TrialsSetting) {
             settings.trials = Parse(TrialsChoices, setting, value);
+        } else if (setting == ShopsSetting) {
+            settings.shops = Parse(ShopsChoices, setting, value);
         } else if (setting == LensSetting) {
             settings.lens = Parse(LensChoices, setting, value);
         } else if (setting == GossipStonesSetting) {

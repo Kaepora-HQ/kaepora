@@ -14,6 +14,7 @@ inline constexpr std::string_view MapsAndCompassesSetting = "Maps and compasses"
 inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
+inline constexpr std::string_view ShopsSetting = "Shop goods";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
 
@@ -69,6 +70,12 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::None, "None" },
 };
 
+enum class Shops { Vanilla, FourPerShopShuffled };
+inline constexpr std::pair<Shops, std::string_view> ShopsChoices[] = {
+    { Shops::Vanilla, "Vanilla" },
+    { Shops::FourPerShopShuffled, "Four per shop shuffled" },
+};
+
 enum class Lens { Needed, NeverNeeded };
 inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::Needed, "Needed" },
@@ -93,6 +100,7 @@ struct SeedSettings {
     Forest forest = Forest::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
+    Shops shops = Shops::Vanilla;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
 

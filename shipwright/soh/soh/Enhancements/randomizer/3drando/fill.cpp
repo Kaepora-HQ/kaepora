@@ -911,17 +911,24 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
     } while (unsuccessfulPlacement);
 }
 
-static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests) {
+static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests,
+                                                            const std::vector<RemakeShopSlot>& shops) {
     auto ctx = Rando::Context::GetInstance();
     std::map<RandomizerCheck, const RemakeChest*> chestAt;
     for (const RemakeChest& chest : chests) {
         chestAt.emplace(chest.location, &chest);
     }
+    std::set<RandomizerCheck> shopSlots;
+    for (const RemakeShopSlot& slot : shops) {
+        shopSlots.insert(slot.location);
+    }
     std::vector<const RemakeChest*> shuffled;
     itemPool.clear();
     for (RandomizerCheck loc : ctx->allLocations) {
         auto chest = chestAt.find(loc);
-        if (chest == chestAt.end()) {
+        if (shopSlots.contains(loc)) {
+            itemPool.push_back(ShopFiller);
+        } else if (chest == chestAt.end()) {
             ctx->GetItemLocation(loc)->PlaceVanillaItem();
         } else if (chest->second->shuffled) {
             shuffled.push_back(chest->second);
@@ -967,15 +974,22 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     }
 }
 
-// Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests what
-// the unmodified game gives there. The shuffled chests' items make up the item pool. Returns the shuffled chests.
-std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests) {
+// Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests and
+// shop slots what the unmodified game gives there. The shuffled chests' items and a Red Rupee for each shuffled shop
+// slot make up the item pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
+std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
+                                           const std::vector<RemakeShopSlot>& shops) {
     auto ctx = Rando::Context::GetInstance();
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();
-    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests);
+    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops);
     GenerateStartingInventory();
+
+    for (const RemakeShopSlot& slot : shops) {
+        ctx->GetItemLocation(slot.location)
+            ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(slot.location), shopsanityPrices));
+    }
 
     // Add prices to scrubs
     auto scrubLoc = Rando::StaticData::GetScrubLocations();
@@ -1023,7 +1037,14 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
 void ClearProgress() {
 }
 
-int Fill(const std::vector<RemakeChest>& chests) {
+// The game has not shown that a shop sells these to a Link who lacks the bullet bag, the quiver or the Goron Ruby they
+// may need, so they go to chests.
+static bool KeptFromShops(RandomizerGet item) {
+    return item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT || item == RG_PROGRESSIVE_BOMB_BAG ||
+           item == RG_BOMBCHU_5;
+}
+
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops) {
     auto ctx = Rando::Context::GetInstance();
     int retries = 0;
     SPDLOG_INFO("Starting seed generation...");
@@ -1033,7 +1054,7 @@ int Fill(const std::vector<RemakeChest>& chests) {
         // showItemProgress = false;
         ctx->playthroughLocations.clear();
         ctx->GetEntranceShuffler()->playthroughEntrances.clear();
-        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests);
+        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests, shops);
 
         // Temporarily add shop items to the itemPool so that entrance randomization
         // can validate the world using deku/hylian shields
@@ -1059,6 +1080,13 @@ int Fill(const std::vector<RemakeChest>& chests) {
 
         SPDLOG_INFO("Shuffling and Placing Dungeon Items...");
         PlaceDungeonItems(shuffled);
+
+        if (!shops.empty()) {
+            AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromShops), shuffledLocations);
+            for (const RemakeShopSlot& slot : shops) {
+                shuffledLocations.push_back(slot.location);
+            }
+        }
 
         SPDLOG_INFO("Shuffling Advancement Items");
         // Then place the rest of the advancement items

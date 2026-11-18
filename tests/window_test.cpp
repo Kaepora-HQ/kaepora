@@ -531,6 +531,7 @@ private slots:
                                 "Kokiri Forest: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
+                                "Shop goods: Vanilla\n"
                                 "Lens of Truth: Never needed\n"
                                 "Gossip stones: Give hints";
         QVERIFY(shows(summary));
@@ -576,6 +577,7 @@ private slots:
         chooseForestOutKeysInChestsLensNeverNeeded();
         choice("Maps and compasses")->setCurrentText("In their own chests");
         choice("Gossip stones")->setCurrentText("Vanilla");
+        choice("Shop goods")->setCurrentText("Four per shop shuffled");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -586,6 +588,7 @@ private slots:
         QCOMPARE(choice("Kokiri Forest")->currentText(), QString("Closed"));
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
+        QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
         dialogButton("OK")->click();
@@ -622,6 +625,7 @@ private slots:
         QTest::newRow("forest") << "Kokiri Forest" << "Open" << "Forest open";
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
+        QTest::newRow("shops") << "Shop goods" << "Four per shop shuffled" << "Shop goods shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";

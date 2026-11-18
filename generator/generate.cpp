@@ -21,7 +21,8 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 }
 
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
-                              const std::vector<RemakeChest>& chests, const std::vector<StoneHint>& hints) {
+                              const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+                              const std::vector<StoneHint>& hints) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
                                    { "settings", ToJson(settings) },
@@ -34,6 +35,12 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
         }
     }
     auto ctx = Rando::Context::GetInstance();
+    for (const RemakeShopSlot& slot : shops) {
+        const Rando::ItemLocation* location = ctx->GetItemLocation(slot.location);
+        log["locations"][Rando::StaticData::GetLocation(slot.location)->GetName()] = {
+            { "item", location->GetPlacedItemName().GetEnglish() }, { "price", location->GetPrice() }
+        };
+    }
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         nlohmann::ordered_json steps = nlohmann::ordered_json::object();
         for (RandomizerCheck location : sphere) {
@@ -74,11 +81,26 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
     }
 }
 
+// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, so four per shop are items 5 to 8.
+static bool Shuffled(const RemakeShopSlot& slot, const SeedSettings& settings) {
+    return settings.shops == Shops::FourPerShopShuffled && slot.number >= 5;
+}
+
+static std::vector<RemakeShopSlot> ShuffledShops(const std::vector<RemakeShopSlot>& table,
+                                                 const SeedSettings& settings) {
+    std::vector<RemakeShopSlot> shops;
+    std::ranges::copy_if(table, std::back_inserter(shops),
+                         [&](const RemakeShopSlot& slot) { return Shuffled(slot, settings); });
+    return shops;
+}
+
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> table = LoadRemakeChests();
-    static const RemakeHintTables hintTables = LoadRemakeHintTables(table);
+    static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
+    static const RemakeHintTables hintTables =
+        LoadRemakeHintTables(table, ShuffledShops(shopTable, { .shops = Shops::FourPerShopShuffled }));
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -87,16 +109,17 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
+    const std::vector<RemakeShopSlot> shops = ShuffledShops(shopTable, settings);
 
     SetOptions(settings);
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, enabledTricks, chests) <= 0) {
+    if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, enabledTricks, chests, shops) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests);
+    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops);
     const std::vector<StoneHint> hints =
         settings.gossipStones == GossipStones::GiveHints ? PickHints(hintTables, items) : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, chests, hints), RemakePlan(seed, chests, settings, items, hints) };
+    return { SpoilerLog(seed, settings, chests, shops, hints), RemakePlan(seed, chests, shops, settings, items, hints) };
 }
