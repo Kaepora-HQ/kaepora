@@ -33,10 +33,16 @@ class ItemLocation {
     RandomizerCheckStatus GetCheckStatus();
     void SetIsSkipped(bool isSkipped_);
     bool GetIsSkipped();
+    bool IsHintable() const;
+    void SetAsHintable();
     bool IsExcluded();
     void SetExcludedOption(uint8_t val);
     bool IsVisible() const;
     void SetVisible(bool visibleInImGui_);
+    bool IsWothCandidate() const;
+    void SetWothCandidate();
+    bool IsFoolishCandidate() const;
+    void SetBarrenCandidate();
     void ResetVariables();
     bool IsAvailable() const;
     void SetAvailable(bool isAvailable_);
@@ -46,6 +52,7 @@ class ItemLocation {
     bool addedToPool = false;
     RandomizerGet placedItem = RG_NONE;
     RandomizerGet delayedItem = RG_NONE;
+    bool isHintable = false;
     OptionValue excludedOption = OptionValue(RO_LOCATION_INCLUDE);
     uint16_t price = 0;
     RandomizerRegion parentRegion = RR_NONE;
@@ -54,5 +61,7 @@ class ItemLocation {
     RandomizerCheckStatus status = RCSHOW_UNCHECKED;
     bool isSkipped = false;
     bool isAvailable = false;
+    bool wothCandidate = false;
+    bool barrenCandidate = false;
 };
 } // namespace Rando

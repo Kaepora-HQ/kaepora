@@ -1,0 +1,36 @@
+remake_item	label	name	article
+Item_Arrow_Ice	Item_Arrow_Ice_Name	Ice Arrow	the
+Item_BombBag_Small	Item_BombBag_Small_Name	Bomb Bag	the
+Item_BombBundle_Small	Item_BombBundle_Small_Name	Five Bombs	
+Item_BombchuBundle_Small	Item_BombchuBundle_Small_Name	Five Bombchus	
+Item_Boomerang	Item_Boomerang_Name	Boomerang	the
+Item_DekuStickBundle_Small	Item_DekuStickBundle_Small_Name	Three Deku Sticks	
+Item_Dungeon_BossKey	Item_Dungeon_BossKey_Name	Boss Key	a
+Item_Dungeon_Compass	Item_Dungeon_Compass_Name	Compass	a
+Item_Dungeon_Map	Item_Dungeon_Map_Name	Dungeon Map	a
+Item_Dungeon_SmallKey	Item_Dungeon_SmallKey_Name	Small Key	a
+Item_Gauntlet_Gold	Armor_Adult_Gauntlet_Gold_Name	Golden Gauntlets	the
+Item_Gauntlet_Silver	Armor_Adult_Gauntlet_Silver_Name	Silver Gauntlets	the
+Item_GlassTruth	Armor_GlassTruth_Name	Lenses of Truth	the
+Item_Hammer	Item_Hammer_Name	Megaton Hammer	the
+Item_HeavyBoot	Armor_Adult_HeavyBoot_Name	Iron Boots	the
+Item_Hookshot	Item_Hookshot_Name	Hookshot	the
+Item_HoverBoot	Armor_Adult_HoverBoot_Name	Hover Boots	the
+Item_Longshot	Item_Longshot_Name	Longshot	the
+Item_Range_Bow	Weapon_Range_Bow_Name	Fairy Bow	the
+Item_Range_SlingShot	Weapon_Range_SlingShot_Name	Fairy Slingshot	the
+Item_ScrubBusinessSeed	Item_ScrubBusinessSeed_Name	Business Scrub Seed	a
+Item_Shield_Mirror	Weapon_Shield_Mirror_Name	Mirror Shield	the
+Item_Sword_Kokiri	Weapon_Sword_Kokiri_Name	Kokiri Sword	the
+Obj_Heart_Piece	Obj_Heart_Piece_Name	Piece of Heart	a
+Obj_MiniGame_SmallKey	Obj_MiniGame_SmallKey_Name	Door Key	a
+TBox_ArrowBundle_Large	Obj_ArrowBundle_Large_Name	10 Arrows	
+TBox_ArrowBundle_Medium	Obj_ArrowBundle_Medium_Name	Five Arrows	
+TBox_DekuNutBundle	TBox_DekuNutBundle_Name	Three Deku Nuts	
+TBox_Rupee_Blue	Obj_Rupee_Blue_Name	Blue Rupee	a
+TBox_Rupee_Green	Obj_Rupee_Green_Name	Green Rupee	a
+TBox_Rupee_Purple	Obj_Rupee_Purple_Name	Purple Rupee	a
+TBox_Rupee_Red	Obj_Rupee_Red_Name	Red Rupee	a
+TBox_Shield_Deku	Weapon_Shield_Deku_Name	Deku Shield	a
+TBox_Shield_Hylian	Weapon_Shield_Hylian_Name	Hylian Shield	a
+Tbox_MagicJar_Large	Obj_MagicJar_Large_Name	Large Magic Jar	a

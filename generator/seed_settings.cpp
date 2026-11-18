@@ -28,7 +28,8 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { ForestSetting, Words(ForestChoices, settings.forest) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
-             { LensSetting, Words(LensChoices, settings.lens) } };
+             { LensSetting, Words(LensChoices, settings.lens) },
+             { GossipStonesSetting, Words(GossipStonesChoices, settings.gossipStones) } };
 }
 
 SeedSettings ParseSeedSettings(const nlohmann::json& json) {
@@ -55,6 +56,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.trials = Parse(TrialsChoices, setting, value);
         } else if (setting == LensSetting) {
             settings.lens = Parse(LensChoices, setting, value);
+        } else if (setting == GossipStonesSetting) {
+            settings.gossipStones = Parse(GossipStonesChoices, setting, value);
         } else {
             throw std::runtime_error("unknown setting \"" + setting + "\"");
         }

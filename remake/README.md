@@ -27,7 +27,26 @@ first row's item is what the location adds to the pool.
 `items.tsv` maps each remake item name to the SoH item it stands for, by SoH's English name. A remake key, map or
 compass names no dungeon, so it has one row per dungeon, and a chest takes the one of its own dungeon.
 
-`stones.tsv` has a row for each gossip stone whose SoH stone is known, and the patcher gives a text only to these.
+`stones.tsv` has a row for each gossip stone whose SoH stone is known. Only these get a hint, and the patcher gives a
+text only to these.
 
 - `label`: the stone's actor `Name`, which is also the label of the message it says in `EventFlowMsg/GossipStone.msbt`.
 - `location`: the SoH gossip stone it is, by SoH's English name.
+
+A hint names places and items as the game's English text does, so it matches the map and the item screen. With the
+game file, a test checks each `name` against the game's message at `label`, in both English text packs, leaving out the
+codes the game puts before a noun.
+
+- `places.tsv` names each SoH area that holds a shuffled chest. `area` is the prefix SoH gives the names of the area's
+  locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says` is what a hint says: the name,
+  with `the` where the game's text writes one before it, or the end of the name, as "Ganondorf's Castle" for "Inside
+  Ganondorf's Castle". A test checks that it is.
+- `item_names.tsv` names each remake item of `items.tsv`. `label` is in `ActorMsg/PouchContent.msbt`: the game names an
+  item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `the` or empty.
+
+`chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
+the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
+is SoH's English sentence with the remake's place names. Every other sentence is written in the same style.
+
+`junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
+jokes, but for three about SoH's own project, and six of ours.

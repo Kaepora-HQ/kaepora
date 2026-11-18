@@ -48,6 +48,7 @@ add_library(kaepora-generator OBJECT
     generator/cvars.cpp
     generator/game_state.cpp
     generator/generate.cpp
+    generator/hints.cpp
     generator/remake.cpp
     generator/seed_settings.cpp
     generator/setup.cpp
@@ -190,7 +191,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      keys_not_needed forest_open bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
-                     every_setting_changed_at_once seed_text_ignores_case fixed_seed_matches_fixture)
+                     every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
+                     every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})

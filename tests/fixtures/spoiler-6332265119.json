@@ -21,7 +21,8 @@
         "Kokiri Forest": "Closed",
         "Rainbow Bridge": "After the Light Arrows",
         "Ganon's trials": "All six",
-        "Lens of Truth": "Needed"
+        "Lens of Truth": "Needed",
+        "Gossip stones": "Give hints"
     },
     "locations": {
         "KF Kokiri Sword Chest": "Blue Rupee",
@@ -336,5 +337,41 @@
         "sphere 27": {
             "Ganon": "Triforce"
         }
+    },
+    "hints": {
+        "KF Gossip Stone": "They say that the Death Mountain Trail is on the way of the hero.",
+        "KF Deku Tree Right Gossip Stone": "They say that plundering the Gerudo Proving Grounds is a foolish choice.",
+        "KF Deku Tree Left Gossip Stone": "They say that the Ice Arrow can be found at Hyrule Field.",
+        "LW Gossip Stone": "They say that plundering the Bottom of the Well is a foolish choice.",
+        "SFM Maze Upper Gossip Stone": "They say that the Fairy Slingshot can be found at Kokiri Forest.",
+        "SFM Maze Lower Gossip Stone": "They say that a Red Rupee can be found at Kokiri Forest.",
+        "SFM Saria Gossip Stone": "They say that Kokiri Forest is on the way of the hero.",
+        "HF Cow Grotto Gossip Stone": "They say that the Longshot can be found at Gerudo Valley.",
+        "LH Southeast Gossip Stone": "They say that Ganondorf's Castle hoards a Red Rupee.",
+        "LH Southwest Gossip Stone": "They say that the Great Deku Tree hoards the Megaton Hammer.",
+        "LH Lab Gossip Stone": "They say that the Fairy Bow can be found at the Graveyard.",
+        "Market ToT Left Gossip Stone": "They say that quest guidance can be found at a talking rock.",
+        "Market ToT Left Center Gossip Stone": "They say that Dodongo Cavern hoards Five Bombs.",
+        "Market ToT Right Center Gossip Stone": "They say that a statue in Dodongo Cavern guards the Iron Boots.",
+        "Market ToT Right Gossip Stone": "Use bombs wisely.",
+        "HC Malon Gossip Stone": "They say that a Business Scrub Seed can be found at Death Mountain Crater.",
+        "HC Rock Wall Gossip Stone": "They say that a Red Rupee can be found at Hyrule Field.",
+        "HC Storms Grotto Gossip Stone": "They say that the Bottom of the Well hoards Five Bombchus.",
+        "Kak Open Grotto Gossip Stone": "They say that the Boomerang can be found at Kakariko Village.",
+        "Graveyard Gossip Stone": "They say that atop a ruined tower near Lon Lon Ranch lies a Piece of Heart.",
+        "DMT Gossip Stone": "They say that the Shadow Temple is on the way of the hero.",
+        "GC Medigoron Gossip Stone": "They say that the Kokiri Sword can be found at Goron City.",
+        "GC Maze Gossip Stone": "They say that a Piece of Heart can be found at the Graveyard.",
+        "DMC Gossip Stone": "They say that the Mirage Desert is on the way of the hero.",
+        "DMC Upper Grotto Gossip Stone": "They say that Ganondorf's Castle hoards Five Arrows.",
+        "Dodongos Cavern Gossip Stone": "They say that the Great Deku Tree hoards a Red Rupee.",
+        "ZR Near Grottos Gossip Stone": "Hoot! Hoot! Would you like me to repeat that?",
+        "ZR Open Grotto Gossip Stone": "They say that the Forest Temple is on the way of the hero.",
+        "ZR Near Domain Gossip Stone": "They say that a Blue Rupee can be found at Kokiri Forest.",
+        "ZD Gossip Stone": "They say that Ganondorf's Castle hoards a Blue Rupee.",
+        "ZF Jabu Gossip Stone": "They say that fire beyond a waterfall reveals a Business Scrub Seed.",
+        "ZF Fairy Gossip Stone": "They say that a Business Scrub Seed can be found at Goron City.",
+        "GV Gossip Stone": "They say Ingo is not very good at planning ahead.",
+        "Colossus Gossip Stone": "They say that a hole in a volcano holds a Purple Rupee."
     }
 }

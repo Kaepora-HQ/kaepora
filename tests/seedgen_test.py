@@ -44,7 +44,12 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Lens of Truth": "Needed"}
+                    "Lens of Truth": "Needed", "Gossip stones": "Give hints"}
+NO_HINTS = {"Gossip stones": "As in the game"}
+EVERY_SETTING_CHANGED = {
+    "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
+    "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
+    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -69,6 +74,20 @@ BOSS_KEY_DUNGEONS = ["ForestTemple", "FireTemple", "WaterTemple", "ShadowTemple"
 KEYS = {"Item_Dungeon_SmallKey", "Item_Dungeon_BossKey"}
 MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
 
+STONES = {row["label"]: row["location"] for row in read_tsv("stones.tsv")}
+PLACE_BY_AREA_PREFIX = {row["area"]: row["says"] for row in read_tsv("places.tsv")}
+DUNGEON_PLACES = {"Deku Tree", "Dodongos Cavern", "Jabu Jabus Belly", "Forest Temple", "Fire Temple", "Water Temple",
+                  "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
+                  "Ganon's Castle"}
+ITEM_NAMES = {row["remake_item"]: f"{row['article']} {row['name']}".strip() for row in read_tsv("item_names.tsv")}
+CHEST_SENTENCES = {row["location"]: row["sentence"] for row in read_tsv("chest_hints.tsv")}
+JUNK = [row["hint"] for row in read_tsv("junk_hints.tsv")]
+SOH_MAJOR_ITEMS = {"Boomerang", "Progressive Bow", "Progressive Slingshot", "Progressive Hookshot",
+                   "Megaton Hammer", "Iron Boots", "Hover Boots", "Lens of Truth", "Silver Gauntlets",
+                   "Golden Gauntlets", "Mirror Shield", "Kokiri Sword", "Progressive Bomb Bag", "Ice Arrows"}
+BOX_LINES = 2
+LINE_LENGTH = 65
+
 
 def folder(path):
     return path.split("/")[1]
@@ -81,6 +100,21 @@ def without_version(log):
 
 def playthrough_steps(log):
     return {location: item for sphere in log["playthrough"].values() for location, item in sphere.items()}
+
+
+def place_of(location):
+    prefixes = [area for area in PLACE_BY_AREA_PREFIX if location.startswith(area + " ")]
+    return max(prefixes, key=len) if prefixes else None
+
+
+def plain(text):
+    text = re.sub(r"\{page\}|[\n^&]", " ", text).replace("@", "Link")
+    return " ".join(re.sub(r"\{[^}]*\}|#", "", text).split())
+
+
+def placed_remake_items(plan):
+    rows = {row["hash"]: row["location"] for row in SHUFFLED}
+    return {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
 
 
 class SeedgenTest(unittest.TestCase):
@@ -163,7 +197,7 @@ class SeedgenTest(unittest.TestCase):
 
     def test_spoiler_log_lists_the_shuffled_locations_and_the_route(self):
         spoiler, _ = self.generate("KAEPORA")
-        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints"])
         self.assertEqual(spoiler["kaepora"], VERSION)
         self.assertEqual(spoiler["seed"], "KAEPORA")
         self.assertEqual(spoiler["settings"], DEFAULT_SETTINGS)
@@ -273,11 +307,11 @@ class SeedgenTest(unittest.TestCase):
 
     def test_spoiler_log_records_the_settings(self):
         settings = {"Shuffled dungeons": ["Fire Temple", "Deku Tree"], "Small and boss keys": "In their own chests",
-                    "Maps and compasses": "In their own chests", "Lens of Truth": "Never needed"}
+                    "Maps and compasses": "In their own chests", "Lens of Truth": "Never needed", **NO_HINTS}
         spoiler, _ = self.generate("9", settings)
         self.assertEqual(spoiler["settings"],
                          DEFAULT_SETTINGS | settings | {"Shuffled dungeons": ["Deku Tree", "Fire Temple"]})
-        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints"])
 
     def test_default_settings_are_the_settings_left_out(self):
         self.assertEqual(self.run_seedgen("10", DEFAULT_SETTINGS), self.run_seedgen("10"))
@@ -361,12 +395,8 @@ class SeedgenTest(unittest.TestCase):
             self.assertIn("Bongo Bongo", playthrough_steps(never))
 
     def test_every_setting_changed_at_once(self):
-        settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
-                    "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests",
-                    "Kokiri Forest": "Open", "Rainbow Bridge": "Always open", "Ganon's trials": "None",
-                    "Lens of Truth": "Never needed"}
         for seed in range(400, 500):
-            spoiler, _ = self.generate(str(seed), settings)
+            spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
 
     def test_seed_text_ignores_case(self):
@@ -375,6 +405,81 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.run_seedgen("oWl"), upper)
         spoiler, plan = map(json.loads, upper)
         self.assertEqual((spoiler["seed"], plan["seed"]), ("OWL", "OWL"))
+
+    def test_every_hint_is_true(self):
+        for seed in (FIXED_SEED, *map(str, range(600, 620))):
+            self.assert_hints_are_true(seed)
+        for seed in map(str, range(620, 625)):
+            self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
+
+    def assert_hints_are_true(self, seed, settings=None):
+        spoiler, plan = self.generate(seed, settings)
+        hints = spoiler["hints"]
+        self.assertEqual(list(hints), list(STONES.values()))
+        self.assertEqual({entry["label"]: plain(entry["text"]) for entry in plan["stone_texts"]},
+                         {label: hints[location] for label, location in STONES.items()})
+        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(plan).items()}
+        chest_hints = {plain(CHEST_SENTENCES[location].replace("[[1]]", item)) for location, item in held.items()}
+        junk = {plain(line) for line in JUNK}
+        places = {phrase: area for area, phrase in PLACE_BY_AREA_PREFIX.items()}
+        placed = list(spoiler["locations"].items())
+        self.assertTrue(reach.reachable("Ganon", *placed, settings=spoiler["settings"]))
+        steps = playthrough_steps(spoiler)
+
+        def items_at(area):
+            return [item for location, item in held.items() if place_of(location) == area]
+
+        for stone, hint in hints.items():
+            with self.subTest(seed=seed, stone=stone, hint=hint):
+                if hint in chest_hints or hint in junk:
+                    continue
+                if found := re.fullmatch(r"They say that (.+) is on the way of the hero\.", hint):
+                    area = places[found[1]]
+                    needed = [location for location in steps if location in spoiler["locations"]
+                              and place_of(location) == area]
+                    self.assertTrue(any(not reach.reachable("Ganon", *placed, (location, "Green Rupee"),
+                                                            settings=spoiler["settings"])
+                                        for location in needed))
+                elif found := re.fullmatch(r"They say that plundering (.+) is a foolish choice\.", hint):
+                    # SoH's rule: no chest of the area holds a major item or one the seed cannot be finished without.
+                    area = places[found[1]]
+                    chests = [location for location in spoiler["locations"] if place_of(location) == area]
+                    self.assertTrue(chests)
+                    self.assertFalse(SOH_MAJOR_ITEMS & {spoiler["locations"][location] for location in chests})
+                    self.assertTrue(all(reach.reachable("Ganon", *placed, (location, "Green Rupee"),
+                                                        settings=spoiler["settings"])
+                                        for location in steps if location in chests))
+                elif found := re.fullmatch(r"They say that (.+) can be found at (.+)\.", hint):
+                    area = places[found[2]]
+                    self.assertNotIn(area, DUNGEON_PLACES)
+                    self.assertIn(found[1], items_at(area))
+                elif found := re.fullmatch(r"They say that (.+) hoards (.+)\.", hint):
+                    area = places[found[1]]
+                    self.assertIn(area, DUNGEON_PLACES)
+                    self.assertIn(found[2], items_at(area))
+                else:
+                    self.fail("not a hint")
+
+    def test_every_stone_has_a_hint_that_fits_its_boxes(self):
+        for seed in (FIXED_SEED, *map(str, range(620, 640))):
+            _, plan = self.generate(seed)
+            self.assertEqual([entry["label"] for entry in plan["stone_texts"]], list(STONES))
+            for entry in plan["stone_texts"]:
+                for box in entry["text"].split("{page}"):
+                    lines = box.split("\n")
+                    self.assertLessEqual(len(lines), BOX_LINES, entry)
+                    for line in lines:
+                        self.assertTrue(line.strip(), entry)
+                        self.assertLessEqual(len(re.sub(r"\{[^}]*\}", "", line)), LINE_LENGTH, entry)
+
+    def test_hints_never_move_an_item(self):
+        for seed in map(str, range(640, 650)):
+            spoiler, plan = self.generate(seed)
+            without_hints, plan_without_hints = self.generate(seed, NO_HINTS)
+            self.assertEqual((spoiler["locations"], spoiler["playthrough"], plan["chests"]),
+                             (without_hints["locations"], without_hints["playthrough"], plan_without_hints["chests"]))
+            self.assertTrue(spoiler["hints"])
+            self.assertEqual((without_hints["hints"], plan_without_hints["stone_texts"]), ({}, []))
 
     def test_fixed_seed_matches_fixture(self):
         spoiler, plan = self.run_seedgen(FIXED_SEED)

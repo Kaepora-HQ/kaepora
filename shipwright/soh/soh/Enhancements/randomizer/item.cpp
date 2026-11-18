@@ -389,6 +389,77 @@ bool Item::IsBottleItem() const {
            (getItemId >= 0x8C && getItemId <= 0x94); // Rest of bottled contents
 }
 
+bool Item::IsMajorItem() const {
+    const auto ctx = Context::GetInstance();
+    if (type == ITEMTYPE_TOKEN) {
+        return ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_TOKENS) ||
+               ctx->GBKCondition() == RO_CHECK_TRIGGER_TOKENS;
+    }
+
+    if (type == ITEMTYPE_DROP || type == ITEMTYPE_EVENT || type == ITEMTYPE_SHOP || type == ITEMTYPE_MAP ||
+        type == ITEMTYPE_COMPASS) {
+        return false;
+    }
+
+    if (type == ITEMTYPE_DUNGEONREWARD &&
+        ctx->GetOption(RSK_SHUFFLE_DUNGEON_REWARDS).Is(RO_DUNGEON_REWARDS_END_OF_DUNGEON)) {
+        return false;
+    }
+
+    if ((randomizerGet == RG_BOMBCHU_5 || randomizerGet == RG_BOMBCHU_10 || randomizerGet == RG_BOMBCHU_20) &&
+        ctx->GetOption(RSK_BOMBCHU_BAG).Is(RO_BOMBCHU_BAG_NONE)) {
+        return false;
+    }
+
+    if (randomizerGet == RG_HEART_CONTAINER || randomizerGet == RG_PIECE_OF_HEART ||
+        randomizerGet == RG_TREASURE_GAME_HEART) {
+        return false;
+    }
+
+    if (type == ITEMTYPE_SMALLKEY && (ctx->GetOption(RSK_KEYSANITY).Is(RO_DUNGEON_ITEM_LOC_VANILLA) ||
+                                      ctx->GetOption(RSK_KEYSANITY).Is(RO_DUNGEON_ITEM_LOC_OWN_DUNGEON))) {
+        return false;
+    }
+
+    if (type == ITEMTYPE_FORTRESS_SMALLKEY && ctx->GetOption(RSK_GERUDO_KEYS).Is(RO_GERUDO_KEYS_VANILLA)) {
+        return false;
+    }
+
+    if (type == ITEMTYPE_BOSSKEY && getItemId != 0xAD &&
+        (ctx->GetOption(RSK_BOSS_KEYSANITY).Is(RO_DUNGEON_ITEM_LOC_VANILLA) ||
+         ctx->GetOption(RSK_BOSS_KEYSANITY).Is(RO_DUNGEON_ITEM_LOC_OWN_DUNGEON))) {
+        return false;
+    }
+    // Ganons Castle Boss Key
+    if (getItemId == 0xAD && (ctx->GetOption(RSK_GANONS_BOSS_KEY).Is(RO_GANON_BOSS_KEY_VANILLA) ||
+                              ctx->GetOption(RSK_GANONS_BOSS_KEY).Is(RO_GANON_BOSS_KEY_OWN_DUNGEON))) {
+        return false;
+    }
+
+    if (randomizerGet == RG_GREG_RUPEE) {
+        return ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_GREG);
+    }
+
+    return IsAdvancement();
+}
+
+bool Item::IsShieldOrTunic() const {
+    switch (randomizerGet) {
+        case RG_DEKU_SHIELD:
+        case RG_HYLIAN_SHIELD:
+        case RG_MIRROR_SHIELD:
+        case RG_GORON_TUNIC:
+        case RG_ZORA_TUNIC:
+        case RG_BUY_DEKU_SHIELD:
+        case RG_BUY_HYLIAN_SHIELD:
+        case RG_BUY_GORON_TUNIC:
+        case RG_BUY_ZORA_TUNIC:
+            return true;
+        default:
+            return false;
+    }
+}
+
 RandomizerHintTextKey Item::GetHintKey() const {
     return hintKey;
 }

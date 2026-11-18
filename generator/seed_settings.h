@@ -15,6 +15,7 @@ inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
+inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
 
 struct Dungeon {
     std::string_view name;
@@ -74,6 +75,12 @@ inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::NeverNeeded, "Never needed" },
 };
 
+enum class GossipStones { GiveHints, AsInTheGame };
+inline constexpr std::pair<GossipStones, std::string_view> GossipStonesChoices[] = {
+    { GossipStones::GiveHints, "Give hints" },
+    { GossipStones::AsInTheGame, "As in the game" },
+};
+
 template <typename Value, size_t Size>
 std::string_view Words(const std::pair<Value, std::string_view> (&choices)[Size], Value value) {
     return std::ranges::find(choices, value, &std::pair<Value, std::string_view>::first)->second;
@@ -87,6 +94,7 @@ struct SeedSettings {
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
     Lens lens = Lens::Needed;
+    GossipStones gossipStones = GossipStones::GiveHints;
 
     bool operator==(const SeedSettings&) const = default;
 };

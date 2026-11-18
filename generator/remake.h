@@ -4,6 +4,7 @@
 #include "soh/Enhancements/randomizer/randomizerEnums.h"
 #include <nlohmann/json.hpp>
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -38,9 +39,42 @@ struct RemakeChest {
 // another copy of its chest, gives an unshuffled row no note, or leaves out a chest location of SoH's vanilla layouts.
 std::vector<RemakeChest> LoadRemakeChests();
 
-// The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake name of the item the
-// seed placed there. Where several remake names stand for one SoH item, it hands back the names the shuffled chests
-// held, each as often as it occurred. Then the event flow strings every seed changes, and the saved values a new game
-// starts with that the rules or the settings count on.
+struct RemakeStone {
+    std::string label;
+    RandomizerCheck location;
+};
+
+struct ChestSentence {
+    std::string beforeItem;
+    std::string afterItem;
+};
+
+// Places and items as a hint names them, with their article.
+struct RemakeHintTables {
+    std::vector<RemakeStone> stones;
+    std::map<RandomizerCheckArea, std::string> places;
+    std::map<std::string, std::string> itemsByRemakeName;
+    std::map<RandomizerCheck, ChestSentence> chestSentences;
+    std::vector<std::string> junk;
+};
+
+// The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
+// item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item.
+RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests);
+
+// The remake name of the item each shuffled chest gives. Where several remake names stand for one SoH item, the chests
+// that hold it give the names the shuffled chests held, in table order, each as often as it occurred.
+std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests);
+
+struct StoneHint {
+    RemakeStone stone;
+    std::string tagged;
+    std::string plain;
+};
+
+// The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
+// Then the event flow strings every seed changes, the saved values a new game starts with that the rules or the
+// settings count on, and the gossip stones' texts.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const SeedSettings& settings);
+                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<StoneHint>& hints);

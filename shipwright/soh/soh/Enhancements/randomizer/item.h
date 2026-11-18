@@ -55,6 +55,8 @@ class Item {
     void SetCustomDrawFunc(CustomDrawFunc) const;
     bool IsPlaythrough() const;
     bool IsBottleItem() const;
+    bool IsMajorItem() const;
+    bool IsShieldOrTunic() const;
     RandomizerHintTextKey GetHintKey() const;
     GetItemCategory GetCategory();
     bool operator==(const Item& right) const;

@@ -123,6 +123,14 @@ void ItemLocation::SetExcludedOption(uint8_t val) {
     excludedOption.Set(val);
 }
 
+bool ItemLocation::IsHintable() const {
+    return isHintable;
+}
+
+void ItemLocation::SetAsHintable() {
+    isHintable = true;
+}
+
 bool ItemLocation::IsVisible() const {
     return visibleInImGui;
 }
@@ -130,12 +138,31 @@ void ItemLocation::SetVisible(const bool visibleInImGui_) {
     visibleInImGui = visibleInImGui_;
 }
 
+bool ItemLocation::IsWothCandidate() const {
+    return wothCandidate;
+}
+
+void ItemLocation::SetWothCandidate() {
+    wothCandidate = true;
+}
+
+bool ItemLocation::IsFoolishCandidate() const {
+    return barrenCandidate;
+}
+
+void ItemLocation::SetBarrenCandidate() {
+    barrenCandidate = true;
+}
+
 void ItemLocation::ResetVariables() {
     addedToPool = false;
     placedItem = RG_NONE;
     delayedItem = RG_NONE;
+    isHintable = false;
     price = 0;
     hasCustomPrice = false;
+    wothCandidate = false;
+    barrenCandidate = false;
     status = RCSHOW_UNCHECKED;
     isSkipped = false;
     isAvailable = false;

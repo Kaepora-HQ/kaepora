@@ -5,6 +5,7 @@ Usage: python3 -I -B tests/remake_tables_test.py <game.nup> [test name ...]
 
 import csv
 import pathlib
+import struct
 import sys
 import unittest
 
@@ -20,6 +21,24 @@ def read_tsv(name):
         return list(csv.DictReader(f, delimiter="\t"))
 
 
+# Codes of group 201 come before some nouns in the game's names. Hints leave them out. That they show nothing in
+# English is not confirmed.
+GRAMMAR = 201
+
+
+def without_grammar_codes(text):
+    shown, at = bytearray(), 0
+    while at < len(text):
+        if text[at] == 0x0E:
+            group, _, size = struct.unpack_from("<HHH", text, at + 1)
+            assert group == GRAMMAR, text
+            at += 7 + size
+        else:
+            shown.append(text[at])
+            at += 1
+    return shown.decode()
+
+
 class RemakeTablesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -27,7 +46,6 @@ class RemakeTablesTest(unittest.TestCase):
         cls.packs = {path: game.text_pack(game.read(path)) for path in patch_test.ENGLISH_PACKS}
 
     def messages(self, file):
-        """The messages of one message file in each English text pack."""
         return {path: patch_test.msbt(pack[file])[1] for path, pack in self.packs.items()}
 
     def test_every_paired_stone_has_a_message_of_its_own(self):
@@ -35,6 +53,22 @@ class RemakeTablesTest(unittest.TestCase):
         self.assertEqual(len(labels), len(set(labels)))
         for path, messages in self.messages(patch_test.STONE_MESSAGES).items():
             self.assertLessEqual(set(labels), messages.keys(), path)
+
+    def assert_names(self, table, key, file):
+        for path, messages in self.messages(file).items():
+            for row in read_tsv(table):
+                self.assertEqual(without_grammar_codes(messages[row["label"]]), row["name"], (path, row[key]))
+
+    def test_every_place_has_the_game_s_name(self):
+        self.assert_names("places.tsv", "area", "LocationMsg/Location.msbt")
+
+    def test_a_hint_names_a_place_in_the_end_of_the_game_s_name(self):
+        for row in read_tsv("places.tsv"):
+            says = row["says"].removeprefix("the ")
+            self.assertTrue(row["name"] == says or row["name"].endswith(" " + says), row["area"])
+
+    def test_every_item_has_the_game_s_name(self):
+        self.assert_names("item_names.tsv", "remake_item", "ActorMsg/PouchContent.msbt")
 
 
 if __name__ == "__main__":

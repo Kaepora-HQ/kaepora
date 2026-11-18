@@ -22,6 +22,7 @@ from the patcher's tags.
 import itertools
 import json
 import pathlib
+import re
 import struct
 import subprocess
 import sys
@@ -73,7 +74,6 @@ ENGLISH_PACKS = ["Mals/EUen.Product.110.sarc.zs", "Mals/USen.Product.110.sarc.zs
 KOKIRI_STONE = "GOSSIP_KOKIRI_FOREST_01"
 # The stone whose English rumour is the shortest, so a long text grows the English pack past its size table entry.
 SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
-# A stone that talks but is not in remake/stones.tsv.
 UNPAIRED_STONE = "GOSSIP_HYRULE_FIELD_02"
 STONE_FLOW = "Event/EventFlow/GossipStone.bfevfl.zs"
 TEXT_PACK_OVERHEAD = 312
@@ -805,10 +805,22 @@ def stone_texts(patch, game):
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
 
 
+def message_bytes(text):
+    data = b""
+    for part in re.split(r"(\{color:\d+\}|\{page\})", text):
+        if part == "{page}":
+            data += RUMOUR_PAGE
+        elif part.startswith("{color:"):
+            data += color(int(part.removeprefix("{color:").removesuffix("}")))
+        else:
+            data += part.encode()
+    return data
+
+
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
-    substitute where it has one, and as an added value where it names none. Each fits the size table entry the game
-    reads."""
+    substitute where it has one, and as an added value where it names none, and every planned stone saying its text in
+    both English text packs. Each fits the size table entry the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -830,16 +842,24 @@ def seed_plan(patch, game, plan_file):
     flows = {path: game.event_flow(game.read(path)) for path in {text["flow"] for text in seed["event_texts"]}}
     for text in seed["event_texts"]:
         string_parameter(flows[text["flow"]], text["event"], text["param"])[1] = text["text"]
+    assert seed["stone_texts"]
     mod = patched(patch, game, seed)
-    assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == sorted(changed + list(flows)), sorted(mod)
+    written = sorted(changed + list(flows) + ENGLISH_PACKS + [STONE_FLOW])
+    assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == written, sorted(mod)
     for path in changed:
         assert ordered(game.placement(mod[path])) == ordered(expected[path]), path
     for path, flow in flows.items():
         assert game.event_flow(mod[path]) == flow, path
-    sizes = placement_sizes(game, mod, changed)
-    table = mod[SIZE_TABLE] if SIZE_TABLE in mod else game.read(SIZE_TABLE)
-    entries = dict(read_size_table(zstd.decompress(table))[1])
-    assert all(load_size(size) <= entries[key] for key, size in sizes.items()), sizes
+    needed = {key: load_size(size) for key, size in placement_sizes(game, mod, changed).items()}
+    planned = {entry["label"]: RUMOUR_OPENING + message_bytes(entry["text"]) for entry in seed["stone_texts"]}
+    for path in ENGLISH_PACKS:
+        ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
+        assert {name for name in ours if ours[name] != theirs[name]} == {STONE_MESSAGES}, path
+        assert msbt(ours[STONE_MESSAGES])[1] == msbt(theirs[STONE_MESSAGES])[1] | planned, path
+        size = len(zstd.decompress(mod[path], zstd_dict=game.zs_dictionary))
+        needed[size_key(path)] = load_size(size, TEXT_PACK_OVERHEAD)
+    entries = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    assert all(size <= entries[key] for key, size in needed.items()), needed
 
 
 def other_version(patch, game):

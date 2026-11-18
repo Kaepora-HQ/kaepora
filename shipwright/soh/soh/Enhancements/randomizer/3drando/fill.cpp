@@ -748,11 +748,56 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
 }
 
+// Very similar to PareDownPlaythrough except it sets WotH candidacy of Way of the Hero items
+// Way of the Hero items are more specific than playthrough items in that they are items which *must*
+//  be obtained to logically be able to complete the seed, rather than playthrough items which
+//  are just possible items you *can* collect to complete the seed.
+static void CalculateWotH() {
+    auto ctx = Rando::Context::GetInstance();
+    // size - 1 so Triforce is not counted
+    for (size_t i = 0; i < ctx->playthroughLocations.size() - 1; i++) {
+        for (size_t j = 0; j < ctx->playthroughLocations[i].size(); j++) {
+            // If removing this item and no other item caused the game to become unbeatable, then it is strictly
+            // necessary.
+            auto itemLoc = ctx->GetItemLocation(ctx->playthroughLocations[i][j]);
+            if (itemLoc->IsHintable() && !IsBeatableWithout(ctx->playthroughLocations[i][j], true)) {
+                itemLoc->SetWothCandidate();
+            }
+        }
+    }
+}
+
+// Calculate barren locations and assign Barren Candidacy to all locations inside those areas
+static void CalculateBarren() {
+    auto ctx = Rando::Context::GetInstance();
+    std::array<bool, RCAREA_INVALID + 1> NotBarren = {};
+
+    // When shop shields/tunics are gated behind finding a shield, those items become relevant, so
+    // regions holding a shield or tunic should not be hinted foolish.
+    const bool shieldTunicGate = ctx->GetOption(RSK_SHOP_SHIELDS_AND_TUNICS_ONLY_REFILL).Is(RO_GENERIC_ON);
+
+    for (RandomizerCheck loc : ctx->allLocations) {
+        Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);
+        // If a location has a major item or is a way of the hero location, it is not barren
+        if (itemLoc->GetPlacedItem().IsMajorItem() || itemLoc->IsWothCandidate() ||
+            (shieldTunicGate && itemLoc->GetPlacedItem().IsShieldOrTunic())) {
+            NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()] = true;
+        }
+    }
+
+    for (RandomizerCheck loc : ctx->allLocations) {
+        if (!NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()]) {
+            ctx->GetItemLocation(loc)->SetBarrenCandidate();
+        }
+    }
+}
+
 // Will place things completely randomly, no logic checks are performed
 static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerCheck> locations) {
     auto ctx = Rando::Context::GetInstance();
     while (!locations.empty() && !items.empty()) {
         RandomizerCheck loc = RandomElement(locations, true);
+        ctx->GetItemLocation(loc)->SetAsHintable();
         ctx->PlaceItemInLocation(loc, RandomElement(items, true));
     }
 }
@@ -764,7 +809,8 @@ static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerChe
 | This method helps distribution of items locked behind many requirements.
 | - OoT Randomizer
 */
-static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vector<RandomizerCheck>& allowedLocations) {
+static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vector<RandomizerCheck>& allowedLocations,
+                        bool setLocationsAsHintable = false) {
     auto ctx = Rando::Context::GetInstance();
     if (items.size() > allowedLocations.size()) {
         SPDLOG_ERROR("ERROR: MORE ITEMS THAN LOCATIONS IN GIVEN LISTS");
@@ -842,6 +888,13 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
             RandomizerCheck selectedLocation = RandomElement(accessibleLocations);
             ctx->PlaceItemInLocation(selectedLocation, item);
             attemptedLocations.push_back(selectedLocation);
+
+            // This tells us the location went through the randomization algorithm
+            // to distinguish it from locations which did not or that the player already
+            // knows
+            if (setLocationsAsHintable) {
+                ctx->GetItemLocation(selectedLocation)->SetAsHintable();
+            }
 
             // If ACR is off, then we check beatability after placing the item.
             // If the game is beatable, then we can stop placing items with logic.
@@ -1011,7 +1064,7 @@ int Fill(const std::vector<RemakeChest>& chests) {
         // Then place the rest of the advancement items
         std::vector<RandomizerGet> advancementItems = FilterAndEraseFromPool(
             itemPool, [](const auto i) { return Rando::StaticData::RetrieveItem(i).IsAdvancement(); });
-        AssumedFill(advancementItems, shuffledLocations);
+        AssumedFill(advancementItems, shuffledLocations, true);
 
         // Fast fill for the rest of the pool
         SPDLOG_INFO("Shuffling Remaining Items");
@@ -1022,6 +1075,8 @@ int Fill(const std::vector<RemakeChest>& chests) {
         if (ctx->playthroughBeatable && !placementFailure) {
             SPDLOG_INFO("Calculating Playthrough...");
             PareDownPlaythrough(lateLocations);
+            CalculateWotH();
+            CalculateBarren();
             SPDLOG_INFO("Calculating Playthrough Done");
 
             ctx->GetEntranceShuffler()->CreateEntranceOverrides();

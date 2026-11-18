@@ -10,22 +10,39 @@
 #include <format>
 #include <map>
 #include <set>
+#include <span>
 #include <stdexcept>
+#include <string_view>
 
-static constexpr char chestTable[] = {
+static constexpr unsigned char chestTable[] = {
 #embed "../remake/chests.tsv"
 };
-static constexpr char itemTable[] = {
+static constexpr unsigned char itemTable[] = {
 #embed "../remake/items.tsv"
+};
+static constexpr unsigned char stoneTable[] = {
+#embed "../remake/stones.tsv"
+};
+static constexpr unsigned char placeTable[] = {
+#embed "../remake/places.tsv"
+};
+static constexpr unsigned char itemNameTable[] = {
+#embed "../remake/item_names.tsv"
+};
+static constexpr unsigned char chestHintTable[] = {
+#embed "../remake/chest_hints.tsv"
+};
+static constexpr unsigned char junkTable[] = {
+#embed "../remake/junk_hints.tsv"
 };
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
 }
 
-static std::vector<std::vector<std::string>> ReadTable(const std::string& name, const std::string& text,
+static std::vector<std::vector<std::string>> ReadTable(const std::string& name, std::span<const unsigned char> table,
                                                        const std::string& header) {
-    std::vector<std::string> lines = SohUtils::StringSplit(text, "\n");
+    std::vector<std::string> lines = SohUtils::StringSplit({ table.begin(), table.end() }, "\n");
     if (lines.front() != header || !lines.back().empty()) {
         Fail(name + ": the header is not \"" + header + "\", or the last line has no newline");
     }
@@ -53,7 +70,7 @@ std::string RemakeChest::Folder() const {
 static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
     std::map<std::string, std::vector<RandomizerGet>> items;
     size_t line = 1;
-    for (const auto& row : ReadTable("remake/items.tsv", { itemTable, sizeof itemTable }, "remake_item\tsoh_item")) {
+    for (const auto& row : ReadTable("remake/items.tsv", itemTable, "remake_item\tsoh_item")) {
         const std::string where = "remake/items.tsv line " + std::to_string(++line) + ": ";
         const std::string& name = row[0];
         const std::string& sohName = row[1];
@@ -99,8 +116,7 @@ std::vector<RemakeChest> LoadRemakeChests() {
     std::map<RandomizerCheck, size_t> locations;
     std::set<std::string> hashes;
     size_t line = 1;
-    for (const auto& row : ReadTable("remake/chests.tsv", { chestTable, sizeof chestTable },
-                                     "location\thash\tfiles\titem\tshuffled\tnote")) {
+    for (const auto& row : ReadTable("remake/chests.tsv", chestTable, "location\thash\tfiles\titem\tshuffled\tnote")) {
         const std::string where = "remake/chests.tsv line " + std::to_string(++line) + ": ";
         const std::string& name = row[0];
         const std::string& hash = row[1];
@@ -174,6 +190,117 @@ std::vector<RemakeChest> LoadRemakeChests() {
         }
     }
     return chests;
+}
+
+static RandomizerCheck LocationNamed(const std::string& where, const std::string& name) {
+    auto location = Rando::StaticData::locationNameToEnum.find(name);
+    if (location == Rando::StaticData::locationNameToEnum.end()) {
+        Fail(where + "\"" + name + "\" is not a SoH location");
+    }
+    return location->second;
+}
+
+static std::string ItemPhrase(const std::string& where, const std::vector<std::string>& row) {
+    const std::string& name = row[2];
+    const std::string& article = row[3];
+    if (name.empty() || (article != "" && article != "a" && article != "the")) {
+        Fail(where + "no name, or an article other than a or the");
+    }
+    return article.empty() ? name : article + " " + name;
+}
+
+RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests) {
+    RemakeHintTables tables;
+    size_t line = 1;
+    for (const auto& row : ReadTable("remake/stones.tsv", stoneTable, "label\tlocation")) {
+        const std::string where = std::format("remake/stones.tsv line {}: ", ++line);
+        const RandomizerCheck location = LocationNamed(where, row[1]);
+        if (row[0].empty() || Rando::StaticData::GetLocation(location)->GetRCType() != RCTYPE_GOSSIP_STONE ||
+            std::ranges::find(tables.stones, row[0], &RemakeStone::label) != tables.stones.end() ||
+            std::ranges::find(tables.stones, location, &RemakeStone::location) != tables.stones.end()) {
+            Fail(where + "no label, a location that is not a gossip stone, or a stone listed twice");
+        }
+        tables.stones.push_back({ row[0], location });
+    }
+
+    line = 1;
+    for (const auto& row : ReadTable("remake/places.tsv", placeTable, "area\tlabel\tname\tsays")) {
+        const std::string where = std::format("remake/places.tsv line {}: ", ++line);
+        int area = RCAREA_KOKIRI_FOREST;
+        while (area < RCAREA_INVALID && SohUtils::GetRandomizerCheckAreaPrefix(area) != row[0]) {
+            ++area;
+        }
+        if (area == RCAREA_INVALID || row[3].empty() ||
+            !tables.places.emplace(RandomizerCheckArea(area), row[3]).second) {
+            Fail(where + "\"" + row[0] + "\" is not the prefix of a SoH area, repeats one, or says nothing");
+        }
+    }
+
+    const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
+    line = 1;
+    for (const auto& row : ReadTable("remake/item_names.tsv", itemNameTable, "remake_item\tlabel\tname\tarticle")) {
+        const std::string where = std::format("remake/item_names.tsv line {}: ", ++line);
+        if (!items.contains(row[0]) || !tables.itemsByRemakeName.emplace(row[0], ItemPhrase(where, row)).second) {
+            Fail(where + "\"" + row[0] + "\" is not an item of remake/items.tsv, or repeats one");
+        }
+    }
+
+    line = 1;
+    for (const auto& row : ReadTable("remake/chest_hints.tsv", chestHintTable, "location\tsentence")) {
+        const std::string where = std::format("remake/chest_hints.tsv line {}: ", ++line);
+        constexpr std::string_view itemSlot = "[[1]]";
+        const std::string& sentence = row[1];
+        const size_t item = sentence.find(itemSlot);
+        if (item == std::string::npos || sentence.find(itemSlot, item + 1) != std::string::npos ||
+            !tables.chestSentences
+                 .emplace(LocationNamed(where, row[0]),
+                          ChestSentence{ sentence.substr(0, item), sentence.substr(item + itemSlot.size()) })
+                 .second) {
+            Fail(where + "a sentence without one [[1]] for the item, or a location listed twice");
+        }
+    }
+
+    for (const auto& row : ReadTable("remake/junk_hints.tsv", junkTable, "hint")) {
+        tables.junk.push_back(row[0]);
+    }
+
+    std::set<RandomizerCheck> shuffled;
+    for (const RemakeChest& chest : chests) {
+        if (!chest.shuffled) {
+            continue;
+        }
+        shuffled.insert(chest.location);
+        const Rando::Location* location = Rando::StaticData::GetLocation(chest.location);
+        if (!tables.chestSentences.contains(chest.location) || !tables.itemsByRemakeName.contains(chest.item) ||
+            !tables.places.contains(location->GetArea())) {
+            Fail("\"" + location->GetName() + "\" has no sentence in remake/chest_hints.tsv, its item no name in " +
+                 "remake/item_names.tsv, or its area no name in remake/places.tsv");
+        }
+    }
+    if (shuffled.size() != tables.chestSentences.size()) {
+        Fail("remake/chest_hints.tsv has a sentence for a location that is not a shuffled chest");
+    }
+    return tables;
+}
+
+std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests) {
+    std::map<RandomizerGet, std::deque<std::string>> names;
+    for (const RemakeChest& chest : chests) {
+        if (chest.shuffled) {
+            names[chest.sohItem].push_back(chest.item);
+        }
+    }
+    std::map<RandomizerCheck, std::string> placed;
+    for (const RemakeChest& chest : chests) {
+        if (chest.shuffled) {
+            RandomizerGet item =
+                Rando::Context::GetInstance()->GetItemLocation(chest.location)->GetPlacedRandomizerGet();
+            std::deque<std::string>& candidates = names.at(item);
+            placed.emplace(chest.location, candidates.front());
+            candidates.pop_front();
+        }
+    }
+    return placed;
 }
 
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the
@@ -289,31 +416,25 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 }
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const SeedSettings& settings) {
-    std::map<RandomizerGet, std::deque<std::string>> names;
-    for (const RemakeChest& chest : chests) {
-        if (chest.shuffled) {
-            names[chest.sohItem].push_back(chest.item);
-        }
-    }
+                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<StoneHint>& hints) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
         if (!chest.shuffled) {
             continue;
         }
-        RandomizerGet placed = Rando::Context::GetInstance()->GetItemLocation(chest.location)->GetPlacedRandomizerGet();
-        std::deque<std::string>& candidates = names.at(placed);
         for (const RemakeChest::Actor& actor : chest.actors) {
             plan["chests"].push_back(
-                { { "hash", actor.hash }, { "files", actor.files }, { "drop_actor", candidates.front() } });
+                { { "hash", actor.hash }, { "files", actor.files }, { "drop_actor", items.at(chest.location) } });
         }
-        candidates.pop_front();
     }
     for (const auto& [flow, event, param, text] : eventTexts) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
     }
     plan["start_values"] = StartValues(settings);
-    // Gossip stones keep the game's rumours.
     plan["stone_texts"] = nlohmann::ordered_json::array();
+    for (const StoneHint& hint : hints) {
+        plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
+    }
     return plan;
 }
