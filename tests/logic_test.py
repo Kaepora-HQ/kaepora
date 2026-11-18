@@ -381,6 +381,13 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("HF Fairy Thought Chest", NEVER_ADULT))
         self.assertFalse(self.reachable("HF Fairy Thought Chest", ("Sheik at Temple", "Green Rupee")))
 
+    def test_lake_hylia_grotto_chest_needs_fire_for_four_candles(self):
+        # A child lights the candles with Din's Fire and a Deku Stick, an adult with Din's Fire or fire arrows alone.
+        no_dins_fire = ("HC Great Fairy Reward", "Green Rupee")
+        no_fire_arrows = ("LH Sun", "Green Rupee")
+        self.assertTrue(self.reachable("LH Grotto Chest", no_dins_fire))
+        self.assertFalse(self.reachable("LH Grotto Chest", no_dins_fire, no_fire_arrows))
+
     def test_hyrule_field_tower_chest_needs_the_hookshot(self):
         self.assertTrue(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
         self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))

@@ -206,6 +206,9 @@ void RegionTable_Init_LakeHylia() {
         LOCATION(RC_LH_DEKU_SCRUB_GROTTO_RIGHT,  logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_LH_DEKU_SCRUB_GROTTO_CENTER, logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_LH_GROTTO_BEEHIVE,           logic->CanBreakUpperBeehives()),
+        // The chest appears once all four candles burn together. A child lights them with Din's Fire and a Deku
+        // Stick, an adult with Din's Fire or fire arrows alone.
+        LOCATION(RC_LH_GROTTO_CHEST,             ((logic->CanUse(RG_DINS_FIRE) && (logic->IsAdult || logic->CanUse(RG_STICKS))) || logic->CanUse(RG_FIRE_ARROWS)) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_LAKE_HYLIA, true),
