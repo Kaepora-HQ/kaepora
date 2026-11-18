@@ -169,7 +169,7 @@ Bottom of the Well Center Skulltula Chest	631709185320708287	Banc/BottomOfTheWel
 Bottom of the Well Back Left Bombable Chest	10905582354954996284	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
 Bottom of the Well Lens of Truth Chest	16654774376625985726	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	Item_GlassTruth	yes	
 Bottom of the Well Invisible Chest	11718708984125260282	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Purple	no	It stands on a shelf above room 2's corridor that Link reaches only by way of Dead Hand's room, whose exit stays barred until Dead Hand dies (seen in game), and SoH's rule for it does not ask for the kill.
-	6064359710907908886	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	no	SoH has no location for it; a child reaches it by jumping a hidden hole above Dead Hand's room, the door bars behind him, and Dead Hand's room keeps its exit barred until Dead Hand dies (seen in game).
+Bottom of the Well Before Dead Hand Chest	6064359710907908886	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Bottom of the Well Underwater Front Chest	12988877782812797760	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	TBox_Rupee_Blue	yes	
 Bottom of the Well Underwater Left Chest				no	The remake's well has two small keys where SoH has three, and no chest stands for this one.
 Bottom of the Well Map Chest	9466613428674883506	Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs	Item_Dungeon_Map	yes	

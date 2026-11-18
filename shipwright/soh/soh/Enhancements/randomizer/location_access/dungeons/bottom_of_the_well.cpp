@@ -171,7 +171,12 @@ void RegionTable_Init_BottomOfTheWell() {
         ENTRANCE(RR_BOTW_NEAR_BOSS_UPPER,  logic->HasItem(RG_CLIMB) || (logic->IsAdult && logic->CanGroundJump())),
     });
 
-    areaTable[RR_BOTW_NEAR_BOSS_UPPER] = Region("Bottom of the Well Near Boss Upper", SCENE_BOTTOM_OF_THE_WELL, {}, {}, {
+    areaTable[RR_BOTW_NEAR_BOSS_UPPER] = Region("Bottom of the Well Near Boss Upper", SCENE_BOTTOM_OF_THE_WELL, {}, {
+        //Locations
+        // Past a big Skulltula and the door before Dead Hand's room, beyond a hidden hole a child jumps. A child who
+        // misses falls to Dead Hand, and the door behind him stays barred until Dead Hand dies.
+        LOCATION(RC_BOTTOM_OF_THE_WELL_BEFORE_DEAD_HAND_CHEST, logic->CanPassEnemy(RE_BIG_SKULLTULA) && logic->CanKillEnemy(RE_DEAD_HAND) && logic->HasItem(RG_OPEN_CHEST)),
+    }, {
         //Exits
         ENTRANCE(RR_BOTW_NEAR_BOSS_LOWER, true),
         ENTRANCE(RR_BOTW_DEAD_HAND_ROOM,  true),

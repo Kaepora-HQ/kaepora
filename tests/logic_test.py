@@ -469,6 +469,9 @@ class LogicTest(unittest.TestCase):
     def test_ice_cavern_block_ledge_chest_is_reachable(self):
         self.assertTrue(self.reachable("Ice Cavern Block Ledge Chest"))
 
+    def test_bottom_of_the_well_chest_before_dead_hand_is_reachable(self):
+        self.assertTrue(self.reachable("Bottom of the Well Before Dead Hand Chest"))
+
     def test_fire_temple_scarecrow_ledge_chests_need_what_the_scarecrow_chest_needs(self):
         # Both stand beside the Scarecrow Chest from the start. The way up takes the scarecrow's song and a hookshot.
         for chest in ("Fire Temple Scarecrow Ledge Left Chest", "Fire Temple Scarecrow Ledge Right Chest"):
