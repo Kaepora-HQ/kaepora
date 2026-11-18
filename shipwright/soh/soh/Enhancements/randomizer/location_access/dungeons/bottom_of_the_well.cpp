@@ -185,7 +185,8 @@ void RegionTable_Init_BottomOfTheWell() {
     areaTable[RR_BOTW_DEAD_HAND_ROOM] = Region("Bottom of the Well Dead Hand Room", SCENE_BOTTOM_OF_THE_WELL, {}, {
         //Locations
         LOCATION(RC_BOTTOM_OF_THE_WELL_LENS_OF_TRUTH_CHEST, logic->CanKillEnemy(RE_DEAD_HAND) && logic->CanOpenLargeChest()),
-        LOCATION(RC_BOTTOM_OF_THE_WELL_INVISIBLE_CHEST,     logic->HasItem(RG_OPEN_CHEST)),
+        // On a shelf above the corridor before the door to room 11, reached only on the way out past Dead Hand.
+        LOCATION(RC_BOTTOM_OF_THE_WELL_INVISIBLE_CHEST,     logic->CanKillEnemy(RE_DEAD_HAND) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_BOTW_NEAR_BOSS_UPPER, logic->CanKillEnemy(RE_DEAD_HAND)),
