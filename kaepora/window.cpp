@@ -311,7 +311,9 @@ void Window::useSeed() {
         // The folder is gone or holds the file naming a seed, checked above, so this program made it.
         std::filesystem::remove_all(target);
         WriteFile(target / CopyingFile, seed.toStdString());
-        std::filesystem::copy(Path(folder + "/romfs"), target / "romfs", std::filesystem::copy_options::recursive);
+        for (const char* part : { "romfs", "exefs" }) {
+            std::filesystem::copy(Path(folder + "/" + part), target / part, std::filesystem::copy_options::recursive);
+        }
         std::filesystem::rename(target / CopyingFile, target / SeedFile);
     } catch (const std::exception& e) {
         // Part of a seed would change some of its files and not others. The folder is this call's.

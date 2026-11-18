@@ -402,6 +402,9 @@ private slots:
         QVERIFY(!box()->text().contains("Other files"));
         box()->close();
         QCOMPARE(FilesIn(mods + "/Kaepora/romfs"), seven);
+        const Files patch = FilesIn(library + "/7/exefs");
+        QCOMPARE(patch.keys(), QStringList{ "E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348.ips" });
+        QCOMPARE(FilesIn(mods + "/Kaepora/exefs"), patch);
         QCOMPARE(listed(), (QStringList{ "8", "7 (in use)" }));
 
         select("8");
