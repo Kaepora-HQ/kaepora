@@ -1343,10 +1343,10 @@
       "text": "Get_Epona_IsAfter_Ready_Exp"
     }
   ],
-  "start_flags": [
-    "IsChainLockDoorOpen.4189300454150217955",
-    "IsChainLockDoorOpen.2202807660383340401",
-    "Gimmick_DefeatEnemy_Open_ForestTemple_03",
-    "SpiritTemple_Room07_Unlocked"
-  ]
+  "start_values": {
+    "IsChainLockDoorOpen.4189300454150217955": true,
+    "IsChainLockDoorOpen.2202807660383340401": true,
+    "Gimmick_DefeatEnemy_Open_ForestTemple_03": true,
+    "SpiritTemple_Room07_Unlocked": true
+  }
 }

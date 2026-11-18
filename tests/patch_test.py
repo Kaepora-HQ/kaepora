@@ -10,7 +10,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-strength-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version <kaepora-patch> <game.nup>
+           other-version|start-values <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -64,6 +64,7 @@ UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
 OTHER_VERSION = "This game file is another version of the game. Kaepora works only with version 2.0.0."
 BOOL = 0xD0
+INT = 0xD1
 INT64 = 0xD4
 UINT64 = 0xD5
 
@@ -73,7 +74,10 @@ WATER_LOCK = "IsChainLockDoorOpen.2202807660383340401"
 MIDO_CHEST = "IsTreasureBoxOpen.12786193094758345086"
 WATER_KEYS = "DungeonInfo.WaterTemple.SmallKeyTotalNum"
 IS_CHILD = "Sequence_IsChildhood"
-HASHES = {FIRE_LOCK: 749909151, WATER_LOCK: 400117133, WATER_KEYS: 3683958665, IS_CHILD: 3466731731}
+FOREST_EXIT_SHUT = "KokiriForest_Npc_Kokiri_007_Child_Blocker_00"
+TRIALS_LEFT = "InsideGanonCastle_Dungeon_Barrier_Count"
+HASHES = {FIRE_LOCK: 749909151, WATER_LOCK: 400117133, WATER_KEYS: 3683958665, IS_CHILD: 3466731731,
+          FOREST_EXIT_SHUT: 3856422516, TRIALS_LEFT: 2698978896}
 
 
 class Game:
@@ -325,11 +329,11 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_flags=(), event_texts=()):
+def plan(chests, start_values=None, event_texts=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
-            "start_flags": list(start_flags)}
+            "start_values": start_values or {}}
 
 
 def run(patch, game, plan, tmp):
@@ -371,7 +375,7 @@ def tested_mod(patch, game, mod_file):
 def tested_start_mod(patch, game, mod_file):
     """The start state the game accepted: two lock records and one Mido's House chest record start set."""
     tested = pathlib.Path(mod_file).read_bytes()
-    mod = patched(patch, game, plan([], [FIRE_LOCK, WATER_LOCK, MIDO_CHEST]))
+    mod = patched(patch, game, plan([], {FIRE_LOCK: True, WATER_LOCK: True, MIDO_CHEST: True}))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
     ours, game_frame = mod[GAME_DATA_LIST], game.read(GAME_DATA_LIST)
     assert_same_frame_header(ours, game_frame)
@@ -503,16 +507,25 @@ def larger_plan(patch, game):
         assert game.placement(mod[path]) == expected, path
 
 
+def with_defaults(game, values):
+    data = game.game_data_list(game.read(GAME_DATA_LIST))
+    for name, value in values.items():
+        kind, tag = ("Bool", BOOL) if isinstance(value, bool) else ("Int", INT)
+        entry = next(e for e in data["Data"][kind] if e["Hash"][1] == HASHES[name])
+        assert entry["DefaultValue"][0] == tag and entry["DefaultValue"] != (tag, int(value)), (name, entry)
+        entry["DefaultValue"] = (tag, int(value))
+    return data
+
+
 def together(patch, game):
-    """Chests, gifts and start flags in one plan give the files each gives alone. The chests and the gifts each raise
-    a size table entry, and the one table holds both."""
-    flags = [FIRE_LOCK, WATER_LOCK]
+    """Chests, gifts and start values in one plan give the files each gives alone. The chests and the gifts each
+    raise a size table entry, and the one table holds both."""
+    values = {FIRE_LOCK: True, WATER_LOCK: True}
     parts = [plan(rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]),
              plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang"), (*DINS_FIRE_GIFT, "Item_HeavyBoot")]),
-             plan([], flags)]
-    whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "start_flags")}
-    whole["seed"] = "1"
+             plan([], values)]
+    whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "event_texts")}
+    whole |= {"seed": "1", "start_values": values}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     chest_table, gift_table = (read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone[:2])
     header, entries, names = read_size_table(zstd.decompress(combined.pop(SIZE_TABLE)))
@@ -520,13 +533,18 @@ def together(patch, game):
     assert entries == [(key, max(a, b)) for (key, a), (_, b) in zip(chest_table[1], gift_table[1])]
     assert combined == {path: data for part in alone for path, data in part.items()}, sorted(combined)
 
-    ours = game.game_data_list(combined[GAME_DATA_LIST])
-    expected = game.game_data_list(game.read(GAME_DATA_LIST))
-    flagged = [e for e in expected["Data"]["Bool"] if e["Hash"][1] in {HASHES[f] for f in flags}]
-    assert [e["DefaultValue"] for e in flagged] == [(BOOL, 0)] * len(flags), flagged
-    for entry in flagged:
-        entry["DefaultValue"] = (BOOL, 1)
-    assert ours == expected
+    assert game.game_data_list(combined[GAME_DATA_LIST]) == with_defaults(game, values)
+
+
+def start_values(patch, game):
+    """A value set, a value cleared and a whole number changed. The list keeps its size, so it still fits its size
+    table entry."""
+    values = {FIRE_LOCK: True, FOREST_EXIT_SHUT: False, TRIALS_LEFT: 0}
+    mod = patched(patch, game, plan([], values))
+    assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
+    ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
+    assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
 
 
 def read_size_table(data):
@@ -721,8 +739,8 @@ def bad_input(patch, game):
             [str(KOKIRI_SWORD_CHEST), FOREST_DYNAMIC]),
     }
     plans = {name: (good | {"chests": [valid, chest]}, named) for name, (chest, named) in cases.items()}
-    plans["no event_texts"] = ({"seed": "1", "chests": [valid], "start_flags": []}, ["plan.json", "event_texts"])
-    plans["no start_flags"] = ({"seed": "1", "chests": [valid], "event_texts": []}, ["plan.json", "start_flags"])
+    plans["no event_texts"] = ({"seed": "1", "chests": [valid], "start_values": {}}, ["plan.json", "event_texts"])
+    plans["no start_values"] = ({"seed": "1", "chests": [valid], "event_texts": []}, ["plan.json", "start_values"])
     valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "text": "Item_Boomerang"}
     nowhere = "Event/EventFlow/Nowhere.bfevfl.zs"
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
@@ -750,13 +768,18 @@ def bad_input(patch, game):
     values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
     assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
     assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)
-    flags = {
-        "flag not in the list": ("IsChainLockDoorOpen.1", "not a true-or-false value"),
-        "flag not true-or-false": (WATER_KEYS, "not a true-or-false value"),
-        "flag already true": (IS_CHILD, "already true"),
+    values = {
+        "value not in the list": ("IsChainLockDoorOpen.1", True, ["not a true-or-false value"]),
+        "value not true-or-false in the list": (WATER_KEYS, True, ["not a true-or-false value"]),
+        "value already true": (IS_CHILD, True, ["already true"]),
+        "value already false": (FIRE_LOCK, False, ["already false"]),
+        "number not in the list": (FIRE_LOCK, 1, ["not a whole number"]),
+        "number already the default": (TRIALS_LEFT, 6, ["already 6"]),
+        "value neither": (FOREST_EXIT_SHUT, "open", ["plan.json", "start_values", "true, false or a whole number"]),
+        "number too large": (TRIALS_LEFT, 2**31, ["plan.json", "start_values", "true, false or a whole number"]),
     }
-    for name, (flag, reason) in flags.items():
-        plans[name] = (good | {"start_flags": [FIRE_LOCK, flag]}, [flag, reason])
+    for name, (value_name, value, reasons) in values.items():
+        plans[name] = (good | {"start_values": {WATER_LOCK: True, value_name: value}}, [value_name, *reasons])
     for name, (bad_plan, named) in plans.items():
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)
@@ -794,6 +817,7 @@ def main():
         "size-table": size_table_entries,
         "size-table-unchanged": size_table_unchanged,
         "together": together,
+        "start-values": start_values,
         "gift": gift,
         "gift-size-table": gift_size_table,
     }

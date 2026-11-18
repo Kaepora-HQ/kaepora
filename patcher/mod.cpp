@@ -13,6 +13,7 @@
 #include <cstring>
 #include <format>
 #include <fstream>
+#include <limits>
 #include <set>
 #include <stdexcept>
 #include <tuple>
@@ -49,7 +50,17 @@ static std::string Name(const PlannedEventText& text) {
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
     const auto texts = json.at("event_texts").get<std::vector<nlohmann::json>>();
-    Plan plan{ .startFlags = json.at("start_flags").get<std::vector<std::string>>() };
+    Plan plan;
+    for (const auto& [name, value] : json.at("start_values").get<std::map<std::string, nlohmann::json>>()) {
+        if (value.is_boolean()) {
+            plan.startValues.emplace(name, value.get<bool>());
+        } else if (value.is_number_integer() && value >= std::numeric_limits<int32_t>::min() &&
+                   value <= std::numeric_limits<int32_t>::max()) {
+            plan.startValues.emplace(name, value.get<int32_t>());
+        } else {
+            throw std::runtime_error(std::format("start_values: \"{}\" is not true, false or a whole number", name));
+        }
+    }
     for (size_t i = 0; i < chests.size(); ++i) {
         try {
             plan.chests.push_back(ParseChest(chests[i]));
@@ -201,28 +212,40 @@ static uint32_t Murmur3(std::string_view name) {
     return hash ^ hash >> 16;
 }
 
-// The game data list with the default of each named Bool set to true, compressed as the game's own copy is. A Bool's
-// default sits inside its entry, so the list keeps its size and still fits its size table entry.
-static std::string StartFlagList(GameFile& game, const std::string& dictionary, const std::vector<std::string>& names) {
+// The game data list's table and node type for each kind of start value, in the order of StartValue's types.
+static constexpr std::tuple<std::string_view, byml::Type, std::string_view> startValueKinds[] = {
+    { "Bool", byml::Type::Bool, "a true-or-false value" },
+    { "Int", byml::Type::Int, "a whole number" },
+};
+
+static byml::Node& DefaultValue(byml::Node& data, const std::string& name, const StartValue& value) {
+    const auto& [kind, type, words] = startValueKinds[value.index()];
+    byml::Node* values = Find(data, kind);
+    byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
+    byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
+    if (defaultValue == nullptr || defaultValue->type != type) {
+        throw std::runtime_error(std::format("start value \"{}\" is not {} in the list", name, words));
+    }
+    return *defaultValue;
+}
+
+// A Bool's or an Int's default sits inside its entry, so the list keeps its size and still fits its size table entry.
+static std::string StartValueList(GameFile& game, const std::string& dictionary,
+                                  const std::map<std::string, StartValue>& values) {
     try {
         byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
-        byml::Node* bools = data == nullptr ? nullptr : Find(*data, "Bool");
-        if (bools == nullptr) {
-            throw std::runtime_error("the list has no Data.Bool");
+        if (data == nullptr) {
+            throw std::runtime_error("the list has no Data");
         }
-        for (const std::string& name : names) {
-            byml::Node* entry = FindHash(*bools, Murmur3(name));
-            byml::Node* value = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
-            if (value == nullptr || value->type != byml::Type::Bool) {
-                throw std::runtime_error(
-                    std::format("start flag \"{}\" is not a true-or-false value in the list", name));
+        for (const auto& [name, value] : values) {
+            byml::Node& defaultValue = DefaultValue(*data, name, value);
+            const uint64_t scalar = std::visit([](auto v) { return uint64_t(uint32_t(v)); }, value);
+            if (defaultValue.scalar == scalar) {
+                throw std::runtime_error(std::format("start value \"{}\" is already {} by default", name,
+                                                     std::visit([](auto v) { return std::format("{}", v); }, value)));
             }
-            if (value->scalar != 0) {
-                throw std::runtime_error(
-                    std::format("start flag \"{}\" is already true by default, or is listed twice", name));
-            }
-            value->scalar = 1;
+            defaultValue.scalar = scalar;
         }
         return Compress(byml::Write(list), dictionary);
     } catch (const std::exception& e) {
@@ -293,8 +316,8 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));
     }
-    if (!plan.startFlags.empty()) {
-        addToRomfs(GameDataListPath, StartFlagList(game, zsDictionary, plan.startFlags));
+    if (!plan.startValues.empty()) {
+        addToRomfs(GameDataListPath, StartValueList(game, zsDictionary, plan.startValues));
     }
     return mod;
 }

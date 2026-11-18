@@ -244,6 +244,9 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     for (const auto& [flow, event, param, text] : eventTexts) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
     }
-    plan["start_flags"] = startFlags;
+    plan["start_values"] = nlohmann::ordered_json::object();
+    for (const char* flag : startFlags) {
+        plan["start_values"][flag] = true;
+    }
     return plan;
 }
