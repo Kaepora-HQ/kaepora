@@ -173,6 +173,11 @@ static constexpr const char* startFlags[] = {
     // the chest holds another item. Set from the start, this value lifts the door's only lock, and the door opens from
     // both sides. forest_temple.cpp lets Link back west once the Stalfos are dead.
     "Gimmick_DefeatEnemy_Open_ForestTemple_03",
+    // The Spirit Temple's door between the statue room and the child climb room stays shut from both sides until the
+    // cracked wall in the climb room breaks. spirit_temple.cpp lets Link through both ways with nothing, and SoH's key
+    // counts for the temple expect an adult to walk from the statue room into the climb room. Set from the start, this
+    // value lifts both of the door's locks, and the wall stays standing.
+    "SpiritTemple_Room07_Unlocked",
 };
 
 struct EventText {

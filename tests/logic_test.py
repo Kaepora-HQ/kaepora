@@ -389,6 +389,15 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Third Chest", *no_bomb_bag))
         self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Cracked Wall Chest", *no_bomb_bag))
 
+    def test_spirit_temple_climb_room_door_needs_no_explosives(self):
+        # A child reaches the statue room, where the Map Chest stands, only through the climb room's door, which stands
+        # open from the start. Without the only bomb bag, Link reaches neither the Goron's Ruby nor the Zora's Sapphire
+        # nor a magic meter, so those come from elsewhere.
+        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
+                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
+                       ("KF Mido Bottom Right Chest", "Progressive Magic Meter"))
+        self.assertTrue(self.reachable("Spirit Temple Map Chest", *no_bomb_bag))
+
 
 if __name__ == "__main__":
     reach.PROGRAM = sys.argv[1]

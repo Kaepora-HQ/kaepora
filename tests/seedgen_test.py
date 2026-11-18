@@ -157,12 +157,13 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
-        # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door and the west door of the
-        # Forest Temple's bow chest room.
+        # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest
+        # Temple's bow chest room and the Spirit Temple's door between the statue room and the child climb room.
         _, plan = self.generate("6")
         self.assertEqual(plan["start_flags"], ["IsChainLockDoorOpen.4189300454150217955",
                                                "IsChainLockDoorOpen.2202807660383340401",
-                                               "Gimmick_DefeatEnemy_Open_ForestTemple_03"])
+                                               "Gimmick_DefeatEnemy_Open_ForestTemple_03",
+                                               "SpiritTemple_Room07_Unlocked"])
 
     def test_plan_keeps_quests_from_going_back(self):
         escape = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
