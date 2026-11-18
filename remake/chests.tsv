@@ -85,7 +85,7 @@ Dodongos Cavern End Of Bridge Chest	7524527082521156886	Banc/DodongoCavern/Dodon
 Jabu Jabus Belly Map Chest	14933854942830098290	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Jabu Jabus Belly Compass Chest	3510516276638146208	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	
 Jabu Jabus Belly Boomerang Chest	5527401621172639818	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Item_Boomerang	yes	
-	3609242017501283521	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	TBox_Rupee_Red	no	This chest stands on the pot island in the basement, where invisible walls keep Link from climbing on from the water, and how a child gets there is not seen.
+Jabu Jabus Belly Pot Island Chest	3609242017501283521	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Forest Temple First Room Chest	1171460703078800858	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Forest Temple First Stalfos Chest	14776684749746592758	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Forest Temple Raised Island Courtyard Chest	3174893090599461927	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	

@@ -73,6 +73,8 @@ void RegionTable_Init_JabuJabusBelly() {
         LOCATION(RC_JABU_JABUS_BELLY_TWO_OCTOROK_POT_3, logic->CanUse(RG_BOOMERANG)),
         LOCATION(RC_JABU_JABUS_BELLY_TWO_OCTOROK_POT_4, logic->CanUse(RG_BOOMERANG)),
         LOCATION(RC_JABU_JABUS_BELLY_TWO_OCTOROK_POT_5, logic->CanUse(RG_BOOMERANG)),
+        // The boomerang stills the swaying floor, which carries Link to the pot island and its chest.
+        LOCATION(RC_JABU_JABUS_BELLY_POT_ISLAND_CHEST,  logic->CanUse(RG_BOOMERANG) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_JABU_JABUS_BELLY_HOLES_BASEMENT, true),

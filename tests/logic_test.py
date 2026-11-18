@@ -553,6 +553,12 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Compass Chest", *no_blast))
         self.assertFalse(self.reachable("Dodongos Cavern Stairs Niche Chest", *no_blast))
 
+    def test_jabu_jabus_belly_pot_island_chest_needs_the_boomerang(self):
+        # The boomerang stills the swaying floor that carries a child to the island.
+        self.assertTrue(self.reachable("Jabu Jabus Belly Pot Island Chest"))
+        self.assertFalse(self.reachable("Jabu Jabus Belly Pot Island Chest",
+                                        ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")))
+
     def test_ice_cavern_block_ledge_chest_is_reachable(self):
         self.assertTrue(self.reachable("Ice Cavern Block Ledge Chest"))
 
