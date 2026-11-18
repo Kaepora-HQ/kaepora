@@ -124,16 +124,22 @@ if(Qt6_FOUND)
 
     # The window is the one program that installs, with the licences of the code built into it. On Windows it sits at
     # the top of the folder, beside the Visual C++ runtime, as Windows looks for a program's libraries in its own folder
-    # first. tools/package-windows.sh adds Qt there.
+    # first. tools/package-windows.sh adds Qt there. On macOS it is the app Kaepora.app, and tools/package-macos.sh
+    # adds Qt to it.
     if(WIN32)
         set(LICENSES licenses)
         install(TARGETS kaepora DESTINATION .)
         set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
         include(InstallRequiredSystemLibraries)
-        install(FILES ${nlohmann_json_SOURCE_DIR}/LICENSE.MIT DESTINATION ${LICENSES}/nlohmann_json)
-        install(FILES ${spdlog_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/spdlog)
-        install(FILES ${spdlog_SOURCE_DIR}/include/spdlog/fmt/bundled/fmt.license.rst DESTINATION ${LICENSES}/fmt)
-        install(FILES ${zstd_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/zstd)
+    elseif(APPLE)
+        set(LICENSES Kaepora.app/Contents/Resources/licenses)
+        set(ICON dist/io.github.pixelhabits.kaepora.icns)
+        set_source_files_properties(${ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        target_sources(kaepora PRIVATE ${ICON})
+        set_target_properties(kaepora PROPERTIES MACOSX_BUNDLE ON OUTPUT_NAME Kaepora
+            MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/dist/Info.plist.in
+            INSTALL_RPATH @executable_path/../Frameworks)
+        install(TARGETS kaepora BUNDLE DESTINATION .)
     else()
         include(GNUInstallDirs)
         set(LICENSES ${CMAKE_INSTALL_DATADIR}/licenses)
@@ -143,6 +149,12 @@ if(Qt6_FOUND)
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
         install(FILES dist/io.github.pixelhabits.kaepora.png
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
+    endif()
+    if(WIN32 OR APPLE)
+        install(FILES ${nlohmann_json_SOURCE_DIR}/LICENSE.MIT DESTINATION ${LICENSES}/nlohmann_json)
+        install(FILES ${spdlog_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/spdlog)
+        install(FILES ${spdlog_SOURCE_DIR}/include/spdlog/fmt/bundled/fmt.license.rst DESTINATION ${LICENSES}/fmt)
+        install(FILES ${zstd_SOURCE_DIR}/LICENSE DESTINATION ${LICENSES}/zstd)
     endif()
     install(FILES LICENSE DESTINATION ${LICENSES}/kaepora)
     install(FILES shipwright/libultraship/LICENSE DESTINATION ${LICENSES}/libultraship)

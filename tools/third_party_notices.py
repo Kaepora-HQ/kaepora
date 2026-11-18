@@ -3,6 +3,7 @@ holds.
 
 Usage: python3 -I tools/third_party_notices.py <package folder> <Qt> <AppImage runtime>
 On Windows: python -I tools/third_party_notices.py --windows <package folder> <Qt>
+On macOS: python3 -I tools/third_party_notices.py --macos <Kaepora.app> <Qt>
 
 On Linux it runs on Ubuntu, after linuxdeploy has filled the folder. Each Qt file in the folder is looked up in Qt's
 SBOMs, which also name the code from other projects built into it; each other library is looked up with dpkg; the
@@ -13,6 +14,10 @@ On Windows it runs in the Visual Studio environment the build used, after the in
 the folder. Qt is looked up as on Linux, and every other library must be a Visual C++ runtime library of that
 environment. The code from other projects built into kaepora.exe has its licence in licenses/, where the install rules
 put it.
+
+On macOS it runs after the install rules and macdeployqt have filled the app, and writes into the app's Resources
+folder, as the app may hold nothing else at its top. Qt is looked up as on Linux, and every framework must be Qt's. The
+code from other projects built into the window has its licence in Resources/licenses/, as on Windows.
 """
 
 import hashlib
@@ -48,7 +53,7 @@ QT_COMMERCIAL = "LicenseRef-Qt-Commercial"
 
 def stem(path):
     """A library or plugin path without its suffix and version, as both the folder and Qt's SBOMs name it."""
-    return re.sub(r"\.so(\.[\d.]+)?$|\.dll$", "", path.removeprefix("./"))
+    return re.sub(r"\.so(\.[\d.]+)?$|\.dll$|\.dylib$", "", path.removeprefix("./"))
 
 
 def license_ids(expression):
@@ -240,8 +245,8 @@ def visual_cpp(folder, qt_files):
     ]
 
 
-def built_in(folder):
-    lines = ["Built into kaepora.exe", "", "Code from these projects is built into kaepora.exe. Each one's licence:"]
+def built_in(folder, program):
+    lines = [f"Built into {program}", "", f"Code from these projects is built into {program}. Each one's licence:"]
     for project in sorted((folder / "licenses").iterdir()):
         if project.name not in ("kaepora", "qt", "spdx"):
             lines += [f"  {project.name}: licenses/{project.name}/{file.name}" for file in sorted(project.iterdir())]
@@ -289,7 +294,7 @@ def windows(folder, qt_root):
         elif path.name.startswith("Qt6"):
             shipped[f"bin/{stem(name)}"] = name
     texts = set()
-    sections = [built_in(folder)]
+    sections = [built_in(folder, "kaepora.exe")]
     qt_lines, extracted = qt(folder, qt_root, texts, shipped, "licenses",
                              "its libraries and its plugin folders are beside kaepora.exe")
     sections = [qt_lines, visual_cpp(folder, shipped), *sections]
@@ -297,9 +302,32 @@ def windows(folder, qt_root):
     write(folder, "licenses", sections, texts, extracted, "THIRD_PARTY_NOTICES.txt")
 
 
+def macos(app, qt_root):
+    # Qt's SBOMs name its frameworks under lib/ and its plugins under plugins/; the app keeps them in Frameworks and
+    # PlugIns, beside the Resources folder that holds the notices.
+    contents = app / "Contents"
+    shipped = {}
+    for path in (contents / "Frameworks").iterdir():
+        if path.suffix != ".framework":
+            sys.exit(f"Contents/Frameworks/{path.name} is not one of Qt's frameworks")
+        binary = f"{path.name}/Versions/A/{path.stem}"
+        shipped[f"lib/{binary}"] = f"../Frameworks/{binary}"
+    for path in (contents / "PlugIns").rglob("*.dylib"):
+        name = path.relative_to(contents / "PlugIns").as_posix()
+        shipped[f"plugins/{stem(name)}"] = f"../PlugIns/{name}"
+    resources = contents / "Resources"
+    texts = set()
+    qt_lines, extracted = qt(resources, qt_root, texts, shipped, "licenses",
+                             "its frameworks are in ../Frameworks and its plugins in ../PlugIns")
+    sections = [qt_lines, built_in(resources, "../MacOS/Kaepora")]
+    write(resources, "licenses", sections, texts, extracted, "THIRD_PARTY_NOTICES.txt")
+
+
 def main():
     if sys.argv[1] == "--windows":
         windows(*map(pathlib.Path, sys.argv[2:4]))
+    elif sys.argv[1] == "--macos":
+        macos(*map(pathlib.Path, sys.argv[2:4]))
     else:
         linux(*map(pathlib.Path, sys.argv[1:4]))
 
