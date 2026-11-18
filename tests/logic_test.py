@@ -19,6 +19,7 @@ ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
 NO_HAMMER = ("Fire Temple Megaton Hammer Chest", "Green Rupee")
 NO_SILVER_GAUNTLETS = ("Spirit Temple Silver Gauntlets Chest", "Green Rupee")
 NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Green Rupee")
+SILVER_GAUNTLETS_AT_START = ("Link's Pocket", "Silver Gauntlets")
 # Without the Ocarina of Time, Link never becomes adult.
 NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 # Dampe's race gives the first hookshot. The Water Temple's Longshot chest lies past places that need one.
@@ -360,6 +361,12 @@ class LogicTest(unittest.TestCase):
         for chest in ("GV Storms Grotto Chest", "GV Storms Grotto Visible Chest"):
             self.assertTrue(self.reachable(chest))
             self.assertFalse(self.reachable(chest, ("Song from Windmill", "Green Rupee")))
+
+    def test_gerudo_valley_octorok_grotto_chest_needs_the_iron_boots(self):
+        # The chest stands under water, in the grotto under a boulder that takes the Silver Gauntlets.
+        self.assertTrue(self.reachable("GV Octorok Grotto Chest", SILVER_GAUNTLETS_AT_START))
+        no_iron_boots = ("Ice Cavern Iron Boots Chest", "Green Rupee")
+        self.assertFalse(self.reachable("GV Octorok Grotto Chest", SILVER_GAUNTLETS_AT_START, no_iron_boots))
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
