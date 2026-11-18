@@ -22,6 +22,9 @@ void RegionTable_Init_GoronCity() {
         //Locations
         LOCATION(RC_GC_MAZE_LEFT_CHEST,                    (logic->CanUse(RG_MEGATON_HAMMER) || logic->CanUse(RG_SILVER_GAUNTLETS) || (ctx->GetTrickOption(RT_GC_LEFTMOST) && logic->HasExplosives() && logic->CanUse(RG_HOVER_BOOTS))) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GC_MAZE_CENTER_CHEST,                  (logic->BlastOrSmash() || logic->CanUse(RG_SILVER_GAUNTLETS)) && logic->HasItem(RG_OPEN_CHEST)),
+        // Beside the center chest. Rocks that a bomb or the hammer breaks close the maze's mouth, and lifting boulders
+        // does not open them.
+        LOCATION(RC_GC_MAZE_CENTER_SIDE_CHEST,             logic->BlastOrSmash() && logic->HasItem(RG_OPEN_CHEST)),
         // Boulders only the Silver Gauntlets lift ring the chest.
         LOCATION(RC_GC_MAZE_RIGHT_CHEST,                   logic->BlastOrSmash() && logic->CanUse(RG_SILVER_GAUNTLETS) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GC_POT_FREESTANDING_POH,               logic->IsChild && logic->Get(LOGIC_GORON_CITY_CHILD_FIRE) && (logic->CanUse(RG_BOMB_BAG) || (logic->HasItem(RG_GORONS_BRACELET) && ctx->GetTrickOption(RT_GC_POT_STRENGTH)) || (logic->CanUse(RG_BOMBCHU_5) && ctx->GetTrickOption(RT_GC_POT)))),

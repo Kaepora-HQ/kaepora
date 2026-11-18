@@ -178,6 +178,9 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Right Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_goron_city_maze_center_side_chest_is_reachable(self):
+        self.assertTrue(self.reachable("GC Maze Center Side Chest"))
+
     def test_the_bracelet_lifts_nothing_that_needs_gauntlets(self):
         # Darunia gives the bracelet.
         self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))
