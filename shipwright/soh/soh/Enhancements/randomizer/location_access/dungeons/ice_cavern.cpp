@@ -181,6 +181,8 @@ void RegionTable_Init_IceCavern() {
         LOCATION(RC_ICE_CAVERN_SLIDING_BLOCK_RUPEE_2,  logic->CanUse(RG_SONG_OF_TIME)),
         LOCATION(RC_ICE_CAVERN_SLIDING_BLOCK_RUPEE_3,  logic->CanUse(RG_SONG_OF_TIME)),
         LOCATION(RC_ICE_CAVERN_NEAR_FIRE_BLOCK_SILVER, true),
+        // On a ledge past three Song of Time blocks, beside the rupees.
+        LOCATION(RC_ICE_CAVERN_BLOCK_LEDGE_CHEST,      logic->CanUse(RG_SONG_OF_TIME) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_ICE_CAVERN_BLOCK_ROOM, true),
