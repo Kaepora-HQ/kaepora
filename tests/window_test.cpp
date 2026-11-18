@@ -525,6 +525,7 @@ private slots:
                                 "Small and boss keys: In their own chests\n"
                                 "Maps and compasses: Anywhere in their dungeon\n"
                                 "Kokiri Forest: Closed\n"
+                                "Rainbow Bridge: After the Light Arrows\n"
                                 "Lens of Truth: Never needed";
         QVERIFY(shows(summary));
         QCOMPARE(label(summary)->toolTip(), details);
@@ -566,6 +567,7 @@ private slots:
             QCOMPARE(choice(label)->currentText(), QString("Anywhere in their dungeon"));
         }
         QCOMPARE(choice("Kokiri Forest")->currentText(), QString("Closed"));
+        QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         dialogButton("OK")->click();
         QVERIFY(shows("Default settings"));
@@ -599,6 +601,7 @@ private slots:
         QTest::addColumn<QString>("summary");
         QTest::newRow("keys") << "Small and boss keys" << "Not needed" << "Keys not needed";
         QTest::newRow("forest") << "Kokiri Forest" << "Open" << "Forest open";
+        QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
     }

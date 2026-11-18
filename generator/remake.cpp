@@ -251,6 +251,10 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         values["KokiriForest_Npc_Kokiri_Mido_Child_Blocker"] = false;
         values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
     }
+    if (settings.bridge == Bridge::AlwaysOpen) {
+        // The bridge's logic module builds it once its event has played, whatever the Ganon quest's step.
+        values["HavePlayedEvent.GanonCastle_Adult_Field_Rainbow"] = true;
+    }
     if (settings.keys == DungeonItems::GivenAtTheStart) {
         for (std::string_view door : smallKeyDoors) {
             values[std::format("IsChainLockDoorOpen.{}", door)] = true;

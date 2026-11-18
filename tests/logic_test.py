@@ -29,6 +29,7 @@ NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
+BRIDGE_OPEN = {"Rainbow Bridge": "Always open"}
 
 
 class LogicTest(unittest.TestCase):
@@ -293,6 +294,12 @@ class LogicTest(unittest.TestCase):
         for location in ("Deku Tree Map Chest", "HC Malon Egg"):
             self.assertFalse(self.reachable(location, no_sword), location)
             self.assertTrue(self.reachable(location, no_sword, settings=FOREST_OPEN), location)
+
+    def test_an_open_bridge_needs_no_light_arrows(self):
+        # Zelda gives the Light Arrows after the Spirit and the Shadow sages wake, and the bridge appears after her.
+        no_light_arrows = ("Market ToT Light Arrow Cutscene", "Green Rupee")
+        self.assertFalse(self.reachable("Ganon's Castle Forest Trial Chest", no_light_arrows))
+        self.assertTrue(self.reachable("Ganon's Castle Forest Trial Chest", no_light_arrows, settings=BRIDGE_OPEN))
 
     def test_no_door_takes_a_key_when_keys_are_not_needed(self):
         # The first room's key opens the first lock. The boss key chest holds the only boss key.

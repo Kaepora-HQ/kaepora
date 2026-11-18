@@ -40,7 +40,7 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
             "Ganon's Castle"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
-                    "Lens of Truth": "Needed"}
+                    "Rainbow Bridge": "After the Light Arrows", "Lens of Truth": "Needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -287,6 +287,11 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["start_values"], DOORS_OPEN | {"KokiriForest_Npc_Kokiri_Mido_Child_Blocker": False,
                                                              "KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
 
+    def test_bridge_always_open(self):
+        spoiler, plan = self.generate("17", {"Rainbow Bridge": "Always open"})
+        self.assertEqual(spoiler["settings"]["Rainbow Bridge"], "Always open")
+        self.assertEqual(plan["start_values"], DOORS_OPEN | {"HavePlayedEvent.GanonCastle_Adult_Field_Rainbow": True})
+
     def test_keys_not_needed(self):
         spoiler, plan = self.generate("15", {"Small and boss keys": "Not needed"})
         self.assertEqual(spoiler["settings"]["Small and boss keys"], "Not needed")
@@ -315,7 +320,7 @@ class SeedgenTest(unittest.TestCase):
     def test_every_setting_changed_at_once(self):
         settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
                     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests",
-                    "Kokiri Forest": "Open", "Lens of Truth": "Never needed"}
+                    "Kokiri Forest": "Open", "Rainbow Bridge": "Always open", "Lens of Truth": "Never needed"}
         for seed in range(400, 500):
             spoiler, _ = self.generate(str(seed), settings)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())

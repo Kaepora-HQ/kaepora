@@ -272,5 +272,8 @@ void SetOptions(const SeedSettings& settings) {
     if (settings.forest == Forest::Open) {
         ctx->GetOption(RSK_FOREST).Set(RO_CLOSED_FOREST_OFF);
     }
+    if (settings.bridge == Bridge::AlwaysOpen) {
+        ctx->GetOption(RSK_RAINBOW_BRIDGE).Set(RO_BRIDGE_ALWAYS_OPEN);
+    }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
 }

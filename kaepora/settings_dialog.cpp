@@ -56,6 +56,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.forest == Forest::Open) {
         changed << "forest open";
     }
+    if (settings.bridge == Bridge::AlwaysOpen) {
+        changed << "bridge always open";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -85,6 +88,7 @@ QString Details(const SeedSettings& settings) {
                         Line(MapsAndCompassesSetting,
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
+                        Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))) }
         .join('\n');
 }
@@ -149,8 +153,10 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     dungeonGroup->setLayout(dungeonForm);
 
     QComboBox* forest = Choice(ForestChoices);
+    QComboBox* bridge = Choice(BridgeChoices);
     auto* worldForm = new QFormLayout;
     worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
+    worldForm->addRow(QString::fromUtf8(BridgeSetting), bridge);
     auto* worldGroup = new QGroupBox("World");
     worldGroup->setLayout(worldForm);
 
@@ -179,6 +185,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(keys, shown.keys);
         Select(mapsAndCompasses, shown.mapsAndCompasses);
         Select(forest, shown.forest);
+        Select(bridge, shown.bridge);
         Select(lens, shown.lens);
     };
     show(settings);
@@ -196,6 +203,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.keys = Selected<DungeonItems>(keys);
         shown.mapsAndCompasses = Selected<DungeonItems>(mapsAndCompasses);
         shown.forest = Selected<Forest>(forest);
+        shown.bridge = Selected<Bridge>(bridge);
         shown.lens = Selected<Lens>(lens);
         chosen(shown);
         dialog->accept();
