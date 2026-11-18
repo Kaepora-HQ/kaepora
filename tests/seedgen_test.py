@@ -173,12 +173,14 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(placed[soh], POOL[remake], soh)
 
     def test_a_chest_kept_twice_holds_one_item(self):
-        # The Kakariko lookout chest stands in both versions of the adult village, and the Gerudo Valley storms grotto
-        # chest in the child and the adult files, each under its own hash.
+        # The Kakariko lookout chest stands in both versions of the adult village, the Gerudo Valley storms grotto
+        # chest in the child and the adult files, and the Lost Woods bridge chest in the Lost Woods and in the Kokiri
+        # Forest, each under its own hash.
         _, plan = self.generate("8")
         names = {entry["hash"]: entry["drop_actor"] for entry in plan["chests"]}
         for first, second in (("13080955777249750889", "11929552275106311978"),
-                              ("18413589940135955604", "6205043616869463865")):
+                              ("18413589940135955604", "6205043616869463865"),
+                              ("17479747339356189279", "4349272251343787229")):
             self.assertIn(first, names)
             self.assertEqual(names[first], names[second])
 

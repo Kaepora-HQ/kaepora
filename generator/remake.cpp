@@ -39,10 +39,14 @@ static std::vector<std::vector<std::string>> ReadTable(const std::string& name, 
     return rows;
 }
 
-std::string RemakeChest::Folder() const {
-    const std::string& file = actors.front().files.front();
+std::string RemakeChest::Actor::Folder() const {
+    const std::string& file = files.front();
     size_t start = file.find('/') + 1;
     return file.substr(start, file.find('/', start) - start);
+}
+
+std::string RemakeChest::Folder() const {
+    return actors.front().Folder();
 }
 
 static std::map<std::string, std::vector<RandomizerGet>> LoadItems() {
@@ -142,11 +146,11 @@ std::vector<RemakeChest> LoadRemakeChests() {
         if (hash.empty()) {
             continue;
         }
-        RemakeChest& chest = chests[index->second];
-        chest.actors.push_back({ hash, SohUtils::StringSplit(files, ",") });
-        for (const std::string& file : chest.actors.back().files) {
-            if (!file.starts_with("Banc/" + chest.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
-                Fail(where + "\"" + file + "\" is not a scene file in the chest's Banc folder");
+        const RemakeChest::Actor& actor =
+            chests[index->second].actors.emplace_back(hash, SohUtils::StringSplit(files, ","));
+        for (const std::string& file : actor.files) {
+            if (!file.starts_with("Banc/" + actor.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
+                Fail(where + "\"" + file + "\" is not a scene file in the Banc folder of the row's first file");
             }
         }
     }

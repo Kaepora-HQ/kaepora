@@ -8,15 +8,18 @@
 
 // A SoH location and the remake chest it is. Where the remake has no chest, actors is empty.
 struct RemakeChest {
-    // One actor that places the chest: its hash, and the romfs paths of the scene files that hold it.
+    // One actor that places the chest: its hash, and the romfs paths of the scene files that hold it, all in one Banc
+    // folder.
     struct Actor {
         std::string hash;
         std::vector<std::string> files;
+
+        std::string Folder() const;
     };
 
     RandomizerCheck location;
-    // Usually one. The files keep a few chests once in each of two versions of a scene, under two hashes, and both
-    // give the location's item. Every file is in one Banc folder.
+    // Usually one. The files keep a few chests twice, under two hashes, and both give the location's item: once in
+    // each of two versions of a scene, or once in each of two scenes that show the same spot.
     std::vector<Actor> actors;
     // What the chest gives, by its remake name (remake/README.md), empty when the table names nothing, and the SoH item
     // it stands for. RG_NONE means the logic sees nothing there.
@@ -24,7 +27,7 @@ struct RemakeChest {
     RandomizerGet sohItem;
     bool shuffled;
 
-    // The Banc folder, the remake's name for the scene the chest stands in.
+    // The first actor's Banc folder, the remake's name for the scene the chest stands in.
     std::string Folder() const;
 };
 

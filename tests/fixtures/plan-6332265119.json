@@ -58,6 +58,14 @@
       "drop_actor": "Item_BombBundle_Small"
     },
     {
+      "hash": "4349272251343787229",
+      "files": [
+        "Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs",
+        "Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs"
+      ],
+      "drop_actor": "Item_BombBundle_Small"
+    },
+    {
       "hash": "7995233962349162969",
       "files": [
         "Banc/SacredForestMeadow/SacredForestMeadow_Adult_Static.bcett.byml.zs",
