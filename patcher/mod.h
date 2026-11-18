@@ -1,6 +1,7 @@
 // A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file and event flow the plan
-// changes, the size table if a file outgrows its entry, and the game data list if the plan names start values. Under
-// exefs/ is the patch to the game's program (program_patch.h).
+// changes, the size table if a file outgrows its entry, the game data list if the plan names start values, and the
+// actor packs that let a bomb out of the bag with no strength. Under exefs/ is the patch to the game's program
+// (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>

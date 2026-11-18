@@ -6,8 +6,10 @@
 #include "compression.h"
 #include "game_file.h"
 #include "program_patch.h"
+#include "sarc.h"
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <charconv>
 #include <cstring>
@@ -253,6 +255,35 @@ static std::string StartValueList(GameFile& game, const std::string& dictionary,
     }
 }
 
+// Link takes a bomb out of the bag only when the bomb's lift grade is at most his, as he lifts a rock. A bomb's grade
+// is Low, which a child reaches only with Goron's Bracelet. At None, the bombchu's grade, a child with no strength
+// takes a bomb out and breaks a wall with it. Each of these packs holds a copy of the bomb's lift file, and which copy
+// the game loads is not known. In the three bomb flower packs the fruit's own lift file builds on this one and states
+// Low itself, so a bomb flower still takes the bracelet's strength.
+constexpr std::string_view BombLiftFile = "Component/LiftableParam/Item_Bomb.game__component__LiftableParam.bgyml";
+constexpr std::array<std::string_view, 5> BombLiftPacks{
+    "Pack/Actor/Item_Bomb.pack.zs",
+    "Pack/Actor/Npc_Hylia_ImperialSoldier_Bomb.pack.zs",
+    "Pack/Actor/Obj_BombFlower_A_01.pack.zs",
+    "Pack/Actor/Obj_BombFlower_A_04.pack.zs",
+    "Pack/Actor/Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01.pack.zs",
+};
+
+// The grade changes in place, so the pack keeps its size and still fits its size table entry.
+static std::string BombLiftPack(GameFile& game, const std::string& dictionary, std::string_view path) {
+    try {
+        sarc::Files pack = sarc::Parse(Decompress(game.Read(std::string(path)), dictionary));
+        const auto file = pack.find(std::string(BombLiftFile));
+        if (file == pack.end()) {
+            throw std::runtime_error(std::format("the pack has no {}", BombLiftFile));
+        }
+        byml::SetRootUInt(file->second, "LiftGrade", Murmur3("Low"), Murmur3("None"));
+        return Compress(sarc::Write(pack, sarc::ActorPackAlignment), dictionary);
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::format("{}: {}", path, e.what()));
+    }
+}
+
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
     GameFile game(nup);
     // With a program of another build the game would run without the program patch.
@@ -301,6 +332,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const auto addToRomfs = [&](std::string_view path, std::string data) {
         mod.emplace(std::format("romfs/{}", path), std::move(data));
     };
+    const std::string packDictionary = Dictionary(game, "pack.zsdic");
+    for (const std::string_view path : BombLiftPacks) {
+        addToRomfs(path, BombLiftPack(game, packDictionary, path));
+    }
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;
     for (const std::string& path : changed) {

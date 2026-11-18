@@ -7,7 +7,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
-       python3 -I tests/patch_test.py tested-program-mod <kaepora-patch> <game.nup> <tested mod's folder>
+       python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
+           <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values <kaepora-patch> <game.nup>
@@ -34,6 +35,9 @@ TRAINING_GROUND_DYNAMIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynami
 TRAINING_GROUND_STATIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
 WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
 SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
+BOMB_LIFT_PACKS = [f"Pack/Actor/{actor}.pack.zs" for actor in (
+    "Item_Bomb", "Npc_Hylia_ImperialSoldier_Bomb", "Obj_BombFlower_A_01", "Obj_BombFlower_A_04",
+    "Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01")]
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
@@ -121,6 +125,7 @@ class Game:
         dictionaries = zstd.decompress(self.read("Pack/ZsDic.pack.zs"))
         self.dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"bcett.byml.zsdic"))
         self.zs_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"zs.zsdic"))
+        self.pack_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"pack.zsdic"))
 
     def read(self, path):
         size, offset = self.files[path]
@@ -351,7 +356,9 @@ def patched(patch, game, plan, part="romfs"):
         tmp = pathlib.Path(tmp)
         result = run(patch, game, plan, tmp)
         assert result.returncode == 0, result.stderr
-        return files(tmp / "mod" / part)
+        written = files(tmp / "mod" / part)
+    # Every mod carries the bomb's packs, which tested-bomb-mod checks.
+    return {path: data for path, data in written.items() if path not in BOMB_LIFT_PACKS}
 
 
 def assert_same_frame_header(ours, theirs):
@@ -469,6 +476,24 @@ def tested_program_mod(patch, game, mod):
     tested = files(pathlib.Path(mod) / "exefs")
     ours = patched(patch, game, plan([]), part="exefs")
     assert ours == tested, (sorted(ours), sorted(tested))
+
+
+def tested_bomb_mod(patch, game, mod):
+    """The bomb's lift grade at None that the game ran, in each actor pack that holds a copy of its lift file: with it,
+    a child at lift level None took a bomb out of the bag and broke a wall with it, and bomb flowers still stayed in
+    the ground for him."""
+    tested = files(pathlib.Path(mod) / "romfs" / "Pack" / "Actor")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        result = run(patch, game, plan([]), tmp)
+        assert result.returncode == 0, result.stderr
+        ours = files(tmp / "mod" / "romfs" / "Pack" / "Actor")
+    assert sorted(ours) == sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), \
+        (sorted(ours), sorted(tested))
+    for name, data in ours.items():
+        assert_same_frame_header(data, tested[name])
+        assert zstd.decompress(data, zstd_dict=game.pack_dictionary) == zstd.decompress(
+            tested[name], zstd_dict=game.pack_dictionary), name
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -810,6 +835,7 @@ def main():
         "tested-gift-mod": tested_gift_mod,
         "tested-event-text-mods": tested_event_text_mods,
         "tested-program-mod": tested_program_mod,
+        "tested-bomb-mod": tested_bomb_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,

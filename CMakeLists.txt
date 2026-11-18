@@ -231,6 +231,8 @@ set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
 set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
     "The romfs folders of the mods tested in the game with the event texts every plan carries, as a list")
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
+set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with the bomb's lift grade at None")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -293,6 +295,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-program-mod
             COMMAND ${PATCH_TEST} tested-program-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_PROGRAM_MOD}")
+    endif()
+    if(KAEPORA_TESTED_BOMB_MOD)
+        add_test(NAME patch-tested-bomb-mod
+            COMMAND ${PATCH_TEST} tested-bomb-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_BOMB_MOD}")
     endif()
 endif()
 
