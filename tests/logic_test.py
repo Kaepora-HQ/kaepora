@@ -370,6 +370,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("HF Southwest Poe Chest"))
         self.assertFalse(self.reachable("HF Southwest Poe Chest", ("Water Temple Boss Key Chest", "Green Rupee")))
 
+    def test_hyrule_field_redead_grotto_chest_needs_the_song_of_storms(self):
+        self.assertTrue(self.reachable("HF Redead Grotto Chest"))
+        self.assertFalse(self.reachable("HF Redead Grotto Chest", ("Song from Windmill", "Green Rupee")))
+
     def test_hyrule_field_tower_chest_needs_the_hookshot(self):
         self.assertTrue(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
         self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))

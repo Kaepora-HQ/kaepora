@@ -21,6 +21,9 @@ void RegionTable_Init_HyruleField() {
         LOCATION(RC_HF_NORTH_POE_CHEST,            logic->IsAdult && logic->HasItem(RG_OPEN_CHEST)),
         // From the tower floor, the hookshot latches onto vines that end on the chest's terrace.
         LOCATION(RC_HF_TOWER_CHEST,                logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_OPEN_CHEST)),
+        // The Song of Storms opens the hole by the way to Kakariko. Below it, the chest appears once its two ReDeads
+        // are dead.
+        LOCATION(RC_HF_REDEAD_GROTTO_CHEST,        logic->CanOpenStormsGrotto() && logic->CanKillEnemy(RE_REDEAD, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),
