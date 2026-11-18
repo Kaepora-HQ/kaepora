@@ -71,7 +71,7 @@ void RegionTable_Init_DekuTree() {
         //Locations
         LOCATION(RC_DEKU_TREE_SLINGSHOT_CHEST,           logic->CanOpenLargeChest()),
         // An eye in the room drops the ladder to this chest.
-        LOCATION(RC_DEKU_TREE_SLINGSHOT_ROOM_SIDE_CHEST, logic->CanHitEyeTargets() && (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT) || (logic->IsAdult && logic->CanMegajump())) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_DEKU_TREE_SLINGSHOT_ROOM_SIDE_CHEST, logic->CanHitHookshotEyeTargets() && (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT) || (logic->IsAdult && logic->CanMegajump())) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_1,         logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_2,         logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_3,         logic->CanCutShrubs()),
@@ -128,7 +128,7 @@ void RegionTable_Init_DekuTree() {
     }, {
         //Exits
         ENTRANCE(RR_DEKU_TREE_BASEMENT_LOWER,            true),
-        ENTRANCE(RR_DEKU_TREE_BASEMENT_WATER_ROOM_FRONT, AnyAgeTime([]{return logic->CanHitEyeTargets();})),
+        ENTRANCE(RR_DEKU_TREE_BASEMENT_WATER_ROOM_FRONT, AnyAgeTime([]{return logic->CanHitHookshotEyeTargets();})),
     });
 
     areaTable[RR_DEKU_TREE_BASEMENT_WATER_ROOM_FRONT] = Region("Deku Tree Basement Water Room Front", SCENE_DEKU_TREE, {}, {}, {

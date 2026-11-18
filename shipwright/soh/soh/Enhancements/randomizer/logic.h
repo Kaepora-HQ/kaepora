@@ -66,6 +66,8 @@ class Logic {
     bool CanGetDekuBabaSticks();
     bool CanGetDekuBabaNuts();
     bool CanHitEyeTargets();
+    // Most of the remake's eye switches take the hookshot too. The ones that do not keep CanHitEyeTargets.
+    bool CanHitHookshotEyeTargets();
     bool CanDetonateBombFlowers();
     bool CanDetonateUprightBombFlower();
     bool BeanPlanted(LogicVal beanEvent);

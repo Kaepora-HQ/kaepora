@@ -527,7 +527,7 @@ void RegionTable_Init_SpiritTemple() {
     areaTable[RR_SPIRIT_TEMPLE_FAKE_DOORS_ROOM] = Region("Spirit Temple Fake Doors Room", SCENE_SPIRIT_TEMPLE, {}, {
         //Locations
         LOCATION(RC_SPIRIT_TEMPLE_BOSS_KEY_CHEST, ((logic->TakeDamage() && ctx->GetTrickOption(RT_FIRE_RINGS)) ||
-                                                  (AnyAgeTime([]{return logic->CanHitEyeTargets() && logic->CanAvoidEnemy(RE_TORCH_SLUG, ED_CLOSE, true, 4);})
+                                                  (AnyAgeTime([]{return logic->CanHitHookshotEyeTargets() && logic->CanAvoidEnemy(RE_TORCH_SLUG, ED_CLOSE, true, 4);})
                                                    && logic->CanUse(RG_HOOKSHOT))) && logic->CanOpenLargeChest()),
     }, {
         //Exits

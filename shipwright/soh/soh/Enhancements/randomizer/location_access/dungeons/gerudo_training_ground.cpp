@@ -20,7 +20,7 @@ void RegionTable_Init_GerudoTrainingGround() {
         //Locations
         // The invisible left chest stands there from the start. The eye switch shows only the right one.
         LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_LEFT_CHEST,      logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_RIGHT_CHEST,     logic->CanHitEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_GERUDO_TRAINING_GROUND_LOBBY_RIGHT_CHEST,     logic->CanHitHookshotEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_ENTRANCE_STORMS_FAIRY, logic->CanUse(RG_SONG_OF_STORMS)),
     }, {
         //Exits
@@ -107,7 +107,7 @@ void RegionTable_Init_GerudoTrainingGround() {
         //Events
         // The room links the barred door to an eye switch in a recess high above it. An arrow from the floor in front
         // of the door hits it, with or without the Lens of Truth.
-        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, logic->CanHitEyeTargets()),
+        EVENT_ACCESS(LOGIC_GTG_UNLOCKED_DOOR_BEHIND_HEAVY_BLOCK, logic->CanHitHookshotEyeTargets()),
     }, {}, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_ROOM, logic->Get(LOGIC_GTG_PUSHED_HEAVY_BLOCK)),
@@ -118,7 +118,7 @@ void RegionTable_Init_GerudoTrainingGround() {
         //Locations
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_FIRST_CHEST,  logic->CanKillEnemy(RE_LIKE_LIKE) && logic->HasItem(RG_OPEN_CHEST)),
         // The chest appears when the eye switch on the wall is hit.
-        LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_SECOND_CHEST, logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanHitEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_SECOND_CHEST, logic->CanKillEnemy(RE_LIKE_LIKE) && logic->CanHitHookshotEyeTargets() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_THIRD_CHEST,  logic->CanPassEnemy(RE_LIKE_LIKE) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_HEAVY_BLOCK_FOURTH_CHEST, logic->HasItem(RG_OPEN_CHEST)),
         // Behind a cracked wall, with a Like Like in front of it.
@@ -165,7 +165,7 @@ void RegionTable_Init_GerudoTrainingGround() {
         LOCATION(RC_GERUDO_TRAINING_GROUND_WONDER_TORCH_SLUGS_ROOM,  logic->CanUse(RG_FAIRY_BOW)),
     }, {
         //Exits
-        ENTRANCE(RR_GERUDO_TRAINING_GROUND_EYE_STATUE_LOWER,      logic->CanUse(RG_MEGATON_HAMMER) && logic->CanUse(RG_FAIRY_BOW)),
+        ENTRANCE(RR_GERUDO_TRAINING_GROUND_EYE_STATUE_LOWER,      logic->CanHitHookshotEyeTargets()),
         // The door back to the lava room stays shut until both Torch Slugs and both Fire Keese die.
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_LAVA_ROOM_UPPER_LEDGE, logic->CanKillEnemy(RE_TORCH_SLUG, ED_CLOSE, true, 2) && logic->CanKillEnemy(RE_FIRE_KEESE, ED_CLOSE, true, 2)),
     });

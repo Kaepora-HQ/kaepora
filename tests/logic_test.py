@@ -200,15 +200,12 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
-    def test_training_ground_heavy_block_second_chest_needs_the_eye_hit(self):
+    def test_training_ground_door_behind_the_heavy_block_opens_to_the_hookshot(self):
         # Without the bow, the Forest Temple and so the well's Lens of Truth are out of reach, so the gauntlets and the
-        # Lens come from elsewhere. The barred door into the room of all four chests opens to an eye hit as well.
+        # Lens come from elsewhere. The hookshot hits the eye above the barred door into the room of all four chests.
         no_bow = ("Forest Temple Bow Chest", "Green Rupee")
         outside = (("KF Mido Top Left Chest", "Silver Gauntlets"), ("KF Mido Top Right Chest", "Lens of Truth"))
-        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, *outside))
-        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
-        bow = ("KF Mido Bottom Left Chest", "Progressive Bow")
-        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block First Chest", no_bow, bow, *outside))
+        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Second Chest", no_bow, *outside))
 
     def test_training_ground_door_behind_the_heavy_block_needs_no_lens(self):
         # An arrow from the floor in front of the barred door, behind the pushed block, hits the eye above it with the
@@ -222,7 +219,6 @@ class LogicTest(unittest.TestCase):
         # The invisible left chest stands there from the start. The eye switch shows only the right one.
         no_bow = ("Forest Temple Bow Chest", "Green Rupee")
         self.assertTrue(self.reachable("Gerudo Training Ground Lobby Left Chest", no_bow))
-        self.assertFalse(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow))
 
     def test_jabu_jabu_map_chest_needs_no_boomerang(self):
         # The chest stands beyond the basement below the holes, and no tentacle stands in the way.
@@ -372,6 +368,30 @@ class LogicTest(unittest.TestCase):
         # lucky picks.
         self.assertTrue(self.reachable("Market Treasure Chest Game Reward"))
         self.assertFalse(self.reachable("Market Treasure Chest Game Reward", NO_LENS, settings=LENS_NEVER_NEEDED))
+
+    def test_the_hookshot_hits_the_eyes_that_take_it(self):
+        # Most of the remake's eye switches take the hookshot, and a few keep to the bow.
+        # The Gerudo card lets Link past the fortress's guards without the bow or the hookshot.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        card = ("KF Mido Bottom Right Chest", "Gerudo Membership Card")
+        self.assertTrue(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow))
+        self.assertFalse(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow, NO_HOOKSHOT, card))
+        self.assertFalse(self.reachable("Gerudo Training Ground Eye Statue Chest", no_bow))
+        # The hammer room's door to the eye statue's lower room opens to its eye alone. Without the Lens, the way down
+        # from above is shut, so that door is the only way in.
+        self.assertTrue(self.reachable("Gerudo Training Ground Eye Statue Chest", NO_LENS, NO_HAMMER))
+        # In Dodongo's Cavern, the plain hookshot hits the eye across the fire in the first eye room, and only the
+        # Longshot reaches the two eyes of the second. Without the bracelet no child comes in with the slingshot, so
+        # adult Link opens the cavern with the Silver Gauntlets, and the Goron's Ruby and the Zora's Sapphire lie
+        # elsewhere. A second hookshot makes the Longshot.
+        no_longshot = ("Water Temple Longshot Chest", "Green Rupee")
+        second_hookshot = ("KF Mido Bottom Right Chest", "Progressive Hookshot")
+        adult_only = (("GC Darunias Joy", "Green Rupee"), ("KF Mido Top Left Chest", "Silver Gauntlets"),
+                      ("KF Mido Top Right Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"))
+        self.assertTrue(self.reachable("Dodongos Cavern Upper Lizalfos Chest", no_bow, no_longshot, *adult_only))
+        self.assertFalse(self.reachable("Dodongos Cavern Bomb Bag Chest", no_bow, no_longshot, *adult_only))
+        self.assertTrue(self.reachable("Dodongos Cavern Bomb Bag Chest", no_bow, no_longshot, second_hookshot,
+                                       *adult_only))
 
     # Chests SoH has no location for.
 

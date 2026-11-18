@@ -266,7 +266,7 @@ void RegionTable_Init_FireTemple() {
         ENTRANCE(RR_FIRE_TEMPLE_BIG_LAVA_ROOM,      logic->TakeDamage()),
         ENTRANCE(RR_FIRE_TEMPLE_BOULDER_MAZE_LOWER, logic->SmallKeys(SCENE_FIRE_TEMPLE, 5)),
         ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CHASE,    true),
-        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CAGE,     logic->CanHitEyeTargets()),
+        ENTRANCE(RR_FIRE_TEMPLE_FIRE_WALL_CAGE,     logic->CanHitHookshotEyeTargets()),
     });
 
     areaTable[RR_FIRE_TEMPLE_FIRE_WALL_CHASE] = Region("Fire Temple Fire Wall Chase", SCENE_FIRE_TEMPLE, {}, {
