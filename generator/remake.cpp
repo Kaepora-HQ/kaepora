@@ -170,6 +170,21 @@ static constexpr const char* startFlags[] = {
     "IsChainLockDoorOpen.2202807660383340401",
 };
 
+struct EventText {
+    std::string_view flow;
+    std::string_view event;
+    std::string_view param;
+    std::string_view text;
+};
+
+static constexpr EventText eventTexts[] = {
+    // The warp after Gohma completes the Forest quest in its Event1. Its Event4 sets the castle quest to Step01 even when
+    // the quest is further on, and a Link who woke Talon before Gohma can then not meet Zelda. These texts make Event4 a
+    // second copy of Event1.
+    { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "ChallengeName", "Get_StoneOfForest" },
+    { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "StepName", "Complete" },
+};
+
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
@@ -190,8 +205,9 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
         candidates.pop_front();
     }
-    // No item an event flow gives is shuffled.
-    plan["event_texts"] = nlohmann::ordered_json::array();
+    for (const auto& [flow, event, param, text] : eventTexts) {
+        plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
+    }
     plan["start_flags"] = startFlags;
     return plan;
 }

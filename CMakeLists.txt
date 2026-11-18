@@ -150,7 +150,8 @@ enable_testing()
 add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route
-                     plan_opens_the_doors_the_rules_count_open same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
+                     plan_opens_the_doors_the_rules_count_open plan_keeps_the_castle_quest_after_gohma
+                     same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      the_crate_heart_piece_and_the_training_ground_key_are_shuffled
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
@@ -193,6 +194,8 @@ set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with an item value added to two chests that named none")
 set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
+set(KAEPORA_TESTED_CASTLE_QUEST_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with the warp after Gohma keeping the castle quest")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -238,6 +241,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-gift-mod
             COMMAND ${PATCH_TEST} tested-gift-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_GIFT_MOD}")
+    endif()
+    if(KAEPORA_TESTED_CASTLE_QUEST_MOD)
+        add_test(NAME patch-tested-castle-quest-mod
+            COMMAND ${PATCH_TEST} tested-castle-quest-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_CASTLE_QUEST_MOD}")
     endif()
 endif()
 

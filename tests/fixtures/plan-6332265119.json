@@ -1089,7 +1089,20 @@
       "drop_actor": "TBox_Rupee_Red"
     }
   ],
-  "event_texts": [],
+  "event_texts": [
+    {
+      "flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs",
+      "event": "Event4",
+      "param": "ChallengeName",
+      "text": "Get_StoneOfForest"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs",
+      "event": "Event4",
+      "param": "StepName",
+      "text": "Complete"
+    }
+  ],
   "start_flags": [
     "IsChainLockDoorOpen.4189300454150217955",
     "IsChainLockDoorOpen.2202807660383340401"

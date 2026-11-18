@@ -2,8 +2,8 @@
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
-       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod <kaepora-patch> \
-           <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod| \
+           tested-castle-quest-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift \
            <kaepora-patch> <game.nup>
@@ -50,6 +50,11 @@ NAYRUS_LOVE_GIFT = ("Event/EventFlow/Dm_FairyFountain_Nayru.bfevfl.zs", "Event16
 ANJU_FLOW = "Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs"
 COJIRO_GIFT = (ANJU_FLOW, "Event234", "ReveiveItem")
 POCKET_EGG_GIFT = (ANJU_FLOW, "Event264", "ReveiveItem")
+# After Gohma, the warp's Event4 sets the castle quest to Step01. As a second copy of Event1, it completes the Forest
+# quest again instead.
+ESCAPE_FLOW = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
+CASTLE_QUEST_KEPT = [(ESCAPE_FLOW, "Event4", "ChallengeName", "Get_StoneOfForest"),
+                     (ESCAPE_FLOW, "Event4", "StepName", "Complete")]
 BOOL = 0xD0
 INT64 = 0xD4
 UINT64 = 0xD5
@@ -286,12 +291,19 @@ def event_flow(data):
     return flow
 
 
+def string_parameter(flow, event, param):
+    """The named event's parameter in a parsed flow, as [type, text], to read or to change."""
+    _, _, (names, values), *_ = next(e for e in flow["events"] if e[0] == event)
+    parameter = values[[name for _, name in names[1:]].index(param)]
+    assert parameter[0] == 5, parameter
+    return parameter
+
+
 def give(flow, gift, old, new):
     """Changes the item that the gift's call names in a parsed flow from old to new."""
     _, event, param = gift
-    _, _, (names, values), *_ = next(e for e in flow["events"] if e[0] == event)
-    parameter = values[[name for _, name in names[1:]].index(param)]
-    assert parameter == [5, old], parameter
+    parameter = string_parameter(flow, event, param)
+    assert parameter[1] == old, parameter
     parameter[1] = new
 
 
@@ -380,6 +392,17 @@ def tested_gift_mod(patch, game, romfs):
     mod = patched(patch, game, plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
     assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
     ours = mod[SHOP_CHILD_FLOW]
+    assert_same_frame_header(ours, tested)
+    assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
+
+
+def tested_castle_quest_mod(patch, game, romfs):
+    """The castle quest kept as the game accepted it: after Gohma, the warp left the quest at Step04, and Zelda's scene
+    played."""
+    tested = (pathlib.Path(romfs) / ESCAPE_FLOW).read_bytes()
+    mod = patched(patch, game, plan([], event_texts=CASTLE_QUEST_KEPT))
+    assert sorted(mod) == [ESCAPE_FLOW], sorted(mod)
+    ours = mod[ESCAPE_FLOW]
     assert_same_frame_header(ours, tested)
     assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
 
@@ -598,10 +621,15 @@ def seed_plan(patch, game, plan_file):
     assert kinds == {"no item", "substitute"}, kinds
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
+    flows = {path: game.event_flow(game.read(path)) for path in {text["flow"] for text in seed["event_texts"]}}
+    for text in seed["event_texts"]:
+        string_parameter(flows[text["flow"]], text["event"], text["param"])[1] = text["text"]
     mod = patched(patch, game, seed)
-    assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == changed, sorted(mod)
+    assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == sorted(changed + list(flows)), sorted(mod)
     for path in changed:
         assert ordered(game.placement(mod[path])) == ordered(expected[path]), path
+    for path, flow in flows.items():
+        assert game.event_flow(mod[path]) == flow, path
     sizes = placement_sizes(game, mod, changed)
     table = mod[SIZE_TABLE] if SIZE_TABLE in mod else game.read(SIZE_TABLE)
     entries = dict(read_size_table(zstd.decompress(table))[1])
@@ -694,6 +722,7 @@ def main():
         "tested-substitute-mod": tested_substitute_mod,
         "tested-added-item-mod": tested_added_item_mod,
         "tested-gift-mod": tested_gift_mod,
+        "tested-castle-quest-mod": tested_castle_quest_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,

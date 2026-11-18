@@ -35,6 +35,6 @@ std::vector<RemakeChest> LoadRemakeChests();
 
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake name of the item the
 // seed placed there. Where several remake names stand for one SoH item, it hands back the names the shuffled chests
-// held, each as often as it occurred. Then the saved values a new game must start with set, because the rules count
-// on them.
+// held, each as often as it occurred. Then the event flow strings every seed changes, and the saved values a new game
+// must start with set, because the rules count on them.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests);
