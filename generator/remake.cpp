@@ -160,14 +160,19 @@ std::vector<RemakeChest> LoadRemakeChests() {
     return chests;
 }
 
-// Saved values a new game starts with set. Each opens a locked door that SoH opens when it creates a save, and that
-// SoH's rules count open.
+// Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the
+// first two when it creates a save.
 static constexpr const char* startFlags[] = {
     // The Fire Temple's lowest locked door, to the boss key loop, starts open. Logic::IsFireLoopLocked is false, so
     // fire_temple.cpp asks no key there, and Logic::Reset counts one Fire Temple small key for it.
     "IsChainLockDoorOpen.4189300454150217955",
     // The Water Temple's west middle-floor door, to the jet lift, starts open. water_temple.cpp asks no key there.
     "IsChainLockDoorOpen.2202807660383340401",
+    // The west door of the Forest Temple's bow chest room stays locked from the room's side until an arrow hits its
+    // eye, and refuses a warp to a Link who came in through it while it is locked, so one with no bow is shut in when
+    // the chest holds another item. Set from the start, this value lifts the door's only lock, and the door opens from
+    // both sides. forest_temple.cpp lets Link back west once the Stalfos are dead.
+    "Gimmick_DefeatEnemy_Open_ForestTemple_03",
 };
 
 struct EventText {
