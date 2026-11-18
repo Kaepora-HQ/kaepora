@@ -140,14 +140,14 @@ std::vector<RemakeChest> LoadRemakeChests() {
             Fail(where + "\"" + name + "\" is not a SoH location");
         }
 
+        auto candidates = items.find(item);
+        if (!item.empty() && candidates == items.end()) {
+            Fail(where + "unknown remake item \"" + item + "\"");
+        }
         auto [index, added] = locations.try_emplace(location->second, chests.size());
         if (added) {
             RemakeChest chest{ location->second, {}, item, RG_NONE, shuffled == "yes" };
             if (!item.empty()) {
-                auto candidates = items.find(item);
-                if (candidates == items.end()) {
-                    Fail(where + "unknown remake item \"" + item + "\"");
-                }
                 chest.sohItem = ResolveItem(candidates->second, chest.location);
                 if (chest.sohItem == RG_NONE) {
                     Fail(where + "no SoH item for \"" + item + "\" in this location's dungeon");
@@ -157,7 +157,7 @@ std::vector<RemakeChest> LoadRemakeChests() {
                 Fail(where + "a shuffled chest needs a remake chest whose item stands for a SoH item");
             }
             chests.push_back(std::move(chest));
-        } else if (hash.empty() || chests[index->second].actors.empty() || item != chests[index->second].item ||
+        } else if (hash.empty() || chests[index->second].actors.empty() ||
                    (shuffled == "yes") != chests[index->second].shuffled) {
             Fail(where + "repeats the location \"" + name + "\" for anything but another copy of its chest");
         }

@@ -188,6 +188,11 @@ class LogicTest(unittest.TestCase):
     def test_goron_city_maze_center_side_chest_is_reachable(self):
         self.assertTrue(self.reachable("GC Maze Center Side Chest"))
 
+    def test_goron_city_grotto_chest_needs_the_hookshot(self):
+        # Two hookshot targets cross the lava room to the grotto. Goron City has no Song of Time block.
+        self.assertTrue(self.reachable("GC Grotto Chest"))
+        self.assertFalse(self.reachable("GC Grotto Chest", NO_HOOKSHOT))
+
     def test_the_bracelet_lifts_nothing_that_needs_gauntlets(self):
         # Darunia gives the bracelet.
         self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))

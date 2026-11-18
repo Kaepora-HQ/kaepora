@@ -27,8 +27,13 @@ def read_tsv(name):
 
 
 SHUFFLED = [row for row in read_tsv("chests.tsv") if row["shuffled"] == "yes"]
-# What each shuffled location holds in the unmodified game. A location whose chest the files keep twice counts once.
-POOL = collections.Counter({row["location"]: row["item"] for row in SHUFFLED}.values())
+FIRST_ROWS = {}
+for row in SHUFFLED:
+    FIRST_ROWS.setdefault(row["location"], row)
+POOL = collections.Counter(row["item"] for row in FIRST_ROWS.values())
+# Locations whose chest the files keep twice, under two hashes.
+KEPT_TWICE = {location for location, rows in collections.Counter(row["location"] for row in SHUFFLED).items()
+              if rows > 1}
 ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.tsv")}
 DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
@@ -73,8 +78,8 @@ class SeedgenTest(unittest.TestCase):
     def assert_kept_in_place(self, kept, settings, seeds, *, on_route):
         rows = {row["hash"]: row for row in SHUFFLED}
         kept_locations = {row["location"] for row in kept}
-        pool = collections.Counter({row["location"]: row["item"] for row in SHUFFLED
-                                    if row["location"] not in kept_locations}.values())
+        pool = collections.Counter(row["item"] for location, row in FIRST_ROWS.items()
+                                   if location not in kept_locations)
         items = {row["location"]: row["item"] for row in kept}
         stepped = set()
         for seed in seeds:
@@ -173,16 +178,11 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(placed[soh], POOL[remake], soh)
 
     def test_a_chest_kept_twice_holds_one_item(self):
-        # The Kakariko lookout chest stands in both versions of the adult village, the Gerudo Valley storms grotto
-        # chest in the child and the adult files, and the Lost Woods bridge chest in the Lost Woods and in the Kokiri
-        # Forest, each under its own hash.
         _, plan = self.generate("8")
         names = {entry["hash"]: entry["drop_actor"] for entry in plan["chests"]}
-        for first, second in (("13080955777249750889", "11929552275106311978"),
-                              ("18413589940135955604", "6205043616869463865"),
-                              ("17479747339356189279", "4349272251343787229")):
-            self.assertIn(first, names)
-            self.assertEqual(names[first], names[second])
+        for location in KEPT_TWICE:
+            first, second = (row["hash"] for row in SHUFFLED if row["location"] == location)
+            self.assertEqual(names[first], names[second], location)
 
     def test_loose_items_the_remake_keeps_in_chests_are_shuffled(self):
         chests = {"GV Crate Freestanding PoH": "15856256242099990922",

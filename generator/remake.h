@@ -19,10 +19,11 @@ struct RemakeChest {
 
     RandomizerCheck location;
     // Usually one. The files keep a few chests twice, under two hashes, and both give the location's item: once in
-    // each of two versions of a scene, or once in each of two scenes that show the same spot.
+    // each of two versions of a scene, once in each of two scenes that show the same spot, or as the two chests one
+    // puzzle shows one of.
     std::vector<Actor> actors;
-    // What the chest gives, by its remake name (remake/README.md), empty when the table names nothing, and the SoH item
-    // it stands for. RG_NONE means the logic sees nothing there.
+    // What the first actor gives, by its remake name (remake/README.md), empty when the table names nothing, and the
+    // SoH item it stands for. RG_NONE means the logic sees nothing there.
     std::string item;
     RandomizerGet sohItem;
     bool shuffled;

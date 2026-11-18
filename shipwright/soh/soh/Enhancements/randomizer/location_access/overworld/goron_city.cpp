@@ -171,6 +171,9 @@ void RegionTable_Init_GoronCity() {
         LOCATION(RC_GC_DEKU_SCRUB_GROTTO_RIGHT,  logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_DEKU_SCRUB_GROTTO_CENTER, logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_GC_GROTTO_BEEHIVE,           logic->CanBreakUpperBeehives()),
+        // Cutting the signs in the right order shows one chest, and a wrong order another; both give this item. Two
+        // hookshot targets cross the lava room to the grotto, and Goron City has no Song of Time block.
+        LOCATION(RC_GC_GROTTO_CHEST,             logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_GC_GROTTO_PLATFORM, true),
