@@ -68,6 +68,8 @@ class Logic {
     bool CanHitEyeTargets();
     // Most of the remake's eye switches take the hookshot too. The ones that do not keep CanHitEyeTargets.
     bool CanHitHookshotEyeTargets();
+    // The near eye switches take a child's boomerang too.
+    bool CanHitNearEyeTargets();
     bool CanDetonateBombFlowers();
     bool CanDetonateUprightBombFlower();
     bool BeanPlanted(LogicVal beanEvent);

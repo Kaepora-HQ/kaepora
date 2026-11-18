@@ -1357,6 +1357,10 @@ bool Logic::CanHitHookshotEyeTargets() {
     return CanHitEyeTargets() || CanUse(RG_HOOKSHOT);
 }
 
+bool Logic::CanHitNearEyeTargets() {
+    return CanHitHookshotEyeTargets() || CanUse(RG_BOOMERANG);
+}
+
 bool Logic::CanDetonateBombFlowers() {
     return CanUse(RG_FAIRY_BOW) || HasExplosives() || CanUse(RG_DINS_FIRE);
 }

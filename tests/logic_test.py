@@ -429,6 +429,18 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag, mirror_shield))
         self.assertFalse(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag))
 
+    def test_a_childs_boomerang_hits_the_near_eyes(self):
+        # Without the slingshot, a child's boomerang hits the Deku Tree's basement eye on the way to Gohma, its
+        # slingshot room's eye that drops the side chest's ladder, and the eye across the fire in Dodongo's Cavern's
+        # first eye room. The second eye room's far eye stays out of its reach.
+        no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
+        boomerang = ("KF Mido Top Left Chest", "Boomerang")
+        self.assertTrue(self.reachable("Queen Gohma", no_slingshot, boomerang))
+        self.assertTrue(self.reachable("Deku Tree Slingshot Room Side Chest", no_slingshot, boomerang))
+        self.assertFalse(self.reachable("Queen Gohma", no_slingshot))
+        self.assertTrue(self.reachable("Dodongos Cavern Upper Lizalfos Chest", no_slingshot, boomerang, NEVER_ADULT))
+        self.assertFalse(self.reachable("Dodongos Cavern Bomb Bag Chest", no_slingshot, boomerang, NEVER_ADULT))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):
