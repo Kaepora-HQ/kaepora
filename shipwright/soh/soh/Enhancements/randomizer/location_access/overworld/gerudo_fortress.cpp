@@ -13,6 +13,8 @@ void RegionTable_Init_GerudoFortress() {
         LOCATION(RC_GF_OUTSKIRTS_NW_CRATE,   (logic->IsChild || logic->CanPassEnemy(RE_GERUDO_GUARD)) && logic->CanBreakCrates()),
         LOCATION(RC_GF_EAST_EXIT_ARROW_SIGN, logic->CanRead()),
         LOCATION(RC_GF_WONDER_ENTRANCE_SIGN, logic->CanUse(RG_HOOKSHOT)),
+        // In a grotto inside the fortress, up the stairs from the middle west door, past the guards indoors.
+        LOCATION(RC_GF_GROTTO_CHEST,         logic->IsAdult && logic->CanPassEnemy(RE_GERUDO_GUARD) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_GV_FORTRESS_SIDE, true),

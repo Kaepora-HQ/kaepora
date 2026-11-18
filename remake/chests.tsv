@@ -26,6 +26,7 @@ GV Storms Grotto Visible Chest	17750686910716887133	Banc/GerudoValley/GerudoVall
 GV Octorok Grotto Chest	6463521162691873710	Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs,Banc/GerudoValley/GerudoValley_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 GV Crate Freestanding PoH	15856256242099990922	Banc/GerudoValley/GerudoValley_Adult_Static.bcett.byml.zs,Banc/GerudoValley/GerudoValley_Child_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
 GF Chest	12343753510713797715	Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
+GF Grotto Chest	16619432200060282313	Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Wasteland Chest	8825521833684392638	Banc/HountedWasteland/HountedWasteland_Adult_Static.bcett.byml.zs,Banc/HountedWasteland/HountedWasteland_Child_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Colossus Grotto Chest	1186167733408299582	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	TBox_Rupee_Purple	yes	
 Market Treasure Chest Game Reward	16881481538337649070	Banc/Market/Market_Child_Static.bcett.byml.zs	Obj_Heart_Piece	no	Treasure Chest Game

@@ -380,6 +380,9 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Colossus Deku Scrub Grotto Front", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
         self.assertFalse(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
 
+    def test_gerudo_fortress_grotto_chest_is_reachable(self):
+        self.assertTrue(self.reachable("GF Grotto Chest"))
+
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
             self.assertTrue(self.reachable(chest))
