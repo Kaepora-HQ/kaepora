@@ -11,6 +11,8 @@ bun run dev
 
 `bun run typecheck` checks the types. `bun run test` runs the tests. `bun run build` writes the production build to `.output/`.
 
+`.github/workflows/web.yml` runs those three checks with Bun 1.4.4 on each pull request and each push to `main` that changes `web/`.
+
 - The theme (colours, fonts, sizes) is in `src/styles.css`. The drawings are in `src/components/night.tsx`.
 - The download addresses are in `src/release.ts`.
 - The download page reads `CHANGELOG.md` from the root of the repository at build time and renders it with Bun's built-in Markdown. Until that file exists, the page says there are no releases yet.
