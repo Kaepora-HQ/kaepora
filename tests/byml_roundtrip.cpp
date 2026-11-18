@@ -2,7 +2,7 @@
 // from.
 #include "byml.h"
 #include "compression.h"
-#include "romfs.h"
+#include "game_file.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -14,9 +14,9 @@ constexpr int PlacementFiles = 160;
 
 constexpr const char* GameDataList = "GameData/GameDataList.Product.110.byml.zs";
 
-static bool RoundTrips(Romfs& romfs, const std::string& path, const std::string& dictionary) {
+static bool RoundTrips(GameFile& game, const std::string& path, const std::string& dictionary) {
     try {
-        const std::string original = Decompress(romfs.Read(path), dictionary);
+        const std::string original = Decompress(game.Read(path), dictionary);
         const std::string written = byml::Write(byml::Parse(original));
         if (written == original) {
             return true;
@@ -35,18 +35,18 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "usage: %s <game.nup>\n", argv[0]);
         return 2;
     }
-    Romfs romfs(argv[1]);
-    const std::string dictionary = Dictionary(romfs, "bcett.byml.zsdic");
+    GameFile game(argv[1]);
+    const std::string dictionary = Dictionary(game, "bcett.byml.zsdic");
     int files = 0;
     int failures = 0;
-    for (const auto& [path, file] : romfs.Files()) {
+    for (const auto& [path, file] : game.Files()) {
         if (path.starts_with("Banc/") && path.ends_with(".bcett.byml.zs")) {
             ++files;
-            failures += !RoundTrips(romfs, path, dictionary);
+            failures += !RoundTrips(game, path, dictionary);
         }
     }
     std::printf("%d of %d placement files round trip\n", files - failures, files);
-    const bool list = RoundTrips(romfs, GameDataList, Dictionary(romfs, "zs.zsdic"));
+    const bool list = RoundTrips(game, GameDataList, Dictionary(game, "zs.zsdic"));
     std::printf("%s %s\n", GameDataList, list ? "round trips" : "does not round trip");
     return files == PlacementFiles && failures == 0 && list ? 0 : 1;
 }

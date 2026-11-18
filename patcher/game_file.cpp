@@ -1,4 +1,4 @@
-#include "romfs.h"
+#include "game_file.h"
 
 #include "bytes.h"
 #include "compression.h"
@@ -41,7 +41,7 @@ struct Toc {
         return std::string(data.substr(pool + offset, length));
     }
 
-    void Walk(uint64_t dir, const std::string& prefix, std::map<std::string, Romfs::File>& out) const {
+    void Walk(uint64_t dir, const std::string& prefix, std::map<std::string, GameFile::File>& out) const {
         const size_t record = dirs + dir * DirSize;
         const uint32_t first = ReadAt<uint32_t>(data, record + 8);
         const uint32_t count = ReadAt<uint32_t>(data, record + 12);
@@ -61,7 +61,7 @@ struct Toc {
 
 } // namespace
 
-Romfs::Romfs(const std::filesystem::path& path) : nup(path, std::ios::binary) {
+GameFile::GameFile(const std::filesystem::path& path) : nup(path, std::ios::binary) {
     if (!nup) {
         throw std::runtime_error(path.string() + ": cannot open");
     }
@@ -96,7 +96,7 @@ Romfs::Romfs(const std::filesystem::path& path) : nup(path, std::ios::binary) {
     }
 }
 
-std::string Romfs::Read(const std::string& path) {
+std::string GameFile::Read(const std::string& path) {
     const auto file = files.find(path);
     if (file == files.end()) {
         throw std::runtime_error("the game has no such file");
@@ -107,7 +107,7 @@ std::string Romfs::Read(const std::string& path) {
     return ReadBytes(file->second.offset, file->second.size);
 }
 
-std::string Romfs::ReadBytes(uint64_t offset, uint64_t size) {
+std::string GameFile::ReadBytes(uint64_t offset, uint64_t size) {
     std::string data(size, '\0');
     nup.seekg(offset);
     nup.read(data.data(), size);
@@ -117,8 +117,8 @@ std::string Romfs::ReadBytes(uint64_t offset, uint64_t size) {
     return data;
 }
 
-std::string Dictionary(Romfs& romfs, std::string_view name) {
-    const std::string archive = Decompress(romfs.Read(std::string(DictionaryPack)));
+std::string Dictionary(GameFile& game, std::string_view name) {
+    const std::string archive = Decompress(game.Read(std::string(DictionaryPack)));
     // A SARC header, then the SFAT node table, then the SFNT name table with names at 4-byte steps.
     if (!archive.starts_with("SARC")) {
         throw std::runtime_error(std::string(DictionaryPack) + ": not a SARC archive");

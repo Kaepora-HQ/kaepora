@@ -1,4 +1,4 @@
-// The game's RomFS inside a Lichii .nup container.
+// The game file, a Lichii .nup container, and the game's RomFS in it.
 #pragma once
 
 #include <cstdint>
@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-class Romfs {
+class GameFile {
 public:
     struct File {
         uint64_t offset;
@@ -16,7 +16,7 @@ public:
         uint8_t codec;
     };
 
-    explicit Romfs(const std::filesystem::path& nup);
+    explicit GameFile(const std::filesystem::path& nup);
 
     // Throws if the RomFS has no file at this path.
     std::string Read(const std::string& path);
@@ -33,4 +33,4 @@ private:
 };
 
 // A zstd dictionary in the game's dictionary pack, by its name there.
-std::string Dictionary(Romfs& romfs, std::string_view name);
+std::string Dictionary(GameFile& game, std::string_view name);

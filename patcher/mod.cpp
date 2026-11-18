@@ -4,7 +4,7 @@
 #include "byml.h"
 #include "bytes.h"
 #include "compression.h"
-#include "romfs.h"
+#include "game_file.h"
 
 #include <algorithm>
 #include <bit>
@@ -143,9 +143,9 @@ static uint32_t Crc32(std::string_view data) {
     return ~crc;
 }
 
-static std::string ReadSizeTable(Romfs& romfs) {
+static std::string ReadSizeTable(GameFile& game) {
     try {
-        std::string table = Decompress(romfs.Read(std::string(SizeTablePath)));
+        std::string table = Decompress(game.Read(std::string(SizeTablePath)));
         if (!table.starts_with(SizeTableMagic) || ReadAt<uint32_t>(table, 0x06) != SizeTableVersion) {
             throw std::runtime_error(std::format("not a version {} size table", SizeTableVersion));
         }
@@ -202,9 +202,9 @@ static uint32_t Murmur3(std::string_view name) {
 
 // The game data list with the default of each named Bool set to true, compressed as the game's own copy is. A Bool's
 // default sits inside its entry, so the list keeps its size and still fits its size table entry.
-static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, const std::vector<std::string>& names) {
+static std::string StartFlagList(GameFile& game, const std::string& dictionary, const std::vector<std::string>& names) {
     try {
-        byml::Document list = byml::Parse(Decompress(romfs.Read(std::string(GameDataListPath)), dictionary));
+        byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
         byml::Node* bools = data == nullptr ? nullptr : Find(*data, "Bool");
         if (bools == nullptr) {
@@ -230,8 +230,8 @@ static std::string StartFlagList(Romfs& romfs, const std::string& dictionary, co
 }
 
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
-    Romfs romfs(nup);
-    const std::string dictionary = Dictionary(romfs, "bcett.byml.zsdic");
+    GameFile game(nup);
+    const std::string dictionary = Dictionary(game, "bcett.byml.zsdic");
 
     std::map<std::string, byml::Document> placements;
     std::set<std::string> changed;
@@ -240,7 +240,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             try {
                 auto placement = placements.find(path);
                 if (placement == placements.end()) {
-                    placement = placements.emplace(path, byml::Parse(Decompress(romfs.Read(path), dictionary))).first;
+                    placement = placements.emplace(path, byml::Parse(Decompress(game.Read(path), dictionary))).first;
                 }
                 if (SetItem(Actor(placement->second.root, chest.hash), chest.dropActor)) {
                     changed.insert(path);
@@ -251,14 +251,14 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
-    const std::string zsDictionary = Dictionary(romfs, "zs.zsdic");
+    const std::string zsDictionary = Dictionary(game, "zs.zsdic");
     std::map<std::string, bfevfl::Flow> flows;
     std::set<std::string> changedFlows;
     for (const PlannedEventText& text : plan.eventTexts) {
         try {
             auto flow = flows.find(text.flow);
             if (flow == flows.end()) {
-                flow = flows.emplace(text.flow, bfevfl::Parse(Decompress(romfs.Read(text.flow), zsDictionary))).first;
+                flow = flows.emplace(text.flow, bfevfl::Parse(Decompress(game.Read(text.flow), zsDictionary))).first;
             }
             if (bfevfl::SetString(flow->second, text.event, text.param, text.text)) {
                 changedFlows.insert(text.flow);
@@ -269,7 +269,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
 
     std::map<std::string, std::string> mod;
-    std::string table = ReadSizeTable(romfs);
+    std::string table = ReadSizeTable(game);
     bool tableChanged = false;
     for (const std::string& path : changed) {
         const std::string data = byml::Write(placements.at(path));
@@ -285,7 +285,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         mod.emplace(SizeTablePath, Compress(table));
     }
     if (!plan.startFlags.empty()) {
-        mod.emplace(GameDataListPath, StartFlagList(romfs, zsDictionary, plan.startFlags));
+        mod.emplace(GameDataListPath, StartFlagList(game, zsDictionary, plan.startFlags));
     }
     return mod;
 }
