@@ -178,12 +178,16 @@ if(Qt6Test_FOUND)
                                                       Qt6::Test)
     target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
     # The window's tests that make no seed need no game file.
-    foreach(TEST IN ITEMS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn aChoiceShowsInTheSummary
-                          defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
-                          longSettingsLeaveTheWindowWidth settingsAreRemembered
-                          unreadableRememberedSettingsStartAsTheDefaults aNewerVersionShowsTheNotice
-                          quietOutcomesShowNothing theBoxTurnsTheCheckOff aDayPassesBetweenRequests
-                          aNewerVersionIsRememberedUntilItRuns untickingStopsARequestInFlight)
+    set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn aChoiceShowsInTheSummary
+                     defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
+                     longSettingsLeaveTheWindowWidth settingsAreRemembered
+                     unreadableRememberedSettingsStartAsTheDefaults aNewerVersionShowsTheNotice quietOutcomesShowNothing
+                     theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
+                     untickingStopsARequestInFlight)
+    if(APPLE)
+        list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)
+    endif()
+    foreach(TEST IN LISTS WINDOW_TESTS)
         add_test(NAME window_${TEST} COMMAND kaepora-window-test ${TEST})
         # On Windows, QTest writes to the debugger rather than to stderr when no console is attached, as under ctest.
         set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT

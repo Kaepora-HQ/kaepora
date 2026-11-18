@@ -27,6 +27,10 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+#ifdef Q_OS_MACOS
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -69,6 +73,35 @@ static QString LichiiModsFolder() {
     const QString load = QDir(data).filePath(LichiiLoad);
     return QFileInfo(load).isDir() ? QDir(load).filePath(GameId) : QString();
 }
+
+#ifdef Q_OS_MACOS
+// On macOS the emulator is an app, which is a folder, and the program it starts is the one its Info.plist names.
+bool (QFileInfo::*const IsEmulator)() const = &QFileInfo::isBundle;
+
+// Empty when the app is gone.
+static QString Program(const QString& app) {
+    QString program;
+    const CFURLRef url = QUrl::fromLocalFile(app).toCFURL();
+    if (const CFBundleRef bundle = CFBundleCreate(kCFAllocatorDefault, url)) {
+        if (const CFURLRef executable = CFBundleCopyExecutableURL(bundle)) {
+            // The program's URL is relative to the app's folder of programs.
+            const CFURLRef absolute = CFURLCopyAbsoluteURL(executable);
+            program = QUrl::fromCFURL(absolute).toLocalFile();
+            CFRelease(absolute);
+            CFRelease(executable);
+        }
+        CFRelease(bundle);
+    }
+    CFRelease(url);
+    return program;
+}
+#else
+bool (QFileInfo::*const IsEmulator)() const = &QFileInfo::isFile;
+
+static QString Program(const QString& emulator) {
+    return emulator;
+}
+#endif
 
 static std::filesystem::path Path(const QString& path) {
     return QFileInfo(path).filesystemFilePath();
@@ -160,7 +193,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     if (modsFolder->text().isEmpty()) {
         modsFolder->setText(LichiiModsFolder());
     }
-    emulator = addPathRow(form, "Emulator (optional)", "emulator", &QFileInfo::isFile,
+    emulator = addPathRow(form, "Emulator (optional)", "emulator", IsEmulator,
                           [this] { return QFileDialog::getOpenFileName(this, "Choose the emulator"); });
 
     seedField = new QLineEdit;
@@ -386,7 +419,7 @@ void Window::deleteSeed() {
 }
 
 void Window::play() {
-    if (!QProcess::startDetached(emulator->text(), { "-g", gameFile->text() })) {
+    if (!QProcess::startDetached(Program(emulator->text()), { "-g", gameFile->text() })) {
         Tell(this, QMessageBox::Critical, "The emulator did not start.");
     }
 }
