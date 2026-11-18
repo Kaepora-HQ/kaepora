@@ -48,6 +48,8 @@ QString Summary(const SeedSettings& settings) {
     }
     if (settings.mapsAndCompasses == DungeonItems::InTheirOwnChests) {
         changed << "maps and compasses in their own chests";
+    } else if (settings.mapsAndCompasses == DungeonItems::GivenAtTheStart) {
+        changed << "maps and compasses given at the start";
     }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
@@ -76,7 +78,7 @@ QString Details(const SeedSettings& settings) {
     return QStringList{ Line(ShuffledDungeonsSetting, ShuffledDungeons(settings)),
                         Line(KeysSetting, QString::fromUtf8(Words(DungeonItemsChoices, settings.keys))),
                         Line(MapsAndCompassesSetting,
-                             QString::fromUtf8(Words(DungeonItemsChoices, settings.mapsAndCompasses))),
+                             QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
                         Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))) }
         .join('\n');
 }
@@ -132,7 +134,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         dungeons.emplace_back(dungeon, box);
     }
     QComboBox* keys = Choice(DungeonItemsChoices);
-    QComboBox* mapsAndCompasses = Choice(DungeonItemsChoices);
+    QComboBox* mapsAndCompasses = Choice(MapsAndCompassesChoices);
     auto* dungeonForm = new QFormLayout;
     dungeonForm->addRow(QString::fromUtf8(ShuffledDungeonsSetting), checklist);
     dungeonForm->addRow(QString::fromUtf8(KeysSetting), keys);

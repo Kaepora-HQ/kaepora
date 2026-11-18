@@ -81,5 +81,5 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, {}, chests) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    return { SpoilerLog(seed, settings, chests), RemakePlan(seed, chests) };
+    return { SpoilerLog(seed, settings, chests), RemakePlan(seed, chests, settings) };
 }

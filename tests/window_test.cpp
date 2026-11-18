@@ -591,6 +591,26 @@ private slots:
         QVERIFY(shows("8 of 12 dungeons shuffled"));
     }
 
+    void aChoiceShowsInTheSummary_data() {
+        QTest::addColumn<QString>("setting");
+        QTest::addColumn<QString>("value");
+        QTest::addColumn<QString>("summary");
+        QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
+                              << "Maps and compasses given at the start";
+    }
+
+    void aChoiceShowsInTheSummary() {
+        QFETCH(QString, setting);
+        QFETCH(QString, value);
+        QFETCH(QString, summary);
+        button("Settings…")->click();
+        choice(setting)->setCurrentText(value);
+        QCOMPARE(choice(setting)->currentText(), value);
+        dialogButton("OK")->click();
+        QVERIFY(shows(summary));
+        QVERIFY(label(summary)->toolTip().split('\n').contains(setting + ": " + value));
+    }
+
     void longSettingsLeaveTheWindowWidth() {
         const int least = window->minimumSizeHint().width();
         const int width = window->width();

@@ -35,10 +35,15 @@ inline constexpr Dungeon Dungeons[] = {
     { "Ganon's Castle", "InsideGanonCastle" },
 };
 
-enum class DungeonItems { AnywhereInTheirDungeon, InTheirOwnChests };
+enum class DungeonItems { AnywhereInTheirDungeon, InTheirOwnChests, GivenAtTheStart };
 inline constexpr std::pair<DungeonItems, std::string_view> DungeonItemsChoices[] = {
     { DungeonItems::AnywhereInTheirDungeon, "Anywhere in their dungeon" },
     { DungeonItems::InTheirOwnChests, "In their own chests" },
+};
+inline constexpr std::pair<DungeonItems, std::string_view> MapsAndCompassesChoices[] = {
+    { DungeonItems::AnywhereInTheirDungeon, "Anywhere in their dungeon" },
+    { DungeonItems::InTheirOwnChests, "In their own chests" },
+    { DungeonItems::GivenAtTheStart, "Given at the start" },
 };
 
 enum class Lens { Needed, NeverNeeded };

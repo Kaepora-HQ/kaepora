@@ -40,6 +40,12 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
             "Ganon's Castle"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Lens of Truth": "Needed"}
+# The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
+# bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
+DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
+              "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
+MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
+                "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 KEYS = {"Item_Dungeon_SmallKey", "Item_Dungeon_BossKey"}
 MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
 
@@ -147,13 +153,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
-        # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest
-        # Temple's bow chest room and the Spirit Temple's door between the statue room and the child climb room.
         _, plan = self.generate("6")
-        self.assertEqual(plan["start_values"], {"IsChainLockDoorOpen.4189300454150217955": True,
-                                                "IsChainLockDoorOpen.2202807660383340401": True,
-                                                "Gimmick_DefeatEnemy_Open_ForestTemple_03": True,
-                                                "SpiritTemple_Room07_Unlocked": True})
+        self.assertEqual(plan["start_values"], DOORS_OPEN)
 
     def test_plan_keeps_quests_from_going_back(self):
         escape = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
@@ -262,6 +263,14 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(kept)
         self.assert_kept_in_place(kept, {"Maps and compasses": "In their own chests"},
                                   [str(seed) for seed in range(320, 330)], on_route=False)
+
+    def test_maps_and_compasses_given_at_the_start(self):
+        spoiler, plan = self.generate("14", {"Maps and compasses": "Given at the start"})
+        self.assertEqual(spoiler["settings"]["Maps and compasses"], "Given at the start")
+        given = {f"DungeonInfo.{dungeon}.{value}": True for dungeon in MAP_DUNGEONS
+                 for value in ("IsGetMap", "IsGetCompass")}
+        self.assertEqual(plan["start_values"], DOORS_OPEN | given)
+        self.assertEqual({entry["hash"] for entry in plan["chests"]}, {row["hash"] for row in SHUFFLED})
 
     def test_lens_never_needed_leaves_the_lens_off_the_route(self):
         for seed in range(330, 345):

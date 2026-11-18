@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <format>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -221,7 +222,26 @@ static constexpr EventText eventTexts[] = {
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
 };
 
-nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {
+static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
+    nlohmann::ordered_json values = nlohmann::ordered_json::object();
+    for (const char* flag : startFlags) {
+        values[flag] = true;
+    }
+    if (settings.mapsAndCompasses == DungeonItems::GivenAtTheStart) {
+        // The Training Ground and Ganon's Castle have neither.
+        for (const Dungeon& dungeon : Dungeons) {
+            if (dungeon.folder != "GerudoTrainingGround" && dungeon.folder != "InsideGanonCastle") {
+                const std::string info = std::format("DungeonInfo.{}.", dungeon.folder);
+                values[info + "IsGetMap"] = true;
+                values[info + "IsGetCompass"] = true;
+            }
+        }
+    }
+    return values;
+}
+
+nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
+                                  const SeedSettings& settings) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
@@ -244,9 +264,6 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     for (const auto& [flow, event, param, text] : eventTexts) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
     }
-    plan["start_values"] = nlohmann::ordered_json::object();
-    for (const char* flag : startFlags) {
-        plan["start_values"][flag] = true;
-    }
+    plan["start_values"] = StartValues(settings);
     return plan;
 }
