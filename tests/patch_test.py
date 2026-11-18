@@ -1,4 +1,4 @@
-"""End-to-end tests of kaepora-patch on the game's own placement files, event flows and game data list.
+"""End-to-end tests of kaepora-patch on the game's own placement files, event flows, actor packs and game data list.
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
@@ -11,7 +11,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values <kaepora-patch> <game.nup>
+           other-version|start-values|shop <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -94,6 +94,32 @@ TRIALS_LEFT = "InsideGanonCastle_Dungeon_Barrier_Count"
 HASHES = {FIRE_LOCK: 749909151, WATER_LOCK: 400117133, WATER_KEYS: 3683958665, IS_CHILD: 3466731731,
           FOREST_EXIT_SHUT: 3856422516, TRIALS_LEFT: 2698978896}
 
+GORON_SHOPKEEPERS = [("Npc_Goron_011_Shop_Child", "Npc_Goron_011_Shop_Child"),
+                     ("Npc_Goron_011_Shop_Adult", "Npc_Goron_011_Shop_Child")]
+KOKIRI_SHOPKEEPERS = [("Npc_Kokiri_001_Shop_Child_ShortStock", "Npc_Kokiri_001_Shop_Child_ShortStock"),
+                      ("Npc_Kokiri_001_Shop_Child", "Npc_Kokiri_001_Shop_Child"),
+                      ("Npc_Kokiri_001_Shop_Adult", "Npc_Kokiri_001_Shop_Child")]
+GORON_ADULT_STATIC = "Banc/GoronCity/GoronCity_Adult_Static.bcett.byml.zs"
+GORON_CHILD_STATIC = "Banc/GoronCity/GoronCity_Child_Static.bcett.byml.zs"
+KOKIRI_ADULT_STATIC = "Banc/KokiriForest/KokiriForest_Adult_Static.bcett.byml.zs"
+KOKIRI_CHILD_STATIC = "Banc/KokiriForest/KokiriForest_Child_Static.bcett.byml.zs"
+GORON_TUNIC_SLOT = (GORON_SHOPKEEPERS, 3, [(GORON_ADULT_STATIC, 15075156905719609791),
+                                           (GORON_CHILD_STATIC, 9081723785715040392)])
+GORON_HEART_SLOT = (GORON_SHOPKEEPERS, 0, [(GORON_ADULT_STATIC, 17336515988275376869),
+                                           (GORON_CHILD_STATIC, 3512162152062029293)])
+STORMS_GROTTO_CHEST = 14818888396401495482
+# All three Kokiri shopkeepers gate this slot on meeting the Deku Tree.
+KOKIRI_STICKS_SLOT = (KOKIRI_SHOPKEEPERS, 5, [(KOKIRI_ADULT_STATIC, 4359156404841200094),
+                                              (KOKIRI_CHILD_STATIC, 15329846556357339265),
+                                              (KOKIRI_CHILD_STATIC, 1748192465494650957)])
+# Each shopkeeper's count of a slot sold, Shop_SoldNum.<shopkeeper>.<slot>, by the hash of its name.
+SOLD_NUM_HASHES = {("Npc_Goron_011_Shop_Child", 3): 3884178440, ("Npc_Goron_011_Shop_Adult", 3): 3983252854,
+                   ("Npc_Goron_011_Shop_Child", 0): 1081991991, ("Npc_Goron_011_Shop_Adult", 0): 2258296172,
+                   ("Npc_Kokiri_001_Shop_Child_ShortStock", 5): 2755930899,
+                   ("Npc_Kokiri_001_Shop_Child", 5): 3688367492, ("Npc_Kokiri_001_Shop_Adult", 5): 138333967}
+# The game's size table entry for an actor pack, over its decompressed size rounded up to 32 bytes.
+PACK_OVERHEAD = 312
+
 
 class Game:
     """The update package's RomFS, which holds every placement file, the game data list, the dictionary pack and the
@@ -155,6 +181,9 @@ class Game:
 
     def text_pack(self, data):
         return sarc(zstd.decompress(data, zstd_dict=self.zs_dictionary))
+
+    def pack(self, data):
+        return sarc(zstd.decompress(data, zstd_dict=self.pack_dictionary))
 
 
 def sarc(data):
@@ -399,12 +428,20 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_values=None, event_texts=(), stone_texts=()):
+def plan(chests, start_values=None, event_texts=(), stone_texts=(), shops=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
             "start_values": start_values or {},
-            "stone_texts": [{"label": label, "text": text} for label, text in stone_texts]}
+            "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
+            "shops": [shop_slot(slot, item, price) for slot, item, price in shops]}
+
+
+def shop_slot(slot, item, price):
+    shopkeepers, index, shelves = slot
+    return {"shopkeepers": [{"actor": actor, "goods_list": goods_list} for actor, goods_list in shopkeepers],
+            "slot": index, "shelves": [{"file": path, "hash": str(h)} for path, h in shelves], "item": item,
+            "price": price}
 
 
 def run(patch, game, plan, tmp):
@@ -628,7 +665,8 @@ def together(patch, game):
              plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang"), (*DINS_FIRE_GIFT, "Item_HeavyBoot")]),
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
-    whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "event_texts", "stone_texts")}
+    whole = {key: [entry for part in parts for entry in part[key]]
+             for key in ("chests", "event_texts", "stone_texts", "shops")}
     whole |= {"seed": "1", "start_values": values}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -650,6 +688,72 @@ def start_values(patch, game):
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
     assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
+
+
+def goods(actor):
+    return f"Work/Actor/{actor}.engine__actor__ActorParam.gyml"
+
+
+def shop(patch, game):
+    def each(shopkeepers, entry):
+        return {keeper: entry for keeper, _ in shopkeepers}
+
+    # The goods' base prices in PouchActorInfo: the Hylian Shield 80 rupees, 5 bombs 35 and 10 arrows 20. The
+    # short-stock Kokiri shopkeeper's copy has every key of a slot, and the other two leave out the defaults.
+    released = {"IsCheckReleaseGameData": (BOOL, 0), "ReleaseGameData": ""}
+    sales = [
+        (GORON_TUNIC_SLOT, "TBox_Shield_Hylian", 35, "Shop_Weapon_Shield_Hylian", each(GORON_SHOPKEEPERS, {
+            "Actor": goods("Shop_Weapon_Shield_Hylian"), "PriceOffset": (INT, 2**32 - 45), "StockNum": (INT, 1)})),
+        (GORON_HEART_SLOT, "Item_BombBundle_Small", 0, "Shop_BombBundle_01", each(GORON_SHOPKEEPERS, {
+            "Actor": goods("Shop_BombBundle_01"), "PriceOffset": (INT, 2**32 - 35), "StockNum": (INT, 1)})),
+        (KOKIRI_STICKS_SLOT, "TBox_ArrowBundle_Large", 95, "Shop_ArrowBundle_01", each(KOKIRI_SHOPKEEPERS, {
+            "Actor": goods("Shop_ArrowBundle_01"), "PriceOffset": (INT, 75), "Release": released,
+            "StockNum": (INT, 1)}) | {"Npc_Kokiri_001_Shop_Child_ShortStock": {
+                "Actor": goods("Shop_ArrowBundle_01"), "ConditionalPriceOffsetList": [], "IsDefaultFocus": (BOOL, 0),
+                "PriceOffset": (INT, 75), "Release": released, "StockNum": (INT, 1)}}),
+    ]
+    chest = (STORMS_GROTTO_CHEST, [KOKIRI_ADULT_STATIC, KOKIRI_CHILD_STATIC], "Item_Hookshot")
+    mod = patched(patch, game, plan([chest], {FIRE_LOCK: True}, shops=[sale[:3] for sale in sales]))
+
+    packs, goods_lists, placements = {}, {}, {}
+    data = with_defaults(game, {FIRE_LOCK: True})
+    for (shopkeepers, index, shelves), _, _, goods_actor, entries in sales:
+        for keeper, goods_list in shopkeepers:
+            path = f"Pack/Actor/{keeper}.pack.zs"
+            member = f"Component/ShopParam/{goods_list}.game__component__ShopParam.bgyml"
+            pack = packs.setdefault(path, game.pack(game.read(path)))
+            goods_lists.setdefault((path, member), byml(pack[member]))["GoodsList"][index] = entries[keeper]
+            sold = next(e for e in data["Data"]["Int"] if e["Hash"][1] == SOLD_NUM_HASHES[keeper, index])
+            assert sold["ResetTypeValue"] == (INT, 2), sold
+            sold["ResetTypeValue"] = (INT, 0)
+        for path, h in shelves:
+            actor(placements.setdefault(path, game.placement(game.read(path))), h)["Gyaml"] = goods_actor
+    for path in chest[1]:
+        actor(placements[path], STORMS_GROTTO_CHEST)["Dynamic"]["Drop__DropActor"] = chest[2]
+
+    _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    def needs(path, dictionary, overhead=264):
+        return size_key(path), load_size(len(zstd.decompress(mod[path], zstd_dict=dictionary)), overhead)
+
+    needed = dict([needs(p, game.dictionary) for p in placements] + [needs(GAME_DATA_LIST, game.zs_dictionary)] +
+                  [needs(p, game.pack_dictionary, PACK_OVERHEAD) for p in packs])
+    expected_entries = [(key, max(size, needed.get(key, 0))) for key, size in entries]
+    raised = expected_entries != entries
+    assert sorted(mod) == sorted([*packs, *placements, GAME_DATA_LIST] + [SIZE_TABLE] * raised), sorted(mod)
+    if raised:
+        assert read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1] == expected_entries
+    for path, files in packs.items():
+        ours = game.pack(mod[path])
+        assert ours.keys() == files.keys(), path
+        for name, member in files.items():
+            if (path, name) in goods_lists:
+                assert ordered(byml(ours[name])) == ordered(goods_lists[path, name]), (path, name)
+            else:
+                assert ours[name] == member, (path, name)
+        assert_same_frame_header(mod[path], game.read(path))
+    for path, placement in placements.items():
+        assert ordered(game.placement(mod[path])) == ordered(placement), path
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == data
 
 
 def read_size_table(data):
@@ -931,6 +1035,17 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in stones.items():
         plans[name] = (good | {"stone_texts": [valid_stone, entry]}, named)
+    plans["no shops"] = (
+        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}, "stone_texts": []}, ["plan.json", "shops"])
+    valid_shop = shop_slot(GORON_TUNIC_SLOT, "TBox_Shield_Hylian", 35)
+    elsewhere = {"file": GORON_ADULT_STATIC, "hash": str(KOKIRI_STICKS_SLOT[2][0][1])}
+    shops = {
+        "shop slot not this shape": (dict(valid_shop, price=-1), ["plan.json", "shops[1]"]),
+        "no goods actor": (dict(valid_shop, item="TBox_Rupee_Red"), ["TBox_Rupee_Red", "no goods actor"]),
+        "shelf not in the file": (dict(valid_shop, shelves=[elsewhere]), [elsewhere["hash"], GORON_ADULT_STATIC]),
+    }
+    for name, (entry, named) in shops.items():
+        plans[name] = (good | {"shops": [valid_shop, entry]}, named)
     valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "text": "Item_Boomerang"}
     nowhere = "Event/EventFlow/Nowhere.bfevfl.zs"
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
@@ -1013,6 +1128,7 @@ def main():
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
+        "shop": shop,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

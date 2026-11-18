@@ -436,5 +436,6 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     for (const StoneHint& hint : hints) {
         plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
     }
+    plan["shops"] = nlohmann::ordered_json::array();
     return plan;
 }

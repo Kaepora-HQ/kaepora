@@ -22,14 +22,20 @@
 #include <stdexcept>
 #include <tuple>
 
-static PlannedChest ParseChest(const nlohmann::json& chest) {
-    const std::string hash = chest.at("hash").get<std::string>();
-    PlannedChest planned{ .files = chest.at("files").get<std::vector<std::string>>(),
-                          .dropActor = chest.at("drop_actor").get<std::string>() };
-    const auto [end, error] = std::from_chars(hash.data(), hash.data() + hash.size(), planned.hash);
-    if (error != std::errc() || end != hash.data() + hash.size()) {
-        throw std::runtime_error(std::format("hash \"{}\" is not a 64-bit decimal number", hash));
+static uint64_t ParseHash(const nlohmann::json& json) {
+    const std::string text = json.get<std::string>();
+    uint64_t hash = 0;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), hash);
+    if (error != std::errc() || end != text.data() + text.size()) {
+        throw std::runtime_error(std::format("hash \"{}\" is not a 64-bit decimal number", text));
     }
+    return hash;
+}
+
+static PlannedChest ParseChest(const nlohmann::json& chest) {
+    const PlannedChest planned{ .hash = ParseHash(chest.at("hash")),
+                                .files = chest.at("files").get<std::vector<std::string>>(),
+                                .dropActor = chest.at("drop_actor").get<std::string>() };
     if (planned.files.empty() || planned.dropActor.empty()) {
         throw std::runtime_error("files and drop_actor must not be empty");
     }
@@ -43,6 +49,27 @@ static PlannedEventText ParseEventText(const nlohmann::json& text) {
                               .text = text.at("text").get<std::string>() };
     if (planned.text.empty()) {
         throw std::runtime_error("text must not be empty");
+    }
+    return planned;
+}
+
+static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
+    const nlohmann::json& price = slot.at("price");
+    if (!price.is_number_unsigned() || price > std::numeric_limits<int32_t>::max()) {
+        throw std::runtime_error("price must be a whole number of rupees");
+    }
+    PlannedShopSlot planned{ .slot = slot.at("slot").get<uint32_t>(),
+                             .item = slot.at("item").get<std::string>(),
+                             .price = price.get<int32_t>() };
+    for (const nlohmann::json& keeper : slot.at("shopkeepers")) {
+        planned.shopkeepers.push_back(
+            { .actor = keeper.at("actor").get<std::string>(), .goodsList = keeper.at("goods_list").get<std::string>() });
+    }
+    for (const nlohmann::json& shelf : slot.at("shelves")) {
+        planned.shelves.push_back({ .file = shelf.at("file").get<std::string>(), .hash = ParseHash(shelf.at("hash")) });
+    }
+    if (planned.shopkeepers.empty() || planned.shelves.empty() || planned.item.empty()) {
+        throw std::runtime_error("shopkeepers, shelves and item must not be empty");
     }
     return planned;
 }
@@ -133,12 +160,29 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("stone_texts[{}]: {}", i, e.what()));
         }
     }
+    const auto shops = json.at("shops").get<std::vector<nlohmann::json>>();
+    for (size_t i = 0; i < shops.size(); ++i) {
+        try {
+            plan.shops.push_back(ParseShopSlot(shops[i]));
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("shops[{}]: {}", i, e.what()));
+        }
+    }
     return plan;
 }
 
 static byml::Node* Find(byml::Node& dict, std::string_view key) {
     const auto entry = std::ranges::find(dict.dict, key, &byml::Entry::key);
     return entry == dict.dict.end() ? nullptr : &entry->value;
+}
+
+// The dict's value for the key, added in key order as the game's dicts are when the dict has none.
+static byml::Node& FindOrAdd(byml::Node& dict, const std::string& key, byml::Type type) {
+    const auto at = std::ranges::lower_bound(dict.dict, key, {}, &byml::Entry::key);
+    if (at != dict.dict.end() && at->key == key) {
+        return at->value;
+    }
+    return dict.dict.insert(at, { .key = key, .value = { .type = type } })->value;
 }
 
 static byml::Node* FindHash(byml::Node& array, uint64_t hash) {
@@ -158,6 +202,78 @@ static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     return *actor;
 }
 
+// The goods actor that sells each item: its shelf model is the item's, and buying it gives the item.
+static const std::map<std::string, std::string, std::less<>> goodsActors = {
+    { "Item_BombBundle_Small", "Shop_BombBundle_01" },
+    { "TBox_ArrowBundle_Large", "Shop_ArrowBundle_01" },
+    { "TBox_Shield_Deku", "Shop_Weapon_Shield_Deku" },
+    { "TBox_Shield_Hylian", "Shop_Weapon_Shield_Hylian" },
+};
+
+static const std::string& GoodsActor(const std::string& item) {
+    const auto found = goodsActors.find(item);
+    if (found == goodsActors.end()) {
+        throw std::runtime_error(std::format("no goods actor sells {}", item));
+    }
+    return found->second;
+}
+
+// A shop sells goods at their base price in this table, the row's BuyingPrice, plus the slot's PriceOffset.
+constexpr std::string_view PouchActorInfoPath = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs";
+
+static int32_t BasePrice(byml::Node& pouchActorInfo, const std::string& goodsActor) {
+    const auto row = std::ranges::find_if(pouchActorInfo.array, [&](byml::Node& r) {
+        const byml::Node* id = Find(r, "__RowId");
+        return id != nullptr && id->string == goodsActor;
+    });
+    byml::Node* price = row == pouchActorInfo.array.end() ? nullptr : Find(*row, "BuyingPrice");
+    if (price == nullptr || price->type != byml::Type::Int) {
+        throw std::runtime_error(std::format("{} has no BuyingPrice for {}", PouchActorInfoPath, goodsActor));
+    }
+    return int32_t(uint32_t(price->scalar));
+}
+
+// Each shopkeeper's actor pack holds its own copy of the goods list it sells from.
+struct ShopPack {
+    sarc::Files files;
+    std::map<std::string, byml::Document> goodsLists;
+
+    byml::Node& GoodsList(const std::string& goodsList) {
+        const std::string name = std::format("Component/ShopParam/{}.game__component__ShopParam.bgyml", goodsList);
+        auto list = goodsLists.find(name);
+        if (list == goodsLists.end()) {
+            const auto file = files.find(name);
+            if (file == files.end()) {
+                throw std::runtime_error(std::format("the shopkeeper's pack has no {}", name));
+            }
+            list = goodsLists.emplace(name, byml::Parse(file->second)).first;
+        }
+        return list->second.root;
+    }
+};
+
+// A gate on the slot's release and a discount were for the game's own goods, so they take the forms of a slot with
+// neither.
+static void SetGoods(byml::Node& goodsList, uint32_t slot, const std::string& goodsActor, int32_t priceOffset) {
+    byml::Node* list = Find(goodsList, "GoodsList");
+    if (list == nullptr || slot >= list->array.size()) {
+        throw std::runtime_error(std::format("the goods list has no slot {}", slot));
+    }
+    byml::Node& goods = list->array[slot];
+    FindOrAdd(goods, "Actor", byml::Type::String).string =
+        std::format("Work/Actor/{}.engine__actor__ActorParam.gyml", goodsActor);
+    FindOrAdd(goods, "PriceOffset", byml::Type::Int).scalar = uint32_t(priceOffset);
+    FindOrAdd(goods, "StockNum", byml::Type::Int).scalar = 1;
+    if (byml::Node* release = Find(goods, "Release")) {
+        *release = { .type = byml::Type::Dict,
+                     .dict = { { .key = "IsCheckReleaseGameData", .value = { .type = byml::Type::Bool } },
+                               { .key = "ReleaseGameData", .value = { .type = byml::Type::String } } } };
+    }
+    if (byml::Node* discounts = Find(goods, "ConditionalPriceOffsetList")) {
+        discounts->array.clear();
+    }
+}
+
 // A chest gives its Dynamic.Drop__DropActor. One without it gives a refill of what Link is lowest on, so the item is
 // added, in key order as the game's dicts are. One with a Drop__DropActor_Substitute gives that instead to Link who
 // owns its Drop__CheckActor, so the substitute takes the item too. Returns whether the actor changed.
@@ -167,10 +283,7 @@ static bool SetItem(byml::Node& chest, const std::string& item) {
         throw std::runtime_error("the chest's actor has no Dynamic values");
     }
     const std::string dropActor = "Drop__DropActor";
-    const auto at = std::ranges::lower_bound(dynamic->dict, dropActor, {}, &byml::Entry::key);
-    if (at == dynamic->dict.end() || at->key != dropActor) {
-        dynamic->dict.insert(at, { .key = dropActor, .value = { .type = byml::Type::String } });
-    }
+    FindOrAdd(*dynamic, dropActor, byml::Type::String);
     bool changed = false;
     for (const std::string& key : { dropActor, std::string("Drop__DropActor_Substitute") }) {
         byml::Node* value = Find(*dynamic, key);
@@ -227,6 +340,7 @@ constexpr size_t SizeAlignment = 32;
 constexpr size_t PlacementOverhead = 264;
 constexpr size_t EventFlowOverhead = 272;
 constexpr size_t TextPackOverhead = 312;
+constexpr size_t ActorPackOverhead = 312;
 
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
 // the entry changed. The game silently skips a file that is too large for its entry, and loads one that is smaller.
@@ -284,9 +398,11 @@ static byml::Node& DefaultValue(byml::Node& data, const std::string& name, const
     return *defaultValue;
 }
 
-// A Bool's or an Int's default sits inside its entry, so the list keeps its size and still fits its size table entry.
-static std::string StartValueList(GameFile& game, const std::string& dictionary,
-                                  const std::map<std::string, StartValue>& values) {
+// A new game starts with each start value as its default. Each count of a shop slot sold takes reset type 0 in place
+// of the game's 2, the type that the game's data has a day change reset. A Bool's or an Int's default and an entry's
+// reset type sit inside the entry, so the list keeps its size and still fits its size table entry.
+static std::string GameDataList(GameFile& game, const std::string& dictionary,
+                                const std::map<std::string, StartValue>& values, const std::set<std::string>& soldOnce) {
     try {
         byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
@@ -301,6 +417,15 @@ static std::string StartValueList(GameFile& game, const std::string& dictionary,
                                                      std::visit([](auto v) { return std::format("{}", v); }, value)));
             }
             defaultValue.scalar = scalar;
+        }
+        for (const std::string& name : soldOnce) {
+            byml::Node* ints = Find(*data, "Int");
+            byml::Node* entry = ints == nullptr ? nullptr : FindHash(*ints, Murmur3(name));
+            byml::Node* reset = entry == nullptr ? nullptr : Find(*entry, "ResetTypeValue");
+            if (reset == nullptr || reset->type != byml::Type::Int) {
+                throw std::runtime_error(std::format("\"{}\" is not a count with a reset type in the list", name));
+            }
+            reset->scalar = 0;
         }
         return Compress(byml::Write(list), dictionary);
     } catch (const std::exception& e) {
@@ -386,20 +511,63 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const std::string dictionary = Dictionary(game, "bcett.byml.zsdic");
 
     std::map<std::string, byml::Document> placements;
+    const auto placement = [&](const std::string& path) -> byml::Node& {
+        auto found = placements.find(path);
+        if (found == placements.end()) {
+            found = placements.emplace(path, byml::Parse(Decompress(game.Read(path), dictionary))).first;
+        }
+        return found->second.root;
+    };
     std::set<std::string> changed;
     for (const PlannedChest& chest : plan.chests) {
         for (const std::string& path : chest.files) {
             try {
-                auto placement = placements.find(path);
-                if (placement == placements.end()) {
-                    placement = placements.emplace(path, byml::Parse(Decompress(game.Read(path), dictionary))).first;
-                }
-                if (SetItem(Actor(placement->second.root, chest.hash), chest.dropActor)) {
+                if (SetItem(Actor(placement(path), chest.hash), chest.dropActor)) {
                     changed.insert(path);
                 }
             } catch (const std::exception& e) {
                 throw std::runtime_error(std::format("chest {} in {}: {}", chest.hash, path, e.what()));
             }
+        }
+    }
+
+    const std::string packDictionary = Dictionary(game, "pack.zsdic");
+    std::map<std::string, ShopPack> packs;
+    std::set<std::string> soldOnce;
+    byml::Document pouchActorInfo;
+    if (!plan.shops.empty()) {
+        pouchActorInfo = byml::Parse(Decompress(game.Read(std::string(PouchActorInfoPath))));
+    }
+    for (const PlannedShopSlot& slot : plan.shops) {
+        try {
+            const std::string& goodsActor = GoodsActor(slot.item);
+            const int32_t priceOffset = slot.price - BasePrice(pouchActorInfo.root, goodsActor);
+            for (const Shopkeeper& keeper : slot.shopkeepers) {
+                const std::string path = std::format("Pack/Actor/{}.pack.zs", keeper.actor);
+                auto pack = packs.find(path);
+                if (pack == packs.end()) {
+                    pack = packs.emplace(path, ShopPack{ sarc::Parse(Decompress(game.Read(path), packDictionary)) }).first;
+                }
+                SetGoods(pack->second.GoodsList(keeper.goodsList), slot.slot, goodsActor, priceOffset);
+                soldOnce.insert(std::format("Shop_SoldNum.{}.{}", keeper.actor, slot.slot));
+            }
+            for (const PlacedActor& shelf : slot.shelves) {
+                try {
+                    byml::Node* gyaml = Find(Actor(placement(shelf.file), shelf.hash), "Gyaml");
+                    if (gyaml == nullptr || gyaml->type != byml::Type::String) {
+                        throw std::runtime_error("the actor has no Gyaml");
+                    }
+                    if (gyaml->string != goodsActor) {
+                        gyaml->string = goodsActor;
+                        changed.insert(shelf.file);
+                    }
+                } catch (const std::exception& e) {
+                    throw std::runtime_error(std::format("shelf {} in {}: {}", shelf.hash, shelf.file, e.what()));
+                }
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("shop slot {} of {}: {}", slot.slot, slot.shopkeepers.front().actor, e.what()));
         }
     }
 
@@ -435,7 +603,6 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const auto addToRomfs = [&](std::string_view path, std::string data) {
         mod.emplace(std::format("romfs/{}", path), std::move(data));
     };
-    const std::string packDictionary = Dictionary(game, "pack.zsdic");
     for (const std::string_view path : BombLiftPacks) {
         addToRomfs(path, BombLiftPack(game, packDictionary, path));
     }
@@ -458,11 +625,19 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             addToRomfs(path, Compress(data, zsDictionary));
         }
     }
+    for (auto& [path, pack] : packs) {
+        for (const auto& [name, list] : pack.goodsLists) {
+            pack.files[name] = byml::Write(list);
+        }
+        const std::string data = sarc::Write(pack.files, sarc::ActorPackAlignment);
+        tableChanged |= RaiseSize(table, path, data.size(), ActorPackOverhead);
+        addToRomfs(path, Compress(data, packDictionary));
+    }
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));
     }
-    if (!plan.startValues.empty()) {
-        addToRomfs(GameDataListPath, StartValueList(game, zsDictionary, plan.startValues));
+    if (!plan.startValues.empty() || !soldOnce.empty()) {
+        addToRomfs(GameDataListPath, GameDataList(game, zsDictionary, plan.startValues, soldOnce));
     }
     return mod;
 }
