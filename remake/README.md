@@ -14,8 +14,10 @@ row's item is what the location adds to the pool.
   are empty when the remake has no chest there.
 - `item`: what the chest gives, by the remake's name, and so what it adds to the pool when shuffled. That is its
   `Drop__DropActor`. A plain chest with no `Drop__DropActor` gives a refill of whatever Link is lowest on, and stands
-  here as a Large Magic Jar (`Tbox_MagicJar_Large`), the refill one of them gave in the game. Empty for a chest that
-  gives nothing a row can name: a trap chest, or a chest that checks what Link owns and names no item.
+  here as a Large Magic Jar (`Tbox_MagicJar_Large`), the refill one of them gave in the game. The one chest that
+  checks what Link owns and has no `Drop__DropActor` gave 5 bombs (`Item_BombBundle_Small`) to a Link without the
+  checked item, which may be such a refill too, and stands here as that. Empty for a trap chest, which gives
+  nothing.
 - `shuffled`: `yes` or `no`. A `yes` chest takes part in the shuffle unless the seed's settings keep it in place;
   every other location keeps its item.
 - `note`: for a row that is not shuffled, why, in one sentence. For a shuffled row, what else its chest does, if

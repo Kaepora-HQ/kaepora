@@ -2,6 +2,7 @@
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
+       python3 -I tests/patch_test.py tested-hammer-room-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod <kaepora-patch> \
            <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
@@ -16,6 +17,7 @@ The game's data is read from the container at test time. These readers are writt
 reader bug in either shows as a difference.
 """
 
+import itertools
 import json
 import pathlib
 import struct
@@ -29,6 +31,7 @@ DEKU_STATIC = "Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs"
 DODONGO_DYNAMIC = "Banc/DodongoCavern/DodongoCavern_Dynamic.bcett.byml.zs"
 FOREST_DYNAMIC = "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
 TRAINING_GROUND_DYNAMIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs"
+TRAINING_GROUND_STATIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
 WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
 SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
@@ -41,6 +44,9 @@ PLATFORM_CHEST = 11582649900854566065
 # Chests whose actor has no Dynamic.Drop__DropActor, in the Forest Temple and the Training Ground lobby.
 FOREST_CHEST_WITHOUT_DROP = 15117164073907033527
 LOBBY_CHEST_WITHOUT_DROP = 11182647876438515984
+# The Training Ground hammer room chest names no Drop__DropActor, only a Drop__DropActor_Substitute for a Link who
+# owns its Drop__CheckActor.
+HAMMER_ROOM_CHEST = 4961588221597286817
 # Gifts as the flow, the event whose call gives the item, and the call's parameter that names it. The Market potion
 # shop child's bottle fits the Boomerang's name in its flow's size table entry. The Great Fairy's Din's Fire flow is a
 # multiple of 32 bytes, so a longer name outgrows its entry.
@@ -442,6 +448,17 @@ def tested_added_item_mod(patch, game, romfs):
         assert ours_sizes[size_key(path)] == tested_sizes[size_key(path)], path
 
 
+def tested_hammer_room_mod(patch, game, mod_file):
+    """The chest with a substitute and no item of its own, as the game accepted it: with the red rupee added as its item
+    and written over its substitute, the Training Ground hammer room chest gave a red rupee with and without the bow."""
+    tested = pathlib.Path(mod_file).read_bytes()
+    mod = patched(patch, game, plan([(HAMMER_ROOM_CHEST, [TRAINING_GROUND_STATIC], "TBox_Rupee_Red")]))
+    assert sorted(mod) == [TRAINING_GROUND_STATIC], sorted(mod)
+    ours = mod[TRAINING_GROUND_STATIC]
+    assert_same_frame_header(ours, tested)
+    assert zstd.decompress(ours, zstd_dict=game.dictionary) == zstd.decompress(tested, zstd_dict=game.dictionary)
+
+
 def tested_strength_mod(patch, game, mod):
     """The patch to the game's program that the game ran: with it, a weaker strength item left Link's lift level where
     it was."""
@@ -633,17 +650,15 @@ def seed_plan(patch, game, plan_file):
             if path not in expected:
                 expected[path] = game.placement(game.read(path))
             dynamic = actor(expected[path], int(chest["hash"]))["Dynamic"]
-            if "Drop__DropActor" not in dynamic:
-                kinds.add("no item")
+            kinds.add(("Drop__DropActor" in dynamic, "Drop__DropActor_Substitute" in dynamic))
             if "Drop__DropActor_Substitute" in dynamic:
-                kinds.add("substitute")
                 dynamic["Drop__DropActor_Substitute"] = chest["drop_actor"]
             dynamic["Drop__DropActor"] = chest["drop_actor"]
             # The game's dicts are in key order, and an added value takes its place in it.
             entries = sorted(dynamic.items())
             dynamic.clear()
             dynamic.update(entries)
-    assert kinds == {"no item", "substitute"}, kinds
+    assert kinds == set(itertools.product((True, False), repeat=2)), kinds
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
     flows = {path: game.event_flow(game.read(path)) for path in {text["flow"] for text in seed["event_texts"]}}
@@ -768,6 +783,7 @@ def main():
         "tested-start-mod": tested_start_mod,
         "tested-substitute-mod": tested_substitute_mod,
         "tested-added-item-mod": tested_added_item_mod,
+        "tested-hammer-room-mod": tested_hammer_room_mod,
         "tested-gift-mod": tested_gift_mod,
         "tested-event-text-mods": tested_event_text_mods,
         "tested-strength-mod": tested_strength_mod,

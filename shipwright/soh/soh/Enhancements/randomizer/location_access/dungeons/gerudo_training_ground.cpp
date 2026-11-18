@@ -159,13 +159,15 @@ void RegionTable_Init_GerudoTrainingGround() {
 
     areaTable[RR_GERUDO_TRAINING_GROUND_HAMMER_ROOM] = Region("Gerudo Training Ground Hammer Room", SCENE_GERUDO_TRAINING_GROUND, {}, {
         //Locations
-        LOCATION(RC_GERUDO_TRAINING_GROUND_HAMMER_ROOM_CLEAR_CHEST,  logic->CanAttack() && logic->HasItem(RG_OPEN_CHEST)),
+        // The chest appears once both Torch Slugs and both Fire Keese die.
+        LOCATION(RC_GERUDO_TRAINING_GROUND_HAMMER_ROOM_CLEAR_CHEST,  logic->CanKillEnemy(RE_TORCH_SLUG, ED_CLOSE, true, 2) && logic->CanKillEnemy(RE_FIRE_KEESE, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_HAMMER_ROOM_SWITCH_CHEST, (logic->CanUse(RG_MEGATON_HAMMER) || (logic->TakeDamage() && ctx->GetTrickOption(RT_FIRE_RINGS))) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GERUDO_TRAINING_GROUND_WONDER_TORCH_SLUGS_ROOM,  logic->CanUse(RG_FAIRY_BOW)),
     }, {
         //Exits
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_EYE_STATUE_LOWER,      logic->CanUse(RG_MEGATON_HAMMER) && logic->CanUse(RG_FAIRY_BOW)),
-        ENTRANCE(RR_GERUDO_TRAINING_GROUND_LAVA_ROOM_UPPER_LEDGE, true),
+        // The door back to the lava room stays shut until both Torch Slugs and both Fire Keese die.
+        ENTRANCE(RR_GERUDO_TRAINING_GROUND_LAVA_ROOM_UPPER_LEDGE, logic->CanKillEnemy(RE_TORCH_SLUG, ED_CLOSE, true, 2) && logic->CanKillEnemy(RE_FIRE_KEESE, ED_CLOSE, true, 2)),
     });
 
     areaTable[RR_GERUDO_TRAINING_GROUND_LAVA_ROOM] = Region("Gerudo Training Ground Lava Room", SCENE_GERUDO_TRAINING_GROUND, {

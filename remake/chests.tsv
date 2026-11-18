@@ -188,7 +188,7 @@ Gerudo Training Ground Maze Path Final Chest	1941083939696166170	Banc/GerudoTrai
 Gerudo Training Ground Maze Right Central Chest	196331300747102419	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_BombchuBundle_Small	yes	
 Gerudo Training Ground Maze Right Side Chest	11683433230229591151	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Gerudo Training Ground Underwater Silver Rupee Chest	3717705376223508790	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
-Gerudo Training Ground Hammer Room Clear Chest	4961588221597286817	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs		no	checks what Link owns and names no item, and no chest of both kinds is seen to give a placed item
+Gerudo Training Ground Hammer Room Clear Chest	4961588221597286817	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_BombBundle_Small	yes	With no mod it gave 5 bombs to a Link without the bow (seen in game), which may be a refill of what he was lowest on.
 Gerudo Training Ground Hammer Room Switch Chest	4372363658229299619	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Eye Statue Chest	11563468890171962383	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Gerudo Training Ground Near Scarecrow Chest	9911316961118170383	Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	

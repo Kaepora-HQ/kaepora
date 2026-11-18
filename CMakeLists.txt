@@ -191,6 +191,8 @@ set(KAEPORA_TESTED_SUBSTITUTE_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with one item in a chest's item and substitute values")
 set(KAEPORA_TESTED_ADDED_ITEM_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with an item value added to two chests that named none")
+set(KAEPORA_TESTED_HAMMER_ROOM_MOD "" CACHE FILEPATH
+    "The placement file of the mod tested in the game with the red rupee in the Training Ground hammer room chest")
 set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
 set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
@@ -237,6 +239,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-added-item-mod
             COMMAND ${PATCH_TEST} tested-added-item-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_ADDED_ITEM_MOD}")
+    endif()
+    if(KAEPORA_TESTED_HAMMER_ROOM_MOD)
+        add_test(NAME patch-tested-hammer-room-mod
+            COMMAND ${PATCH_TEST} tested-hammer-room-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_HAMMER_ROOM_MOD}")
     endif()
     if(KAEPORA_TESTED_GIFT_MOD)
         add_test(NAME patch-tested-gift-mod
