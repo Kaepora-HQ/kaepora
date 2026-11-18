@@ -140,30 +140,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                        ("KF Mido Top Left Chest", "Goron's Bracelet")))
 
-    def test_a_bomb_needs_the_bracelets_strength(self):
-        # Link takes a bomb out of the bag only at the strength the bracelet gives, or adult Link's gauntlets give. The
-        # rock before the Death Mountain Trail chest takes a bomb or the hammer.
+    def test_a_bomb_needs_no_strength(self):
+        # Every mod gives a bomb the bombchu's lift grade, None, so Link takes one out of the bag with no strength. The
+        # rock before the Death Mountain Trail chest takes a bomb, a bombchu or the hammer, and the logic counts
+        # bombchus only with a bomb bag.
         no_bracelet = ("GC Darunias Joy", "Green Rupee")
         bomb_bag = ("KF Mido Top Left Chest", "Progressive Bomb Bag")
-        self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
-        self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, bomb_bag))
-        # Without the bracelet, a child reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come from
-        # elsewhere for Link to become adult.
-        adult_without_strength = (NO_HAMMER, bomb_bag, no_bracelet, NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS,
-                                  ("KF Mido Bottom Left Chest", "Goron's Ruby"),
-                                  ("KF Mido Bottom Right Chest", "Zora's Sapphire"))
-        self.assertFalse(self.reachable("DMT Chest", *adult_without_strength))
-        self.assertTrue(self.reachable("DMT Chest", *adult_without_strength,
-                                       ("KF Mido Top Right Chest", "Silver Gauntlets")))
-
-    def test_a_bombchu_needs_no_strength(self):
-        # The logic counts bombchus only with a bomb bag and a place to buy them, here a Mido's House chest. The rock
-        # before the Death Mountain Trail chest takes a bomb, a bombchu or the hammer.
-        child_with_bombs_without_bracelet = (NEVER_ADULT, ("GC Darunias Joy", "Green Rupee"),
-                                             ("KF Mido Top Left Chest", "Progressive Bomb Bag"))
-        self.assertFalse(self.reachable("DMT Chest", *child_with_bombs_without_bracelet))
-        self.assertTrue(self.reachable("DMT Chest", *child_with_bombs_without_bracelet,
-                                       ("KF Mido Top Right Chest", "Buy Bombchu (10)")))
+        self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet))
+        self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
 
     def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
         # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
@@ -286,9 +270,9 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Bottom of the Well Map Chest",
                                         ("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), *kit))
         self.assertTrue(self.reachable("Bottom of the Well Map Chest", *kit))
-        # Without the bracelet a child uses no bomb, but a bombchu needs no strength. Adult Link's Silver Gauntlets push
-        # the Forest Temple's blocks and open Dodongo's Cavern, where the bomb bag lies. Without the bracelet, a child
-        # reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come from elsewhere.
+        # Adult Link's Silver Gauntlets push the Forest Temple's blocks and open Dodongo's Cavern, where the bomb bag
+        # lies. Without the bracelet, a child reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come
+        # from elsewhere.
         self.assertTrue(self.reachable("Bottom of the Well Map Chest", ("GC Darunias Joy", "Green Rupee"),
                                        ("KF Mido Top Left Chest", "Silver Gauntlets"),
                                        ("KF Mido Top Right Chest", "Goron's Ruby"),
