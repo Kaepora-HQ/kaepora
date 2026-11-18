@@ -216,3 +216,4 @@ Ganon's Castle Light Trial Second Right Chest	14046623154429024571	Banc/InsideGa
 Ganon's Castle Light Trial Third Right Chest	11406545451127340703	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs		no	a trap chest gives nothing and ignores any item written to it
 Ganon's Castle Light Trial Invisible Enemies Chest	14962432460641118089	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Ganon's Castle Light Trial Lullaby Chest	4733634471038136588	Banc/InsideGanonCastle/InsideGanonCastle_Static.bcett.byml.zs	TBox_Rupee_Green	yes	
+Ganon's Castle Light Trial Triforce Room Invisible Chest	15320975652699461295	Banc/InsideGanonCastle/InsideGanonCastle_Dynamic.bcett.byml.zs	Item_Dungeon_SmallKey	yes	

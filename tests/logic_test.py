@@ -358,6 +358,17 @@ class LogicTest(unittest.TestCase):
 
     # Chests SoH has no location for.
 
+    def test_ganons_castle_lock_takes_the_key_of_the_light_trial_chest(self):
+        # The castle's one small key lies in an invisible chest in the Light Trial's Lullaby room, before its one lock.
+        # Every trial, the Light Trial's behind that lock among them, stands before the tower.
+        no_key = ("Ganon's Castle Light Trial Triforce Room Invisible Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Ganon's Castle Light Trial Triforce Room Invisible Chest",
+                                       SILVER_GAUNTLETS_AT_START))
+        self.assertTrue(self.reachable("Ganon's Castle Tower Boss Key Chest", SILVER_GAUNTLETS_AT_START))
+        self.assertFalse(self.reachable("Ganon's Castle Tower Boss Key Chest", SILVER_GAUNTLETS_AT_START, no_key))
+
+    # Chests SoH has no location for.
+
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):
         # Adult Link rides the platform that grows from the magic bean planted by the bridge.
         self.assertTrue(self.reachable("LW Bridge Chest"))
