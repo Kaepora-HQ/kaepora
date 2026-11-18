@@ -8,10 +8,13 @@ static void Trap(const char* symbol) {
     std::abort();
 }
 
-#define TRAP(symbol)                   \
-    void trap_##symbol() asm(#symbol); \
-    void trap_##symbol() {             \
-        Trap(#symbol);                 \
+// A Mach-O name starts with an underscore that an ELF name lacks; the compiler gives the prefix.
+#define STRING(text) #text
+#define LABEL(prefix, symbol) STRING(prefix) #symbol
+#define TRAP(symbol)                                                \
+    void trap_##symbol() asm(LABEL(__USER_LABEL_PREFIX__, symbol)); \
+    void trap_##symbol() {                                          \
+        Trap(#symbol);                                              \
     }
 
 TRAP(Actor_Kill)

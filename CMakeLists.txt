@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
+# Lichii needs macOS 15 or later, so the programs need no older one. project() reads this, so it comes first.
+set(CMAKE_OSX_DEPLOYMENT_TARGET 15.0 CACHE STRING "The oldest macOS the programs run on")
 project(kaepora VERSION 0.0.0 LANGUAGES C CXX) # x-release-please-version
 
 set(CMAKE_CXX_STANDARD 20)
@@ -8,8 +10,9 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # Release builds keep assert on, so a broken invariant stops the program instead of writing a bad seed.
 add_compile_options(-UNDEBUG)
 
-if(WIN32)
-    # Windows has no packages of these. EXCLUDE_FROM_ALL keeps their install rules out of the package.
+if(WIN32 OR APPLE)
+    # Windows has no packages of these, and the macOS package must not need Homebrew's. EXCLUDE_FROM_ALL keeps their
+    # install rules out of the package.
     include(FetchContent)
     set(ZSTD_BUILD_SHARED OFF)
     set(ZSTD_BUILD_PROGRAMS OFF)
@@ -66,10 +69,10 @@ target_include_directories(kaepora-generator PUBLIC
 target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
-    $<IF:$<C_COMPILER_ID:Clang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
+    $<IF:$<C_COMPILER_ID:Clang,AppleClang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
 # Clang takes #embed in C++ as an extension and warns at each use.
 set_source_files_properties(generator/remake.cpp shipwright/soh/soh/Enhancements/Lang/Lang.cpp PROPERTIES
-    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:Clang>:-Wno-c23-extensions>)
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-c23-extensions>)
 target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 add_executable(kaepora-seedgen generator/main.cpp)

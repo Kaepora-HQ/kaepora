@@ -7,6 +7,7 @@ The imported sources hold game and GUI code next to the generator code. The gene
 but the linker still needs a definition for every function it references. Each trap aborts with the symbol name.
 A missing symbol used as data, or as a function pointer not listed below, must be defined by hand in generator/.
 Read the objects of a Debug build: optimised objects drop some references that a Debug build still needs.
+macOS builds the same generator/traps.cpp, as it misses the same names.
 
 On Windows the linker names what it misses. The script writes generator/traps_windows.cpp with no traps, links
 kaepora-seedgen in the build folder, writes a trap for each name the linker reports, and links again. The build
@@ -36,10 +37,13 @@ static void Trap(const char* symbol) {
     std::abort();
 }
 
-#define TRAP(symbol)                   \\
-    void trap_##symbol() asm(#symbol); \\
-    void trap_##symbol() {             \\
-        Trap(#symbol);                 \\
+// A Mach-O name starts with an underscore that an ELF name lacks; the compiler gives the prefix.
+#define STRING(text) #text
+#define LABEL(prefix, symbol) STRING(prefix) #symbol
+#define TRAP(symbol)                                                \\
+    void trap_##symbol() asm(LABEL(__USER_LABEL_PREFIX__, symbol)); \\
+    void trap_##symbol() {                                          \\
+        Trap(#symbol);                                              \\
     }
 
 """
