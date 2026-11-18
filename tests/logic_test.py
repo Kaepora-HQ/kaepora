@@ -374,6 +374,13 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("HF Redead Grotto Chest"))
         self.assertFalse(self.reachable("HF Redead Grotto Chest", ("Song from Windmill", "Green Rupee")))
 
+    def test_hyrule_field_fairy_thought_chest_needs_both_ages(self):
+        # Adult Link reads the Fairy Thought beside the chest, and the chest then opens for child Link. Without the
+        # Prelude of Light, adult Link never returns to child.
+        self.assertTrue(self.reachable("HF Fairy Thought Chest"))
+        self.assertFalse(self.reachable("HF Fairy Thought Chest", NEVER_ADULT))
+        self.assertFalse(self.reachable("HF Fairy Thought Chest", ("Sheik at Temple", "Green Rupee")))
+
     def test_hyrule_field_tower_chest_needs_the_hookshot(self):
         self.assertTrue(self.reachable("HF Tower Chest", ("Water Temple Longshot Chest", "Green Rupee")))
         self.assertFalse(self.reachable("HF Tower Chest", NO_HOOKSHOT))

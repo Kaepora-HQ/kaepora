@@ -9,6 +9,8 @@ void RegionTable_Init_HyruleField() {
         //Events
         EVENT_ACCESS(LOGIC_BIG_POE_KILL,       logic->HasBottle() && logic->CanUse(RG_FAIRY_BOW) && (logic->SummonEpona() || ctx->GetTrickOption(RT_HF_BIG_POE_WITHOUT_EPONA))),
         EVENT_ACCESS(LOGIC_SOLD_BUNNY_HOOD,    logic->IsChild && logic->HasItem(RG_BUNNY_HOOD) && logic->HasItem(RG_KOKIRI_EMERALD) && logic->HasItem(RG_GORON_RUBY) && logic->HasItem(RG_ZORA_SAPPHIRE) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
+        // The Fairy Thought beside the heart piece chest stands only in the adult field.
+        EVENT_ACCESS(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT, logic->IsAdult),
     }, {
         //Locations
         LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
@@ -24,6 +26,8 @@ void RegionTable_Init_HyruleField() {
         // The Song of Storms opens the hole by the way to Kakariko. Below it, the chest appears once its two ReDeads
         // are dead.
         LOCATION(RC_HF_REDEAD_GROTTO_CHEST,        logic->CanOpenStormsGrotto() && logic->CanKillEnemy(RE_REDEAD, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
+        // The chest opens only for child Link, once adult Link has read the Fairy Thought beside it.
+        LOCATION(RC_HF_FAIRY_THOUGHT_CHEST,        logic->IsChild && logic->Get(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),
