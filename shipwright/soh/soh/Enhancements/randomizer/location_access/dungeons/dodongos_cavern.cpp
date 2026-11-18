@@ -117,7 +117,8 @@ void RegionTable_Init_DodongosCavern() {
     }, {
         //Exits
         ENTRANCE(RR_DODONGOS_CAVERN_LOBBY_SWITCH,      logic->HasFireSourceWithTorch()),
-        ENTRANCE(RR_DODONGOS_CAVERN_LOWER_LIZALFOS,    true),
+        // From this side the Lizalfos never come, so the door opens only once they have died.
+        ENTRANCE(RR_DODONGOS_CAVERN_LOWER_LIZALFOS,    logic->Get(LOGIC_DC_KILLED_LOWER_LIZALFOS)),
         ENTRANCE(RR_DODONGOS_CAVERN_NEAR_DODONGO_ROOM, AnyAgeTime([]{return logic->CanBreakMudWalls() || logic->HasItem(RG_GORONS_BRACELET);})),
     });
 
