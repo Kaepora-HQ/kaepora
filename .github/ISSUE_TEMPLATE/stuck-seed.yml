@@ -1,0 +1,43 @@
+name: A seed I cannot finish
+description: An item you need is out of reach, or the game stopped you from going on.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every seed should be possible to finish. If yours is not, this report finds out why.
+
+        Never attach the game file, or any file taken out of the game. The spoiler log is safe to share.
+  - type: textarea
+    id: spoiler-log
+    attributes:
+      label: Spoiler log
+      description: Select the seed in Kaepora and click **Open spoiler log**. Drag that file here, or paste its text. It holds the version, the seed and its settings.
+    validations:
+      required: true
+  - type: textarea
+    id: stuck
+    attributes:
+      label: Where you are stuck
+      description: The place, and what stops you there. For example, "Forest Temple, the door past the twisted hallway stays barred."
+    validations:
+      required: true
+  - type: textarea
+    id: items
+    attributes:
+      label: What Link has
+      description: The items, songs and keys you hold, and the dungeons you finished. A screenshot of the inventory works.
+    validations:
+      required: true
+  - type: textarea
+    id: order
+    attributes:
+      label: Anything you did in an unusual order
+      description: For example, a dungeon before the item the game expects there, or a scene you skipped.
+  - type: input
+    id: system
+    attributes:
+      label: Your system and Lichii version
+      placeholder: Windows 11, Lichii 1.2.3
+    validations:
+      required: true

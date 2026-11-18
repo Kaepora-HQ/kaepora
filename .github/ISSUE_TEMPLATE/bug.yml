@@ -1,0 +1,47 @@
+name: Something else is wrong
+description: Kaepora will not start, a seed cannot be created, the game does not load the seed, or an item is wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never attach the game file, or any file taken out of the game.
+  - type: textarea
+    id: did
+    attributes:
+      label: What you did
+      description: The steps, in order, from opening Kaepora.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: Copy any message Kaepora showed, word for word. A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: spoiler-log
+    attributes:
+      label: Spoiler log, if the problem is in one seed
+      description: Select the seed in Kaepora and click **Open spoiler log**. Drag that file here, or paste its text.
+  - type: input
+    id: version
+    attributes:
+      label: Kaepora version
+      description: The name of the file you downloaded has it. So does the first line of a spoiler log.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Your system and Lichii version
+      placeholder: Linux (Fedora 43), Lichii 1.2.3
+    validations:
+      required: true

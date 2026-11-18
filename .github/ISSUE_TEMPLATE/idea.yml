@@ -1,0 +1,16 @@
+name: An idea
+description: Something Kaepora could shuffle, a setting, or a change to the window.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What a player would see or do that they cannot today.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why you want it
+      description: The seed or the moment that made you wish for it.
