@@ -95,6 +95,8 @@ void RegionTable_Init_DodongosCavern() {
         EVENT_ACCESS(LOGIC_DC_KILLED_LOWER_LIZALFOS, logic->CanKillEnemy(RE_LIZALFOS, ED_CLOSE, true, 2)),
     }, {
         //Locations
+        // The chest appears once the first two Lizalfos die.
+        LOCATION(RC_DODONGOS_CAVERN_LOWER_LIZALFOS_CHEST, logic->CanKillEnemy(RE_LIZALFOS, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_DODONGOS_CAVERN_LIZALFOS_POT_1,       logic->CanBreakPots()),
         LOCATION(RC_DODONGOS_CAVERN_LIZALFOS_POT_2,       logic->CanBreakPots()),
         LOCATION(RC_DODONGOS_CAVERN_LIZALFOS_POT_3,       logic->CanBreakPots()),
