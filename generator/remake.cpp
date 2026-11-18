@@ -255,6 +255,18 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         // The bridge's logic module builds it once its event has played, whatever the Ganon quest's step.
         values["HavePlayedEvent.GanonCastle_Adult_Field_Rainbow"] = true;
     }
+    if (settings.trials == Trials::None) {
+        // Each trial counts done and none is left. Nothing in the game lowers the tower's barrier when no trial is left
+        // to finish, so it starts down. The elevator in the barrier comes only once Rauru's scene has played.
+        values["InsideGanonCastle_Dungeon_Barrier_Count"] = 0;
+        values["InsideGanonCastle_IsAllBarrierClear"] = true;
+        values["HavePlayedEvent.Dm_InsideGanonCastle_0090"] = true;
+        values["InsideGanonCastle_Dungeon_SeeBarrierGuide"] = true;
+        for (std::string_view trial : { "Forest", "Water", "Shadow", "Fire", "Light", "Spirit" }) {
+            values[std::format("InsideGanonCastle_Dungeon_BarrierRemove_{}", trial)] = true;
+            values[std::format("HavePlayedEvent.InsideGanonCastle_Dungeon_BarrierRemove_{}", trial)] = true;
+        }
+    }
     if (settings.keys == DungeonItems::GivenAtTheStart) {
         for (std::string_view door : smallKeyDoors) {
             values[std::format("IsChainLockDoorOpen.{}", door)] = true;

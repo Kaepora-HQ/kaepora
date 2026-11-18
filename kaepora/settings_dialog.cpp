@@ -59,6 +59,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.bridge == Bridge::AlwaysOpen) {
         changed << "bridge always open";
     }
+    if (settings.trials == Trials::None) {
+        changed << "no trials";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -89,6 +92,7 @@ QString Details(const SeedSettings& settings) {
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
+                        Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
                         Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))) }
         .join('\n');
 }
@@ -154,9 +158,11 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
 
     QComboBox* forest = Choice(ForestChoices);
     QComboBox* bridge = Choice(BridgeChoices);
+    QComboBox* trials = Choice(TrialsChoices);
     auto* worldForm = new QFormLayout;
     worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
     worldForm->addRow(QString::fromUtf8(BridgeSetting), bridge);
+    worldForm->addRow(QString::fromUtf8(TrialsSetting), trials);
     auto* worldGroup = new QGroupBox("World");
     worldGroup->setLayout(worldForm);
 
@@ -186,6 +192,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(mapsAndCompasses, shown.mapsAndCompasses);
         Select(forest, shown.forest);
         Select(bridge, shown.bridge);
+        Select(trials, shown.trials);
         Select(lens, shown.lens);
     };
     show(settings);
@@ -204,6 +211,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.mapsAndCompasses = Selected<DungeonItems>(mapsAndCompasses);
         shown.forest = Selected<Forest>(forest);
         shown.bridge = Selected<Bridge>(bridge);
+        shown.trials = Selected<Trials>(trials);
         shown.lens = Selected<Lens>(lens);
         chosen(shown);
         dialog->accept();

@@ -13,6 +13,7 @@ inline constexpr std::string_view KeysSetting = "Small and boss keys";
 inline constexpr std::string_view MapsAndCompassesSetting = "Maps and compasses";
 inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
+inline constexpr std::string_view TrialsSetting = "Ganon's trials";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 
 struct Dungeon {
@@ -61,6 +62,12 @@ inline constexpr std::pair<Bridge, std::string_view> BridgeChoices[] = {
     { Bridge::AlwaysOpen, "Always open" },
 };
 
+enum class Trials { AllSix, None };
+inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
+    { Trials::AllSix, "All six" },
+    { Trials::None, "None" },
+};
+
 enum class Lens { Needed, NeverNeeded };
 inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::Needed, "Needed" },
@@ -78,6 +85,7 @@ struct SeedSettings {
     DungeonItems mapsAndCompasses = DungeonItems::AnywhereInTheirDungeon;
     Forest forest = Forest::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
+    Trials trials = Trials::AllSix;
     Lens lens = Lens::Needed;
 
     bool operator==(const SeedSettings&) const = default;

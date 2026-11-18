@@ -30,6 +30,7 @@ LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
 BRIDGE_OPEN = {"Rainbow Bridge": "Always open"}
+NO_TRIALS = {"Ganon's trials": "None"}
 
 
 class LogicTest(unittest.TestCase):
@@ -300,6 +301,13 @@ class LogicTest(unittest.TestCase):
         no_light_arrows = ("Market ToT Light Arrow Cutscene", "Green Rupee")
         self.assertFalse(self.reachable("Ganon's Castle Forest Trial Chest", no_light_arrows))
         self.assertTrue(self.reachable("Ganon's Castle Forest Trial Chest", no_light_arrows, settings=BRIDGE_OPEN))
+
+    def test_the_tower_opens_without_trials(self):
+        # Each trial ends with a Light Arrow shot at its core. The bridge is open so that Link reaches the castle at all.
+        tower = "Ganon's Castle Tower Boss Key Chest"
+        no_light_arrows = ("Market ToT Light Arrow Cutscene", "Green Rupee")
+        self.assertFalse(self.reachable(tower, no_light_arrows, settings=BRIDGE_OPEN))
+        self.assertTrue(self.reachable(tower, no_light_arrows, settings=BRIDGE_OPEN | NO_TRIALS))
 
     def test_no_door_takes_a_key_when_keys_are_not_needed(self):
         # The first room's key opens the first lock. The boss key chest holds the only boss key.

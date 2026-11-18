@@ -275,5 +275,8 @@ void SetOptions(const SeedSettings& settings) {
     if (settings.bridge == Bridge::AlwaysOpen) {
         ctx->GetOption(RSK_RAINBOW_BRIDGE).Set(RO_BRIDGE_ALWAYS_OPEN);
     }
+    if (settings.trials == Trials::None) {
+        ctx->GetOption(RSK_GANONS_TRIALS).Set(RO_GANONS_TRIALS_SKIP);
+    }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
 }
