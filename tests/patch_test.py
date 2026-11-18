@@ -73,6 +73,8 @@ ENGLISH_PACKS = ["Mals/EUen.Product.110.sarc.zs", "Mals/USen.Product.110.sarc.zs
 KOKIRI_STONE = "GOSSIP_KOKIRI_FOREST_01"
 # The stone whose English rumour is the shortest, so a long text grows the English pack past its size table entry.
 SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
+# A stone that talks but is not in remake/stones.tsv.
+UNPAIRED_STONE = "GOSSIP_HYRULE_FIELD_02"
 STONE_FLOW = "Event/EventFlow/GossipStone.bfevfl.zs"
 TEXT_PACK_OVERHEAD = 312
 BOOL = 0xD0
@@ -902,8 +904,9 @@ def bad_input(patch, game):
         "tag not closed": ({"label": other, "text": "{color:0 Saria"}, ["stone_texts[1]", "{color:0 Saria"]),
         "colour out of range": ({"label": other, "text": "{color:65536}"}, ["stone_texts[1]", "{color:65536}"]),
         "code byte outside a tag": ({"label": other, "text": "Sa\u000eria"}, ["stone_texts[1]", "code"]),
-        "label not a message": (
-            {"label": "GOSSIP_NOWHERE_01", "text": "They say."}, ["GOSSIP_NOWHERE_01", "Mals/", STONE_MESSAGES]),
+        "stone not paired": (
+            {"label": UNPAIRED_STONE, "text": "They say."},
+            ["plan.json", "stone_texts[1]", UNPAIRED_STONE, "remake/stones.tsv"]),
     }
     for name, (entry, named) in stones.items():
         plans[name] = (good | {"stone_texts": [valid_stone, entry]}, named)

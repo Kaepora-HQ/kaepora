@@ -26,3 +26,8 @@ first row's item is what the location adds to the pool.
 
 `items.tsv` maps each remake item name to the SoH item it stands for, by SoH's English name. A remake key, map or
 compass names no dungeon, so it has one row per dungeon, and a chest takes the one of its own dungeon.
+
+`stones.tsv` has a row for each gossip stone whose SoH stone is known, and the patcher gives a text only to these.
+
+- `label`: the stone's actor `Name`, which is also the label of the message it says in `EventFlowMsg/GossipStone.msbt`.
+- `location`: the SoH gossip stone it is, by SoH's English name.

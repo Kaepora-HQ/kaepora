@@ -17,6 +17,7 @@
 #include <format>
 #include <fstream>
 #include <limits>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <tuple>
@@ -55,11 +56,31 @@ static std::string Name(const PlannedEventText& text) {
 constexpr std::string_view RumourOpening = "{color:1}{size:80}{3:0:0f0000}";
 constexpr std::string_view RumourPageReset = "{size:80}{color:1}";
 
+static constexpr char stoneTable[] = {
+#embed "../remake/stones.tsv"
+};
+
+static std::set<std::string, std::less<>> PairedStones() {
+    std::set<std::string, std::less<>> labels;
+    for (const auto row :
+         std::views::split(std::string_view(stoneTable, sizeof stoneTable), '\n') | std::views::drop(1)) {
+        const std::string_view line(row.begin(), row.end());
+        if (!line.empty()) {
+            labels.emplace(line.substr(0, line.find('\t')));
+        }
+    }
+    return labels;
+}
+
 static PlannedStoneText ParseStoneText(const nlohmann::json& stone) {
+    static const std::set<std::string, std::less<>> paired = PairedStones();
     const std::string label = stone.at("label").get<std::string>();
     const std::string words = stone.at("text").get<std::string>();
     if (label.empty() || words.empty()) {
         throw std::runtime_error("label and text must not be empty");
+    }
+    if (!paired.contains(label)) {
+        throw std::runtime_error(std::format("{} is not a stone of remake/stones.tsv", label));
     }
     std::string text = std::string(RumourOpening) + words;
     for (size_t page = text.find(msbt::PageTag); page != std::string::npos; page = text.find(msbt::PageTag, page + 1)) {

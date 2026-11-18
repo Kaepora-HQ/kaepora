@@ -70,9 +70,9 @@ target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
 # The item icon table drops const from texture names. The generator only reads the slot tables next to it.
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang,AppleClang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
-# Clang takes #embed in C++ as an extension and warns at each use.
-set_source_files_properties(generator/remake.cpp shipwright/soh/soh/Enhancements/Lang/Lang.cpp PROPERTIES
-    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-c23-extensions>)
+# GCC and Clang take #embed in C++20 as an extension and warn at each use.
+set_source_files_properties(generator/remake.cpp patcher/mod.cpp shipwright/soh/soh/Enhancements/Lang/Lang.cpp
+    PROPERTIES COMPILE_OPTIONS $<IF:$<CXX_COMPILER_ID:Clang,AppleClang>,-Wno-c23-extensions,-Wno-c++26-extensions>)
 target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 add_executable(kaepora-seedgen generator/main.cpp)
@@ -252,6 +252,8 @@ if(KAEPORA_GAME_NUP)
                  gift-size-table stone-texts)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
+    add_test(NAME remake-tables
+        COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-fixed-seed-plan
         COMMAND ${PATCH_TEST} seed-plan $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                 ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json)
