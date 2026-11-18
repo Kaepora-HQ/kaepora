@@ -153,7 +153,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      plan_opens_the_doors_the_rules_count_open plan_keeps_quests_from_going_back
                      same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
-                     the_crate_heart_piece_and_the_training_ground_key_are_shuffled
+                     loose_items_the_remake_keeps_in_chests_are_shuffled
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      maps_and_compasses_stay_in_their_own_chests lens_never_needed_leaves_the_lens_off_the_route

@@ -184,10 +184,10 @@ class SeedgenTest(unittest.TestCase):
             self.assertIn(first, names)
             self.assertEqual(names[first], names[second])
 
-    def test_the_crate_heart_piece_and_the_training_ground_key_are_shuffled(self):
-        # SoH counts both as loose items. The remake keeps each in a chest.
+    def test_loose_items_the_remake_keeps_in_chests_are_shuffled(self):
         chests = {"GV Crate Freestanding PoH": "15856256242099990922",
-                  "Gerudo Training Ground Freestanding Key": "1883068192328530224"}
+                  "Gerudo Training Ground Freestanding Key": "1883068192328530224",
+                  "Graveyard Dampe Race Freestanding PoH": "5534919361313859554"}
         held = collections.defaultdict(set)
         for seed in range(220, 230):
             spoiler, plan = self.generate(str(seed))
