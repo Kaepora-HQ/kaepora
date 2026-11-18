@@ -120,6 +120,8 @@ void RegionTable_Init_DesertColossus() {
         LOCATION(RC_COLOSSUS_DEKU_SCRUB_GROTTO_REAR,    logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_COLOSSUS_DEKU_SCRUB_GROTTO_FRONT,   logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_COLOSSUS_DEKU_SCRUB_GROTTO_BEEHIVE, logic->CanBreakUpperBeehives()),
+        // The chest appears once the Beamos and the five Skullwalltulas die in one visit.
+        LOCATION(RC_COLOSSUS_GROTTO_CHEST,              logic->CanKillEnemy(RE_BEAMOS) && logic->CanKillEnemy(RE_WALLTULA, ED_BOMB_THROW, true, 5) && logic->HasItem(RG_OPEN_CHEST)),
     }, {
         //Exits
         ENTRANCE(RR_DESERT_COLOSSUS, true),

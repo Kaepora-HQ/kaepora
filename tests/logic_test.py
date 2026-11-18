@@ -368,6 +368,18 @@ class LogicTest(unittest.TestCase):
         no_iron_boots = ("Ice Cavern Iron Boots Chest", "Green Rupee")
         self.assertFalse(self.reachable("GV Octorok Grotto Chest", SILVER_GAUNTLETS_AT_START, no_iron_boots))
 
+    def test_colossus_grotto_chest_needs_the_beamos_killed(self):
+        # Under a boulder that takes the Silver Gauntlets. The chest appears once a Beamos and five Skullwalltulas die,
+        # and only explosives kill the Beamos. Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a
+        # bag, so without it Link has no explosives; the stones and the magic meter that take them lie elsewhere, so he
+        # still reaches the grotto.
+        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
+                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
+                       ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+        self.assertTrue(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START))
+        self.assertTrue(self.reachable("Colossus Deku Scrub Grotto Front", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
+        self.assertFalse(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
+
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
             self.assertTrue(self.reachable(chest))
