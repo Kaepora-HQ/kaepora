@@ -6,6 +6,7 @@ Link can ever collect what is at one location. Names are SoH's English names.
 """
 
 import pathlib
+import subprocess
 import sys
 import unittest
 
@@ -33,6 +34,12 @@ class LogicTest(unittest.TestCase):
     def test_placed_items_change_the_answer(self):
         self.assertTrue(self.reachable("Queen Gohma"))
         self.assertFalse(self.reachable("Queen Gohma", ("KF Kokiri Sword Chest", "Green Rupee")))
+
+    def test_links_pocket_takes_one_item(self):
+        result = subprocess.run([reach.PROGRAM, "{}", "Queen Gohma", "Link's Pocket", "Silver Gauntlets",
+                                 "Link's Pocket", "Green Rupee"], capture_output=True, text=True)
+        self.assertEqual((result.returncode, result.stdout), (2, ""), result.stderr)
+        self.assertIn("Link's Pocket", result.stderr)
 
     def test_child_comes_back_only_with_the_prelude_of_light(self):
         # Only child Link can drain the well, with the Song of Storms that only adult Link learns.

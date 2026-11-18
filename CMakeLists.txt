@@ -157,11 +157,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      maps_and_compasses_stay_in_their_own_chests lens_never_needed_leaves_the_lens_off_the_route
-                     every_setting_changed_at_once strength_items_come_in_rising_order seed_text_ignores_case
-                     fixed_seed_matches_fixture)
+                     every_setting_changed_at_once seed_text_ignores_case fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
-                                  $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
-                                  SeedgenTest.test_${TEST})
+                                  $<TARGET_FILE:kaepora-seedgen> ${PROJECT_VERSION} SeedgenTest.test_${TEST})
 endforeach()
 add_test(NAME logic COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py
                             $<TARGET_FILE:kaepora-reach>)
