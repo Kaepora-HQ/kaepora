@@ -26,6 +26,10 @@ NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 # The well holds the only Lens of Truth.
 NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+# Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a bag, so without it Link holds no explosive. The
+# stones and the magic meter lie where no explosive is needed, so he still grows up.
+NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Goron's Ruby"),
+               ("KF Mido Bottom Left Chest", "Zora's Sapphire"), ("KF Storms Grotto Chest", "Progressive Magic Meter"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
@@ -172,8 +176,8 @@ class LogicTest(unittest.TestCase):
                                            ("KF Mido Top Right Chest", "Goron's Ruby")))
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
-        # Only the Silver Gauntlets or the hammer clear the way to the leftmost chest of the Goron City maze.
-        self.assertTrue(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_HAMMER,
+        # Boulders only the Silver Gauntlets lift ring the rightmost chest of the Goron City maze.
+        self.assertTrue(self.reachable("GC Maze Right Chest", NO_SILVER_GAUNTLETS,
                                        ("KF Mido Top Left Chest", "Golden Gauntlets")))
 
     def test_silver_gauntlets_do_not_lift_what_golden_gauntlets_lift(self):
@@ -189,6 +193,19 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GC Maze Right Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS,
                                        ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
+    def test_goron_city_maze_first_row_takes_a_bomb_or_the_hammer(self):
+        # Tan boulders close the maze's first row, and only a bomb or the hammer breaks them. Past it, the hammer or the
+        # Silver Gauntlets reach the left chest, and explosives alone do not. Without explosives the Fire Temple's hammer
+        # is out of reach, so it comes from elsewhere.
+        gauntlets_alone = (SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG, NO_HAMMER)
+        hammer_alone = (("KF Mido Top Right Chest", "Megaton Hammer"), *NO_BOMB_BAG, NO_SILVER_GAUNTLETS,
+                        NO_GOLDEN_GAUNTLETS)
+        for chest in ("GC Maze Center Chest", "GC Maze Left Chest"):
+            self.assertFalse(self.reachable(chest, *gauntlets_alone))
+            self.assertTrue(self.reachable(chest, *hammer_alone))
+        self.assertTrue(self.reachable("GC Maze Left Chest", SILVER_GAUNTLETS_AT_START, NO_HAMMER))
+        self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))
+
     def test_goron_city_maze_center_side_chest_is_reachable(self):
         self.assertTrue(self.reachable("GC Maze Center Side Chest"))
 
@@ -199,10 +216,7 @@ class LogicTest(unittest.TestCase):
 
     def test_the_bracelet_lifts_nothing_that_needs_gauntlets(self):
         # Darunia gives the bracelet.
-        self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))
         self.assertFalse(self.reachable("OGC Great Fairy Reward", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS))
-        self.assertTrue(self.reachable("GC Maze Left Chest", NO_GOLDEN_GAUNTLETS, NO_HAMMER,
-                                       ("KF Mido Top Left Chest", "Silver Gauntlets")))
 
     def test_training_ground_door_behind_the_heavy_block_opens_to_the_hookshot(self):
         # Without the bow, the Forest Temple and so the well's Lens of Truth are out of reach, so the gauntlets and the
@@ -456,15 +470,10 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Forest Temple Falling Ceiling Room Chest", no_bow, *two_keys))
 
     def test_a_beamos_falls_to_the_mirror_shield(self):
-        # The Mirror Shield sends a Beamos's beam back at it. Only Dodongo's Cavern holds a bomb bag, and bombchus count
-        # only with a bag, so without it Link has no explosives, and the stones and the magic meter that take them lie
-        # elsewhere.
-        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
-                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                       ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+        # The Mirror Shield sends a Beamos's beam back at it.
         mirror_shield = ("KF Mido Top Right Chest", "Mirror Shield")
-        self.assertTrue(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag, mirror_shield))
-        self.assertFalse(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag))
+        self.assertTrue(self.reachable("Gerudo Training Ground Beamos Chest", *NO_BOMB_BAG, mirror_shield))
+        self.assertFalse(self.reachable("Gerudo Training Ground Beamos Chest", *NO_BOMB_BAG))
 
     def test_a_childs_boomerang_hits_the_near_eyes(self):
         # Without the slingshot, a child's boomerang hits the Deku Tree's basement eye on the way to Gohma, its
@@ -520,15 +529,11 @@ class LogicTest(unittest.TestCase):
 
     def test_colossus_grotto_chest_needs_the_beamos_killed(self):
         # Under a boulder that takes the Silver Gauntlets. The chest appears once a Beamos and five Skullwalltulas die,
-        # and only explosives or the Mirror Shield kill the Beamos. Only Dodongo's Cavern holds a bomb bag, and bombchus
-        # count only with a bag, so without it Link has no explosives and does not reach the Mirror Shield chest; the
-        # stones and the magic meter that take them lie elsewhere, so he still reaches the grotto.
-        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
-                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                       ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+        # and only explosives or the Mirror Shield kill the Beamos. Without the bomb bag Link does not reach the Mirror
+        # Shield chest either.
         self.assertTrue(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START))
-        self.assertTrue(self.reachable("Colossus Deku Scrub Grotto Front", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
-        self.assertFalse(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START, *no_bomb_bag))
+        self.assertTrue(self.reachable("Colossus Deku Scrub Grotto Front", SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG))
+        self.assertFalse(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG))
 
     def test_gerudo_fortress_grotto_chest_is_reachable(self):
         self.assertTrue(self.reachable("GF Grotto Chest"))

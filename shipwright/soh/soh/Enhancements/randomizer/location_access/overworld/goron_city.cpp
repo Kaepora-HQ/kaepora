@@ -20,10 +20,9 @@ void RegionTable_Init_GoronCity() {
                                                                                    (ctx->GetTrickOption(RT_GC_LINK_GORON_DINS) && (logic->CanUse(RG_DINS_FIRE) || (ctx->GetTrickOption(RT_BLUE_FIRE_MUD_WALLS) && logic->CanUse(RG_BOTTLE_WITH_BLUE_FIRE)))))),
     }, {
         //Locations
-        LOCATION(RC_GC_MAZE_LEFT_CHEST,                    (logic->CanUse(RG_MEGATON_HAMMER) || logic->CanUse(RG_SILVER_GAUNTLETS) || (ctx->GetTrickOption(RT_GC_LEFTMOST) && logic->HasExplosives() && logic->CanUse(RG_HOVER_BOOTS))) && logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_GC_MAZE_CENTER_CHEST,                  (logic->BlastOrSmash() || logic->CanUse(RG_SILVER_GAUNTLETS)) && logic->HasItem(RG_OPEN_CHEST)),
-        // Beside the center chest. Rocks that a bomb or the hammer breaks close the maze's mouth, and lifting boulders
-        // does not open them.
+        // Rocks that a bomb or the hammer breaks close the maze's first row, and lifting boulders does not open them.
+        LOCATION(RC_GC_MAZE_LEFT_CHEST,                    (logic->CanUse(RG_MEGATON_HAMMER) || (logic->HasExplosives() && logic->CanUse(RG_SILVER_GAUNTLETS)) || (ctx->GetTrickOption(RT_GC_LEFTMOST) && logic->HasExplosives() && logic->CanUse(RG_HOVER_BOOTS))) && logic->HasItem(RG_OPEN_CHEST)),
+        LOCATION(RC_GC_MAZE_CENTER_CHEST,                  logic->BlastOrSmash() && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_GC_MAZE_CENTER_SIDE_CHEST,             logic->BlastOrSmash() && logic->HasItem(RG_OPEN_CHEST)),
         // Boulders only the Silver Gauntlets lift ring the chest.
         LOCATION(RC_GC_MAZE_RIGHT_CHEST,                   logic->BlastOrSmash() && logic->CanUse(RG_SILVER_GAUNTLETS) && logic->HasItem(RG_OPEN_CHEST)),
