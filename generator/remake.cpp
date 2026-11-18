@@ -183,6 +183,12 @@ static constexpr EventText eventTexts[] = {
     // second copy of Event1.
     { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "ChallengeName", "Get_StoneOfForest" },
     { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "StepName", "Complete" },
+    // Kaepora Gaebora waits at the foot of Zora's River once the Dodongo's Cavern Bomb Bag Chest is open. His Event80
+    // sets the Water quest to Step02 even when the quest is further on, and a Link who has shown King Zora Ruto's
+    // letter is then barred from Zora's Fountain. Event80 runs only after Impa's talk, which comes only once the Fire
+    // quest is complete, so these texts make it complete the Fire quest, a write the game ignores on a completed quest.
+    { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "ChallengeName", "Get_StoneOfFire" },
+    { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "StepName", "Complete" },
 };
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {

@@ -2,8 +2,10 @@
 
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
-       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod| \
-           tested-castle-quest-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod <kaepora-patch> \
+           <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
+           <tested mod's romfs folder>...
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift \
            <kaepora-patch> <game.nup>
@@ -50,11 +52,6 @@ NAYRUS_LOVE_GIFT = ("Event/EventFlow/Dm_FairyFountain_Nayru.bfevfl.zs", "Event16
 ANJU_FLOW = "Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs"
 COJIRO_GIFT = (ANJU_FLOW, "Event234", "ReveiveItem")
 POCKET_EGG_GIFT = (ANJU_FLOW, "Event264", "ReveiveItem")
-# After Gohma, the warp's Event4 sets the castle quest to Step01. As a second copy of Event1, it completes the Forest
-# quest again instead.
-ESCAPE_FLOW = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
-CASTLE_QUEST_KEPT = [(ESCAPE_FLOW, "Event4", "ChallengeName", "Get_StoneOfForest"),
-                     (ESCAPE_FLOW, "Event4", "StepName", "Complete")]
 BOOL = 0xD0
 INT64 = 0xD4
 UINT64 = 0xD5
@@ -396,15 +393,21 @@ def tested_gift_mod(patch, game, romfs):
     assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
 
 
-def tested_castle_quest_mod(patch, game, romfs):
-    """The castle quest kept as the game accepted it: after Gohma, the warp left the quest at Step04, and Zelda's scene
-    played."""
-    tested = (pathlib.Path(romfs) / ESCAPE_FLOW).read_bytes()
-    mod = patched(patch, game, plan([], event_texts=CASTLE_QUEST_KEPT))
-    assert sorted(mod) == [ESCAPE_FLOW], sorted(mod)
-    ours = mod[ESCAPE_FLOW]
-    assert_same_frame_header(ours, tested)
-    assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
+def tested_event_text_mods(patch, game, plan_file, *romfs):
+    """Every event flow a plan edits, as the patcher writes it, is the flow of a mod the game accepted: after Gohma
+    the warp left the castle quest at Step04 and Zelda's scene played; after Ruto's letter Kaepora Gaebora left the
+    Water quest at Step07 and King Zora stood aside."""
+    texts = json.loads(pathlib.Path(plan_file).read_text())["event_texts"]
+    tested = {path.relative_to(folder).as_posix(): path.read_bytes()
+              for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
+    mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts]))
+    # The list may name played mods for texts this plan does not carry.
+    assert set(mod) <= set(tested), sorted(set(mod) - set(tested))
+    dictionary = game.zs_dictionary
+    for path, ours in mod.items():
+        theirs = tested[path]
+        assert_same_frame_header(ours, theirs)
+        assert zstd.decompress(ours, zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
 
 
 def tested_added_item_mod(patch, game, romfs):
@@ -722,7 +725,7 @@ def main():
         "tested-substitute-mod": tested_substitute_mod,
         "tested-added-item-mod": tested_added_item_mod,
         "tested-gift-mod": tested_gift_mod,
-        "tested-castle-quest-mod": tested_castle_quest_mod,
+        "tested-event-text-mods": tested_event_text_mods,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,

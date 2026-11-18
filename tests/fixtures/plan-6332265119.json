@@ -1101,6 +1101,18 @@
       "event": "Event4",
       "param": "StepName",
       "text": "Complete"
+    },
+    {
+      "flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs",
+      "event": "Event80",
+      "param": "ChallengeName",
+      "text": "Get_StoneOfFire"
+    },
+    {
+      "flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs",
+      "event": "Event80",
+      "param": "StepName",
+      "text": "Complete"
     }
   ],
   "start_flags": [
