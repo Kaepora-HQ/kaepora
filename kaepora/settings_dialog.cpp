@@ -11,6 +11,8 @@
 #include <QStringList>
 #include <QVBoxLayout>
 
+#include <algorithm>
+#include <initializer_list>
 #include <iterator>
 #include <string_view>
 #include <utility>
@@ -79,6 +81,22 @@ QString Details(const SeedSettings& settings) {
         .join('\n');
 }
 
+// Each group lays out its own labels. They all take the widest one's width, so the choices start in one column.
+static void AlignLabels(std::initializer_list<QFormLayout*> forms) {
+    std::vector<QWidget*> labels;
+    int width = 0;
+    for (QFormLayout* form : forms) {
+        for (int row = 0; row < form->rowCount(); ++row) {
+            QWidget* label = form->itemAt(row, QFormLayout::LabelRole)->widget();
+            labels.push_back(label);
+            width = std::max(width, label->sizeHint().width());
+        }
+    }
+    for (QWidget* label : labels) {
+        label->setMinimumWidth(width);
+    }
+}
+
 template <typename Value, size_t Size>
 static QComboBox* Choice(const std::pair<Value, std::string_view> (&choices)[Size]) {
     auto* box = new QComboBox;
@@ -127,6 +145,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     logicForm->addRow(QString::fromUtf8(LensSetting), lens);
     auto* logicGroup = new QGroupBox("Logic");
     logicGroup->setLayout(logicForm);
+    AlignLabels({ dungeonForm, logicForm });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel |
                                          QDialogButtonBox::Ok);

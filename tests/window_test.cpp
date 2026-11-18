@@ -569,6 +569,17 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
+    void theChoicesStartInOneColumn() {
+        button("Settings…")->click();
+        QCoreApplication::processEvents();
+        QList<int> lefts;
+        for (QComboBox* box : dialog()->findChildren<QComboBox*>()) {
+            lefts << box->mapTo(dialog(), QPoint(0, 0)).x();
+        }
+        QVERIFY(lefts.size() > 1);
+        QCOMPARE(lefts.count(lefts.front()), lefts.size());
+    }
+
     void theSummaryNamesUpToThreeDungeonsLeftOut() {
         leaveOut({ "Water Temple" });
         QVERIFY(shows("Water Temple not shuffled"));
