@@ -64,4 +64,8 @@ Document Parse(std::string_view data);
 // written once.
 std::string Write(const Document& document);
 
+// Sets the UInt under the key at the root of the file, where its dict entry holds it, so every other byte stays.
+// Throws when the root has no UInt under the key, or the UInt is not `from`.
+void SetRootUInt(std::string& data, std::string_view key, uint32_t from, uint32_t to);
+
 } // namespace byml

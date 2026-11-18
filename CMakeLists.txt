@@ -112,6 +112,10 @@ add_executable(kaepora-patch-pack-roundtrip tests/pack_roundtrip.cpp)
 target_link_libraries(kaepora-patch-pack-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-pack-roundtrip PRIVATE ${WARNINGS})
 
+add_executable(kaepora-patch-value-test tests/byml_value_test.cpp)
+target_link_libraries(kaepora-patch-value-test PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch-value-test PRIVATE ${WARNINGS})
+
 # Makes seed folders with the window's MakeSeed, for the tests.
 add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
 target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
@@ -167,6 +171,7 @@ endif()
 
 enable_testing()
 add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
+add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route
                      plan_opens_the_doors_the_rules_count_open plan_keeps_quests_from_going_back

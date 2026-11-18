@@ -246,15 +246,40 @@ private:
 
 } // namespace
 
-Document Parse(std::string_view data) {
+static Reader Open(std::string_view data) {
     Reader reader{ .data = data,
                    .order = data.starts_with(Magic(std::endian::big)) ? std::endian::big : std::endian::little };
     if (!data.starts_with(Magic(reader.order)) || reader.Read<uint16_t>(2) != Version) {
         throw std::runtime_error("not a BYML version 7 file");
     }
     reader.keys = reader.Table(reader.Read<uint32_t>(4));
+    return reader;
+}
+
+Document Parse(std::string_view data) {
+    Reader reader = Open(data);
     reader.strings = reader.Table(reader.Read<uint32_t>(8));
     return { .order = reader.order, .root = reader.Container(reader.Read<uint32_t>(12)) };
+}
+
+void SetRootUInt(std::string& data, std::string_view key, uint32_t from, uint32_t to) {
+    const Reader reader = Open(data);
+    const uint32_t root = reader.Read<uint32_t>(12);
+    if (Type(ReadAt<uint8_t>(data, root)) != Type::Dict) {
+        throw std::runtime_error("the BYML file's root is not a dict");
+    }
+    for (uint32_t i = 0; i < reader.Read24(root + 1); ++i) {
+        const size_t entry = root + 4 + 8 * i;
+        if (reader.keys.at(reader.Read24(entry)) != key) {
+            continue;
+        }
+        if (Type(ReadAt<uint8_t>(data, entry + 3)) != Type::UInt || reader.Read<uint32_t>(entry + 4) != from) {
+            throw std::runtime_error(std::format("{} at the BYML file's root is not the UInt {}", key, from));
+        }
+        WriteAt(data, entry + 4, ToByteOrder(to, reader.order));
+        return;
+    }
+    throw std::runtime_error(std::format("the BYML file's root has no {}", key));
 }
 
 std::string Write(const Document& document) {
