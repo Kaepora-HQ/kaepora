@@ -225,6 +225,8 @@ void RegionTable_Init_DodongosCavern() {
         LOCATION(RC_DODONGOS_CAVERN_LOWER_LIZALFOS_HEART,       true),
         LOCATION(RC_DODONGOS_CAVERN_UPPER_LIZALFOS_LEFT_HEART,  true),
         LOCATION(RC_DODONGOS_CAVERN_UPPER_LIZALFOS_RIGHT_HEART, true),
+        // The chest appears once the second pair of Lizalfos die.
+        LOCATION(RC_DODONGOS_CAVERN_UPPER_LIZALFOS_CHEST,       logic->CanKillEnemy(RE_LIZALFOS, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         //This room is in different states based on what entrance you entered by,
         //So it's simpler to treat them as separate regions with shared checks in both
         LOCATION(RC_DODONGOS_CAVERN_LIZALFOS_POT_1,             logic->CanBreakPots()),
