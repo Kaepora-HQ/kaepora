@@ -418,6 +418,17 @@ class LogicTest(unittest.TestCase):
                     ("KF Mido Top Right Chest", "Forest Temple Small Key"))
         self.assertFalse(self.reachable("Forest Temple Falling Ceiling Room Chest", no_bow, *two_keys))
 
+    def test_a_beamos_falls_to_the_mirror_shield(self):
+        # The Mirror Shield sends a Beamos's beam back at it. Only Dodongo's Cavern holds a bomb bag, and bombchus count
+        # only with a bag, so without it Link has no explosives, and the stones and the magic meter that take them lie
+        # elsewhere.
+        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
+                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
+                       ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+        mirror_shield = ("KF Mido Top Right Chest", "Mirror Shield")
+        self.assertTrue(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag, mirror_shield))
+        self.assertFalse(self.reachable("Gerudo Training Ground Beamos Chest", *no_bomb_bag))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):
@@ -447,9 +458,9 @@ class LogicTest(unittest.TestCase):
 
     def test_colossus_grotto_chest_needs_the_beamos_killed(self):
         # Under a boulder that takes the Silver Gauntlets. The chest appears once a Beamos and five Skullwalltulas die,
-        # and only explosives kill the Beamos. Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a
-        # bag, so without it Link has no explosives; the stones and the magic meter that take them lie elsewhere, so he
-        # still reaches the grotto.
+        # and only explosives or the Mirror Shield kill the Beamos. Only Dodongo's Cavern holds a bomb bag, and bombchus
+        # count only with a bag, so without it Link has no explosives and does not reach the Mirror Shield chest; the
+        # stones and the magic meter that take them lie elsewhere, so he still reaches the grotto.
         no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
                        ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
                        ("KF Storms Grotto Chest", "Progressive Magic Meter"))

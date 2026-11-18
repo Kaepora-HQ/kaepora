@@ -222,7 +222,8 @@ void RegionTable_Init_GerudoTrainingGround() {
         LOCATION(RC_GERUDO_TRAINING_GROUND_WONDER_BEAMOS_ROOM, logic->CanUse(RG_FAIRY_BOW)),
     }, {
         //Exits
-        ENTRANCE(RR_GERUDO_TRAINING_GROUND_LOBBY,     true),
+        // The room stays shut until the Beamos and both Dinolfos die.
+        ENTRANCE(RR_GERUDO_TRAINING_GROUND_LOBBY,     AnyAgeTime([]{return logic->CanKillEnemy(RE_BEAMOS) && logic->CanKillEnemy(RE_DINOLFOS, ED_CLOSE, true, 2, true);})),
         ENTRANCE(RR_GERUDO_TRAINING_GROUND_LAVA_ROOM, AnyAgeTime([]{return logic->CanKillEnemy(RE_BEAMOS) && logic->CanKillEnemy(RE_DINOLFOS, ED_CLOSE, true, 2, true);})),
     });
 

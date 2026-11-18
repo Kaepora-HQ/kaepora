@@ -1096,7 +1096,8 @@ bool Logic::CanKillEnemy(RandomizerEnemy enemy, EnemyDistance distance, bool wal
             // there's a restoration that allows beating them with mirror shield + some way to trigger their attack
             return HasFireSource();
         case RE_BEAMOS:
-            return HasExplosives();
+            // The Mirror Shield sends its beam back at it.
+            return HasExplosives() || CanUse(RG_MIRROR_SHIELD);
         case RE_PURPLE_LEEVER:
             // dies on its own, so this is the conditions to spawn it (killing 10 normal leevers)
             // Sticks and Ice arrows work but will need ammo capacity logic
