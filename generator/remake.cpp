@@ -246,6 +246,11 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
     for (const char* flag : startFlags) {
         values[flag] = true;
     }
+    if (settings.forest == Forest::Open) {
+        // Mido and the Kokiri at the exit no longer block Link, and the invisible wall beside each is gone.
+        values["KokiriForest_Npc_Kokiri_Mido_Child_Blocker"] = false;
+        values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
+    }
     if (settings.keys == DungeonItems::GivenAtTheStart) {
         for (std::string_view door : smallKeyDoors) {
             values[std::format("IsChainLockDoorOpen.{}", door)] = true;

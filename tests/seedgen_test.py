@@ -39,7 +39,8 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
             "Ganon's Castle"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
-                    "Maps and compasses": "Anywhere in their dungeon", "Lens of Truth": "Needed"}
+                    "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
+                    "Lens of Truth": "Needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -242,7 +243,8 @@ class SeedgenTest(unittest.TestCase):
         settings = {"Shuffled dungeons": ["Fire Temple", "Deku Tree"], "Small and boss keys": "In their own chests",
                     "Maps and compasses": "In their own chests", "Lens of Truth": "Never needed"}
         spoiler, _ = self.generate("9", settings)
-        self.assertEqual(spoiler["settings"], {**settings, "Shuffled dungeons": ["Deku Tree", "Fire Temple"]})
+        self.assertEqual(spoiler["settings"],
+                         DEFAULT_SETTINGS | settings | {"Shuffled dungeons": ["Deku Tree", "Fire Temple"]})
         self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough"])
 
     def test_default_settings_are_the_settings_left_out(self):
@@ -279,6 +281,12 @@ class SeedgenTest(unittest.TestCase):
         self.assert_kept_in_place(kept, {"Maps and compasses": "In their own chests"},
                                   [str(seed) for seed in range(320, 330)], on_route=False)
 
+    def test_forest_open(self):
+        spoiler, plan = self.generate("16", {"Kokiri Forest": "Open"})
+        self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Open")
+        self.assertEqual(plan["start_values"], DOORS_OPEN | {"KokiriForest_Npc_Kokiri_Mido_Child_Blocker": False,
+                                                             "KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
+
     def test_keys_not_needed(self):
         spoiler, plan = self.generate("15", {"Small and boss keys": "Not needed"})
         self.assertEqual(spoiler["settings"]["Small and boss keys"], "Not needed")
@@ -307,7 +315,7 @@ class SeedgenTest(unittest.TestCase):
     def test_every_setting_changed_at_once(self):
         settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
                     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests",
-                    "Lens of Truth": "Never needed"}
+                    "Kokiri Forest": "Open", "Lens of Truth": "Never needed"}
         for seed in range(400, 500):
             spoiler, _ = self.generate(str(seed), settings)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())

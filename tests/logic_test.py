@@ -28,6 +28,7 @@ NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
+FOREST_OPEN = {"Kokiri Forest": "Open"}
 
 
 class LogicTest(unittest.TestCase):
@@ -284,6 +285,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Forest Temple Boss Key Chest", bow, *without("Floormaster", "Red Poe")))
         self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
         self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
+
+    def test_an_open_forest_asks_nothing_of_a_child(self):
+        # Mido lets a child through to the Deku Tree with the Kokiri Sword and a Deku Shield, and the exit opens after
+        # the Deku Tree. The forest's own chest holds the only sword a child can use.
+        no_sword = ("KF Kokiri Sword Chest", "Green Rupee")
+        for location in ("Deku Tree Map Chest", "HC Malon Egg"):
+            self.assertFalse(self.reachable(location, no_sword), location)
+            self.assertTrue(self.reachable(location, no_sword, settings=FOREST_OPEN), location)
 
     def test_no_door_takes_a_key_when_keys_are_not_needed(self):
         # The first room's key opens the first lock. The boss key chest holds the only boss key.

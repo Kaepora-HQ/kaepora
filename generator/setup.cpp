@@ -269,5 +269,8 @@ void SetOptions(const SeedSettings& settings) {
         ctx->GetOption(RSK_BOSS_KEYSANITY).Set(RO_DUNGEON_ITEM_LOC_STARTWITH);
         ctx->GetOption(RSK_GANONS_BOSS_KEY).Set(RO_GANON_BOSS_KEY_STARTWITH);
     }
+    if (settings.forest == Forest::Open) {
+        ctx->GetOption(RSK_FOREST).Set(RO_CLOSED_FOREST_OFF);
+    }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
 }

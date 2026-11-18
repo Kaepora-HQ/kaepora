@@ -53,6 +53,9 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.mapsAndCompasses == DungeonItems::GivenAtTheStart) {
         changed << "maps and compasses given at the start";
     }
+    if (settings.forest == Forest::Open) {
+        changed << "forest open";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -81,6 +84,7 @@ QString Details(const SeedSettings& settings) {
                         Line(KeysSetting, QString::fromUtf8(Words(KeysChoices, settings.keys))),
                         Line(MapsAndCompassesSetting,
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
+                        Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))) }
         .join('\n');
 }
@@ -144,12 +148,18 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* dungeonGroup = new QGroupBox("Dungeons");
     dungeonGroup->setLayout(dungeonForm);
 
+    QComboBox* forest = Choice(ForestChoices);
+    auto* worldForm = new QFormLayout;
+    worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
+    auto* worldGroup = new QGroupBox("World");
+    worldGroup->setLayout(worldForm);
+
     QComboBox* lens = Choice(LensChoices);
     auto* logicForm = new QFormLayout;
     logicForm->addRow(QString::fromUtf8(LensSetting), lens);
     auto* logicGroup = new QGroupBox("Logic");
     logicGroup->setLayout(logicForm);
-    AlignLabels({ dungeonForm, logicForm });
+    AlignLabels({ dungeonForm, worldForm, logicForm });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel |
                                          QDialogButtonBox::Ok);
@@ -158,6 +168,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
 
     auto* layout = new QVBoxLayout(dialog);
     layout->addWidget(dungeonGroup);
+    layout->addWidget(worldGroup);
     layout->addWidget(logicGroup);
     layout->addWidget(buttons);
 
@@ -167,6 +178,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         }
         Select(keys, shown.keys);
         Select(mapsAndCompasses, shown.mapsAndCompasses);
+        Select(forest, shown.forest);
         Select(lens, shown.lens);
     };
     show(settings);
@@ -183,6 +195,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         }
         shown.keys = Selected<DungeonItems>(keys);
         shown.mapsAndCompasses = Selected<DungeonItems>(mapsAndCompasses);
+        shown.forest = Selected<Forest>(forest);
         shown.lens = Selected<Lens>(lens);
         chosen(shown);
         dialog->accept();
