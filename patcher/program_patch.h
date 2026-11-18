@@ -11,4 +11,4 @@
 constexpr std::string_view PatchedBuildId = "E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348";
 
 // The patch as the IPS32 file the emulator reads from a mod's exefs folder.
-std::string LiftLevelPatch();
+std::string ProgramPatch();

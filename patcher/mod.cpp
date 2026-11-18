@@ -5,7 +5,7 @@
 #include "bytes.h"
 #include "compression.h"
 #include "game_file.h"
-#include "lift_level.h"
+#include "program_patch.h"
 
 #include <algorithm>
 #include <bit>
@@ -297,7 +297,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
-    std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId), LiftLevelPatch() } };
+    std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId), ProgramPatch() } };
     const auto addToRomfs = [&](std::string_view path, std::string data) {
         mod.emplace(std::format("romfs/{}", path), std::move(data));
     };

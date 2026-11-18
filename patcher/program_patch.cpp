@@ -1,4 +1,4 @@
-#include "lift_level.h"
+#include "program_patch.h"
 
 #include "bytes.h"
 
@@ -65,7 +65,7 @@ constexpr uint32_t NsoHeaderSize = 0x100;
 
 } // namespace
 
-std::string LiftLevelPatch() {
+std::string ProgramPatch() {
     std::string ips = "IPS32";
     for (const Code& code : { Code{ LiftLevelWrite, CallKeepHigher }, Code{ KeepHigher, KeepHigherInstructions } }) {
         const uint32_t offset = code.address + NsoHeaderSize;

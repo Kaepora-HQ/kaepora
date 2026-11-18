@@ -91,7 +91,7 @@ else()
 endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp
-                                       patcher/game_file.cpp patcher/lift_level.cpp patcher/mod.cpp)
+                                       patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
