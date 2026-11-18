@@ -151,9 +151,9 @@ Shadow Temple Compass Chest	1733372171176975157	Banc/ShadowTemple/ShadowTemple_S
 Shadow Temple Early Silver Rupee Chest	1111717451118505545	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Shadow Temple Invisible Blades Visible Chest	10344372963276519235	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	
 Shadow Temple Invisible Blades Invisible Chest	3718790579351798247	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Red	yes	Invisible without the Lens, it opens without it (seen in game).
-Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	The remake's falling spikes room has two of SoH's three chests, and which one it lacks is not known.
-Shadow Temple Falling Spikes Upper Chest				no	Matching every chest of the remake to SoH's locations left none for this one.
-Shadow Temple Falling Spikes Switch Chest	5781953901224064730	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Shadow Temple Falling Spikes Lower Chest	8858270325665149688	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
+Shadow Temple Falling Spikes Upper Chest	5781953901224064730	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	It stands from the start, reached by walking on the spikes after the block puzzle (seen in game).
+Shadow Temple Falling Spikes Switch Chest				no	The remake's falling spikes room has no chest a switch makes: both of its chests stand from the start (seen in game).
 Shadow Temple Invisible Spikes Chest				no	Matching every chest of the remake to SoH's locations left none for this one.
 Shadow Temple Wind Hint Chest	12345747231768877602	Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Shadow Temple After Wind Enemy Chest	5681107746948738726	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	TBox_Rupee_Green	yes	
