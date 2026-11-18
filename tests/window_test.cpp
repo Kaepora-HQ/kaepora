@@ -99,11 +99,14 @@ public:
     std::function<void()> requested;
 
     explicit FakeGitHub(const QString& folder) {
-        // An RSA key, since Qt's Schannel backend, the one Windows uses, can serve only an RSA or a DSA key.
+        // An RSA key, since Qt's Schannel backend, the one Windows uses, can serve only an RSA or a DSA key. macOS
+        // trusts a server's certificate only when it names the server's use. The key is left unencrypted with -nodes,
+        // since macOS's own openssl, LibreSSL, does not know OpenSSL 3's -noenc.
         QProcess openssl;
-        openssl.start("openssl", { "req", "-x509", "-newkey", "rsa:2048", "-noenc", "-subj", "/CN=github.com",
-                                   "-addext", "subjectAltName=DNS:github.com", "-keyout", folder + "/github.key",
-                                   "-out", folder + "/github.pem" });
+        openssl.start("openssl", { "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-subj", "/CN=github.com",
+                                   "-addext", "subjectAltName=DNS:github.com", "-addext",
+                                   "extendedKeyUsage=serverAuth", "-keyout", folder + "/github.key", "-out",
+                                   folder + "/github.pem" });
         if (!openssl.waitForFinished() || openssl.exitCode() != 0) {
             qFatal("openssl made no certificate: %s", openssl.readAllStandardError().constData());
         }
@@ -769,6 +772,11 @@ int main(int argc, char** argv) {
         return 1;
     }
     qputenv("HOME", home.path().toUtf8());
+    // On macOS Qt asks the system for the user's folders, and the system reads its home from CFFIXED_USER_HOME.
+    qputenv("CFFIXED_USER_HOME", home.path().toUtf8());
+    // Qt's Secure Transport backend, the one macOS uses, imports the fake server's key into the default keychain, and
+    // this HOME has none. With this set, it makes a keychain of its own in the temporary folder.
+    qputenv("QT_SSL_USE_TEMPORARY_KEYCHAIN", "1");
     QStandardPaths::setTestModeEnabled(true);
     // Test mode does not move the Windows registry, so the settings go to a file in the temporary folder. On Windows
     // the window looks for Lichii's data in APPDATA, which points there too.
