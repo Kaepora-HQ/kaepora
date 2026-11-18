@@ -354,7 +354,11 @@ void RegionTable_Init_WaterTemple() {
                                             (logic->IsAdult && (logic->CanUse(RG_HOVER_BOOTS) || logic->BunnyHood())) || logic->CanMidairGroundJump() || logic->CanMegajump()),
     });
 
-    areaTable[RR_WATER_TEMPLE_NEAR_CAGE] = Region("Water Temple Near Cage", SCENE_WATER_TEMPLE, {}, {}, {
+    areaTable[RR_WATER_TEMPLE_NEAR_CAGE] = Region("Water Temple Near Cage", SCENE_WATER_TEMPLE, {}, {
+        //Locations
+        // Where the cage was. Two crossings to it take the hookshot.
+        LOCATION(RC_WATER_TEMPLE_LIKE_LIKE_CHEST, logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_OPEN_CHEST)),
+    }, {
         //Exits
         ENTRANCE(RR_WATER_TEMPLE_NEAR_CAGE_STEPS, true),
         //Chus can hit the switch, but not bombs, and it's a kinda narrow timing so probably a trick

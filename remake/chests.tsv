@@ -116,6 +116,7 @@ Fire Temple Highest Goron Chest	10521366928524045067	Banc/FireTemple/FireTemple_
 Fire Temple Megaton Hammer Chest	12083259659219538030	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Item_Hammer	yes	
 Water Temple Map Chest	16384925224245172970	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_Map	yes	
 Water Temple Compass Chest	16490222392193949581	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
+Water Temple Like Like Chest	16424266294822218796	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_Compass	yes	Opening it also gives the Water Temple's compass, whatever it holds (read from the room's logic).
 Water Temple Torches Chest	18099019250896853049	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Water Temple Dragon Chest	2503861086004941173	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
 Water Temple Central Bow Target Chest	3693930347660122883	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey	yes	
