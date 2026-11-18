@@ -398,6 +398,11 @@ class LogicTest(unittest.TestCase):
     def test_gerudo_fortress_grotto_chest_is_reachable(self):
         self.assertTrue(self.reachable("GF Grotto Chest"))
 
+    def test_sacred_forest_meadow_song_of_time_grotto_chest_needs_the_song_of_time(self):
+        # Song of Time blocks stand before the chest, in the grotto under a rock near Saria.
+        self.assertTrue(self.reachable("SFM Song of Time Grotto Chest"))
+        self.assertFalse(self.reachable("SFM Song of Time Grotto Chest", ("Song from Ocarina of Time", "Green Rupee")))
+
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
             self.assertTrue(self.reachable(chest))
