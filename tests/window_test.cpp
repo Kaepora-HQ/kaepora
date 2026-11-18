@@ -358,8 +358,9 @@ private slots:
 #else
         const QDir data(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
 #endif
+        // A fresh Lichii has its load folder, but no folder in it for the game until a mod is put there.
+        QVERIFY(QDir().mkpath(data.filePath("lichii/load")));
         const QString lichii = data.filePath("lichii/load/0400486024DEC000");
-        QVERIFY(QDir().mkpath(lichii));
         QSettings().remove("modsFolder");
         window = std::make_unique<Window>();
         QStringList paths;

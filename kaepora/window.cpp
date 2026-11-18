@@ -45,8 +45,9 @@ constexpr char ModName[] = "Kaepora";
 constexpr char CopyingFile[] = "seed.copying";
 constexpr char SeedFile[] = "seed.txt";
 
-// Where Lichii looks for this game's mods, under its data folder.
-constexpr char LichiiMods[] = "lichii/load/0400486024DEC000";
+// Where Lichii looks for mods, under its data folder, and the folder there that holds this game's.
+constexpr char LichiiLoad[] = "lichii/load";
+constexpr char GameId[] = "0400486024DEC000";
 
 constexpr char SettingsKey[] = "seedSettings";
 
@@ -55,14 +56,16 @@ static bool IsSeed(const QString& text) {
     return pattern.match(text).hasMatch();
 }
 
-// Lichii keeps its data in %APPDATA% on Windows, and in the user's data folder elsewhere.
+// Lichii keeps its data in %APPDATA% on Windows, and in the user's data folder elsewhere. The game's folder in its load
+// folder can be missing until a mod is put there, and putting a seed in use makes it.
 static QString LichiiModsFolder() {
 #ifdef Q_OS_WIN
-    const QString folder = QDir(qEnvironmentVariable("APPDATA")).filePath(LichiiMods);
-    return QFileInfo(folder).isDir() ? folder : QString();
+    const QString load = QDir(qEnvironmentVariable("APPDATA")).filePath(LichiiLoad);
 #else
-    return QStandardPaths::locate(QStandardPaths::GenericDataLocation, LichiiMods, QStandardPaths::LocateDirectory);
+    const QString load =
+        QStandardPaths::locate(QStandardPaths::GenericDataLocation, LichiiLoad, QStandardPaths::LocateDirectory);
 #endif
+    return QFileInfo(load).isDir() ? QDir(load).filePath(GameId) : QString();
 }
 
 static std::filesystem::path Path(const QString& path) {
