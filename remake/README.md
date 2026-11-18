@@ -2,11 +2,12 @@
 
 The generator builds these into the program and checks them when it starts.
 
-`chests.tsv` has a row for every SoH chest location of the vanilla dungeon layouts, and for each SoH loose item that
-the remake keeps in a chest. A location has a second row where the files keep its chest twice, under two hashes: once
-in each of two versions of a scene, once in each of two scenes that show the same spot, or as the two chests one
-puzzle shows one of. Each row names what its own chest holds. Both chests give the location's item, and the first
-row's item is what the location adds to the pool.
+`chests.tsv` has a row for every chest of the remake, 212 in all, and for every SoH chest location of the vanilla
+dungeon layouts, so it is the list of which chests are shuffled and why the others are not. A SoH loose item that the
+remake keeps in a chest has a row too. A location has a second row where the files keep its chest twice, under two
+hashes: once in each of two versions of a scene, once in each of two scenes that show the same spot, or as the two
+chests one puzzle shows one of. Each row names what its own chest holds. Both chests give the location's item, and the
+first row's item is what the location adds to the pool.
 
 - `location`: the SoH location, by SoH's English name for it. Empty for a remake chest that no location stands for,
   which is not shuffled.
