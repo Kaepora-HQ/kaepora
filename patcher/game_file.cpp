@@ -2,11 +2,13 @@
 
 #include "bytes.h"
 #include "compression.h"
+#include "sarc.h"
 
 #include <format>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 namespace {
 
@@ -156,22 +158,10 @@ std::string GameFile::ReadBytes(uint64_t offset, uint64_t size) {
 }
 
 std::string Dictionary(GameFile& game, std::string_view name) {
-    const std::string archive = Decompress(game.Read(std::string(DictionaryPack)));
-    // A SARC header, then the SFAT node table, then the SFNT name table with names at 4-byte steps.
-    if (!archive.starts_with("SARC")) {
-        throw std::runtime_error(std::string(DictionaryPack) + ": not a SARC archive");
+    sarc::Files archive = sarc::Parse(Decompress(game.Read(std::string(DictionaryPack))));
+    const auto dictionary = archive.find(std::string(name));
+    if (dictionary == archive.end()) {
+        throw std::runtime_error(std::string(DictionaryPack) + " has no " + std::string(name));
     }
-    const uint16_t headerSize = ReadAt<uint16_t>(archive, 0x04);
-    const uint32_t dataOffset = ReadAt<uint32_t>(archive, 0x0C);
-    const uint16_t count = ReadAt<uint16_t>(archive, headerSize + 0x06);
-    const size_t nodes = headerSize + 0x0C;
-    const size_t names = nodes + count * 0x10 + 0x08;
-    for (size_t node = nodes; node < nodes + count * 0x10; node += 0x10) {
-        if (StringAt(archive, names + (ReadAt<uint32_t>(archive, node + 0x04) & 0xFFFF) * 4) == name) {
-            const uint32_t start = ReadAt<uint32_t>(archive, node + 0x08);
-            const uint32_t end = ReadAt<uint32_t>(archive, node + 0x0C);
-            return archive.substr(dataOffset + start, end - start);
-        }
-    }
-    throw std::runtime_error(std::string(DictionaryPack) + " has no " + std::string(name));
+    return std::move(dictionary->second);
 }

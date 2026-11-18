@@ -91,7 +91,7 @@ else()
 endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp
-                                       patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp)
+                                       patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp patcher/sarc.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
@@ -107,6 +107,10 @@ target_compile_options(kaepora-patch-roundtrip PRIVATE ${WARNINGS})
 add_executable(kaepora-patch-flow-roundtrip tests/bfevfl_roundtrip.cpp)
 target_link_libraries(kaepora-patch-flow-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-flow-roundtrip PRIVATE ${WARNINGS})
+
+add_executable(kaepora-patch-pack-roundtrip tests/pack_roundtrip.cpp)
+target_link_libraries(kaepora-patch-pack-roundtrip PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch-pack-roundtrip PRIVATE ${WARNINGS})
 
 # Makes seed folders with the window's MakeSeed, for the tests.
 add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
@@ -226,6 +230,7 @@ set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.p
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
+    add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")

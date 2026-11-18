@@ -4,6 +4,7 @@
 #include <array>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -42,6 +43,14 @@ void WriteAt(std::string& data, size_t offset, T value) {
 
 constexpr size_t AlignUp(size_t size, size_t alignment) {
     return (size + alignment - 1) / alignment * alignment;
+}
+
+inline uint32_t NameHash(std::string_view name, uint32_t multiplier) {
+    uint32_t hash = 0;
+    for (const char byte : name) {
+        hash = hash * multiplier + uint8_t(byte);
+    }
+    return hash;
 }
 
 // The zero-terminated string that starts at the offset.
