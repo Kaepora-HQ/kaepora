@@ -1089,7 +1089,7 @@
       "drop_actor": "TBox_Rupee_Red"
     }
   ],
-  "gifts": [],
+  "event_texts": [],
   "start_flags": [
     "IsChainLockDoorOpen.4189300454150217955",
     "IsChainLockDoorOpen.2202807660383340401"

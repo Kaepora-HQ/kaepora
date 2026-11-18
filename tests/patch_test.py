@@ -299,10 +299,10 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_flags=(), gifts=()):
+def plan(chests, start_flags=(), event_texts=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
-            "gifts": [{"flow": flow, "event": event, "param": param, "item": item}
-                      for flow, event, param, item in gifts],
+            "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
+                            for flow, event, param, text in event_texts],
             "start_flags": list(start_flags)}
 
 
@@ -377,7 +377,7 @@ def tested_gift_mod(patch, game, romfs):
     """The gift the game accepted: with the Boomerang in the call that gives the Market potion shop child's bottle, she
     gave the Boomerang."""
     tested = (pathlib.Path(romfs) / SHOP_CHILD_FLOW).read_bytes()
-    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
+    mod = patched(patch, game, plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
     assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
     ours = mod[SHOP_CHILD_FLOW]
     assert_same_frame_header(ours, tested)
@@ -443,9 +443,10 @@ def together(patch, game):
     a size table entry, and the one table holds both."""
     flags = [FIRE_LOCK, WATER_LOCK]
     parts = [plan(rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]),
-             plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang"), (*DINS_FIRE_GIFT, "Item_HeavyBoot")]),
+             plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang"), (*DINS_FIRE_GIFT, "Item_HeavyBoot")]),
              plan([], flags)]
-    whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "gifts", "start_flags")}
+    whole = {key: [entry for part in parts for entry in part[key]]
+             for key in ("chests", "event_texts", "start_flags")}
     whole["seed"] = "1"
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     chest_table, gift_table = (read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone[:2])
@@ -522,7 +523,7 @@ def gift(patch, game):
     """A gift written into its flow: read apart from the patcher, the flow is the game's with the one parameter
     changed. The Boomerang's name keeps the flow inside its size table entry, so the table is left out."""
     _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
-    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
+    mod = patched(patch, game, plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
     assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
     data = zstd.decompress(mod[SHOP_CHILD_FLOW], zstd_dict=game.zs_dictionary)
     assert load_size(len(data), EVENT_FLOW_OVERHEAD) <= dict(entries)[size_key(SHOP_CHILD_FLOW)]
@@ -531,14 +532,14 @@ def gift(patch, game):
     assert event_flow(data) == expected
 
     # The item the flow already gives changes nothing, so nothing is written.
-    mod = patched(patch, game, plan([], gifts=[(*BOTTLE_GIFT, "Item_Bottle")]))
+    mod = patched(patch, game, plan([], event_texts=[(*BOTTLE_GIFT, "Item_Bottle")]))
     assert sorted(mod) == [], sorted(mod)
 
     # A shorter name leaves the flow no larger, so the size table is left out, and the flow reads as the game's with
     # that name. The same holds for a name whose text ends on an 8-byte boundary.
     for site, old, new in ((DINS_FIRE_GIFT, "Item_DinFire", "Item_Hammer"),
                            (NAYRUS_LOVE_GIFT, "Item_NayruLove", "Item_Hammer")):
-        mod = patched(patch, game, plan([], gifts=[(*site, new)]))
+        mod = patched(patch, game, plan([], event_texts=[(*site, new)]))
         assert sorted(mod) == [site[0]], sorted(mod)
         expected = game.event_flow(game.read(site[0]))
         give(expected, site, old, new)
@@ -550,7 +551,7 @@ def gift(patch, game):
     give(expected, COJIRO_GIFT, "Item_CojiroCucco", "Item_Boomerang")
     give(expected, POCKET_EGG_GIFT, "Item_PocketEgg", "Item_Gauntlet_Silver")
     for order in (gifts, gifts[::-1]):
-        mod = patched(patch, game, plan([], gifts=order))
+        mod = patched(patch, game, plan([], event_texts=order))
         assert ANJU_FLOW in mod, sorted(mod)
         assert game.event_flow(mod[ANJU_FLOW]) == expected
 
@@ -561,7 +562,7 @@ def gift_size_table(patch, game):
     changed."""
     path = DINS_FIRE_GIFT[0]
     header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
-    mod = patched(patch, game, plan([], gifts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]))
+    mod = patched(patch, game, plan([], event_texts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]))
     assert sorted(mod) == sorted([path, SIZE_TABLE]), sorted(mod)
     data = zstd.decompress(mod[path], zstd_dict=game.zs_dictionary)
     table = zstd.decompress(mod[SIZE_TABLE])
@@ -630,21 +631,21 @@ def bad_input(patch, game):
             [str(KOKIRI_SWORD_CHEST), FOREST_DYNAMIC]),
     }
     plans = {name: (good | {"chests": [valid, chest]}, named) for name, (chest, named) in cases.items()}
-    plans["no gifts"] = ({"seed": "1", "chests": [valid], "start_flags": []}, ["plan.json", "gifts"])
-    plans["no start_flags"] = ({"seed": "1", "chests": [valid], "gifts": []}, ["plan.json", "start_flags"])
-    valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "item": "Item_Boomerang"}
+    plans["no event_texts"] = ({"seed": "1", "chests": [valid], "start_flags": []}, ["plan.json", "event_texts"])
+    plans["no start_flags"] = ({"seed": "1", "chests": [valid], "event_texts": []}, ["plan.json", "start_flags"])
+    valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "text": "Item_Boomerang"}
     nowhere = "Event/EventFlow/Nowhere.bfevfl.zs"
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
     # Dm_LonLon_0030's Event40 gives 20 rupees, a number.
     rupees = {"flow": "Event/EventFlow/Dm_LonLon_0030.bfevfl.zs", "event": "Event40", "param": "Value"}
-    gifts = {
-        "gift not this shape": (
-            {key: valid_gift[key] for key in ("flow", "event", "param")}, ["plan.json", "gifts[1]"]),
-        "gift without an item": (
-            dict(zip(("flow", "event", "param"), DINS_FIRE_GIFT), item=""), ["plan.json", "gifts[1]", "item"]),
-        "gift listed twice": (
-            dict(valid_gift, item="Item_Bottle"),
-            ["plan.json", "gifts[1]", "Event171 ActorName", SHOP_CHILD_FLOW, "twice"]),
+    texts = {
+        "event text not this shape": (
+            {key: valid_gift[key] for key in ("flow", "event", "param")}, ["plan.json", "event_texts[1]"]),
+        "event text empty": (
+            dict(zip(("flow", "event", "param"), DINS_FIRE_GIFT), text=""), ["plan.json", "event_texts[1]", "text"]),
+        "event text listed twice": (
+            dict(valid_gift, text="Item_Bottle"),
+            ["plan.json", "event_texts[1]", "Event171 ActorName", SHOP_CHILD_FLOW, "twice"]),
         "flow not in the game": (dict(valid_gift, flow=nowhere), ["Event171 ActorName", nowhere, "no such file"]),
         "flow a timeline": (dict(valid_gift, flow=timeline), ["Event171 ActorName", timeline, "timeline"]),
         "event not in the flow": (
@@ -652,10 +653,10 @@ def bad_input(patch, game):
         "parameter not in the event": (
             dict(valid_gift, param="Actor"), ["Event171 Actor", SHOP_CHILD_FLOW, "no parameter"]),
         "parameter not a string": (
-            dict(rupees, item="Item_Boomerang"), ["Event40 Value", rupees["flow"], "not a string"]),
+            dict(rupees, text="Item_Boomerang"), ["Event40 Value", rupees["flow"], "not a string"]),
     }
-    for name, (entry, named) in gifts.items():
-        plans[name] = (good | {"gifts": [valid_gift, entry]}, named)
+    for name, (entry, named) in texts.items():
+        plans[name] = (good | {"event_texts": [valid_gift, entry]}, named)
     values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
     assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
     assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)

@@ -30,24 +30,24 @@ static PlannedChest ParseChest(const nlohmann::json& chest) {
     return planned;
 }
 
-static PlannedGift ParseGift(const nlohmann::json& gift) {
-    PlannedGift planned{ .flow = gift.at("flow").get<std::string>(),
-                         .event = gift.at("event").get<std::string>(),
-                         .param = gift.at("param").get<std::string>(),
-                         .item = gift.at("item").get<std::string>() };
-    if (planned.item.empty()) {
-        throw std::runtime_error("item must not be empty");
+static PlannedEventText ParseEventText(const nlohmann::json& text) {
+    PlannedEventText planned{ .flow = text.at("flow").get<std::string>(),
+                              .event = text.at("event").get<std::string>(),
+                              .param = text.at("param").get<std::string>(),
+                              .text = text.at("text").get<std::string>() };
+    if (planned.text.empty()) {
+        throw std::runtime_error("text must not be empty");
     }
     return planned;
 }
 
-static std::string Name(const PlannedGift& gift) {
-    return std::format("{} {} in {}", gift.event, gift.param, gift.flow);
+static std::string Name(const PlannedEventText& text) {
+    return std::format("{} {} in {}", text.event, text.param, text.flow);
 }
 
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
-    const auto gifts = json.at("gifts").get<std::vector<nlohmann::json>>();
+    const auto texts = json.at("event_texts").get<std::vector<nlohmann::json>>();
     Plan plan{ .startFlags = json.at("start_flags").get<std::vector<std::string>>() };
     for (size_t i = 0; i < chests.size(); ++i) {
         try {
@@ -56,15 +56,15 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("chests[{}]: {}", i, e.what()));
         }
     }
-    std::set<std::tuple<std::string, std::string, std::string>> given;
-    for (size_t i = 0; i < gifts.size(); ++i) {
+    std::set<std::tuple<std::string, std::string, std::string>> named;
+    for (size_t i = 0; i < texts.size(); ++i) {
         try {
-            const PlannedGift& gift = plan.gifts.emplace_back(ParseGift(gifts[i]));
-            if (!given.emplace(gift.flow, gift.event, gift.param).second) {
-                throw std::runtime_error(std::format("{} is listed twice", Name(gift)));
+            const PlannedEventText& text = plan.eventTexts.emplace_back(ParseEventText(texts[i]));
+            if (!named.emplace(text.flow, text.event, text.param).second) {
+                throw std::runtime_error(std::format("{} is listed twice", Name(text)));
             }
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::format("gifts[{}]: {}", i, e.what()));
+            throw std::runtime_error(std::format("event_texts[{}]: {}", i, e.what()));
         }
     }
     return plan;
@@ -254,17 +254,17 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const std::string zsDictionary = Dictionary(romfs, "zs.zsdic");
     std::map<std::string, bfevfl::Flow> flows;
     std::set<std::string> changedFlows;
-    for (const PlannedGift& gift : plan.gifts) {
+    for (const PlannedEventText& text : plan.eventTexts) {
         try {
-            auto flow = flows.find(gift.flow);
+            auto flow = flows.find(text.flow);
             if (flow == flows.end()) {
-                flow = flows.emplace(gift.flow, bfevfl::Parse(Decompress(romfs.Read(gift.flow), zsDictionary))).first;
+                flow = flows.emplace(text.flow, bfevfl::Parse(Decompress(romfs.Read(text.flow), zsDictionary))).first;
             }
-            if (bfevfl::SetString(flow->second, gift.event, gift.param, gift.item)) {
-                changedFlows.insert(gift.flow);
+            if (bfevfl::SetString(flow->second, text.event, text.param, text.text)) {
+                changedFlows.insert(text.flow);
             }
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::format("gift {}: {}", Name(gift), e.what()));
+            throw std::runtime_error(std::format("event text {}: {}", Name(text), e.what()));
         }
     }
 

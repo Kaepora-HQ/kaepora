@@ -17,17 +17,17 @@ struct PlannedChest {
     std::string dropActor;
 };
 
-// A character hands the item over in a call of an event flow, which names the item in a string parameter.
-struct PlannedGift {
-    std::string flow;  // RomFS path of the event flow
-    std::string event; // name of the event whose call gives the item
-    std::string param; // name of the call's parameter that names the item
-    std::string item;
+// A string parameter of an event in an event flow, and the text it takes. A gift names its item this way.
+struct PlannedEventText {
+    std::string flow; // RomFS path of the event flow
+    std::string event;
+    std::string param;
+    std::string text;
 };
 
 struct Plan {
     std::vector<PlannedChest> chests;
-    std::vector<PlannedGift> gifts;
+    std::vector<PlannedEventText> eventTexts;
     std::vector<std::string> startFlags; // names of saved Bools a new game starts with set
 };
 
