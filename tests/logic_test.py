@@ -356,9 +356,10 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("ZF Scarecrow Chest"))
         self.assertFalse(self.reachable("ZF Scarecrow Chest", NO_HOOKSHOT))
 
-    def test_gerudo_valley_storms_grotto_chest_needs_the_song_of_storms(self):
-        self.assertTrue(self.reachable("GV Storms Grotto Chest"))
-        self.assertFalse(self.reachable("GV Storms Grotto Chest", ("Song from Windmill", "Green Rupee")))
+    def test_gerudo_valley_storms_grotto_chests_need_the_song_of_storms(self):
+        for chest in ("GV Storms Grotto Chest", "GV Storms Grotto Visible Chest"):
+            self.assertTrue(self.reachable(chest))
+            self.assertFalse(self.reachable(chest, ("Song from Windmill", "Green Rupee")))
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):

@@ -22,6 +22,7 @@ LH Grotto Chest	6900843020594897860	Banc/HyruleField/HyruleField_Adult_Static.bc
 GV Chest	13612880783193811229	Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs	TBox_Rupee_Red	no	pairing confidence low
 GV Storms Grotto Chest	18413589940135955604	Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
 GV Storms Grotto Chest	6205043616869463865	Banc/GerudoValley/GerudoValley_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	
+GV Storms Grotto Visible Chest	17750686910716887133	Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs,Banc/GerudoValley/GerudoValley_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Green	yes	
 GV Crate Freestanding PoH	15856256242099990922	Banc/GerudoValley/GerudoValley_Adult_Static.bcett.byml.zs,Banc/GerudoValley/GerudoValley_Child_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
 GF Chest	12343753510713797715	Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
 Wasteland Chest	8825521833684392638	Banc/HountedWasteland/HountedWasteland_Adult_Static.bcett.byml.zs,Banc/HountedWasteland/HountedWasteland_Child_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
