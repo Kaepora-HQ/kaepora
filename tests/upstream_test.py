@@ -11,7 +11,8 @@ import sys
 import tempfile
 
 TOOL = pathlib.Path(__file__).resolve().parent.parent / "tools" / "upstream.py"
-ENV = os.environ | {
+# A caller such as `git rebase --exec` sets GIT_DIR, and git then ignores -C and commits into the caller's repository.
+ENV = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")} | {
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_NOSYSTEM": "1",
     "GIT_AUTHOR_NAME": "test",
