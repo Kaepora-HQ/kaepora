@@ -31,9 +31,9 @@ struct RemakeChest {
     std::string Folder() const;
 };
 
-// The chests of remake/chests.tsv, read from the copy built into the program, one per location. Throws when a table
-// names an unknown location or item, repeats a hash, repeats a location for anything but another copy of its chest, or
-// leaves out a chest location of SoH's vanilla layouts.
+// The chests of remake/chests.tsv that stand for a location, read from the copy built into the program, one per
+// location. Throws when a table names an unknown location or item, repeats a hash, repeats a location for anything but
+// another copy of its chest, gives an unshuffled row no note, or leaves out a chest location of SoH's vanilla layouts.
 std::vector<RemakeChest> LoadRemakeChests();
 
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake name of the item the

@@ -26,6 +26,7 @@ GV Crate Freestanding PoH	15856256242099990922	Banc/GerudoValley/GerudoValley_Ad
 GF Chest	12343753510713797715	Banc/GerudoFortress/GerudoFortress_Adult_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
 Wasteland Chest	8825521833684392638	Banc/HountedWasteland/HountedWasteland_Adult_Static.bcett.byml.zs,Banc/HountedWasteland/HountedWasteland_Child_Static.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 Market Treasure Chest Game Reward	16881481538337649070	Banc/Market/Market_Child_Static.bcett.byml.zs	Obj_Heart_Piece	no	Treasure Chest Game
+	6781536951709667179	Banc/Market/Market_Child_Static.bcett.byml.zs	TBox_Rupee_Red	no	The Treasure Chest Game puts this red rupee chest in the prize's place for every win after the first and pays it each time, so an item placed in it would be paid again and again.
 Market Chest Game First Room Item	7390716194495618474	Banc/Market/Market_Child_Static.bcett.byml.zs	TBox_Rupee_Green	no	Treasure Chest Game
 Market Chest Game Second Room Item	12114077686306649660	Banc/Market/Market_Child_Static.bcett.byml.zs	TBox_Rupee_Green	no	Treasure Chest Game
 Market Chest Game Third Room Item	9591654059707200528	Banc/Market/Market_Child_Static.bcett.byml.zs	TBox_Rupee_Green	no	Treasure Chest Game
@@ -43,8 +44,10 @@ Kak Lookout Chest	11929552275106311978	Banc/KakarikoVillage/KakarikoVillage_Adul
 Graveyard Shield Grave Chest	16912540161937823130	Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs	TBox_Shield_Hylian	yes	
 Graveyard Heart Piece Grave Chest	9622128545943056087	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs	Obj_Heart_Piece	no	pairing confidence low
 Graveyard Royal Family's Tomb Chest				no	no remake chest
-Graveyard Hookshot Chest	16041366920820397198	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	Item_Hookshot	no	The race goal holds four alternate chests (this one, a heart piece, a red rupee and a blue rupee), and which one each race leaves is not known.
+Graveyard Hookshot Chest	16041366920820397198	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	Item_Hookshot	no	Dampe's race ends at this hookshot chest only until a race ends with a hookshot in Link's pouch, so an item placed in it is lost to a Link who found a hookshot first.
 Graveyard Dampe Race Freestanding PoH	5534919361313859554	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	Obj_Heart_Piece	yes	
+	4322670163630771947	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	TBox_Rupee_Blue	no	Dampe's race ends at this blue rupee chest after a race of more than a minute, or after one without a new best time once the heart piece is taken, and fills it again each time, so an item placed in it would be paid again and again.
+	234006393181394602	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs	TBox_Rupee_Red	no	Dampe's race ends at this red rupee chest after a new best time once the heart piece is taken, and fills it again each time, so an item placed in it would be paid again and again.
 DMT Chest	9809508929088891725	Banc/DeathMountainTrail/DeathMountainTrail_Adult_Dynamic.bcett.byml.zs,Banc/DeathMountainTrail/DeathMountainTrail_Child_Dynamic.bcett.byml.zs	Item_ScrubBusinessSeed	yes	
 DMT Storms Grotto Chest				no	no remake chest
 GC Maze Left Chest	4402942101476009858	Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs,Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs	TBox_Rupee_Red	yes	

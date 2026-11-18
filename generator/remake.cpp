@@ -106,11 +106,8 @@ std::vector<RemakeChest> LoadRemakeChests() {
         const std::string& files = row[2];
         const std::string& item = row[3];
         const std::string& shuffled = row[4];
+        const std::string& note = row[5];
 
-        auto location = Rando::StaticData::locationNameToEnum.find(name);
-        if (location == Rando::StaticData::locationNameToEnum.end()) {
-            Fail(where + "\"" + name + "\" is not a SoH location");
-        }
         if (hash.empty() != files.empty() || (hash.empty() && !item.empty())) {
             Fail(where + "a row with no remake chest leaves hash, files and item empty");
         }
@@ -120,6 +117,27 @@ std::vector<RemakeChest> LoadRemakeChests() {
         }
         if (shuffled != "yes" && shuffled != "no") {
             Fail(where + "shuffled is neither yes nor no");
+        }
+        if (shuffled == "no" && note.empty()) {
+            Fail(where + "a row that is not shuffled needs a note");
+        }
+        const RemakeChest::Actor actor{ hash, SohUtils::StringSplit(files, ",") };
+        if (!hash.empty()) {
+            for (const std::string& file : actor.files) {
+                if (!file.starts_with("Banc/" + actor.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
+                    Fail(where + "\"" + file + "\" is not a scene file in the Banc folder of the row's first file");
+                }
+            }
+        }
+        if (name.empty()) {
+            if (hash.empty() || shuffled == "yes") {
+                Fail(where + "a row with no location is a remake chest that is not shuffled");
+            }
+            continue;
+        }
+        auto location = Rando::StaticData::locationNameToEnum.find(name);
+        if (location == Rando::StaticData::locationNameToEnum.end()) {
+            Fail(where + "\"" + name + "\" is not a SoH location");
         }
 
         auto [index, added] = locations.try_emplace(location->second, chests.size());
@@ -143,15 +161,8 @@ std::vector<RemakeChest> LoadRemakeChests() {
                    (shuffled == "yes") != chests[index->second].shuffled) {
             Fail(where + "repeats the location \"" + name + "\" for anything but another copy of its chest");
         }
-        if (hash.empty()) {
-            continue;
-        }
-        const RemakeChest::Actor& actor =
-            chests[index->second].actors.emplace_back(hash, SohUtils::StringSplit(files, ","));
-        for (const std::string& file : actor.files) {
-            if (!file.starts_with("Banc/" + actor.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
-                Fail(where + "\"" + file + "\" is not a scene file in the Banc folder of the row's first file");
-            }
+        if (!hash.empty()) {
+            chests[index->second].actors.push_back(actor);
         }
     }
 
