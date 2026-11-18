@@ -189,6 +189,11 @@ static constexpr EventText eventTexts[] = {
     // quest is complete, so these texts make it complete the Fire quest, a write the game ignores on a completed quest.
     { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "ChallengeName", "Get_StoneOfFire" },
     { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "StepName", "Complete" },
+    // After Link loses Ingo's bet race on a horse that is not Epona, adult Malon's talk sets Epona's quest to
+    // GuideToLonLonRanchAdult in Event177 whenever Event179 finds the quest not past ReadyForGetEponaSong. A Link who
+    // met child Malon at the ranch and has not learned her song is set back, and she then never teaches it. This text
+    // makes Event179 ask whether the quest is past Ready, so the write moves only a quest still at Ready.
+    { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
 };
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests) {

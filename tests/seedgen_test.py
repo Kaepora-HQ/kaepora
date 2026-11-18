@@ -165,12 +165,14 @@ class SeedgenTest(unittest.TestCase):
     def test_plan_keeps_quests_from_going_back(self):
         escape = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
         water = "Event/EventFlow/Get_StoneOfWater.bfevfl.zs"
+        malon = "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs"
         _, plan = self.generate("12")
         self.assertEqual(plan["event_texts"], [
             {"flow": escape, "event": "Event4", "param": "ChallengeName", "text": "Get_StoneOfForest"},
             {"flow": escape, "event": "Event4", "param": "StepName", "text": "Complete"},
             {"flow": water, "event": "Event80", "param": "ChallengeName", "text": "Get_StoneOfFire"},
-            {"flow": water, "event": "Event80", "param": "StepName", "text": "Complete"}])
+            {"flow": water, "event": "Event80", "param": "StepName", "text": "Complete"},
+            {"flow": malon, "event": "Event179", "param": "GameDataName", "text": "Get_Epona_IsAfter_Ready_Exp"}])
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.

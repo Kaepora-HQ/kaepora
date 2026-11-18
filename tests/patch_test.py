@@ -396,7 +396,8 @@ def tested_gift_mod(patch, game, romfs):
 def tested_event_text_mods(patch, game, plan_file, *romfs):
     """Every event flow a plan edits, as the patcher writes it, is the flow of a mod the game accepted: after Gohma
     the warp left the castle quest at Step04 and Zelda's scene played; after Ruto's letter Kaepora Gaebora left the
-    Water quest at Step07 and King Zora stood aside."""
+    Water quest at Step07 and King Zora stood aside; after a lost bet race adult Malon left Epona's quest at
+    ReadyForGetEponaSong and child Malon then taught her song."""
     texts = json.loads(pathlib.Path(plan_file).read_text())["event_texts"]
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}

@@ -1113,6 +1113,12 @@
       "event": "Event80",
       "param": "StepName",
       "text": "Complete"
+    },
+    {
+      "flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs",
+      "event": "Event179",
+      "param": "GameDataName",
+      "text": "Get_Epona_IsAfter_Ready_Exp"
     }
   ],
   "start_flags": [
