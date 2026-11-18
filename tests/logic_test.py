@@ -402,6 +402,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Spirit Temple Silver Gauntlets Chest", SILVER_GAUNTLETS_AT_START, four_keys,
                                        *hover_boots_no_longshot))
 
+    def test_forest_temple_alcove_door_opens_only_after_the_courtyard_ledge(self):
+        # The door from the block push room's alcove to the north-west courtyard's ledge stays barred from the alcove
+        # until Link has come through it from the ledge, which he first reaches from the boss key hallway with the bow.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        hover_boots = ("KF Mido Top Left Chest", "Hover Boots")
+        self.assertTrue(self.reachable("Forest Temple Floormaster Chest"))
+        self.assertFalse(self.reachable("Forest Temple Floormaster Chest", no_bow, hover_boots))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):

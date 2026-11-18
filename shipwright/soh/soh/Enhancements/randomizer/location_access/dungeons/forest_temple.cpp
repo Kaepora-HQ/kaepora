@@ -304,7 +304,6 @@ void RegionTable_Init_ForestTemple() {
     areaTable[RR_FOREST_TEMPLE_BLOCK_PUSH_ROOM_COURTYARD_ALCOVE] = Region("Forest Temple Block Push Room Courtyard Alcove", SCENE_FOREST_TEMPLE, {}, {}, {
         //Exits
         ENTRANCE(RR_FOREST_TEMPLE_LOWER_BLOCK_PUSH_ROOM, true),
-        ENTRANCE(RR_FOREST_TEMPLE_NW_COURTYARD_UPPER,    true),
     });
 
     areaTable[RR_FOREST_TEMPLE_NW_HALLWAY_TWISTED] = Region("Forest Temple NW Hallway Twisted", SCENE_FOREST_TEMPLE, {}, {}, {
