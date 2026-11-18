@@ -404,6 +404,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Map Chest", *no_blast))
         self.assertFalse(self.reachable("Dodongos Cavern Lobby Alcove Chest", *no_blast))
 
+    def test_dodongos_cavern_stairs_niche_chest_needs_a_blast(self):
+        # At the top of a ladder above the staircase, behind a cracked wall. Link cannot climb a ladder holding a bomb
+        # flower, which is enough to drop the staircase and pass the Armos room to the compass chest.
+        no_blast = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), NO_HAMMER)
+        self.assertTrue(self.reachable("Dodongos Cavern Stairs Niche Chest"))
+        self.assertTrue(self.reachable("Dodongos Cavern Compass Chest", *no_blast))
+        self.assertFalse(self.reachable("Dodongos Cavern Stairs Niche Chest", *no_blast))
+
     def test_fire_temple_scarecrow_ledge_chests_need_what_the_scarecrow_chest_needs(self):
         # Both stand beside the Scarecrow Chest from the start. The way up takes the scarecrow's song and a hookshot.
         for chest in ("Fire Temple Scarecrow Ledge Left Chest", "Fire Temple Scarecrow Ledge Right Chest"):
