@@ -154,6 +154,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      loose_items_the_remake_keeps_in_chests_are_shuffled
+                     dins_fire_comes_from_the_summit_great_fairy
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      maps_and_compasses_stay_in_their_own_chests lens_never_needed_leaves_the_lens_off_the_route

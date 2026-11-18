@@ -197,6 +197,11 @@ class SeedgenTest(unittest.TestCase):
         for location in chests:
             self.assertGreater(len(held[location]), 1, location)
 
+    def test_dins_fire_comes_from_the_summit_great_fairy(self):
+        # She gives Din's Fire with the magic meter. The castle's Great Fairy gives nothing until Link holds it.
+        steps = playthrough_steps(self.generate("9")[0])
+        self.assertEqual(steps.get("DMT Great Fairy Din's Fire"), "Din's Fire")
+
     def test_same_seed_same_files(self):
         self.assertEqual(self.run_seedgen("5"), self.run_seedgen("5"))
 

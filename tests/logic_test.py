@@ -332,7 +332,7 @@ class LogicTest(unittest.TestCase):
     def test_water_temple_central_pillar_door_takes_the_third_key(self):
         # With no bow and no fire source, Link raises the water to the middle only through this door, and reaches two
         # keys before it.
-        no_fire = (("Forest Temple Bow Chest", "Green Rupee"), ("HC Great Fairy Reward", "Green Rupee"))
+        no_fire = (("Forest Temple Bow Chest", "Green Rupee"), ("DMT Great Fairy Din's Fire", "Green Rupee"))
         self.assertFalse(self.reachable("Water Temple Central Pillar Chest", *no_fire))
         self.assertTrue(self.reachable("Water Temple Central Pillar Chest", *no_fire,
                                        ("Water Temple GS Behind Gate", "Water Temple Small Key")))
@@ -409,7 +409,7 @@ class LogicTest(unittest.TestCase):
 
     def test_lake_hylia_grotto_chest_needs_fire_for_four_candles(self):
         # A child lights the candles with Din's Fire and a Deku Stick, an adult with Din's Fire or fire arrows alone.
-        no_dins_fire = ("HC Great Fairy Reward", "Green Rupee")
+        no_dins_fire = ("DMT Great Fairy Din's Fire", "Green Rupee")
         no_fire_arrows = ("LH Sun", "Green Rupee")
         self.assertTrue(self.reachable("LH Grotto Chest", no_dins_fire))
         self.assertFalse(self.reachable("LH Grotto Chest", no_dins_fire, no_fire_arrows))

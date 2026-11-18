@@ -310,7 +310,7 @@ std::unordered_map<std::string, RandomizerCheck> StaticData::excludedLocationToE
     { "114", RC_TOT_MASTER_SWORD },
     { "115", RC_HC_MALON_EGG },
     { "116", RC_HC_ZELDAS_LETTER },
-    { "117", RC_HC_GREAT_FAIRY_REWARD },
+    { "117", RC_DMT_GREAT_FAIRY_DINS_FIRE },
     { "118", RC_HC_GS_TREE },
     { "119", RC_HC_GS_STORMS_GROTTO },
     { "120", RC_LLR_TALONS_CHICKENS },
