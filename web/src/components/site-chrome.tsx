@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { OwlMark } from '@/components/owl-mark'
 import type { Copy } from '@/copy'
-import { downloads, repository } from '@/release'
+import { repository, systems } from '@/release'
+import { homeOffers } from '@/system'
 
 const shipOfHarkinian = 'https://www.shipofharkinian.com/'
 
@@ -71,11 +72,16 @@ export function SiteFooter({ words }: { words: Copy['footer'] }) {
 export function DownloadCall({ words }: { words: Copy['download'] }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-      <a href={downloads.linuxAppImage} className="moon-button px-7 py-3">
-        {words.button}
-      </a>
-      <Link to="/download" className="underline decoration-mist/40 underline-offset-4 hover:decoration-starlight">
-        {words.otherLink}
+      {systems.map((system) => (
+        <a key={system} href={homeOffers[system]} data-offer={system} className="moon-button px-7 py-3">
+          {words.forSystem[system]}
+        </a>
+      ))}
+      <Link to="/download" data-offer="any" className="moon-button px-7 py-3">
+        {words.anySystem}
+      </Link>
+      <Link to="/download" data-offer="all" className="underline decoration-mist/40 underline-offset-4 hover:decoration-starlight">
+        {words.allLink}
       </Link>
     </div>
   )

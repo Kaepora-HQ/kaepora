@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Treeline } from '@/components/night'
 import { SiteFooter, SiteHeader } from '@/components/site-chrome'
 import { copy } from '@/copy'
-import { downloads, releases } from '@/release'
+import { type System, downloads, mainDownloads, releases } from '@/release'
 import changelog from 'virtual:changelog'
 
 export const Route = createFileRoute('/download')({
@@ -14,31 +14,35 @@ export const Route = createFileRoute('/download')({
 type DownloadFile = { format: string; href: string }
 
 const platforms: readonly {
+  system: System
   name: string
   requires: string
   Mark: (props: { className: string }) => ReactNode
-  main: DownloadFile
+  format: string
   more: readonly DownloadFile[]
 }[] = [
   {
+    system: 'linux',
     name: 'Linux',
     requires: '64-bit',
     Mark: LinuxMark,
-    main: { format: 'AppImage', href: downloads.linuxAppImage },
+    format: 'AppImage',
     more: [{ format: 'tar.gz', href: downloads.linuxTarball }],
   },
   {
+    system: 'windows',
     name: 'Windows',
     requires: 'Windows 10 or later, 64-bit',
     Mark: WindowsMark,
-    main: { format: 'zip', href: downloads.windowsZip },
+    format: 'zip',
     more: [],
   },
   {
+    system: 'macos',
     name: 'macOS',
     requires: 'macOS 15 or later, Apple silicon',
     Mark: MacMark,
-    main: { format: 'zip', href: downloads.macosZip },
+    format: 'zip',
     more: [],
   },
 ]
@@ -61,10 +65,11 @@ function Download() {
             <h2 id="files" className="sr-only">Files</h2>
             {/* A 20.25rem card holds the longest requirement line beside its mark on one line; three fit in max-w-5xl. */}
             <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20.25rem),1fr))] gap-5">
-              {platforms.map(({ name, requires, Mark, main, more }) => (
+              {platforms.map(({ system, name, requires, Mark, format, more }) => (
                 <li
-                  key={name}
-                  className="surface row-span-2 grid grid-rows-subgrid gap-y-6 rounded-2xl p-7"
+                  key={system}
+                  id={system}
+                  className="surface row-span-2 grid scroll-mbs-6 grid-rows-subgrid gap-y-6 rounded-2xl p-7"
                 >
                   <div className="flex items-center gap-4">
                     <Mark className="size-10 flex-none" />
@@ -74,8 +79,8 @@ function Download() {
                     </div>
                   </div>
                   <div className="flex flex-wrap content-start items-center gap-3">
-                    <a href={main.href} className="moon-button px-6 py-2.5">
-                      Download {main.format}
+                    <a href={mainDownloads[system]} className="moon-button px-6 py-2.5">
+                      Download {format}
                       <span className="sr-only"> for {name}</span>
                     </a>
                     {more.map((file) => (
@@ -144,25 +149,30 @@ function WindowsMark({ className }: { className: string }) {
   )
 }
 
+const openGuideAtMacCard = `if (location.hash === '#macos') document.currentScript.previousElementSibling.open = true`
+
 function FirstOpenGuide() {
   const words = copy.downloadPage.macosFirstOpen
   return (
-    <details>
-      <summary className="quiet-link -ms-3 w-fit cursor-pointer text-mist marker:text-moon">{words.heading}</summary>
-      <div className="flex max-w-xl flex-col gap-3 pbs-3">
-        <p>{words.why}</p>
-        <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
-          {words.steps.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-        <p>{words.after}</p>
-        <p>{words.terminal}</p>
-        <pre className="surface w-fit rounded-lg px-4 py-2 text-sm whitespace-pre-wrap">
-          <code className="select-all">{words.command}</code>
-        </pre>
-      </div>
-    </details>
+    <>
+      <details suppressHydrationWarning>
+        <summary className="quiet-link -ms-3 w-fit cursor-pointer text-mist marker:text-moon">{words.heading}</summary>
+        <div className="flex max-w-xl flex-col gap-3 pbs-3">
+          <p>{words.why}</p>
+          <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
+            {words.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p>{words.after}</p>
+          <p>{words.terminal}</p>
+          <pre className="surface w-fit rounded-lg px-4 py-2 text-sm whitespace-pre-wrap">
+            <code className="select-all">{words.command}</code>
+          </pre>
+        </div>
+      </details>
+      <script dangerouslySetInnerHTML={{ __html: openGuideAtMacCard }} />
+    </>
   )
 }
 

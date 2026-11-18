@@ -1,8 +1,10 @@
+import type { System } from '@/release'
+
 type Moment = { title: string; text: string }
 
 export type Copy = {
   hero: { headline: string; lead: string }
-  download: { button: string; otherLink: string }
+  download: { forSystem: Record<System, string>; anySystem: string; allLink: string }
   middle: { heading: string; moments: readonly [Moment, Moment, Moment, Moment] }
   closing: { heading: string }
   downloadPage: {
@@ -33,8 +35,13 @@ export const copy: Copy = {
     lead: "Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It shuffles what's inside every chest in Hyrule, so the Hookshot could be anywhere. You know this game by heart. Now you get to guess.",
   },
   download: {
-    button: 'Download for Linux',
-    otherLink: 'Windows, macOS and other downloads',
+    forSystem: {
+      windows: 'Download for Windows',
+      macos: 'Download for macOS',
+      linux: 'Download for Linux',
+    },
+    anySystem: 'Download',
+    allLink: 'All downloads',
   },
   middle: {
     heading: "Every seed is a Hyrule you haven't met.",

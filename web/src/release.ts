@@ -10,3 +10,12 @@ export const downloads = {
   macosZip: `${latest}/kaepora-macos-arm64.zip`,
   checksums: `${latest}/SHA256SUMS`,
 }
+
+export const systems = ['windows', 'macos', 'linux'] as const
+export type System = (typeof systems)[number]
+
+export const mainDownloads: Record<System, string> = {
+  windows: downloads.windowsZip,
+  macos: downloads.macosZip,
+  linux: downloads.linuxAppImage,
+}

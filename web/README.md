@@ -9,7 +9,7 @@ bun install
 bun run dev
 ```
 
-`bun run typecheck` checks the types. `bun run build` writes the production build to `.output/`.
+`bun run typecheck` checks the types. `bun run test` runs the tests. `bun run build` writes the production build to `.output/`.
 
 - The theme (colours, fonts, sizes) is in `src/styles.css`. The drawings are in `src/components/night.tsx`.
 - The download addresses are in `src/release.ts`.

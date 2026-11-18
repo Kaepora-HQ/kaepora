@@ -3,6 +3,7 @@ import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-rou
 import type { ReactNode } from 'react'
 import { copy } from '@/copy'
 import { previewCard } from '@/preview-card'
+import { markSystem } from '@/system'
 import css from '../styles.css?url'
 
 // Link previews need an absolute address for the image.
@@ -30,6 +31,7 @@ export const Route = createRootRoute({
       { rel: 'stylesheet', href: css },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
     ],
+    scripts: [{ children: markSystem }],
   }),
   shellComponent: Document,
   notFoundComponent: NotFound,
@@ -37,7 +39,7 @@ export const Route = createRootRoute({
 
 function Document({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

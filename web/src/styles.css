@@ -104,6 +104,18 @@
 }
 
 @layer components {
+  [data-offer] {
+    display: none;
+  }
+
+  :root:not([data-system]) [data-offer='any'],
+  :root[data-system] [data-offer='all'],
+  :root[data-system='windows'] [data-offer='windows'],
+  :root[data-system='macos'] [data-offer='macos'],
+  :root[data-system='linux'] [data-offer='linux'] {
+    display: revert;
+  }
+
   .changelog {
     display: flex;
     flex-direction: column;
