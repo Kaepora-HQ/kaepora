@@ -88,7 +88,7 @@ else()
 endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp
-                                       patcher/game_file.cpp patcher/mod.cpp)
+                                       patcher/game_file.cpp patcher/lift_level.cpp patcher/mod.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
@@ -196,6 +196,8 @@ set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
 set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
     "The romfs folders of the mods tested in the game with the event texts every plan carries, as a list")
+set(KAEPORA_TESTED_STRENGTH_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with the patch that keeps Link's lift level from dropping")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -246,6 +248,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-event-text-mods
             COMMAND ${PATCH_TEST} tested-event-text-mods $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json ${KAEPORA_TESTED_EVENT_TEXT_MODS})
+    endif()
+    if(KAEPORA_TESTED_STRENGTH_MOD)
+        add_test(NAME patch-tested-strength-mod
+            COMMAND ${PATCH_TEST} tested-strength-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_STRENGTH_MOD}")
     endif()
 endif()
 

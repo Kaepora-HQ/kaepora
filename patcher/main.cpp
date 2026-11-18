@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
         const Plan plan = ReadPlan(argv[2]);
         // Every check passes before writing starts, so a bad plan leaves no file behind.
         for (const auto& [path, data] : ModFiles(argv[1], plan)) {
-            const std::filesystem::path out = modDir / "romfs" / path;
+            const std::filesystem::path out = modDir / path;
             WriteFile(out, data);
             std::printf("%s\n", out.string().c_str());
         }

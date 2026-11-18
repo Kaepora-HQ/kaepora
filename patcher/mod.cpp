@@ -5,6 +5,7 @@
 #include "bytes.h"
 #include "compression.h"
 #include "game_file.h"
+#include "lift_level.h"
 
 #include <algorithm>
 #include <bit>
@@ -268,24 +269,27 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
-    std::map<std::string, std::string> mod;
+    std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId), LiftLevelPatch() } };
+    const auto addToRomfs = [&](std::string_view path, std::string data) {
+        mod.emplace(std::format("romfs/{}", path), std::move(data));
+    };
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;
     for (const std::string& path : changed) {
         const std::string data = byml::Write(placements.at(path));
         tableChanged |= RaiseSize(table, path, data.size(), PlacementOverhead);
-        mod.emplace(path, Compress(data, dictionary));
+        addToRomfs(path, Compress(data, dictionary));
     }
     for (const std::string& path : changedFlows) {
         const std::string data = bfevfl::Write(flows.at(path));
         tableChanged |= RaiseSize(table, path, data.size(), EventFlowOverhead);
-        mod.emplace(path, Compress(data, zsDictionary));
+        addToRomfs(path, Compress(data, zsDictionary));
     }
     if (tableChanged) {
-        mod.emplace(SizeTablePath, Compress(table));
+        addToRomfs(SizeTablePath, Compress(table));
     }
     if (!plan.startFlags.empty()) {
-        mod.emplace(GameDataListPath, StartFlagList(game, zsDictionary, plan.startFlags));
+        addToRomfs(GameDataListPath, StartFlagList(game, zsDictionary, plan.startFlags));
     }
     return mod;
 }

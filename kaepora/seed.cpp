@@ -18,7 +18,7 @@ void MakeSeed(const std::string& seed, const SeedSettings& settings, const std::
     const std::map<std::string, std::string> files = ModFiles(nup, ParsePlan(generated.plan));
     try {
         for (const auto& [path, data] : files) {
-            WriteFile(seedDir / "romfs" / path, data);
+            WriteFile(seedDir / path, data);
         }
         // The log makes the folder a whole seed, so it takes its name only once it is written in full.
         WriteFile(seedDir / "spoiler.json.part", generated.spoilerLog);

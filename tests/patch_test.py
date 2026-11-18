@@ -6,6 +6,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
+       python3 -I tests/patch_test.py tested-strength-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift \
            <kaepora-patch> <game.nup>
@@ -321,14 +322,16 @@ def run(patch, game, plan, tmp):
     return subprocess.run([patch, game.nup, plan_path, tmp / "mod"], capture_output=True, text=True)
 
 
-def patched(patch, game, plan):
-    """The files kaepora-patch writes for the plan, by their path in the mod's romfs."""
+def files(folder):
+    return {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+
+
+def patched(patch, game, plan, part="romfs"):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         result = run(patch, game, plan, tmp)
         assert result.returncode == 0, result.stderr
-        romfs = tmp / "mod" / "romfs"
-        return {p.relative_to(romfs).as_posix(): p.read_bytes() for p in romfs.rglob("*") if p.is_file()}
+        return files(tmp / "mod" / part)
 
 
 def assert_same_frame_header(ours, theirs):
@@ -427,6 +430,14 @@ def tested_added_item_mod(patch, game, romfs):
     tested_sizes = dict(read_size_table(zstd.decompress((romfs / SIZE_TABLE).read_bytes()))[1])
     for _, path in chests:
         assert ours_sizes[size_key(path)] == tested_sizes[size_key(path)], path
+
+
+def tested_strength_mod(patch, game, mod):
+    """The patch to the game's program that the game ran: with it, a weaker strength item left Link's lift level where
+    it was."""
+    tested = files(pathlib.Path(mod) / "exefs")
+    ours = patched(patch, game, plan([]), part="exefs")
+    assert ours == tested, (sorted(ours), sorted(tested))
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -727,6 +738,7 @@ def main():
         "tested-added-item-mod": tested_added_item_mod,
         "tested-gift-mod": tested_gift_mod,
         "tested-event-text-mods": tested_event_text_mods,
+        "tested-strength-mod": tested_strength_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,

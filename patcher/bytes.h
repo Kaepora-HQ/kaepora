@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstring>
@@ -8,6 +10,17 @@
 #include <string_view>
 
 static_assert(std::endian::native == std::endian::little, "the game's data is read in place as little endian");
+
+// Converts a value between the machine's byte order and a file's, in either direction.
+template <typename T>
+T ToByteOrder(T value, std::endian order) {
+    if (order == std::endian::native) {
+        return value;
+    }
+    auto bytes = std::bit_cast<std::array<char, sizeof(T)>>(value);
+    std::ranges::reverse(bytes);
+    return std::bit_cast<T>(bytes);
+}
 
 template <typename T>
 T ReadAt(std::string_view data, size_t offset) {

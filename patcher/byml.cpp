@@ -2,8 +2,6 @@
 
 #include "bytes.h"
 
-#include <algorithm>
-#include <array>
 #include <format>
 #include <map>
 #include <stdexcept>
@@ -19,17 +17,6 @@ constexpr size_t HeaderSize = 0x10;
 
 std::string_view Magic(std::endian order) {
     return order == std::endian::little ? "YB" : "BY";
-}
-
-// Converts a value between the machine's byte order and the file's, in either direction.
-template <typename T>
-T ToByteOrder(T value, std::endian order) {
-    if (order == std::endian::native) {
-        return value;
-    }
-    auto bytes = std::bit_cast<std::array<char, sizeof(T)>>(value);
-    std::ranges::reverse(bytes);
-    return std::bit_cast<T>(bytes);
 }
 
 struct Reader {
