@@ -595,6 +595,7 @@ private slots:
         QTest::addColumn<QString>("setting");
         QTest::addColumn<QString>("value");
         QTest::addColumn<QString>("summary");
+        QTest::newRow("keys") << "Small and boss keys" << "Not needed" << "Keys not needed";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
     }

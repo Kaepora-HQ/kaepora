@@ -46,6 +46,21 @@ DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorO
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
+SMALL_KEY_DOORS = [
+    "1163369963105284964", "2293725469462648563", "3225055400115517869", "5481916789431949409", "17124821462463640959",
+    "530640766699404174", "8886594954069367001", "8924322743887267313", "17520323088057735070",
+    "17586687124735290487", "17649976694470179290", "18033163985131850496",
+    "8936252369722474095", "14915175233807466033", "15319553007255647544",
+    "3785621893886752067", "7859741725793759796", "14964409186081456860", "15639855627873906140",
+    "17286348970163505298",
+    "1239725692126790626", "1598277279179137240", "5866554311248263901", "8208400900970984454",
+    "14562151304140999752",
+    "3180753716225647997", "15964434394101837654",
+    "1782957447756991766", "4054769999674403462", "4861722785202029276", "9161635131903213609",
+    "11215020957634035781", "11279749999185960905", "13610050855796186379", "13961115460808423078",
+    "16099041652987252990",
+    "2559901135200913892"]
+BOSS_KEY_DUNGEONS = ["ForestTemple", "FireTemple", "WaterTemple", "ShadowTemple", "SpiritTemple", "InsideGanonCastle"]
 KEYS = {"Item_Dungeon_SmallKey", "Item_Dungeon_BossKey"}
 MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
 
@@ -263,6 +278,15 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(kept)
         self.assert_kept_in_place(kept, {"Maps and compasses": "In their own chests"},
                                   [str(seed) for seed in range(320, 330)], on_route=False)
+
+    def test_keys_not_needed(self):
+        spoiler, plan = self.generate("15", {"Small and boss keys": "Not needed"})
+        self.assertEqual(spoiler["settings"]["Small and boss keys"], "Not needed")
+        doors = {f"IsChainLockDoorOpen.{door}": True for door in SMALL_KEY_DOORS}
+        boss_keys = {f"DungeonInfo.{dungeon}.IsGetBossKey": True for dungeon in BOSS_KEY_DUNGEONS}
+        self.assertEqual(len(doors), 37)
+        self.assertEqual(plan["start_values"], DOORS_OPEN | doors | boss_keys)
+        self.assertEqual({entry["hash"] for entry in plan["chests"]}, {row["hash"] for row in SHUFFLED})
 
     def test_maps_and_compasses_given_at_the_start(self):
         spoiler, plan = self.generate("14", {"Maps and compasses": "Given at the start"})

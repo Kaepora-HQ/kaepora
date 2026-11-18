@@ -23,7 +23,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
         }
     }
     return { { ShuffledDungeonsSetting, dungeons },
-             { KeysSetting, Words(DungeonItemsChoices, settings.keys) },
+             { KeysSetting, Words(KeysChoices, settings.keys) },
              { MapsAndCompassesSetting, Words(MapsAndCompassesChoices, settings.mapsAndCompasses) },
              { LensSetting, Words(LensChoices, settings.lens) } };
 }
@@ -41,7 +41,7 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
                 settings.shuffledDungeons.insert(*dungeon);
             }
         } else if (setting == KeysSetting) {
-            settings.keys = Parse(DungeonItemsChoices, setting, value);
+            settings.keys = Parse(KeysChoices, setting, value);
         } else if (setting == MapsAndCompassesSetting) {
             settings.mapsAndCompasses = Parse(MapsAndCompassesChoices, setting, value);
         } else if (setting == LensSetting) {

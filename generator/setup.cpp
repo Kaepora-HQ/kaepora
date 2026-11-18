@@ -258,11 +258,16 @@ void InitializeRandomizer() {
     ctx->AddExcludedOptions();
 }
 
-void SetOptions(Lens lens) {
+void SetOptions(const SeedSettings& settings) {
     Rando::Settings::GetInstance()->SetAllToContext();
     auto ctx = Rando::Context::GetInstance();
     for (auto [key, value] : unmodifiedGame) {
         ctx->GetOption(key).Set(value);
     }
-    ctx->GetLogic()->LensNeeded = lens == Lens::Needed;
+    if (settings.keys == DungeonItems::GivenAtTheStart) {
+        ctx->GetOption(RSK_KEYSANITY).Set(RO_DUNGEON_ITEM_LOC_STARTWITH);
+        ctx->GetOption(RSK_BOSS_KEYSANITY).Set(RO_DUNGEON_ITEM_LOC_STARTWITH);
+        ctx->GetOption(RSK_GANONS_BOSS_KEY).Set(RO_GANON_BOSS_KEY_STARTWITH);
+    }
+    ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
 }

@@ -222,10 +222,37 @@ static constexpr EventText eventTexts[] = {
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
 };
 
+static constexpr std::string_view smallKeyDoors[] = {
+    "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
+    "17124821462463640959", "530640766699404174",   "8886594954069367001",  "8924322743887267313",
+    "17520323088057735070", "17586687124735290487", "17649976694470179290", "18033163985131850496",
+    "8936252369722474095",  "14915175233807466033", "15319553007255647544", "3785621893886752067",
+    "7859741725793759796",  "14964409186081456860", "15639855627873906140", "17286348970163505298",
+    "1239725692126790626",  "1598277279179137240",  "5866554311248263901",  "8208400900970984454",
+    "14562151304140999752", "3180753716225647997",  "15964434394101837654", "1782957447756991766",
+    "4054769999674403462",  "4861722785202029276",  "9161635131903213609",  "11215020957634035781",
+    "11279749999185960905", "13610050855796186379", "13961115460808423078", "16099041652987252990",
+    "2559901135200913892",
+};
+
+// Opening a boss door with the key plays its own scene, and the Spirit Temple's starts the Iron Knuckle fight, so a new
+// game holds the key and the door stays locked.
+static constexpr std::string_view bossKeyDungeons[] = {
+    "ForestTemple", "FireTemple", "WaterTemple", "ShadowTemple", "SpiritTemple", "InsideGanonCastle",
+};
+
 static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
     nlohmann::ordered_json values = nlohmann::ordered_json::object();
     for (const char* flag : startFlags) {
         values[flag] = true;
+    }
+    if (settings.keys == DungeonItems::GivenAtTheStart) {
+        for (std::string_view door : smallKeyDoors) {
+            values[std::format("IsChainLockDoorOpen.{}", door)] = true;
+        }
+        for (std::string_view dungeon : bossKeyDungeons) {
+            values[std::format("DungeonInfo.{}.IsGetBossKey", dungeon)] = true;
+        }
     }
     if (settings.mapsAndCompasses == DungeonItems::GivenAtTheStart) {
         // The Training Ground and Ganon's Castle have neither.

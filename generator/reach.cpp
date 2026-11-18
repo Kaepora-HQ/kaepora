@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     InitializeRandomizer();
     std::vector<RemakeChest> chests;
     try {
-        SetOptions(ParseSeedSettings(nlohmann::json::parse(argv[1])).lens);
+        SetOptions(ParseSeedSettings(nlohmann::json::parse(argv[1])));
         chests = LoadRemakeChests();
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());

@@ -157,6 +157,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      dins_fire_comes_from_the_summit_great_fairy
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
+                     keys_not_needed
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
                      every_setting_changed_at_once seed_text_ignores_case fixed_seed_matches_fixture)

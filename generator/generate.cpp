@@ -74,7 +74,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
 
-    SetOptions(settings.lens);
+    SetOptions(settings);
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded and no trick is enabled, so both sets are empty.

@@ -27,6 +27,7 @@ NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 # The well holds the only Lens of Truth.
 NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
+KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 
 
 class LogicTest(unittest.TestCase):
@@ -283,6 +284,18 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Forest Temple Boss Key Chest", bow, *without("Floormaster", "Red Poe")))
         self.assertFalse(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster", "Red Poe")))
         self.assertTrue(self.reachable("Forest Temple Blue Poe Chest", *without("Floormaster")))
+
+    def test_no_door_takes_a_key_when_keys_are_not_needed(self):
+        # The first room's key opens the first lock. The boss key chest holds the only boss key.
+        no_first_key = ("Forest Temple First Room Chest", "Green Rupee")
+        no_boss_key = ("Forest Temple Boss Key Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Forest Temple First Stalfos Chest", no_first_key))
+        self.assertTrue(self.reachable("Forest Temple First Stalfos Chest", no_first_key, settings=KEYS_NOT_NEEDED))
+        self.assertFalse(self.reachable("Phantom Ganon", no_boss_key))
+        self.assertTrue(self.reachable("Phantom Ganon", no_boss_key, settings=KEYS_NOT_NEEDED))
+        no_tower_key = ("Ganon's Castle Tower Boss Key Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Ganon", no_tower_key))
+        self.assertTrue(self.reachable("Ganon", no_tower_key, settings=KEYS_NOT_NEEDED))
 
     def test_shadow_temple_hover_boots_chest_needs_no_hover_boots(self):
         # On a first visit the corridor floor falls under Link, and he climbs out of the pit on Dead Hand's side. The

@@ -36,9 +36,10 @@ inline constexpr Dungeon Dungeons[] = {
 };
 
 enum class DungeonItems { AnywhereInTheirDungeon, InTheirOwnChests, GivenAtTheStart };
-inline constexpr std::pair<DungeonItems, std::string_view> DungeonItemsChoices[] = {
+inline constexpr std::pair<DungeonItems, std::string_view> KeysChoices[] = {
     { DungeonItems::AnywhereInTheirDungeon, "Anywhere in their dungeon" },
     { DungeonItems::InTheirOwnChests, "In their own chests" },
+    { DungeonItems::GivenAtTheStart, "Not needed" },
 };
 inline constexpr std::pair<DungeonItems, std::string_view> MapsAndCompassesChoices[] = {
     { DungeonItems::AnywhereInTheirDungeon, "Anywhere in their dungeon" },
