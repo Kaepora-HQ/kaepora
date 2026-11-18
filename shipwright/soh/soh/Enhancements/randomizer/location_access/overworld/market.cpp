@@ -212,7 +212,9 @@ void RegionTable_Init_Market() {
         LOCATION(RC_MARKET_TREASURE_CHEST_GAME_ITEM_4, logic->CanOpenLargeChest() && (ctx->GetOption(RSK_SHUFFLE_CHEST_MINIGAME) ? logic->SmallKeys(SCENE_TREASURE_BOX_SHOP, 4) : (logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_LENS_OF_TRUTH)))),
         LOCATION(RC_MARKET_TREASURE_CHEST_GAME_KEY_5,  logic->CanOpenLargeChest() && (ctx->GetOption(RSK_SHUFFLE_CHEST_MINIGAME) ? logic->SmallKeys(SCENE_TREASURE_BOX_SHOP, 5) : (logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_LENS_OF_TRUTH)))),
         LOCATION(RC_MARKET_TREASURE_CHEST_GAME_ITEM_5, logic->CanOpenLargeChest() && (ctx->GetOption(RSK_SHUFFLE_CHEST_MINIGAME) ? logic->SmallKeys(SCENE_TREASURE_BOX_SHOP, 5) : (logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_LENS_OF_TRUTH)))),
-        LOCATION(RC_MARKET_TREASURE_CHEST_GAME_REWARD, logic->CanOpenLargeChest() && (ctx->GetOption(RSK_SHUFFLE_CHEST_MINIGAME) ? logic->SmallKeys(SCENE_TREASURE_BOX_SHOP, 6) : (logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_LENS_OF_TRUTH)))),
+        // The Lens shows which chest of each room holds its key, and without it a win takes five lucky picks, so the
+        // prize asks for the Lens even where the logic needs it nowhere else.
+        LOCATION(RC_MARKET_TREASURE_CHEST_GAME_REWARD, logic->CanOpenLargeChest() && (ctx->GetOption(RSK_SHUFFLE_CHEST_MINIGAME) ? logic->SmallKeys(SCENE_TREASURE_BOX_SHOP, 6) : (logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->HasItem(RG_LENS_OF_TRUTH) && logic->CanUse(RG_MAGIC_SINGLE)))),
     }, {
         //Exits
         ENTRANCE(RR_THE_MARKET, true),

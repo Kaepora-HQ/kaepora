@@ -248,7 +248,7 @@ class LogicTest(unittest.TestCase):
             self.assertTrue(self.reachable("Bottom of the Well GS East Inner Room", NO_LENS, settings=settings))
 
     def test_lens_never_needed_waives_every_rule_that_asks_for_it(self):
-        for location in ("Bottom of the Well Compass Chest", "Market Treasure Chest Game Reward", "Bongo Bongo"):
+        for location in ("Bottom of the Well Compass Chest", "Bongo Bongo"):
             self.assertFalse(self.reachable(location, NO_LENS), location)
             self.assertTrue(self.reachable(location, NO_LENS, settings=LENS_NEVER_NEEDED), location)
 
@@ -366,6 +366,12 @@ class LogicTest(unittest.TestCase):
                                        SILVER_GAUNTLETS_AT_START))
         self.assertTrue(self.reachable("Ganon's Castle Tower Boss Key Chest", SILVER_GAUNTLETS_AT_START))
         self.assertFalse(self.reachable("Ganon's Castle Tower Boss Key Chest", SILVER_GAUNTLETS_AT_START, no_key))
+
+    def test_the_treasure_chest_games_prize_needs_the_lens_under_every_setting(self):
+        # Each room deals its key to one of two chests at random, and the Lens shows which. Without it a win takes five
+        # lucky picks.
+        self.assertTrue(self.reachable("Market Treasure Chest Game Reward"))
+        self.assertFalse(self.reachable("Market Treasure Chest Game Reward", NO_LENS, settings=LENS_NEVER_NEEDED))
 
     # Chests SoH has no location for.
 

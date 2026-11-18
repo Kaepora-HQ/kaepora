@@ -41,6 +41,10 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
 }
 
 static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) {
+    // The prize always asks for the Lens, so a seed that never asks for the Lens keeps it as the game has it.
+    if (chest.location == RC_MARKET_TREASURE_CHEST_GAME_REWARD && settings.lens == Lens::NeverNeeded) {
+        return true;
+    }
     const auto dungeon = std::ranges::find(Dungeons, chest.Folder(), &Dungeon::folder);
     if (dungeon != std::end(Dungeons) && !settings.shuffledDungeons.contains(*dungeon)) {
         return true;
