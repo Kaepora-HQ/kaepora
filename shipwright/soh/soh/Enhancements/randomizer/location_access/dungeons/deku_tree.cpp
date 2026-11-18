@@ -70,7 +70,8 @@ void RegionTable_Init_DekuTree() {
     areaTable[RR_DEKU_TREE_SLINGSHOT_ROOM] = Region("Deku Tree Slingshot Room", SCENE_DEKU_TREE, {}, {
         //Locations
         LOCATION(RC_DEKU_TREE_SLINGSHOT_CHEST,           logic->CanOpenLargeChest()),
-        LOCATION(RC_DEKU_TREE_SLINGSHOT_ROOM_SIDE_CHEST, (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT) || (logic->IsAdult && logic->CanMegajump())) && logic->HasItem(RG_OPEN_CHEST)),
+        // An eye in the room drops the ladder to this chest.
+        LOCATION(RC_DEKU_TREE_SLINGSHOT_ROOM_SIDE_CHEST, logic->CanHitEyeTargets() && (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT) || (logic->IsAdult && logic->CanMegajump())) && logic->HasItem(RG_OPEN_CHEST)),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_1,         logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_2,         logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_SLINGSHOT_GRASS_3,         logic->CanCutShrubs()),

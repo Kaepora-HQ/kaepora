@@ -103,6 +103,13 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
                                         ("Graveyard Hookshot Chest", "Green Rupee")))
 
+    def test_deku_tree_slingshot_room_side_chest_needs_an_eye_hit(self):
+        # An eye in the room drops the ladder to the side chest. Without the slingshot child Link reaches only the
+        # room's other chest.
+        self.assertTrue(self.reachable("Deku Tree Slingshot Room Side Chest"))
+        no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
+        self.assertFalse(self.reachable("Deku Tree Slingshot Room Side Chest", no_slingshot))
+
     def test_kokiri_forest_storms_grotto_chest_needs_the_scrubs_beaten(self):
         # Beating the three Deku Scrub brothers takes a shield to send their nuts back. Without the bow, adult Link never
         # finishes the Forest Temple and never returns to child, so only a Hylian Shield does it.
