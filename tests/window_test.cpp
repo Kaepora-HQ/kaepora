@@ -531,7 +531,8 @@ private slots:
                                 "Kokiri Forest: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
-                                "Lens of Truth: Never needed";
+                                "Lens of Truth: Never needed\n"
+                                "Gossip stones: Give hints";
         QVERIFY(shows(summary));
         QCOMPARE(label(summary)->toolTip(), details);
 
@@ -544,6 +545,16 @@ private slots:
         QVERIFY(!settings["Shuffled dungeons"].toArray().contains(QString("Forest Temple")));
         QCOMPARE(listed(1), QStringList{ summary });
         QCOMPARE(entry("7")->toolTip(1), details);
+    }
+
+    void stonesAsInTheGameGoIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Gossip stones")->setCurrentText("As in the game");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject spoiler = ReadJson(library + "/7/spoiler.json");
+        QCOMPARE(spoiler["settings"].toObject()["Gossip stones"].toString(), QString("As in the game"));
+        QVERIFY(spoiler["hints"].toObject().isEmpty());
     }
 
     void cancelChangesNothing() {
@@ -564,6 +575,7 @@ private slots:
     void defaultsSetsEveryControlBack() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         choice("Maps and compasses")->setCurrentText("In their own chests");
+        choice("Gossip stones")->setCurrentText("As in the game");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -575,6 +587,7 @@ private slots:
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
+        QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
         dialogButton("OK")->click();
         QVERIFY(shows("Default settings"));
     }
@@ -611,6 +624,7 @@ private slots:
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
+        QTest::newRow("stones") << "Gossip stones" << "As in the game" << "No gossip stone hints";
     }
 
     void aChoiceShowsInTheSummary() {

@@ -65,6 +65,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
+    if (settings.gossipStones == GossipStones::AsInTheGame) {
+        changed << "no gossip stone hints";
+    }
     QString summary = changed.join(", ");
     summary[0] = summary[0].toUpper();
     return summary;
@@ -93,7 +96,9 @@ QString Details(const SeedSettings& settings) {
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
-                        Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))) }
+                        Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))),
+                        Line(GossipStonesSetting,
+                             QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones))) }
         .join('\n');
 }
 
@@ -171,7 +176,13 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     logicForm->addRow(QString::fromUtf8(LensSetting), lens);
     auto* logicGroup = new QGroupBox("Logic");
     logicGroup->setLayout(logicForm);
-    AlignLabels({ dungeonForm, worldForm, logicForm });
+
+    QComboBox* gossipStones = Choice(GossipStonesChoices);
+    auto* hintsForm = new QFormLayout;
+    hintsForm->addRow(QString::fromUtf8(GossipStonesSetting), gossipStones);
+    auto* hintsGroup = new QGroupBox("Hints");
+    hintsGroup->setLayout(hintsForm);
+    AlignLabels({ dungeonForm, worldForm, logicForm, hintsForm });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel |
                                          QDialogButtonBox::Ok);
@@ -182,6 +193,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     layout->addWidget(dungeonGroup);
     layout->addWidget(worldGroup);
     layout->addWidget(logicGroup);
+    layout->addWidget(hintsGroup);
     layout->addWidget(buttons);
 
     const auto show = [=](const SeedSettings& shown) {
@@ -194,6 +206,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
         Select(lens, shown.lens);
+        Select(gossipStones, shown.gossipStones);
     };
     show(settings);
 
@@ -213,6 +226,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
         shown.lens = Selected<Lens>(lens);
+        shown.gossipStones = Selected<GossipStones>(gossipStones);
         chosen(shown);
         dialog->accept();
     });
