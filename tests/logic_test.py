@@ -441,6 +441,19 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Upper Lizalfos Chest", no_slingshot, boomerang, NEVER_ADULT))
         self.assertFalse(self.reachable("Dodongos Cavern Bomb Bag Chest", no_slingshot, boomerang, NEVER_ADULT))
 
+    def test_the_longshot_opens_the_water_temple_eye_gates(self):
+        # The Longshot hits the eye over the gate to the central bow target room, with the water at middle, and the eye
+        # over the dragon room's gate from the river, and gets Link through each before it shuts. Past the dragon room's
+        # gate lies SoH's River Chest location, which no chest of the remake stands for.
+        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Water Temple Central Bow Target Chest", no_bow))
+        self.assertTrue(self.reachable("Water Temple River Chest", no_bow))
+        # At low water the central gate keeps the bow. With the Longshot from the start and neither the bow nor Din's
+        # Fire, the logic never gets the water to middle.
+        longshot_early = ("Link's Pocket", "Progressive Hookshot")
+        no_dins_fire = ("DMT Great Fairy Din's Fire", "Green Rupee")
+        self.assertFalse(self.reachable("Water Temple Central Bow Target Chest", no_bow, no_dins_fire, longshot_early))
+
     # Chests SoH has no location for.
 
     def test_lost_woods_bridge_chest_needs_the_bridge_bean_as_adult(self):

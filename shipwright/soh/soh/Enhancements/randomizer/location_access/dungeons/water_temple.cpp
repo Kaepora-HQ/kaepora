@@ -138,9 +138,9 @@ void RegionTable_Init_WaterTemple() {
                                                       logic->Water3FCentralToHighEmblem()),
         //hookshot + jumpslash can make it up through the platform slit as adult, is easier with WL_MID but still possible on WL_LOW, but it's a trick
         ENTRANCE(RR_WATER_TEMPLE_3F_CENTRAL_LM,       logic->CanUse(RG_LONGSHOT)),
-        // An arrow in the eye opens the gate to the room, and it shuts again before anything but the Longshot gets Link
-        // through. Inside, the chest takes the hookshot and the block.
-        ENTRANCE(RR_WATER_TEMPLE_BLOCK_LOOP,          logic->CanUse(RG_FAIRY_BOW) && logic->CanUse(RG_LONGSHOT)),
+        // The eye opens the gate to the room, and it shuts again before anything but the Longshot gets Link through.
+        // With the water at middle, the Longshot itself hits the eye. Inside, the chest takes the hookshot and the block.
+        ENTRANCE(RR_WATER_TEMPLE_BLOCK_LOOP,          logic->CanUse(RG_LONGSHOT) && (logic->CanUse(RG_FAIRY_BOW) || logic->WaterLevel(WL_MID))),
     });
 
     areaTable[RR_WATER_TEMPLE_SIDE_TOWER_1F] = Region("Water Temple Side Tower 1F", SCENE_WATER_TEMPLE, {
@@ -619,7 +619,8 @@ void RegionTable_Init_WaterTemple() {
     }, {
         //Exits
         //Child can enter the water without jumping to have just enough time to make it with just swim, but it's a trick
-        ENTRANCE(RR_WATER_TEMPLE_ABOVE_DRAGON, logic->CanHitEyeTargets() && (logic->IsAdult || logic->CanUse(RG_HOVER_BOOTS) || logic->CanUse(RG_HOOKSHOT) || logic->BunnyHood())),
+        // The Longshot hits the eye over the gate and gets Link through.
+        ENTRANCE(RR_WATER_TEMPLE_ABOVE_DRAGON, (logic->CanHitEyeTargets() || logic->CanUse(RG_LONGSHOT)) && (logic->IsAdult || logic->CanUse(RG_HOVER_BOOTS) || logic->CanUse(RG_HOOKSHOT) || logic->BunnyHood())),
         //This ledge is bad: Child can make this with bunnyhovers, but it's inconsistent and has a bad retry time, adult can't ledgegrab and needs a jumpslash
         //regardless, this is annoying enough to be a trick.
         ENTRANCE(RR_WATER_TEMPLE_RIVER_POTS,   logic->HasItem(RG_BRONZE_SCALE) || (logic->IsAdult && logic->CanUse(RG_IRON_BOOTS)) || logic->CanRecoilHover(RECOIL_SWORD_AND_SHIELD) ||
