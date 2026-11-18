@@ -74,10 +74,15 @@
   @apply press rounded-full px-3 py-1.5 hover:bg-starlight/10 hover:text-starlight;
 }
 
+@utility surface {
+  @apply border border-mist/15 bg-starlight/3;
+}
+
 @layer base {
   html {
     color-scheme: dark;
     background: var(--color-midnight);
+    scrollbar-gutter: stable;
   }
 
   body {

@@ -9,6 +9,14 @@ export type Copy = {
     title: string
     status: string
     noReleases: string
+    macosFirstOpen: {
+      heading: string
+      why: string
+      steps: readonly string[]
+      after: string
+      terminal: string
+      command: string
+    }
   }
   footer: {
     heart: { before: string; label: string; after: string }
@@ -26,7 +34,7 @@ export const copy: Copy = {
   },
   download: {
     button: 'Download for Linux',
-    otherLink: 'Windows and other downloads',
+    otherLink: 'Windows, macOS and other downloads',
   },
   middle: {
     heading: "Every seed is a Hyrule you haven't met.",
@@ -56,6 +64,18 @@ export const copy: Copy = {
     title: 'Download Kaepora',
     status: 'Kaepora is still in development.',
     noReleases: 'No releases yet.',
+    macosFirstOpen: {
+      heading: 'Opening it on a Mac the first time',
+      why: 'Apple has not checked this version, so macOS blocks it the first time you open it.',
+      steps: [
+        'Unzip the download and open Kaepora. macOS says it cannot be opened. Click Done.',
+        'Open System Settings and go to Privacy & Security.',
+        'Under Security, click Open Anyway, then enter your password.',
+      ],
+      after: 'After that it opens like any other app.',
+      terminal: 'If you prefer Terminal:',
+      command: 'xattr -dr com.apple.quarantine Kaepora.app',
+    },
   },
   footer: {
     heart: { before: 'Made with', label: 'love', after: 'by fans of Ocarina of Time.' },

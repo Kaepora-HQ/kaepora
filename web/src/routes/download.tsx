@@ -34,6 +34,13 @@ const platforms: readonly {
     main: { format: 'zip', href: downloads.windowsZip },
     more: [],
   },
+  {
+    name: 'macOS',
+    requires: 'macOS 15 or later, Apple silicon',
+    Mark: MacMark,
+    main: { format: 'zip', href: downloads.macosZip },
+    more: [],
+  },
 ]
 
 function Download() {
@@ -42,7 +49,7 @@ function Download() {
       <SiteHeader />
       <main>
         <section className="bg-linear-to-b from-midnight to-dusk">
-          <div className="mx-auto flex max-w-4xl flex-col gap-3 px-gutter pbs-12 box-content">
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-gutter pbs-12 box-content">
             <h1 className="storybook text-title font-normal">{copy.downloadPage.title}</h1>
             <p className="text-lead text-mist">{copy.downloadPage.status}</p>
           </div>
@@ -50,13 +57,14 @@ function Download() {
         </section>
 
         <section aria-labelledby="files" className="bg-silhouette px-gutter pbs-6 pbe-section">
-          <div className="mx-auto flex max-w-4xl flex-col gap-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6">
             <h2 id="files" className="sr-only">Files</h2>
-            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-5">
+            {/* A 20.25rem card holds the longest requirement line beside its mark on one line; three fit in max-w-5xl. */}
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20.25rem),1fr))] gap-5">
               {platforms.map(({ name, requires, Mark, main, more }) => (
                 <li
                   key={name}
-                  className="row-span-2 grid grid-rows-subgrid gap-y-6 rounded-2xl border border-mist/15 bg-starlight/[0.03] p-7"
+                  className="surface row-span-2 grid grid-rows-subgrid gap-y-6 rounded-2xl p-7"
                 >
                   <div className="flex items-center gap-4">
                     <Mark className="size-10 flex-none" />
@@ -68,6 +76,7 @@ function Download() {
                   <div className="flex flex-wrap content-start items-center gap-3">
                     <a href={main.href} className="moon-button px-6 py-2.5">
                       Download {main.format}
+                      <span className="sr-only"> for {name}</span>
                     </a>
                     {more.map((file) => (
                       <a
@@ -82,22 +91,25 @@ function Download() {
                 </li>
               ))}
             </ul>
-            <p className="-me-3 flex flex-wrap justify-end gap-2 text-mist">
-              <a href={downloads.checksums} className="quiet-link">
-                Checksums
-              </a>
-              <a href={releases} className="quiet-link">
-                Older versions
-              </a>
-            </p>
+            <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+              <FirstOpenGuide />
+              <p className="-me-3 ms-auto flex flex-wrap gap-2 text-mist">
+                <a href={downloads.checksums} className="quiet-link">
+                  Checksums
+                </a>
+                <a href={releases} className="quiet-link">
+                  Older versions
+                </a>
+              </p>
+            </div>
           </div>
         </section>
 
         <section aria-labelledby="changes" className="bg-silhouette px-gutter pbe-section">
-          <div className="mx-auto flex max-w-4xl flex-col gap-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6">
             <h2 id="changes" className="storybook text-heading font-normal">What changed</h2>
             {changelog ? (
-              <div className="changelog" dangerouslySetInnerHTML={{ __html: changelog }} />
+              <div className="changelog max-w-xl" dangerouslySetInnerHTML={{ __html: changelog }} />
             ) : (
               <p className="text-mist">{copy.downloadPage.noReleases}</p>
             )}
@@ -128,6 +140,37 @@ function WindowsMark({ className }: { className: string }) {
   return (
     <svg viewBox="-500 -500 5875 5875" aria-hidden="true" className={className}>
       <path fill="#fff" d="M0 0h2311v2310H0zm2564 0h2311v2310H2564zM0 2564h2311v2311H0zm2564 0h2311v2311H2564" />
+    </svg>
+  )
+}
+
+function FirstOpenGuide() {
+  const words = copy.downloadPage.macosFirstOpen
+  return (
+    <details>
+      <summary className="quiet-link -ms-3 w-fit cursor-pointer text-mist marker:text-moon">{words.heading}</summary>
+      <div className="flex max-w-xl flex-col gap-3 pbs-3">
+        <p>{words.why}</p>
+        <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
+          {words.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <p>{words.after}</p>
+        <p>{words.terminal}</p>
+        <pre className="surface w-fit rounded-lg px-4 py-2 text-sm whitespace-pre-wrap">
+          <code className="select-all">{words.command}</code>
+        </pre>
+      </div>
+    </details>
+  )
+}
+
+// Apple's logo as Simple Icons draws it (apple.svg). The logo is Apple's trademark.
+function MacMark({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path fill="#fff" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
     </svg>
   )
 }
