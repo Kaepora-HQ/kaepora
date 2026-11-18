@@ -7,7 +7,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
-       python3 -I tests/patch_test.py tested-strength-mod <kaepora-patch> <game.nup> <tested mod's folder>
+       python3 -I tests/patch_test.py tested-program-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values <kaepora-patch> <game.nup>
@@ -463,9 +463,9 @@ def tested_hammer_room_mod(patch, game, mod_file):
     assert zstd.decompress(ours, zstd_dict=game.dictionary) == zstd.decompress(tested, zstd_dict=game.dictionary)
 
 
-def tested_strength_mod(patch, game, mod):
+def tested_program_mod(patch, game, mod):
     """The patch to the game's program that the game ran: with it, a weaker strength item left Link's lift level where
-    it was."""
+    it was, and a boss key or map from a small chest counted for its dungeon."""
     tested = files(pathlib.Path(mod) / "exefs")
     ours = patched(patch, game, plan([]), part="exefs")
     assert ours == tested, (sorted(ours), sorted(tested))
@@ -809,7 +809,7 @@ def main():
         "tested-hammer-room-mod": tested_hammer_room_mod,
         "tested-gift-mod": tested_gift_mod,
         "tested-event-text-mods": tested_event_text_mods,
-        "tested-strength-mod": tested_strength_mod,
+        "tested-program-mod": tested_program_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,

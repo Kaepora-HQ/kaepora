@@ -221,8 +221,7 @@ set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
 set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
     "The romfs folders of the mods tested in the game with the event texts every plan carries, as a list")
-set(KAEPORA_TESTED_STRENGTH_MOD "" CACHE PATH
-    "The folder of the mod tested in the game with the patch that keeps Link's lift level from dropping")
+set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -280,10 +279,10 @@ if(KAEPORA_GAME_NUP)
             COMMAND ${PATCH_TEST} tested-event-text-mods $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json ${KAEPORA_TESTED_EVENT_TEXT_MODS})
     endif()
-    if(KAEPORA_TESTED_STRENGTH_MOD)
-        add_test(NAME patch-tested-strength-mod
-            COMMAND ${PATCH_TEST} tested-strength-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
-                    "${KAEPORA_TESTED_STRENGTH_MOD}")
+    if(KAEPORA_TESTED_PROGRAM_MOD)
+        add_test(NAME patch-tested-program-mod
+            COMMAND ${PATCH_TEST} tested-program-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_PROGRAM_MOD}")
     endif()
 endif()
 

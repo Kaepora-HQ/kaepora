@@ -14,6 +14,11 @@ struct Code {
     std::span<const uint32_t> instructions;
 };
 
+// The program's code ends at 0x3C461D0 and its read-only data starts at 0x3C47000. The emulator maps the space between
+// as code and fills it with zeros, and the routines below live there. Its own built-in patches use this space too, and
+// it skips a built-in patch whose bytes a mod's patch has changed (Lichii's src/core/file_sys/patch_manager.cpp), so
+// the routines stand.
+
 // The function that adds an item to Link's pouch writes the lift level here. For an item whose PouchActorInfo row has
 // the ExpansionAvility LiftGradeUP, it calls the game's set-enum function at 0x9B3BA0 with the GameData manager in x0,
 // the hash of the row's LiftableGrade in w1, the PlayerStatus handle in x2 and the hash of "LiftGrade" in w3.
@@ -22,9 +27,6 @@ constexpr std::array CallKeepHigher{
     0x94ACDAD0u, // bl   0x3C46F00            KeepHigher, in place of bl 0x9B3BA0
 };
 
-// The program's code ends at 0x3C461D0 and its read-only data starts at 0x3C47000. The emulator maps the space between
-// as code and fills it with zeros. Its own built-in patches use this space too, and it skips a built-in patch whose
-// bytes a mod's patch has changed (Lichii's src/core/file_sys/patch_manager.cpp), so this routine stands.
 constexpr uint32_t KeepHigher = 0x3C46F00;
 constexpr std::array KeepHigherInstructions{
     0xA9BC7BFDu, // stp  x29, x30, [sp, #-0x40]!
@@ -59,15 +61,120 @@ constexpr std::array KeepHigherInstructions{
     0xD65F03C0u, // keep: ret
 };
 
+// The same function branches on the item's PouchSpecialDeal. The map, compass and boss key are NotPushToPouch, whose
+// case starts here and records the item as got with no call for its dungeon. A small chest gives every item through
+// this function. A large chest gives none of these three through it, so it does not set a value twice: its event flow
+// calls the game's OneShotDungeonGetMap, OneShotDungeonGetCompass or OneShotDungeonGetBossKey instead.
+constexpr uint32_t NotPushToPouchCase = 0x110ED88;
+constexpr std::array JumpToAwardDungeonItem{
+    0x14ACE00Au, // b    0x3C46DB0            AwardDungeonItem, in place of ldp x20, x8, [sp, #0x90]
+};
+
+// For the map, compass and boss key, does what the item's OneShot node does, and nothing for any other item. The jump
+// lands inside the function, so the routine keeps x0 to x19, x30 and the flags, and the game functions it calls keep
+// x20 to x29. It keeps no floating point register, as none is live at the jump.
+constexpr uint32_t AwardDungeonItem = 0x3C46DB0;
+constexpr std::array AwardDungeonItemInstructions{
+    0xD10303FFu, // sub  sp, sp, #0xC0
+    0xA90007E0u, // stp  x0, x1, [sp]
+    0xA9010FE2u, // stp  x2, x3, [sp, #0x10]
+    0xA90217E4u, // stp  x4, x5, [sp, #0x20]
+    0xA9031FE6u, // stp  x6, x7, [sp, #0x30]
+    0xA90427E8u, // stp  x8, x9, [sp, #0x40]
+    0xA9052FEAu, // stp  x10, x11, [sp, #0x50]
+    0xA90637ECu, // stp  x12, x13, [sp, #0x60]
+    0xA9073FEEu, // stp  x14, x15, [sp, #0x70]
+    0xA90847F0u, // stp  x16, x17, [sp, #0x80]
+    0xA9097BF2u, // stp  x18, x30, [sp, #0x90]
+    0xD53B4209u, // mrs  x9, nzcv
+    0xA90A27F3u, // stp  x19, x9, [sp, #0xA0]
+    0xF940AFF3u, // ldr  x19, [sp, #0x158]      the item's name, at [sp, #0x98] in the function's frame
+    0xD0000D01u, // adrp x1, 0x3DE8000
+    0x911DA421u, // add  x1, x1, #0x769         the game's string Item_Dungeon_Map
+    0x9400002Eu, // bl   name_is
+    0x350002A0u, // cbnz w0, map
+    0xD503201Fu, // nop
+    0x706966A1u, // adr  x1, 0x3D19AD3          Item_Dungeon_Compass
+    0x9400002Au, // bl   name_is
+    0x350002C0u, // cbnz w0, compass
+    0x900008A1u, // adrp x1, 0x3D5A000
+    0x911FFC21u, // add  x1, x1, #0x7FF         Item_Dungeon_BossKey
+    0x94000026u, // bl   name_is
+    0x340002C0u, // cbz  w0, done
+    0x9400002Eu, // bl   dungeon
+    0xB4000060u, // cbz  x0, boss_key_bool
+    0x52800021u, // mov  w1, #0x1
+    0x97D8F0AFu, // bl   0x32830E0              sets the dungeon's IsGetBossKey
+    0x900081C8u, // boss_key_bool: adrp x8, 0x4C7E000
+    0xF940C108u, // ldr  x8, [x8, #0x180]
+    0xF9400100u, // ldr  x0, [x8]               the GameData manager
+    0x52800021u, // mov  w1, #0x1
+    0x52953702u, // mov  w2, #0xA9B8
+    0x72BF5322u, // movk w2, #0xFA99, lsl #16   an unsaved Bool the boss key node sets too
+    0x9728EF38u, // bl   0x682B20               set bool, by its hash
+    0x1400000Au, // b    done
+    0x94000022u, // map: bl dungeon
+    0xB4000100u, // cbz  x0, done
+    0x52800021u, // mov  w1, #0x1
+    0x97D8F063u, // bl   0x3282FE0              sets the dungeon's IsGetMap
+    0x14000005u, // b    done
+    0x9400001Du, // compass: bl dungeon
+    0xB4000060u, // cbz  x0, done
+    0x52800021u, // mov  w1, #0x1
+    0x97D8F07Eu, // bl   0x3283060              sets the dungeon's IsGetCompass
+    0xA94A27F3u, // done: ldp x19, x9, [sp, #0xA0]
+    0xD51B4209u, // msr  nzcv, x9
+    0xA94007E0u, // ldp  x0, x1, [sp]
+    0xA9410FE2u, // ldp  x2, x3, [sp, #0x10]
+    0xA94217E4u, // ldp  x4, x5, [sp, #0x20]
+    0xA9431FE6u, // ldp  x6, x7, [sp, #0x30]
+    0xA94427E8u, // ldp  x8, x9, [sp, #0x40]
+    0xA9452FEAu, // ldp  x10, x11, [sp, #0x50]
+    0xA94637ECu, // ldp  x12, x13, [sp, #0x60]
+    0xA9473FEEu, // ldp  x14, x15, [sp, #0x70]
+    0xA94847F0u, // ldp  x16, x17, [sp, #0x80]
+    0xA9497BF2u, // ldp  x18, x30, [sp, #0x90]
+    0x910303FFu, // add  sp, sp, #0xC0
+    0xA94923F4u, // ldp  x20, x8, [sp, #0x90]   the instruction the jump replaced
+    0x17531FBAu, // b    0x110ED8C              the rest of the case
+    0xAA1303E0u, // name_is: mov x0, x19        w0 = 1 when the string at x1 is the item's name
+    0x38401402u, // next: ldrb w2, [x0], #0x1
+    0x38401423u, // ldrb w3, [x1], #0x1
+    0x6B03005Fu, // cmp  w2, w3
+    0x54000081u, // b.ne differ
+    0x35FFFF82u, // cbnz w2, next
+    0x52800020u, // mov  w0, #0x1
+    0xD65F03C0u, // ret
+    0x2A1F03E0u, // differ: mov w0, wzr
+    0xD65F03C0u, // ret
+    0xA9BF7BFDu, // dungeon: stp x29, x30, [sp, #-0x10]!   x0 = the dungeon Link stands in, or 0, found as the nodes do
+    0x910003FDu, // mov  x29, sp
+    0x900081C8u, // adrp x8, 0x4C7E000
+    0xF940BD08u, // ldr  x8, [x8, #0x178]
+    0xF9400100u, // ldr  x0, [x8]
+    0x973B900Fu, // bl   0xB2AF20
+    0xB4000040u, // cbz  x0, found
+    0x973B9035u, // bl   0xB2AFC0
+    0xA8C17BFDu, // found: ldp x29, x30, [sp], #0x10
+    0xD65F03C0u, // ret
+};
+
 // The emulator patches the program as its 0x100-byte NSO header followed by its memory, so an IPS offset is an address
 // plus 0x100. These offsets pass 0xFFFFFF, the most plain IPS holds, so the file is IPS32.
 constexpr uint32_t NsoHeaderSize = 0x100;
+
+constexpr std::array Records{
+    Code{ LiftLevelWrite, CallKeepHigher },
+    Code{ KeepHigher, KeepHigherInstructions },
+    Code{ NotPushToPouchCase, JumpToAwardDungeonItem },
+    Code{ AwardDungeonItem, AwardDungeonItemInstructions },
+};
 
 } // namespace
 
 std::string ProgramPatch() {
     std::string ips = "IPS32";
-    for (const Code& code : { Code{ LiftLevelWrite, CallKeepHigher }, Code{ KeepHigher, KeepHigherInstructions } }) {
+    for (const Code& code : Records) {
         const uint32_t offset = code.address + NsoHeaderSize;
         const uint16_t size = uint16_t(code.instructions.size_bytes());
         const size_t record = ips.size();
