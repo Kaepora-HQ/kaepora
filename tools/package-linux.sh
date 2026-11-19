@@ -53,7 +53,7 @@ rm -r "$appdir/apprun-hooks" "$appdir/AppRun"
 mv "$appdir/AppRun.wrapped" "$appdir/AppRun"
 
 # The AppImage specification asks for a PNG icon at .DirIcon; linuxdeploy puts the SVG at the top of the folder.
-ln -s usr/share/icons/hicolor/256x256/apps/io.github.pixelhabits.kaepora.png "$appdir/.DirIcon"
+ln -s usr/share/icons/hicolor/256x256/apps/org.kaepora.Kaepora.png "$appdir/.DirIcon"
 
 python3 -I "$(dirname "${BASH_SOURCE[0]}")/third_party_notices.py" "$appdir" "$qt" "$work/runtime-x86_64"
 

@@ -7,9 +7,9 @@
 	<key>CFBundleExecutable</key>
 	<string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFile</key>
-	<string>io.github.pixelhabits.kaepora.icns</string>
+	<string>org.kaepora.Kaepora.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>io.github.pixelhabits.kaepora</string>
+	<string>org.kaepora.Kaepora</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

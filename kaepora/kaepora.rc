@@ -2,7 +2,7 @@
 #include "version.h"
 
 // Qt's Windows platform plugin gives the window the icon of this name.
-IDI_ICON1 ICON "../dist/io.github.pixelhabits.kaepora.ico"
+IDI_ICON1 ICON "../dist/org.kaepora.Kaepora.ico"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION KAEPORA_VERSION_NUMBERS

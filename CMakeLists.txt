@@ -147,7 +147,7 @@ if(Qt6_FOUND)
         include(InstallRequiredSystemLibraries)
     elseif(APPLE)
         set(LICENSES Kaepora.app/Contents/Resources/licenses)
-        set(ICON dist/io.github.pixelhabits.kaepora.icns)
+        set(ICON dist/org.kaepora.Kaepora.icns)
         set_source_files_properties(${ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_sources(kaepora PRIVATE ${ICON})
         set_target_properties(kaepora PROPERTIES MACOSX_BUNDLE ON OUTPUT_NAME Kaepora
@@ -158,10 +158,10 @@ if(Qt6_FOUND)
         include(GNUInstallDirs)
         set(LICENSES ${CMAKE_INSTALL_DATADIR}/licenses)
         install(TARGETS kaepora)
-        install(FILES dist/io.github.pixelhabits.kaepora.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-        install(FILES dist/io.github.pixelhabits.kaepora.svg
+        install(FILES dist/org.kaepora.Kaepora.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+        install(FILES dist/org.kaepora.Kaepora.svg
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
-        install(FILES dist/io.github.pixelhabits.kaepora.png
+        install(FILES dist/org.kaepora.Kaepora.png
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
     endif()
     if(WIN32 OR APPLE)
