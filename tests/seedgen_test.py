@@ -1,6 +1,6 @@
 """End-to-end tests of kaepora-seedgen against the tables in remake/.
 
-Usage: python3 -I -B tests/seedgen_test.py <kaepora-seedgen> <Kaepora's version> [test name ...]
+Usage: python3 -I -B tests/seedgen_test.py <kaepora-seedgen> <kaepora-reach> <Kaepora's version> [test name ...]
 Writes its seeds into a temporary folder under the current directory.
 """
 
@@ -13,6 +13,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import reach  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -181,6 +184,21 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("GC Shop Item 5", steps)
         self.assertNotIn("Kak 10 Gold Skulltula Reward", steps)
         self.assertNotIn("Kak 30 Gold Skulltula Reward", steps)
+
+    def test_route_steps_are_in_reach_in_their_sphere(self):
+        # Link follows the route sphere by sphere, holding what the spheres before gave him, and a shuffled chest off
+        # the route holds nothing that counts. In seed 1, the pruning drops what three steps counted on in an earlier
+        # sphere.
+        log, _ = self.generate("1")
+        spheres = [list(steps) for steps in log["playthrough"].values()]
+        route = {step for steps in spheres for step in steps}
+        chests = [(chest, item if chest in route else "Green Rupee") for chest, item in log["locations"].items()]
+        out_of_reach = []
+        for number, steps in enumerate(spheres):
+            later = [(step, "Green Rupee") for sphere in spheres[number:] for step in sphere]
+            out_of_reach += [f"sphere {number:02}: {step}" for step in steps
+                             if not reach.reachable(step, *chests, *later, settings=log["settings"])]
+        self.assertEqual(out_of_reach, [])
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
         _, plan = self.generate("6")
@@ -366,5 +384,5 @@ class SeedgenTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    SEEDGEN, VERSION = sys.argv[1:3]
-    unittest.main(argv=[sys.argv[0], *sys.argv[3:]])
+    SEEDGEN, reach.PROGRAM, VERSION = sys.argv[1:4]
+    unittest.main(argv=[sys.argv[0], *sys.argv[4:]])

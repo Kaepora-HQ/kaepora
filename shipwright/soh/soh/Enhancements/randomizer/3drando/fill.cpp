@@ -723,12 +723,24 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
         }
     }
 
-    // Some spheres may now be empty, remove these
-    for (int32_t i = static_cast<int32_t>(ctx->playthroughLocations.size()) - 2; i >= 0; i--) {
-        if (ctx->playthroughLocations.at(i).size() == 0) {
-            ctx->playthroughLocations.erase(ctx->playthroughLocations.begin() + i);
+    // The spheres were numbered before the passes above, which can drop what a step counted on in an earlier sphere.
+    // So the route is walked again over the steps it kept, with every other item that counts as progress set aside,
+    // and no step stands in a sphere before Link can reach it with what the spheres before it gave him.
+    std::bitset<RC_MAX> kept;
+    for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
+        for (RandomizerCheck loc : sphere) {
+            kept.set(loc);
         }
     }
+    for (RandomizerCheck loc : ctx->allLocations) {
+        Rando::ItemLocation* location = ctx->GetItemLocation(loc);
+        if (!kept[loc] && location->GetPlacedItem().IsAdvancement()) {
+            location->DelayItem();
+            toAddBackItem.push_back(loc);
+        }
+    }
+    ctx->playthroughLocations.clear();
+    GeneratePlaythrough();
 
     // Now we can add back items which were removed previously
     for (RandomizerCheck loc : toAddBackItem) {

@@ -174,7 +174,7 @@ add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DI
 add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route route_names_no_gold_skulltula_token
-                     route_takes_what_link_is_handed_over_what_he_buys
+                     route_takes_what_link_is_handed_over_what_he_buys route_steps_are_in_reach_in_their_sphere
                      plan_opens_the_doors_the_rules_count_open plan_keeps_quests_from_going_back
                      same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
@@ -187,7 +187,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      lens_never_needed_leaves_the_lens_off_the_route
                      every_setting_changed_at_once seed_text_ignores_case fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
-                                  $<TARGET_FILE:kaepora-seedgen> ${PROJECT_VERSION} SeedgenTest.test_${TEST})
+                                  $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
+                                  SeedgenTest.test_${TEST})
 endforeach()
 add_test(NAME logic COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/logic_test.py
                             $<TARGET_FILE:kaepora-reach>)

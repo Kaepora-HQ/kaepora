@@ -228,9 +228,7 @@
         },
         "sphere 04": {
             "GC Darunias Joy": "Goron's Bracelet",
-            "ZD Diving Minigame": "Progressive Scale",
-            "DMT Great Fairy Reward": "Progressive Magic Meter",
-            "DMT Great Fairy Din's Fire": "Din's Fire"
+            "ZD Diving Minigame": "Progressive Scale"
         },
         "sphere 05": {
             "Dodongos Cavern Compass Chest": "Iron Boots",
@@ -246,26 +244,28 @@
         },
         "sphere 08": {
             "Graveyard Hookshot Chest": "Progressive Hookshot",
+            "DMT Great Fairy Reward": "Progressive Magic Meter",
+            "DMT Great Fairy Din's Fire": "Din's Fire",
             "GC Rolling Goron as Adult": "Goron Tunic",
             "GV Octorok Grotto Chest": "Progressive Hookshot",
-            "Market ToT Master Sword": "Master Sword",
-            "GF Double Cell Carpenter": "Gerudo Fortress Small Key",
-            "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
-            "GF 1 Torch Carpenter": "Gerudo Fortress Small Key"
+            "Market ToT Master Sword": "Master Sword"
         },
         "sphere 09": {
             "Forest Temple First Room Chest": "Forest Temple Small Key",
-            "Water Temple Central Bow Target Chest": "Water Temple Boss Key",
+            "GF Double Cell Carpenter": "Gerudo Fortress Small Key",
+            "GF Dead End Carpenter": "Gerudo Fortress Small Key",
+            "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
+            "GF 1 Torch Carpenter": "Gerudo Fortress Small Key",
+            "Graveyard Dampe Race Freestanding PoH": "Progressive Bow",
             "Fire Temple Near Boss Chest": "Fire Temple Small Key",
             "Fire Temple Boss Key Chest": "Fire Temple Small Key",
             "Fire Temple Flare Dancer Chest": "Fire Temple Small Key",
-            "Graveyard Dampe Race Freestanding PoH": "Progressive Bow",
-            "GF Dead End Carpenter": "Gerudo Fortress Small Key"
+            "Water Temple Central Bow Target Chest": "Water Temple Boss Key"
         },
         "sphere 10": {
-            "GF Freed All Carpenters": "Gerudo Membership Card",
             "Forest Temple First Stalfos Chest": "Forest Temple Small Key",
             "Forest Temple Well Chest": "Forest Temple Small Key",
+            "GF Freed All Carpenters": "Gerudo Membership Card",
             "Morpha": "Water Medallion",
             "Fire Temple Boulder Maze Lower Chest": "Fire Temple Small Key"
         },
