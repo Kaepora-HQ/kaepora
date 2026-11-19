@@ -71,10 +71,24 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::None, "None" },
 };
 
-enum class Shops { Vanilla, FourPerShopShuffled };
+// A count's value is the number of goods it shuffles in each shop.
+enum class Shops {
+    Vanilla,
+    OnePerShopShuffled,
+    TwoPerShopShuffled,
+    ThreePerShopShuffled,
+    FourPerShopShuffled,
+    FivePerShopShuffled,
+    RandomPerShop,
+};
 inline constexpr std::pair<Shops, std::string_view> ShopsChoices[] = {
     { Shops::Vanilla, "Vanilla" },
+    { Shops::OnePerShopShuffled, "One per shop shuffled" },
+    { Shops::TwoPerShopShuffled, "Two per shop shuffled" },
+    { Shops::ThreePerShopShuffled, "Three per shop shuffled" },
     { Shops::FourPerShopShuffled, "Four per shop shuffled" },
+    { Shops::FivePerShopShuffled, "Five per shop shuffled" },
+    { Shops::RandomPerShop, "A random number per shop" },
 };
 
 enum class Lens { Needed, NeverNeeded };

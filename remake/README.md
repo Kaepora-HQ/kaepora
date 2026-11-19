@@ -49,7 +49,7 @@ codes the game puts before a noun.
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
 is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
-slot that "Shop goods" can shuffle has a row too, with SoH's one sentence for its shop.
+slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.

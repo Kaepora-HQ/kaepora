@@ -56,9 +56,20 @@ EVERY_SETTING_CHANGED = {
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
 SHOP_SLOTS = read_tsv("shops.tsv")
-# SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, so four per shop are items 5 to 8.
-SHUFFLED_SHOP_SLOTS = [row for row in SHOP_SLOTS if int(row["number"]) >= 5]
+# SoH's shopsanity takes a shop's items in this order. A count stops at five.
+SHOPSANITY_ORDER = [7, 5, 8, 6, 3]
+SHOP_COUNTS = {"One per shop shuffled": 1, "Two per shop shuffled": 2, "Three per shop shuffled": 3,
+               "Four per shop shuffled": 4, "Five per shop shuffled": 5}
+
+
+def shuffled_shop_slots(count):
+    return [row for row in SHOP_SLOTS if int(row["number"]) in SHOPSANITY_ORDER[:count]]
+
+
 SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
+SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
+# A seed whose hints name a slot that only five per shop shuffle.
+HINT_SEED_AT_FIVE = "1"
 KEPT_FROM_SHOPS = {"Item_Range_Bow", "Item_Range_SlingShot", "Item_BombBag_Small", "Item_BombchuBundle_Small"}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
@@ -125,10 +136,21 @@ def plain(text):
     return " ".join(re.sub(r"\{[^}]*\}|#", "", text).split())
 
 
+def shop_rows(plan):
+    """The shops.tsv row of each of the plan's shop slots, in the plan's order."""
+    rows = {json.dumps(shop_slot(row), sort_keys=True): row for row in SHOP_SLOTS}
+    return [rows[json.dumps({key: entry[key] for key in ("shopkeepers", "slot", "shelves")}, sort_keys=True)]
+            for entry in plan["shops"]]
+
+
+def shop_of(row):
+    return row["location"].rsplit(" Item ", 1)[0]
+
+
 def placed_remake_items(plan):
     rows = {row["hash"]: row["location"] for row in SHUFFLED}
     placed = {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
-    return placed | {row["location"]: entry["item"] for row, entry in zip(SHUFFLED_SHOP_SLOTS, plan["shops"])}
+    return placed | {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
 
 
 def spoiler_item(placed):
@@ -445,24 +467,50 @@ class SeedgenTest(unittest.TestCase):
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
 
-    def test_four_goods_per_shop_shuffled(self):
-        spoiler, plan = self.generate("19", SHOPS_SHUFFLED)
-        self.assertEqual(spoiler["settings"]["Shop goods"], "Four per shop shuffled")
+    def assert_shop_slots_sell_the_pool(self, spoiler, plan, slots):
+        """The plan's shop slots are the given rows, in table order, each with the spoiler log's item and a cheap price,
+        and the shuffled chests and slots hold the pool and a Red Rupee for each slot."""
         self.assertEqual([{key: entry[key] for key in ("shopkeepers", "slot", "shelves")} for entry in plan["shops"]],
-                         [shop_slot(row) for row in SHUFFLED_SHOP_SLOTS])
-        for row, entry in zip(SHUFFLED_SHOP_SLOTS, plan["shops"]):
+                         [shop_slot(row) for row in slots])
+        for row, entry in zip(slots, plan["shops"]):
             placed = spoiler["locations"][row["location"]]
             self.assertEqual(list(placed), ["item", "price"], row["location"])
             self.assertIn((entry["item"], placed["item"]), ITEM_PAIRS, row["location"])
             # SoH's cheap balanced prices.
             self.assertEqual(entry["price"], placed["price"])
             self.assertIn(entry["price"], range(0, 100, 5))
-        kept = {row["location"] for row in SHOP_SLOTS} - {row["location"] for row in SHUFFLED_SHOP_SLOTS}
+        kept = {row["location"] for row in SHOP_SLOTS} - {row["location"] for row in slots}
         self.assertFalse(kept & spoiler["locations"].keys())
         rows = {row["hash"]: row for row in SHUFFLED}
         chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
         self.assertEqual(collections.Counter(chests.values()) + collections.Counter(e["item"] for e in plan["shops"]),
-                         POOL + collections.Counter({"TBox_Rupee_Red": len(SHUFFLED_SHOP_SLOTS)}))
+                         POOL + collections.Counter({"TBox_Rupee_Red": len(slots)}))
+
+    def test_each_count_shuffles_the_first_goods_of_every_shop_in_sohs_order(self):
+        for words, count in SHOP_COUNTS.items():
+            with self.subTest(words):
+                spoiler, plan = self.generate("19", {"Shop goods": words})
+                self.assertEqual(spoiler["settings"]["Shop goods"], words)
+                self.assertEqual(len(plan["shops"]), 8 * count)
+                self.assert_shop_slots_sell_the_pool(spoiler, plan, shuffled_shop_slots(count))
+
+    def test_a_random_number_per_shop_shuffles_one_to_five_of_its_first_goods(self):
+        counts = collections.Counter()
+        for seed in range(520, 530):
+            spoiler, plan = self.generate(str(seed), SHOPS_AT_RANDOM)
+            self.assertEqual(spoiler["settings"]["Shop goods"], "A random number per shop")
+            rows = shop_rows(plan)
+            numbers = collections.defaultdict(set)
+            for row in rows:
+                numbers[shop_of(row)].add(int(row["number"]))
+            self.assertEqual(set(numbers), {shop_of(row) for row in SHOP_SLOTS}, seed)
+            for shop, taken in numbers.items():
+                self.assertIn(len(taken), range(1, 6), (seed, shop))
+                self.assertEqual(taken, set(SHOPSANITY_ORDER[:len(taken)]), (seed, shop))
+                counts[len(taken)] += 1
+            self.assertEqual(rows, [row for row in SHOP_SLOTS if row in rows], seed)
+            self.assert_shop_slots_sell_the_pool(spoiler, plan, rows)
+        self.assertEqual(set(counts), set(range(1, 6)))
 
     def test_shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse(self):
         sold = collections.Counter()
@@ -537,6 +585,16 @@ class SeedgenTest(unittest.TestCase):
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.
         self.assert_hints_are_true("4", SHOPS_SHUFFLED)
+
+    def test_hints_name_the_goods_only_five_per_shop_shuffle(self):
+        # Seed HINT_SEED_AT_FIVE hints at an item 3 by its slot's sentence.
+        seed, settings = HINT_SEED_AT_FIVE, {"Shop goods": "Five per shop shuffled"}
+        self.assert_hints_are_true(seed, settings)
+        spoiler, plan = self.generate(seed, settings)
+        held = placed_remake_items(plan)
+        sentences = {plain(CHEST_SENTENCES[row["location"]].replace("[[1]]", ITEM_NAMES[held[row["location"]]]))
+                     for row in SHOP_SLOTS if row["number"] == "3"}
+        self.assertTrue(sentences & set(spoiler["hints"].values()))
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):

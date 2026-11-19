@@ -2,6 +2,7 @@
 
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/static_data.h"
+#include "soh/Enhancements/randomizer/rng.h"
 #include "soh/Enhancements/randomizer/3drando/playthrough.hpp"
 #include "soh/util.h"
 #include "hints.h"
@@ -81,17 +82,25 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
     }
 }
 
-// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, so four per shop are items 5 to 8.
-static bool Shuffled(const RemakeShopSlot& slot, const SeedSettings& settings) {
-    return settings.shops == Shops::FourPerShopShuffled && slot.number >= 5;
-}
+// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2. Its sixth is the Kokiri Shop's Deku Shield,
+// and SoH's logic counts only a shield Link can buy, so a count stops at five.
+static constexpr int ShopsanityOrder[] = { 7, 5, 8, 6, 3 };
 
-static std::vector<RemakeShopSlot> ShuffledShops(const std::vector<RemakeShopSlot>& table,
-                                                 const SeedSettings& settings) {
-    std::vector<RemakeShopSlot> shops;
-    std::ranges::copy_if(table, std::back_inserter(shops),
-                         [&](const RemakeShopSlot& slot) { return Shuffled(slot, settings); });
-    return shops;
+// The slots the setting shuffles, in table order: the first items of each shop in SoH's order, as many as the count.
+// A random number per shop draws each shop's count, one to five, as the table reaches its item 1.
+static std::vector<RemakeShopSlot> ShuffledShops(const std::vector<RemakeShopSlot>& table, Shops shops) {
+    std::vector<RemakeShopSlot> shuffled;
+    int count = 0;
+    for (const RemakeShopSlot& slot : table) {
+        if (slot.number == 1) {
+            count = shops == Shops::RandomPerShop ? static_cast<int>(Random(1, std::size(ShopsanityOrder) + 1))
+                                                  : static_cast<int>(shops);
+        }
+        if (std::ranges::find(ShopsanityOrder, slot.number) - std::begin(ShopsanityOrder) < count) {
+            shuffled.push_back(slot);
+        }
+    }
+    return shuffled;
 }
 
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
@@ -101,7 +110,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
     [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table), true);
     static const RemakeHintTables hintTables =
-        LoadRemakeHintTables(table, ShuffledShops(shopTable, { .shops = Shops::FourPerShopShuffled }));
+        LoadRemakeHintTables(table, ShuffledShops(shopTable, Shops::FivePerShopShuffled));
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -110,13 +119,16 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
-    const std::vector<RemakeShopSlot> shops = ShuffledShops(shopTable, settings);
 
     SetOptions(settings);
+    // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
+    // the seed and on what generation does, not on how the options are listed.
+    Random_Init(SohUtils::Hash(seed));
+    const std::vector<RemakeShopSlot> shops = ShuffledShops(shopTable, settings.shops);
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, enabledTricks, chests, shops) <= 0) {
+    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops) <= 0) {
         throw std::runtime_error("generation failed");
     }
     const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops);

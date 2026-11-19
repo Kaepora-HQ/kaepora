@@ -20,9 +20,9 @@ A dungeon's small keys, boss key, map and compass stay inside that dungeon, in a
 
 ## Shops
 
-Set **Shop goods** to **Four per shop shuffled**, and four places on the shelves of each of the eight shops join the shuffle. A shop can then sell the Longshot.
+**Shop goods** puts places on the shelves of each of the eight shops into the shuffle: from **One per shop shuffled** to **Five per shop shuffled**, or **A random number per shop**. A shop can then sell the Longshot.
 
-What those four places sold before is no longer for sale there, and a red rupee joins the shuffled items for each one. Each shuffled place gets its own price, from nothing up to 95 rupees. The other shelves keep their goods and prices. With **Vanilla**, shops sell what they always sold.
+What those places sold before is no longer for sale there, and a red rupee joins the shuffled items for each one. Each shuffled place gets its own price, from nothing up to 95 rupees. The other shelves keep their goods and prices. With **Vanilla**, shops sell what they always sold.
 
 ## Hints
 

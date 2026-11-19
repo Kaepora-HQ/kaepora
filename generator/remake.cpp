@@ -342,8 +342,9 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
             !locations.insert(location->second).second) {
             Fail(where + "\"" + row[0] + "\" is not a SoH shop location, or repeats");
         }
-        if (row[1].size() != 1 || row[1][0] < '1' || row[1][0] > '8') {
-            Fail(where + "the number is not 1 to 8");
+        const std::string next = std::to_string(slots.size() % 8 + 1);
+        if (row[1] != next) {
+            Fail(where + "the number is not " + next + ", as each shop's rows come together, items 1 to 8 in turn");
         }
         if (row[2].size() != 1 || row[2][0] < '0' || row[2][0] > '7') {
             Fail(where + "the slot is not 0 to 7");

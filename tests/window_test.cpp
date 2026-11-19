@@ -622,6 +622,18 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
+    void shopGoodsOffersEachCountUpToFiveAndARandomNumber() {
+        button("Settings…")->click();
+        QStringList offered;
+        for (int index = 0; index < choice("Shop goods")->count(); ++index) {
+            offered << choice("Shop goods")->itemText(index);
+        }
+        QCOMPARE(offered, (QStringList{ "Vanilla", "One per shop shuffled", "Two per shop shuffled",
+                                        "Three per shop shuffled", "Four per shop shuffled", "Five per shop shuffled",
+                                        "A random number per shop" }));
+        dialogButton("Cancel")->click();
+    }
+
     void theChoicesStartInOneColumn() {
         button("Settings…")->click();
         QCoreApplication::processEvents();
@@ -665,6 +677,7 @@ private slots:
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
         QTest::newRow("shops") << "Shop goods" << "Four per shop shuffled" << "Shop goods shuffled";
+        QTest::newRow("shops at random") << "Shop goods" << "A random number per shop" << "Shop goods shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";

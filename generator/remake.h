@@ -48,7 +48,7 @@ struct RemakeShopSlot {
     };
 
     RandomizerCheck location;
-    int number; // the location's item number in its shop, 1 to 8, as SoH numbers them
+    int number; // the location's item number in its shop, 1 to 8, as SoH numbers them; a shop's slots come in turn
     int slot;
     std::vector<Shopkeeper> shopkeepers;
     std::vector<Shelf> shelves;

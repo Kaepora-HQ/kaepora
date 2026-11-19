@@ -64,7 +64,7 @@ QString Summary(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
-    if (settings.shops == Shops::FourPerShopShuffled) {
+    if (settings.shops != Shops::Vanilla) {
         changed << "shop goods shuffled";
     }
     if (settings.lens == Lens::NeverNeeded) {

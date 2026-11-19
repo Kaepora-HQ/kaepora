@@ -283,7 +283,7 @@ void SetOptions(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         ctx->GetOption(RSK_GANONS_TRIALS).Set(RO_GANONS_TRIALS_SKIP);
     }
-    if (settings.shops == Shops::FourPerShopShuffled) {
+    if (settings.shops != Shops::Vanilla) {
         ctx->GetOption(RSK_SHOPSANITY_PRICES).Set(RO_PRICE_CHEAP_BALANCED);
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;

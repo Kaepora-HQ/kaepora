@@ -192,8 +192,11 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
-                     four_goods_per_shop_shuffled shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
+                     each_count_shuffles_the_first_goods_of_every_shop_in_sohs_order
+                     a_random_number_per_shop_shuffles_one_to_five_of_its_first_goods
+                     shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
+                     hints_name_the_goods_only_five_per_shop_shuffle
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
@@ -213,6 +216,7 @@ if(Qt6Test_FOUND)
     # The window's tests that make no seed need no game file.
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn whatJoinsTheShuffleHasItsOwnGroup
                      aChoiceShowsInTheSummary defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
+                     shopGoodsOffersEachCountUpToFiveAndARandomNumber
                      longSettingsLeaveTheWindowWidth settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing
