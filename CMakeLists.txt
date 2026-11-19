@@ -91,7 +91,8 @@ else()
 endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp
-                                       patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp patcher/sarc.cpp)
+                                       patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp patcher/msbt.cpp
+                                       patcher/sarc.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
@@ -111,6 +112,10 @@ target_compile_options(kaepora-patch-flow-roundtrip PRIVATE ${WARNINGS})
 add_executable(kaepora-patch-pack-roundtrip tests/pack_roundtrip.cpp)
 target_link_libraries(kaepora-patch-pack-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-pack-roundtrip PRIVATE ${WARNINGS})
+
+add_executable(kaepora-patch-text-roundtrip tests/text_roundtrip.cpp)
+target_link_libraries(kaepora-patch-text-roundtrip PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch-text-roundtrip PRIVATE ${WARNINGS})
 
 add_executable(kaepora-patch-value-test tests/byml_value_test.cpp)
 target_link_libraries(kaepora-patch-value-test PRIVATE kaepora-patch-files)
@@ -240,6 +245,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
+    add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")

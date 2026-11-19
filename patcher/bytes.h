@@ -45,6 +45,7 @@ constexpr size_t AlignUp(size_t size, size_t alignment) {
     return (size + alignment - 1) / alignment * alignment;
 }
 
+// The hash SARC archives and MSBT message files give a name, each with its own multiplier.
 inline uint32_t NameHash(std::string_view name, uint32_t multiplier) {
     uint32_t hash = 0;
     for (const char byte : name) {

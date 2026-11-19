@@ -15,6 +15,9 @@ Files Parse(std::string_view data);
 // Each file of an actor pack starts on a multiple of this from the start of the files' data.
 constexpr size_t ActorPackAlignment = 8;
 
+// A text pack's files lie back to back.
+constexpr size_t TextPackAlignment = 1;
+
 // The archive laid out as the game's are: the files in the order of their names' hashes, each starting on a multiple of
 // the alignment.
 std::string Write(const Files& files, size_t alignment);
