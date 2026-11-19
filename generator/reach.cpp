@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     auto ctx = Rando::Context::GetInstance();
-    ctx->FinalizeSettings({}, {});
+    ctx->FinalizeSettings({}, enabledTricks);
     for (const RemakeChest* chest : SetUpWorld(chests)) {
         ctx->GetItemLocation(chest->location)->SetPlacedItem(chest->sohItem);
     }

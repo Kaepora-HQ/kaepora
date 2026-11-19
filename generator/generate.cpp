@@ -77,8 +77,8 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     SetOptions(settings);
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
-    // No location is excluded and no trick is enabled, so both sets are empty.
-    if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, {}, chests) <= 0) {
+    // No location is excluded.
+    if (Playthrough::Playthrough_Init(SohUtils::Hash(seed), {}, enabledTricks, chests) <= 0) {
         throw std::runtime_error("generation failed");
     }
     return { SpoilerLog(seed, settings, chests), RemakePlan(seed, chests, settings) };

@@ -221,6 +221,9 @@ static constexpr std::pair<RandomizerSettingKey, uint8_t> unmodifiedGame[] = {
     { RSK_DAMAGE_MULTIPLIER, RO_DAMAGE_MULTIPLIER_DEFAULT },
 };
 
+// The game opens a hidden grotto to a bomb or the hammer, or the Song of Storms, and never checks the Echo Gem.
+const std::set<RandomizerTrick> enabledTricks = { RT_GROTTOS_WITHOUT_AGONY };
+
 // OTRGlobals::Initialize, then ShipInit::InitAll. InitAll would also register in-game hooks, so only the location
 // registrations run here.
 void InitializeRandomizer() {

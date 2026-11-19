@@ -209,6 +209,12 @@ class LogicTest(unittest.TestCase):
     def test_goron_city_maze_center_side_chest_is_reachable(self):
         self.assertTrue(self.reachable("GC Maze Center Side Chest"))
 
+    def test_hidden_grottos_open_without_the_echo_gem(self):
+        # The game opens a hidden grotto to a bomb or the hammer, or the Song of Storms, and never checks the Echo Gem
+        # (SoH's Stone of Agony), which the House of Skulltula gives for 20 tokens.
+        no_echo_gem = ("Kak 20 Gold Skulltula Reward", "Green Rupee")
+        self.assertTrue(self.reachable("KF Storms Grotto Chest", no_echo_gem))
+
     def test_goron_city_grotto_chest_needs_the_hookshot(self):
         # Two hookshot targets cross the lava room to the grotto. Goron City has no Song of Time block.
         self.assertTrue(self.reachable("GC Grotto Chest"))
