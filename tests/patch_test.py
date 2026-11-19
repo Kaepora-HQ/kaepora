@@ -13,8 +13,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
-       python3 -I tests/patch_test.py tested-pedestal-mod <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
-           <tested mod's folder>
+       python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
+           <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
@@ -49,6 +49,7 @@ BOMB_LIFT_PACKS = [f"Pack/Actor/{actor}.pack.zs" for actor in (
     "Item_Bomb", "Npc_Hylia_ImperialSoldier_Bomb", "Obj_BombFlower_A_01", "Obj_BombFlower_A_04",
     "Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01")]
 PEDESTAL_MODULE = "Logic/Market_Adult_Prefab_89da.logic.module.ainb"
+TEMPLE_STATIC = "Banc/Market/Market_Adult_Static.bcett.byml.zs"
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
@@ -482,8 +483,10 @@ def patched(patch, game, plan, part="romfs"):
         result = run(patch, game, plan, tmp)
         assert result.returncode == 0, result.stderr
         written = files(tmp / "mod" / part)
-    # Every mod carries the bomb's packs and the pedestal's module, which tested-bomb-mod and tested-pedestal-mod check.
-    return {path: data for path, data in written.items() if path not in [*BOMB_LIFT_PACKS, PEDESTAL_MODULE]}
+    # Every mod carries the bomb's packs, the pedestal's module and the temple's placement, which tested-bomb-mod,
+    # tested-pedestal-mod and tested-sheik-mod check.
+    return {path: data for path, data in written.items()
+            if path not in [*BOMB_LIFT_PACKS, PEDESTAL_MODULE, TEMPLE_STATIC]}
 
 
 def assert_same_frame_header(ours, theirs):
@@ -770,6 +773,31 @@ def tested_pedestal_mod(patch, game, plan_file, mod):
             result = run(patch, game, planned, tmp)
             assert result.returncode == 0, result.stderr
             assert (tmp / "mod" / "romfs" / PEDESTAL_MODULE).read_bytes() == tested
+
+
+def tested_sheik_mod(patch, game, plan_file, mod):
+    """The Temple of Time's placement that the game ran, with Sheik's wait before the Forest Temple behind the
+    Master Sword in place of in front of it, in the mod of any plan: an empty one and a seed's. It keeps the size of the
+    game's file, so the mod leaves the size table out."""
+    tested = (pathlib.Path(mod) / "romfs" / TEMPLE_STATIC).read_bytes()
+    expected = zstd.decompress(tested, zstd_dict=game.dictionary)
+    assert len(expected) == len(zstd.decompress(game.read(TEMPLE_STATIC), zstd_dict=game.dictionary))
+    _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    entry = dict(entries)[size_key(TEMPLE_STATIC)]
+    for planned in (plan([]), json.loads(pathlib.Path(plan_file).read_text())):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            result = run(patch, game, planned, tmp)
+            assert result.returncode == 0, result.stderr
+            ours = (tmp / "mod" / "romfs" / TEMPLE_STATIC).read_bytes()
+            assert_same_frame_header(ours, tested)
+            assert zstd.decompress(ours, zstd_dict=game.dictionary) == expected
+            # An empty plan writes no file that outgrows its entry, so the mod leaves the table out. A seed's flows may
+            # outgrow theirs, and the table it ships keeps the game's entry for the placement.
+            table = tmp / "mod" / "romfs" / SIZE_TABLE
+            assert planned["chests"] or not table.exists()
+            if table.exists():
+                assert dict(read_size_table(zstd.decompress(table.read_bytes()))[1])[size_key(TEMPLE_STATIC)] == entry
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -1643,6 +1671,7 @@ def main():
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
         "tested-pedestal-mod": tested_pedestal_mod,
+        "tested-sheik-mod": tested_sheik_mod,
         "tested-stone-text-mod": tested_stone_text_mod,
         "tested-message-text-mod": tested_message_text_mod,
         "seed-plan": seed_plan,

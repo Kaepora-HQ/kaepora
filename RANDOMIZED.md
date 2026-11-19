@@ -64,6 +64,7 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 
 - **Strength only goes up.** In the game, a weaker strength item picked up after a stronger one lowers what Link can lift. With a seed it never goes down.
 - **Diving only gets deeper.** In the game, a Silver Scale picked up after the Golden Scale lowers how deep Link dives. With a seed it never goes down.
+- **The Master Sword goes back at any time.** In the game, adult Link can return the sword and be a child again only once the Forest Temple is done. With a seed he can from the start, and Sheik waits behind the pedestal, out of the way. One thing to watch: a child who warps to the Evil Desert Colossus or into Death Mountain Crater cannot walk out. Learn a warp song that lands somewhere else first: the Minuet, the Serenade, the Nocturne or the Prelude.
 - **Bombs need no strength.** Link can take a bomb out of the bag before he has a strength item.
 - **A few doors and scenes.** Four dungeon doors start open, and three story scenes no longer set a quest back.
 
@@ -74,4 +75,3 @@ More is being worked on. Until each part lands, the game keeps its own.
 - **Songs.** The 12 songs, shuffled among the places that teach them.
 - **Gold Skulltulas.** What the 100 Gold Skulltulas leave behind.
 - **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.
-- **Going back to child sooner.** Putting the Master Sword back before the Forest Temple.

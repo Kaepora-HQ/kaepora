@@ -699,6 +699,33 @@ static std::string OpenPedestal(GameFile& game) {
     return module;
 }
 
+// Before the Forest Temple, Sheik's schedule sends him to his AnchorAction1, 0.77 units in front of the Master Sword on
+// its axis. The sword's "Return" prompt needs Link within 1.5 units in front of it, and after a pull adult Link appears
+// 0.34 units from that spot. Sheik's own placement stands 1.39 units behind the sword. The anchor takes that x and
+// keeps its height and z, so its position stays a container of its own and the file keeps its size. His lesson after
+// the Forest Temple warps him to a spot of its own.
+constexpr std::string_view TempleStatic = "Banc/Market/Market_Adult_Static.bcett.byml.zs";
+constexpr uint64_t SheikHash = 2669233513522124871;
+constexpr uint64_t SheikWaitHash = 3082534610608980032;
+// The anchor's position as the game ships it, (136.871, 106.3536, -34.0), as the bits of its floats.
+constexpr std::array<uint32_t, 3> SheikWaitShipped = { 0x4308DEFA, 0x42D4B50B, 0xC2080000 };
+
+static void MoveSheikWaitBehindSword(byml::Node& placement) {
+    byml::Node* wait = Find(Actor(placement, SheikWaitHash), "Translate");
+    const bool shipped = wait != nullptr && wait->array.size() == SheikWaitShipped.size() &&
+                         std::ranges::equal(wait->array, SheikWaitShipped, [](const byml::Node& value, uint32_t bits) {
+                             return value.type == byml::Type::Float && value.scalar == bits;
+                         });
+    if (!shipped) {
+        throw std::runtime_error("Sheik's AnchorAction1 is not where the game ships it");
+    }
+    const byml::Node* sheik = Find(Actor(placement, SheikHash), "Translate");
+    if (sheik == nullptr || sheik->array.empty() || sheik->array[0].type != byml::Type::Float) {
+        throw std::runtime_error("Sheik has no position");
+    }
+    wait->array[0] = sheik->array[0];
+}
+
 // The game reads the update's text pack of the console's language. A planned text is in English, and on a console in
 // another language the game's own text stays.
 constexpr std::string_view TextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
@@ -780,6 +807,11 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             }
         }
     }
+
+    try {
+        MoveSheikWaitBehindSword(placement(std::string(TempleStatic)));
+        changed.insert(std::string(TempleStatic));
+    } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", TempleStatic, e.what())); }
 
     const std::string packDictionary = Dictionary(game, "pack.zsdic");
     std::map<std::string, ShopPack> packs;
