@@ -23,7 +23,7 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
                               const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                              const std::vector<StoneHint>& hints) {
+                              const std::vector<RemakeGift>& gifts, const std::vector<StoneHint>& hints) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
                                    { "settings", ToJson(settings) },
@@ -41,6 +41,9 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
         log["locations"][Rando::StaticData::GetLocation(slot.location)->GetName()] = {
             { "item", location->GetPlacedItemName().GetEnglish() }, { "price", location->GetPrice() }
         };
+    }
+    for (const RemakeGift& gift : gifts) {
+        AddPlacement(log["locations"], gift.location);
     }
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         nlohmann::ordered_json steps = nlohmann::ordered_json::object();
@@ -108,9 +111,10 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> table = LoadRemakeChests();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
-    [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table), true);
+    static const std::vector<RemakeGift> giftTable = LoadRemakeGifts(table);
+    [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table, giftTable), true);
     static const RemakeHintTables hintTables =
-        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop));
+        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable);
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -119,6 +123,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
+    const std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
 
     SetOptions(settings);
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
@@ -129,11 +134,12 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops) <= 0) {
+    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops, gifts) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops);
+    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts);
     const std::vector<StoneHint> hints =
         settings.gossipStones == GossipStones::GiveHints ? PickHints(hintTables, items) : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, chests, shops, hints), RemakePlan(seed, chests, shops, settings, items, hints) };
+    return { SpoilerLog(seed, settings, chests, shops, gifts, hints),
+             RemakePlan(seed, chests, shops, gifts, settings, items, hints) };
 }

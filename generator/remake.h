@@ -68,10 +68,32 @@ inline constexpr std::string_view ShopFillerName = "TBox_Rupee_Red";
 // out.
 std::vector<RemakeShopSlot> LoadRemakeShops();
 
+// A SoH location whose item a character hands over, and each string parameter of the remake's event flows that gives
+// it. Every site gives the location's one item.
+struct RemakeGift {
+    struct Site {
+        std::string flow; // romfs path of the event flow
+        std::string event;
+        std::string param;
+    };
+
+    RandomizerCheck location;
+    std::vector<Site> sites;
+    // What the sites give in the unmodified game, by its remake name, and the SoH item it stands for.
+    std::string item;
+    RandomizerGet sohItem;
+};
+
+// The gifts of remake/gifts.tsv, read from the copy built into the program, one per location, in table order. Throws
+// when a row names an unknown location, a location of the chest table, a flow that is not an event flow under
+// Event/EventFlow/, or an item that is not one SoH item of remake/items.tsv, or when the rows of a location name
+// different items.
+std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
+
 // Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
-// program, or a row names any other item. A slot can hold the item of a shuffled chest that KeptFromShops lets into
-// shops, and the shop filler.
-void CheckShopGoods(const std::vector<RemakeChest>& chests);
+// program, or a row names any other item. A slot can hold the item of a shuffled chest or of a gift that KeptFromShops
+// lets into shops, and the shop filler.
+void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
 struct RemakeStone {
     std::string label;
@@ -93,15 +115,17 @@ struct RemakeHintTables {
 };
 
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
-// item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, or a shop slot that can
-// be shuffled, or its area.
-RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops);
+// item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
+// shuffled or its area, or a gift, its area or its item.
+RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+                                      const std::vector<RemakeGift>& gifts);
 
-// The remake name of the item each shuffled chest and shop slot gives. Where several remake names stand for one SoH
-// item, the chests in table order and then the slots give the names the shuffled chests held and the slots' fillers,
-// each as often as it occurred.
+// The remake name of the item each shuffled chest, shop slot and gift gives. Where several remake names stand for one
+// SoH item, the chests in table order, then the slots, then the gifts give the names the shuffled chests held, the
+// slots' fillers and the gifts held, each as often as it occurred.
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
-                                                         const std::vector<RemakeShopSlot>& shops);
+                                                         const std::vector<RemakeShopSlot>& shops,
+                                                         const std::vector<RemakeGift>& gifts);
 
 struct StoneHint {
     RemakeStone stone;
@@ -110,9 +134,10 @@ struct StoneHint {
 };
 
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
-// Then the event flow strings every seed changes, the saved values a new game starts with that the rules or the
-// settings count on, the gossip stones' texts, and each shuffled shop slot with its item and price.
+// Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
+// the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
+// the settings count on, the gossip stones' texts, and each shuffled shop slot with its item and price.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const std::vector<RemakeShopSlot>& shops, const SeedSettings& settings,
-                                  const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints);

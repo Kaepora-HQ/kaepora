@@ -57,12 +57,21 @@ struct GetAccessibleLocationsStruct {
 
 void ClearProgress();
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
-                                           const std::vector<RemakeShopSlot>& shops);
-int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops);
+                                           const std::vector<RemakeShopSlot>& shops,
+                                           const std::vector<RemakeGift>& gifts);
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+         const std::vector<RemakeGift>& gifts);
+
+// What only a chest gives whole, kept in chests from every other kind of shuffled place. A chest that gives the Fairy
+// Bow or the Fairy Slingshot also adds the quiver or the bullet bag and their ammunition, from its own AI; a gift gave
+// each with nothing to hold it. The fill places these before the first kind of place that is not a chest joins it. A
+// kind of place that gives another item short places that item too, just before it joins.
+bool FilledOnlyByChests(RandomizerGet item);
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
-// slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the quiver
-// or the Goron Ruby they may need, so they go to chests.
+// slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the
+// quiver, the Goron Ruby or the empty bottle they may need, so they go to any other shuffled place, or to a chest for
+// FilledOnlyByChests.
 bool KeptFromShops(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);

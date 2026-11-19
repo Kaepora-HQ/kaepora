@@ -26,6 +26,12 @@ What those places sold before is no longer for sale there, and a red rupee joins
 
 **Shop prices** sets what the shuffled places cost. **Cheap** gives each its own price, from nothing up to 95 rupees, and **Balanced** goes up to 295. **Vanilla** keeps the price the shelf had. **One price** gives every place the price you type, and **Between two prices** picks each one between the two you type, up to 995 rupees. A seed never asks you to pay more than your wallet can hold when you get there.
 
+## Gifts
+
+Set **Gifts** to **Shuffled**, and 21 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner.
+
+You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. With **Vanilla**, each gives what the game has.
+
 ## Hints
 
 With **Gossip stones** at **Give hints**, a stone speaks without the Mask of Truth, and most stones say something true about your seed.
@@ -61,7 +67,6 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 
 More is being worked on. Until each part lands, the game keeps its own.
 
-- **Gifts.** The 21 items that characters and minigames hand over, such as the Skull Kid's and the House of Skulltula's.
 - **Songs.** The 12 songs, shuffled among the places that teach them.
 - **Gold Skulltulas.** What the 100 Gold Skulltulas leave behind.
 - **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.

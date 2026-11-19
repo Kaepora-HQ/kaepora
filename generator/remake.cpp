@@ -42,6 +42,9 @@ static constexpr unsigned char shopTable[] = {
 static constexpr unsigned char shopGoodsTable[] = {
 #embed "../remake/shop_goods.tsv"
 };
+static constexpr unsigned char giftTable[] = {
+#embed "../remake/gifts.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -210,14 +213,14 @@ static RandomizerCheck LocationNamed(const std::string& where, const std::string
 static std::string ItemPhrase(const std::string& where, const std::vector<std::string>& row) {
     const std::string& name = row[2];
     const std::string& article = row[3];
-    if (name.empty() || (article != "" && article != "a" && article != "the")) {
-        Fail(where + "no name, or an article other than a or the");
+    if (name.empty() || (article != "" && article != "a" && article != "an" && article != "the")) {
+        Fail(where + "no name, or an article other than a, an or the");
     }
     return article.empty() ? name : article + " " + name;
 }
 
-RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests,
-                                      const std::vector<RemakeShopSlot>& shops) {
+RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+                                      const std::vector<RemakeGift>& gifts) {
     RemakeHintTables tables;
     size_t line = 1;
     for (const auto& row : ReadTable("remake/stones.tsv", stoneTable, "label\tlocation")) {
@@ -273,37 +276,38 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests,
     }
 
     std::set<RandomizerCheck> shuffled;
-    for (const RemakeChest& chest : chests) {
-        if (!chest.shuffled) {
-            continue;
-        }
-        shuffled.insert(chest.location);
-        const Rando::Location* location = Rando::StaticData::GetLocation(chest.location);
-        if (!tables.chestSentences.contains(chest.location) || !tables.itemsByRemakeName.contains(chest.item) ||
+    const auto addShuffled = [&](RandomizerCheck rc, const std::string& item) {
+        shuffled.insert(rc);
+        const Rando::Location* location = Rando::StaticData::GetLocation(rc);
+        if (!tables.chestSentences.contains(rc) || !tables.itemsByRemakeName.contains(item) ||
             !tables.places.contains(location->GetArea())) {
             Fail("\"" + location->GetName() + "\" has no sentence in remake/chest_hints.tsv, its item no name in " +
                  "remake/item_names.tsv, or its area no name in remake/places.tsv");
         }
+    };
+    for (const RemakeChest& chest : chests) {
+        if (chest.shuffled) {
+            addShuffled(chest.location, chest.item);
+        }
     }
     for (const RemakeShopSlot& slot : shops) {
-        shuffled.insert(slot.location);
-        const Rando::Location* location = Rando::StaticData::GetLocation(slot.location);
-        if (!tables.chestSentences.contains(slot.location) || !tables.places.contains(location->GetArea())) {
-            Fail("\"" + location->GetName() + "\" has no sentence in remake/chest_hints.tsv, or its area no name in " +
-                 "remake/places.tsv");
-        }
+        addShuffled(slot.location, std::string(ShopFillerName));
+    }
+    for (const RemakeGift& gift : gifts) {
+        addShuffled(gift.location, gift.item);
     }
     for (const auto& [location, sentence] : tables.chestSentences) {
         if (!shuffled.contains(location)) {
             Fail("remake/chest_hints.tsv: \"" + Rando::StaticData::GetLocation(location)->GetName() +
-                 "\" is neither a shuffled chest nor a shop slot that can be shuffled");
+                 "\" is not a shuffled chest, or a shop slot or gift that can be shuffled");
         }
     }
     return tables;
 }
 
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
-                                                         const std::vector<RemakeShopSlot>& shops) {
+                                                         const std::vector<RemakeShopSlot>& shops,
+                                                         const std::vector<RemakeGift>& gifts) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
@@ -311,6 +315,9 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
         }
     }
     names[ShopFiller].insert(names[ShopFiller].end(), shops.size(), std::string(ShopFillerName));
+    for (const RemakeGift& gift : gifts) {
+        names[gift.sohItem].push_back(gift.item);
+    }
     std::map<RandomizerCheck, std::string> placed;
     const auto place = [&](RandomizerCheck location) {
         RandomizerGet item = Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedRandomizerGet();
@@ -325,6 +332,9 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
     }
     for (const RemakeShopSlot& slot : shops) {
         place(slot.location);
+    }
+    for (const RemakeGift& gift : gifts) {
+        place(gift.location);
     }
     return placed;
 }
@@ -368,11 +378,16 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
     return slots;
 }
 
-void CheckShopGoods(const std::vector<RemakeChest>& chests) {
+void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts) {
     std::set<std::string> holdable{ std::string(ShopFillerName) };
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled && !KeptFromShops(chest.sohItem)) {
             holdable.insert(chest.item);
+        }
+    }
+    for (const RemakeGift& gift : gifts) {
+        if (!KeptFromShops(gift.sohItem)) {
+            holdable.insert(gift.item);
         }
     }
     std::set<std::string> rows;
@@ -389,6 +404,38 @@ void CheckShopGoods(const std::vector<RemakeChest>& chests) {
             Fail("remake/shop_goods.tsv: no row for " + item + ", which a shop slot can hold");
         }
     }
+}
+
+std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
+    const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
+    std::vector<RemakeGift> gifts;
+    size_t line = 1;
+    for (const auto& row : ReadTable("remake/gifts.tsv", giftTable, "location\tflow\tevent\tparam\titem")) {
+        const std::string where = std::format("remake/gifts.tsv line {}: ", ++line);
+        const std::string& name = row[0];
+        const std::string& flow = row[1];
+        const std::string& item = row[4];
+        const RandomizerCheck location = LocationNamed(where, name);
+        if (std::ranges::find(chests, location, &RemakeChest::location) != chests.end()) {
+            Fail(where + "\"" + name + "\" is a location of remake/chests.tsv");
+        }
+        if (!flow.starts_with("Event/EventFlow/") || !flow.ends_with(".bfevfl.zs")) {
+            Fail(where + "\"" + flow + "\" is not an event flow under Event/EventFlow/");
+        }
+        const auto candidates = items.find(item);
+        if (candidates == items.end() || candidates->second.size() != 1) {
+            Fail(where + "\"" + item + "\" is not an item of remake/items.tsv that stands for one SoH item");
+        }
+        auto gift = std::ranges::find(gifts, location, &RemakeGift::location);
+        if (gift == gifts.end()) {
+            gift = gifts.insert(
+                gifts.end(), RemakeGift{ .location = location, .item = item, .sohItem = candidates->second.front() });
+        } else if (gift->item != item) {
+            Fail(where + "\"" + name + "\" gives another item at another site");
+        }
+        gift->sites.push_back({ .flow = flow, .event = row[2], .param = row[3] });
+    }
+    return gifts;
 }
 
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the
@@ -436,6 +483,13 @@ static constexpr EventText eventTexts[] = {
     // makes Event179 ask whether the quest is past Ready, so the write moves only a quest still at Ready.
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
 };
+
+// After the 20-token reward, Event371 of the House of Skulltula's flow opens the Stone of Agony's guide once the
+// reward's flag is set, whatever the reward gave. Reading the flag the guide sets once shown, it ends the talk on
+// either answer.
+static constexpr EventText agonyGuideShut = { "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "Event371",
+                                              "GameDataName",
+                                              "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True" };
 
 static constexpr std::string_view smallKeyDoors[] = {
     "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
@@ -507,8 +561,8 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 }
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const std::vector<RemakeShopSlot>& shops, const SeedSettings& settings,
-                                  const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
@@ -520,8 +574,20 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                 { { "hash", actor.hash }, { "files", actor.files }, { "drop_actor", items.at(chest.location) } });
         }
     }
-    for (const auto& [flow, event, param, text] : eventTexts) {
+    const auto addText = [&](std::string_view flow, std::string_view event, std::string_view param,
+                             std::string_view text) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
+    };
+    for (const auto& [flow, event, param, text] : eventTexts) {
+        addText(flow, event, param, text);
+    }
+    for (const RemakeGift& gift : gifts) {
+        for (const RemakeGift::Site& site : gift.sites) {
+            addText(site.flow, site.event, site.param, items.at(gift.location));
+        }
+        if (gift.location == RC_KAK_20_GOLD_SKULLTULA_REWARD) {
+            addText(agonyGuideShut.flow, agonyGuideShut.event, agonyGuideShut.param, agonyGuideShut.text);
+        }
     }
     plan["start_values"] = StartValues(settings);
     plan["stone_texts"] = nlohmann::ordered_json::array();

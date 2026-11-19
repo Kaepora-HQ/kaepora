@@ -1,4 +1,5 @@
 item	goods	pose	bottom	top	width	reach
+Item_AgonyStone		Pose_Common	-124	49	170	91
 Item_Arrow_Ice		Pose_Common	42	569	479	255
 Item_BombBundle_Small	Shop_BombBundle_01					
 Item_Boomerang		Pose_Common	-13	249	343	244
@@ -10,9 +11,13 @@ Item_Hammer		Pose_Common	-293	423	1316	697
 Item_HeavyBoot		Pose_Common	-197	213	477	268
 Item_HoverBoot		Pose_Common	-190	210	513	305
 Item_Longshot		Pose_Common	-250	392	512	294
+Item_Scale_Gold		Pose_Common	-203	203	392	226
+Item_Scale_Silver		Pose_Common	-192	203	380	202
 Item_ScrubBusinessSeed		Pose_Common	-22	401	365	222
 Item_Shield_Mirror		Pose_Common	3	674	571	312
 Item_Sword_Kokiri		Pose_Common	-254	249	460	239
+Item_Wallet_Large		Pose_Common	-244	272	427	230
+Item_Wallet_Medium		Pose_Common	-212	191	283	154
 Obj_Heart_Piece		Pose_Common	8	404	441	221
 TBox_ArrowBundle_Large	Shop_ArrowBundle_01					
 TBox_ArrowBundle_Medium		Pose_Shop	-10	522	433	232

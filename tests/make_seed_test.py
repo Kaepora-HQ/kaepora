@@ -49,6 +49,18 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(json.loads(plan.read_text())["shops"]), 40)
 
+    def test_a_seed_with_gifts_and_shop_goods_shuffled_is_patched(self):
+        # Seed 1 sells the Giant's Wallet, which only a gift holds in the game, in a shop slot.
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Shop goods": "Four per shop shuffled", "Gifts": "Shuffled"})
+        result = subprocess.run([SEEDGEN, "1", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        sold = {entry["item"] for entry in json.loads(plan.read_text())["shops"]}
+        self.assertIn("Item_Wallet_Large", sold)
+        self.assertTrue((mod / "romfs/Pack/Actor/Shop_Item_Wallet_Large.pack.zs").is_file())
+
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:
             result = self.make_seeds((seed, self.tmp / "alone" / seed))

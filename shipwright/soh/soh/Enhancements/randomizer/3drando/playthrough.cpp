@@ -7,7 +7,8 @@
 namespace Playthrough {
 
 int Playthrough_Init(std::set<RandomizerCheck> excludedLocations, std::set<RandomizerTrick> enabledTricks,
-                     const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops) {
+                     const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+                     const std::vector<RemakeGift>& gifts) {
     auto ctx = Rando::Context::GetInstance();
     ctx->ItemReset();
     ctx->GetLogic()->Reset();
@@ -15,7 +16,7 @@ int Playthrough_Init(std::set<RandomizerCheck> excludedLocations, std::set<Rando
 
     ctx->FinalizeSettings(excludedLocations, enabledTricks);
 
-    int ret = Fill(chests, shops);
+    int ret = Fill(chests, shops, gifts);
     if (ret < 0) {
         return ret;
     }

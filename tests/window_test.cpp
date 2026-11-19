@@ -549,6 +549,7 @@ private slots:
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
                                 "Shop goods: Vanilla\n"
+                                "Gifts: Vanilla\n"
                                 "Lens of Truth: Never needed\n"
                                 "Gossip stones: Give hints";
         QVERIFY(shows(summary));
@@ -606,6 +607,7 @@ private slots:
         choice("Maps and compasses")->setCurrentText("In their own chests");
         choice("Gossip stones")->setCurrentText("Vanilla");
         choice("Shop goods")->setCurrentText("Four per shop shuffled");
+        choice("Gifts")->setCurrentText("Shuffled");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -617,6 +619,7 @@ private slots:
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
+        QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
         dialogButton("OK")->click();
@@ -754,7 +757,7 @@ private slots:
             titles << group->title();
         }
         QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
-        QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices" }));
+        QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gifts" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 
@@ -780,6 +783,7 @@ private slots:
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
         QTest::newRow("shops") << "Shop goods" << "Four per shop shuffled" << "Shop goods shuffled";
         QTest::newRow("shops at random") << "Shop goods" << "A random number per shop" << "Shop goods shuffled";
+        QTest::newRow("gifts") << "Gifts" << "Shuffled" << "Gifts shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";

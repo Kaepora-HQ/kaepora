@@ -44,13 +44,14 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}
+                    "Shop goods": "Vanilla", "Gifts": "Vanilla", "Lens of Truth": "Needed",
+                    "Gossip stones": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
-    "Lens of Truth": "Never needed"}
+    "Gifts": "Shuffled", "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -70,7 +71,15 @@ SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 # A seed whose hints name a slot that only five per shop shuffle.
 HINT_SEED_AT_FIVE = "1"
-KEPT_FROM_SHOPS = {"Item_Range_Bow", "Item_Range_SlingShot", "Item_BombBag_Small", "Item_BombchuBundle_Small"}
+FILLED_ONLY_BY_CHESTS = {"Item_Range_Bow", "Item_Range_SlingShot"}
+KEPT_FROM_SHOPS = FILLED_ONLY_BY_CHESTS | {"Item_BombBag_Small", "Item_BombchuBundle_Small", "Item_BombchuBundle_Large",
+                                           "Item_Bottle", "Item_Bottle_Milk"}
+GIFT_SITES = read_tsv("gifts.tsv")
+GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
+GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
+GIFTS_SHUFFLED = {"Gifts": "Shuffled"}
+AGONY_GUIDE_SHUT = {"flow": "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "event": "Event371",
+                    "param": "GameDataName", "text": "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -147,10 +156,16 @@ def shop_of(row):
     return row["location"].rsplit(" Item ", 1)[0]
 
 
+def gift_sites(plan):
+    return [(GIFT_LOCATIONS[site], entry["text"]) for entry in plan["event_texts"]
+            if (site := (entry["flow"], entry["event"], entry["param"])) in GIFT_LOCATIONS]
+
+
 def placed_remake_items(plan):
     rows = {row["hash"]: row["location"] for row in SHUFFLED}
     placed = {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
-    return placed | {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+    placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+    return placed | dict(gift_sites(plan))
 
 
 def spoiler_item(placed):
@@ -592,6 +607,81 @@ class SeedgenTest(unittest.TestCase):
             sold.update(entry["item"] for entry in plan["shops"])
         self.assertFalse(sold.keys() & (KEPT_FROM_SHOPS | KEYS | MAPS_AND_COMPASSES), sold)
 
+    def test_gifts_shuffled(self):
+        spoiler, plan = self.generate("21", GIFTS_SHUFFLED)
+        self.assertEqual(spoiler["settings"]["Gifts"], "Shuffled")
+        sites = gift_sites(plan)
+        self.assertIn(AGONY_GUIDE_SHUT, plan["event_texts"])
+        self.assertEqual([location for location, _ in sites], list(GIFT_LOCATIONS.values()))
+        for location, item in sites:
+            self.assertIn((item, spoiler["locations"][location]), ITEM_PAIRS, location)
+        rows = {row["hash"]: row for row in SHUFFLED}
+        chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+        self.assertEqual(collections.Counter(chests.values()) + collections.Counter(dict(sites).values()),
+                         POOL + GIFT_POOL)
+
+    def test_a_gift_given_at_two_sites_gives_one_item(self):
+        given = collections.defaultdict(set)
+        for seed in map(str, range(22, 27)):
+            _, plan = self.generate(seed, GIFTS_SHUFFLED)
+            items = collections.defaultdict(set)
+            for location, item in gift_sites(plan):
+                items[location].add(item)
+            for location, item in items.items():
+                self.assertEqual(len(item), 1, (seed, location))
+                given[location] |= item
+        twice = {location for location, sites in collections.Counter(GIFT_LOCATIONS.values()).items() if sites > 1}
+        self.assertTrue(twice)
+        self.assertTrue(any(len(given[location]) > 1 for location in twice))
+
+    def test_what_a_shop_may_refuse_goes_to_any_other_shuffled_place(self):
+        # Gifts bring the bottles and 20 Bombchus into the pool. They stay out of shops, as the Bomb Bag and 5 Bombchus
+        # do, and each may sit at a gift.
+        sold, given = collections.Counter(), collections.Counter()
+        for seed in range(520, 540):
+            _, plan = self.generate(str(seed), SHOPS_SHUFFLED | GIFTS_SHUFFLED)
+            sold.update(entry["item"] for entry in plan["shops"])
+            given.update(item for _, item in gift_sites(plan))
+        self.assertFalse(sold.keys() & KEPT_FROM_SHOPS, sold)
+        self.assertTrue(given.keys() & (KEPT_FROM_SHOPS - FILLED_ONLY_BY_CHESTS), given)
+
+    def test_only_chests_give_the_bow_and_the_slingshot(self):
+        # A chest adds the quiver or the bullet bag and its ammunition; a gift gives the Bow and the Slingshot with
+        # nowhere to hold it. A gift's Bomb Bag comes with its bombs.
+        given = collections.Counter()
+        for settings in (GIFTS_SHUFFLED, GIFTS_SHUFFLED | SHOPS_SHUFFLED):
+            for seed in range(540, 560):
+                _, plan = self.generate(str(seed), settings)
+                given.update(item for _, item in gift_sites(plan))
+        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
+        self.assertIn("Item_BombBag_Small", given)
+
+    def test_gifts_give_no_dungeon_item(self):
+        given = collections.Counter()
+        for seed in range(700, 720):
+            _, plan = self.generate(str(seed), GIFTS_SHUFFLED)
+            given.update(item for _, item in gift_sites(plan))
+        self.assertFalse(given.keys() & (KEYS | MAPS_AND_COMPASSES | {"Obj_MiniGame_SmallKey"}), given)
+        self.assertGreater(len(given), len(GIFT_POOL))
+
+    def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
+        # Seed 10's route takes the Hover Boots from the 50-token reward, the Megaton Hammer from the bowling alley and
+        # three more gifts. The route names no token, and without every token it stops at Twinrova.
+        log, plan = self.generate("10", GIFTS_SHUFFLED)
+        vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
+        self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
+                            for location, item in gift_sites(plan)))
+        self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_hints_name_gifts_truly(self):
+        # Seed 23 hints at four gifts by their sentences: Anju's, the Skull Kid's, Bombchu Bowling's and the frogs' in
+        # the rain.
+        spoiler, plan = self.assert_hints_are_true("23", GIFTS_SHUFFLED)
+        sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
+                     for location, item in gift_sites(plan)}
+        self.assertTrue(sentences & set(spoiler["hints"].values()))
+
     def test_seed_text_ignores_case(self):
         upper = self.run_seedgen("OWL")
         self.assertEqual(self.run_seedgen("owl"), upper)
@@ -653,6 +743,7 @@ class SeedgenTest(unittest.TestCase):
                     self.assertIn(found[2], items_at(area))
                 else:
                     self.fail("not a hint")
+        return spoiler, plan
 
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.

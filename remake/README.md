@@ -39,17 +39,18 @@ A hint names places and items as the game's English text does, so it matches the
 game file, a test checks each `name` against the game's message at `label`, in both English text packs, leaving out the
 codes the game puts before a noun.
 
-- `places.tsv` names each SoH area that holds a shuffled chest. `area` is the prefix SoH gives the names of the area's
-  locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says` is what a hint says: the name,
-  with `the` where the game's text writes one before it, or the end of the name, as "Ganondorf's Castle" for "Inside
-  Ganondorf's Castle". A test checks that it is.
+- `places.tsv` names each SoH area that holds a shuffled chest, shop slot or gift. `area` is the prefix SoH gives the
+  names of the area's locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says` is what a hint
+  says: the name, with `the` where the game's text writes one before it, or the end of the name, as "Ganondorf's
+  Castle" for "Inside Ganondorf's Castle". A test checks that it is.
 - `item_names.tsv` names each remake item of `items.tsv`. `label` is in `ActorMsg/PouchContent.msbt`: the game names an
-  item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `the` or empty.
+  item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `an`, `the` or empty.
 
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
 is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
-slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop.
+slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so
+does each gift, with SoH's sentence for it where that is true of the remake.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
@@ -94,15 +95,14 @@ The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus 
 arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the
 four items fall under is unknown.
 
-`shop_goods.tsv` has a row for each item a shop slot can hold, and the generator fails when it starts if one has no
-row. A slot can hold what a shuffled chest holds, but for the dungeon items and the four `KeptFromShops` keeps out, and
-the shop filler. Four items are sold as the game's own goods, named in `goods`. Every other item is sold from a goods
-actor of its own, which shows the item's own model. The game's own goods rest the lowest point of their shop pose
+`shop_goods.tsv` has a row for each item a shop slot can hold, and the generator fails when it starts if one has no row.
+A slot can hold what a shuffled chest or a gift holds, but for the dungeon items and the seven `KeptFromShops` keeps
+out, and the shop filler. Four items are sold as the game's own goods, named in `goods`. Every other item is sold from a
+goods actor of its own, which shows the item's own model. The game's own goods rest the lowest point of their shop pose
 between 26 mm under their shelf's origin (the Hylian Shield) and 34 mm over it (the heart), and the patcher raises each
 shelf so that its item rests on the origin. It also sizes the item as the game sizes its own goods, whose shop poses
 shrink some and grow others: an item taller or reaching farther than the game's goods shrinks to the largest size that
-fits them, and one smaller than the smallest of them grows toward its size, by at most the 1.4 the game grows its
-masks.
+fits them, and one smaller than the smallest of them grows toward its size, by at most the 1.4 the game grows its masks.
 
 - `item`: the remake item.
 - `goods`: the game's goods actor that sells the item, or empty for goods of its own.
@@ -125,3 +125,50 @@ Deku Shield would sink into the shelf or lie flat, where in `Pose_Common` they r
 items on shelves in the eight shops: each stands on its board at the size the rule gives it, so the game draws goods at
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
+
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 21 SoH locations: the five
+House of Skulltula rewards, and the heart pieces, bottles and scales that minigames and characters give. With "Gifts" at
+"Shuffled" the 21 join the shuffle. Each adds to the pool what it gives in the game, and the plan writes the placed
+item at each of its places.
+
+- `location`: the SoH location, by SoH's English name for it.
+- `flow`: the romfs path of the event flow.
+- `event`: the event whose call gives the item, by its name, which no other event of the flow has.
+- `param`: the call's string parameter that names the item.
+- `item`: what the call gives in the unmodified game, by its remake name. Every row of a location names the same item.
+
+A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
+retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
+two copies saying different lines, Dampé said the `.110` copy's. After the 20-token reward the house opens the Stone of
+Agony's guide whatever the reward gave, so the plan also points that question at the flag the guide sets once shown,
+and the guide does not open there. The flow asks that flag once more after the 100-token reward, and the guide opens
+then, as no earlier talk has set it (read from the flow).
+
+Seen in the game:
+
+- One talk in the House of Skulltula hands over all five rewards, each another item. One such talk gave the Giant's
+  Wallet, the Golden Scale, the Adult's Wallet, the Silver Scale and a Red Rupee; another gave four Empty Bottles, and
+  Ruto's Letter then went into a fifth bottle.
+- The man on the roof, the lab's dive and the Skull Kid give another item. The lab's dive gave the Boomerang to a child
+  and to an adult. Three more gifts give through the Skull Kid's call.
+- Dampé's tour showed the Piece of Heart's model in the hole, and taking it gave the seed's Blue Rupee and no Piece of
+  Heart.
+- The Big Poe buyer's first prize sale gave the Iron Boots and the next sale only rupees. Horseback archery gave the
+  Megaton Hammer for 770 points. The frogs' game gave the Boomerang when won on the retry.
+- A chest gives Lon Lon Milk to a Link with no bottle, the Echo Gem, the Giant's Wallet and the Silver Scale.
+
+So every way the 21 hand over their item has given another item. Read from the game's files and not yet seen: a prize
+talk may still name the usual prize, and the map may keep a heart on these places until each is won.
+
+A shop refuses bottle contents to a Link with no empty bottle, and which kind the Empty Bottle and Lon Lon Milk fall
+under is unknown, so the fill keeps both bottles out of shops, and 20 Bombchus with the other Bombchus. The scales, the
+wallets and the Echo Gem may go to a shop slot, each with its row in `shop_goods.tsv`. The Kokiri Shop sold the
+Adult's Wallet and the Silver Scale, and they left a wallet of 500 and a dive depth of 6.0; that build had no shelf
+placement, and none of these has been seen on a shelf where `shop_goods.tsv` places it.
+
+A chest that gives the Fairy Bow or the Fairy Slingshot also adds the quiver or the bullet bag and 30 arrows or 30
+seeds, from the chest's own AI (`AI/TreasureBox.module.ainb`, read from the files); a chest's Fairy Bow left 30 arrows.
+One talk in the House of Skulltula gave the Bomb Bag, the Fairy Bow and the Fairy Slingshot to a Link with none: the
+Bomb Bag came with 20 bombs and room for 20, and the Bow and the Slingshot came with no quiver and no bullet bag, so
+with room for no arrows or seeds. So with gifts shuffled the fill puts the Bow and the Slingshot in chests before gifts
+join it (`FilledOnlyByChests`), and the Bomb Bag may sit at a gift.

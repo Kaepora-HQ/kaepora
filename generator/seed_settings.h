@@ -20,6 +20,7 @@ inline constexpr std::string_view ShopsSetting = "Shop goods";
 inline constexpr std::string_view ShopPricesSetting = "Shop prices";
 inline constexpr std::string_view ShopPriceSetting = "Shop price";
 inline constexpr std::string_view ShopPriceRangeSetting = "Shop price range";
+inline constexpr std::string_view GiftsSetting = "Gifts";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
 
@@ -147,6 +148,12 @@ inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
     return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;
 }
 
+enum class Gifts { Vanilla, Shuffled };
+inline constexpr std::pair<Gifts, std::string_view> GiftsChoices[] = {
+    { Gifts::Vanilla, "Vanilla" },
+    { Gifts::Shuffled, "Shuffled" },
+};
+
 enum class Lens { Needed, NeverNeeded };
 inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::Needed, "Needed" },
@@ -167,6 +174,7 @@ struct SeedSettings {
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
+    Gifts gifts = Gifts::Vanilla;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
 

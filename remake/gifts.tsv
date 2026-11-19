@@ -1,0 +1,25 @@
+location	flow	event	param	item
+LW Skull Kid	Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs	Event71	ActorName	Obj_Heart_Piece
+LW Ocarina Memory Game	Event/EventFlow/Npc_SkullKid_Child_02.bfevfl.zs	Event24	ActorName	Obj_Heart_Piece
+LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event573	ReveiveItem	Obj_Heart_Piece
+LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event821	ActorName	Obj_Heart_Piece
+LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event579	ReveiveItem	Item_Scale_Gold
+LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event822	ActorName	Item_Scale_Gold
+LH Lab Dive	Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs	Event113	ReveiveItem	Obj_Heart_Piece
+GF HBA 1000 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event322	ActorName	Obj_Heart_Piece
+Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece
+Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveItem	Obj_Heart_Piece
+Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle
+Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium
+Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone
+Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large
+Kak 40 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event200	TakenRewardActor	Item_BombchuBundle_Large
+Kak 50 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event219	TakenRewardActor	Obj_Heart_Piece
+Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	Obj_Heart_Piece
+Kak Anju as Child	Event/EventFlow/Minigame_CatchCucco.bfevfl.zs	Event181	ReveiveItem	Item_Bottle
+Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl.zs	Event628	ActorName	Obj_Heart_Piece
+ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	ActorName	Obj_Heart_Piece
+ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event161	ActorName	Obj_Heart_Piece
+ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event75	ActorName	Obj_Heart_Piece
+ZD Diving Minigame	Event/EventFlow/MiniGame_Diving.bfevfl.zs	Event21	ActorName	Item_Scale_Silver
+LLR Talons Chickens	Event/EventFlow/Minigame_FindOutCucco.bfevfl.zs	Event23	ReveiveItem	Item_Bottle_Milk

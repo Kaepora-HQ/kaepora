@@ -95,6 +95,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
             json[std::string(ShopPriceRangeSetting)] = { between->lowest, between->highest };
         }
     }
+    json[std::string(GiftsSetting)] = Words(GiftsChoices, settings.gifts);
     json[std::string(LensSetting)] = Words(LensChoices, settings.lens);
     json[std::string(GossipStonesSetting)] = Words(GossipStonesChoices, settings.gossipStones);
     return json;
@@ -127,6 +128,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.trials = Parse(TrialsChoices, setting, value);
         } else if (const auto shop = std::ranges::find(ShopSettings, setting); shop != std::end(ShopSettings)) {
             shops.emplace(*shop, value);
+        } else if (setting == GiftsSetting) {
+            settings.gifts = Parse(GiftsChoices, setting, value);
         } else if (setting == LensSetting) {
             settings.lens = Parse(LensChoices, setting, value);
         } else if (setting == GossipStonesSetting) {

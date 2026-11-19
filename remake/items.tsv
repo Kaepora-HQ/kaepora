@@ -1,9 +1,13 @@
 remake_item	soh_item
+Item_AgonyStone	Stone of Agony
 Item_Arrow_Ice	Ice Arrows
 Item_BombBag_Small	Progressive Bomb Bag
 Item_BombBundle_Small	Bombs (5)
+Item_BombchuBundle_Large	Bombchus (20)
 Item_BombchuBundle_Small	Bombchus (5)
 Item_Boomerang	Boomerang
+Item_Bottle	Empty Bottle
+Item_Bottle_Milk	Bottle with Milk
 Item_DekuStickBundle_Small	Deku Stick (1)
 Item_Dungeon_BossKey	Fire Temple Boss Key
 Item_Dungeon_BossKey	Forest Temple Boss Key
@@ -49,9 +53,13 @@ Item_HoverBoot	Hover Boots
 Item_Longshot	Progressive Hookshot
 Item_Range_Bow	Progressive Bow
 Item_Range_SlingShot	Progressive Slingshot
+Item_Scale_Gold	Progressive Scale
+Item_Scale_Silver	Progressive Scale
 Item_ScrubBusinessSeed	Business Scrub Seed
 Item_Shield_Mirror	Mirror Shield
 Item_Sword_Kokiri	Kokiri Sword
+Item_Wallet_Large	Progressive Wallet
+Item_Wallet_Medium	Progressive Wallet
 Obj_Heart_Piece	Piece of Heart
 Obj_MiniGame_SmallKey	Chest Game Small Key
 TBox_ArrowBundle_Large	Arrows (30)

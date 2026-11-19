@@ -200,6 +200,10 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      prices_between_two_prices shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
                      hints_name_the_goods_only_five_per_shop_shuffle
+                     gifts_shuffled a_gift_given_at_two_sites_gives_one_item gifts_give_no_dungeon_item
+                     what_a_shop_may_refuse_goes_to_any_other_shuffled_place
+                     only_chests_give_the_bow_and_the_slingshot
+                     a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
@@ -273,7 +277,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table stone-texts shop shop-table new-actors shelf-placement single-goods-sign
-                 bundle-goods-sign shop-scenes-whole dive-depth)
+                 bundle-goods-sign shop-scenes-whole gift-table dive-depth)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -282,8 +286,8 @@ if(KAEPORA_GAME_NUP)
         COMMAND ${PATCH_TEST} seed-plan $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                 ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json)
     foreach(TEST IN ITEMS same_files_as_the_two_programs a_seed_with_shop_goods_shuffled_is_patched
-                          two_seeds_in_one_process same_seed_twice_in_one_process existing_folder_is_refused
-                          new_folder_in_a_missing_folder)
+                          a_seed_with_gifts_and_shop_goods_shuffled_is_patched two_seeds_in_one_process
+                          same_seed_twice_in_one_process existing_folder_is_refused new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>

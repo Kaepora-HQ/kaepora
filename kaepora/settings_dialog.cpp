@@ -72,6 +72,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.shops) {
         changed << "shop goods shuffled";
     }
+    if (settings.gifts == Gifts::Shuffled) {
+        changed << "gifts shuffled";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -120,7 +123,8 @@ QString Details(const SeedSettings& settings) {
     if (settings.shops) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
-    lines << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
+    lines << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
+          << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
           << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)));
     return lines.join('\n');
 }
@@ -217,9 +221,11 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shopPricesRow->addWidget(highestShopPrice);
     auto* shopPricesLabel = new QLabel(QString::fromUtf8(ShopPricesSetting));
     shopPricesLabel->setBuddy(shopPrices);
+    QComboBox* gifts = Choice(GiftsChoices);
     auto* shuffleForm = new QFormLayout;
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     shuffleForm->addRow(shopPricesLabel, shopPricesRow);
+    shuffleForm->addRow(QString::fromUtf8(GiftsSetting), gifts);
     auto* shuffleGroup = new QGroupBox("Shuffle");
     shuffleGroup->setLayout(shuffleForm);
 
@@ -291,6 +297,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         lowestShopPrice->setValue(range.lowest);
         highestShopPrice->setValue(range.highest);
         showPrices();
+        Select(gifts, shown.gifts);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
     };
@@ -324,6 +331,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
             }
             shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
         }
+        shown.gifts = Selected<Gifts>(gifts);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);
         chosen(shown);
