@@ -11,6 +11,9 @@ void RegionTable_Init_HyruleField() {
         EVENT_ACCESS(LOGIC_SOLD_BUNNY_HOOD,    logic->IsChild && logic->HasItem(RG_BUNNY_HOOD) && logic->HasItem(RG_KOKIRI_EMERALD) && logic->HasItem(RG_GORON_RUBY) && logic->HasItem(RG_ZORA_SAPPHIRE) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
         // The Fairy Thought beside the heart piece chest stands only in the adult field.
         EVENT_ACCESS(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT, logic->IsAdult),
+        // A Skullwalltula hangs on the wall of the child field's south grotto. A bomb or the hammer opens the grotto
+        // for both ages.
+        EVENT_ACCESS(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA, logic->IsChild && AnyAgeTime([]{return logic->BlastOrSmash();}) && logic->CanKillEnemy(RE_WALLTULA)),
     }, {
         //Locations
         LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
@@ -31,6 +34,9 @@ void RegionTable_Init_HyruleField() {
         // In the grottos under the east and the south hole, which a bomb or the hammer opens.
         LOCATION(RC_HF_EAST_GROTTO_GOSSIP_STONE,   logic->BlastOrSmash()),
         LOCATION(RC_HF_SOUTH_GROTTO_GOSSIP_STONE,  logic->BlastOrSmash()),
+        // The remake's cow grotto has no Gold Skulltula. The one that stands for it is in a box in the adult field's
+        // south grotto, which holds it only once child Link has killed that grotto's Skullwalltula.
+        LOCATION(RC_HF_GS_COW_GROTTO,              logic->IsAdult && logic->Get(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA) && logic->CanBreakCrates() && logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),
@@ -296,7 +302,6 @@ void RegionTable_Init_HyruleField() {
         EVENT_ACCESS(LOGIC_FAIRY_ACCESS, logic->CallGossipFairy()),
     }, {
         //Locations
-        LOCATION(RC_HF_GS_COW_GROTTO,                     logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
         LOCATION(RC_HF_COW_GROTTO_COW,                    logic->CanUse(RG_EPONAS_SONG)),
         LOCATION(RC_HF_COW_GROTTO_GOSSIP_STONE_FAIRY,     logic->CallGossipFairy()),
         LOCATION(RC_HF_COW_GROTTO_GOSSIP_STONE_FAIRY_BIG, logic->CanUse(RG_SONG_OF_STORMS)),

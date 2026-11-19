@@ -556,6 +556,15 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("ZR GS Tree"))
         self.assertFalse(self.reachable("ZR GS Tree", *NO_BOTTLE))
 
+    def test_hyrule_field_cow_grotto_skulltula_is_in_the_south_grotto_after_a_childs_kill(self):
+        self.assertTrue(self.reachable("HF GS Cow Grotto"))
+        self.assertFalse(self.reachable("HF GS Cow Grotto", NEVER_ADULT))
+        self.assertFalse(self.reachable("HF GS Cow Grotto", *NO_BOMB_BAG, NO_HAMMER))
+        # Adult Link's box holds it only once child Link has killed the Skullwalltula on that grotto's wall. With the
+        # only bomb bag in the adult field, adult Link opens the grotto, and child Link, back through the pedestal, gets
+        # in.
+        self.assertTrue(self.reachable("HF GS Cow Grotto", *NO_BOMB_BAG, ("HF North Poe Chest", "Progressive Bomb Bag")))
+
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
             self.assertTrue(self.reachable(chest))
