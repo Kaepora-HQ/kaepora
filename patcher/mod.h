@@ -1,7 +1,7 @@
 // A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file and event flow the plan
-// changes, the size table if a file outgrows its entry, the game data list if the plan names start values, and the
-// actor packs that let a bomb out of the bag with no strength. Under exefs/ is the patch to the game's program
-// (program_patch.h).
+// changes, the two English text packs if the plan gives gossip stones texts, the size table if a file outgrows its
+// entry, the game data list if the plan names start values, and the actor packs that let a bomb out of the bag with no
+// strength. Under exefs/ is the patch to the game's program (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -28,6 +28,12 @@ struct PlannedEventText {
     std::string text;
 };
 
+// A gossip stone says the message whose label is its name.
+struct PlannedStoneText {
+    std::string label;
+    std::string text; // the message as a text pack stores it
+};
+
 // A saved value as a new game starts with it: a Bool or an Int of the game data list.
 using StartValue = std::variant<bool, int32_t>;
 
@@ -35,6 +41,7 @@ struct Plan {
     std::vector<PlannedChest> chests;
     std::vector<PlannedEventText> eventTexts;
     std::map<std::string, StartValue> startValues;
+    std::vector<PlannedStoneText> stoneTexts;
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

@@ -313,5 +313,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
     }
     plan["start_values"] = StartValues(settings);
+    // Gossip stones keep the game's rumours.
+    plan["stone_texts"] = nlohmann::ordered_json::array();
     return plan;
 }

@@ -3,8 +3,8 @@
 Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
        python3 -I tests/patch_test.py tested-hammer-room-mod <kaepora-patch> <game.nup> <tested mod's placement file>
-       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod <kaepora-patch> \
-           <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod \
+           |tested-stone-text-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
@@ -12,10 +12,11 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values <kaepora-patch> <game.nup>
-       python3 -I tests/patch_test.py gift-size-table <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py gift-size-table|stone-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
-reader bug in either shows as a difference.
+reader bug in either shows as a difference. Expected message texts are built from the control codes' bytes, apart
+from the patcher's tags.
 """
 
 import itertools
@@ -67,6 +68,12 @@ BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
 OTHER_VERSION = "This game file is another version of the game. Kaepora works only with version 2.0.0."
+STONE_MESSAGES = "EventFlowMsg/GossipStone.msbt"
+ENGLISH_PACKS = ["Mals/EUen.Product.110.sarc.zs", "Mals/USen.Product.110.sarc.zs"]
+KOKIRI_STONE = "GOSSIP_KOKIRI_FOREST_01"
+# The stone whose English rumour is the shortest, so a long text grows the English pack past its size table entry.
+SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
+TEXT_PACK_OVERHEAD = 312
 BOOL = 0xD0
 INT = 0xD1
 INT64 = 0xD4
@@ -122,10 +129,10 @@ class Game:
             exefs = {}
             walk(struct.unpack_from("<I", toc, package + 0xC)[0], "", exefs)
             self.program_offsets[toc[package + 0x18]] = exefs["main"][1]
-        dictionaries = zstd.decompress(self.read("Pack/ZsDic.pack.zs"))
-        self.dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"bcett.byml.zsdic"))
-        self.zs_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"zs.zsdic"))
-        self.pack_dictionary = zstd.ZstdDict(sarc_member(dictionaries, b"pack.zsdic"))
+        dictionaries = sarc(zstd.decompress(self.read("Pack/ZsDic.pack.zs")))
+        self.dictionary = zstd.ZstdDict(dictionaries["bcett.byml.zsdic"])
+        self.zs_dictionary = zstd.ZstdDict(dictionaries["zs.zsdic"])
+        self.pack_dictionary = zstd.ZstdDict(dictionaries["pack.zsdic"])
 
     def read(self, path):
         size, offset = self.files[path]
@@ -142,18 +149,72 @@ class Game:
     def event_flow(self, data):
         return event_flow(zstd.decompress(data, zstd_dict=self.zs_dictionary))
 
+    def text_pack(self, data):
+        return sarc(zstd.decompress(data, zstd_dict=self.zs_dictionary))
 
-def sarc_member(data, wanted):
+
+def sarc(data):
+    """The files of a SARC archive by name."""
     header_size = struct.unpack_from("<H", data, 4)[0]
     data_offset = struct.unpack_from("<I", data, 0xC)[0]
     count = struct.unpack_from("<H", data, header_size + 6)[0]
     nodes = header_size + 12
     names = nodes + 16 * count + 8
+    files = {}
     for i in range(count):
         _, attributes, start, end = struct.unpack_from("<IIII", data, nodes + 16 * i)
-        if data[names + 4 * (attributes & 0xFFFF):].split(b"\0", 1)[0] == wanted:
-            return data[data_offset + start:data_offset + end]
-    raise KeyError(wanted)
+        name = data[names + 4 * (attributes & 0xFFFFFF):].split(b"\0", 1)[0].decode()
+        files[name] = data[data_offset + start:data_offset + end]
+    return files
+
+
+def msbt(data):
+    """An MSBT message file's label section as stored, and each message's text by its label, in message order."""
+    assert data[:8] == b"MsgStdBn" and len(data) == struct.unpack_from("<I", data, 0x12)[0], data[:8]
+    sections, at = {}, 0x20
+    while at < len(data):
+        magic, size = struct.unpack_from("<4sI", data, at)
+        sections[magic] = data[at + 16:at + 16 + size]
+        at += 16 + (size + 15) // 16 * 16
+    labels, texts = sections[b"LBL1"], sections[b"TXT2"]
+    count = struct.unpack_from("<I", texts)[0]
+    starts = list(struct.unpack_from(f"<{count}I", texts, 4)) + [len(texts)]
+    names = {}
+    for slot in range(struct.unpack_from("<I", labels)[0]):
+        label_count, at = struct.unpack_from("<II", labels, 4 + 8 * slot)
+        for _ in range(label_count):
+            size = labels[at]
+            names[struct.unpack_from("<I", labels, at + 1 + size)[0]] = labels[at + 1:at + 1 + size].decode()
+            at += 5 + size
+    assert all(texts[end - 1] == 0 for end in starts[1:])
+    return labels, {names[i]: texts[starts[i]:starts[i + 1] - 1] for i in range(count)}
+
+
+def control_code(group, kind, params=b""):
+    return b"\x0e" + struct.pack("<HHH", group, kind, len(params)) + params
+
+
+def color(index):
+    return control_code(0, 3, struct.pack("<H", index))
+
+
+SIZE_80 = control_code(0, 2, struct.pack("<H", 80))
+PAGE = control_code(0, 4)
+RUMOUR_OPENING = color(1) + SIZE_80 + control_code(3, 0, bytes.fromhex("0f0000"))
+RUMOUR_PAGE = PAGE + SIZE_80 + color(1)
+TESTED_STONE_TEXT = ("They say this rumor was written by {color:0}Kaepora{color:65535}.\n"
+                     "If you can read this, the mod loaded.")
+TESTED_STONE_MESSAGE = (RUMOUR_OPENING + b"They say this rumor was written by " + color(0) + b"Kaepora" + color(65535)
+                        + b".\nIf you can read this, the mod loaded.")
+# The game's own rumours use it, and the game draws it.
+LONG_DASH = "\u2014"
+LONG_STONE_TEXT = ("They say that {color:0}Saria's Song{color:65535} is a friend's tune,\n"
+                   "heard best in the Sacred Forest Meadow.{page}"
+                   "They also say a stone speaks to anyone\nwho talks to it" + LONG_DASH + "with or without a mask.")
+LONG_STONE_MESSAGE = (RUMOUR_OPENING + b"They say that " + color(0) + b"Saria's Song" + color(65535)
+                      + b" is a friend's tune,\nheard best in the Sacred Forest Meadow." + RUMOUR_PAGE
+                      + b"They also say a stone speaks to anyone\nwho talks to it" + LONG_DASH.encode()
+                      + b"with or without a mask.")
 
 
 def byml(data):
@@ -334,11 +395,12 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_values=None, event_texts=()):
+def plan(chests, start_values=None, event_texts=(), stone_texts=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
-            "start_values": start_values or {}}
+            "start_values": start_values or {},
+            "stone_texts": [{"label": label, "text": text} for label, text in stone_texts]}
 
 
 def run(patch, game, plan, tmp):
@@ -439,6 +501,18 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
         theirs = tested[path]
         assert_same_frame_header(ours, theirs)
         assert zstd.decompress(ours, zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
+
+
+def tested_stone_text_mod(patch, game, romfs):
+    """The stone text the game showed: with it in the English pack, the Kokiri Forest stone said "They say this rumor
+    was written by Kaepora." with the name in colour and the rest of the text white, then the second line."""
+    path = "Mals/USen.Product.110.sarc.zs"
+    tested = (pathlib.Path(romfs) / path).read_bytes()
+    mod = patched(patch, game, plan([], stone_texts=[(KOKIRI_STONE, TESTED_STONE_TEXT)]))
+    assert path in mod, sorted(mod)
+    assert_same_frame_header(mod[path], tested)
+    assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
+        tested, zstd_dict=game.zs_dictionary)
 
 
 def tested_added_item_mod(patch, game, romfs):
@@ -543,19 +617,21 @@ def with_defaults(game, values):
 
 
 def together(patch, game):
-    """Chests, gifts and start values in one plan give the files each gives alone. The chests and the gifts each
-    raise a size table entry, and the one table holds both."""
+    """Chests, gifts, start values and stone texts in one plan give the files each gives alone. The chests, the gifts
+    and the stone texts each raise size table entries, and the one table holds them all."""
     values = {FIRE_LOCK: True, WATER_LOCK: True}
     parts = [plan(rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]),
              plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang"), (*DINS_FIRE_GIFT, "Item_HeavyBoot")]),
-             plan([], values)]
-    whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "event_texts")}
+             plan([], values),
+             plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
+    whole = {key: [entry for part in parts for entry in part[key]] for key in ("chests", "event_texts", "stone_texts")}
     whole |= {"seed": "1", "start_values": values}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
-    chest_table, gift_table = (read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone[:2])
+    tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
+    assert len(tables) == 3, len(tables)
     header, entries, names = read_size_table(zstd.decompress(combined.pop(SIZE_TABLE)))
-    assert (header, names) == (chest_table[0], chest_table[2])
-    assert entries == [(key, max(a, b)) for (key, a), (_, b) in zip(chest_table[1], gift_table[1])]
+    assert all((header, names) == (table[0], table[2]) for table in tables)
+    assert entries == [(key, max(table[1][i][1] for table in tables)) for i, (key, _) in enumerate(entries)]
     assert combined == {path: data for part in alone for path, data in part.items()}, sorted(combined)
 
     assert game.game_data_list(combined[GAME_DATA_LIST]) == with_defaults(game, values)
@@ -682,6 +758,31 @@ def gift_size_table(patch, game):
     assert event_flow(data) == expected
 
 
+def stone_texts(patch, game):
+    """Stone texts written into the two English text packs and no other: read apart from the patcher, each is the
+    game's pack with the two messages changed. Both grow past their size table entries, and the entries are raised."""
+    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    packs = ENGLISH_PACKS
+    planned = [(KOKIRI_STONE, TESTED_STONE_TEXT), (SHORT_RUMOUR_STONE, LONG_STONE_TEXT)]
+    mod = patched(patch, game, plan([], stone_texts=planned))
+    assert sorted(mod) == sorted(packs + [SIZE_TABLE]), sorted(mod)
+    sizes = {}
+    for path in packs:
+        assert_same_frame_header(mod[path], game.read(path))
+        ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
+        assert list(ours) == list(theirs), path
+        assert {name for name in ours if ours[name] != theirs[name]} == {STONE_MESSAGES}, path
+        labels, texts = msbt(ours[STONE_MESSAGES])
+        game_labels, expected = msbt(theirs[STONE_MESSAGES])
+        expected |= {KOKIRI_STONE: TESTED_STONE_MESSAGE, SHORT_RUMOUR_STONE: LONG_STONE_MESSAGE}
+        assert (labels, list(texts.items())) == (game_labels, list(expected.items())), path
+        sizes[size_key(path)] = len(zstd.decompress(mod[path], zstd_dict=game.zs_dictionary))
+    assert all(load_size(size, TEXT_PACK_OVERHEAD) > dict(entries)[key] for key, size in sizes.items()), sizes
+    expected = [(key, max(size, load_size(sizes[key], TEXT_PACK_OVERHEAD)) if key in sizes else size)
+                for key, size in entries]
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
+
+
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
     substitute where it has one, and as an added value where it names none. Each fits the size table entry the game
@@ -764,8 +865,28 @@ def bad_input(patch, game):
             [str(KOKIRI_SWORD_CHEST), FOREST_DYNAMIC]),
     }
     plans = {name: (good | {"chests": [valid, chest]}, named) for name, (chest, named) in cases.items()}
-    plans["no event_texts"] = ({"seed": "1", "chests": [valid], "start_values": {}}, ["plan.json", "event_texts"])
-    plans["no start_values"] = ({"seed": "1", "chests": [valid], "event_texts": []}, ["plan.json", "start_values"])
+    plans["no event_texts"] = (
+        {"seed": "1", "chests": [valid], "start_values": {}, "stone_texts": []}, ["plan.json", "event_texts"])
+    plans["no start_values"] = (
+        {"seed": "1", "chests": [valid], "event_texts": [], "stone_texts": []}, ["plan.json", "start_values"])
+    plans["no stone_texts"] = (
+        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}}, ["plan.json", "stone_texts"])
+    valid_stone = {"label": KOKIRI_STONE, "text": "They say."}
+    other = SHORT_RUMOUR_STONE
+    stones = {
+        "stone text not this shape": ({"label": other}, ["plan.json", "stone_texts[1]"]),
+        "stone text without a label": ({"label": "", "text": "They say."}, ["plan.json", "stone_texts[1]"]),
+        "stone text without a text": ({"label": other, "text": ""}, ["plan.json", "stone_texts[1]"]),
+        "stone text listed twice": (dict(valid_stone, text="Again."), ["stone_texts[1]", KOKIRI_STONE, "twice"]),
+        "unknown tag": ({"label": other, "text": "{colour:0}Saria"}, ["stone_texts[1]", "{colour:0}"]),
+        "tag not closed": ({"label": other, "text": "{color:0 Saria"}, ["stone_texts[1]", "{color:0 Saria"]),
+        "colour out of range": ({"label": other, "text": "{color:65536}"}, ["stone_texts[1]", "{color:65536}"]),
+        "code byte outside a tag": ({"label": other, "text": "Sa\u000eria"}, ["stone_texts[1]", "code"]),
+        "label not a message": (
+            {"label": "GOSSIP_NOWHERE_01", "text": "They say."}, ["GOSSIP_NOWHERE_01", "Mals/", STONE_MESSAGES]),
+    }
+    for name, (entry, named) in stones.items():
+        plans[name] = (good | {"stone_texts": [valid_stone, entry]}, named)
     valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "text": "Item_Boomerang"}
     nowhere = "Event/EventFlow/Nowhere.bfevfl.zs"
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
@@ -836,6 +957,7 @@ def main():
         "tested-event-text-mods": tested_event_text_mods,
         "tested-program-mod": tested_program_mod,
         "tested-bomb-mod": tested_bomb_mod,
+        "tested-stone-text-mod": tested_stone_text_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
@@ -846,6 +968,7 @@ def main():
         "start-values": start_values,
         "gift": gift,
         "gift-size-table": gift_size_table,
+        "stone-texts": stone_texts,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

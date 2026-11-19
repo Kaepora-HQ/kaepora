@@ -17,4 +17,11 @@ std::vector<Message> Parse(std::string_view data);
 
 std::string Write(const std::vector<Message>& messages);
 
+constexpr std::string_view PageTag = "{page}";
+
+// The text the tags stand for: {color:N} sets the text's colour (65535 the box's own), {size:N} its size in percent,
+// {page} starts a new box, and {G:T:HEX} is any control code by its group, type and parameter bytes. A line break is
+// itself. Throws, naming the tag, on a tag it does not know, and on a zero or code byte outside a tag.
+std::string Encode(std::string_view tagged);
+
 } // namespace msbt

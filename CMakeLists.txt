@@ -240,6 +240,8 @@ set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
+set(KAEPORA_TESTED_STONE_TEXT_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with a text of ours on the Kokiri Forest gossip stone")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
 if(KAEPORA_GAME_NUP)
     add_test(NAME patch-roundtrip COMMAND kaepora-patch-roundtrip "${KAEPORA_GAME_NUP}")
@@ -247,7 +249,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
-                 gift-size-table)
+                 gift-size-table stone-texts)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME patch-fixed-seed-plan
@@ -293,6 +295,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-gift-mod
             COMMAND ${PATCH_TEST} tested-gift-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_GIFT_MOD}")
+    endif()
+    if(KAEPORA_TESTED_STONE_TEXT_MOD)
+        add_test(NAME patch-tested-stone-text-mod
+            COMMAND ${PATCH_TEST} tested-stone-text-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_STONE_TEXT_MOD}")
     endif()
     if(KAEPORA_TESTED_EVENT_TEXT_MODS)
         add_test(NAME patch-tested-event-text-mods

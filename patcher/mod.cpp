@@ -5,6 +5,7 @@
 #include "bytes.h"
 #include "compression.h"
 #include "game_file.h"
+#include "msbt.h"
 #include "program_patch.h"
 #include "sarc.h"
 
@@ -49,6 +50,24 @@ static std::string Name(const PlannedEventText& text) {
     return std::format("{} {} in {}", text.event, text.param, text.flow);
 }
 
+// A rumour opens with the stones' colour, their smaller text and code 3:0, and sets the size and colour again after a
+// page break, as the game's own rumours do in every language.
+constexpr std::string_view RumourOpening = "{color:1}{size:80}{3:0:0f0000}";
+constexpr std::string_view RumourPageReset = "{size:80}{color:1}";
+
+static PlannedStoneText ParseStoneText(const nlohmann::json& stone) {
+    const std::string label = stone.at("label").get<std::string>();
+    const std::string words = stone.at("text").get<std::string>();
+    if (label.empty() || words.empty()) {
+        throw std::runtime_error("label and text must not be empty");
+    }
+    std::string text = std::string(RumourOpening) + words;
+    for (size_t page = text.find(msbt::PageTag); page != std::string::npos; page = text.find(msbt::PageTag, page + 1)) {
+        text.insert(page + msbt::PageTag.size(), RumourPageReset);
+    }
+    return { .label = label, .text = msbt::Encode(text) };
+}
+
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
     const auto texts = json.at("event_texts").get<std::vector<nlohmann::json>>();
@@ -63,6 +82,7 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("start_values: \"{}\" is not true, false or a whole number", name));
         }
     }
+    const auto stones = json.at("stone_texts").get<std::vector<nlohmann::json>>();
     for (size_t i = 0; i < chests.size(); ++i) {
         try {
             plan.chests.push_back(ParseChest(chests[i]));
@@ -79,6 +99,17 @@ Plan ParsePlan(const nlohmann::json& json) {
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("event_texts[{}]: {}", i, e.what()));
+        }
+    }
+    std::set<std::string> labels;
+    for (size_t i = 0; i < stones.size(); ++i) {
+        try {
+            const PlannedStoneText& stone = plan.stoneTexts.emplace_back(ParseStoneText(stones[i]));
+            if (!labels.insert(stone.label).second) {
+                throw std::runtime_error(std::format("{} is listed twice", stone.label));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("stone_texts[{}]: {}", i, e.what()));
         }
     }
     return plan;
@@ -174,6 +205,7 @@ static std::string ReadSizeTable(GameFile& game) {
 constexpr size_t SizeAlignment = 32;
 constexpr size_t PlacementOverhead = 264;
 constexpr size_t EventFlowOverhead = 272;
+constexpr size_t TextPackOverhead = 312;
 
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
 // the entry changed. The game silently skips a file that is too large for its entry, and loads one that is smaller.
@@ -284,6 +316,35 @@ static std::string BombLiftPack(GameFile& game, const std::string& dictionary, s
     }
 }
 
+// The game reads the update's text pack of the console's language. A stone says its text in English, and on a console
+// in another language it keeps the game's rumour.
+constexpr std::string_view StoneTextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
+constexpr std::string_view StoneMessages = "EventFlowMsg/GossipStone.msbt";
+
+static std::string StoneTextPack(GameFile& game, const std::string& path, const std::string& dictionary,
+                                 const std::vector<PlannedStoneText>& stones) {
+    try {
+        sarc::Files pack = sarc::Parse(Decompress(game.Read(path), dictionary));
+        const auto file = pack.find(std::string(StoneMessages));
+        if (file == pack.end()) {
+            throw std::runtime_error(std::format("the pack has no {}", StoneMessages));
+        }
+        std::vector<msbt::Message> messages = msbt::Parse(file->second);
+        for (const PlannedStoneText& stone : stones) {
+            const auto message = std::ranges::find(messages, stone.label, &msbt::Message::label);
+            if (message == messages.end()) {
+                throw std::runtime_error(
+                    std::format("stone text {}: {} has no message with this label", stone.label, StoneMessages));
+            }
+            message->text = stone.text;
+        }
+        file->second = msbt::Write(messages);
+        return sarc::Write(pack, sarc::TextPackAlignment);
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::format("{}: {}", path, e.what()));
+    }
+}
+
 std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, const Plan& plan) {
     GameFile game(nup);
     // With a program of another build the game would run without the program patch.
@@ -347,6 +408,13 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         const std::string data = bfevfl::Write(flows.at(path));
         tableChanged |= RaiseSize(table, path, data.size(), EventFlowOverhead);
         addToRomfs(path, Compress(data, zsDictionary));
+    }
+    if (!plan.stoneTexts.empty()) {
+        for (const std::string_view path : StoneTextPacks) {
+            const std::string data = StoneTextPack(game, std::string(path), zsDictionary, plan.stoneTexts);
+            tableChanged |= RaiseSize(table, path, data.size(), TextPackOverhead);
+            addToRomfs(path, Compress(data, zsDictionary));
+        }
     }
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));

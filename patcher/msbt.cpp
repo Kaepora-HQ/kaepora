@@ -3,7 +3,10 @@
 #include "bytes.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
+#include <format>
+#include <optional>
 #include <stdexcept>
 
 namespace msbt {
@@ -57,6 +60,66 @@ std::string_view Section(std::string_view data, size_t offset, std::string_view 
         throw std::runtime_error("a section runs past the end of the file");
     }
     return data.substr(offset + SectionHeaderSize, size);
+}
+
+// A control code starts with this byte, then has its u16 group, u16 type and u16 parameter size, then its parameters.
+constexpr char CodeStart = 0x0E;
+constexpr uint16_t Layout = 0;
+constexpr uint16_t Size = 2;
+constexpr uint16_t Color = 3;
+constexpr uint16_t Page = 4;
+
+std::string Code(uint16_t group, uint16_t type, std::string_view params) {
+    std::string code(7, '\0');
+    code[0] = CodeStart;
+    WriteAt(code, 1, group);
+    WriteAt(code, 3, type);
+    WriteAt(code, 5, uint16_t(params.size()));
+    return code + std::string(params);
+}
+
+template <typename T> std::optional<T> Number(std::string_view text, int base = 10) {
+    T value;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value, base);
+    return error == std::errc() && end == text.data() + text.size() ? std::optional(value) : std::nullopt;
+}
+
+std::string Tag(std::string_view tag) {
+    const std::runtime_error unknown(std::format("unknown tag {}", tag));
+    const std::string_view inner = tag.substr(1, tag.size() - 2);
+    if (tag == PageTag) {
+        return Code(Layout, Page, {});
+    }
+    const size_t colon = inner.find(':');
+    if (colon == std::string_view::npos) {
+        throw unknown;
+    }
+    const std::string_view name = inner.substr(0, colon);
+    const std::string_view rest = inner.substr(colon + 1);
+    if (name == "color" || name == "size") {
+        const auto value = Number<uint16_t>(rest);
+        if (!value) {
+            throw unknown;
+        }
+        std::string param(2, '\0');
+        WriteAt(param, 0, *value);
+        return Code(Layout, name == "color" ? Color : Size, param);
+    }
+    const size_t hex = rest.find(':');
+    const auto group = Number<uint16_t>(name);
+    const auto type = Number<uint16_t>(rest.substr(0, hex));
+    if (!group || !type || hex == std::string_view::npos || (rest.size() - hex - 1) % 2 != 0) {
+        throw unknown;
+    }
+    std::string params;
+    for (size_t at = hex + 1; at < rest.size(); at += 2) {
+        const auto byte = Number<uint8_t>(rest.substr(at, 2), 16);
+        if (!byte) {
+            throw unknown;
+        }
+        params += char(*byte);
+    }
+    return Code(*group, *type, params);
 }
 
 } // namespace
@@ -145,6 +208,28 @@ std::string Write(const std::vector<Message>& messages) {
     }
     WriteAt(file, FileSize, uint32_t(file.size()));
     return file;
+}
+
+std::string Encode(std::string_view tagged) {
+    std::string text;
+    for (size_t at = 0; at < tagged.size();) {
+        const size_t open = tagged.find('{', at);
+        const std::string_view plain = tagged.substr(at, open - at);
+        if (plain.find_first_of(std::string_view("\0\x0E\x0F", 3)) != std::string_view::npos) {
+            throw std::runtime_error("a zero or code byte outside a tag");
+        }
+        text += plain;
+        if (open == std::string_view::npos) {
+            break;
+        }
+        const size_t close = tagged.find('}', open);
+        if (close == std::string_view::npos) {
+            throw std::runtime_error(std::format("unknown tag {}", tagged.substr(open)));
+        }
+        text += Tag(tagged.substr(open, close + 1 - open));
+        at = close + 1;
+    }
+    return text;
 }
 
 } // namespace msbt
