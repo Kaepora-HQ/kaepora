@@ -123,7 +123,17 @@ struct PrizeLine {
     Fit fit;
 };
 
-// Places and items as a hint names them, with their article, and the lines that name a prize.
+// A message in which a character tells where an item lies, as SoH's hint of that name does.
+struct CharacterHint {
+    RandomizerCheck hint; // the spoiler log names the hint by SoH's location for it
+    RandomizerGet item;
+    std::string file; // the message file in the text packs
+    std::string label;
+    Sentence sentence; // [[1]] is the place
+    Fit fit;
+};
+
+// Places and items as a hint names them, with their article, the lines that name a prize, and the characters' hints.
 struct RemakeHintTables {
     std::vector<RemakeStone> stones;
     std::map<RandomizerCheckArea, std::string> places;
@@ -131,12 +141,13 @@ struct RemakeHintTables {
     std::map<RandomizerCheck, Sentence> chestSentences;
     std::vector<std::string> junk;
     std::vector<PrizeLine> prizeLines;
+    std::vector<CharacterHint> characterHints;
 };
 
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
 // item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
 // shuffled or its area, or a gift, its area or its item, or when a prize line names a place that is no chest of the
-// chest table, or one whose own item has no name.
+// chest table, or one whose own item has no name, or a character's hint names an unknown hint location or item.
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                                       const std::vector<RemakeGift>& gifts);
 

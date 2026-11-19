@@ -109,8 +109,10 @@ ITEM_NAMES = {row["remake_item"]: f"{row['article']} {row['name']}".strip() for 
 CHEST_SENTENCES = {row["location"]: row["sentence"] for row in read_tsv("chest_hints.tsv")}
 JUNK = [row["hint"] for row in read_tsv("junk_hints.tsv")]
 PRIZE_LINES = read_tsv("prize_lines.tsv")
+CHARACTER_HINTS = read_tsv("character_hints.tsv")
 CHEST_GAME_PRIZE = "Market Treasure Chest Game Reward"
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
+FOREST_OPEN = {"Kokiri Forest": "Open"}
 SOH_MAJOR_ITEMS = {"Boomerang", "Progressive Bow", "Progressive Slingshot", "Progressive Hookshot",
                    "Megaton Hammer", "Iron Boots", "Hover Boots", "Lens of Truth", "Silver Gauntlets",
                    "Golden Gauntlets", "Mirror Shield", "Kokiri Sword", "Progressive Bomb Bag", "Ice Arrows"}
@@ -256,7 +258,8 @@ class SeedgenTest(unittest.TestCase):
 
     def test_spoiler_log_lists_the_shuffled_locations_and_the_route(self):
         spoiler, _ = self.generate("KAEPORA")
-        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints"])
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints",
+                                         "hints from characters"])
         self.assertEqual(spoiler["kaepora"], VERSION)
         self.assertEqual(spoiler["seed"], "KAEPORA")
         self.assertEqual(spoiler["settings"], DEFAULT_SETTINGS)
@@ -387,7 +390,8 @@ class SeedgenTest(unittest.TestCase):
         spoiler, _ = self.generate("9", settings)
         self.assertEqual(spoiler["settings"],
                          DEFAULT_SETTINGS | settings | {"Shuffled dungeons": ["Deku Tree", "Fire Temple"]})
-        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints"])
+        self.assertEqual(list(spoiler), ["kaepora", "seed", "settings", "locations", "playthrough", "hints",
+                                         "hints from characters"])
 
     def test_default_settings_are_the_settings_left_out(self):
         self.assertEqual(self.run_seedgen("10", DEFAULT_SETTINGS), self.run_seedgen("10"))
@@ -715,6 +719,7 @@ class SeedgenTest(unittest.TestCase):
         def items_at(area):
             return [item for location, item in held.items() if place_of(location) == area]
 
+        self.assert_character_hints_are_true(spoiler, plan)
         for stone, hint in hints.items():
             with self.subTest(seed=seed, stone=stone, hint=hint):
                 if hint in chest_hints or hint in junk:
@@ -748,6 +753,58 @@ class SeedgenTest(unittest.TestCase):
                     self.fail("not a hint")
         return spoiler, plan
 
+    def assert_character_hints_are_true(self, spoiler, plan):
+        """Each character's hint names the place of the seed that holds its item, in each of its messages, and the
+        spoiler log has what each message says. With the forest open Mido says none."""
+        texts = {(entry["file"], entry["label"]): plain(entry["text"]) for entry in plan["message_texts"]}
+        said = collections.defaultdict(list)
+        for row in CHARACTER_HINTS:
+            if spoiler["settings"]["Kokiri Forest"] == "Open":
+                self.assertNotIn((row["file"], row["label"]), texts, spoiler["seed"])
+                continue
+            [location] = [location for location, placed in spoiler["locations"].items()
+                          if spoiler_item(placed) == row["item"]]
+            line = plain(row["sentence"].replace("[[1]]", PLACE_BY_AREA_PREFIX[place_of(location)]))
+            self.assertEqual(texts[(row["file"], row["label"])], line, spoiler["seed"])
+            said[row["hint"]].append(line)
+        self.assertEqual(spoiler["hints from characters"], said)
+
+    def stones_naming_the_sword(self, spoiler, plan):
+        """The stones' hints that name the Kokiri Sword's place: its chest's own sentence, or one of the two named item
+        hints, as SoH words them."""
+        [sword] = [location for location, placed in spoiler["locations"].items()
+                   if spoiler_item(placed) == "Kokiri Sword"]
+        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(plan).items()}
+        named = {plain(CHEST_SENTENCES[sword].replace("[[1]]", held[sword])),
+                 f"They say that the Kokiri Sword can be found at {PLACE_BY_AREA_PREFIX[place_of(sword)]}.",
+                 f"They say that {PLACE_BY_AREA_PREFIX[place_of(sword)]} hoards the Kokiri Sword."}
+        return named & set(spoiler["hints"].values())
+
+    def test_mido_names_where_the_kokiri_sword_lies(self):
+        for seed in range(800, 820):
+            spoiler, plan = self.generate(str(seed))
+            self.assert_character_hints_are_true(spoiler, plan)
+            self.assertEqual(len(spoiler["hints from characters"]["KF Mido Hint"]), 3)
+        # Seed 811 puts the sword in a chest of Mido's House.
+        spoiler, _ = self.generate("811")
+        self.assertIn("the Kokiri Sword I hid in Kokiri Forest!", spoiler["hints from characters"]["KF Mido Hint"][0])
+
+    def test_a_place_a_character_names_is_not_named_again_by_a_stone(self):
+        for seed in range(800, 860):
+            spoiler, plan = self.generate(str(seed))
+            self.assertFalse(self.stones_naming_the_sword(spoiler, plan), seed)
+
+    def test_mido_gives_no_hint_with_the_forest_open(self):
+        # Seen in the game: with the forest open, Mido greets a Link with no sword and no shield as one who has both,
+        # and never says the lines that carry the hint. The stones may name the sword's place, as without him.
+        named = 0
+        for seed in range(860, 880):
+            spoiler, plan = self.generate(str(seed), FOREST_OPEN)
+            self.assert_character_hints_are_true(spoiler, plan)
+            self.assertEqual(spoiler["hints from characters"], {})
+            named += bool(self.stones_naming_the_sword(spoiler, plan))
+        self.assertTrue(named)
+
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.
         self.assert_hints_are_true("4", SHOPS_SHUFFLED)
@@ -777,7 +834,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(named), 2, named)
 
     def test_every_message_fits_its_box(self):
-        sites = {(row["file"], row["label"]): row for row in PRIZE_LINES}
+        sites = {(row["file"], row["label"]): row for row in PRIZE_LINES + CHARACTER_HINTS}
         for seed, settings in [(str(seed), None) for seed in range(720, 730)] + [("730", SHOPS_SHUFFLED)]:
             _, plan = self.generate(seed, settings)
             self.assertTrue(plan["message_texts"])

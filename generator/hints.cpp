@@ -224,7 +224,8 @@ static std::vector<RandomizerCheck> StonesReachableWithout(RandomizerCheck loc,
     return reachable;
 }
 
-std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<RandomizerCheck, std::string>& items) {
+std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<RandomizerCheck, std::string>& items,
+                                 const std::set<RandomizerCheck>& named) {
     auto ctx = Rando::Context::GetInstance();
     std::map<RandomizerCheck, std::string> sentences;
     const auto emptyStones = [&] {
@@ -236,7 +237,7 @@ std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<
         }
         return stones;
     };
-    std::set<RandomizerCheck> givenAway;
+    std::set<RandomizerCheck> givenAway = named;
     std::array<Draw, BalancedDistribution.size()> draws = BalancedDistribution;
     while (sentences.size() < tables.stones.size()) {
         Draw& draw = WeightedDraw(draws);
@@ -289,4 +290,37 @@ std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
         lines.push_back({ line.file, line.label, Layout(line.sentence.before + item + line.sentence.after, line.fit) });
     }
     return lines;
+}
+
+// Mido says his hint while he stops Link on the way to the Deku Tree. With the forest open he greets a Link with no
+// sword and no shield as one who has both, and never says it (seen in the game).
+static bool Says(const CharacterHint& hint, const SeedSettings& settings) {
+    return hint.hint != RC_MIDO_HINT || settings.forest != Forest::Open;
+}
+
+std::vector<CharacterHintText> CharacterHints(const RemakeHintTables& tables,
+                                              const std::map<RandomizerCheck, std::string>& items,
+                                              const SeedSettings& settings) {
+    auto ctx = Rando::Context::GetInstance();
+    std::vector<CharacterHintText> texts;
+    for (const CharacterHint& hint : tables.characterHints) {
+        if (!Says(hint, settings)) {
+            continue;
+        }
+        // As SoH's hints do, the first location in SoH's order that holds the item.
+        const auto place = std::ranges::find(ctx->allLocations, hint.item, [&](RandomizerCheck loc) {
+            return ctx->GetItemLocation(loc)->GetPlacedRandomizerGet();
+        });
+        if (place == ctx->allLocations.end() || !items.contains(*place)) {
+            continue;
+        }
+        const std::string markup = hint.sentence.before +
+                                   tables.places.at(Rando::StaticData::GetLocation(*place)->GetArea()) +
+                                   hint.sentence.after;
+        texts.push_back({ .hint = hint.hint,
+                          .place = *place,
+                          .message = { hint.file, hint.label, Layout(markup, hint.fit) },
+                          .plain = Plain(Words(markup)) });
+    }
+    return texts;
 }

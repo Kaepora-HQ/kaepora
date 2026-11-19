@@ -14,6 +14,7 @@
 #include <cctype>
 #include <format>
 #include <iterator>
+#include <set>
 #include <stdexcept>
 
 static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck location) {
@@ -23,13 +24,15 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
                               const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                              const std::vector<RemakeGift>& gifts, const std::vector<StoneHint>& hints) {
+                              const std::vector<RemakeGift>& gifts, const std::vector<StoneHint>& hints,
+                              const std::vector<CharacterHintText>& characterHints) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
                                    { "settings", ToJson(settings) },
                                    { "locations", nlohmann::ordered_json::object() },
                                    { "playthrough", nlohmann::ordered_json::object() },
-                                   { "hints", nlohmann::ordered_json::object() } };
+                                   { "hints", nlohmann::ordered_json::object() },
+                                   { "hints from characters", nlohmann::ordered_json::object() } };
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
             AddPlacement(log["locations"], chest.location);
@@ -60,6 +63,9 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
     }
     for (const StoneHint& hint : hints) {
         log["hints"][Rando::StaticData::GetLocation(hint.stone.location)->GetName()] = hint.plain;
+    }
+    for (const CharacterHintText& hint : characterHints) {
+        log["hints from characters"][Rando::StaticData::GetLocation(hint.hint)->GetName()].push_back(hint.plain);
     }
     return log.dump(4) + "\n";
 }
@@ -138,8 +144,16 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         throw std::runtime_error("generation failed");
     }
     const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts);
-    const std::vector<StoneHint> hints =
-        settings.gossipStones == GossipStones::GiveHints ? PickHints(hintTables, items) : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, chests, shops, gifts, hints),
-             RemakePlan(seed, chests, shops, gifts, settings, items, hints, PrizeLines(hintTables, items)) };
+    const std::vector<CharacterHintText> characterHints = CharacterHints(hintTables, items, settings);
+    std::set<RandomizerCheck> named;
+    std::vector<MessageText> messages = PrizeLines(hintTables, items);
+    for (const CharacterHintText& hint : characterHints) {
+        named.insert(hint.place);
+        messages.push_back(hint.message);
+    }
+    const std::vector<StoneHint> hints = settings.gossipStones == GossipStones::GiveHints
+                                             ? PickHints(hintTables, items, named)
+                                             : std::vector<StoneHint>{};
+    return { SpoilerLog(seed, settings, chests, shops, gifts, hints, characterHints),
+             RemakePlan(seed, chests, shops, gifts, settings, items, hints, messages) };
 }

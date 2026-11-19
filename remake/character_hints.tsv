@@ -1,0 +1,4 @@
+hint	item	file	label	sentence	line_length	box_lines
+KF Mido Hint	Kokiri Sword	EventFlowMsg/Npc_Kokiri_Mido_Child.msbt	Talk_03	Hrmph! You'll never find the #Kokiri Sword# I hid in #[[1]]#! And without a #sword# and a #shield#, I won't let you through!	60	3
+KF Mido Hint	Kokiri Sword	EventFlowMsg/Npc_Kokiri_Mido_Child.msbt	Talk_20	You'll never find the #Kokiri Sword# I hid in #[[1]]#! Hrmph!^Bring both a #sword# and a #shield#, and then I'll let you pass!	60	3
+KF Mido Hint	Kokiri Sword	EventFlowMsg/Npc_Kokiri_Mido_Child.msbt	Talk_26	But that's not enough! You still need a #sword#, and you'll never find the #Kokiri Sword# I hid in #[[1]]#!	60	3

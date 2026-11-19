@@ -65,6 +65,19 @@ the seed keeps it. The game's own line names the unmodified game's item, which w
 - `line_length` and `box_lines`: how much the message's box holds, the widest line in characters and the lines in one
   box, read from the game's own messages at full size in the same file. A test checks that every rewritten line fits.
 
+`character_hints.tsv` has the messages in which a character tells where an item lies, as SoH's hint of the same name
+does. A seed writes each one only where the item lies in a place the seed shuffles, so the hint names that place, as
+the stones name it. Each sentence is in SoH's markup, with `[[1]]` where the place goes, and keeps the meaning of the
+line it replaces.
+
+- `hint`: SoH's location for the hint, by which the spoiler log names it. A stone never names a place a character
+  names. With "Kokiri Forest" at "Open" Mido gives no hint: he greets a Link with no sword and no shield as one who has
+  both, and never says the lines that carry it (seen in the game).
+- `item`: the SoH item, by SoH's English name. The hint names the first location in SoH's order that holds it.
+- `file`, `label`, `line_length` and `box_lines`: as in `prize_lines.tsv`, but Mido's 60 characters are not read from
+  the game's own lines. His widest line at full size is 53 characters, and a 60-character line of ours was seen in the
+  game, whole on one line at normal size inside his box.
+
 `shops.tsv` has a row for each of SoH's 64 shop locations, by shop and then by item number. Each row is one slot of a
 remake shop. With "Shop goods" at "Four per shop shuffled", items 5 to 8 of each shop are shuffled, the four that SoH's
 shopsanity takes at that count. Each shuffled slot adds a Red Rupee to the pool and takes one of SoH's cheap balanced

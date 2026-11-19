@@ -40,6 +40,9 @@ static constexpr unsigned char junkTable[] = {
 static constexpr unsigned char prizeLineTable[] = {
 #embed "../remake/prize_lines.tsv"
 };
+static constexpr unsigned char characterHintTable[] = {
+#embed "../remake/character_hints.tsv"
+};
 static constexpr unsigned char shopTable[] = {
 #embed "../remake/shops.tsv"
 };
@@ -313,6 +316,25 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
                                       .label = row[2],
                                       .sentence = Split(where, row[3]),
                                       .fit = ReadFit(where, row[4], row[5]) });
+    }
+
+    line = 1;
+    for (const auto& row : ReadTable("remake/character_hints.tsv", characterHintTable,
+                                     "hint\titem\tfile\tlabel\tsentence\tline_length\tbox_lines")) {
+        const std::string where = std::format("remake/character_hints.tsv line {}: ", ++line);
+        const RandomizerCheck hint = LocationNamed(where, row[0]);
+        const auto item = Rando::StaticData::itemNameToEnum.find(row[1]);
+        if (Rando::StaticData::GetLocation(hint)->GetRCType() != RCTYPE_STATIC_HINT ||
+            item == Rando::StaticData::itemNameToEnum.end() || item->second == RG_NONE || row[2].empty() ||
+            row[3].empty()) {
+            Fail(where + "no SoH hint location, an unknown SoH item, or no file or label");
+        }
+        tables.characterHints.push_back({ .hint = hint,
+                                          .item = item->second,
+                                          .file = row[2],
+                                          .label = row[3],
+                                          .sentence = Split(where, row[4]),
+                                          .fit = ReadFit(where, row[5], row[6]) });
     }
 
     std::set<RandomizerCheck> shuffled;
