@@ -7,11 +7,14 @@ void RegionTable_Init_LonLonRanch() {
     // clang-format off
     areaTable[RR_LON_LON_RANCH] = Region("Lon Lon Ranch", SCENE_LON_LON_RANCH, {
         //Events
-        EVENT_ACCESS(LOGIC_FREED_EPONA, logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_EPONAS_SONG) && logic->IsAdult && logic->AtDay),
-        EVENT_ACCESS(LOGIC_LINKS_COW,   logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_EPONAS_SONG) && logic->IsAdult && logic->AtDay),
+        EVENT_ACCESS(LOGIC_MALONS_LESSON, logic->IsChild && logic->Get(LOGIC_MALON_RETURNED_FROM_CASTLE) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->HasItem(RG_FAIRY_OCARINA) && logic->AtDay),
+        // The game moves Epona's quest past ReadyForGetEponaSong only in child Malon's lesson, whatever song it
+        // teaches, and Ingo races adult Link for her only past that step.
+        EVENT_ACCESS(LOGIC_FREED_EPONA, logic->Get(LOGIC_MALONS_LESSON) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_EPONAS_SONG) && logic->IsAdult && logic->AtDay),
+        EVENT_ACCESS(LOGIC_LINKS_COW,   logic->Get(LOGIC_MALONS_LESSON) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->CanUse(RG_EPONAS_SONG) && logic->IsAdult && logic->AtDay),
     }, {
         //Locations
-        LOCATION(RC_SONG_FROM_MALON,        logic->IsChild && logic->Get(LOGIC_MALON_RETURNED_FROM_CASTLE) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->HasItem(RG_FAIRY_OCARINA) && logic->AtDay),
+        LOCATION(RC_SONG_FROM_MALON,        logic->Get(LOGIC_MALONS_LESSON)),
         LOCATION(RC_LLR_GS_TREE,            logic->IsChild && logic->CanBonkTrees() && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))),
         // The remake hangs it 8 units above the shed's floor with nothing beside it to climb. The Boomerang kills it and
         // brings its token back.

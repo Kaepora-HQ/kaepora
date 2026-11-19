@@ -108,6 +108,20 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Market Bombchu Shop Item 7", *NO_WALLET_UPGRADE))
         self.assertTrue(self.reachable("Market Bombchu Shop Item 8", ONE_WALLET_UPGRADE))
 
+    def test_epona_comes_only_after_malons_lesson(self):
+        # Horseback archery needs Epona. Ingo races adult Link for her only once child Malon's lesson has played,
+        # whatever song it teaches.
+        self.assertTrue(self.reachable("GF HBA 1000 Points", ("Song from Malon", "Saria's Song"),
+                                       ("Song from Saria", "Epona's Song")))
+        # Without the Weird Egg, Talon never wakes and Malon never goes home to teach. Zelda's Letter from the start
+        # opens the village gate, and the Lullaby and Saria's Song in the forest win the stones, so Link still grows
+        # up and holds Epona's Song.
+        no_lesson = (("HC Malon Egg", "Green Rupee"), ("Link's Pocket", "Zelda's Letter"),
+                     ("KF Mido Top Left Chest", "Zelda's Lullaby"), ("KF Mido Top Right Chest", "Saria's Song"),
+                     ("KF Mido Bottom Left Chest", "Epona's Song"))
+        self.assertTrue(self.reachable("Song from Windmill", *no_lesson))
+        self.assertFalse(self.reachable("GF HBA 1000 Points", *no_lesson))
+
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
