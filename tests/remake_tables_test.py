@@ -11,6 +11,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import patch_test  # noqa: E402
+import shop_goods  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GAME = None
@@ -42,8 +43,8 @@ def without_grammar_codes(text):
 class RemakeTablesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        game = patch_test.Game(GAME)
-        cls.packs = {path: game.text_pack(game.read(path)) for path in patch_test.ENGLISH_PACKS}
+        cls.game = patch_test.Game(GAME)
+        cls.packs = {path: cls.game.text_pack(cls.game.read(path)) for path in patch_test.ENGLISH_PACKS}
 
     def messages(self, file):
         return {path: patch_test.msbt(pack[file])[1] for path, pack in self.packs.items()}
@@ -69,6 +70,16 @@ class RemakeTablesTest(unittest.TestCase):
 
     def test_every_item_has_the_game_s_name(self):
         self.assert_names("item_names.tsv", "remake_item", "ActorMsg/PouchContent.msbt")
+
+    def test_every_shop_goods_row_is_the_game_s_goods_or_its_model_on_the_shelf(self):
+        infos = shop_goods.actor_infos(self.game)
+        for row in read_tsv("shop_goods.tsv"):
+            measured = [row[key] for key in ("pose", "bottom", "top", "width", "reach")]
+            if row["goods"]:
+                self.assertIn(f"Pack/Actor/{row['goods']}.pack.zs", self.game.files, row["item"])
+                self.assertEqual(measured, [""] * 5, row["item"])
+            else:
+                self.assertEqual(measured, shop_goods.row(self.game, infos, row["item"]), row["item"])
 
 
 if __name__ == "__main__":

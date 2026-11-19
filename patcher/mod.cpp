@@ -22,6 +22,7 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <variant>
 
 static uint64_t ParseHash(const nlohmann::json& json) {
     const std::string text = json.get<std::string>();
@@ -84,18 +85,36 @@ static std::string Name(const PlannedEventText& text) {
 constexpr std::string_view RumourOpening = "{color:1}{size:80}{3:0:0f0000}";
 constexpr std::string_view RumourPageReset = "{size:80}{color:1}";
 
+// A table of remake/ built into the program: each row's fields, after the header given. Throws when the header is
+// another, the last line has no newline, or a row has another number of fields.
+static std::vector<std::vector<std::string_view>> ReadTable(std::string_view name, std::string_view table,
+                                                            std::string_view header) {
+    if (!table.starts_with(std::format("{}\n", header)) || !table.ends_with('\n')) {
+        throw std::runtime_error(
+            std::format("{}: the header is not \"{}\", or the last line has no newline", name, header));
+    }
+    const size_t fields = std::ranges::count(header, '\t') + 1;
+    std::vector<std::vector<std::string_view>> rows;
+    for (size_t start = header.size() + 1; start < table.size(); start = table.find('\n', start) + 1) {
+        std::vector<std::string_view>& row = rows.emplace_back();
+        for (const auto field : std::views::split(table.substr(start, table.find('\n', start) - start), '\t')) {
+            row.emplace_back(field.begin(), field.end());
+        }
+        if (row.size() != fields) {
+            throw std::runtime_error(std::format("{} line {}: wrong number of fields", name, rows.size() + 1));
+        }
+    }
+    return rows;
+}
+
 static constexpr char stoneTable[] = {
 #embed "../remake/stones.tsv"
 };
 
 static std::set<std::string, std::less<>> PairedStones() {
     std::set<std::string, std::less<>> labels;
-    for (const auto row :
-         std::views::split(std::string_view(stoneTable, sizeof stoneTable), '\n') | std::views::drop(1)) {
-        const std::string_view line(row.begin(), row.end());
-        if (!line.empty()) {
-            labels.emplace(line.substr(0, line.find('\t')));
-        }
+    for (const auto& row : ReadTable("remake/stones.tsv", { stoneTable, sizeof stoneTable }, "label\tlocation")) {
+        labels.emplace(row[0]);
     }
     return labels;
 }
@@ -193,14 +212,76 @@ static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     return *actor;
 }
 
-// The goods actor the game has for an item: its shelf model is the item's, and buying it gives the item. Every other
-// item gets a goods actor of its own.
-static const std::map<std::string, std::string, std::less<>> gameGoods = {
-    { "Item_BombBundle_Small", "Shop_BombBundle_01" },
-    { "TBox_ArrowBundle_Large", "Shop_ArrowBundle_01" },
-    { "TBox_Shield_Deku", "Shop_Weapon_Shield_Deku" },
-    { "TBox_Shield_Hylian", "Shop_Weapon_Shield_Hylian" },
+static constexpr char shopGoodsTable[] = {
+#embed "../remake/shop_goods.tsv"
 };
+
+// How the model of an item sold from goods of its own stands in the pose a shop plays for it, in millimetres.
+struct GoodsModel {
+    int32_t bottom;
+    int32_t top;
+    int32_t width;
+    int32_t reach;
+};
+
+// A row of remake/shop_goods.tsv: the game's goods actor that sells the item, or the model of goods of its own.
+using ShopGoods = std::variant<std::string, GoodsModel>;
+
+static const ShopGoods& Goods(std::string_view item) {
+    static const std::map<std::string, ShopGoods, std::less<>> rows = [] {
+        std::map<std::string, ShopGoods, std::less<>> rows;
+        for (const auto& row : ReadTable("remake/shop_goods.tsv", { shopGoodsTable, sizeof shopGoodsTable },
+                                         "item\tgoods\tpose\tbottom\ttop\twidth\treach")) {
+            if (!row[1].empty()) {
+                rows.emplace(row[0], std::string(row[1]));
+                continue;
+            }
+            std::array<int32_t, 4> millimetres{};
+            for (size_t i = 0; i < millimetres.size(); ++i) {
+                const std::string_view cell = row[3 + i];
+                const auto [end, error] = std::from_chars(cell.data(), cell.data() + cell.size(), millimetres[i]);
+                if (error != std::errc() || end != cell.data() + cell.size()) {
+                    throw std::runtime_error(std::format("remake/shop_goods.tsv: {} has no model", row[0]));
+                }
+            }
+            const auto [bottom, top, width, reach] = millimetres;
+            rows.emplace(row[0], GoodsModel{ bottom, top, width, reach });
+        }
+        return rows;
+    }();
+    const auto goods = rows.find(item);
+    if (goods == rows.end()) {
+        throw std::runtime_error(std::format("remake/shop_goods.tsv has no row for {}", item));
+    }
+    return goods->second;
+}
+
+// The tallest of the game's own goods on a shop's shelf, the potions, and the farthest any reaches from the upright
+// through its origin, the bombchus, in millimetres, as their shop poses stand them.
+constexpr double TallestGoods = 561;
+constexpr double LongestReach = 395;
+// The smallest of those goods, the heart, by the larger of its height and its width, in millimetres, and the most the
+// game raises any of its goods for a shelf, the masks.
+constexpr double SmallestGoods = 318;
+constexpr double MostRaised = 1.4;
+
+// The game's goods rest the lowest point of their pose on their shelf's origin, so the shelf rises by what hangs below
+// it. Every shelf stands upright.
+static void StandOnShelf(byml::Node& shelf, const GoodsModel& model) {
+    const double height = model.top - model.bottom;
+    const double raised = std::max(1.0, std::min(MostRaised, SmallestGoods / std::max<double>(height, model.width)));
+    const double scale = std::min({ TallestGoods / height, LongestReach / model.reach, raised });
+    byml::Node* translate = Find(shelf, "Translate");
+    if (translate == nullptr || translate->array.size() != 3) {
+        throw std::runtime_error("the shelf has no Translate");
+    }
+    byml::Node& y = translate->array[1];
+    y.scalar = std::bit_cast<uint32_t>(float(std::bit_cast<float>(uint32_t(y.scalar)) - scale * model.bottom / 1000));
+    if (scale != 1) {
+        const byml::Node size{ .type = byml::Type::Float, .scalar = std::bit_cast<uint32_t>(float(scale)) };
+        FindOrAdd(shelf, "Scale", byml::Type::Array).array = { size, size, size };
+    }
+}
 
 // A shop sells the game's goods at their base price in this table, the row's BuyingPrice, plus the slot's
 // PriceOffset.
@@ -586,8 +667,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         try {
             std::string goodsActor;
             int32_t priceOffset = slot.price;
-            if (const auto goods = gameGoods.find(slot.item); goods != gameGoods.end()) {
-                goodsActor = goods->second;
+            const ShopGoods& goods = Goods(slot.item);
+            const GoodsModel* model = std::get_if<GoodsModel>(&goods);
+            if (model == nullptr) {
+                goodsActor = std::get<std::string>(goods);
                 priceOffset -= BasePrice(tables.find(PouchActorInfoPath)->second.root, goodsActor);
             } else {
                 auto actor = newActors.find(slot.item);
@@ -607,12 +690,17 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             }
             for (const PlacedActor& shelf : slot.shelves) {
                 try {
-                    byml::Node* gyaml = Find(Actor(placement(shelf.file), shelf.hash), "Gyaml");
+                    byml::Node& shelfActor = Actor(placement(shelf.file), shelf.hash);
+                    byml::Node* gyaml = Find(shelfActor, "Gyaml");
                     if (gyaml == nullptr || gyaml->type != byml::Type::String) {
                         throw std::runtime_error("the actor has no Gyaml");
                     }
                     if (gyaml->string != goodsActor) {
                         gyaml->string = goodsActor;
+                        changed.insert(shelf.file);
+                    }
+                    if (model != nullptr) {
+                        StandOnShelf(shelfActor, *model);
                         changed.insert(shelf.file);
                     }
                 } catch (const std::exception& e) {

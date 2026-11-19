@@ -1,5 +1,6 @@
 #include "remake.h"
 
+#include "soh/Enhancements/randomizer/3drando/fill.hpp"
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/dungeon.h"
 #include "soh/Enhancements/randomizer/static_data.h"
@@ -37,6 +38,9 @@ static constexpr unsigned char junkTable[] = {
 };
 static constexpr unsigned char shopTable[] = {
 #embed "../remake/shops.tsv"
+};
+static constexpr unsigned char shopGoodsTable[] = {
+#embed "../remake/shop_goods.tsv"
 };
 
 [[noreturn]] static void Fail(const std::string& message) {
@@ -361,6 +365,29 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
         }
     }
     return slots;
+}
+
+void CheckShopGoods(const std::vector<RemakeChest>& chests) {
+    std::set<std::string> holdable{ std::string(ShopFillerName) };
+    for (const RemakeChest& chest : chests) {
+        if (chest.shuffled && !KeptFromShops(chest.sohItem)) {
+            holdable.insert(chest.item);
+        }
+    }
+    std::set<std::string> rows;
+    size_t line = 1;
+    for (const auto& row :
+         ReadTable("remake/shop_goods.tsv", shopGoodsTable, "item\tgoods\tpose\tbottom\ttop\twidth\treach")) {
+        const std::string where = std::format("remake/shop_goods.tsv line {}: ", ++line);
+        if (!holdable.contains(row[0]) || !rows.insert(row[0]).second) {
+            Fail(where + "\"" + row[0] + "\" is no item a shop slot can hold, or repeats one");
+        }
+    }
+    for (const std::string& item : holdable) {
+        if (!rows.contains(item)) {
+            Fail("remake/shop_goods.tsv: no row for " + item + ", which a shop slot can hold");
+        }
+    }
 }
 
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the

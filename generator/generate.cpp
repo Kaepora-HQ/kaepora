@@ -99,6 +99,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> table = LoadRemakeChests();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
+    [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table), true);
     static const RemakeHintTables hintTables =
         LoadRemakeHintTables(table, ShuffledShops(shopTable, { .shops = Shops::FourPerShopShuffled }));
 

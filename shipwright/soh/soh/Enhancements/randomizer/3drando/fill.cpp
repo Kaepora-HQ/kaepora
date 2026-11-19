@@ -1042,10 +1042,10 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
 void ClearProgress() {
 }
 
-// The game has not shown that a shop sells these to a Link who lacks the bullet bag, the quiver or the Goron Ruby they
-// may need, so they go to chests.
-static bool KeptFromShops(RandomizerGet item) {
-    return item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT || item == RG_PROGRESSIVE_BOMB_BAG ||
+bool KeptFromShops(RandomizerGet item) {
+    const ItemType type = Rando::StaticData::RetrieveItem(item).GetItemType();
+    return type == ITEMTYPE_SMALLKEY || type == ITEMTYPE_BOSSKEY || type == ITEMTYPE_MAP || type == ITEMTYPE_COMPASS ||
+           item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT || item == RG_PROGRESSIVE_BOMB_BAG ||
            item == RG_BOMBCHU_5;
 }
 

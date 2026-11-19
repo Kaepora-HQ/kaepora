@@ -1,6 +1,7 @@
 # Remake tables
 
-The generator builds these into the program and checks them when it starts.
+The generator builds these into the program and checks them when it starts. The patcher builds in `stones.tsv` and
+`shop_goods.tsv` too. With the game file, `tests/remake_tables_test.py` checks the tables against the game's own files.
 
 `chests.tsv` has a row for every chest of the remake, 212 in all, and for every SoH chest location of the vanilla
 dungeon layouts, so it is the list of which chests are shuffled and why the others are not. A SoH loose item that the
@@ -84,3 +85,35 @@ Read from the game's data and not yet seen:
 The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus out of shops. A shop may refuse
 arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the
 four items fall under is unknown.
+
+`shop_goods.tsv` has a row for each item a shop slot can hold, and the generator fails when it starts if one has no
+row. A slot can hold what a shuffled chest holds, but for the dungeon items and the four `KeptFromShops` keeps out, and
+the shop filler. Four items are sold as the game's own goods, named in `goods`. Every other item is sold from a goods
+actor of its own, which shows the item's own model. The game's own goods rest the lowest point of their shop pose
+between 26 mm under their shelf's origin (the Hylian Shield) and 34 mm over it (the heart), and the patcher raises each
+shelf so that its item rests on the origin. It also sizes the item as the game sizes its own goods, whose shop poses
+shrink some and grow others: an item taller or reaching farther than the game's goods shrinks to the largest size that
+fits them, and one smaller than the smallest of them grows toward its size, by at most the 1.4 the game grows its
+masks.
+
+- `item`: the remake item.
+- `goods`: the game's goods actor that sells the item, or empty for goods of its own.
+- `pose`: the pose of the item's model that a shop plays: `Pose_Shop` where its animations have one, else
+  `Pose_Common`.
+- `bottom` and `top`: the model's lowest and highest points in that pose, over the goods' origin, in millimetres.
+- `width`: the model's width along its X axis, across the shelf, in that pose, in millimetres.
+- `reach`: how far the model reaches from the upright through that origin, in millimetres.
+
+`python3 -I -B tests/shop_goods.py <game.nup> <item>...` prints the row of each item, and the tables test checks every
+row the same way. It reads the model and animation files the item's `ActorInfo` row names, poses the model's bones
+with the pose's one frame and skins each vertex to them, and counts only the shapes the item's own bone visibility set
+shows. In the bind pose that gives the `ActorInfo` bounds of every item of the table and every goods of the eight
+shops, to 0.02 mm, but one. The Business Scrub's seed has its `ActorInfo` bounds posed: `Pose_Common`, with the model
+lifted 50 mm, as `Rotate_Obj` lifts its root. On a shelf the goods play `Rotate_Stoped`, which lifts nothing.
+
+That a shop plays `Pose_Shop`, and `Pose_Common` for a model with no `Pose_Shop`, was inferred from where the game's
+goods rest: the masks, the Deku Shield and the tunics have no `Pose_Shop`, and in their bind pose the masks and the
+Deku Shield would sink into the shelf or lie flat, where in `Pose_Common` they rest on it. Seen in the game, with all 25
+items on shelves in the eight shops: each stands on its board at the size the rule gives it, so the game draws goods at
+their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
+handle on the board and its head up in the niche.

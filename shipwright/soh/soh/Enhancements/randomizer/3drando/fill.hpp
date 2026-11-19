@@ -60,6 +60,11 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
                                            const std::vector<RemakeShopSlot>& shops);
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops);
 
+// What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
+// slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the quiver
+// or the Goron Ruby they may need, so they go to chests.
+bool KeptFromShops(RandomizerGet item);
+
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);
 
 void ProcessRegion(Region* region, GetAccessibleLocationsStruct& gals, RandomizerGet ignore = RG_NONE,

@@ -1,0 +1,26 @@
+item	goods	pose	bottom	top	width	reach
+Item_Arrow_Ice		Pose_Common	42	569	479	255
+Item_BombBundle_Small	Shop_BombBundle_01					
+Item_Boomerang		Pose_Common	-13	249	343	244
+Item_DekuStickBundle_Small		Pose_Shop	-3	492	340	209
+Item_Gauntlet_Gold		Pose_Common	-213	219	348	219
+Item_Gauntlet_Silver		Pose_Common	-213	219	350	219
+Item_GlassTruth		Pose_Common	-109	-5	218	133
+Item_Hammer		Pose_Common	-293	423	1316	697
+Item_HeavyBoot		Pose_Common	-197	213	477	268
+Item_HoverBoot		Pose_Common	-190	210	513	305
+Item_Longshot		Pose_Common	-250	392	512	294
+Item_ScrubBusinessSeed		Pose_Common	-22	401	365	222
+Item_Shield_Mirror		Pose_Common	3	674	571	312
+Item_Sword_Kokiri		Pose_Common	-254	249	460	239
+Obj_Heart_Piece		Pose_Common	8	404	441	221
+TBox_ArrowBundle_Large	Shop_ArrowBundle_01					
+TBox_ArrowBundle_Medium		Pose_Shop	-10	522	433	232
+TBox_DekuNutBundle		Pose_Common	-14	291	360	183
+TBox_Rupee_Blue		Pose_Common	7	390	206	103
+TBox_Rupee_Green		Pose_Common	7	390	206	103
+TBox_Rupee_Purple		Pose_Common	7	390	206	103
+TBox_Rupee_Red		Pose_Common	7	390	206	103
+TBox_Shield_Deku	Shop_Weapon_Shield_Deku					
+TBox_Shield_Hylian	Shop_Weapon_Shield_Hylian					
+Tbox_MagicJar_Large		Pose_Common	-6	585	427	231

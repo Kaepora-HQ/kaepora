@@ -799,14 +799,59 @@ def shop(patch, game):
     assert game.game_data_list(mod[GAME_DATA_LIST]) == data
 
 
+def remake_table(name):
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / name, newline="") as f:
+        return list(csv.DictReader(f, delimiter="\t"))
+
+
+def table_slot(row):
+    shopkeepers = [tuple(cell.split(":")) for cell in row["shopkeepers"].split(",")]
+    shelves = [(path, int(h)) for path, h in (cell.rsplit(":", 1) for cell in row["shelves"].split(","))]
+    return shopkeepers, int(row["slot"]), shelves
+
+
+def table_slots():
+    return {row["location"]: table_slot(row) for row in remake_table("shops.tsv")}
+
+
+def as_float(node):
+    return struct.unpack("<f", struct.pack("<I", node[1]))[0]
+
+
+def shelf_placement(patch, game):
+    """An item sold from goods of its own stands on its shelf as the game's goods stand theirs: the shelf rises by what
+    hangs under the item's origin in its pose, at the size the item takes. The Longshot hangs 250 mm under its origin
+    and stands 642 mm tall, so it shrinks to the tallest goods' 561 mm, 0.874, and rises 0.874 * 250 mm. The Lens of
+    Truth hangs 109 mm under and is 218 mm wide at most, so it grows by 1.4 toward the heart's 318 mm and rises 1.4 *
+    109 mm. The Golden Gauntlets keep their size and rise 213 mm. Nothing else in the scenes changes."""
+    slots = table_slots()
+    rises = {("Kak Bazaar Item 6", "Item_Longshot"): (0.2185, 0.874), ("GC Shop Item 6", "Item_GlassTruth"): (0.1526, 1.4),
+             ("Kak Potion Shop Item 5", "Item_Gauntlet_Gold"): (0.213, None)}
+    mod = patched(patch, game, plan([], shops=[(slots[location], item, 10) for location, item in rises]))
+    shelves = {}
+    for (location, item), rise in rises.items():
+        for path, h in slots[location][2]:
+            shelves.setdefault(path, {})[h] = (item, rise)
+    for path, planned in shelves.items():
+        ours, theirs = game.placement(mod[path]), game.placement(game.read(path))
+        assert ordered({**ours, "Actors": None}) == ordered({**theirs, "Actors": None}), path
+        assert [a for a in ours["Actors"] if a["Hash"][1] not in planned] == \
+            [a for a in theirs["Actors"] if a["Hash"][1] not in planned], path
+        for h, (item, (rise, scale)) in planned.items():
+            shelf, game_shelf = actor(ours, h), actor(theirs, h)
+            assert shelf.pop("Gyaml") == f"Shop_{item}", (path, h)
+            sizes = [as_float(v) for v in shelf.pop("Scale", [])]
+            assert sizes == [] if scale is None else len(sizes) == 3 and all(abs(v - scale) < 0.0005 for v in sizes), \
+                (path, h, sizes)
+            moved = as_float(shelf["Translate"][1]) - as_float(game_shelf["Translate"][1])
+            assert abs(moved - rise) < 0.0005, (path, h, moved)
+            shelf["Translate"][1] = game_shelf["Translate"][1]
+            assert shelf == {key: value for key, value in game_shelf.items() if key != "Gyaml"}, (path, h)
+
+
 def shop_table(patch, game):
-    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "shops.tsv", newline="") as f:
-        rows = list(csv.DictReader(f, delimiter="\t"))
-    slots = []
-    for row in rows:
-        shopkeepers = [tuple(cell.split(":")) for cell in row["shopkeepers"].split(",")]
-        shelves = [(path, int(h)) for path, h in (cell.rsplit(":", 1) for cell in row["shelves"].split(","))]
-        slots.append((shopkeepers, int(row["slot"]), shelves))
+    rows = remake_table("shops.tsv")
+    slots = [table_slot(row) for row in rows]
     mod = patched(patch, game, plan([], shops=[(slot, "TBox_Shield_Hylian", 5) for slot in slots]))
     sold = {}
     for row, (shopkeepers, index, shelves) in zip(rows, slots):
@@ -1210,7 +1255,7 @@ def bad_input(patch, game):
     elsewhere = {"file": GORON_ADULT_STATIC, "hash": str(KOKIRI_STICKS_SLOT[2][0][1])}
     shops = {
         "shop slot not this shape": (dict(valid_shop, price=-1), ["plan.json", "shops[1]"]),
-        "item with no actor": (dict(valid_shop, item="Item_Nowhere"), ["Item_Nowhere", "no such file"]),
+        "item with no row": (dict(valid_shop, item="Item_Nowhere"), ["Item_Nowhere", "remake/shop_goods.tsv"]),
         "shelf not in the file": (dict(valid_shop, shelves=[elsewhere]), [elsewhere["hash"], GORON_ADULT_STATIC]),
     }
     for name, (entry, named) in shops.items():
@@ -1301,6 +1346,7 @@ def main():
         "stone-texts": stone_texts,
         "shop": shop,
         "shop-table": shop_table,
+        "shelf-placement": shelf_placement,
         "new-actors": new_actors,
         "tested-new-actor-mod": tested_new_actor_mod,
     }

@@ -68,6 +68,11 @@ inline constexpr std::string_view ShopFillerName = "TBox_Rupee_Red";
 // out.
 std::vector<RemakeShopSlot> LoadRemakeShops();
 
+// Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
+// program, or a row names any other item. A slot can hold the item of a shuffled chest that KeptFromShops lets into
+// shops, and the shop filler.
+void CheckShopGoods(const std::vector<RemakeChest>& chests);
+
 struct RemakeStone {
     std::string label;
     RandomizerCheck location;
