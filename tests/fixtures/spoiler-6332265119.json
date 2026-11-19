@@ -224,12 +224,10 @@
         },
         "sphere 03": {
             "Song from Impa": "Zelda's Lullaby",
-            "Song from Saria": "Saria's Song",
-            "Kak 10 Gold Skulltula Reward": "Progressive Wallet"
+            "Song from Saria": "Saria's Song"
         },
         "sphere 04": {
             "GC Darunias Joy": "Goron's Bracelet",
-            "Kak 30 Gold Skulltula Reward": "Progressive Wallet",
             "ZD Diving Minigame": "Progressive Scale",
             "DMT Great Fairy Reward": "Progressive Magic Meter",
             "DMT Great Fairy Din's Fire": "Din's Fire"
@@ -248,7 +246,7 @@
         },
         "sphere 08": {
             "Graveyard Hookshot Chest": "Progressive Hookshot",
-            "GC Shop Item 5": "Buy Goron Tunic",
+            "GC Rolling Goron as Adult": "Goron Tunic",
             "GV Octorok Grotto Chest": "Progressive Hookshot",
             "Market ToT Master Sword": "Master Sword",
             "GF Double Cell Carpenter": "Gerudo Fortress Small Key",

@@ -170,11 +170,17 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_route_names_no_gold_skulltula_token(self):
-        # Any ten tokens buy the same reward, so the route keeps the Skulltula House's rewards and names no token.
+        # Any ten tokens buy the same Skulltula House reward, so the route names no token.
+        self.assertNotIn("Gold Skulltula Token", playthrough_steps(self.generate(FIXED_SEED)[0]).values())
+
+    def test_route_takes_what_link_is_handed_over_what_he_buys(self):
+        # The stored seed's route needs a Goron Tunic, which the rolling Goron gives adult Link. The Goron City shop sells
+        # one for 600 rupees, which take both wallets the Skulltula House gives.
         steps = playthrough_steps(self.generate(FIXED_SEED)[0])
-        self.assertNotIn("Gold Skulltula Token", steps.values())
-        self.assertEqual(steps["Kak 10 Gold Skulltula Reward"], "Progressive Wallet")
-        self.assertEqual(steps["Kak 30 Gold Skulltula Reward"], "Progressive Wallet")
+        self.assertEqual(steps["GC Rolling Goron as Adult"], "Goron Tunic")
+        self.assertNotIn("GC Shop Item 5", steps)
+        self.assertNotIn("Kak 10 Gold Skulltula Reward", steps)
+        self.assertNotIn("Kak 30 Gold Skulltula Reward", steps)
 
     def test_plan_opens_the_doors_the_rules_count_open(self):
         _, plan = self.generate("6")

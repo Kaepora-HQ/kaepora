@@ -664,6 +664,11 @@ void ValidateEntrances(bool checkOtherEntranceAccess) {
     }
 }
 
+static bool IsPurchaseOrSkulltulaReward(RandomizerCheck check) {
+    return Rando::Context::GetInstance()->GetItemLocation(check)->CanBePurchased() ||
+           Rando::StaticData::GetLocation(check)->GetScene() == SCENE_HOUSE_OF_SKULLTULA;
+}
+
 // Remove unnecessary items from playthrough by removing their location, and checking if game is still beatable
 // To reduce searches, some preprocessing is done in playthrough generation to avoid adding obviously unnecessary items
 static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocations) {
@@ -674,26 +679,46 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
         ctx->GetItemLocation(loc)->DelayItem();
         toAddBackItem.push_back(loc);
     }
-    // Start at sphere before Ganon's and count down
-    for (int32_t i = static_cast<int32_t>(ctx->playthroughLocations.size()) - 2; i >= 0; i--) {
-        // Check each item location in sphere
-        std::vector<RandomizerCheck> sphere = ctx->playthroughLocations.at(i);
-        for (int32_t j = static_cast<int32_t>(sphere.size()) - 1; j >= 0; j--) {
-            RandomizerCheck loc = sphere.at(j);
-            RandomizerGet locGet = ctx->GetItemLocation(loc)->GetPlacedRandomizerGet();
+    // Purchases and Skulltula House rewards the seed can do without go first, so the route takes what Link is handed
+    // over what he buys or earns with tokens.
+    for (bool purchasesAndRewardsOnly : { true, false }) {
+        // Start at sphere before Ganon's and count down
+        for (int32_t i = static_cast<int32_t>(ctx->playthroughLocations.size()) - 2; i >= 0; i--) {
+            // Check each item location in sphere
+            std::vector<RandomizerCheck> sphere = ctx->playthroughLocations.at(i);
+            for (int32_t j = static_cast<int32_t>(sphere.size()) - 1; j >= 0; j--) {
+                RandomizerCheck loc = sphere.at(j);
+                if (purchasesAndRewardsOnly && !IsPurchaseOrSkulltulaReward(loc)) {
+                    continue;
+                }
+                RandomizerGet locGet = ctx->GetItemLocation(loc)->GetPlacedRandomizerGet();
 
-            RandomizerGet ignore = RG_NONE;
-            if (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
-                Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP) {
-                ignore = locGet;
-            }
+                RandomizerGet ignore = RG_NONE;
+                if (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
+                    Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP) {
+                    ignore = locGet;
+                }
 
-            // Playthrough is still beatable without this item, therefore it can be removed from playthrough section.
-            if (IsBeatableWithout(loc, false, ignore)) {
-                ctx->playthroughLocations[i].erase(ctx->playthroughLocations[i].begin() + j);
-                toAddBackItem.push_back(loc); // Game is still beatable, don't add back until later
-            } else {
-                ctx->GetItemLocation(loc)->SaveDelayedItem(); // Immediately put item back so game is beatable again
+                // Playthrough is still beatable without this item, therefore it can be removed from playthrough
+                // section.
+                if (IsBeatableWithout(loc, false, ignore)) {
+                    ctx->playthroughLocations[i].erase(ctx->playthroughLocations[i].begin() + j);
+                    toAddBackItem.push_back(loc); // Game is still beatable, don't add back until later
+                    // The route buys this nowhere, so no shop slot left off the route stands in for a step after it.
+                    if (Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP) {
+                        for (RandomizerCheck other : ctx->allLocations) {
+                            Rando::ItemLocation* slot = ctx->GetItemLocation(other);
+                            if (slot->GetPlacedItem().GetItemType() == ITEMTYPE_SHOP &&
+                                slot->GetPlacedItem().GetLogicVal() ==
+                                    Rando::StaticData::RetrieveItem(locGet).GetLogicVal()) {
+                                slot->DelayItem();
+                                toAddBackItem.push_back(other);
+                            }
+                        }
+                    }
+                } else {
+                    ctx->GetItemLocation(loc)->SaveDelayedItem(); // Immediately put item back so game is beatable again
+                }
             }
         }
     }
