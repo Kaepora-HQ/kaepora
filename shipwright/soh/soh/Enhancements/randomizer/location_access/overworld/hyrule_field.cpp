@@ -28,6 +28,8 @@ void RegionTable_Init_HyruleField() {
         LOCATION(RC_HF_REDEAD_GROTTO_CHEST,        logic->CanOpenStormsGrotto() && logic->CanKillEnemy(RE_REDEAD, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         // The chest opens only for child Link, once adult Link has read the Fairy Thought beside it.
         LOCATION(RC_HF_FAIRY_THOUGHT_CHEST,        logic->IsChild && logic->Get(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT) && logic->HasItem(RG_OPEN_CHEST)),
+        // In the grotto under the east hole, which a bomb or the hammer opens.
+        LOCATION(RC_HF_EAST_GROTTO_GOSSIP_STONE,   logic->BlastOrSmash()),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),

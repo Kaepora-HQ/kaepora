@@ -1352,11 +1352,11 @@
   "stone_texts": [
     {
       "label": "GOSSIP_KOKIRI_FOREST_01",
-      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Death\nMountain Crater{color:65535}."
+      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Goron City{color:65535}."
     },
     {
       "label": "GOSSIP_KOKIRI_FOREST_03",
-      "text": "They say that {color:0}Dodongo Cavern{color:65535} hoards {color:0}Five Bombs{color:65535}."
+      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Red Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_KOKIRI_FOREST_04",
@@ -1368,127 +1368,131 @@
     },
     {
       "label": "GOSSIP_SACRED_FOREST_MEADOW_01",
-      "text": "They say that plundering {color:0}the Bottom of the Well{color:65535} is {color:0}a foolish\nchoice{color:65535}."
+      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Death\nMountain Crater{color:65535}."
     },
     {
       "label": "GOSSIP_SACRED_FOREST_MEADOW_02",
-      "text": "They say that {color:0}Kokiri Forest{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_SACRED_FOREST_MEADOW_03",
-      "text": "They say that {color:0}the Shadow Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_KOKIRI_FOREST_02",
-      "text": "They say that {color:0}the Longshot{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_FIELD_04",
-      "text": "They say that {color:0}the Bottom of the Well{color:65535} hoards {color:0}Five Bombchus{color:65535}."
-    },
-    {
-      "label": "GOSSIP_LAKE_HYLIA_01",
-      "text": "They say that {color:0}the Boomerang{color:65535} can be found at {color:0}Kakariko Village{color:65535}."
-    },
-    {
-      "label": "GOSSIP_LAKE_HYLIA_02",
-      "text": "They say Ingo is not very good at planning ahead."
-    },
-    {
-      "label": "GOSSIP_LAKE_HYLIA_03",
-      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Goron City{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_MARKET_01",
-      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Red Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_MARKET_02",
-      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}Kokiri Forest{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_MARKET_03",
-      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}Five Arrows{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_MARKET_04",
-      "text": "They say that {color:0}Dodongo Cavern{color:65535} hoards {color:0}a Red Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_CASTLE_01",
-      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Purple Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_CASTLE_02",
-      "text": "They say that {color:0}the Spirit Temple{color:65535} hoards {color:0}a Red Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_FIELD_01",
-      "text": "They say that a {color:0}hole in a volcano{color:65535} holds {color:0}a Purple Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_KAKARIKO_VILLAGE_01",
-      "text": "They say that plundering {color:0}the Gerudo Proving Grounds{color:65535} is {color:0}a foolish\nchoice{color:65535}."
-    },
-    {
-      "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_01",
-      "text": "Use bombs wisely."
-    },
-    {
-      "label": "GOSSIP_GRAVEYARD_01",
-      "text": "They say that {color:0}a Red Rupee{color:65535} can be found at {color:0}Kokiri Forest{color:65535}."
-    },
-    {
-      "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_02",
-      "text": "They say that {color:0}the Forest Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_CASTLE_03",
-      "text": "They say that {color:0}the Death Mountain Trail{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_GORON_CITY_01",
-      "text": "They say that {color:0}the Ice Arrow{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
-    },
-    {
-      "label": "GOSSIP_GORON_CITY_02",
-      "text": "They say that {color:0}a Red Rupee{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
-    },
-    {
-      "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_01",
-      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}the Megaton Hammer{color:65535}."
-    },
-    {
-      "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_02",
       "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Blue Rupee{color:65535}."
     },
     {
-      "label": "GOSSIP_DODONGO_CAVERN_01",
-      "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
+      "label": "GOSSIP_SACRED_FOREST_MEADOW_03",
+      "text": "They say that {color:0}Kokiri Forest{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
-      "label": "GOSSIP_ZORA_RIVER_01",
-      "text": "They say that {color:0}the Silver Gauntlets{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
+      "label": "GOSSIP_KOKIRI_FOREST_02",
+      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}Kokiri Forest{color:65535}."
     },
     {
-      "label": "GOSSIP_ZORA_RIVER_02",
-      "text": "They say that atop a {color:0}ruined tower near Lon Lon Ranch{color:65535} lies {color:0}a Piece\nof Heart{color:65535}."
+      "label": "GOSSIP_HYRULE_FIELD_04",
+      "text": "They say that fire {color:0}beyond a waterfall{color:65535} reveals {color:0}a Business Scrub\nSeed{color:65535}."
     },
     {
-      "label": "GOSSIP_ZORA_RIVER_03",
-      "text": "They say that quest guidance can be found at a talking rock."
-    },
-    {
-      "label": "GOSSIP_LOST_WOOD_01",
-      "text": "They say that {color:0}the Mirage Desert{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_ZORA_DOMAIN_01",
+      "label": "GOSSIP_HYRULE_FIELD_02",
       "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}a Red Rupee{color:65535}."
     },
     {
-      "label": "GOSSIP_ZORA_FOUNTAIN_01",
+      "label": "GOSSIP_LAKE_HYLIA_01",
+      "text": "They say that {color:0}the Longshot{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
+    },
+    {
+      "label": "GOSSIP_LAKE_HYLIA_02",
+      "text": "Hoot! Hoot! Would you like me to repeat that?"
+    },
+    {
+      "label": "GOSSIP_LAKE_HYLIA_03",
+      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}the Megaton Hammer{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_MARKET_01",
+      "text": "They say that {color:0}the Ice Arrow{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_MARKET_02",
+      "text": "They say that {color:0}a Red Rupee{color:65535} can be found at {color:0}Kokiri Forest{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_MARKET_03",
+      "text": "They say that {color:0}Dodongo Cavern{color:65535} hoards {color:0}a Red Rupee{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_MARKET_04",
+      "text": "They say Ingo is not very good at planning ahead."
+    },
+    {
+      "label": "GOSSIP_HYRULE_CASTLE_01",
       "text": "They say that a {color:0}statue in Dodongo Cavern{color:65535} guards {color:0}the Iron Boots{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_CASTLE_02",
+      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}Five Arrows{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_FIELD_01",
+      "text": "They say that {color:0}the Bottom of the Well{color:65535} hoards {color:0}Five Bombchus{color:65535}."
+    },
+    {
+      "label": "GOSSIP_KAKARIKO_VILLAGE_01",
+      "text": "They say that plundering {color:0}the Bottom of the Well{color:65535} is {color:0}a foolish\nchoice{color:65535}."
+    },
+    {
+      "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_01",
+      "text": "They say that quest guidance can be found at a talking rock."
+    },
+    {
+      "label": "GOSSIP_GRAVEYARD_01",
+      "text": "Hoot! Hoot! They say the owl knows where everything is, and will\ntell you anything else."
+    },
+    {
+      "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_02",
+      "text": "They say that {color:0}the Spirit Temple{color:65535} hoards {color:0}a Red Rupee{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_CASTLE_03",
+      "text": "They say that {color:0}the Boomerang{color:65535} can be found at {color:0}Kakariko Village{color:65535}."
+    },
+    {
+      "label": "GOSSIP_GORON_CITY_01",
+      "text": "They say that a {color:0}hole in a volcano{color:65535} holds {color:0}a Purple Rupee{color:65535}."
+    },
+    {
+      "label": "GOSSIP_GORON_CITY_02",
+      "text": "They say that {color:0}the Shadow Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
+    },
+    {
+      "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_01",
+      "text": "They say that {color:0}the Mirage Desert{color:65535} is on {color:0}the way of the hero{color:65535}."
+    },
+    {
+      "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_02",
+      "text": "They say that plundering {color:0}the Gerudo Proving Grounds{color:65535} is {color:0}a foolish\nchoice{color:65535}."
+    },
+    {
+      "label": "GOSSIP_DODONGO_CAVERN_01",
+      "text": "They say that atop a {color:0}ruined tower near Lon Lon Ranch{color:65535} lies {color:0}a Piece\nof Heart{color:65535}."
+    },
+    {
+      "label": "GOSSIP_ZORA_RIVER_01",
+      "text": "They say that {color:0}the Forest Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
+    },
+    {
+      "label": "GOSSIP_ZORA_RIVER_02",
+      "text": "They say that {color:0}a Red Rupee{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+    },
+    {
+      "label": "GOSSIP_ZORA_RIVER_03",
+      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Purple Rupee{color:65535}."
+    },
+    {
+      "label": "GOSSIP_LOST_WOOD_01",
+      "text": "They say that {color:0}the Silver Gauntlets{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
+    },
+    {
+      "label": "GOSSIP_ZORA_DOMAIN_01",
+      "text": "They say that {color:0}Dodongo Cavern{color:65535} hoards {color:0}Five Bombs{color:65535}."
+    },
+    {
+      "label": "GOSSIP_ZORA_FOUNTAIN_01",
+      "text": "They say that {color:0}the Death Mountain Trail{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_FOUNTAIN_02",
@@ -1496,11 +1500,11 @@
     },
     {
       "label": "GOSSIP_GERUDO_VALLEY_01",
-      "text": "Hoot! Hoot! Would you like me to repeat that?"
+      "text": "Use bombs wisely."
     },
     {
       "label": "GOSSIP_DESERT_COLOSSUS_01",
-      "text": "They say that fire {color:0}beyond a waterfall{color:65535} reveals {color:0}a Business Scrub\nSeed{color:65535}."
+      "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
     }
   ]
 }
