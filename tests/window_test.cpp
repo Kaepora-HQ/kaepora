@@ -10,6 +10,8 @@
 #include <QDesktopServices>
 #include <QDialog>
 #include <QDirListing>
+#include <QFormLayout>
+#include <QGroupBox>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -294,6 +296,20 @@ private:
             }
         }
         return nullptr;
+    }
+
+    // The labels of a group's rows, in order.
+    QStringList rows(const QString& title) const {
+        QStringList labels;
+        for (QGroupBox* group : dialog()->findChildren<QGroupBox*>()) {
+            if (group->title() == title) {
+                auto* form = qobject_cast<QFormLayout*>(group->layout());
+                for (int row = 0; row < form->rowCount(); ++row) {
+                    labels << qobject_cast<QLabel*>(form->itemAt(row, QFormLayout::LabelRole)->widget())->text();
+                }
+            }
+        }
+        return labels;
     }
 
     void chooseForestOutKeysInChestsLensNeverNeeded() {
@@ -615,6 +631,17 @@ private slots:
         }
         QVERIFY(lefts.size() > 1);
         QCOMPARE(lefts.count(lefts.front()), lefts.size());
+    }
+
+    void whatJoinsTheShuffleHasItsOwnGroup() {
+        button("Settings…")->click();
+        QStringList titles;
+        for (QGroupBox* group : dialog()->findChildren<QGroupBox*>()) {
+            titles << group->title();
+        }
+        QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
+        QCOMPARE(rows("Shuffle"), QStringList{ "Shop goods" });
+        QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 
     void theSummaryNamesUpToThreeDungeonsLeftOut() {

@@ -167,15 +167,19 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* dungeonGroup = new QGroupBox("Dungeons");
     dungeonGroup->setLayout(dungeonForm);
 
+    QComboBox* shops = Choice(ShopsChoices);
+    auto* shuffleForm = new QFormLayout;
+    shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
+    auto* shuffleGroup = new QGroupBox("Shuffle");
+    shuffleGroup->setLayout(shuffleForm);
+
     QComboBox* forest = Choice(ForestChoices);
     QComboBox* bridge = Choice(BridgeChoices);
     QComboBox* trials = Choice(TrialsChoices);
-    QComboBox* shops = Choice(ShopsChoices);
     auto* worldForm = new QFormLayout;
     worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
     worldForm->addRow(QString::fromUtf8(BridgeSetting), bridge);
     worldForm->addRow(QString::fromUtf8(TrialsSetting), trials);
-    worldForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     auto* worldGroup = new QGroupBox("World");
     worldGroup->setLayout(worldForm);
 
@@ -190,7 +194,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     hintsForm->addRow(QString::fromUtf8(GossipStonesSetting), gossipStones);
     auto* hintsGroup = new QGroupBox("Hints");
     hintsGroup->setLayout(hintsForm);
-    AlignLabels({ dungeonForm, worldForm, logicForm, hintsForm });
+    AlignLabels({ dungeonForm, shuffleForm, worldForm, logicForm, hintsForm });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel |
                                          QDialogButtonBox::Ok);
@@ -199,6 +203,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
 
     auto* layout = new QVBoxLayout(dialog);
     layout->addWidget(dungeonGroup);
+    layout->addWidget(shuffleGroup);
     layout->addWidget(worldGroup);
     layout->addWidget(logicGroup);
     layout->addWidget(hintsGroup);
