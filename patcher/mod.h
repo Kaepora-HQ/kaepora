@@ -1,8 +1,9 @@
 // A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file, event flow and actor pack
-// the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English text packs and
-// the stones' flow if the plan gives gossip stones texts, the size table if a file outgrows its entry or is new, the
-// game data list if the plan names start values or shop slots, and the actor packs that let a bomb out of the bag with
-// no strength. Under exefs/ is the patch to the game's program (program_patch.h).
+// the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English text packs if
+// the plan gives texts to gossip stones or other messages, the stones' flow if it gives gossip stones texts, the size
+// table if a file outgrows its entry or is new, the game data list if the plan names start values or shop slots, and
+// the actor packs that let a bomb out of the bag with no strength. Under exefs/ is the patch to the game's program
+// (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -35,6 +36,13 @@ struct PlannedStoneText {
     std::string text; // the message as a text pack stores it
 };
 
+// A message of a text pack, and the text it says after the control codes the game's message opens with.
+struct PlannedMessageText {
+    std::string file; // the message file in the text pack, e.g. EventFlowMsg/SignboardWood.msbt
+    std::string label;
+    std::string text; // as a text pack stores it
+};
+
 // A shopkeeper actor, and the goods list in its pack that it sells from.
 struct Shopkeeper {
     std::string actor;
@@ -64,6 +72,7 @@ struct Plan {
     std::vector<PlannedEventText> eventTexts;
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
+    std::vector<PlannedMessageText> messageTexts;
     std::vector<PlannedShopSlot> shops;
     bool midoCastleEntryRemoved;
 };

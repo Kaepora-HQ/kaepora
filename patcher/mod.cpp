@@ -136,6 +136,17 @@ static PlannedStoneText ParseStoneText(const nlohmann::json& stone) {
     return { .label = label, .text = msbt::Encode(text) };
 }
 
+static PlannedMessageText ParseMessageText(const nlohmann::json& message) {
+    PlannedMessageText planned{ .file = message.at("file").get<std::string>(),
+                                .label = message.at("label").get<std::string>(),
+                                .text = message.at("text").get<std::string>() };
+    if (planned.file.empty() || planned.label.empty() || planned.text.empty()) {
+        throw std::runtime_error("file, label and text must not be empty");
+    }
+    planned.text = msbt::Encode(planned.text);
+    return planned;
+}
+
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
     const auto texts = json.at("event_texts").get<std::vector<nlohmann::json>>();
@@ -178,6 +189,18 @@ Plan ParsePlan(const nlohmann::json& json) {
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("stone_texts[{}]: {}", i, e.what()));
+        }
+    }
+    const auto messages = json.at("message_texts").get<std::vector<nlohmann::json>>();
+    std::set<std::pair<std::string, std::string>> messageLabels;
+    for (size_t i = 0; i < messages.size(); ++i) {
+        try {
+            const PlannedMessageText& message = plan.messageTexts.emplace_back(ParseMessageText(messages[i]));
+            if (!messageLabels.emplace(message.file, message.label).second) {
+                throw std::runtime_error(std::format("{} of {} is listed twice", message.label, message.file));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("message_texts[{}]: {}", i, e.what()));
         }
     }
     const auto shops = json.at("shops").get<std::vector<nlohmann::json>>();
@@ -654,9 +677,9 @@ static std::string MidoScheduleWithoutCastleEntry(GameFile& game) {
     } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", MidoSchedule, e.what())); }
 }
 
-// The game reads the update's text pack of the console's language. A stone says its text in English, and on a console
-// in another language it keeps the game's rumour.
-constexpr std::string_view StoneTextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
+// The game reads the update's text pack of the console's language. A planned text is in English, and on a console in
+// another language the game's own text stays.
+constexpr std::string_view TextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
 constexpr std::string_view StoneMessages = "EventFlowMsg/GossipStone.msbt";
 
 // Every stone's talk runs this flow. Without the Mask of Truth held and worn, Navi talks in the stone's place. With it,
@@ -669,24 +692,37 @@ constexpr std::string_view StoneMessage = "Event18";
 constexpr std::pair<std::string_view, std::string_view> StoneFlowNext[] = { { MaskHeldQuery, StoneTalkOpening },
                                                                             { StoneTalkOpening, StoneMessage } };
 
-static std::string StoneTextPack(GameFile& game, const std::string& path, const std::string& dictionary,
-                                 const std::vector<PlannedStoneText>& stones) {
+// The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
+// message opens with.
+static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan) {
     try {
         sarc::Files pack = sarc::Parse(Decompress(game.Read(path), dictionary));
-        const auto file = pack.find(std::string(StoneMessages));
-        if (file == pack.end()) {
-            throw std::runtime_error(std::format("the pack has no {}", StoneMessages));
-        }
-        std::vector<msbt::Message> messages = msbt::Parse(file->second);
-        for (const PlannedStoneText& stone : stones) {
-            const auto message = std::ranges::find(messages, stone.label, &msbt::Message::label);
-            if (message == messages.end()) {
-                throw std::runtime_error(
-                    std::format("stone text {}: {} has no message with this label", stone.label, StoneMessages));
+        std::map<std::string, std::vector<msbt::Message>> files;
+        const auto message = [&](const std::string& file, const std::string& label) -> msbt::Message& {
+            auto messages = files.find(file);
+            if (messages == files.end()) {
+                const auto data = pack.find(file);
+                if (data == pack.end()) {
+                    throw std::runtime_error(std::format("the pack has no {}", file));
+                }
+                messages = files.emplace(file, msbt::Parse(data->second)).first;
             }
-            message->text = stone.text;
+            const auto found = std::ranges::find(messages->second, label, &msbt::Message::label);
+            if (found == messages->second.end()) {
+                throw std::runtime_error(std::format("{} has no message with the label {}", file, label));
+            }
+            return *found;
+        };
+        for (const PlannedStoneText& stone : plan.stoneTexts) {
+            message(std::string(StoneMessages), stone.label).text = stone.text;
         }
-        file->second = msbt::Write(messages);
+        for (const PlannedMessageText& planned : plan.messageTexts) {
+            msbt::Message& text = message(planned.file, planned.label);
+            text.text = std::string(msbt::Opening(text.text)) + planned.text;
+        }
+        for (const auto& [file, messages] : files) {
+            pack[file] = msbt::Write(messages);
+        }
         return sarc::Write(pack, sarc::TextPackAlignment);
     } catch (const std::exception& e) {
         throw std::runtime_error(std::format("{}: {}", path, e.what()));
@@ -837,9 +873,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), EventFlowOverhead);
         addToRomfs(path, Compress(data, zsDictionary));
     }
-    if (!plan.stoneTexts.empty()) {
-        for (const std::string_view path : StoneTextPacks) {
-            const std::string data = StoneTextPack(game, std::string(path), zsDictionary, plan.stoneTexts);
+    if (!plan.stoneTexts.empty() || !plan.messageTexts.empty()) {
+        for (const std::string_view path : TextPacks) {
+            const std::string data = TextPack(game, std::string(path), zsDictionary, plan);
             tableChanged |= RaiseSize(table, path, data.size(), TextPackOverhead);
             addToRomfs(path, Compress(data, zsDictionary));
         }

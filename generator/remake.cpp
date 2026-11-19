@@ -594,6 +594,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     for (const StoneHint& hint : hints) {
         plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
     }
+    plan["message_texts"] = nlohmann::ordered_json::array();
     plan["shops"] = nlohmann::ordered_json::array();
     for (const RemakeShopSlot& slot : shops) {
         const Rando::ItemLocation* location = Rando::Context::GetInstance()->GetItemLocation(slot.location);

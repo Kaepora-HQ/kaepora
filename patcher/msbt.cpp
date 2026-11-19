@@ -64,13 +64,14 @@ std::string_view Section(std::string_view data, size_t offset, std::string_view 
 
 // A control code starts with this byte, then has its u16 group, u16 type and u16 parameter size, then its parameters.
 constexpr char CodeStart = 0x0E;
+constexpr size_t CodeHeaderSize = 7;
 constexpr uint16_t Layout = 0;
 constexpr uint16_t Size = 2;
 constexpr uint16_t Color = 3;
 constexpr uint16_t Page = 4;
 
 std::string Code(uint16_t group, uint16_t type, std::string_view params) {
-    std::string code(7, '\0');
+    std::string code(CodeHeaderSize, '\0');
     code[0] = CodeStart;
     WriteAt(code, 1, group);
     WriteAt(code, 3, type);
@@ -208,6 +209,17 @@ std::string Write(const std::vector<Message>& messages) {
     }
     WriteAt(file, FileSize, uint32_t(file.size()));
     return file;
+}
+
+std::string_view Opening(std::string_view text) {
+    size_t end = 0;
+    while (end < text.size() && text[end] == CodeStart) {
+        end += CodeHeaderSize + ReadAt<uint16_t>(text, end + CodeHeaderSize - sizeof(uint16_t));
+    }
+    if (end > text.size()) {
+        throw std::runtime_error("a control code runs past the end of the text");
+    }
+    return text.substr(0, end);
 }
 
 std::string Encode(std::string_view tagged) {

@@ -17,6 +17,9 @@ std::vector<Message> Parse(std::string_view data);
 
 std::string Write(const std::vector<Message>& messages);
 
+// The control codes a text opens with, before its first character. A character's talk opens with its voice and face.
+std::string_view Opening(std::string_view text);
+
 constexpr std::string_view PageTag = "{page}";
 
 // The text the tags stand for: {color:N} sets the text's colour (65535 the box's own), {size:N} its size in percent,

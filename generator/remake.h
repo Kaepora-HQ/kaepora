@@ -136,7 +136,8 @@ struct StoneHint {
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
 // Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
 // the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
-// the settings count on, the gossip stones' texts, and each shuffled shop slot with its item and price.
+// the settings count on, the gossip stones' texts, the messages the seed rewrites, and each shuffled shop slot with its
+// item and price.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
                                   const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,

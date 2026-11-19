@@ -4,7 +4,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
        python3 -I tests/patch_test.py tested-hammer-room-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod \
-           |tested-first-gifts-mod|tested-stone-text-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+           |tested-first-gifts-mod|tested-stone-text-mod|tested-message-text-mod <kaepora-patch> <game.nup> \
+           <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
@@ -15,7 +16,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
-       python3 -I tests/patch_test.py gift-size-table|stone-texts <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
 reader bug in either shows as a difference. Expected message texts are built from the control codes' bytes, apart
@@ -82,6 +83,11 @@ SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
 # A label no stone of the game has.
 NO_STONE = "GOSSIP_NOWHERE"
 STONE_FLOW = "Event/EventFlow/GossipStone.bfevfl.zs"
+# Mido's talk opens with his face and his voice, and a wooden sign's text with no code at all.
+MIDO_MESSAGES = "EventFlowMsg/Npc_Kokiri_Mido_Child.msbt"
+MIDO_TALK = "Talk_03"
+SIGN_MESSAGES = "EventFlowMsg/SignboardWood.msbt"
+MASK_SHOP_SIGN = "HrlCity_001"
 TEXT_PACK_OVERHEAD = 312
 BOOL = 0xD0
 INT = 0xD1
@@ -438,12 +444,14 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_values=None, event_texts=(), stone_texts=(), shops=(), mido_castle_entry_removed=False):
+def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
+         mido_castle_entry_removed=False):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
+            "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
             "mido_castle_entry_removed": mido_castle_entry_removed}
 
@@ -590,6 +598,53 @@ def tested_stone_text_mod(patch, game, romfs):
     assert_same_frame_header(mod[path], tested)
     assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
         tested, zstd_dict=game.zs_dictionary)
+
+
+# The texts of the mod seen in the game: seed 811's lines of the Treasure Chest Game's owner and of Mido, a line for
+# each cursed child of the House of Skulltula, and the Happy Mask Shop's sign.
+CHEST_GAME_MESSAGES = "EventFlowMsg/Npc_Hylia_022_Shop_Child.msbt"
+SKULL_CHILD_MESSAGES = "EventFlowMsg/Npc_SkullChild_00{}.msbt"
+SEEN_TEXTS = [
+    (CHEST_GAME_MESSAGES, "Talk_04",
+     "Win {color:0}five times in a row{color:65535}, and I'll give you a\none-time prize: {color:0}a Red Rupee"
+     "{color:65535}!{page}Guess wrong, though, and you're done. It's all down\nto your luck!"),
+    (MIDO_MESSAGES, "Talk_03",
+     "Hrmph! You'll never find the {color:0}Kokiri Sword{color:65535} I hid in {color:0}Kokiri\nForest{color:65535}! "
+     "And without a {color:0}sword{color:65535} and a {color:0}shield{color:65535}, I won't let you\nthrough!"),
+    (MIDO_MESSAGES, "Talk_20",
+     "You'll never find the {color:0}Kokiri Sword{color:65535} I hid in {color:0}Kokiri Forest{color:65535}!\nHrmph!"
+     "{page}Bring both a {color:0}sword{color:65535} and a {color:0}shield{color:65535}, and then I'll let you pass!"),
+    (MIDO_MESSAGES, "Talk_26",
+     "But that's not enough! You still need a {color:0}sword{color:65535}, and you'll\nnever find the {color:0}Kokiri "
+     "Sword{color:65535} I hid in {color:0}Kokiri Forest{color:65535}!"),
+    *((SKULL_CHILD_MESSAGES.format(child), "Talk_00",
+       f"Yeaaarrgh! I'm cursed!{{page}}Please save me by destroying {{color:0}}{count} Gold Skulltulas"
+       f"{{color:65535}},\nand I will give you {reward}!")
+      for child, count, reward in [(5, 10, "the {color:0}Adult's Wallet{color:65535}"),
+                                   (4, 20, "the {color:0}Echo Gem{color:65535}"),
+                                   (3, 30, "the {color:0}Giant's Wallet{color:65535}"),
+                                   (2, 40, "{color:0}20 Bombchus{color:65535}"),
+                                   (1, 50, "a {color:0}Piece of Heart{color:65535}")]),
+    (SIGN_MESSAGES, MASK_SHOP_SIGN,
+     "                   Happy Mask Shop Tips\nSome young {color:0}Deku Scrubs{color:65535} in the {color:0}Lost Woods"
+     "{color:65535} love seeing\nmasks!{page}Show them the {color:0}Skull Mask{color:65535}, and they'll give you\na "
+     "{color:0}Bigger Deku-Stick Bag{color:65535}.{page}Show them the {color:0}Mask of Truth{color:65535}, and they'll "
+     "give\nyou a {color:0}Bigger Deku-Nut Bag{color:65535}.{page}Kaepora wrote this sign, not the shop's owner."),
+]
+
+
+def tested_message_text_mod(patch, game, romfs):
+    """The texts the game showed: Mido's three lines whole inside his box at normal size, the longest one line of 60
+    characters; the owner's line at night; the sign's pages; and at 25 tokens the three cursed children for 30, 40 and
+    50. Both English text packs and the size table are the mod's, read apart from the patcher."""
+    mod = patched(patch, game, plan([], message_texts=SEEN_TEXTS))
+    tested = {path: (pathlib.Path(romfs) / path).read_bytes() for path in ENGLISH_PACKS + [SIZE_TABLE]}
+    assert sorted(mod) == sorted(tested), sorted(mod)
+    for path in ENGLISH_PACKS:
+        assert_same_frame_header(mod[path], tested[path])
+        assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
+            tested[path], zstd_dict=game.zs_dictionary), path
+    assert zstd.decompress(mod[SIZE_TABLE]) == zstd.decompress(tested[SIZE_TABLE])
 
 
 def tested_added_item_mod(patch, game, romfs):
@@ -757,7 +812,7 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "stone_texts", "shops")}
+             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -1284,11 +1339,57 @@ def stone_texts(patch, game):
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
 
 
-def message_bytes(text):
+def opening(text):
+    """The control codes a message opens with, before its first character."""
+    at = 0
+    while text[at:at + 1] == b"\x0e":
+        at += 7 + struct.unpack_from("<H", text, at + 5)[0]
+    return text[:at]
+
+
+# Longer than the sign's own text, so with Mido's it grows each English pack past its size table entry.
+MIDO_TEXT = ("Hrmph! You'll never find the {color:0}Kokiri Sword{color:65535} I hid\n"
+             "in {color:0}the Lost Woods{color:65535}!")
+SIGN_TEXT = "{page}".join(f"Tip {n}: some young {{color:0}}Deku Scrubs{{color:65535}} love to see a mask,\n"
+                          "and show their thanks with a prize." for n in range(1, 13))
+
+
+def message_texts(patch, game):
+    """Messages of any file written into the two English text packs and no other. Read apart from the patcher, each
+    pack is the game's with the planned messages changed, each after the control codes the game's message opens
+    with: Mido's face and voice, and none for a sign. A stone's text goes into the same packs in the same write. Both
+    packs grow past their size table entries, and the entries are raised."""
+    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    planned = [(MIDO_MESSAGES, MIDO_TALK, MIDO_TEXT), (SIGN_MESSAGES, MASK_SHOP_SIGN, SIGN_TEXT)]
+    mod = patched(patch, game, plan([], stone_texts=[(KOKIRI_STONE, TESTED_STONE_TEXT)], message_texts=planned))
+    assert sorted(mod) == sorted(ENGLISH_PACKS + [STONE_FLOW, SIZE_TABLE]), sorted(mod)
+    sizes = {}
+    for path in ENGLISH_PACKS:
+        assert_same_frame_header(mod[path], game.read(path))
+        ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
+        assert list(ours) == list(theirs), path
+        assert opening(msbt(theirs[MIDO_MESSAGES])[1][MIDO_TALK]).count(b"\x0e") == 2, path
+        assert opening(msbt(theirs[SIGN_MESSAGES])[1][MASK_SHOP_SIGN]) == b"", path
+        expected = {STONE_MESSAGES: {KOKIRI_STONE: TESTED_STONE_MESSAGE}}
+        for file, label, text in planned:
+            expected.setdefault(file, {})[label] = opening(msbt(theirs[file])[1][label]) + message_bytes(text, PAGE)
+        assert {name for name in ours if ours[name] != theirs[name]} == set(expected), path
+        for file, changed in expected.items():
+            labels, texts = msbt(ours[file])
+            game_labels, game_texts = msbt(theirs[file])
+            assert (labels, list(texts.items())) == (game_labels, list((game_texts | changed).items())), (path, file)
+        sizes[size_key(path)] = len(zstd.decompress(mod[path], zstd_dict=game.zs_dictionary))
+    assert all(load_size(size, TEXT_PACK_OVERHEAD) > dict(entries)[key] for key, size in sizes.items()), sizes
+    expected = [(key, max(size, load_size(sizes[key], TEXT_PACK_OVERHEAD)) if key in sizes else size)
+                for key, size in entries]
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
+
+
+def message_bytes(text, page=RUMOUR_PAGE):
     data = b""
     for part in re.split(r"(\{color:\d+\}|\{page\})", text):
         if part == "{page}":
-            data += RUMOUR_PAGE
+            data += page
         elif part.startswith("{color:"):
             data += color(int(part.removeprefix("{color:").removesuffix("}")))
         else:
@@ -1298,8 +1399,8 @@ def message_bytes(text):
 
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
-    substitute where it has one, and as an added value where it names none, and every planned stone saying its text in
-    both English text packs. Each fits the size table entry the game reads."""
+    substitute where it has one, and as an added value where it names none, and every planned stone and message saying
+    its text in both English text packs. Each fits the size table entry the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -1322,6 +1423,7 @@ def seed_plan(patch, game, plan_file):
     for text in seed["event_texts"]:
         string_parameter(flows[text["flow"]], text["event"], text["param"])[1] = text["text"]
     assert seed["stone_texts"]
+    planned_files = {STONE_MESSAGES} | {entry["file"] for entry in seed["message_texts"]}
     mod = patched(patch, game, seed)
     written = sorted(changed + list(flows) + ENGLISH_PACKS + [STONE_FLOW])
     assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == written, sorted(mod)
@@ -1330,11 +1432,15 @@ def seed_plan(patch, game, plan_file):
     for path, flow in flows.items():
         assert game.event_flow(mod[path]) == flow, path
     needed = {key: load_size(size) for key, size in placement_sizes(game, mod, changed).items()}
-    planned = {entry["label"]: RUMOUR_OPENING + message_bytes(entry["text"]) for entry in seed["stone_texts"]}
+    stones = {entry["label"]: RUMOUR_OPENING + message_bytes(entry["text"]) for entry in seed["stone_texts"]}
     for path in ENGLISH_PACKS:
         ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
-        assert {name for name in ours if ours[name] != theirs[name]} == {STONE_MESSAGES}, path
-        assert msbt(ours[STONE_MESSAGES])[1] == msbt(theirs[STONE_MESSAGES])[1] | planned, path
+        assert {name for name in ours if ours[name] != theirs[name]} == planned_files, path
+        assert msbt(ours[STONE_MESSAGES])[1] == msbt(theirs[STONE_MESSAGES])[1] | stones, path
+        for entry in seed["message_texts"]:
+            game_text = msbt(theirs[entry["file"]])[1][entry["label"]]
+            written = msbt(ours[entry["file"]])[1][entry["label"]]
+            assert written == opening(game_text) + message_bytes(entry["text"], PAGE), (path, entry)
         size = len(zstd.decompress(mod[path], zstd_dict=game.zs_dictionary))
         needed[size_key(path)] = load_size(size, TEXT_PACK_OVERHEAD)
     entries = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
@@ -1412,8 +1518,34 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in stones.items():
         plans[name] = (good | {"stone_texts": [valid_stone, entry]}, named)
+    plans["no message_texts"] = (
+        {key: value for key, value in good.items() if key != "message_texts"}, ["plan.json", "message_texts"])
+    valid_message = {"file": MIDO_MESSAGES, "label": MIDO_TALK, "text": "Hrmph!"}
+    nowhere_messages = "EventFlowMsg/Nowhere.msbt"
+    messages = {
+        "message text not this shape": (
+            {"file": SIGN_MESSAGES, "label": MASK_SHOP_SIGN}, ["plan.json", "message_texts[1]"]),
+        "message text without a file": (
+            {"file": "", "label": MASK_SHOP_SIGN, "text": "Masks."}, ["plan.json", "message_texts[1]"]),
+        "message text without a label": (
+            {"file": SIGN_MESSAGES, "label": "", "text": "Masks."}, ["plan.json", "message_texts[1]"]),
+        "message text without a text": (
+            {"file": SIGN_MESSAGES, "label": MASK_SHOP_SIGN, "text": ""}, ["plan.json", "message_texts[1]"]),
+        "message text listed twice": (
+            dict(valid_message, text="Again."), ["message_texts[1]", MIDO_MESSAGES, MIDO_TALK, "twice"]),
+        "message text with an unknown tag": (
+            {"file": SIGN_MESSAGES, "label": MASK_SHOP_SIGN, "text": "{colour:0}Masks"},
+            ["message_texts[1]", "{colour:0}"]),
+        "message file not in the pack": (
+            {"file": nowhere_messages, "label": MASK_SHOP_SIGN, "text": "Masks."}, [nowhere_messages]),
+        "label not in the message file": (
+            {"file": SIGN_MESSAGES, "label": "Nowhere_001", "text": "Masks."}, [SIGN_MESSAGES, "Nowhere_001"]),
+    }
+    for name, (entry, named) in messages.items():
+        plans[name] = (good | {"message_texts": [valid_message, entry]}, named)
     plans["no shops"] = (
-        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}, "stone_texts": []}, ["plan.json", "shops"])
+        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}, "stone_texts": [], "message_texts": []},
+        ["plan.json", "shops"])
     valid_shop = shop_slot(GORON_TUNIC_SLOT, "TBox_Shield_Hylian", 35)
     elsewhere = {"file": GORON_ADULT_STATIC, "hash": str(KOKIRI_STICKS_SLOT[2][0][1])}
     shops = {
@@ -1496,6 +1628,7 @@ def main():
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
         "tested-stone-text-mod": tested_stone_text_mod,
+        "tested-message-text-mod": tested_message_text_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,
         "bad-input": bad_input,
@@ -1507,6 +1640,7 @@ def main():
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
+        "message-texts": message_texts,
         "shop": shop,
         "shop-table": shop_table,
         "shelf-placement": shelf_placement,
