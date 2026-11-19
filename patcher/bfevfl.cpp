@@ -2,6 +2,7 @@
 
 #include "bytes.h"
 
+#include <format>
 #include <stdexcept>
 #include <utility>
 
@@ -44,17 +45,26 @@ std::string_view Text(std::string_view data, uint64_t offset) {
     return text;
 }
 
-uint64_t FindEvent(std::string_view data, uint64_t flowchart, std::string_view name) {
-    // The flowchart holds its event count at 0x16 and points to its events at 0x30. An event is 0x30 bytes and
-    // points to its name first.
-    const uint64_t events = ReadAt<uint64_t>(data, flowchart + 0x30);
+uint64_t Flowchart(std::string_view data) {
+    if (ReadAt<uint16_t>(data, FlowchartCount) == 0) {
+        throw std::runtime_error("the file is a timeline, which has no events");
+    }
+    return ReadAt<uint64_t>(data, ReadAt<uint64_t>(data, Flowcharts));
+}
+
+// The flowchart points to its events at 0x30, and an event is 0x30 bytes.
+uint64_t EventOffset(std::string_view data, uint64_t flowchart, uint16_t index) {
+    return ReadAt<uint64_t>(data, flowchart + 0x30) + 0x30 * index;
+}
+
+// The flowchart holds its event count at 0x16, and an event points to its name first.
+uint16_t EventIndex(std::string_view data, uint64_t flowchart, std::string_view name) {
     for (uint16_t i = 0; i < ReadAt<uint16_t>(data, flowchart + 0x16); ++i) {
-        const uint64_t event = events + 0x30 * i;
-        if (Text(data, ReadAt<uint64_t>(data, event)) == name) {
-            return event;
+        if (Text(data, ReadAt<uint64_t>(data, EventOffset(data, flowchart, i))) == name) {
+            return i;
         }
     }
-    throw std::runtime_error("no event in the flow has this name");
+    throw std::runtime_error(std::format("no event in the flow is named {}", name));
 }
 
 // The offset of the value of the event's parameter with this name.
@@ -107,11 +117,9 @@ Flow Parse(std::string_view data) {
 }
 
 bool SetString(Flow& flow, std::string_view event, std::string_view param, std::string_view value) {
-    if (ReadAt<uint16_t>(flow.data, FlowchartCount) == 0) {
-        throw std::runtime_error("the file is a timeline, which has no events");
-    }
-    const uint64_t flowchart = ReadAt<uint64_t>(flow.data, ReadAt<uint64_t>(flow.data, Flowcharts));
-    const uint64_t found = FindParam(flow.data, FindEvent(flow.data, flowchart, event), param);
+    const uint64_t flowchart = Flowchart(flow.data);
+    const uint64_t found =
+        FindParam(flow.data, EventOffset(flow.data, flowchart, EventIndex(flow.data, flowchart, event)), param);
     if (ReadAt<uint8_t>(flow.data, found) != StringValue) {
         throw std::runtime_error("the parameter is not a string");
     }
@@ -142,6 +150,36 @@ bool SetString(Flow& flow, std::string_view event, std::string_view param, std::
         field = uint32_t(moved(field));
     }
     return true;
+}
+
+bool SetNext(Flow& flow, std::string_view event, std::string_view next) {
+    const uint64_t flowchart = Flowchart(flow.data);
+    const uint64_t at = EventOffset(flow.data, flowchart, EventIndex(flow.data, flowchart, event));
+    const uint16_t target = EventIndex(flow.data, flowchart, next);
+    // An action, a join or a sub-flow call holds the index of its next event at 0x0A. A switch holds its case count
+    // there and points to its cases at 0x18. A case is 8 bytes: its value, then the index of the event it goes to.
+    std::vector<uint64_t> fields;
+    switch (EventType(ReadAt<uint8_t>(flow.data, at + 0x08))) {
+        case Action:
+        case Join:
+        case Subflow:
+            fields.push_back(at + 0x0A);
+            break;
+        case Switch:
+        case SubflowSwitch:
+            for (uint16_t i = 0; i < ReadAt<uint16_t>(flow.data, at + 0x0A); ++i) {
+                fields.push_back(ReadAt<uint64_t>(flow.data, at + 0x18) + 8 * i + 4);
+            }
+            break;
+        default:
+            throw std::runtime_error(std::format("{} is a fork or a return, which has no next event", event));
+    }
+    bool changed = false;
+    for (const uint64_t field : fields) {
+        changed |= ReadAt<uint16_t>(flow.data, field) != target;
+        WriteAt(flow.data, field, target);
+    }
+    return changed;
 }
 
 std::string Write(const Flow& flow) {

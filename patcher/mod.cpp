@@ -321,6 +321,16 @@ static std::string BombLiftPack(GameFile& game, const std::string& dictionary, s
 constexpr std::string_view StoneTextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
 constexpr std::string_view StoneMessages = "EventFlowMsg/GossipStone.msbt";
 
+// Every stone's talk runs this flow. Without the Mask of Truth held and worn, Navi talks in the stone's place. With it,
+// the stone's talk opens, the stone says its lines about the mask, and then its message.
+constexpr std::string_view StoneFlow = "Event/EventFlow/GossipStone.bfevfl.zs";
+constexpr std::string_view MaskHeldQuery = "Event112";
+constexpr std::string_view StoneTalkOpening = "Event6";
+constexpr std::string_view StoneMessage = "Event18";
+// The mask question goes on to the talk's opening on both answers, and the opening straight on to the message.
+constexpr std::pair<std::string_view, std::string_view> StoneFlowNext[] = { { MaskHeldQuery, StoneTalkOpening },
+                                                                            { StoneTalkOpening, StoneMessage } };
+
 static std::string StoneTextPack(GameFile& game, const std::string& path, const std::string& dictionary,
                                  const std::vector<PlannedStoneText>& stones) {
     try {
@@ -375,17 +385,28 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const std::string zsDictionary = Dictionary(game, "zs.zsdic");
     std::map<std::string, bfevfl::Flow> flows;
     std::set<std::string> changedFlows;
+    const auto flowAt = [&](const std::string& path) -> bfevfl::Flow& {
+        auto flow = flows.find(path);
+        if (flow == flows.end()) {
+            flow = flows.emplace(path, bfevfl::Parse(Decompress(game.Read(path), zsDictionary))).first;
+        }
+        return flow->second;
+    };
     for (const PlannedEventText& text : plan.eventTexts) {
         try {
-            auto flow = flows.find(text.flow);
-            if (flow == flows.end()) {
-                flow = flows.emplace(text.flow, bfevfl::Parse(Decompress(game.Read(text.flow), zsDictionary))).first;
-            }
-            if (bfevfl::SetString(flow->second, text.event, text.param, text.text)) {
+            if (bfevfl::SetString(flowAt(text.flow), text.event, text.param, text.text)) {
                 changedFlows.insert(text.flow);
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("event text {}: {}", Name(text), e.what()));
+        }
+    }
+    if (!plan.stoneTexts.empty()) {
+        const std::string path(StoneFlow);
+        for (const auto& [event, next] : StoneFlowNext) {
+            if (bfevfl::SetNext(flowAt(path), event, next)) {
+                changedFlows.insert(path);
+            }
         }
     }
 

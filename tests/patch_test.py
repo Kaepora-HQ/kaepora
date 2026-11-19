@@ -73,6 +73,7 @@ ENGLISH_PACKS = ["Mals/EUen.Product.110.sarc.zs", "Mals/USen.Product.110.sarc.zs
 KOKIRI_STONE = "GOSSIP_KOKIRI_FOREST_01"
 # The stone whose English rumour is the shortest, so a long text grows the English pack past its size table entry.
 SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
+STONE_FLOW = "Event/EventFlow/GossipStone.bfevfl.zs"
 TEXT_PACK_OVERHEAD = 312
 BOOL = 0xD0
 INT = 0xD1
@@ -758,14 +759,33 @@ def gift_size_table(patch, game):
     assert event_flow(data) == expected
 
 
+def without_mask(flow):
+    """A parsed GossipStone flow in which the mask question goes on to the stone's talk on both answers, and the talk
+    straight on to the stone's message."""
+    events = flow["events"]
+    index = {event[0]: i for i, event in enumerate(events)}
+    mask_held, mask_worn, navi = index["Event112"], index["Event25"], index["Event39"]
+    talk, mask_lines, message = index["Event6"], index["Event90"], index["Event18"]
+    query, opening = events[mask_held], events[talk]
+    assert query[3] == struct.pack("<IHxxIHxx", 0, mask_worn, 1, navi), query[3]
+    query[3] = struct.pack("<IHxxIHxx", 0, talk, 1, talk)
+    assert struct.unpack_from("<H", opening[1], 2)[0] == mask_lines, opening[1]
+    opening[1] = opening[1][:2] + struct.pack("<H", message) + opening[1][4:]
+    return flow
+
+
 def stone_texts(patch, game):
     """Stone texts written into the two English text packs and no other: read apart from the patcher, each is the
-    game's pack with the two messages changed. Both grow past their size table entries, and the entries are raised."""
+    game's pack with the two messages changed. Both grow past their size table entries, and the entries are raised.
+    The stones' flow, read apart from the patcher, sends the mask question on to the stone's message, and keeps its
+    size."""
     header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
     packs = ENGLISH_PACKS
     planned = [(KOKIRI_STONE, TESTED_STONE_TEXT), (SHORT_RUMOUR_STONE, LONG_STONE_TEXT)]
     mod = patched(patch, game, plan([], stone_texts=planned))
-    assert sorted(mod) == sorted(packs + [SIZE_TABLE]), sorted(mod)
+    assert sorted(mod) == sorted(packs + [STONE_FLOW, SIZE_TABLE]), sorted(mod)
+    expected_flow = without_mask(game.event_flow(game.read(STONE_FLOW)))
+    assert event_flow(zstd.decompress(mod[STONE_FLOW], zstd_dict=game.zs_dictionary)) == expected_flow
     sizes = {}
     for path in packs:
         assert_same_frame_header(mod[path], game.read(path))
