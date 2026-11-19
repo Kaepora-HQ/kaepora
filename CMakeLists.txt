@@ -270,6 +270,8 @@ set(KAEPORA_TESTED_MIDO_MOD "" CACHE PATH
     "The folder of the mod tested in the game with Mido's castle entry taken out of his schedule")
 set(KAEPORA_TESTED_SHOP_GOODS_MOD "" CACHE PATH
     "The folder of the mod tested in the game with every item that can reach a shop's shelf on one")
+set(KAEPORA_TESTED_PEDESTAL_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with the Master Sword pedestal open to every adult")
 set(KAEPORA_TESTED_STONE_TEXT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with a text of ours on the Kokiri Forest gossip stone")
 set(KAEPORA_TESTED_MESSAGE_TEXT_MOD "" CACHE PATH
@@ -376,6 +378,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-shop-goods-mod
             COMMAND ${PATCH_TEST} tested-shop-goods-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_SHOP_GOODS_MOD}")
+    endif()
+    if(KAEPORA_TESTED_PEDESTAL_MOD)
+        add_test(NAME patch-tested-pedestal-mod
+            COMMAND ${PATCH_TEST} tested-pedestal-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json "${KAEPORA_TESTED_PEDESTAL_MOD}")
     endif()
 endif()
 

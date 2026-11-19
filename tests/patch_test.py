@@ -13,6 +13,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
+       python3 -I tests/patch_test.py tested-pedestal-mod <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
+           <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
@@ -46,6 +48,7 @@ MIDO_SCHEDULE = "Component/AIScheduleParam/Npc_Kokiri_Mido_Child.game__component
 BOMB_LIFT_PACKS = [f"Pack/Actor/{actor}.pack.zs" for actor in (
     "Item_Bomb", "Npc_Hylia_ImperialSoldier_Bomb", "Obj_BombFlower_A_01", "Obj_BombFlower_A_04",
     "Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01")]
+PEDESTAL_MODULE = "Logic/Market_Adult_Prefab_89da.logic.module.ainb"
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
 KOKIRI_SWORD_CHEST = 16757992849254467386
@@ -479,8 +482,8 @@ def patched(patch, game, plan, part="romfs"):
         result = run(patch, game, plan, tmp)
         assert result.returncode == 0, result.stderr
         written = files(tmp / "mod" / part)
-    # Every mod carries the bomb's packs, which tested-bomb-mod checks.
-    return {path: data for path, data in written.items() if path not in BOMB_LIFT_PACKS}
+    # Every mod carries the bomb's packs and the pedestal's module, which tested-bomb-mod and tested-pedestal-mod check.
+    return {path: data for path, data in written.items() if path not in [*BOMB_LIFT_PACKS, PEDESTAL_MODULE]}
 
 
 def assert_same_frame_header(ours, theirs):
@@ -755,6 +758,18 @@ def tested_mido_mod(patch, game, mod):
     assert sorted(tested) == [MIDO_SCHEDULE], sorted(tested)
     assert patched(patch, game, plan([], mido_castle_entry_removed=True)).get(MIDO_SCHEDULE) == tested[MIDO_SCHEDULE]
     assert MIDO_SCHEDULE not in patched(patch, game, plan([]))
+
+
+def tested_pedestal_mod(patch, game, plan_file, mod):
+    """The Master Sword pedestal's logic module that the game ran, with the condition every adult meets in place of
+    the Forest Temple's quest complete, in the mod of any plan: an empty one and a seed's."""
+    tested = (pathlib.Path(mod) / "romfs" / PEDESTAL_MODULE).read_bytes()
+    for planned in (plan([]), json.loads(pathlib.Path(plan_file).read_text())):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            result = run(patch, game, planned, tmp)
+            assert result.returncode == 0, result.stderr
+            assert (tmp / "mod" / "romfs" / PEDESTAL_MODULE).read_bytes() == tested
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -1627,6 +1642,7 @@ def main():
         "tested-program-mod": tested_program_mod,
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
+        "tested-pedestal-mod": tested_pedestal_mod,
         "tested-stone-text-mod": tested_stone_text_mod,
         "tested-message-text-mod": tested_message_text_mod,
         "seed-plan": seed_plan,

@@ -677,6 +677,28 @@ static std::string MidoScheduleWithoutCastleEntry(GameFile& game) {
     } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", MidoSchedule, e.what())); }
 }
 
+// Adult Link becomes a child by putting the Master Sword back. This logic module takes the sword's interaction away
+// while the expression it names is false, and the game names the Forest Temple's quest complete. Every adult has the
+// Door of Time's quest complete, since the first pull of the sword completes it. The module names its expression once,
+// in its string pool, and the file is stored uncompressed. The shorter name ends in NUL bytes where the longer one
+// stood, so the module keeps its size and its size table entry.
+constexpr std::string_view PedestalModule = "Logic/Market_Adult_Prefab_89da.logic.module.ainb";
+constexpr std::string_view ForestTempleDone = "SageOfForest_IsCompleted_Exp";
+constexpr std::string_view DoorOfTimeOpened = "DoorOfTime_IsCompleted_Exp";
+
+static std::string OpenPedestal(GameFile& game) {
+    std::string module = game.Read(std::string(PedestalModule));
+    const std::string gameName = std::string(ForestTempleDone) + '\0';
+    const size_t at = module.find(gameName);
+    if (at == std::string::npos || module.find(gameName, at + 1) != std::string::npos) {
+        throw std::runtime_error(std::format("{}: the module does not name {} once", PedestalModule, ForestTempleDone));
+    }
+    std::string name(DoorOfTimeOpened);
+    name.resize(gameName.size(), '\0');
+    module.replace(at, name.size(), name);
+    return module;
+}
+
 // The game reads the update's text pack of the console's language. A planned text is in English, and on a console in
 // another language the game's own text stays.
 constexpr std::string_view TextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
@@ -861,6 +883,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     if (plan.midoCastleEntryRemoved) {
         addToRomfs(MidoSchedule, MidoScheduleWithoutCastleEntry(game));
     }
+    addToRomfs(PedestalModule, OpenPedestal(game));
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;
     for (const std::string& path : changed) {
