@@ -11,6 +11,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's folder>
        python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
+       python3 -I tests/patch_test.py dive-depth <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
@@ -620,12 +621,58 @@ def tested_hammer_room_mod(patch, game, mod_file):
     assert zstd.decompress(ours, zstd_dict=game.dictionary) == zstd.decompress(tested, zstd_dict=game.dictionary)
 
 
+# The function that adds an item to Link's pouch writes the dive depth with a call to the game's set-float function.
+DIVE_DEPTH_WRITE, SET_FLOAT, GET_FLOAT = 0x1110480, 0x44C5D0, 0x607F70
+# Zero space after the program's code that no built-in patch of Lichii writes (src/core/file_sys/patch_manager.cpp,
+# zortos293/Lichii nx2 at 159e076e22) and below the caves of ultrawide mods from 0x3C46400.
+FREE_SPACE = range(0x3C46394, 0x3C46400)
+
+
+def ips_records(ips):
+    """The program addresses an IPS32 patch writes, with the bytes it writes there."""
+    assert ips[:5] == b"IPS32" and ips[-4:] == b"EEOF"
+    records, at = {}, 5
+    while at < len(ips) - 4:
+        offset, size = struct.unpack_from(">IH", ips, at)
+        records[offset - NSO_HEADER_SIZE] = ips[at + 6:at + 6 + size]
+        at += 6 + size
+    return records
+
+
+def branch_target(at, word):
+    """Where the b or bl instruction at the address goes."""
+    offset = word & 0x3FFFFFF
+    return at + 4 * (offset - (1 << 26) if offset >> 25 else offset)
+
+
+def is_branch(word):
+    return word >> 26 in (0b000101, 0b100101)
+
+
 def tested_program_mod(patch, game, mod):
     """The patch to the game's program that the game ran: with it, a weaker strength item left Link's lift level where
-    it was, and a boss key or map from a small chest counted for its dungeon."""
+    it was, a boss key or map from a small chest counted for its dungeon, and a Silver Scale after the Golden left the
+    dive depth at 9."""
     tested = files(pathlib.Path(mod) / "exefs")
     ours = patched(patch, game, plan([]), part="exefs")
     assert ours == tested, (sorted(ours), sorted(tested))
+
+
+def dive_depth(patch, game):
+    """The program patch sends the dive depth's write to a routine in zero space that no built-in patch of Lichii
+    writes. The routine reads the depth with the game's get-float function and ends in the game's set-float function,
+    the call it replaces."""
+    (ips,) = patched(patch, game, plan([]), part="exefs").values()
+    records = ips_records(ips)
+    assert DIVE_DEPTH_WRITE in records, sorted(hex(address) for address in records)
+    (call,) = struct.unpack("<I", records[DIVE_DEPTH_WRITE])
+    routine = branch_target(DIVE_DEPTH_WRITE, call)
+    assert call >> 26 == 0b100101 and routine in FREE_SPACE and routine + len(records[routine]) - 1 in FREE_SPACE, \
+        hex(routine)
+    words = [word for (word,) in struct.iter_unpack("<I", records[routine])]
+    targets = [branch_target(routine + 4 * i, word) for i, word in enumerate(words) if is_branch(word)]
+    assert [target for target in targets if target not in range(routine, routine + 4 * len(words))] == \
+        [GET_FLOAT, SET_FLOAT], [hex(target) for target in targets]
 
 
 def tested_bomb_mod(patch, game, mod):
@@ -1452,6 +1499,7 @@ def main():
         "new-actors": new_actors,
         "tested-new-actor-mod": tested_new_actor_mod,
         "tested-shop-goods-mod": tested_shop_goods_mod,
+        "dive-depth": dive_depth,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

@@ -4,6 +4,9 @@
 // after either pair of gauntlets, or the Silver Gauntlets after the Golden, would lower what Link can lift. With the
 // patch the level takes an item's grade only when the grade is at least the level.
 //
+// Link's dive depth never drops. Picking up a scale sets the depth to the scale's, so the Silver Scale after the
+// Golden would lower how deep Link can dive. With the patch the depth takes a scale's only when it is at least as deep.
+//
 // A boss key, map or compass counts from any chest. The large chest's event flow sets a dungeon's own value for one,
 // and the small chest's does not, so from a small chest the boss door would stay chained and the map grey. With the
 // patch the function that adds an item to Link's pouch sets the value for these three as the large chest does.

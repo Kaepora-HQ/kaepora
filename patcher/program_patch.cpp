@@ -61,6 +61,40 @@ constexpr std::array KeepHigherInstructions{
     0xD65F03C0u, // keep: ret
 };
 
+// The same function writes the dive depth here. For an item whose PouchActorInfo row has the ExpansionAvility
+// DiveDepthUP, it calls the game's set-float function at 0x44C5D0 with the GameData manager in x0, the PlayerStatus
+// handle in x1, the hash of "DiveDepth" in w2 and the row's DiveDepth in s0.
+constexpr uint32_t DiveDepthWrite = 0x1110480;
+constexpr std::array CallKeepDeeper{
+    0x94ACD7C8u, // bl   0x3C463A0            KeepDeeper, in place of bl 0x44C5D0
+};
+
+// No built-in patch of Lichii writes 0x3C46394 to 0x3C46400 (nx2 at 159e076e22), and ultrawide mods start at
+// 0x3C46400.
+constexpr uint32_t KeepDeeper = 0x3C463A0;
+constexpr std::array KeepDeeperInstructions{
+    0xA9BD7BFDu, // stp  x29, x30, [sp, #-0x30]!
+    0x910003FDu, // mov  x29, sp
+    0xA90107E0u, // stp  x0, x1, [sp, #0x10]   keeps the set-float arguments
+    0xB90023E2u, // str  w2, [sp, #0x20]
+    0xBD0027E0u, // str  s0, [sp, #0x24]
+    0x2A0203E3u, // mov  w3, w2
+    0xAA0103E2u, // mov  x2, x1
+    0x9100A3E1u, // add  x1, sp, #0x28         where the get-float function puts the depth Link has
+    0x972706ECu, // bl   0x607F70              get float, with the same manager, handle and member; true when it reads
+    0x2A0003E4u, // mov  w4, w0
+    0xBD402BE1u, // ldr  s1, [sp, #0x28]       s1 is the depth Link has
+    0xBD4027E0u, // ldr  s0, [sp, #0x24]
+    0xB94023E2u, // ldr  w2, [sp, #0x20]
+    0xA94107E0u, // ldp  x0, x1, [sp, #0x10]
+    0xA8C37BFDu, // ldp  x29, x30, [sp], #0x30  x30 returns to 0x1110484, after the call it replaces
+    0x36000064u, // tbz  w4, #0, set           a depth it cannot read is set, as the game sets it
+    0x1E202020u, // fcmp s1, s0
+    0x5400004Cu, // b.gt keep                  a depth deeper than the item's stays
+    0x1720187Au, // set: b 0x44C5D0            set float, with the arguments of the call it replaces
+    0xD65F03C0u, // keep: ret
+};
+
 // The same function branches on the item's PouchSpecialDeal. The map, compass and boss key are NotPushToPouch, whose
 // case starts here and records the item as got with no call for its dungeon. A small chest gives every item through
 // this function. A large chest gives none of these three through it, so it does not set a value twice: its event flow
@@ -166,6 +200,8 @@ constexpr uint32_t NsoHeaderSize = 0x100;
 constexpr std::array Records{
     Code{ LiftLevelWrite, CallKeepHigher },
     Code{ KeepHigher, KeepHigherInstructions },
+    Code{ DiveDepthWrite, CallKeepDeeper },
+    Code{ KeepDeeper, KeepDeeperInstructions },
     Code{ NotPushToPouchCase, JumpToAwardDungeonItem },
     Code{ AwardDungeonItem, AwardDungeonItemInstructions },
 };

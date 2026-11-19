@@ -263,7 +263,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table stone-texts shop shop-table new-actors shelf-placement single-goods-sign
-                 bundle-goods-sign shop-scenes-whole)
+                 bundle-goods-sign shop-scenes-whole dive-depth)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
