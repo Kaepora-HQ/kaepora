@@ -20,8 +20,8 @@
 #include <chrono>
 #include <optional>
 
-constexpr char LatestAddress[] = "https://github.com/PixelHabits/kaepora/releases/latest/download/latest.json";
-constexpr char ReleasePagePattern[] = R"(https://github\.com/PixelHabits/kaepora/releases/tag/[A-Za-z0-9._-]+)";
+constexpr char LatestAddress[] = "https://github.com/Kaepora-HQ/kaepora/releases/latest/download/latest.json";
+constexpr char ReleasePagePattern[] = R"(https://github\.com/Kaepora-HQ/kaepora/releases/tag/[A-Za-z0-9._-]+)";
 constexpr std::chrono::hours AskEvery{ 24 };
 // Qt's transfer timeout: the request stops when no data comes for this long.
 constexpr std::chrono::seconds RequestTimeout{ 30 };

@@ -2,7 +2,7 @@
 
 Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It moves the game's items to new places, so the Hookshot could be anywhere. Every seed can be finished, and the same seed gives the same game on every computer.
 
-Website and downloads: <https://kaepora.vercel.app>
+Website and downloads: <https://kaepora.org>
 
 ## What you need
 
@@ -12,7 +12,7 @@ Website and downloads: <https://kaepora.vercel.app>
 
 ## Download
 
-Get the newest version from the [download page](https://kaepora.vercel.app) or from [Releases](https://github.com/PixelHabits/kaepora/releases).
+Get the newest version from the [download page](https://kaepora.org) or from [Releases](https://github.com/Kaepora-HQ/kaepora/releases).
 
 | System | File |
 | --- | --- |

@@ -37,8 +37,8 @@
 
 using Files = QMap<QString, QByteArray>;
 
-constexpr char LatestPath[] = "/PixelHabits/kaepora/releases/latest/download/latest.json";
-constexpr char ReleasePage[] = "https://github.com/PixelHabits/kaepora/releases/tag/v99.0.0";
+constexpr char LatestPath[] = "/Kaepora-HQ/kaepora/releases/latest/download/latest.json";
+constexpr char ReleasePage[] = "https://github.com/Kaepora-HQ/kaepora/releases/tag/v99.0.0";
 
 static QByteArray Latest(const QString& version, const QString& page = ReleasePage) {
     return QJsonDocument(QJsonObject{ { "version", version }, { "url", page } }).toJson();
@@ -58,7 +58,7 @@ static const QByteArray NotFound = Answer("404 Not Found", R"({"error":"Not Foun
 
 // GitHub's first redirect for the newest release's file, to the same file under the release's tag.
 static const QByteArray ToTheTag =
-    Answer("302 Found", {}, "Location: https://github.com/PixelHabits/kaepora/releases/download/v99.0.0/latest.json\r\n");
+    Answer("302 Found", {}, "Location: https://github.com/Kaepora-HQ/kaepora/releases/download/v99.0.0/latest.json\r\n");
 
 static Files FilesIn(const QString& folder) {
     Files files;
@@ -720,11 +720,11 @@ private slots:
         QTest::newRow("not JSON") << Ok("<!DOCTYPE html>");
         QTest::newRow("a version that is not a number") << Ok(Latest("v99.0.0"));
         QTest::newRow("a page on another site")
-            << Ok(Latest("99.0.0", "https://example.com/PixelHabits/kaepora/releases/tag/v99.0.0"));
+            << Ok(Latest("99.0.0", "https://example.com/Kaepora-HQ/kaepora/releases/tag/v99.0.0"));
         QTest::newRow("a page of another repository")
             << Ok(Latest("99.0.0", "https://github.com/someone/kaepora/releases/tag/v99.0.0"));
         QTest::newRow("a path out of the releases")
-            << Ok(Latest("99.0.0", "https://github.com/PixelHabits/kaepora/releases/tag/../../../someone/kaepora"));
+            << Ok(Latest("99.0.0", "https://github.com/Kaepora-HQ/kaepora/releases/tag/../../../someone/kaepora"));
         QTest::newRow("the version running") << Ok(Latest(KAEPORA_VERSION));
     }
 

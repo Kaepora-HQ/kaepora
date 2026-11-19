@@ -7,7 +7,7 @@
 set -euo pipefail
 
 folder=$1
-releases=https://github.com/PixelHabits/kaepora/releases
+releases=https://github.com/Kaepora-HQ/kaepora/releases
 
 version=$(jq -r '."."' .release-please-manifest.json)
 # The window reads 0.2.0-rc.1 as 0.2.0, and ignores a version that starts with v.

@@ -1,6 +1,6 @@
 # Security
 
-To report a security problem, use **Report a vulnerability** on the repository's [Security tab](https://github.com/PixelHabits/kaepora/security). The report stays private until it is fixed.
+To report a security problem, use **Report a vulnerability** on the repository's [Security tab](https://github.com/Kaepora-HQ/kaepora/security). The report stays private until it is fixed.
 
 Do not open a public issue for it.
 

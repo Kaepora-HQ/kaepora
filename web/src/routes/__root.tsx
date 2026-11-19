@@ -7,7 +7,7 @@ import { markSystem } from '@/system'
 import css from '../styles.css?url'
 
 // Link previews need an absolute address for the image.
-const origin = 'https://kaepora.vercel.app'
+const origin = 'https://kaepora.org'
 
 export const Route = createRootRoute({
   head: () => ({

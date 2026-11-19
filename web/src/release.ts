@@ -1,4 +1,4 @@
-export const repository = 'https://github.com/PixelHabits/kaepora'
+export const repository = 'https://github.com/Kaepora-HQ/kaepora'
 export const releases = `${repository}/releases`
 
 const latest = `${releases}/latest/download`
