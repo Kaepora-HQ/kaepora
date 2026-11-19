@@ -57,8 +57,7 @@ constexpr std::array<Draw, 7> BalancedDistribution = { {
 } };
 
 // The most the game's own English rumours put in a stone's text box.
-constexpr size_t LineLength = 65;
-constexpr size_t BoxLines = 2;
+constexpr Fit StoneFit{ .lineLength = 65, .boxLines = 2 };
 
 // Key words are orange, as the game's own text colours them, and then the box's colour again.
 constexpr std::string_view KeyColour = "{color:0}";
@@ -97,8 +96,8 @@ static bool Fits(Kind kind, RandomizerCheck loc) {
     return false;
 }
 
-static std::string Sentence(Kind kind, RandomizerCheck loc, const RemakeHintTables& tables,
-                            const std::map<RandomizerCheck, std::string>& items) {
+static std::string StoneSentence(Kind kind, RandomizerCheck loc, const RemakeHintTables& tables,
+                                 const std::map<RandomizerCheck, std::string>& items) {
     const Rando::Location* location = Rando::StaticData::GetLocation(loc);
     const std::string& place = tables.places.at(location->GetArea());
     const std::string& item = tables.itemsByRemakeName.at(items.at(loc));
@@ -109,8 +108,8 @@ static std::string Sentence(Kind kind, RandomizerCheck loc, const RemakeHintTabl
             return "They say that plundering #" + place + "# is #a foolish choice#.";
         case Kind::Overworld:
         case Kind::Dungeon: {
-            const ChestSentence& sentence = tables.chestSentences.at(loc);
-            return sentence.beforeItem + item + sentence.afterItem;
+            const Sentence& sentence = tables.chestSentences.at(loc);
+            return sentence.before + item + sentence.after;
         }
         case Kind::NamedItem:
         case Kind::RandomItem:
@@ -151,7 +150,18 @@ static std::vector<Word> Words(std::string_view markup) {
     return words;
 }
 
-static std::string Layout(const std::vector<Word>& words) {
+static std::string Plain(const std::vector<Word>& words) {
+    std::string plain;
+    for (const Word& word : words) {
+        plain += plain.empty() ? "" : " ";
+        for (const Piece& piece : word.pieces) {
+            plain += piece.text;
+        }
+    }
+    return plain;
+}
+
+static std::string Layout(const std::vector<Word>& words, const Fit& fit) {
     std::string text;
     size_t length = 0;
     size_t lines = 1;
@@ -159,10 +169,10 @@ static std::string Layout(const std::vector<Word>& words) {
     for (const Word& word : words) {
         if (!text.empty()) {
             Break before = word.before;
-            if (before == Break::Space && length + 1 + word.Length() > LineLength) {
+            if (before == Break::Space && length + 1 + word.Length() > fit.lineLength) {
                 before = Break::Line;
             }
-            if (before == Break::Line && lines == BoxLines) {
+            if (before == Break::Line && lines == fit.boxLines) {
                 before = Break::Box;
             }
             if (coloured && !word.pieces.front().coloured) {
@@ -177,7 +187,7 @@ static std::string Layout(const std::vector<Word>& words) {
                 ++lines;
                 length = 0;
             } else {
-                // The patcher sets the stones' own colour again after a new box.
+                // A new box starts in the box's colour. The patcher sets a stone's own colour again after a new box.
                 text += "{page}";
                 lines = 1;
                 length = 0;
@@ -199,15 +209,8 @@ static std::string Layout(const std::vector<Word>& words) {
     return text;
 }
 
-static std::string Plain(const std::vector<Word>& words) {
-    std::string plain;
-    for (const Word& word : words) {
-        plain += plain.empty() ? "" : " ";
-        for (const Piece& piece : word.pieces) {
-            plain += piece.text;
-        }
-    }
-    return plain;
+std::string Layout(std::string_view markup, const Fit& fit) {
+    return Layout(Words(markup), fit);
 }
 
 static std::vector<RandomizerCheck> StonesReachableWithout(RandomizerCheck loc,
@@ -257,7 +260,7 @@ std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<
             draw.weight = 0;
             continue;
         }
-        sentences[RandomElement(stones)] = Sentence(*draw.kind, hinted, tables, items);
+        sentences[RandomElement(stones)] = StoneSentence(*draw.kind, hinted, tables, items);
         givenAway.insert(hinted);
         if (*draw.kind == Kind::Foolish) {
             const RandomizerCheckArea area = Rando::StaticData::GetLocation(hinted)->GetArea();
@@ -272,7 +275,18 @@ std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<
     std::vector<StoneHint> hints;
     for (const RemakeStone& stone : tables.stones) {
         const std::vector<Word> words = Words(sentences.at(stone.location));
-        hints.push_back({ stone, Layout(words), Plain(words) });
+        hints.push_back({ stone, Layout(words, StoneFit), Plain(words) });
     }
     return hints;
+}
+
+std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
+                                    const std::map<RandomizerCheck, std::string>& items) {
+    std::vector<MessageText> lines;
+    for (const PrizeLine& line : tables.prizeLines) {
+        const auto placed = items.find(line.location);
+        const std::string& item = tables.itemsByRemakeName.at(placed == items.end() ? line.ownItem : placed->second);
+        lines.push_back({ line.file, line.label, Layout(line.sentence.before + item + line.sentence.after, line.fit) });
+    }
+    return lines;
 }

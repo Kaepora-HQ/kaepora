@@ -55,6 +55,16 @@ does each gift, with SoH's sentence for it where that is true of the remake.
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
 
+`prize_lines.tsv` has the lines in which a character names what a place gives. Every seed rewrites each one in our
+words, in SoH's markup, with `[[1]]` where the item goes: the item the seed places there, or the place's own item where
+the seed keeps it. The game's own line names the unmodified game's item, which would be false.
+
+- `location`: the SoH location, a chest of `chests.tsv`.
+- `file` and `label`: the message, in the English text packs. The patcher keeps the control codes the game's message
+  opens with, the speaker's voice and face.
+- `line_length` and `box_lines`: how much the message's box holds, the widest line in characters and the lines in one
+  box, read from the game's own messages at full size in the same file. A test checks that every rewritten line fits.
+
 `shops.tsv` has a row for each of SoH's 64 shop locations, by shop and then by item number. Each row is one slot of a
 remake shop. With "Shop goods" at "Four per shop shuffled", items 5 to 8 of each shop are shuffled, the four that SoH's
 shopsanity takes at that count. Each shuffled slot adds a Red Rupee to the pool and takes one of SoH's cheap balanced

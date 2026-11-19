@@ -7,6 +7,7 @@
 #include "soh/util.h"
 
 #include <algorithm>
+#include <charconv>
 #include <deque>
 #include <format>
 #include <map>
@@ -35,6 +36,9 @@ static constexpr unsigned char chestHintTable[] = {
 };
 static constexpr unsigned char junkTable[] = {
 #embed "../remake/junk_hints.tsv"
+};
+static constexpr unsigned char prizeLineTable[] = {
+#embed "../remake/prize_lines.tsv"
 };
 static constexpr unsigned char shopTable[] = {
 #embed "../remake/shops.tsv"
@@ -210,6 +214,29 @@ static RandomizerCheck LocationNamed(const std::string& where, const std::string
     return location->second;
 }
 
+constexpr std::string_view ItemSlot = "[[1]]";
+
+static Sentence Split(const std::string& where, const std::string& sentence) {
+    const size_t slot = sentence.find(ItemSlot);
+    if (slot == std::string::npos || sentence.find(ItemSlot, slot + 1) != std::string::npos) {
+        Fail(where + "a sentence without one [[1]] for the item");
+    }
+    return { sentence.substr(0, slot), sentence.substr(slot + ItemSlot.size()) };
+}
+
+static size_t Count(const std::string& where, const std::string& text) {
+    size_t count = 0;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), count);
+    if (error != std::errc() || end != text.data() + text.size() || count == 0) {
+        Fail(where + "\"" + text + "\" is not a whole number above 0");
+    }
+    return count;
+}
+
+static Fit ReadFit(const std::string& where, const std::string& lineLength, const std::string& boxLines) {
+    return { .lineLength = Count(where, lineLength), .boxLines = Count(where, boxLines) };
+}
+
 static std::string ItemPhrase(const std::string& where, const std::vector<std::string>& row) {
     const std::string& name = row[2];
     const std::string& article = row[3];
@@ -259,20 +286,33 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
     line = 1;
     for (const auto& row : ReadTable("remake/chest_hints.tsv", chestHintTable, "location\tsentence")) {
         const std::string where = std::format("remake/chest_hints.tsv line {}: ", ++line);
-        constexpr std::string_view itemSlot = "[[1]]";
-        const std::string& sentence = row[1];
-        const size_t item = sentence.find(itemSlot);
-        if (item == std::string::npos || sentence.find(itemSlot, item + 1) != std::string::npos ||
-            !tables.chestSentences
-                 .emplace(LocationNamed(where, row[0]),
-                          ChestSentence{ sentence.substr(0, item), sentence.substr(item + itemSlot.size()) })
-                 .second) {
-            Fail(where + "a sentence without one [[1]] for the item, or a location listed twice");
+        if (!tables.chestSentences.emplace(LocationNamed(where, row[0]), Split(where, row[1])).second) {
+            Fail(where + "a location listed twice");
         }
     }
 
     for (const auto& row : ReadTable("remake/junk_hints.tsv", junkTable, "hint")) {
         tables.junk.push_back(row[0]);
+    }
+
+    line = 1;
+    for (const auto& row : ReadTable("remake/prize_lines.tsv", prizeLineTable,
+                                     "location\tfile\tlabel\tsentence\tline_length\tbox_lines")) {
+        const std::string where = std::format("remake/prize_lines.tsv line {}: ", ++line);
+        const RandomizerCheck location = LocationNamed(where, row[0]);
+        const auto chest = std::ranges::find(chests, location, &RemakeChest::location);
+        if (chest == chests.end() || !tables.itemsByRemakeName.contains(chest->item)) {
+            Fail(where + "\"" + row[0] + "\" is no chest of remake/chests.tsv, or its item has no name");
+        }
+        if (row[1].empty() || row[2].empty()) {
+            Fail(where + "no file or label");
+        }
+        tables.prizeLines.push_back({ .location = location,
+                                      .ownItem = chest->item,
+                                      .file = row[1],
+                                      .label = row[2],
+                                      .sentence = Split(where, row[3]),
+                                      .fit = ReadFit(where, row[4], row[5]) });
     }
 
     std::set<RandomizerCheck> shuffled;
@@ -563,7 +603,7 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
                                   const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
-                                  const std::vector<StoneHint>& hints) {
+                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
         if (!chest.shuffled) {
@@ -595,6 +635,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
     }
     plan["message_texts"] = nlohmann::ordered_json::array();
+    for (const MessageText& message : messages) {
+        plan["message_texts"].push_back(
+            { { "file", message.file }, { "label", message.label }, { "text", message.tagged } });
+    }
     plan["shops"] = nlohmann::ordered_json::array();
     for (const RemakeShopSlot& slot : shops) {
         const Rando::ItemLocation* location = Rando::Context::GetInstance()->GetItemLocation(slot.location);

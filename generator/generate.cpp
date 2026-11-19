@@ -141,5 +141,5 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     const std::vector<StoneHint> hints =
         settings.gossipStones == GossipStones::GiveHints ? PickHints(hintTables, items) : std::vector<StoneHint>{};
     return { SpoilerLog(seed, settings, chests, shops, gifts, hints),
-             RemakePlan(seed, chests, shops, gifts, settings, items, hints) };
+             RemakePlan(seed, chests, shops, gifts, settings, items, hints, PrizeLines(hintTables, items)) };
 }

@@ -1511,7 +1511,13 @@
       "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
     }
   ],
-  "message_texts": [],
+  "message_texts": [
+    {
+      "file": "EventFlowMsg/Npc_Hylia_022_Shop_Child.msbt",
+      "label": "Talk_04",
+      "text": "Win {color:0}five times in a row{color:65535}, and I'll give you a\none-time prize: {color:0}Three Deku Nuts{color:65535}!{page}Guess wrong, though, and you're done. It's all down\nto your luck!"
+    }
+  ],
   "shops": [],
   "mido_castle_entry_removed": false
 }

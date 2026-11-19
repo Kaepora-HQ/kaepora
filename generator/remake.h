@@ -100,23 +100,43 @@ struct RemakeStone {
     RandomizerCheck location;
 };
 
-struct ChestSentence {
-    std::string beforeItem;
-    std::string afterItem;
+// A sentence in SoH's markup, split where it names an item or a place.
+struct Sentence {
+    std::string before;
+    std::string after;
 };
 
-// Places and items as a hint names them, with their article.
+// How much text a message's box holds: the widest line in bytes, one for each character of plain English, and the lines
+// in a box.
+struct Fit {
+    size_t lineLength;
+    size_t boxLines;
+};
+
+// A line in which a character names what a place gives. Every seed rewrites it to name what the seed places there.
+struct PrizeLine {
+    RandomizerCheck location;
+    std::string ownItem; // what the place gives in the unmodified game, by its remake name
+    std::string file;    // the message file in the text packs
+    std::string label;
+    Sentence sentence;
+    Fit fit;
+};
+
+// Places and items as a hint names them, with their article, and the lines that name a prize.
 struct RemakeHintTables {
     std::vector<RemakeStone> stones;
     std::map<RandomizerCheckArea, std::string> places;
     std::map<std::string, std::string> itemsByRemakeName;
-    std::map<RandomizerCheck, ChestSentence> chestSentences;
+    std::map<RandomizerCheck, Sentence> chestSentences;
     std::vector<std::string> junk;
+    std::vector<PrizeLine> prizeLines;
 };
 
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
 // item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
-// shuffled or its area, or a gift, its area or its item.
+// shuffled or its area, or a gift, its area or its item, or when a prize line names a place that is no chest of the
+// chest table, or one whose own item has no name.
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                                       const std::vector<RemakeGift>& gifts);
 
@@ -133,6 +153,13 @@ struct StoneHint {
     std::string plain;
 };
 
+// A message the seed rewrites, and its text in the patcher's tags.
+struct MessageText {
+    std::string file;
+    std::string label;
+    std::string tagged;
+};
+
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
 // Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
 // the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
@@ -141,4 +168,4 @@ struct StoneHint {
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
                                   const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
-                                  const std::vector<StoneHint>& hints);
+                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages);

@@ -108,6 +108,9 @@ DUNGEON_PLACES = {"Deku Tree", "Dodongos Cavern", "Jabu Jabus Belly", "Forest Te
 ITEM_NAMES = {row["remake_item"]: f"{row['article']} {row['name']}".strip() for row in read_tsv("item_names.tsv")}
 CHEST_SENTENCES = {row["location"]: row["sentence"] for row in read_tsv("chest_hints.tsv")}
 JUNK = [row["hint"] for row in read_tsv("junk_hints.tsv")]
+PRIZE_LINES = read_tsv("prize_lines.tsv")
+CHEST_GAME_PRIZE = "Market Treasure Chest Game Reward"
+LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 SOH_MAJOR_ITEMS = {"Boomerang", "Progressive Bow", "Progressive Slingshot", "Progressive Hookshot",
                    "Megaton Hammer", "Iron Boots", "Hover Boots", "Lens of Truth", "Silver Gauntlets",
                    "Golden Gauntlets", "Mirror Shield", "Kokiri Sword", "Progressive Bomb Bag", "Ice Arrows"}
@@ -758,6 +761,35 @@ class SeedgenTest(unittest.TestCase):
         sentences = {plain(CHEST_SENTENCES[row["location"]].replace("[[1]]", ITEM_NAMES[held[row["location"]]]))
                      for row in SHOP_SLOTS if row["number"] == "3"}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
+
+    def test_the_chest_game_owner_names_the_prize(self):
+        # Without the Lens the prize stays the game's own, a Piece of Heart.
+        row = next(row for row in PRIZE_LINES if row["location"] == CHEST_GAME_PRIZE)
+        named = set()
+        for seed, settings in [(str(seed), None) for seed in range(700, 710)] + [("710", LENS_NEVER_NEEDED)]:
+            _, plan = self.generate(seed, settings)
+            item = placed_remake_items(plan).get(CHEST_GAME_PRIZE, "Obj_Heart_Piece")
+            self.assertEqual(settings is None, CHEST_GAME_PRIZE in placed_remake_items(plan), seed)
+            [entry] = [entry for entry in plan["message_texts"] if (entry["file"], entry["label"])
+                       == (row["file"], row["label"])]
+            self.assertEqual(plain(entry["text"]), plain(row["sentence"].replace("[[1]]", ITEM_NAMES[item])), seed)
+            named.add(item)
+        self.assertGreater(len(named), 2, named)
+
+    def test_every_message_fits_its_box(self):
+        sites = {(row["file"], row["label"]): row for row in PRIZE_LINES}
+        for seed, settings in [(str(seed), None) for seed in range(720, 730)] + [("730", SHOPS_SHUFFLED)]:
+            _, plan = self.generate(seed, settings)
+            self.assertTrue(plan["message_texts"])
+            for entry in plan["message_texts"]:
+                site = sites[(entry["file"], entry["label"])]
+                for box in entry["text"].split("{page}"):
+                    lines = box.split("\n")
+                    self.assertLessEqual(len(lines), int(site["box_lines"]), entry)
+                    for line in lines:
+                        self.assertTrue(line.strip(), entry)
+                        self.assertLessEqual(len(re.sub(r"\{[^}]*\}", "", line).encode()), int(site["line_length"]),
+                                             entry)
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):
