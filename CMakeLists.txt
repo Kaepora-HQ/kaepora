@@ -277,6 +277,8 @@ set(KAEPORA_TESTED_SKULLTULA_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with a Gold Skulltula that drops a token giving the Boomerang")
 set(KAEPORA_TESTED_PICKUP_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Mirror Shield at the Lon Lon Ranch heart piece")
+set(KAEPORA_TESTED_SONG_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with Impa teaching the Minuet and the windmill Epona's Song")
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
@@ -302,7 +304,7 @@ if(KAEPORA_GAME_NUP)
                  gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
-                 weapon-copies)
+                 weapon-copies event-numbers)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -363,6 +365,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-pickup-mod
             COMMAND ${PATCH_TEST} tested-pickup-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_PICKUP_MOD}")
+    endif()
+    if(KAEPORA_TESTED_SONG_MOD)
+        add_test(NAME patch-tested-song-mod
+            COMMAND ${PATCH_TEST} tested-song-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_SONG_MOD}")
     endif()
     if(KAEPORA_TESTED_GIFT_MOD)
         add_test(NAME patch-tested-gift-mod

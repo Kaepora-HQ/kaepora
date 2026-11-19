@@ -1343,6 +1343,7 @@
       "text": "Get_Epona_IsAfter_Ready_Exp"
     }
   ],
+  "event_numbers": [],
   "start_values": {
     "IsChainLockDoorOpen.4189300454150217955": true,
     "IsChainLockDoorOpen.2202807660383340401": true,

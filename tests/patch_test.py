@@ -10,8 +10,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
-       python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod <kaepora-patch> \
-           <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod| \
+           tested-song-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
@@ -19,7 +19,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies \
+           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers \
            <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
@@ -79,6 +79,20 @@ NAYRUS_LOVE_GIFT = ("Event/EventFlow/Dm_FairyFountain_Nayru.bfevfl.zs", "Event16
 ANJU_FLOW = "Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs"
 COJIRO_GIFT = (ANJU_FLOW, "Event234", "ReveiveItem")
 POCKET_EGG_GIFT = (ANJU_FLOW, "Event264", "ReveiveItem")
+# Impa's lesson: its example tune, the notes Link plays, the line before the example, and the song she gives.
+IMPA_LESSON_FLOW = "Event/EventFlow/Dm_MelodyGet_Zelda.bfevfl.zs"
+IMPA_EXAMPLE = (IMPA_LESSON_FLOW, "Event27", "MelodyType")
+IMPA_FOLLOW = (IMPA_LESSON_FLOW, "Event49", "MelodyType")
+IMPA_LINE = (IMPA_LESSON_FLOW, "Event27", "MessageId")
+IMPA_GIFT = (IMPA_LESSON_FLOW, "Event111", "ActorName")
+# The melody types of Zelda's Lullaby, Epona's Song, the Song of Storms and the Minuet of Forest.
+LULLABY, EPONAS_SONG, SONG_OF_STORMS, MINUET = 0, 1, 5, 6
+# The windmill's lesson, and the windmill man's two questions whether it may start.
+WINDMILL_LESSON_FLOW = "Event/EventFlow/Dm_MelodyGet_Storm.bfevfl.zs"
+WINDMILL_MAN_FLOW = "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs"
+FIELD_ADULT_DYNAMIC = "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs"
+# Hyrule Field's southwest Poe chest.
+FIELD_POE_CHEST = 17023457248274633121
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
@@ -457,12 +471,23 @@ def event_flow(data):
     return flow
 
 
-def string_parameter(flow, event, param):
-    """The named event's parameter in a parsed flow, as [type, text], to read or to change."""
+def parameter(flow, event, param, kind):
+    """The named event's parameter in a parsed flow, as [type, value], to read or to change."""
     _, _, (names, values), *_ = next(e for e in flow["events"] if e[0] == event)
-    parameter = values[[name for _, name in names[1:]].index(param)]
-    assert parameter[0] == 5, parameter
-    return parameter
+    found = values[[name for _, name in names[1:]].index(param)]
+    assert found[0] == kind, found
+    return found
+
+
+def string_parameter(flow, event, param):
+    return parameter(flow, event, param, 5)
+
+
+def set_number(flow, site, old, new):
+    """Changes an integer parameter of a parsed flow from old to new."""
+    number = parameter(flow, *site[1:], 2)
+    assert number[1] == old.to_bytes(4, "little", signed=True), number
+    number[1] = new.to_bytes(4, "little", signed=True)
 
 
 def give(flow, gift, old, new):
@@ -478,10 +503,13 @@ def actor(placement, hash):
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
-         mido_castle_entry_removed=False, skulltulas=(), loose_items=()):
+         mido_castle_entry_removed=False, skulltulas=(), loose_items=(),
+         event_numbers=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
+            "event_numbers": [{"flow": flow, "event": event, "param": param, "value": value}
+                              for flow, event, param, value in event_numbers],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
@@ -590,6 +618,33 @@ def tested_gift_mod(patch, game, romfs):
     ours = mod[SHOP_CHILD_FLOW]
     assert_same_frame_header(ours, tested)
     assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
+
+
+def tested_song_mod(patch, game, romfs):
+    """The songs the game taught. Impa's lesson asked for the Minuet of Forest's notes, Link learned the Minuet and
+    not Zelda's Lullaby, and her send-off followed, also for a Link with no ocarina. The windmill taught Epona's Song
+    to a Link who knew the Song of Storms, and a second ocarina there gave no second lesson. Whether the chest gives
+    the Sun's Song is unseen."""
+    romfs = pathlib.Path(romfs)
+    texts = [(*IMPA_LINE, "EventFlowMsg/Dm_MelodyGet_Forest:Dm_MelodyGet_Forest_0009"),
+             (*IMPA_GIFT, "Item_Melody_ForestMinuet"),
+             (WINDMILL_LESSON_FLOW, "Event29", "ActorName", "Item_Melody_EponaSong"),
+             (WINDMILL_MAN_FLOW, "Event17", "GameDataName", "HavePlayedEvent.Dm_MelodyGet_Storm"),
+             (WINDMILL_MAN_FLOW, "Event69", "GameDataName", "HavePlayedEvent.Dm_MelodyGet_Storm")]
+    numbers = [(*IMPA_EXAMPLE, MINUET), (*IMPA_FOLLOW, MINUET),
+               (WINDMILL_LESSON_FLOW, "Event6", "MelodyType", EPONAS_SONG),
+               (WINDMILL_LESSON_FLOW, "Event9", "MelodyType", EPONAS_SONG)]
+    ours = patched(patch, game, plan([(FIELD_POE_CHEST, [FIELD_ADULT_DYNAMIC], "Item_Melody_SunSong")],
+                                     event_texts=texts, event_numbers=numbers))
+    tested = files(romfs)
+    assert sorted(ours) == sorted(tested), (sorted(ours), sorted(tested))
+    for path, theirs in tested.items():
+        assert_same_frame_header(ours[path], theirs)
+    assert read_size_table(zstd.decompress(ours.pop(SIZE_TABLE))) == \
+        raised_pouch_entry(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
+    for path, theirs in tested.items():
+        dictionary = game.dictionary if path.startswith("Banc/") else game.zs_dictionary
+        assert zstd.decompress(ours[path], zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
@@ -896,7 +951,7 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops", "skulltulas",
+             for key in ("chests", "event_texts", "event_numbers", "stone_texts", "message_texts", "shops", "skulltulas",
                          "loose_items")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
@@ -1656,6 +1711,35 @@ def gift_size_table(patch, game):
     assert event_flow(data) == expected
 
 
+def event_numbers(patch, game):
+    """Melody types written into Impa's lesson: read apart from the patcher, the flow is the game's with the two
+    parameters changed, and keeps its size, so the size table is left out. With the line and the gift in the same
+    plan, all four are written."""
+    numbers = [(*IMPA_EXAMPLE, MINUET), (*IMPA_FOLLOW, MINUET)]
+    mod = patched(patch, game, plan([], event_numbers=numbers))
+    assert sorted(mod) == [IMPA_LESSON_FLOW], sorted(mod)
+    data = zstd.decompress(mod[IMPA_LESSON_FLOW], zstd_dict=game.zs_dictionary)
+    assert len(data) == len(zstd.decompress(game.read(IMPA_LESSON_FLOW), zstd_dict=game.zs_dictionary))
+    expected = game.event_flow(game.read(IMPA_LESSON_FLOW))
+    set_number(expected, IMPA_EXAMPLE, LULLABY, MINUET)
+    set_number(expected, IMPA_FOLLOW, LULLABY, MINUET)
+    assert event_flow(data) == expected
+
+    # The melody the lesson already teaches changes nothing, so nothing is written.
+    mod = patched(patch, game, plan([], event_numbers=[(*IMPA_EXAMPLE, LULLABY), (*IMPA_FOLLOW, LULLABY)]))
+    assert sorted(mod) == [], sorted(mod)
+
+    line = "EventFlowMsg/Dm_MelodyGet_Forest:Dm_MelodyGet_Forest_0009"
+    mod = patched(patch, game, plan([], event_texts=[(*IMPA_LINE, line), (*IMPA_GIFT, "Item_Melody_ForestMinuet")],
+                                    event_numbers=numbers))
+    expected = game.event_flow(game.read(IMPA_LESSON_FLOW))
+    set_number(expected, IMPA_EXAMPLE, LULLABY, MINUET)
+    set_number(expected, IMPA_FOLLOW, LULLABY, MINUET)
+    string_parameter(expected, *IMPA_LINE[1:])[1] = line
+    give(expected, IMPA_GIFT, "Item_Melody_ZeldaLullaby", "Item_Melody_ForestMinuet")
+    assert game.event_flow(mod[IMPA_LESSON_FLOW]) == expected
+
+
 def without_mask(flow):
     """A parsed GossipStone flow in which the mask question goes on to the stone's talk on both answers, and the talk
     straight on to the stone's message."""
@@ -1780,9 +1864,13 @@ def seed_plan(patch, game, plan_file):
     assert kinds == set(itertools.product((True, False), repeat=2)), kinds
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
-    flows = {path: game.event_flow(game.read(path)) for path in {text["flow"] for text in seed["event_texts"]}}
+    edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"]}
+    flows = {path: game.event_flow(game.read(path)) for path in edited}
     for text in seed["event_texts"]:
         string_parameter(flows[text["flow"]], text["event"], text["param"])[1] = text["text"]
+    for number in seed["event_numbers"]:
+        parameter(flows[number["flow"]], number["event"], number["param"], 2)[1] = number["value"].to_bytes(
+            4, "little", signed=True)
     assert seed["stone_texts"]
     planned_files = {STONE_MESSAGES} | {entry["file"] for entry in seed["message_texts"]}
     mod = patched(patch, game, seed)
@@ -1854,11 +1942,17 @@ def bad_input(patch, game):
     }
     plans = {name: (good | {"chests": [valid, chest]}, named) for name, (chest, named) in cases.items()}
     plans["no event_texts"] = (
-        {"seed": "1", "chests": [valid], "start_values": {}, "stone_texts": []}, ["plan.json", "event_texts"])
+        {"seed": "1", "chests": [valid], "event_numbers": [], "start_values": {}, "stone_texts": []},
+        ["plan.json", "event_texts"])
+    plans["no event_numbers"] = (
+        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}, "stone_texts": []},
+        ["plan.json", "event_numbers"])
     plans["no start_values"] = (
-        {"seed": "1", "chests": [valid], "event_texts": [], "stone_texts": []}, ["plan.json", "start_values"])
+        {"seed": "1", "chests": [valid], "event_texts": [], "event_numbers": [], "stone_texts": []},
+        ["plan.json", "start_values"])
     plans["no stone_texts"] = (
-        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}}, ["plan.json", "stone_texts"])
+        {"seed": "1", "chests": [valid], "event_texts": [], "event_numbers": [], "start_values": {}},
+        ["plan.json", "stone_texts"])
     plans["no mido_castle_entry_removed"] = (
         {key: value for key, value in good.items() if key != "mido_castle_entry_removed"},
         ["plan.json", "mido_castle_entry_removed"])
@@ -1905,7 +1999,8 @@ def bad_input(patch, game):
     for name, (entry, named) in messages.items():
         plans[name] = (good | {"message_texts": [valid_message, entry]}, named)
     plans["no shops"] = (
-        {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}, "stone_texts": [], "message_texts": []},
+        {"seed": "1", "chests": [valid], "event_texts": [], "event_numbers": [], "start_values": {}, "stone_texts": [],
+         "message_texts": []},
         ["plan.json", "shops"])
     valid_shop = shop_slot(GORON_TUNIC_SLOT, "TBox_Shield_Hylian", 35)
     elsewhere = {"file": GORON_ADULT_STATIC, "hash": str(KOKIRI_STICKS_SLOT[2][0][1])}
@@ -1956,6 +2051,31 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in texts.items():
         plans[name] = (good | {"event_texts": [valid_gift, entry]}, named)
+    valid_melody = dict(zip(("flow", "event", "param"), IMPA_EXAMPLE), value=MINUET)
+    numbers = {
+        "event number not this shape": (
+            {key: valid_melody[key] for key in ("flow", "event", "param")}, ["plan.json", "event_numbers[1]"]),
+        "event number not a whole number": (
+            dict(zip(("flow", "event", "param"), IMPA_FOLLOW), value="6"),
+            ["plan.json", "event_numbers[1]", "whole number"]),
+        "event number too large": (
+            dict(zip(("flow", "event", "param"), IMPA_FOLLOW), value=2**31),
+            ["plan.json", "event_numbers[1]", "whole number"]),
+        "event number listed twice": (
+            dict(valid_melody, value=EPONAS_SONG), ["plan.json", "event_numbers[1]", "Event27 MelodyType", "twice"]),
+        "event number also a text": (
+            dict(zip(("flow", "event", "param"), BOTTLE_GIFT), value=1),
+            ["plan.json", "event_numbers[0]", "Event171 ActorName", "twice"]),
+        "parameter not an integer": (
+            dict(zip(("flow", "event", "param"), IMPA_LINE), value=1),
+            ["Event27 MessageId", IMPA_LESSON_FLOW, "not an integer"]),
+        "event not in the lesson": (dict(valid_melody, event="Event9999"), ["Event9999 MelodyType", "no event"]),
+    }
+    for name, (entry, named) in numbers.items():
+        if name == "event number also a text":
+            plans[name] = (good | {"event_texts": [valid_gift], "event_numbers": [entry]}, named)
+        else:
+            plans[name] = (good | {"event_numbers": [valid_melody, entry]}, named)
     values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
     assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
     assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)
@@ -2040,6 +2160,8 @@ def main():
         "loose-items": loose_items,
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
+        "tested-song-mod": tested_song_mod,
+        "event-numbers": event_numbers,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

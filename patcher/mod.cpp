@@ -56,6 +56,18 @@ static PlannedEventText ParseEventText(const nlohmann::json& text) {
     return planned;
 }
 
+static PlannedEventNumber ParseEventNumber(const nlohmann::json& number) {
+    const nlohmann::json& value = number.at("value");
+    if (!value.is_number_integer() || value < std::numeric_limits<int32_t>::min() ||
+        value > std::numeric_limits<int32_t>::max()) {
+        throw std::runtime_error("value must be a whole number");
+    }
+    return { .flow = number.at("flow").get<std::string>(),
+             .event = number.at("event").get<std::string>(),
+             .param = number.at("param").get<std::string>(),
+             .value = value.get<int32_t>() };
+}
+
 static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
     const nlohmann::json& price = slot.at("price");
     if (!price.is_number_unsigned() || price > std::numeric_limits<int32_t>::max()) {
@@ -87,8 +99,8 @@ static PlannedActorItem ParseActorItem(const nlohmann::json& entry) {
     return planned;
 }
 
-static std::string Name(const PlannedEventText& text) {
-    return std::format("{} {} in {}", text.event, text.param, text.flow);
+static std::string Name(std::string_view flow, std::string_view event, std::string_view param) {
+    return std::format("{} {} in {}", event, param, flow);
 }
 
 // A rumour opens with the stones' colour, their smaller text and code 3:0, and sets the size and colour again after a
@@ -161,6 +173,7 @@ static PlannedMessageText ParseMessageText(const nlohmann::json& message) {
 Plan ParsePlan(const nlohmann::json& json) {
     const auto chests = json.at("chests").get<std::vector<nlohmann::json>>();
     const auto texts = json.at("event_texts").get<std::vector<nlohmann::json>>();
+    const auto numbers = json.at("event_numbers").get<std::vector<nlohmann::json>>();
     Plan plan;
     for (const auto& [name, value] : json.at("start_values").get<std::map<std::string, nlohmann::json>>()) {
         if (value.is_boolean()) {
@@ -185,10 +198,21 @@ Plan ParsePlan(const nlohmann::json& json) {
         try {
             const PlannedEventText& text = plan.eventTexts.emplace_back(ParseEventText(texts[i]));
             if (!named.emplace(text.flow, text.event, text.param).second) {
-                throw std::runtime_error(std::format("{} is listed twice", Name(text)));
+                throw std::runtime_error(std::format("{} is listed twice", Name(text.flow, text.event, text.param)));
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("event_texts[{}]: {}", i, e.what()));
+        }
+    }
+    for (size_t i = 0; i < numbers.size(); ++i) {
+        try {
+            const PlannedEventNumber& number = plan.eventNumbers.emplace_back(ParseEventNumber(numbers[i]));
+            if (!named.emplace(number.flow, number.event, number.param).second) {
+                throw std::runtime_error(
+                    std::format("{} is listed twice", Name(number.flow, number.event, number.param)));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("event_numbers[{}]: {}", i, e.what()));
         }
     }
     std::set<std::string> labels;
@@ -1012,7 +1036,18 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 changedFlows.insert(text.flow);
             }
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::format("event text {}: {}", Name(text), e.what()));
+            throw std::runtime_error(
+                std::format("event text {}: {}", Name(text.flow, text.event, text.param), e.what()));
+        }
+    }
+    for (const PlannedEventNumber& number : plan.eventNumbers) {
+        try {
+            if (bfevfl::SetInt(flowAt(number.flow), number.event, number.param, number.value)) {
+                changedFlows.insert(number.flow);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("event number {}: {}", Name(number.flow, number.event, number.param), e.what()));
         }
     }
     if (!plan.stoneTexts.empty()) {

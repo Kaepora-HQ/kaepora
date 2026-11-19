@@ -32,6 +32,14 @@ struct PlannedEventText {
     std::string text;
 };
 
+// An integer parameter of an event in an event flow, and the value it takes. A song's lesson names its melody this way.
+struct PlannedEventNumber {
+    std::string flow; // RomFS path of the event flow
+    std::string event;
+    std::string param;
+    int32_t value;
+};
+
 // A gossip stone says the message whose label is its name.
 struct PlannedStoneText {
     std::string label;
@@ -80,6 +88,7 @@ using StartValue = std::variant<bool, int32_t>;
 struct Plan {
     std::vector<PlannedChest> chests;
     std::vector<PlannedEventText> eventTexts;
+    std::vector<PlannedEventNumber> eventNumbers;
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedMessageText> messageTexts;

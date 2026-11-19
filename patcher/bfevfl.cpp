@@ -34,6 +34,7 @@ constexpr size_t PointersPerEntry = 32;
 constexpr size_t PoolOffset = 0x04;
 
 enum EventType : uint8_t { Action, Switch, Fork, Join, Subflow, SubflowSwitch, Return };
+constexpr uint8_t IntValue = 2;
 constexpr uint8_t StringValue = 5;
 
 // A string: its u16 length, its bytes, and a zero byte.
@@ -149,6 +150,21 @@ bool SetString(Flow& flow, std::string_view event, std::string_view param, std::
     for (uint32_t& field : flow.pointers) {
         field = uint32_t(moved(field));
     }
+    return true;
+}
+
+bool SetInt(Flow& flow, std::string_view event, std::string_view param, int32_t value) {
+    const uint64_t flowchart = Flowchart(flow.data);
+    const uint64_t found =
+        FindParam(flow.data, EventOffset(flow.data, flowchart, EventIndex(flow.data, flowchart, event)), param);
+    // An integer value holds its count at 0x02 and the integer itself at 0x10.
+    if (ReadAt<uint8_t>(flow.data, found) != IntValue || ReadAt<uint16_t>(flow.data, found + 0x02) != 1) {
+        throw std::runtime_error("the parameter is not an integer");
+    }
+    if (ReadAt<int32_t>(flow.data, found + 0x10) == value) {
+        return false;
+    }
+    WriteAt(flow.data, found + 0x10, value);
     return true;
 }
 
