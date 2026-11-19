@@ -74,6 +74,9 @@ Seen in the game:
 - A Kokiri Shop slot sells from the start once the patcher lifts its gate on meeting the Deku Tree, from the shopkeeper
   who stands until then too.
 - A child can buy an adult's item: the Market Bazaar sold him the Silver Gauntlets.
+- A slot's quantity sign shows the count of the bundle it sells, and a slot that sells one item or a rupee shows none:
+  in the Bombchu Shop the 3 Deku Nuts read x3 and the Ice Arrows and the Blue Rupee had no sign. The shop sold the Ice
+  Arrows from the slot whose sign was taken out.
 
 Read from the game's data and not yet seen:
 
@@ -81,6 +84,11 @@ Read from the game's data and not yet seen:
 - The Bombchu Shop's shopkeeper stands only once Link has the Goron Ruby.
 - The Goron Shop refuses a child a tunic by its name: the shop's flow compares the chosen goods with the two tunics,
   then asks whether Link is a child. GC Shop Item 5 still asks for adult Link until that is seen.
+- A quantity sign is an actor of its own that the shelf and the shopkeeper link to. The goods tell it to show while
+  the slot is on sale and to hide once sold out. With no message it does nothing, so a sign nothing links to would
+  show. So the patcher takes a sign out of the scene with every mention of it in the placement file: its links and its
+  places in the file's groups. A saved value in the game data list and two records in the scene's baked collision
+  still name it, and nothing reads them without the actor.
 
 The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus out of shops. A shop may refuse
 arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the

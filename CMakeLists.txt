@@ -251,6 +251,8 @@ set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
 set(KAEPORA_TESTED_MIDO_MOD "" CACHE PATH
     "The folder of the mod tested in the game with Mido's castle entry taken out of his schedule")
+set(KAEPORA_TESTED_SHOP_GOODS_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with every item that can reach a shop's shelf on one")
 set(KAEPORA_TESTED_STONE_TEXT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with a text of ours on the Kokiri Forest gossip stone")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
@@ -260,7 +262,8 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
-                 gift-size-table stone-texts shop shop-table new-actors shelf-placement)
+                 gift-size-table stone-texts shop shop-table new-actors shelf-placement single-goods-sign
+                 bundle-goods-sign shop-scenes-whole)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -344,6 +347,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-mido-mod
             COMMAND ${PATCH_TEST} tested-mido-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_MIDO_MOD}")
+    endif()
+    if(KAEPORA_TESTED_SHOP_GOODS_MOD)
+        add_test(NAME patch-tested-shop-goods-mod
+            COMMAND ${PATCH_TEST} tested-shop-goods-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_SHOP_GOODS_MOD}")
     endif()
 endif()
 

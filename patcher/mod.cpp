@@ -283,6 +283,76 @@ static void StandOnShelf(byml::Node& shelf, const GoodsModel& model) {
     }
 }
 
+constexpr std::string_view QuantitySign = "Shop_Board_Bundle_";
+
+// A row with no BundleActorNum gives one thing, as the token's and the Deku Seed's do. A rupee's row holds its worth
+// there, which is no count of things on the shelf.
+static uint32_t Quantity(byml::Node& pouchRow) {
+    const byml::Node* bundle = Find(pouchRow, "BundleActorNum");
+    const byml::Node* category = Find(pouchRow, "PouchCategory");
+    return bundle == nullptr || (category != nullptr && category->string == "Rupee") ? 1 : uint32_t(bundle->scalar);
+}
+
+// Takes the actors out of the scene with every mention of them, wherever the file holds it: an entry of any list that
+// is one of their hashes, or a dict that holds one directly, such as the actor or a link to it. A list emptied so goes
+// from its dict, as the game writes no empty list of links.
+static void Unplace(byml::Node& node, const std::vector<uint64_t>& hashes) {
+    const auto isHash = [&](const byml::Node& value) {
+        return value.type == byml::Type::UInt64 && std::ranges::find(hashes, value.scalar) != hashes.end();
+    };
+    if (node.type == byml::Type::Array) {
+        std::erase_if(node.array, [&](const byml::Node& item) {
+            return isHash(item) || std::ranges::any_of(item.dict, isHash, &byml::Entry::value);
+        });
+        for (byml::Node& item : node.array) {
+            Unplace(item, hashes);
+        }
+    } else if (node.type == byml::Type::Dict) {
+        std::vector<std::string> emptied;
+        for (byml::Entry& entry : node.dict) {
+            const bool held = !entry.value.array.empty();
+            Unplace(entry.value, hashes);
+            if (held && entry.value.array.empty()) {
+                emptied.push_back(entry.key);
+            }
+        }
+        std::erase_if(node.dict, [&](const byml::Entry& entry) {
+            return std::ranges::find(emptied, entry.key) != emptied.end();
+        });
+    }
+}
+
+// The game's single goods have no quantity sign. Returns whether the scene changed.
+static bool ShowQuantity(const GameFile& game, byml::Node& placement, uint64_t shelf, uint32_t quantity) {
+    std::vector<uint64_t> signs;
+    if (byml::Node* links = Find(Actor(placement, shelf), "Links")) {
+        for (byml::Node& link : links->array) {
+            const uint64_t linked = Find(link, "Dst")->scalar;
+            if (Find(Actor(placement, linked), "Gyaml")->string.starts_with(QuantitySign)) {
+                signs.push_back(linked);
+            }
+        }
+    }
+    if (signs.empty()) {
+        return false;
+    }
+    if (quantity > 1) {
+        const std::string sign = std::format("{}{:02}", QuantitySign, quantity);
+        if (!game.Files().contains(std::format("Pack/Actor/{}.pack.zs", sign))) {
+            throw std::runtime_error(std::format("the game has no quantity sign for {}", quantity));
+        }
+        bool changed = false;
+        for (const uint64_t hash : signs) {
+            std::string& gyaml = Find(Actor(placement, hash), "Gyaml")->string;
+            changed |= gyaml != sign;
+            gyaml = sign;
+        }
+        return changed;
+    }
+    Unplace(placement, signs);
+    return true;
+}
+
 // A shop sells the game's goods at their base price in this table, the row's BuyingPrice, plus the slot's
 // PriceOffset.
 static int32_t BasePrice(byml::Node& pouchActorInfo, const std::string& goodsActor) {
@@ -679,6 +749,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 }
                 goodsActor = actor->second.name;
             }
+            const uint32_t quantity = Quantity(Row(tables.find(PouchActorInfoPath)->second.root, slot.item));
             for (const Shopkeeper& keeper : slot.shopkeepers) {
                 const std::string path = std::format("Pack/Actor/{}.pack.zs", keeper.actor);
                 auto pack = packs.find(path);
@@ -701,6 +772,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                     }
                     if (model != nullptr) {
                         StandOnShelf(shelfActor, *model);
+                        changed.insert(shelf.file);
+                    }
+                    if (ShowQuantity(game, placement(shelf.file), shelf.hash, quantity)) {
                         changed.insert(shelf.file);
                     }
                 } catch (const std::exception& e) {

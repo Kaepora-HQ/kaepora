@@ -10,6 +10,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
        python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
@@ -771,6 +772,10 @@ def shop(patch, game):
             sold["ResetTypeValue"] = (INT, 0)
         for path, h in shelves:
             actor(placements.setdefault(path, game.placement(game.read(path))), h)["Gyaml"] = goods_actor
+    # 10 arrows where 5 Deku Sticks were: the slot's quantity signs read 10.
+    for path, h in KOKIRI_STICKS_SLOT[2]:
+        for link in actor(placements[path], h).get("Links", []):
+            actor(placements[path], link["Dst"][1])["Gyaml"] = "Shop_Board_Bundle_10"
     for path in chest[1]:
         actor(placements[path], STORMS_GROTTO_CHEST)["Dynamic"]["Drop__DropActor"] = chest[2]
 
@@ -847,6 +852,100 @@ def shelf_placement(patch, game):
             assert abs(moved - rise) < 0.0005, (path, h, moved)
             shelf["Translate"][1] = game_shelf["Translate"][1]
             assert shelf == {key: value for key, value in game_shelf.items() if key != "Gyaml"}, (path, h)
+
+
+def quantity_signs(placement, shelf):
+    """The quantity signs a shelf links to."""
+    return [link["Dst"][1] for link in actor(placement, shelf).get("Links", [])
+            if actor(placement, link["Dst"][1])["Gyaml"].startswith("Shop_Board_Bundle_")]
+
+
+def single_goods_sign(patch, game):
+    """A slot that sells one item loses the quantity sign the game shows there, as the game's single goods have none:
+    the Hover Boots where 10 arrows were, a Red Rupee where 30 Deku Seeds were. A rupee is one item."""
+    slots = table_slots()
+    sales = [(slots["Kak Bazaar Item 5"], "Item_HoverBoot", 10), (slots["KF Shop Item 5"], "TBox_Rupee_Red", 5)]
+    mod = patched(patch, game, plan([], shops=sales))
+    removed = 0
+    for (_, _, shelves), _, _ in sales:
+        for path, h in shelves:
+            ours, theirs = game.placement(mod[path]), game.placement(game.read(path))
+            signs = quantity_signs(theirs, h)
+            assert not set(signs) & {a["Hash"][1] for a in ours["Actors"]}, (path, h)
+            assert "Links" not in actor(ours, h) or not signs, (path, h)
+            removed += len(signs)
+    assert removed == 4, removed
+
+
+def bundle_goods_sign(patch, game):
+    """A slot that sells a bundle keeps the quantity sign the game shows there, and it shows the bundle's count: 3
+    where 10 Deku Seeds were for 3 Deku Nuts, 5 where 30 Deku Seeds were for 5 bombs."""
+    slots = table_slots()
+    sales = {("Kak Bazaar Item 8", "TBox_DekuNutBundle"): "Shop_Board_Bundle_03",
+             ("KF Shop Item 5", "Item_BombBundle_Small"): "Shop_Board_Bundle_05"}
+    mod = patched(patch, game, plan([], shops=[(slots[location], item, 5) for location, item in sales]))
+    shown = 0
+    for (location, _), sign in sales.items():
+        for path, h in slots[location][2]:
+            ours, theirs = game.placement(mod[path]), game.placement(game.read(path))
+            assert quantity_signs(ours, h) == quantity_signs(theirs, h), (path, h)
+            for linked in quantity_signs(ours, h):
+                assert actor(ours, linked)["Gyaml"] == sign, (path, h)
+                shown += 1
+    assert shown == 4, shown
+
+
+def shop_scenes_whole(patch, game):
+    """With a single item in every shop slot, so that every quantity sign under a shuffled shelf leaves its scene,
+    nothing in a written scene names an actor of the scene that is not there: no link, group or list of the file."""
+    slots = [table_slot(row) for row in remake_table("shops.tsv")]
+    mod = patched(patch, game, plan([], shops=[(slot, "TBox_Shield_Hylian", 5) for slot in slots]))
+    removed = 0
+    for path in {path for _, _, shelves in slots for path, _ in shelves}:
+        ours, theirs = game.placement(mod[path]), game.placement(game.read(path))
+        present = {a["Hash"][1] for a in ours["Actors"]}
+        gone = {a["Hash"][1] for a in theirs["Actors"]} - present
+        removed += len(gone)
+
+        def names(node):
+            if isinstance(node, dict):
+                return [n for value in node.values() for n in names(value)]
+            if isinstance(node, list):
+                return [n for value in node for n in names(value)]
+            return [node[1]] if isinstance(node, tuple) and node[0] == UINT64 else []
+
+        assert not gone & set(names(ours)), (path, sorted(gone & set(names(ours))))
+    assert removed > 0, removed
+
+
+# The shop look's sales by SoH location: every item a seed can put on a shelf, one to a slot, each for 5 rupees.
+LOOK_SALES = {
+    "Kak Bazaar Item 6": "Item_Longshot", "Kak Bazaar Item 5": "Item_HoverBoot",
+    "Kak Potion Shop Item 5": "Item_Gauntlet_Gold", "ZD Shop Item 5": "Item_Boomerang",
+    "ZD Shop Item 6": "Item_GlassTruth", "ZD Shop Item 7": "Item_HeavyBoot",
+    "Market Potion Shop Item 5": "Item_Shield_Mirror", "Market Bombchu Shop Item 5": "TBox_DekuNutBundle",
+    "KF Shop Item 5": "TBox_Rupee_Red", "KF Shop Item 6": "Item_DekuStickBundle_Small",
+    "KF Shop Item 7": "TBox_ArrowBundle_Medium", "KF Shop Item 8": "Item_Sword_Kokiri",
+    "Market Bazaar Item 5": "Item_BombBundle_Small", "Market Bazaar Item 6": "Item_Hammer",
+    "Market Bazaar Item 7": "TBox_Shield_Deku", "Market Bazaar Item 8": "TBox_Rupee_Purple",
+    "Market Potion Shop Item 6": "Obj_Heart_Piece", "Market Potion Shop Item 7": "Tbox_MagicJar_Large",
+    "Market Potion Shop Item 8": "Item_Gauntlet_Silver", "Market Bombchu Shop Item 6": "TBox_ArrowBundle_Large",
+    "Market Bombchu Shop Item 7": "Item_Arrow_Ice", "Market Bombchu Shop Item 8": "TBox_Rupee_Blue",
+    "GC Shop Item 5": "TBox_Shield_Hylian", "GC Shop Item 6": "Item_ScrubBusinessSeed",
+    "GC Shop Item 7": "TBox_Rupee_Green",
+}
+
+
+def tested_shop_goods_mod(patch, game, mod):
+    """The shelves as the game showed them: each item standing on its board at its size, under the quantity sign of
+    its count or none, in all eight shops. For the look's plan the patcher writes each scene file the played mod
+    holds, byte for byte."""
+    slots = table_slots()
+    tested = {path: data for path, data in files(pathlib.Path(mod) / "romfs").items() if path.startswith("Banc/")}
+    ours = patched(patch, game, plan([], shops=[(slots[location], item, 5) for location, item in LOOK_SALES.items()]))
+    assert sorted(path for path in ours if path.startswith("Banc/")) == sorted(tested), sorted(ours)
+    for path, data in tested.items():
+        assert ours[path] == data, path
 
 
 def shop_table(patch, game):
@@ -1347,8 +1446,12 @@ def main():
         "shop": shop,
         "shop-table": shop_table,
         "shelf-placement": shelf_placement,
+        "single-goods-sign": single_goods_sign,
+        "bundle-goods-sign": bundle_goods_sign,
+        "shop-scenes-whole": shop_scenes_whole,
         "new-actors": new_actors,
         "tested-new-actor-mod": tested_new_actor_mod,
+        "tested-shop-goods-mod": tested_shop_goods_mod,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")
