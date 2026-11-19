@@ -543,6 +543,12 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("SFM Song of Time Grotto Chest"))
         self.assertFalse(self.reachable("SFM Song of Time Grotto Chest", ("Song from Ocarina of Time", "Green Rupee")))
 
+    def test_sacred_forest_meadow_wolfos_grotto_opens_to_the_song_of_storms(self):
+        # A cover that goes at the Song of Storms hides the grotto, and no bomb opens it. A Link who never grows up
+        # holds bombs and never learns the song.
+        self.assertTrue(self.reachable("SFM Wolfos Grotto Chest"))
+        self.assertFalse(self.reachable("SFM Wolfos Grotto Chest", NEVER_ADULT))
+
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
             self.assertTrue(self.reachable(chest))
