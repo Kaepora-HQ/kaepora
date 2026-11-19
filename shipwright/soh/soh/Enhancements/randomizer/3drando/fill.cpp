@@ -64,27 +64,22 @@ PriceSettingsStruct merchantPrices = {
     RSK_MERCHANT_PRICES_AFFORDABLE,
 };
 
-// Adult Link becomes child again only by putting the Master Sword back, which the unmodified game allows once Sheik has
-// taught him the Prelude of Light. So child Link first reaches all he can alone. Then adult Link goes on alone with what
-// child Link found, and child Link comes back with the Prelude of Light.
-static bool TimeTravel(GetAccessibleLocationsStruct& gals) {
-    Region* root = RegionTable(RR_ROOT);
-    Region* doorOfTime = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME);
-    if (!root->Adult() && doorOfTime->Child()) {
-        root->adultDay = doorOfTime->childDay;
-        root->adultNight = doorOfTime->childNight;
-        for (RandomizerRegion region : gals.regionPool) {
-            RegionTable(region)->childDay = false;
-            RegionTable(region)->childNight = false;
+static void PropagateTimeTravel(GetAccessibleLocationsStruct& gals, RandomizerGet ignore = RG_NONE,
+                                bool stopOnBeatable = false, bool addToPlaythrough = false) {
+    // special check for temple of time
+    if (gals.haveTimeAccess && gals.foundTempleOfTime && gals.validatedStartingRegion) {
+        if (!RegionTable(RR_ROOT)->Adult() &&
+            RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)
+                ->Child()) { // RANDOTODO: sphere weirdness, other age locations not propagated in this sphere
+            RegionTable(RR_ROOT)->adultDay = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)->childDay;
+            RegionTable(RR_ROOT)->adultNight = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)->childNight;
+            ProcessRegion(RegionTable(RR_ROOT), gals, ignore, stopOnBeatable, addToPlaythrough);
+        } else if (!RegionTable(RR_ROOT)->Child() && RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)->Adult()) {
+            RegionTable(RR_ROOT)->childDay = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)->adultDay;
+            RegionTable(RR_ROOT)->childNight = RegionTable(RR_TOT_BEYOND_DOOR_OF_TIME)->adultNight;
+            ProcessRegion(RegionTable(RR_ROOT), gals, ignore, stopOnBeatable, addToPlaythrough);
         }
-        return true;
     }
-    if (!root->Child() && doorOfTime->Adult() && logic->HasItem(RG_PRELUDE_OF_LIGHT)) {
-        root->childDay = doorOfTime->adultDay;
-        root->childNight = doorOfTime->adultNight;
-        return true;
-    }
-    return false;
 }
 
 // This function will propagate Time of Day access through the entrance
@@ -508,6 +503,7 @@ void ProcessRegion(Region* region, GetAccessibleLocationsStruct& gals, Randomize
 
     ProcessExits(region, gals, ignore, stopOnBeatable, addToPlaythrough);
 
+    PropagateTimeTravel(gals, ignore, stopOnBeatable, addToPlaythrough);
     for (size_t k = 0; k < region->locations.size(); k++) {
         if (AddCheckToLogic(region->locations[k], gals, ignore, stopOnBeatable, region, addToPlaythrough)) {
             Rando::Context::GetInstance()->playthroughBeatable = true;
@@ -555,7 +551,7 @@ std::vector<RandomizerCheck> ReachabilitySearch(const std::vector<RandomizerChec
         for (size_t i = 0; i < gals.regionPool.size(); i++) {
             ProcessRegion(RegionTable(gals.regionPool[i]), gals, ignore);
         }
-    } while (gals.logicUpdated || TimeTravel(gals));
+    } while (gals.logicUpdated);
     std::bitset<RC_MAX> isTarget;
     for (RandomizerCheck allowedLocation : targetLocations) {
         isTarget.set(allowedLocation);
@@ -593,7 +589,7 @@ std::vector<RandomizerCheck> GeneratePlaythrough() {
         if (gals.entranceSphere.size() > 0 && !ctx->GetEntranceShuffler()->HasNoRandomEntrances()) {
             ctx->GetEntranceShuffler()->playthroughEntrances.push_back(gals.entranceSphere);
         }
-    } while (gals.logicUpdated || TimeTravel(gals));
+    } while (gals.logicUpdated);
     return gals.lateLocations;
 }
 
@@ -611,7 +607,7 @@ bool CheckBeatable(RandomizerGet ignore /* = RG_NONE*/) {
                 return true;
             }
         }
-    } while (gals.logicUpdated || TimeTravel(gals));
+    } while (gals.logicUpdated);
     return false;
 }
 
@@ -646,7 +642,7 @@ void ValidateEntrances(bool checkOtherEntranceAccess) {
         for (size_t i = 0; i < gals.regionPool.size(); i++) {
             ProcessRegion(RegionTable(gals.regionPool[i]), gals);
         }
-    } while (gals.logicUpdated || TimeTravel(gals));
+    } while (gals.logicUpdated);
     if (gals.sphereZeroComplete) {
         ctx->allLocationsReachable = true;
         // RANDOTODO a size check here before getting the exact fails would be a minor optimization

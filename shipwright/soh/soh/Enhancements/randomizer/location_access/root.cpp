@@ -3,6 +3,13 @@
 
 using namespace Rando;
 
+// The remake has no save warp to bring Link back to his spawn, so a warp that lands a child where he cannot walk out
+// counts for him only when he knows a song that lands him where he can.
+static bool ChildKnowsAWarpHeWalksOutOf() {
+    return logic->CanUse(RG_MINUET_OF_FOREST) || logic->CanUse(RG_SERENADE_OF_WATER) ||
+           logic->CanUse(RG_NOCTURNE_OF_SHADOW) || logic->CanUse(RG_PRELUDE_OF_LIGHT);
+}
+
 void RegionTable_Init_Root() {
     // clang-format off
     areaTable[RR_ROOT] = Region("Root", SCENE_ID_MAX, TIME_DOESNT_PASS, {RA_LINKS_POCKET}, {
@@ -39,10 +46,12 @@ void RegionTable_Init_Root() {
         ENTRANCE(RR_CHILD_SPAWN,             logic->IsChild),
         ENTRANCE(RR_ADULT_SPAWN,             logic->IsAdult),
         ENTRANCE(RR_MINUET_OF_FOREST_WARP,   logic->CanUse(RG_MINUET_OF_FOREST)),
-        ENTRANCE(RR_BOLERO_OF_FIRE_WARP,     logic->CanUse(RG_BOLERO_OF_FIRE)),
+        // A child who warps to the middle of Death Mountain Crater cannot get across to an exit.
+        ENTRANCE(RR_BOLERO_OF_FIRE_WARP,     logic->CanUse(RG_BOLERO_OF_FIRE) && (logic->IsAdult || ChildKnowsAWarpHeWalksOutOf())),
         ENTRANCE(RR_SERENADE_OF_WATER_WARP,  logic->CanUse(RG_SERENADE_OF_WATER)),
         ENTRANCE(RR_NOCTURNE_OF_SHADOW_WARP, logic->CanUse(RG_NOCTURNE_OF_SHADOW)),
-        ENTRANCE(RR_REQUIEM_OF_SPIRIT_WARP,  logic->CanUse(RG_REQUIEM_OF_SPIRIT)),
+        // A child cannot walk out of the Desert Colossus: his Haunted Wasteland leads only back to it.
+        ENTRANCE(RR_REQUIEM_OF_SPIRIT_WARP,  logic->CanUse(RG_REQUIEM_OF_SPIRIT) && (logic->IsAdult || ChildKnowsAWarpHeWalksOutOf())),
         ENTRANCE(RR_PRELUDE_OF_LIGHT_WARP,   logic->CanUse(RG_PRELUDE_OF_LIGHT)),
     });
 

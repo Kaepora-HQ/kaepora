@@ -124,7 +124,7 @@
         "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs",
         "Banc/HyruleField/HyruleField_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Arrow_Ice"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "6900843020594897860",
@@ -132,7 +132,7 @@
         "Banc/HyruleField/HyruleField_Adult_Static.bcett.byml.zs",
         "Banc/HyruleField/HyruleField_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "13612880783193811229",
@@ -146,14 +146,14 @@
       "files": [
         "Banc/GerudoValley/GerudoValley_Adult_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "6205043616869463865",
       "files": [
         "Banc/GerudoValley/GerudoValley_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "17750686910716887133",
@@ -199,7 +199,7 @@
         "Banc/HountedWasteland/HountedWasteland_Adult_Static.bcett.byml.zs",
         "Banc/HountedWasteland/HountedWasteland_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Gauntlet_Gold"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "1186167733408299582",
@@ -207,7 +207,7 @@
         "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs",
         "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Obj_Heart_Piece"
     },
     {
       "hash": "16881481538337649070",
@@ -245,7 +245,7 @@
         "Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "9622128545943056087",
@@ -260,7 +260,7 @@
       "files": [
         "Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Range_Bow"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "9809508929088891725",
@@ -508,7 +508,7 @@
       "files": [
         "Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Deku"
+      "drop_actor": "Obj_Heart_Piece"
     },
     {
       "hash": "6449977980406424425",
@@ -543,14 +543,14 @@
       "files": [
         "Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_HoverBoot"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "11082303891540711688",
       "files": [
         "Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Obj_Heart_Piece"
+      "drop_actor": "Item_HoverBoot"
     },
     {
       "hash": "3433400840978782007",
@@ -571,7 +571,7 @@
       "files": [
         "Banc/ForestTemple/ForestTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "Item_Shield_Mirror"
     },
     {
       "hash": "5634724236470386190",
@@ -599,7 +599,7 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "3949488292768750868",
@@ -627,7 +627,7 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "16785682308850448108",
@@ -662,7 +662,7 @@
       "files": [
         "Banc/FireTemple/FireTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Item_ScrubBusinessSeed"
     },
     {
       "hash": "12945617941305968586",
@@ -697,7 +697,7 @@
       "files": [
         "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_ScrubBusinessSeed"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "16424266294822218796",
@@ -739,7 +739,7 @@
       "files": [
         "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "18059711820131847165",
@@ -754,7 +754,7 @@
         "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs",
         "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Deku"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "10012167258643363548",
@@ -762,14 +762,14 @@
         "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs",
         "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Green"
+      "drop_actor": "TBox_Shield_Deku"
     },
     {
       "hash": "5309180490719879013",
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Shield_Deku"
     },
     {
       "hash": "5703423643219134246",
@@ -804,7 +804,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombBundle_Small"
+      "drop_actor": "Item_Arrow_Ice"
     },
     {
       "hash": "1501288453962537671",
@@ -825,7 +825,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_ArrowBundle_Large"
     },
     {
       "hash": "12042193296697281461",
@@ -846,7 +846,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_ArrowBundle_Large"
+      "drop_actor": "TBox_Rupee_Green"
     },
     {
       "hash": "16272168033146555902",
@@ -860,7 +860,7 @@
       "files": [
         "Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Shield_Deku"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "13528903653876646082",
@@ -874,7 +874,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "1733372171176975157",
@@ -902,7 +902,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Tbox_MagicJar_Large"
     },
     {
       "hash": "8858270325665149688",
@@ -923,7 +923,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Tbox_MagicJar_Large"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "5681107746948738726",
@@ -944,7 +944,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Shield_Mirror"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "9221365632831348137",
@@ -958,7 +958,7 @@
       "files": [
         "Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "8975637636514249074",
@@ -979,14 +979,14 @@
       "files": [
         "Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Shield_Deku"
     },
     {
       "hash": "14911602953212243797",
       "files": [
         "Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Obj_Heart_Piece"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "631709185320708287",
@@ -1014,14 +1014,14 @@
       "files": [
         "Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_BombBundle_Small"
     },
     {
       "hash": "6064359710907908886",
       "files": [
         "Banc/BottomOfTheWell/BottomOfTheWell_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_Gauntlet_Gold"
     },
     {
       "hash": "12988877782812797760",
@@ -1042,7 +1042,7 @@
       "files": [
         "Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "11498802739257120175",
@@ -1056,7 +1056,7 @@
       "files": [
         "Banc/IceCavern/IceCavern_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Tbox_MagicJar_Large"
     },
     {
       "hash": "6859289214373847284",
@@ -1077,7 +1077,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Tbox_MagicJar_Large"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "2436665354602612279",
@@ -1091,7 +1091,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Item_Range_Bow"
     },
     {
       "hash": "4709724720801091788",
@@ -1147,14 +1147,14 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_ScrubBusinessSeed"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "3717705376223508790",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Obj_Heart_Piece"
+      "drop_actor": "Item_ScrubBusinessSeed"
     },
     {
       "hash": "4961588221597286817",
@@ -1175,7 +1175,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "9911316961118170383",
@@ -1189,28 +1189,28 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "6897789835137994741",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Item_BombchuBundle_Small"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "11754783663699171680",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "5329807728555596183",
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_BombchuBundle_Small"
     },
     {
       "hash": "3750231902048775592",
@@ -1224,7 +1224,7 @@
       "files": [
         "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Obj_Heart_Piece"
     },
     {
       "hash": "17092385671602176550",
@@ -1360,15 +1360,15 @@
     },
     {
       "label": "GOSSIP_KOKIRI_FOREST_04",
-      "text": "They say that an {color:0}invisible chest beneath Gerudo Valley{color:65535} holds {color:0}a\nGreen Rupee{color:65535}."
+      "text": "They say that {color:0}the Gerudo Proving Grounds{color:65535} hoards {color:0}the Fairy Bow{color:65535}."
     },
     {
       "label": "GOSSIP_LOST_WOOD_02",
-      "text": "They say that {color:0}the Boomerang{color:65535} can be found at {color:0}Kakariko Village{color:65535}."
+      "text": "They say that {color:0}the Forest Temple{color:65535} hoards {color:0}the Mirror Shield{color:65535}."
     },
     {
       "label": "GOSSIP_SACRED_FOREST_MEADOW_01",
-      "text": "They say that plundering {color:0}the Gerudo Proving Grounds{color:65535} is {color:0}a foolish\nchoice{color:65535}."
+      "text": "They say that plundering {color:0}the Mirage Desert{color:65535} is {color:0}a foolish choice{color:65535}."
     },
     {
       "label": "GOSSIP_SACRED_FOREST_MEADOW_02",
@@ -1376,39 +1376,39 @@
     },
     {
       "label": "GOSSIP_SACRED_FOREST_MEADOW_03",
-      "text": "They say that {color:0}a Red Rupee{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+      "text": "They say that {color:0}Lord Jabu-Jabu's Belly{color:65535} hoards {color:0}a Business Scrub\nSeed{color:65535}."
     },
     {
       "label": "GOSSIP_KOKIRI_FOREST_02",
-      "text": "They say that upon the {color:0}Colossus's left hand{color:65535} is {color:0}a Green Rupee{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_FIELD_04",
-      "text": "They say that {color:0}a Green Rupee{color:65535} can be found at {color:0}Gerudo Fortress{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_FIELD_02",
-      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Goron City{color:65535}."
-    },
-    {
-      "label": "GOSSIP_HYRULE_FIELD_03",
-      "text": "They say that {color:0}the Mirage Desert{color:65535} is on {color:0}the way of the hero{color:65535}."
-    },
-    {
-      "label": "GOSSIP_LAKE_HYLIA_01",
-      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}the Sacred\nGrove{color:65535}."
-    },
-    {
-      "label": "GOSSIP_LAKE_HYLIA_02",
       "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}the Megaton Hammer{color:65535}."
     },
     {
+      "label": "GOSSIP_HYRULE_FIELD_04",
+      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}Kokiri Forest{color:65535}."
+    },
+    {
+      "label": "GOSSIP_HYRULE_FIELD_02",
+      "text": "They say this stone used to ask for a mask. Nobody misses it."
+    },
+    {
+      "label": "GOSSIP_HYRULE_FIELD_03",
+      "text": "They say that {color:0}the Bottom of the Well{color:65535} is on {color:0}the way of the hero{color:65535}."
+    },
+    {
+      "label": "GOSSIP_LAKE_HYLIA_01",
+      "text": "They say that {color:0}four candles beneath the lake{color:65535} light the way to {color:0}a\nGreen Rupee{color:65535}."
+    },
+    {
+      "label": "GOSSIP_LAKE_HYLIA_02",
+      "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
+    },
+    {
       "label": "GOSSIP_LAKE_HYLIA_03",
-      "text": "They say that {color:0}the Lenses of Truth{color:65535} can be found at {color:0}the Death\nMountain Trail{color:65535}."
+      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}a Piece of Heart{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_MARKET_01",
-      "text": "They say that plundering {color:0}the Bottom of the Well{color:65535} is {color:0}a foolish\nchoice{color:65535}."
+      "text": "They say that a {color:0}hole along a river{color:65535} holds {color:0}a Purple Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_MARKET_02",
@@ -1416,43 +1416,43 @@
     },
     {
       "label": "GOSSIP_HYRULE_MARKET_03",
-      "text": "They say that high on the {color:0}windmill of Kakariko Village{color:65535} lies {color:0}Three\nDeku Nuts{color:65535}."
+      "text": "They say that {color:0}Dodongo Cavern{color:65535} hoards {color:0}a Red Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_MARKET_04",
-      "text": "They say that {color:0}the Forest Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
+      "text": "They say that {color:0}the Lenses of Truth{color:65535} can be found at {color:0}the Death\nMountain Trail{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_CASTLE_01",
-      "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
+      "text": "They say that {color:0}the Spirit Temple{color:65535} hoards {color:0}a Green Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_CASTLE_02",
-      "text": "They say that {color:0}a Large Magic Jar{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+      "text": "They say that a {color:0}Poe near Lake Hylia{color:65535} guards {color:0}a Red Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_FIELD_01",
-      "text": "They say that quest guidance can be found at a talking rock."
+      "text": "They say that {color:0}the Fire Temple{color:65535} hoards {color:0}a Business Scrub Seed{color:65535}."
     },
     {
       "label": "GOSSIP_KAKARIKO_VILLAGE_01",
-      "text": "They say that {color:0}the Longshot{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
+      "text": "They say that quest guidance can be found at a talking rock."
     },
     {
       "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_01",
-      "text": "They say that {color:0}the Silver Gauntlets{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
+      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}the Graveyard{color:65535}."
     },
     {
       "label": "GOSSIP_GRAVEYARD_01",
-      "text": "I heard Link is pretty good at Zelda."
+      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}a Blue Rupee{color:65535}."
     },
     {
       "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_02",
-      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}the Lost Woods{color:65535}."
+      "text": "They say that {color:0}the Silver Gauntlets{color:65535} can be found at {color:0}Gerudo Valley{color:65535}."
     },
     {
       "label": "GOSSIP_HYRULE_CASTLE_03",
-      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+      "text": "They say that beside the {color:0}heart of the Goron City maze{color:65535} lies {color:0}Five\nArrows{color:65535}."
     },
     {
       "label": "GOSSIP_GORON_CITY_01",
@@ -1460,55 +1460,55 @@
     },
     {
       "label": "GOSSIP_GORON_CITY_02",
-      "text": "They say that {color:0}the Graveyard{color:65535} is on {color:0}the way of the hero{color:65535}."
+      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}Five Arrows{color:65535}."
     },
     {
       "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_01",
-      "text": "They say that a {color:0}hole in a forest village{color:65535} holds {color:0}a Blue Rupee{color:65535}."
+      "text": "They say that {color:0}the Bottom of the Well{color:65535} hoards {color:0}a Deku Shield{color:65535}."
     },
     {
       "label": "GOSSIP_DEATH_MOUNTAIN_CRATER_02",
-      "text": "Hoot! Hoot! Would you like me to repeat that?"
+      "text": "They say that a {color:0}Poe in northern Hyrule Field{color:65535} guards {color:0}a Large Magic\nJar{color:65535}."
     },
     {
       "label": "GOSSIP_DODONGO_CAVERN_01",
-      "text": "They say that {color:0}the Forest Temple{color:65535} hoards {color:0}a Piece of Heart{color:65535}."
+      "text": "They say that {color:0}the Shadow Temple{color:65535} hoards {color:0}Five Bombs{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_RIVER_01",
-      "text": "Hoot! Hoot! They say the owl knows where everything is, and will\ntell you anything else."
+      "text": "They say the remake moved this chest. It did not say where."
     },
     {
       "label": "GOSSIP_ZORA_RIVER_02",
-      "text": "They say that {color:0}the Ice Arrow{color:65535} can be found at {color:0}Hyrule Field{color:65535}."
+      "text": "They say that {color:0}Kakariko Village{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_RIVER_03",
-      "text": "They say that {color:0}the Forest Temple{color:65535} hoards {color:0}a Deku Shield{color:65535}."
+      "text": "They say that {color:0}Gerudo Valley{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
       "label": "GOSSIP_LOST_WOOD_01",
-      "text": "They say that {color:0}the Water Temple{color:65535} hoards {color:0}a Red Rupee{color:65535}."
+      "text": "They say that above a {color:0}maze of stone{color:65535} in Dodongo Cavern lies {color:0}a Blue\nRupee{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_DOMAIN_01",
-      "text": "They say that {color:0}Five Arrows{color:65535} can be found at {color:0}Goron City{color:65535}."
+      "text": "They say that {color:0}the Forest Temple{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_FOUNTAIN_01",
-      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}a Piece of Heart{color:65535}."
+      "text": "They say that the {color:0}Song of Time{color:65535} in the Gerudo Proving Grounds\nleads to {color:0}a Piece of Heart{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_FOUNTAIN_02",
-      "text": "They say that {color:0}the Great Deku Tree{color:65535} hoards {color:0}a Red Rupee{color:65535}."
+      "text": "They say that {color:0}the Spirit Temple{color:65535} hoards {color:0}the Ice Arrow{color:65535}."
     },
     {
       "label": "GOSSIP_GERUDO_VALLEY_01",
-      "text": "They say that {color:0}the Shadow Temple{color:65535} hoards {color:0}the Mirror Shield{color:65535}."
+      "text": "Hoot! Hoot! They say the owl knows where everything is, and will\ntell you anything else."
     },
     {
       "label": "GOSSIP_DESERT_COLOSSUS_01",
-      "text": "They say that {color:0}the Fire Temple{color:65535} hoards {color:0}a Business Scrub Seed{color:65535}."
+      "text": "They say that {color:0}Ganondorf's Castle{color:65535} hoards {color:0}a Red Rupee{color:65535}."
     }
   ],
   "message_texts": [

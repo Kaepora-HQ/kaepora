@@ -51,13 +51,24 @@ class LogicTest(unittest.TestCase):
         self.assertEqual((result.returncode, result.stdout), (2, ""), result.stderr)
         self.assertIn("Link's Pocket", result.stderr)
 
-    def test_child_comes_back_only_with_the_prelude_of_light(self):
-        # Only child Link can drain the well, with the Song of Storms that only adult Link learns.
-        self.assertTrue(self.reachable("Bottom of the Well Lens of Truth Chest"))
-        # With the Fairy Bow in the well, adult Link cannot finish the Forest Temple to learn the Prelude of Light.
-        self.assertFalse(self.reachable("Bottom of the Well Lens of Truth Chest",
-                                        ("Bottom of the Well Lens of Truth Chest", "Progressive Bow"),
-                                        ("Forest Temple Bow Chest", "Green Rupee")))
+    def test_child_comes_back_before_the_forest_temple(self):
+        # Only child Link can drain the well, with the Song of Storms that only adult Link learns. With the Fairy Bow in
+        # the well, adult Link cannot finish the Forest Temple, and he still puts the Master Sword back.
+        self.assertTrue(self.reachable("Bottom of the Well Lens of Truth Chest",
+                                       ("Bottom of the Well Lens of Truth Chest", "Progressive Bow"),
+                                       ("Forest Temple Bow Chest", "Green Rupee")))
+
+    def test_a_child_warps_where_he_cannot_walk_out_only_with_a_song_that_takes_him_out(self):
+        # A child cannot walk out of the Desert Colossus, where only the Requiem takes him, nor get across to an exit
+        # from the middle of Death Mountain Crater, where the Bolero lands him and he plants the bean of its skulltula.
+        # The Minuet, the Serenade, the Nocturne and the Prelude land him where he can walk out.
+        no_way_out = (("Sheik in Forest", "Green Rupee"), ("Sheik in Ice Cavern", "Green Rupee"),
+                      ("Sheik in Kakariko", "Green Rupee"), ("Sheik at Temple", "Green Rupee"))
+        for location in ("Spirit Temple Child Early Torches Chest", "DMC GS Bean Patch"):
+            self.assertFalse(self.reachable(location, *no_way_out), location)
+            for song in no_way_out:
+                others = [pair for pair in no_way_out if pair != song]
+                self.assertTrue(self.reachable(location, *others), (location, song[0]))
 
     def test_only_adult_link_buys_a_tunic(self):
         never_adult = ("HF Ocarina of Time Item", "Green Rupee")
@@ -118,15 +129,6 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Deku Tree Slingshot Room Side Chest"))
         no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
         self.assertFalse(self.reachable("Deku Tree Slingshot Room Side Chest", no_slingshot))
-
-    def test_kokiri_forest_storms_grotto_chest_needs_the_scrubs_beaten(self):
-        # Beating the three Deku Scrub brothers takes a shield to send their nuts back. Without the bow, adult Link never
-        # finishes the Forest Temple and never returns to child, so only a Hylian Shield does it.
-        no_bow = ("Forest Temple Bow Chest", "Green Rupee")
-        no_hylian_shield = (("Market Bazaar Item 1", "Green Rupee"), ("Kak Bazaar Item 1", "Green Rupee"),
-                            ("Graveyard Shield Grave Chest", "Green Rupee"))
-        self.assertTrue(self.reachable("KF Storms Grotto Chest", no_bow))
-        self.assertFalse(self.reachable("KF Storms Grotto Chest", no_bow, *no_hylian_shield))
 
     # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
     # tier found, and only adult Link can use them.
@@ -563,11 +565,9 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("HF Redead Grotto Chest", ("Song from Windmill", "Green Rupee")))
 
     def test_hyrule_field_fairy_thought_chest_needs_both_ages(self):
-        # Adult Link reads the Fairy Thought beside the chest, and the chest then opens for child Link. Without the
-        # Prelude of Light, adult Link never returns to child.
+        # Adult Link reads the Fairy Thought beside the chest, and the chest then opens for child Link.
         self.assertTrue(self.reachable("HF Fairy Thought Chest"))
         self.assertFalse(self.reachable("HF Fairy Thought Chest", NEVER_ADULT))
-        self.assertFalse(self.reachable("HF Fairy Thought Chest", ("Sheik at Temple", "Green Rupee")))
 
     def test_lake_hylia_grotto_chest_needs_fire_for_four_candles(self):
         # A child lights the candles with Din's Fire and a Deku Stick, an adult with Din's Fire or fire arrows alone.

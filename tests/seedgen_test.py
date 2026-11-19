@@ -71,7 +71,7 @@ def shuffled_shop_slots(count):
 SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 # A seed whose hints name a slot that only five per shop shuffle.
-HINT_SEED_AT_FIVE = "1"
+HINT_SEED_AT_FIVE = "2"
 FILLED_ONLY_BY_CHESTS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = FILLED_ONLY_BY_CHESTS | {"Item_BombBag_Small", "Item_BombchuBundle_Small", "Item_BombchuBundle_Large",
                                            "Item_Bottle", "Item_Bottle_Milk"}
@@ -81,6 +81,8 @@ GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SI
 GIFTS_SHUFFLED = {"Gifts": "Shuffled"}
 AGONY_GUIDE_SHUT = {"flow": "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "event": "Event371",
                     "param": "GameDataName", "text": "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"}
+KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
+WARPS_A_CHILD_WALKS_OUT_OF = ("Minuet of Forest", "Serenade of Water", "Nocturne of Shadow", "Prelude of Light")
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -306,6 +308,31 @@ class SeedgenTest(unittest.TestCase):
         # In seed 1, the pruning drops what three steps counted on in an earlier sphere.
         log, _ = self.generate("1")
         self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere(self):
+        # Only child Link drains the well, with the Song of Storms that only adult Link learns. Seed 3's route takes a
+        # chest in the well before Phantom Ganon.
+        log, _ = self.generate("3")
+        spheres = list(log["playthrough"].values())
+        forest_temple = next(number for number, steps in enumerate(spheres) if "Phantom Ganon" in steps)
+        self.assertTrue(any(step.startswith("Bottom of the Well") for steps in spheres[:forest_temple] for step in steps))
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_a_route_warps_a_child_to_the_colossus_only_after_a_song_that_takes_him_out(self):
+        # A child cannot walk out of the Desert Colossus, and only the Requiem takes him there. With keys not needed,
+        # seed 4's route takes steps that need the Requiem. Its adult Link holds the Longshot and the Hover Boots by
+        # then, so he walks to the Colossus, and the child is the one who needs the song.
+        log, _ = self.generate("4", KEYS_NOT_NEEDED)
+        spheres = [list(steps) for steps in log["playthrough"].values()]
+        given = {spoiler_item(item): number for number, steps in enumerate(log["playthrough"].values())
+                 for item in steps.values()}
+        requiem = next(location for location, item in playthrough_steps(log).items() if item == "Requiem of Spirit")
+        without_requiem = [*log["locations"].items(), (requiem, "Green Rupee")]
+        by_child = [number for number, steps in enumerate(spheres) if number > given["Requiem of Spirit"]
+                    for step in steps if not reach.reachable(step, *without_requiem, settings=log["settings"])]
+        self.assertTrue(by_child)
+        way_out = min(given.get(song, len(spheres)) for song in WARPS_A_CHILD_WALKS_OUT_OF)
+        self.assertLess(way_out, min(by_child))
 
     def test_a_route_that_buys_from_shops_is_in_reach_in_its_sphere(self):
         # Seed 3's route buys the Hookshot, the Megaton Hammer and the Mirror Shield at shuffled slots.
