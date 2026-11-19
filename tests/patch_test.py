@@ -4,7 +4,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-start-mod <kaepora-patch> <game.nup> <tested mod's game data list>
        python3 -I tests/patch_test.py tested-hammer-room-mod <kaepora-patch> <game.nup> <tested mod's placement file>
        python3 -I tests/patch_test.py tested-substitute-mod|tested-added-item-mod|tested-gift-mod \
-           |tested-stone-text-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+           |tested-first-gifts-mod|tested-stone-text-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
@@ -551,6 +551,31 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
         theirs = tested[path]
         assert_same_frame_header(ours, theirs)
         assert zstd.decompress(ours, zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
+
+
+def tested_first_gifts_mod(patch, game, romfs):
+    """Gifts and gift items as the game showed them: one talk in the House of Skulltula handed over a Purple Rupee, 10
+    arrows, a Hylian Shield, the Fairy Slingshot and a Large Magic Jar, and the Stone of Agony's guide did not open; the
+    man on the roof gave the Kokiri Sword, the lab's dive the Megaton Hammer, and the Skull Kid three Deku Nuts; four
+    Hyrule Field chests gave Lon Lon Milk to a Link with no bottle, the Echo Gem, the Giant's Wallet and the Silver
+    Scale. The patcher writes every file of that mod byte for byte."""
+    field = "Banc/HyruleField/HyruleField_{}_Dynamic.bcett.byml.zs"
+    chests = [(17023457248274633121, [field.format("Adult")], "Item_Bottle_Milk"),
+              (1163740567397714729, [field.format("Adult")], "Item_AgonyStone"),
+              (9891111455604007674, [field.format("Adult")], "Item_Wallet_Large"),
+              (17445672702269453589, [field.format("Adult"), field.format("Child")], "Item_Scale_Silver")]
+    house = "Event/EventFlow/GatheringTokenGold.bfevfl.zs"
+    texts = [(house, "Event398", "TakenRewardActor", "TBox_Rupee_Purple"),
+             (house, "Event75", "TakenRewardActor", "TBox_ArrowBundle_Large"),
+             (house, "Event371", "GameDataName", "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"),
+             (house, "Event194", "TakenRewardActor", "TBox_Shield_Hylian"),
+             (house, "Event200", "TakenRewardActor", "Item_Range_SlingShot"),
+             (house, "Event219", "TakenRewardActor", "Tbox_MagicJar_Large"),
+             ("Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs", "Event4", "ActorName", "Item_Sword_Kokiri"),
+             ("Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs", "Event71", "ActorName", "TBox_DekuNutBundle"),
+             ("Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs", "Event113", "ReveiveItem", "Item_Hammer")]
+    mod = patched(patch, game, plan(chests, event_texts=texts))
+    assert mod == files(pathlib.Path(romfs)), sorted(mod)
 
 
 def tested_stone_text_mod(patch, game, romfs):
@@ -1258,6 +1283,7 @@ def main():
         "tested-hammer-room-mod": tested_hammer_room_mod,
         "tested-gift-mod": tested_gift_mod,
         "tested-event-text-mods": tested_event_text_mods,
+        "tested-first-gifts-mod": tested_first_gifts_mod,
         "tested-program-mod": tested_program_mod,
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
