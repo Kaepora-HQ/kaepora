@@ -1,0 +1,12 @@
+location	song	melody	lesson	examples	follows	line	gift
+Song from Impa	Item_Melody_ZeldaLullaby	0	Event/EventFlow/Dm_MelodyGet_Zelda.bfevfl.zs	Event27	Event49	EventFlowMsg/Dm_MelodyGet_Zelda:Dm_MelodyGet_Zelda_0012	Event/EventFlow/Dm_MelodyGet_Zelda.bfevfl.zs:Event111
+Song from Malon	Item_Melody_EponaSong	1	Event/EventFlow/Dm_MelodyGet_Epona.bfevfl.zs	Event2	Event7	EventFlowMsg/Dm_MelodyGet_Epona:Dm_MelodyGet_Epona_0000	Event/EventFlow/Dm_MelodyGet_Epona.bfevfl.zs:Event11
+Song from Saria	Item_Melody_SariaSong	2	Event/EventFlow/Dm_MelodyGet_Saria.bfevfl.zs	Event135	Event85	EventFlowMsg/Dm_MelodyGet_Saria:Dm_MelodyGet_Saria_0009	Event/EventFlow/Dm_MelodyGet_Saria.bfevfl.zs:Event109
+Song from Royal Family's Tomb	Item_Melody_SunSong	3	Event/EventFlow/Dm_MelodyGet_Sun.bfevfl.zs	Event0,Event3	Event106,Event145	EventFlowMsg/Dm_MelodyGet_Sun:Dm_MelodyGet_Sun_0014	Event/EventFlow/Dm_MelodyGet_Sun_03.bfevfl.zs:Event34
+Song from Ocarina of Time	Item_Melody_TimeSong	4	Event/EventFlow/Dm_MelodyGet_Time.bfevfl.zs	Event83	Event92	EventFlowMsg/Dm_MelodyGet_Time:Dm_MelodyGet_Time_Text_006_c	Event/EventFlow/Dm_MelodyGet_Time.bfevfl.zs:Event4
+Song from Windmill	Item_Melody_StormSong	5	Event/EventFlow/Dm_MelodyGet_Storm.bfevfl.zs	Event6	Event9	EventFlowMsg/Npc_Hylia_009_Adult:Talk_03	Event/EventFlow/Dm_MelodyGet_Storm.bfevfl.zs:Event29
+Sheik in Forest	Item_Melody_ForestMinuet	6	Event/EventFlow/Dm_MelodyGet_Forest.bfevfl.zs	Event7	Event9	EventFlowMsg/Dm_MelodyGet_Forest:Dm_MelodyGet_Forest_0009	Event/EventFlow/Dm_MelodyGet_Forest.bfevfl.zs:Event22
+Sheik in Crater	Item_Melody_FireBolero	7	Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs	Event2	Event3	EventFlowMsg/Dm_MelodyGet_Fire:Dm_MelodyGet_Fire_0004	Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs:Event192
+Sheik in Ice Cavern	Item_Melody_WaterSerenade	8	Event/EventFlow/Dm_MelodyGet_Water.bfevfl.zs	Event16	Event2	EventFlowMsg/Dm_MelodyGet_Water:Dm_MelodyGet_Water_0011	Event/EventFlow/Dm_MelodyGet_Water.bfevfl.zs:Event29
+Sheik in Kakariko	Item_Melody_ShadowNocturne	10	Event/EventFlow/Dm_MelodyGet_Shadow.bfevfl.zs	Event12	Event13	EventFlowMsg/Dm_MelodyGet_Shadow:Dm_MelodyGet_Shadow_0009	Event/EventFlow/Dm_MelodyGet_Shadow.bfevfl.zs:Event21
+Sheik at Temple	Item_Melody_LightPrelude	11	Event/EventFlow/Dm_MelodyGet_Shine.bfevfl.zs	Event12	Event13	EventFlowMsg/Dm_MelodyGet_Shine:Dm_MelodyGet_Shine_0015	Event/EventFlow/Dm_MelodyGet_Shine.bfevfl.zs:Event53

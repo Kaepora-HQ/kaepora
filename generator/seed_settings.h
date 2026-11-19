@@ -22,6 +22,7 @@ inline constexpr std::string_view ShopPriceSetting = "Shop price";
 inline constexpr std::string_view ShopPriceRangeSetting = "Shop price range";
 inline constexpr std::string_view GiftsSetting = "Gifts";
 inline constexpr std::string_view SkulltulasSetting = "Gold Skulltulas";
+inline constexpr std::string_view SongsSetting = "Songs";
 inline constexpr std::string_view LooseItemsSetting = "Loose items";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
@@ -165,6 +166,12 @@ inline constexpr std::pair<Skulltulas, std::string_view> SkulltulasChoices[] = {
     { Skulltulas::All, "All" },
 };
 
+enum class Songs { Vanilla, ShuffledAmongThemselves };
+inline constexpr std::pair<Songs, std::string_view> SongsChoices[] = {
+    { Songs::Vanilla, "Vanilla" },
+    { Songs::ShuffledAmongThemselves, "Shuffled among themselves" },
+};
+
 enum class LooseItems { Vanilla, Shuffled };
 inline constexpr std::pair<LooseItems, std::string_view> LooseItemsChoices[] = {
     { LooseItems::Vanilla, "Vanilla" },
@@ -199,6 +206,7 @@ struct SeedSettings {
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Gifts gifts = Gifts::Vanilla;
     Skulltulas skulltulas = Skulltulas::Vanilla;
+    Songs songs = Songs::Vanilla;
     LooseItems looseItems = LooseItems::Vanilla;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;

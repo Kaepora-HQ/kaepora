@@ -551,6 +551,7 @@ private slots:
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
                                 "Gifts: Vanilla\n"
+                                "Songs: Vanilla\n"
                                 "Loose items: Vanilla\n"
                                 "Lens of Truth: Never needed\n"
                                 "Gossip stones: Give hints\n"
@@ -624,6 +625,7 @@ private slots:
         choice("Shop goods")->setCurrentText("Four per shop shuffled");
         choice("Gold Skulltulas")->setCurrentText("All");
         choice("Gifts")->setCurrentText("Shuffled");
+        choice("Songs")->setCurrentText("Shuffled among themselves");
         choice("Loose items")->setCurrentText("Shuffled");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
@@ -638,6 +640,7 @@ private slots:
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
+        QCOMPARE(choice("Songs")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Loose items")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
@@ -778,7 +781,7 @@ private slots:
         }
         QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
         QCOMPARE(rows("Shuffle"),
-                 (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Loose items" }));
+                 (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs", "Loose items" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 
@@ -820,6 +823,7 @@ private slots:
                                               << "Overworld Gold Skulltulas shuffled";
         QTest::newRow("skulltulas") << "Gold Skulltulas" << "All" << "Gold Skulltulas shuffled";
         QTest::newRow("gifts") << "Gifts" << "Shuffled" << "Gifts shuffled";
+        QTest::newRow("songs") << "Songs" << "Shuffled among themselves" << "Songs shuffled";
         QTest::newRow("loose items") << "Loose items" << "Shuffled" << "Loose items shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";

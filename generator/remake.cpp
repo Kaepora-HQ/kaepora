@@ -10,6 +10,7 @@
 #include <charconv>
 #include <deque>
 #include <format>
+#include <iterator>
 #include <map>
 #include <set>
 #include <span>
@@ -57,6 +58,9 @@ static constexpr unsigned char skulltulaTable[] = {
 };
 static constexpr unsigned char looseItemTable[] = {
 #embed "../remake/loose_items.tsv"
+};
+static constexpr unsigned char songTable[] = {
+#embed "../remake/songs.tsv"
 };
 
 [[noreturn]] static void Fail(const std::string& message) {
@@ -302,7 +306,8 @@ static std::string ItemPhrase(const std::string& where, const std::vector<std::s
 
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                                       const std::vector<RemakeGift>& gifts,
-                                      const std::vector<RemakeSkulltula>& skulltulas) {
+                                      const std::vector<RemakeSkulltula>& skulltulas,
+                                      const std::vector<RemakeSongPlace>& songs) {
     RemakeHintTables tables;
     size_t line = 1;
     for (const auto& row : ReadTable("remake/stones.tsv", stoneTable, "label\tlocation")) {
@@ -408,10 +413,13 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
     for (const RemakeSkulltula& skulltula : skulltulas) {
         addShuffled(skulltula.location, std::string(TokenName));
     }
+    for (const RemakeSongPlace& place : songs) {
+        addShuffled(place.location, place.song);
+    }
     for (const auto& [location, sentence] : tables.chestSentences) {
         if (!shuffled.contains(location)) {
             Fail("remake/chest_hints.tsv: \"" + Rando::StaticData::GetLocation(location)->GetName() +
-                 "\" is not a shuffled chest, or a shop slot, gift or skulltula that can be shuffled");
+                 "\" is not a shuffled chest, or a shop slot, gift, skulltula or song place that can be shuffled");
         }
     }
     return tables;
@@ -420,7 +428,8 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
                                                          const std::vector<RemakeShopSlot>& shops,
                                                          const std::vector<RemakeGift>& gifts,
-                                                         const std::vector<RemakeSkulltula>& skulltulas) {
+                                                         const std::vector<RemakeSkulltula>& skulltulas,
+                                                         const std::vector<RemakeSongPlace>& songs) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
@@ -433,6 +442,9 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
     }
     names[RG_GOLD_SKULLTULA_TOKEN].insert(names[RG_GOLD_SKULLTULA_TOKEN].end(), skulltulas.size(),
                                           std::string(TokenName));
+    for (const RemakeSongPlace& place : songs) {
+        names[place.sohSong].push_back(place.song);
+    }
     std::map<RandomizerCheck, std::string> placed;
     const auto place = [&](RandomizerCheck location) {
         RandomizerGet item = Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedRandomizerGet();
@@ -453,6 +465,9 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
     }
     for (const RemakeSkulltula& skulltula : skulltulas) {
         place(skulltula.location);
+    }
+    for (const RemakeSongPlace& song : songs) {
+        place(song.location);
     }
     return placed;
 }
@@ -599,6 +614,57 @@ std::vector<RemakeSkulltula> LoadRemakeSkulltulas() {
     return skulltulas;
 }
 
+std::vector<RemakeSongPlace> LoadRemakeSongs() {
+    const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
+    std::vector<RemakeSongPlace> places;
+    std::set<RandomizerCheck> locations;
+    std::set<int> melodies;
+    size_t line = 1;
+    for (const auto& row :
+         ReadTable("remake/songs.tsv", songTable, "location\tsong\tmelody\tlesson\texamples\tfollows\tline\tgift")) {
+        const std::string where = "remake/songs.tsv line " + std::to_string(++line) + ": ";
+        const RandomizerCheck location = LocationNamed(where, row[0]);
+        const auto song = items.find(row[1]);
+        if (Rando::StaticData::GetLocation(location)->GetRCType() != RCTYPE_SONG_LOCATION ||
+            !locations.insert(location).second || song == items.end() || song->second.size() != 1 ||
+            song->second.front() != Rando::StaticData::GetLocation(location)->GetVanillaItem()) {
+            Fail(where + "not a SoH song location, a repeated one, or a song that is not the location's");
+        }
+        int melody = 0;
+        const auto [end, error] = std::from_chars(row[2].data(), row[2].data() + row[2].size(), melody);
+        const size_t colon = row[7].find(':');
+        RemakeSongPlace place{ .location = location,
+                               .song = row[1],
+                               .sohSong = song->second.front(),
+                               .melody = melody,
+                               .lesson = row[3],
+                               .examples = SohUtils::StringSplit(row[4], ","),
+                               .follows = SohUtils::StringSplit(row[5], ","),
+                               .line = row[6],
+                               .giftFlow = row[7].substr(0, colon),
+                               .giftEvent = colon == std::string::npos ? "" : row[7].substr(colon + 1) };
+        const auto isFlow = [](const std::string& path) {
+            return path.starts_with("Event/EventFlow/") && path.ends_with(".bfevfl.zs");
+        };
+        if (error != std::errc() || end != row[2].data() + row[2].size() || !melodies.insert(melody).second ||
+            !isFlow(place.lesson) || !isFlow(place.giftFlow) || place.giftEvent.empty() ||
+            !place.line.starts_with("EventFlowMsg/")) {
+            Fail(where + "a melody that is not a whole number or repeats, or a flow, gift or line out of place");
+        }
+        places.push_back(std::move(place));
+    }
+    // Sheik's scene at the Desert Colossus, the arrival there from the Wasteland and the Spirit Temple each set the
+    // Spirit quest's step whatever step it stands at. With the Requiem learned elsewhere, Link could warp there before
+    // the Gerudo Fortress and skip the fortress's steps, so the Colossus keeps its Requiem and has no row.
+    for (const Rando::Location& location : Rando::StaticData::GetLocationTable()) {
+        if (location.GetRCType() == RCTYPE_SONG_LOCATION && location.GetRandomizerCheck() != RC_SHEIK_AT_COLOSSUS &&
+            !locations.contains(location.GetRandomizerCheck())) {
+            Fail("remake/songs.tsv: no row for the SoH song location \"" + location.GetName() + "\"");
+        }
+    }
+    return places;
+}
+
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the
 // first two when it creates a save.
 static constexpr const char* startFlags[] = {
@@ -652,6 +718,20 @@ static constexpr EventText agonyGuideShut = { "Event/EventFlow/GatheringTokenGol
                                               "GameDataName",
                                               "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True" };
 
+// Event texts every seed that shuffles the songs carries.
+static constexpr EventText songFixes[] = {
+    // The windmill man starts his lesson only while Link does not know the Song of Storms. A Link who learns it
+    // elsewhere would never get the windmill's song, and one who learns another song there would get the lesson again
+    // at every ocarina. He asks whether the lesson has played instead.
+    { "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs", "Event17", "GameDataName",
+      "HavePlayedEvent.Dm_MelodyGet_Storm" },
+    { "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs", "Event69", "GameDataName",
+      "HavePlayedEvent.Dm_MelodyGet_Storm" },
+    // The Bolero's scene marks the Bolero known itself, whatever song it teaches. It marks its own lesson played
+    // instead, which the game also does as the scene plays.
+    { "Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs", "Event1", "GameDataName", "HavePlayedEvent.Dm_MelodyGet_Fire" },
+};
+
 static constexpr std::string_view smallKeyDoors[] = {
     "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
     "17124821462463640959", "530640766699404174",   "8886594954069367001",  "8924322743887267313",
@@ -683,6 +763,11 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
     if (settings.forest != Forest::Closed) {
         // The Kokiri at the exit no longer blocks the way out, and the invisible wall beside him is gone.
         values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
+    }
+    if (settings.songs == Songs::ShuffledAmongThemselves) {
+        // A child can learn a warp song and, grown up, warp out of the Temple of Time before he walks through its door.
+        // The scene at the door plays only while AllSage stands at Step01, and the adult's world map waits for it.
+        values["HavePlayedEvent.Dm_TimeTemple_0065"] = true;
     }
     if (settings.bridge == Bridge::AlwaysOpen) {
         // The bridge's logic module builds it once its event has played, whatever the Ganon quest's step.
@@ -724,7 +809,8 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-                                  const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
+                                  const std::vector<RemakeSkulltula>& skulltulas,
+                                  const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
@@ -752,7 +838,27 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             addText(agonyGuideShut.flow, agonyGuideShut.event, agonyGuideShut.param, agonyGuideShut.text);
         }
     }
+    if (!songs.empty()) {
+        for (const auto& [flow, event, param, text] : songFixes) {
+            addText(flow, event, param, text);
+        }
+    }
     plan["event_numbers"] = nlohmann::ordered_json::array();
+    for (const RemakeSongPlace& place : songs) {
+        const RemakeSongPlace& taught = *std::ranges::find(songs, items.at(place.location), &RemakeSongPlace::song);
+        for (const std::string& event : place.examples) {
+            addText(place.lesson, event, "MessageId", taught.line);
+        }
+        addText(place.giftFlow, place.giftEvent, "ActorName", taught.song);
+        for (const std::vector<std::string>* events : { &place.examples, &place.follows }) {
+            for (const std::string& event : *events) {
+                plan["event_numbers"].push_back({ { "flow", place.lesson },
+                                                  { "event", event },
+                                                  { "param", "MelodyType" },
+                                                  { "value", taught.melody } });
+            }
+        }
+    }
     plan["start_values"] = StartValues(settings);
     plan["stone_texts"] = nlohmann::ordered_json::array();
     for (const StoneHint& hint : hints) {

@@ -917,7 +917,8 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
 static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests,
                                                             const std::vector<RemakeShopSlot>& shops,
                                                             const std::vector<RemakeGift>& gifts,
-                                                            const std::vector<RemakeSkulltula>& skulltulas) {
+                                                            const std::vector<RemakeSkulltula>& skulltulas,
+                                                            const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
     std::map<RandomizerCheck, const RemakeChest*> chestAt;
     for (const RemakeChest& chest : chests) {
@@ -932,6 +933,9 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     }
     for (const RemakeSkulltula& skulltula : skulltulas) {
         pooled.emplace(skulltula.location, RG_GOLD_SKULLTULA_TOKEN);
+    }
+    for (const RemakeSongPlace& place : songs) {
+        pooled.emplace(place.location, place.sohSong);
     }
     std::vector<const RemakeChest*> shuffled;
     itemPool.clear();
@@ -986,18 +990,19 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
 }
 
 // Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests, shop
-// slots, gifts and Gold Skulltulas what the unmodified game gives there. The shuffled chests' and gifts' items, a Red
-// Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item pool, and each shuffled
-// shop slot takes a price. Returns the shuffled chests.
+// slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The shuffled chests', gifts' and
+// song places' items, a Red Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item
+// pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
                                            const std::vector<RemakeShopSlot>& shops,
                                            const std::vector<RemakeGift>& gifts,
-                                           const std::vector<RemakeSkulltula>& skulltulas) {
+                                           const std::vector<RemakeSkulltula>& skulltulas,
+                                           const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();
-    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops, gifts, skulltulas);
+    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops, gifts, skulltulas, songs);
     GenerateStartingInventory();
 
     for (const RemakeShopSlot& slot : shops) {
@@ -1060,7 +1065,7 @@ bool KeptFromShops(RandomizerGet item) {
 
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
          const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-         const std::vector<RemakeSkulltula>& skulltulas) {
+         const std::vector<RemakeSkulltula>& skulltulas, const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
     std::vector<RemakeChest> places = chests;
     places.insert(places.end(), looseItems.begin(), looseItems.end());
@@ -1076,7 +1081,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         // showItemProgress = false;
         ctx->playthroughLocations.clear();
         ctx->GetEntranceShuffler()->playthroughEntrances.clear();
-        std::vector<const RemakeChest*> shuffled = SetUpWorld(places, shops, gifts, skulltulas);
+        std::vector<const RemakeChest*> shuffled = SetUpWorld(places, shops, gifts, skulltulas, songs);
 
         // Temporarily add shop items to the itemPool so that entrance randomization
         // can validate the world using deku/hylian shields
@@ -1104,6 +1109,19 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 
         SPDLOG_INFO("Shuffling and Placing Dungeon Items...");
         PlaceDungeonItems(shuffled);
+
+        // As SoH places songs at song locations: once the dungeon items are in their own dungeons, the songs leave the
+        // pool for the song places.
+        if (!songs.empty()) {
+            std::vector<RandomizerCheck> songPlaces;
+            std::ranges::transform(songs, std::back_inserter(songPlaces), &RemakeSongPlace::location);
+            AssumedFill(FilterAndEraseFromPool(itemPool,
+                                               [](RandomizerGet item) {
+                                                   return Rando::StaticData::RetrieveItem(item).GetItemType() ==
+                                                          ITEMTYPE_SONG;
+                                               }),
+                        songPlaces, true);
+        }
 
         for (const RemakeChest& looseItem : looseItems) {
             shuffledLocations.push_back(looseItem.location);

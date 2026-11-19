@@ -214,11 +214,16 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      loose_items_hold_the_bomb_bag_the_bow_and_the_slingshot
                      a_dungeon_left_out_keeps_its_loose_items
                      a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere hints_name_loose_items_truly
+                     songs_shuffled_among_themselves a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere
+                     hints_name_song_places_truly
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
                      mido_names_where_the_kokiri_sword_lies a_place_a_character_names_is_not_named_again_by_a_stone
-                     mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla)
+                     mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla
+                     with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter
+                     with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple
+                     with_songs_shuffled_the_courtyard_scene_starts_played)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
@@ -304,7 +309,7 @@ if(KAEPORA_GAME_NUP)
                  gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
-                 weapon-copies event-numbers)
+                 weapon-copies event-numbers song-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -315,8 +320,9 @@ if(KAEPORA_GAME_NUP)
     foreach(TEST IN ITEMS same_files_as_the_two_programs a_seed_with_shop_goods_shuffled_is_patched
                           a_seed_with_gifts_and_shop_goods_shuffled_is_patched
                           a_seed_with_gold_skulltulas_shuffled_is_patched
-                          a_seed_with_loose_items_shuffled_is_patched two_seeds_in_one_process
-                          same_seed_twice_in_one_process existing_folder_is_refused new_folder_in_a_missing_folder)
+                          a_seed_with_loose_items_shuffled_is_patched a_seed_with_songs_shuffled_is_patched
+                          two_seeds_in_one_process same_seed_twice_in_one_process existing_folder_is_refused
+                          new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>

@@ -39,19 +39,20 @@ A hint names places and items as the game's English text does, so it matches the
 game file, a test checks each `name` against the game's message at `label`, in both English text packs, leaving out the
 codes the game puts before a noun.
 
-- `places.tsv` names each SoH area that holds a shuffled chest, shop slot, gift or Gold Skulltula. `area` is the prefix
-  SoH gives the names of the area's locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says`
-  is what a hint says: the name, with `the` where the game's text writes one before it, or the end of the name, as
-  "Ganondorf's Castle" for "Inside Ganondorf's Castle". A test checks that it is.
+- `places.tsv` names each SoH area that holds a shuffled chest, shop slot, gift, Gold Skulltula or song place. `area`
+  is the prefix SoH gives the names of the area's locations, and `label` is the place's label in
+  `LocationMsg/Location.msbt`. `says` is what a hint says: the name, with `the` where the game's text writes one before
+  it, or the end of the name, as "Ganondorf's Castle" for "Inside Ganondorf's Castle". A test checks that it is.
 - `item_names.tsv` names each remake item of `items.tsv`. `label` is in `ActorMsg/PouchContent.msbt`: the game names an
   item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `an`, `the` or empty.
 
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
 is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
-slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so does
-each gift, with SoH's sentence for it where that is true of the remake, each Gold Skulltula, and each item of
-`loose_items.tsv`. No crate stands by the graveyard's heart piece in the remake, so its sentence is our own.
+slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop. So does
+each gift, with SoH's sentence for it where that is true of the remake, each Gold Skulltula, each item of
+`loose_items.tsv`, and each song place, with SoH's sentence for it. No crate stands by the graveyard's heart piece in
+the remake, so its sentence is our own.
 
 `skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
 remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row
@@ -245,3 +246,40 @@ of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 
 container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The
 fill may place the Bow, the Slingshot and the Bomb Bag at a gift, a loose spot or a Gold Skulltula, but for a
 skulltula with shop goods shuffled (above).
+
+`songs.tsv` has a row for each of SoH's song locations but Sheik at Colossus. Each is a scene that teaches a song with
+the shared lesson in `Dm_SY_Ocarina`: the teacher plays an example tune, Link plays its notes, and the scene's gift
+names the song. With "Songs" at "Shuffled among themselves", the eleven songs go to the eleven places, as SoH's song
+locations setting puts them, and each place teaches the song placed there: its lesson takes that song's melody type and
+line, and its gift the song.
+
+- `location`: the SoH location, by SoH's English name for it.
+- `song`: the song the place teaches in the game, by the remake's name.
+- `melody`: that song's melody type. The shared lesson plays the tune and asks for the notes of the type it is given.
+  It adds the song of that type to what Link knows only within its own group: types 0 to 5 and 12 in a lesson of the
+  other teachers, the six warp songs, types 6 to 11, in Sheik's (read from `Dm_SY_Ocarina`). A lesson that teaches a
+  song of the other group adds it by its gift alone.
+- `lesson`: the scene's event flow.
+- `examples`: the events that call the lesson's example, comma separated. Each passes the melody type and the line
+  shown before the tune, as `MessageId`. The Sun's Song has two, for child and adult Link.
+- `follows`: the events that call the lesson's notes, comma separated, each with the melody type.
+- `line`: the message the examples show, by its file and label. The line goes with the song to the place that teaches
+  it.
+- `gift`: the flow and event that give the song with its window, as `flow:event`, by `ActorName`. The Sun's Song's
+  gift is in a flow of its own.
+
+The Desert Colossus keeps the Requiem of Spirit. Sheik's scene there sets the Spirit quest to Step05 whatever step it
+stands at (`DesertColossus_Common_665d`), and so do the Wasteland's arrival scene there and the Spirit Temple's hand
+chest, Iron Knuckle and Twinrova. Learned elsewhere, the Requiem would take Link there before the Gerudo Fortress, whose
+guards and carpenters belong to the quest's first steps. Read from the game's data; what the fortress then does is not
+seen.
+
+Every seed that shuffles the songs also changes two scenes. The windmill man starts his lesson while it has not played,
+not while Link does not know the Song of Storms. The Bolero's scene marks its own lesson played where it marked the
+Bolero known.
+
+Seen in the game: Impa's lesson with the Minuet of Forest's melody type, line and gift taught the Minuet and not Zelda's
+Lullaby, also to a Link with no ocarina, and her send-off followed. The windmill's lesson with Epona's Song taught it to
+a Link who knew the Song of Storms, and gave no second lesson.
+
+Read from the game's data and not yet seen: the other nine places and the Bolero's change.

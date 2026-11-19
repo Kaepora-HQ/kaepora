@@ -19,8 +19,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers \
-           <kaepora-patch> <game.nup>
+           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
+           song-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1236,6 +1236,39 @@ def skulltula_table(patch, game):
     assert len(rows) == 100 and len({h for h, _, _ in planned}) == 100, len(rows)
 
 
+def song_table(patch, game):
+    """Every place of remake/songs.tsv teaching the next row's song, as a plan of the generator's asks: read apart from
+    the patcher, each lesson's flow is the game's with the melody types, the line and the gift of that song, and the
+    gift of the Sun's Song, which has a flow of its own, names it too. A melody type is an integer, the rest are
+    strings."""
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "songs.tsv", newline="") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    texts, numbers, expected = [], [], {}
+
+    def flow(path):
+        if path not in expected:
+            expected[path] = game.event_flow(game.read(path))
+        return expected[path]
+
+    for place, song in zip(rows, rows[1:] + rows[:1]):
+        for event in place["examples"].split(","):
+            texts.append((place["lesson"], event, "MessageId", song["line"]))
+            assert string_parameter(flow(place["lesson"]), event, "MessageId")[1] == place["line"], place["location"]
+            string_parameter(flow(place["lesson"]), event, "MessageId")[1] = song["line"]
+        for event in place["examples"].split(",") + place["follows"].split(","):
+            numbers.append((place["lesson"], event, "MelodyType", int(song["melody"])))
+            set_number(flow(place["lesson"]), (place["lesson"], event, "MelodyType"), int(place["melody"]),
+                       int(song["melody"]))
+        path, event = place["gift"].split(":")
+        texts.append((path, event, "ActorName", song["song"]))
+        give(flow(path), (path, event, "ActorName"), place["song"], song["song"])
+    mod = patched(patch, game, plan([], event_texts=texts, event_numbers=numbers))
+    assert sorted(set(mod) - {SIZE_TABLE}) == sorted(expected), sorted(mod)
+    for path, parsed in expected.items():
+        assert game.event_flow(mod[path]) == parsed, path
+    assert len(rows) == 11 and len(numbers) == 24, (len(rows), len(numbers))
+
+
 def tested_new_actor_mod(patch, game, romfs):
     """A slot that sells the Megaton Hammer adds the goods actor the game showed and sold: its pack, its rows in the
     three actor tables and their size table entries are the tested mod's."""
@@ -2161,6 +2194,7 @@ def main():
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
         "tested-song-mod": tested_song_mod,
+        "song-table": song_table,
         "event-numbers": event_numbers,
     }
     tests[test](patch, game, *rest)

@@ -25,7 +25,7 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
                               const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                               const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas,
-                              const std::vector<StoneHint>& hints,
+                              const std::vector<RemakeSongPlace>& songs, const std::vector<StoneHint>& hints,
                               const std::vector<CharacterHintText>& characterHints) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
@@ -51,6 +51,9 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
     }
     for (const RemakeSkulltula& skulltula : skulltulas) {
         AddPlacement(log["locations"], skulltula.location);
+    }
+    for (const RemakeSongPlace& place : songs) {
+        AddPlacement(log["locations"], place.location);
     }
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         nlohmann::ordered_json steps = nlohmann::ordered_json::object();
@@ -150,8 +153,10 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     [[maybe_unused]] static const bool shopGoodsChecked =
         (CheckShopGoods(Joined(table, looseItemTable), giftTable), true);
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
-    static const RemakeHintTables hintTables = LoadRemakeHintTables(
-        Joined(table, looseItemTable), ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable, skulltulaTable);
+    static const std::vector<RemakeSongPlace> songTable = LoadRemakeSongs();
+    static const RemakeHintTables hintTables = LoadRemakeHintTables(Joined(table, looseItemTable),
+                                                                    ShuffledSlots(shopTable, ShopCount::FivePerShop),
+                                                                    giftTable, skulltulaTable, songTable);
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -177,13 +182,16 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     Random_Init(SohUtils::Hash(seed));
     const std::vector<RemakeShopSlot> shops =
         settings.shops ? ShuffledSlots(shopTable, settings.shops->count) : std::vector<RemakeShopSlot>{};
+    const std::vector<RemakeSongPlace> songs =
+        settings.songs == Songs::ShuffledAmongThemselves ? songTable : std::vector<RemakeSongPlace>{};
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, looseItems, shops, gifts, skulltulas) <= 0) {
+    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, looseItems, shops, gifts, skulltulas, songs) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(locations, shops, gifts, skulltulas);
+    const std::map<RandomizerCheck, std::string> items =
+        PlacedRemakeItems(locations, shops, gifts, skulltulas, songs);
     const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
                                                               ? CharacterHints(hintTables, items, settings)
                                                               : std::vector<CharacterHintText>{};
@@ -196,6 +204,6 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     const std::vector<StoneHint> hints = settings.gossipStones == GossipStones::GiveHints
                                              ? PickHints(hintTables, items, named)
                                              : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, locations, shops, gifts, skulltulas, hints, characterHints),
-             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, settings, items, hints, messages) };
+    return { SpoilerLog(seed, settings, locations, shops, gifts, skulltulas, songs, hints, characterHints),
+             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, songs, settings, items, hints, messages) };
 }

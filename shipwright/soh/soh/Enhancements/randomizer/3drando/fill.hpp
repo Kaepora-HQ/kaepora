@@ -59,10 +59,11 @@ void ClearProgress();
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
                                            const std::vector<RemakeShopSlot>& shops,
                                            const std::vector<RemakeGift>& gifts,
-                                           const std::vector<RemakeSkulltula>& skulltulas);
+                                           const std::vector<RemakeSkulltula>& skulltulas,
+                                           const std::vector<RemakeSongPlace>& songs);
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
          const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-         const std::vector<RemakeSkulltula>& skulltulas);
+         const std::vector<RemakeSkulltula>& skulltulas, const std::vector<RemakeSongPlace>& songs);
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
 // slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the

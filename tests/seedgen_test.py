@@ -44,15 +44,17 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Loose items": "Vanilla",
-                    "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
+                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Songs": "Vanilla",
+                    "Loose items": "Vanilla", "Lens of Truth": "Needed",
+                    "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
-    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Loose items": "Shuffled", "Lens of Truth": "Never needed"}
+    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Songs": "Shuffled among themselves", "Loose items": "Shuffled",
+    "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -90,6 +92,36 @@ SKULLTULAS_SHUFFLED = {"Gold Skulltulas": "All"}
 TOKEN = "Item_Token_Gold"
 LOOSE_ITEMS = read_tsv("loose_items.tsv")
 LOOSE_SHUFFLED = {"Loose items": "Shuffled"}
+SONG_PLACES = read_tsv("songs.tsv")
+SONGS_SHUFFLED = {"Songs": "Shuffled among themselves"}
+SOH_NAMES = {row["remake_item"]: row["soh_item"] for row in read_tsv("items.tsv")}
+SONGS = {SOH_NAMES[row["song"]]: row for row in SONG_PLACES}
+# SoH's area of each song place, whose name names none.
+SONG_PLACE_AREAS = {"Song from Impa": "HC", "Song from Malon": "LLR", "Song from Saria": "SFM",
+                    "Song from Royal Family's Tomb": "Graveyard", "Song from Ocarina of Time": "HF",
+                    "Song from Windmill": "Kak", "Sheik in Forest": "SFM", "Sheik in Crater": "DMC",
+                    "Sheik in Ice Cavern": "Ice Cavern", "Sheik at Colossus": "Colossus", "Sheik in Kakariko": "Kak",
+                    "Sheik at Temple": "Market"}
+# The event texts every plan carries.
+QUEST_TEXTS = [
+    {"flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "event": "Event4", "param": "ChallengeName",
+     "text": "Get_StoneOfForest"},
+    {"flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "event": "Event4", "param": "StepName",
+     "text": "Complete"},
+    {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event80", "param": "ChallengeName",
+     "text": "Get_StoneOfFire"},
+    {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event80", "param": "StepName", "text": "Complete"},
+    {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
+     "text": "Get_Epona_IsAfter_Ready_Exp"}]
+# The windmill man starts his lesson while it has not played, and the Bolero's scene marks itself played, not the
+# Bolero known, in every seed that shuffles the songs.
+SONG_FIXES = [
+    {"flow": "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs", "event": "Event17", "param": "GameDataName",
+     "text": "HavePlayedEvent.Dm_MelodyGet_Storm"},
+    {"flow": "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs", "event": "Event69", "param": "GameDataName",
+     "text": "HavePlayedEvent.Dm_MelodyGet_Storm"},
+    {"flow": "Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs", "event": "Event1", "param": "GameDataName",
+     "text": "HavePlayedEvent.Dm_MelodyGet_Fire"}]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -151,7 +183,9 @@ def playthrough_steps(log):
 
 
 def soh_area(location):
-    """The SoH area of a location, the prefix of its name."""
+    """The SoH area of a location: the prefix of its name, or for a song place, whose name names none, its area."""
+    if location in SONG_PLACE_AREAS:
+        return SONG_PLACE_AREAS[location]
     prefixes = [area for area in PLACE_BY_AREA_PREFIX if location.startswith(area + " ")]
     return max(prefixes, key=len) if prefixes else None
 
@@ -190,12 +224,31 @@ def placed_remake_items(spoiler, plan):
     placed |= {row["location"]: loose.get(row["hash"], row["item"]) for row in LOOSE_ITEMS
                if row["location"] in spoiler["locations"]}
     placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+    lessons = {tuple(row["gift"].split(":")): row["location"] for row in SONG_PLACES}
+    placed |= {lessons[text["flow"], text["event"]]: text["text"] for text in plan["event_texts"]
+               if (text["flow"], text["event"]) in lessons}
     placed |= dict(gift_sites(plan))
     return placed | {SKULLTULA_AT[entry["hash"]]: entry["item"] for entry in plan["skulltulas"]}
 
 
 def in_a_dungeon(location):
     return soh_area(location) in DUNGEON_PLACES
+
+
+def song_lessons(spoiler):
+    """The event texts and numbers a plan carries for its song places: each place's lesson takes the melody and the
+    line of the song it teaches, and its gift the song."""
+    texts, numbers = [], []
+    for place in SONG_PLACES:
+        song = SONGS[spoiler["locations"][place["location"]]]
+        for event in place["examples"].split(","):
+            texts.append({"flow": place["lesson"], "event": event, "param": "MessageId", "text": song["line"]})
+        flow, event = place["gift"].split(":")
+        texts.append({"flow": flow, "event": event, "param": "ActorName", "text": song["song"]})
+        for event in place["examples"].split(",") + place["follows"].split(","):
+            numbers.append({"flow": place["lesson"], "event": event, "param": "MelodyType",
+                            "value": int(song["melody"])})
+    return texts, numbers
 
 
 def spoiler_item(placed):
@@ -368,16 +421,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["start_values"], DOORS_OPEN)
 
     def test_plan_keeps_quests_from_going_back(self):
-        escape = "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs"
-        water = "Event/EventFlow/Get_StoneOfWater.bfevfl.zs"
-        malon = "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs"
         _, plan = self.generate("12")
-        self.assertEqual(plan["event_texts"], [
-            {"flow": escape, "event": "Event4", "param": "ChallengeName", "text": "Get_StoneOfForest"},
-            {"flow": escape, "event": "Event4", "param": "StepName", "text": "Complete"},
-            {"flow": water, "event": "Event80", "param": "ChallengeName", "text": "Get_StoneOfFire"},
-            {"flow": water, "event": "Event80", "param": "StepName", "text": "Complete"},
-            {"flow": malon, "event": "Event179", "param": "GameDataName", "text": "Get_Epona_IsAfter_Ready_Exp"}])
+        self.assertEqual(plan["event_texts"], QUEST_TEXTS)
+        self.assertEqual(plan["event_numbers"], [])
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
@@ -780,6 +826,66 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 5)
         self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_songs_shuffled_among_themselves(self):
+        spoiler, plan = self.generate("21", SONGS_SHUFFLED)
+        self.assertEqual(spoiler["settings"]["Songs"], "Shuffled among themselves")
+        places = {row["location"] for row in SONG_PLACES}
+        taught = {location: spoiler["locations"][location] for location in places}
+        self.assertEqual(sorted(taught.values()), sorted(SONGS))
+        self.assertTrue(any(SOH_NAMES[row["song"]] != taught[row["location"]] for row in SONG_PLACES))
+        elsewhere = {spoiler_item(item) for location, item in spoiler["locations"].items() if location not in places}
+        self.assertFalse(elsewhere & SONGS.keys())
+        self.assertFalse({item for location, item in playthrough_steps(spoiler).items()
+                          if location not in places} & SONGS.keys())
+        # Sheik's scene at the Colossus sets the Spirit quest's step, so the Colossus keeps its Requiem and its lesson.
+        self.assertNotIn("Sheik at Colossus", spoiler["locations"])
+        self.assertEqual(playthrough_steps(spoiler).get("Sheik at Colossus", "Requiem of Spirit"), "Requiem of Spirit")
+        texts, numbers = song_lessons(spoiler)
+        self.assertEqual(plan["event_texts"], QUEST_TEXTS + SONG_FIXES + texts)
+        self.assertEqual(plan["event_numbers"], numbers)
+        self.assertFalse([edit for edit in plan["event_texts"] + plan["event_numbers"]
+                          if edit["flow"] == "Event/EventFlow/Dm_MelodyGet_Spilit.bfevfl.zs"])
+        self.assertEqual(len(numbers), 24)
+
+    def test_a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere(self):
+        # Seed 22's route learns songs at places that teach others in the game.
+        log, _ = self.generate("22", SONGS_SHUFFLED)
+        places = {row["location"] for row in SONG_PLACES}
+        self.assertTrue(any(location in places and SONGS[item]["location"] != location
+                            for location, item in playthrough_steps(log).items()))
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter(self):
+        # A child who finishes both stone dungeons before he meets Zelda may never get the Ocarina of Time. With the
+        # songs shuffled, Malon can teach Zelda's Lullaby before the castle's courtyard, and seed 23's route took
+        # King Dodongo and Barinade with no step there.
+        log, _ = self.generate("23", SONGS_SHUFFLED)
+        sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+        for boss in ("King Dodongo", "Barinade"):
+            self.assertLess(sphere["HC Zeldas Letter"], sphere[boss], boss)
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple(self):
+        # The second of the Shadow and Spirit sages sets AllSage to Step02, the one step at which the Light Arrows scene
+        # starts as Link walks into the Temple of Time. The Forest Temple's end then sets it back to Step01_00, and
+        # nothing sets Step02 again. Seed 10 teaches the Nocturne in the meadow: with the Forest Temple's boss key held
+        # back, Link can still clear one of the two, and never both.
+        spoiler, _ = self.generate("10", SONGS_SHUFFLED)
+        key = next(location for location, item in spoiler["locations"].items() if item == "Forest Temple Boss Key")
+        placed = [*spoiler["locations"].items(), (key, "Green Rupee")]
+        self.assertFalse(reach.reachable("Phantom Ganon", *placed, settings=spoiler["settings"]))
+        cleared = [reach.reachable(boss, *placed, settings=spoiler["settings"]) for boss in ("Bongo Bongo", "Twinrova")]
+        self.assertEqual(sorted(cleared), [False, True])
+
+    def test_with_songs_shuffled_the_courtyard_scene_starts_played(self):
+        # With the songs shuffled, a child can learn a warp song and, grown up, warp out of the Temple of Time before he
+        # walks through its door. The scene there plays only while AllSage stands at Step01, and the adult's world map
+        # waits for it.
+        _, shuffled = self.generate("21", SONGS_SHUFFLED)
+        _, vanilla = self.generate("21")
+        self.assertIs(shuffled["start_values"]["HavePlayedEvent.Dm_TimeTemple_0065"], True)
+        self.assertNotIn("HavePlayedEvent.Dm_TimeTemple_0065", vanilla["start_values"])
+
     def test_loose_items_shuffled(self):
         spoiler, plan = self.generate("21", LOOSE_SHUFFLED)
         self.assertEqual(spoiler["settings"]["Loose items"], "Shuffled")
@@ -1034,6 +1140,15 @@ class SeedgenTest(unittest.TestCase):
         said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                 for location, item in placed_remake_items(spoiler, plan).items() if location in skulltulas}
         self.assertTrue(said & set(spoiler["hints"].values()))
+
+    def test_hints_name_song_places_truly(self):
+        # Seed 24 hints at two song places by their sentences.
+        spoiler, plan = self.generate("24", SONGS_SHUFFLED)
+        held = placed_remake_items(spoiler, plan)
+        sentences = {plain(CHEST_SENTENCES[row["location"]].replace("[[1]]", ITEM_NAMES[held[row["location"]]]))
+                     for row in SONG_PLACES}
+        self.assertTrue(sentences & set(spoiler["hints"].values()))
+        self.assert_hints_are_true("24", SONGS_SHUFFLED)
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):

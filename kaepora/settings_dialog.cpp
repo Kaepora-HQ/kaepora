@@ -82,6 +82,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.gifts == Gifts::Shuffled) {
         changed << "gifts shuffled";
     }
+    if (settings.songs == Songs::ShuffledAmongThemselves) {
+        changed << "songs shuffled";
+    }
     if (settings.looseItems == LooseItems::Shuffled) {
         changed << "loose items shuffled";
     }
@@ -138,6 +141,7 @@ QString Details(const SeedSettings& settings) {
     }
     lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
           << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
+          << Line(SongsSetting, QString::fromUtf8(Words(SongsChoices, settings.songs)))
           << Line(LooseItemsSetting, QString::fromUtf8(Words(LooseItemsChoices, settings.looseItems)))
           << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
           << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)))
@@ -240,12 +244,14 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shopPricesLabel->setBuddy(shopPrices);
     QComboBox* skulltulas = Choice(SkulltulasChoices);
     QComboBox* gifts = Choice(GiftsChoices);
+    QComboBox* songs = Choice(SongsChoices);
     QComboBox* looseItems = Choice(LooseItemsChoices);
     auto* shuffleForm = new QFormLayout;
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     shuffleForm->addRow(shopPricesLabel, shopPricesRow);
     shuffleForm->addRow(QString::fromUtf8(SkulltulasSetting), skulltulas);
     shuffleForm->addRow(QString::fromUtf8(GiftsSetting), gifts);
+    shuffleForm->addRow(QString::fromUtf8(SongsSetting), songs);
     shuffleForm->addRow(QString::fromUtf8(LooseItemsSetting), looseItems);
     auto* shuffleGroup = new QGroupBox("Shuffle");
     shuffleGroup->setLayout(shuffleForm);
@@ -322,6 +328,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         showPrices();
         Select(skulltulas, shown.skulltulas);
         Select(gifts, shown.gifts);
+        Select(songs, shown.songs);
         Select(looseItems, shown.looseItems);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
@@ -359,6 +366,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         }
         shown.skulltulas = Selected<Skulltulas>(skulltulas);
         shown.gifts = Selected<Gifts>(gifts);
+        shown.songs = Selected<Songs>(songs);
         shown.looseItems = Selected<LooseItems>(looseItems);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);

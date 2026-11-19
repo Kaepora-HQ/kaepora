@@ -55,6 +55,22 @@ struct RemakeShopSlot {
     std::vector<Shelf> shelves;
 };
 
+// A SoH song location and the remake scene that teaches its song. The lesson's flow passes the song's melody type to
+// the shared lesson in Dm_SY_Ocarina from each example event, for the tune the teacher plays after the line the event
+// names, and from each follow event, for the notes Link plays. The gift event names the song.
+struct RemakeSongPlace {
+    RandomizerCheck location;
+    std::string song; // the remake name of the song the place teaches in the game
+    RandomizerGet sohSong;
+    int melody;
+    std::string lesson; // romfs path of the lesson's event flow
+    std::vector<std::string> examples;
+    std::vector<std::string> follows;
+    std::string line; // the message the example events show, by its file and label
+    std::string giftFlow;
+    std::string giftEvent;
+};
+
 // The chests of remake/chests.tsv that stand for a location, read from the copy built into the program, one per
 // location. Throws when a table names an unknown location or item, repeats a hash, repeats a location for anything but
 // another copy of its chest, gives an unshuffled row no note, or leaves out a chest location of SoH's vanilla layouts.
@@ -113,6 +129,11 @@ std::vector<RemakeSkulltula> LoadRemakeSkulltulas();
 
 inline constexpr std::string_view TokenName = "Item_Token_Gold";
 
+// The places of remake/songs.tsv, read from the copy built into the program. Throws when a row names anything but a SoH
+// song location, repeats one or its melody, names a song that is not the location's, or names a flow or a message
+// outside the event flows' folders, or when the table leaves out a song location other than Sheik at Colossus.
+std::vector<RemakeSongPlace> LoadRemakeSongs();
+
 struct RemakeStone {
     std::string label;
     RandomizerCheck location;
@@ -164,20 +185,23 @@ struct RemakeHintTables {
 
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
 // item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
-// shuffled or its area, a gift, its area or its item, or a skulltula or its area, or when a prize line names a place
-// that is no chest of the chest table, or one whose own item has no name, or a character's hint names an unknown hint
-// location or item.
+// shuffled or its area, a gift, its area or its item, a skulltula or its area, or a song place or its area, or when a
+// prize line names a place that is no chest of the chest table, or one whose own item has no name, or a character's
+// hint names an unknown hint location or item.
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                                       const std::vector<RemakeGift>& gifts,
-                                      const std::vector<RemakeSkulltula>& skulltulas);
+                                      const std::vector<RemakeSkulltula>& skulltulas,
+                                      const std::vector<RemakeSongPlace>& songs);
 
-// The remake name of the item each shuffled chest, shop slot, gift and skulltula gives. Where several remake names
-// stand for one SoH item, the chests in table order, then the slots, the gifts and the skulltulas give the names the
-// shuffled chests held, the slots' fillers, the gifts held and the skulltulas' tokens, each as often as it occurred.
+// The remake name of the item each shuffled chest, shop slot, gift, skulltula and song place gives. Where several
+// remake names stand for one SoH item, the chests in table order, then the slots, the gifts and the skulltulas give the
+// names the shuffled chests held, the slots' fillers, the gifts held and the skulltulas' tokens, each as often as it
+// occurred.
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
                                                          const std::vector<RemakeShopSlot>& shops,
                                                          const std::vector<RemakeGift>& gifts,
-                                                         const std::vector<RemakeSkulltula>& skulltulas);
+                                                         const std::vector<RemakeSkulltula>& skulltulas,
+                                                         const std::vector<RemakeSongPlace>& songs);
 
 struct StoneHint {
     RemakeStone stone;
@@ -193,14 +217,17 @@ struct MessageText {
 };
 
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
-// Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
-// the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
-// the settings count on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its
-// item and price, each shuffled skulltula with its item, and each shuffled loose item that gives another item than its
-// own, with that item.
+// Then the event flow strings every seed changes, and each site of each shuffled gift with its item and the text that
+// keeps the Stone of Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the
+// Bolero's lessons then name their own lesson where they named their song, and each song place's lesson takes the
+// melody type, the line and the gift of the song it teaches. Then the saved values a new game starts with that the
+// rules or the settings count on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot
+// with its item and price, each shuffled skulltula with its item, and each shuffled loose item that gives another item
+// than its own, with that item.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-                                  const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
+                                  const std::vector<RemakeSkulltula>& skulltulas,
+                                  const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages);

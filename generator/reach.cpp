@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     }
     auto ctx = Rando::Context::GetInstance();
     ctx->FinalizeSettings({}, enabledTricks);
-    for (const RemakeChest* chest : SetUpWorld(chests, {}, {}, {})) {
+    for (const RemakeChest* chest : SetUpWorld(chests, {}, {}, {}, {})) {
         ctx->GetItemLocation(chest->location)->SetPlacedItem(chest->sohItem);
     }
     bool pocketTaken = false;

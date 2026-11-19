@@ -14,7 +14,7 @@
 
 namespace {
 
-enum class Kind { WayOfTheHero, Foolish, Overworld, Dungeon, NamedItem, RandomItem };
+enum class Kind { WayOfTheHero, Foolish, Song, Overworld, Dungeon, NamedItem, RandomItem };
 
 struct Draw {
     std::optional<Kind> kind;
@@ -45,10 +45,11 @@ struct Word {
 
 constexpr std::nullopt_t Junk = std::nullopt;
 
-// SoH's balanced distribution. Its song hints are left out, as no song is shuffled.
-constexpr std::array<Draw, 7> BalancedDistribution = { {
+// SoH's balanced distribution.
+constexpr std::array<Draw, 8> BalancedDistribution = { {
     { Kind::WayOfTheHero, 7 },
     { Kind::Foolish, 4 },
+    { Kind::Song, 2 },
     { Kind::Overworld, 4 },
     { Kind::Dungeon, 3 },
     { Kind::NamedItem, 10 },
@@ -84,6 +85,8 @@ static bool Fits(Kind kind, RandomizerCheck loc) {
             return placed->IsWothCandidate();
         case Kind::Foolish:
             return placed->IsFoolishCandidate();
+        case Kind::Song:
+            return Rando::StaticData::GetLocation(loc)->GetRCType() == RCTYPE_SONG_LOCATION;
         case Kind::Overworld:
             return Rando::StaticData::GetLocation(loc)->IsOverworld();
         case Kind::Dungeon:
@@ -106,6 +109,7 @@ static std::string StoneSentence(Kind kind, RandomizerCheck loc, const RemakeHin
             return "They say that #" + place + "# is on #the way of the hero#.";
         case Kind::Foolish:
             return "They say that plundering #" + place + "# is #a foolish choice#.";
+        case Kind::Song:
         case Kind::Overworld:
         case Kind::Dungeon: {
             const Sentence& sentence = tables.chestSentences.at(loc);
@@ -239,6 +243,12 @@ std::vector<StoneHint> PickHints(const RemakeHintTables& tables, const std::map<
     };
     std::set<RandomizerCheck> givenAway = named;
     std::array<Draw, BalancedDistribution.size()> draws = BalancedDistribution;
+    // A song hint names a shuffled song place, and with the songs where the game teaches them there is none to draw.
+    if (std::ranges::none_of(ctx->allLocations, [&](RandomizerCheck loc) {
+            return Fits(Kind::Song, loc) && ctx->GetItemLocation(loc)->IsHintable();
+        })) {
+        std::ranges::find(draws, std::optional(Kind::Song), &Draw::kind)->weight = 0;
+    }
     while (sentences.size() < tables.stones.size()) {
         Draw& draw = WeightedDraw(draws);
         if (draw.kind == Junk) {

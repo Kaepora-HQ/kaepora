@@ -679,7 +679,10 @@ void RegionTable_Init_JabuJabusBelly() {
 
     areaTable[RR_JABU_JABUS_BELLY_BOSS_ROOM] = Region("Jabu Jabus Belly Boss Room", SCENE_JABU_JABU_BOSS, {
         //Events
-        EVENT_ACCESS(LOGIC_JABU_JABUS_BELLY_CLEAR, logic->CanKillEnemy(RE_BARINADE)),
+        // The Door of Time's quest counts the two stones only as each stone's dungeon ends, and only once Zelda has
+        // been met: before that it refuses the step. So a child who takes both stones first never gets the Ocarina of
+        // Time. With the songs shuffled, Malon can teach Zelda's Lullaby before he meets Zelda.
+        EVENT_ACCESS(LOGIC_JABU_JABUS_BELLY_CLEAR, logic->CanKillEnemy(RE_BARINADE) && (!logic->SongsShuffled || logic->HasItem(RG_ZELDAS_LETTER))),
     }, {
         //Locations
         LOCATION(RC_JABU_JABUS_BELLY_BARINADE_POT_1, logic->CanBreakPots()),

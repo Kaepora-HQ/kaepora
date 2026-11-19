@@ -22,6 +22,18 @@ Item_HeavyBoot	Armor_Adult_HeavyBoot_Name	Iron Boots	the
 Item_Hookshot	Item_Hookshot_Name	Hookshot	the
 Item_HoverBoot	Armor_Adult_HoverBoot_Name	Hover Boots	the
 Item_Longshot	Item_Longshot_Name	Longshot	the
+Item_Melody_EponaSong	Item_Melody_EponaSong_Name	Epona's Song	
+Item_Melody_FireBolero	Item_Melody_FireBolero_Name	Bolero of Fire	the
+Item_Melody_ForestMinuet	Item_Melody_ForestMinuet_Name	Minuet of the Forest	the
+Item_Melody_LightPrelude	Item_Melody_LightPrelude_Name	Prelude of Light	the
+Item_Melody_SariaSong	Item_Melody_SariaSong_Name	Saria's Song	
+Item_Melody_ShadowNocturne	Item_Melody_ShadowNocturne_Name	Nocturne of Shadow	the
+Item_Melody_SpiritRequiem	Item_Melody_SpiritRequiem_Name	Requiem of Spirit	the
+Item_Melody_StormSong	Item_Melody_StormSong_Name	Song of Storms	the
+Item_Melody_SunSong	Item_Melody_SunSong_Name	Sun's Song	the
+Item_Melody_TimeSong	Item_Melody_TimeSong_Name	Song of Time	the
+Item_Melody_WaterSerenade	Item_Melody_WaterSerenade_Name	Serenade of Water	the
+Item_Melody_ZeldaLullaby	Item_Melody_ZeldaLullaby_Name	Zelda's Lullaby	
 Item_Range_Bow	Weapon_Range_Bow_Name	Fairy Bow	the
 Item_Range_SlingShot	Weapon_Range_SlingShot_Name	Fairy Slingshot	the
 Item_Scale_Gold	Item_Scale_Gold_Name	Golden Scale	a

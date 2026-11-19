@@ -307,4 +307,5 @@ void SetOptions(const SeedSettings& settings) {
                    settings.shops->prices);
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
+    ctx->GetLogic()->SongsShuffled = settings.songs == Songs::ShuffledAmongThemselves;
 }
