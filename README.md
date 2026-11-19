@@ -35,6 +35,8 @@ Kaepora keeps every seed you make. A save you started on an older seed still has
 
 If you get stuck, **Open spoiler log** shows where every item went and one route that finishes the game.
 
+If the game runs slowly or stutters, see the [FAQ](FAQ.md).
+
 ## What a seed changes
 
 - **Chests.** A seed moves the items that chests hold. Songs, gifts from characters, shop goods and Gold Skulltula tokens stay where the game has them.

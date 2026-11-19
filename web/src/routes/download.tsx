@@ -1,7 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { Treeline } from '@/components/night'
-import { SiteFooter, SiteHeader } from '@/components/site-chrome'
+import { PageHero, SiteFooter, SiteHeader } from '@/components/site-chrome'
 import { copy } from '@/copy'
 import { type System, downloads, mainDownloads, releases } from '@/release'
 import changelog from 'virtual:changelog'
@@ -52,13 +51,9 @@ function Download() {
     <>
       <SiteHeader />
       <main>
-        <section className="bg-linear-to-b from-midnight to-dusk">
-          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-gutter pbs-12 box-content">
-            <h1 className="storybook text-title font-normal">{copy.downloadPage.title}</h1>
-            <p className="text-lead text-mist">{copy.downloadPage.status}</p>
-          </div>
-          <Treeline className="mbs-10 block h-[clamp(5rem,3rem+7vw,9rem)] w-full" />
-        </section>
+        <PageHero title={copy.downloadPage.title}>
+          <p className="text-lead text-mist">{copy.downloadPage.status}</p>
+        </PageHero>
 
         <section aria-labelledby="files" className="bg-silhouette px-gutter pbs-6 pbe-section">
           <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -105,6 +100,9 @@ function Download() {
                 <a href={releases} className="quiet-link">
                   Older versions
                 </a>
+                <Link to="/faq" className="quiet-link">
+                  FAQ
+                </Link>
               </p>
             </div>
           </div>
@@ -114,7 +112,7 @@ function Download() {
           <div className="mx-auto flex max-w-5xl flex-col gap-6">
             <h2 id="changes" className="storybook text-heading font-normal">What changed</h2>
             {changelog ? (
-              <div className="changelog max-w-xl" dangerouslySetInnerHTML={{ __html: changelog }} />
+              <div className="markdown max-w-xl" dangerouslySetInnerHTML={{ __html: changelog }} />
             ) : (
               <p className="text-mist">{copy.downloadPage.noReleases}</p>
             )}

@@ -116,29 +116,63 @@
     display: revert;
   }
 
-  .changelog {
+  .markdown {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .changelog h2 {
+  .markdown h2 {
     @apply mbs-8 text-lead font-semibold;
   }
 
-  .changelog h2:first-child {
+  .markdown h2:first-child {
     @apply mbs-0;
   }
 
-  .changelog h3 {
+  .markdown h3 {
     @apply font-semibold text-mist;
   }
 
-  .changelog ul {
-    @apply flex list-disc flex-col gap-1.5 ps-6 marker:text-moon;
+  .markdown :is(ul, ol) {
+    @apply flex flex-col gap-1.5 ps-6 marker:text-moon;
   }
 
-  .changelog a {
+  .markdown ul {
+    @apply list-disc;
+  }
+
+  .markdown ol {
+    @apply list-decimal;
+  }
+
+  .markdown a {
     @apply underline decoration-mist/40 underline-offset-4 hover:decoration-starlight;
+  }
+
+  /* At 14 px, three columns of sizes such as 3840×2160 fit a 320 px screen. */
+  .markdown table {
+    @apply surface rounded-xl;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: clamp(0.875rem, 0.5rem + 1.6vw, 1em);
+  }
+
+  .markdown :is(th, td) {
+    @apply py-2 text-start;
+    padding-inline: clamp(0.5rem, 2.5vw, 1rem);
+  }
+
+  .markdown th {
+    @apply font-semibold text-mist;
+  }
+
+  .markdown tbody td {
+    @apply border-bs border-mist/15;
+  }
+
+  .faq h2 {
+    @apply storybook mbs-16 text-heading font-normal;
+    scroll-margin-block-start: 2rem;
   }
 }

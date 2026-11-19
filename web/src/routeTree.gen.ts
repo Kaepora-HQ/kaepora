@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DownloadRouteImport } from './routes/download'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LinkPreviewRouteImport } from './routes/link-preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const DownloadRoute = DownloadRouteImport.update({
   path: '/download',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinkPreviewRoute = LinkPreviewRouteImport.update({
   id: '/link-preview',
   path: '/link-preview',
@@ -32,30 +38,34 @@ const LinkPreviewRoute = LinkPreviewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/download' | '/link-preview'
+  fullPaths: '/' | '/download' | '/faq' | '/link-preview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/download' | '/link-preview'
-  id: '__root__' | '/' | '/download' | '/link-preview'
+  to: '/' | '/download' | '/faq' | '/link-preview'
+  id: '__root__' | '/' | '/download' | '/faq' | '/link-preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DownloadRoute: typeof DownloadRoute
+  FaqRoute: typeof FaqRoute
   LinkPreviewRoute: typeof LinkPreviewRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/link-preview': {
       id: '/link-preview'
       path: '/link-preview'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DownloadRoute: DownloadRoute,
+  FaqRoute: FaqRoute,
   LinkPreviewRoute: LinkPreviewRoute,
 }
 export const routeTree = rootRouteImport
