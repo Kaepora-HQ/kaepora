@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
-           song-table|presence <kaepora-patch> <game.nup>
+           song-table|presence|lichii-built-ins <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -105,6 +105,11 @@ COLOSSUS_STONE_AREA = 12757003145401657983
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
+# Lichii applies a mod's program patch first, then leaves out a built-in patch whose bytes the mod changed. These
+# built-ins write a branch and a routine, as program address and length (src/core/file_sys/patch_manager.cpp,
+# zortos293/Lichii nx2): the text speed patches at TEXT_SPEED_SITE and TEXT_SPEED_CAVE (at 02efb7493a), and "Epona jump
+# (FPS Unlock)" at EPONA_JUMP_HOOK_OFFSET and EPONA_JUMP_CAVE_OFFSET (at 95f5519ea8).
+LICHII_BUILT_INS = [(0xAFE1B4, 4), (0x3C46F00, 20), (0x2C3AE20, 4), (0x3C46FB4, 72)]
 OTHER_VERSION = "This game file is another version of the game. Kaepora works only with version 2.0.0."
 STONE_MESSAGES = "EventFlowMsg/GossipStone.msbt"
 ENGLISH_PACKS = ["Mals/EUen.Product.110.sarc.zs", "Mals/USen.Product.110.sarc.zs"]
@@ -861,9 +866,10 @@ def tested_hammer_room_mod(patch, game, mod_file):
 
 # The function that adds an item to Link's pouch writes the dive depth with a call to the game's set-float function.
 DIVE_DEPTH_WRITE, SET_FLOAT, GET_FLOAT = 0x1110480, 0x44C5D0, 0x607F70
-# Zero space after the program's code that no built-in patch of Lichii writes (src/core/file_sys/patch_manager.cpp,
-# zortos293/Lichii nx2 at 159e076e22) and below the caves of ultrawide mods from 0x3C46400.
-FREE_SPACE = range(0x3C46394, 0x3C46400)
+# Zero space after the program's code that no built-in patch of Lichii writes, from its FPS Unlock movie routine to the
+# code tomvita's cheats write after the game loads (src/core/file_sys/patch_manager.cpp and
+# docs/nx2/ocarina-dynamic-fps.md, zortos293/Lichii nx2 at 8e7348b260).
+FREE_SPACE = range(0x3C46BFC, 0x3C46CC0)
 
 
 def ips_records(ips):
@@ -911,6 +917,15 @@ def dive_depth(patch, game):
     targets = [branch_target(routine + 4 * i, word) for i, word in enumerate(words) if is_branch(word)]
     assert [target for target in targets if target not in range(routine, routine + 4 * len(words))] == \
         [GET_FLOAT, SET_FLOAT], [hex(target) for target in targets]
+
+
+def lichii_built_ins(patch, game):
+    """The program patch leaves the bytes of Lichii's text speed and Epona jump patches as the game has them, so Lichii
+    applies the speed a player turns on in Add-Ons and the jump's fix with FPS Unlock."""
+    (ips,) = patched(patch, game, plan([]), part="exefs").values()
+    overlaps = [(hex(start), len(data)) for start, data in ips_records(ips).items()
+                for place, length in LICHII_BUILT_INS if start < place + length and place < start + len(data)]
+    assert not overlaps, overlaps
 
 
 def tested_bomb_mod(patch, game, mod):
@@ -2282,6 +2297,7 @@ def main():
         "tested-event-text-mods": tested_event_text_mods,
         "tested-first-gifts-mod": tested_first_gifts_mod,
         "tested-program-mod": tested_program_mod,
+        "lichii-built-ins": lichii_built_ins,
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
         "tested-pedestal-mod": tested_pedestal_mod,

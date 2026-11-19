@@ -319,7 +319,7 @@ if(KAEPORA_GAME_NUP)
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
                  weapon-copies event-numbers song-table
-                 presence)
+                 presence lichii-built-ins)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables

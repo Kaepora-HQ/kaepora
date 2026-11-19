@@ -24,10 +24,9 @@ struct Code {
 // the hash of the row's LiftableGrade in w1, the PlayerStatus handle in x2 and the hash of "LiftGrade" in w3.
 constexpr uint32_t LiftLevelWrite = 0x11103C0;
 constexpr std::array CallKeepHigher{
-    0x94ACDAD0u, // bl   0x3C46F00            KeepHigher, in place of bl 0x9B3BA0
+    0x94ACDAD5u, // bl   0x3C46F14            KeepHigher, in place of bl 0x9B3BA0
 };
 
-constexpr uint32_t KeepHigher = 0x3C46F00;
 constexpr std::array KeepHigherInstructions{
     0xA9BC7BFDu, // stp  x29, x30, [sp, #-0x40]!
     0x910003FDu, // mov  x29, sp
@@ -35,7 +34,7 @@ constexpr std::array KeepHigherInstructions{
     0xA9020FE2u, // stp  x2, x3, [sp, #0x20]
     0xB90033FFu, // str  wzr, [sp, #0x30]
     0x9100C3E1u, // add  x1, sp, #0x30         where the get-enum function puts the level's hash
-    0x9714D41Eu, // bl   0x17BF90              get enum, with the same manager, handle and member; true when it reads
+    0x9714D419u, // bl   0x17BF90              get enum, with the same manager, handle and member; true when it reads
     0xB94033E4u, // ldr  w4, [sp, #0x30]       w4 is the level's hash
     0x7200001Fu, // tst  w0, #0x1
     0xA9420FE2u, // ldp  x2, x3, [sp, #0x20]
@@ -57,7 +56,7 @@ constexpr std::array KeepHigherInstructions{
     0x54FFFF21u, // b.ne rank
     0x6B0800FFu, // cmp  w7, w8
     0x54000048u, // b.hi keep                  a level above the item's grade stays
-    0x1735B30Cu, // set: b 0x9B3BA0            set enum, with the arguments of the call it replaces
+    0x1735B307u, // set: b 0x9B3BA0            set enum, with the arguments of the call it replaces
     0xD65F03C0u, // keep: ret
 };
 
@@ -66,12 +65,9 @@ constexpr std::array KeepHigherInstructions{
 // handle in x1, the hash of "DiveDepth" in w2 and the row's DiveDepth in s0.
 constexpr uint32_t DiveDepthWrite = 0x1110480;
 constexpr std::array CallKeepDeeper{
-    0x94ACD7C8u, // bl   0x3C463A0            KeepDeeper, in place of bl 0x44C5D0
+    0x94ACD9E0u, // bl   0x3C46C00            KeepDeeper, in place of bl 0x44C5D0
 };
 
-// No built-in patch of Lichii writes 0x3C46394 to 0x3C46400 (nx2 at 159e076e22), and ultrawide mods start at
-// 0x3C46400.
-constexpr uint32_t KeepDeeper = 0x3C463A0;
 constexpr std::array KeepDeeperInstructions{
     0xA9BD7BFDu, // stp  x29, x30, [sp, #-0x30]!
     0x910003FDu, // mov  x29, sp
@@ -81,7 +77,7 @@ constexpr std::array KeepDeeperInstructions{
     0x2A0203E3u, // mov  w3, w2
     0xAA0103E2u, // mov  x2, x1
     0x9100A3E1u, // add  x1, sp, #0x28         where the get-float function puts the depth Link has
-    0x972706ECu, // bl   0x607F70              get float, with the same manager, handle and member; true when it reads
+    0x972704D4u, // bl   0x607F70              get float, with the same manager, handle and member; true when it reads
     0x2A0003E4u, // mov  w4, w0
     0xBD402BE1u, // ldr  s1, [sp, #0x28]       s1 is the depth Link has
     0xBD4027E0u, // ldr  s0, [sp, #0x24]
@@ -91,7 +87,7 @@ constexpr std::array KeepDeeperInstructions{
     0x36000064u, // tbz  w4, #0, set           a depth it cannot read is set, as the game sets it
     0x1E202020u, // fcmp s1, s0
     0x5400004Cu, // b.gt keep                  a depth deeper than the item's stays
-    0x1720187Au, // set: b 0x44C5D0            set float, with the arguments of the call it replaces
+    0x17201662u, // set: b 0x44C5D0            set float, with the arguments of the call it replaces
     0xD65F03C0u, // keep: ret
 };
 
@@ -107,7 +103,6 @@ constexpr std::array JumpToAwardDungeonItem{
 // For the map, compass and boss key, does what the item's OneShot node does, and nothing for any other item. The jump
 // lands inside the function, so the routine keeps x0 to x19, x30 and the flags, and the game functions it calls keep
 // x20 to x29. It keeps no floating point register, as none is live at the jump.
-constexpr uint32_t AwardDungeonItem = 0x3C46DB0;
 constexpr std::array AwardDungeonItemInstructions{
     0xD10303FFu, // sub  sp, sp, #0xC0
     0xA90007E0u, // stp  x0, x1, [sp]
@@ -192,6 +187,18 @@ constexpr std::array AwardDungeonItemInstructions{
     0xA8C17BFDu, // found: ldp x29, x30, [sp], #0x10
     0xD65F03C0u, // ret
 };
+
+// The routines lie in three pieces of the zero space after the program's code, around two places they leave alone.
+// In the order of the checks below, the pieces run from Lichii's FPS Unlock movie routine to the code tomvita's cheats
+// write after the game loads, from that code to Lichii's text speed routine, and from the text speed routine to
+// Lichii's Epona jump routine (src/core/file_sys/patch_manager.cpp at nx2 8e7348b260, and
+// docs/nx2/ocarina-dynamic-fps.md for the cheats).
+constexpr uint32_t KeepDeeper = 0x3C46C00;
+constexpr uint32_t AwardDungeonItem = 0x3C46DB0;
+constexpr uint32_t KeepHigher = 0x3C46F14;
+static_assert(0x3C46BFC <= KeepDeeper && KeepDeeper + 4 * KeepDeeperInstructions.size() <= 0x3C46CC0);
+static_assert(0x3C46DB0 <= AwardDungeonItem && AwardDungeonItem + 4 * AwardDungeonItemInstructions.size() <= 0x3C46F00);
+static_assert(0x3C46F14 <= KeepHigher && KeepHigher + 4 * KeepHigherInstructions.size() <= 0x3C46FB4);
 
 // The emulator patches the program as its 0x100-byte NSO header followed by its memory, so an IPS offset is an address
 // plus 0x100. These offsets pass 0xFFFFFF, the most plain IPS holds, so the file is IPS32.
