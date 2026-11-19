@@ -30,6 +30,8 @@ NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
 # stones and the magic meter lie where no explosive is needed, so he still grows up.
 NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Goron's Ruby"),
                ("KF Mido Bottom Left Chest", "Zora's Sapphire"), ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Green Rupee"),
+             ("Kak Anju as Child", "Green Rupee"), ("LLR Talons Chickens", "Green Rupee"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
@@ -549,6 +551,10 @@ class LogicTest(unittest.TestCase):
         # holds bombs and never learns the song.
         self.assertTrue(self.reachable("SFM Wolfos Grotto Chest"))
         self.assertFalse(self.reachable("SFM Wolfos Grotto Chest", NEVER_ADULT))
+
+    def test_zoras_river_tree_skulltula_comes_out_of_soil_for_bugs(self):
+        self.assertTrue(self.reachable("ZR GS Tree"))
+        self.assertFalse(self.reachable("ZR GS Tree", *NO_BOTTLE))
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):

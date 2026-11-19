@@ -7,7 +7,6 @@ void RegionTable_Init_ZoraRiver() {
     // clang-format off
     areaTable[RR_ZR_FRONT] = Region("ZR Front", SCENE_ZORAS_RIVER, {}, {
         //Locations
-        LOCATION(RC_ZR_GS_TREE,              logic->IsChild && logic->CanKillEnemy(RE_GOLD_SKULLTULA, ED_CLOSE) && logic->CanBonkTrees()),
         LOCATION(RC_ZR_GRASS_1,              logic->CanCutShrubs()),
         LOCATION(RC_ZR_GRASS_2,              logic->CanCutShrubs()),
         LOCATION(RC_ZR_GRASS_3,              logic->CanCutShrubs()),
@@ -43,6 +42,9 @@ void RegionTable_Init_ZoraRiver() {
     }, {
         //Locations
         LOCATION(RC_ZR_MAGIC_BEAN_SALESMAN,                  logic->IsChild && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        // The remake's river has no Gold Skulltula in a tree. The one that stands for this location comes out of the soft
+        // soil beside the bean seller once bugs go in.
+        LOCATION(RC_ZR_GS_TREE,                              logic->CanSpawnSoilSkull(RG_ZORAS_RIVER_BEAN_SOUL) && logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
         LOCATION(RC_ZR_FROGS_OCARINA_GAME,                   logic->IsChild && logic->CanUse(RG_ZELDAS_LULLABY) && logic->CanUse(RG_SARIAS_SONG) && logic->CanUse(RG_SUNS_SONG) && logic->CanUse(RG_EPONAS_SONG) && logic->CanUse(RG_SONG_OF_TIME) && logic->CanUse(RG_SONG_OF_STORMS)),
         LOCATION(RC_ZR_FROGS_IN_THE_RAIN,                    logic->IsChild && logic->CanUse(RG_SONG_OF_STORMS)),
         LOCATION(RC_ZR_FROGS_ZELDAS_LULLABY,                 logic->IsChild && logic->CanUse(RG_ZELDAS_LULLABY)),
