@@ -20,6 +20,7 @@ export type Copy = {
       command: string
     }
   }
+  faqPage: { title: string; questions: string }
   footer: {
     heart: { before: string; label: string; after: string }
     thanks: { before: string; name: string; after: string }
@@ -83,6 +84,10 @@ export const copy: Copy = {
       terminal: 'If you prefer Terminal:',
       command: 'xattr -dr com.apple.quarantine Kaepora.app',
     },
+  },
+  faqPage: {
+    title: 'FAQ',
+    questions: 'Questions',
   },
   footer: {
     heart: { before: 'Made with', label: 'love', after: 'by fans of Ocarina of Time.' },

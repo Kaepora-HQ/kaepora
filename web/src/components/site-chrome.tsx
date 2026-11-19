@@ -1,4 +1,6 @@
 import { Link } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
+import { Treeline } from '@/components/night'
 import { OwlMark } from '@/components/owl-mark'
 import type { Copy } from '@/copy'
 import { repository, systems } from '@/release'
@@ -34,6 +36,18 @@ export function SiteHeader() {
   )
 }
 
+export function PageHero({ title, children }: { title: string; children?: ReactNode }) {
+  return (
+    <section className="bg-linear-to-b from-midnight to-dusk">
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-gutter pbs-12 box-content">
+        <h1 className="storybook text-title font-normal">{title}</h1>
+        {children}
+      </div>
+      <Treeline className="mbs-10 block h-[clamp(5rem,3rem+7vw,9rem)] w-full" />
+    </section>
+  )
+}
+
 export function SiteFooter({ words }: { words: Copy['footer'] }) {
   return (
     <footer className="border-t border-mist/10 bg-silhouette px-gutter pbs-12 pbe-12">
@@ -59,6 +73,9 @@ export function SiteFooter({ words }: { words: Copy['footer'] }) {
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-2 text-sm text-mist">
           <Link to="/download" className="quiet-link">
             Downloads and changes
+          </Link>
+          <Link to="/faq" className="quiet-link">
+            FAQ
           </Link>
           <a href={repository} className="quiet-link">
             Source code
