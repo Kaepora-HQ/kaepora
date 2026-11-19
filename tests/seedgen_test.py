@@ -389,6 +389,16 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["start_values"], DOORS_OPEN | {"KokiriForest_Npc_Kokiri_Mido_Child_Blocker": False,
                                                              "KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
 
+    def test_forest_closed_deku(self):
+        spoiler, plan = self.generate("19", {"Kokiri Forest": "Closed Deku"})
+        self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed Deku")
+        self.assertEqual(plan["start_values"], DOORS_OPEN | {"KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
+
+    def test_only_closed_deku_removes_midos_castle_entry(self):
+        for choice, removed in (("Closed", False), ("Closed Deku", True), ("Open", False)):
+            _, plan = self.generate("19", {"Kokiri Forest": choice})
+            self.assertIs(plan["mido_castle_entry_removed"], removed, choice)
+
     def test_bridge_always_open(self):
         spoiler, plan = self.generate("17", {"Rainbow Bridge": "Always open"})
         self.assertEqual(spoiler["settings"]["Rainbow Bridge"], "Always open")

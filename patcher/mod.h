@@ -65,6 +65,7 @@ struct Plan {
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedShopSlot> shops;
+    bool midoCastleEntryRemoved;
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

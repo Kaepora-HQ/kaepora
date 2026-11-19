@@ -1511,5 +1511,6 @@
       "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
     }
   ],
-  "shops": []
+  "shops": [],
+  "mido_castle_entry_removed": false
 }

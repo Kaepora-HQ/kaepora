@@ -33,6 +33,7 @@ NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), ("KF Mido Top 
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
+CLOSED_DEKU = {"Kokiri Forest": "Closed Deku"}
 BRIDGE_OPEN = {"Rainbow Bridge": "Always open"}
 NO_TRIALS = {"Ganon's trials": "None"}
 
@@ -299,6 +300,14 @@ class LogicTest(unittest.TestCase):
         for location in ("Deku Tree Map Chest", "HC Malon Egg"):
             self.assertFalse(self.reachable(location, no_sword), location)
             self.assertTrue(self.reachable(location, no_sword, settings=FOREST_OPEN), location)
+
+    def test_a_closed_deku_forest_lets_a_child_out_and_keeps_mido(self):
+        # The forest's own chest holds the only sword a child can use, and the forest's shop sells the Deku Shield.
+        nothing_in_hand = (("KF Kokiri Sword Chest", "Green Rupee"), ("KF Shop Item 1", "Green Rupee"))
+        self.assertFalse(self.reachable("HC Malon Egg", *nothing_in_hand))
+        self.assertTrue(self.reachable("HC Malon Egg", *nothing_in_hand, settings=CLOSED_DEKU))
+        self.assertFalse(self.reachable("Deku Tree Map Chest", *nothing_in_hand, settings=CLOSED_DEKU))
+        self.assertTrue(self.reachable("Deku Tree Map Chest", settings=CLOSED_DEKU))
 
     def test_an_open_bridge_needs_no_light_arrows(self):
         # Zelda gives the Light Arrows after the Spirit and the Shadow sages wake, and the bridge appears after her.

@@ -434,8 +434,11 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         values[flag] = true;
     }
     if (settings.forest == Forest::Open) {
-        // Mido and the Kokiri at the exit no longer block Link, and the invisible wall beside each is gone.
+        // Mido no longer blocks the way to the Deku Tree, and the invisible wall beside him is gone.
         values["KokiriForest_Npc_Kokiri_Mido_Child_Blocker"] = false;
+    }
+    if (settings.forest != Forest::Closed) {
+        // The Kokiri at the exit no longer blocks the way out, and the invisible wall beside him is gone.
         values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
     }
     if (settings.bridge == Bridge::AlwaysOpen) {
@@ -514,5 +517,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                   { "item", items.at(slot.location) },
                                   { "price", location->GetPrice() } });
     }
+    // Only with the exit open and Mido still blocking can Link meet Zelda before Mido lets him by.
+    plan["mido_castle_entry_removed"] = settings.forest == Forest::ClosedDeku;
     return plan;
 }

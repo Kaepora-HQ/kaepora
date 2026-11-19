@@ -53,7 +53,9 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.mapsAndCompasses == DungeonItems::GivenAtTheStart) {
         changed << "maps and compasses given at the start";
     }
-    if (settings.forest == Forest::Open) {
+    if (settings.forest == Forest::ClosedDeku) {
+        changed << "forest exit open";
+    } else if (settings.forest == Forest::Open) {
         changed << "forest open";
     }
     if (settings.bridge == Bridge::AlwaysOpen) {

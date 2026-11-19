@@ -39,6 +39,7 @@ TRAINING_GROUND_DYNAMIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Dynami
 TRAINING_GROUND_STATIC = "Banc/GerudoTrainingGround/GerudoTrainingGround_Static.bcett.byml.zs"
 WATER_STATIC = "Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs"
 SIZE_TABLE = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs"
+MIDO_SCHEDULE = "Component/AIScheduleParam/Npc_Kokiri_Mido_Child.game__component__AIScheduleParam.bgyml"
 BOMB_LIFT_PACKS = [f"Pack/Actor/{actor}.pack.zs" for actor in (
     "Item_Bomb", "Npc_Hylia_ImperialSoldier_Bomb", "Obj_BombFlower_A_01", "Obj_BombFlower_A_04",
     "Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01")]
@@ -435,13 +436,14 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
-def plan(chests, start_values=None, event_texts=(), stone_texts=(), shops=()):
+def plan(chests, start_values=None, event_texts=(), stone_texts=(), shops=(), mido_castle_entry_removed=False):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
-            "shops": [shop_slot(slot, item, price) for slot, item, price in shops]}
+            "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
+            "mido_castle_entry_removed": mido_castle_entry_removed}
 
 
 def shop_slot(slot, item, price):
@@ -618,6 +620,15 @@ def tested_bomb_mod(patch, game, mod):
             tested[name], zstd_dict=game.pack_dictionary), name
 
 
+def tested_mido_mod(patch, game, mod):
+    """Mido's schedule without his castle entry, as the game ran it: with it, a Link who had met Zelda found Mido at his
+    post, and Mido let him through with the sword and the shield."""
+    tested = files(pathlib.Path(mod) / "romfs")
+    assert sorted(tested) == [MIDO_SCHEDULE], sorted(tested)
+    assert patched(patch, game, plan([], mido_castle_entry_removed=True)).get(MIDO_SCHEDULE) == tested[MIDO_SCHEDULE]
+    assert MIDO_SCHEDULE not in patched(patch, game, plan([]))
+
+
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
 ROTATED = [
     (KOKIRI_SWORD_CHEST, ["Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs",
@@ -674,7 +685,7 @@ def together(patch, game):
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "event_texts", "stone_texts", "shops")}
-    whole |= {"seed": "1", "start_values": values}
+    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
     assert len(tables) == 3, len(tables)
@@ -1148,6 +1159,9 @@ def bad_input(patch, game):
         {"seed": "1", "chests": [valid], "event_texts": [], "stone_texts": []}, ["plan.json", "start_values"])
     plans["no stone_texts"] = (
         {"seed": "1", "chests": [valid], "event_texts": [], "start_values": {}}, ["plan.json", "stone_texts"])
+    plans["no mido_castle_entry_removed"] = (
+        {key: value for key, value in good.items() if key != "mido_castle_entry_removed"},
+        ["plan.json", "mido_castle_entry_removed"])
     valid_stone = {"label": KOKIRI_STONE, "text": "They say."}
     other = SHORT_RUMOUR_STONE
     stones = {
@@ -1246,6 +1260,7 @@ def main():
         "tested-event-text-mods": tested_event_text_mods,
         "tested-program-mod": tested_program_mod,
         "tested-bomb-mod": tested_bomb_mod,
+        "tested-mido-mod": tested_mido_mod,
         "tested-stone-text-mod": tested_stone_text_mod,
         "seed-plan": seed_plan,
         "larger-plan": larger_plan,

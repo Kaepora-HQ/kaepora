@@ -188,7 +188,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      dins_fire_comes_from_the_summit_great_fairy
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
-                     keys_not_needed forest_open bridge_always_open no_trials
+                     keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
+                     bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
                      four_goods_per_shop_shuffled shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
@@ -246,6 +247,8 @@ set(KAEPORA_TESTED_NEW_ACTOR_MOD "" CACHE PATH
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
+set(KAEPORA_TESTED_MIDO_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with Mido's castle entry taken out of his schedule")
 set(KAEPORA_TESTED_STONE_TEXT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with a text of ours on the Kokiri Forest gossip stone")
 set(PATCH_TEST ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/patch_test.py)
@@ -329,6 +332,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-bomb-mod
             COMMAND ${PATCH_TEST} tested-bomb-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_BOMB_MOD}")
+    endif()
+    if(KAEPORA_TESTED_MIDO_MOD)
+        add_test(NAME patch-tested-mido-mod
+            COMMAND ${PATCH_TEST} tested-mido-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_MIDO_MOD}")
     endif()
 endif()
 

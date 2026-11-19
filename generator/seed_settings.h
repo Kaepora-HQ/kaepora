@@ -52,9 +52,10 @@ inline constexpr std::pair<DungeonItems, std::string_view> MapsAndCompassesChoic
     { DungeonItems::GivenAtTheStart, "Given at the start" },
 };
 
-enum class Forest { Closed, Open };
+enum class Forest { Closed, ClosedDeku, Open };
 inline constexpr std::pair<Forest, std::string_view> ForestChoices[] = {
     { Forest::Closed, "Closed" },
+    { Forest::ClosedDeku, "Closed Deku" },
     { Forest::Open, "Open" },
 };
 

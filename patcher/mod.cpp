@@ -169,6 +169,7 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("shops[{}]: {}", i, e.what()));
         }
     }
+    plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     return plan;
 }
 
@@ -478,6 +479,30 @@ static std::string BombLiftPack(GameFile& game, const std::string& dictionary, s
     }
 }
 
+// Once the castle quest is complete, the last entry of Mido's schedule sends him away from his post with a talk that
+// never lets Link by, while the wall at the post stands as long as his blocker value holds. Without that entry, a Link
+// who meets Zelda before Mido lets him by finds Mido at his post with his blocking talk, as before Zelda. Once Mido has
+// let him by, the other entries hold as before, and Mido gives his lines for the forest's story instead of those for
+// after the castle.
+constexpr std::string_view MidoSchedule =
+    "Component/AIScheduleParam/Npc_Kokiri_Mido_Child.game__component__AIScheduleParam.bgyml";
+constexpr std::string_view MidoCastleCondition = "Goto_HyruleCastle_IsCompleted_Exp";
+
+// The file shrinks, so it still fits its size table entry.
+static std::string MidoScheduleWithoutCastleEntry(GameFile& game) {
+    try {
+        byml::Document schedule = byml::Parse(game.Read(std::string(MidoSchedule)));
+        byml::Node* entries = Find(schedule.root, "ConditionalSchedule");
+        byml::Node* condition =
+            entries == nullptr || entries->array.empty() ? nullptr : Find(entries->array.back(), "ConditionFlag");
+        if (condition == nullptr || condition->string != MidoCastleCondition) {
+            throw std::runtime_error(std::format("the last entry is not the one for {}", MidoCastleCondition));
+        }
+        entries->array.pop_back();
+        return byml::Write(schedule);
+    } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", MidoSchedule, e.what())); }
+}
+
 // The game reads the update's text pack of the console's language. A stone says its text in English, and on a console
 // in another language it keeps the game's rumour.
 constexpr std::string_view StoneTextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
@@ -634,6 +659,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     };
     for (const std::string_view path : BombLiftPacks) {
         addToRomfs(path, BombLiftPack(game, packDictionary, path));
+    }
+    if (plan.midoCastleEntryRemoved) {
+        addToRomfs(MidoSchedule, MidoScheduleWithoutCastleEntry(game));
     }
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;

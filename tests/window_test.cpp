@@ -558,6 +558,17 @@ private slots:
         QVERIFY(spoiler["hints"].toObject().isEmpty());
     }
 
+    void aClosedDekuForestGoesIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Kokiri Forest")->setCurrentText("Closed Deku");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Kokiri Forest"].toString(), QString("Closed Deku"));
+        QCOMPARE(listed(1), QStringList{ "Forest exit open" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Kokiri Forest: Closed Deku"));
+    }
+
     void cancelChangesNothing() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         dialogButton("Cancel")->click();
@@ -622,6 +633,7 @@ private slots:
         QTest::addColumn<QString>("value");
         QTest::addColumn<QString>("summary");
         QTest::newRow("keys") << "Small and boss keys" << "Not needed" << "Keys not needed";
+        QTest::newRow("forest exit") << "Kokiri Forest" << "Closed Deku" << "Forest exit open";
         QTest::newRow("forest") << "Kokiri Forest" << "Open" << "Forest open";
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
