@@ -220,6 +220,7 @@ void RegionTable_Init_ZoraRiver() {
         LOCATION(RC_ZR_DEKU_SCRUB_GROTTO_REAR,    logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_ZR_DEKU_SCRUB_GROTTO_FRONT,   logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_ZR_DEKU_SCRUB_GROTTO_BEEHIVE, logic->CanBreakUpperBeehives()),
+        LOCATION(RC_ZR_STORMS_GROTTO_GOSSIP_STONE, true),
     }, {
         //Exits
         ENTRANCE(RR_ZORAS_RIVER, true),
