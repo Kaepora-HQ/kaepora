@@ -75,10 +75,10 @@ inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::NeverNeeded, "Never needed" },
 };
 
-enum class GossipStones { GiveHints, AsInTheGame };
+enum class GossipStones { GiveHints, Vanilla };
 inline constexpr std::pair<GossipStones, std::string_view> GossipStonesChoices[] = {
     { GossipStones::GiveHints, "Give hints" },
-    { GossipStones::AsInTheGame, "As in the game" },
+    { GossipStones::Vanilla, "Vanilla" },
 };
 
 template <typename Value, size_t Size>

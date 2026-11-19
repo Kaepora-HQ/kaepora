@@ -45,7 +45,7 @@ DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywh
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
                     "Lens of Truth": "Needed", "Gossip stones": "Give hints"}
-NO_HINTS = {"Gossip stones": "As in the game"}
+NO_HINTS = {"Gossip stones": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",

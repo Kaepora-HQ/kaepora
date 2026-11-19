@@ -547,13 +547,13 @@ private slots:
         QCOMPARE(entry("7")->toolTip(1), details);
     }
 
-    void stonesAsInTheGameGoIntoTheSeed() {
+    void vanillaStonesGoIntoTheSeed() {
         button("Settings…")->click();
-        choice("Gossip stones")->setCurrentText("As in the game");
+        choice("Gossip stones")->setCurrentText("Vanilla");
         dialogButton("OK")->click();
         QVERIFY(create("7"));
         const QJsonObject spoiler = ReadJson(library + "/7/spoiler.json");
-        QCOMPARE(spoiler["settings"].toObject()["Gossip stones"].toString(), QString("As in the game"));
+        QCOMPARE(spoiler["settings"].toObject()["Gossip stones"].toString(), QString("Vanilla"));
         QVERIFY(spoiler["hints"].toObject().isEmpty());
     }
 
@@ -575,7 +575,7 @@ private slots:
     void defaultsSetsEveryControlBack() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         choice("Maps and compasses")->setCurrentText("In their own chests");
-        choice("Gossip stones")->setCurrentText("As in the game");
+        choice("Gossip stones")->setCurrentText("Vanilla");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -624,7 +624,7 @@ private slots:
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
-        QTest::newRow("stones") << "Gossip stones" << "As in the game" << "No gossip stone hints";
+        QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";
     }
 
     void aChoiceShowsInTheSummary() {

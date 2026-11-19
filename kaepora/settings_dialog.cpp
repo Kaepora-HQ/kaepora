@@ -65,7 +65,7 @@ QString Summary(const SeedSettings& settings) {
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
-    if (settings.gossipStones == GossipStones::AsInTheGame) {
+    if (settings.gossipStones == GossipStones::Vanilla) {
         changed << "no gossip stone hints";
     }
     QString summary = changed.join(", ");
