@@ -294,6 +294,8 @@ void RegionTable_Init_Kakariko() {
     areaTable[RR_KAK_REDEAD_GROTTO] = Region("Kak Redead Grotto", SCENE_GROTTOS, {}, {
         //Locations
         LOCATION(RC_KAK_REDEAD_GROTTO_CHEST, logic->CanKillEnemy(RE_REDEAD, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
+        // The remake's hole here holds beehives and this stone, and no ReDead.
+        LOCATION(RC_KAK_BEEHIVE_GROTTO_GOSSIP_STONE, true),
     }, {
         //Exits
         ENTRANCE(RR_KAKARIKO_VILLAGE, true),

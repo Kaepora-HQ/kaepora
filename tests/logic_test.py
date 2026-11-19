@@ -642,6 +642,11 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable(stone))
         self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
 
+    def test_kakariko_beehive_grotto_stone_needs_a_bomb_or_the_hammer(self):
+        stone = "Kak Beehive Grotto Gossip Stone"
+        self.assertTrue(self.reachable(stone))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+
 
 if __name__ == "__main__":
     reach.PROGRAM = sys.argv[1]
