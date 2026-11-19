@@ -4,9 +4,11 @@
 
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <set>
 #include <string_view>
 #include <utility>
+#include <variant>
 
 inline constexpr std::string_view ShuffledDungeonsSetting = "Shuffled dungeons";
 inline constexpr std::string_view KeysSetting = "Small and boss keys";
@@ -15,6 +17,9 @@ inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
 inline constexpr std::string_view ShopsSetting = "Shop goods";
+inline constexpr std::string_view ShopPricesSetting = "Shop prices";
+inline constexpr std::string_view ShopPriceSetting = "Shop price";
+inline constexpr std::string_view ShopPriceRangeSetting = "Shop price range";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
 
@@ -39,6 +44,11 @@ inline constexpr Dungeon Dungeons[] = {
     { "Gerudo Training Ground", "GerudoTrainingGround" },
     { "Ganon's Castle", "InsideGanonCastle" },
 };
+
+template <typename Value, size_t Size>
+std::string_view Words(const std::pair<Value, std::string_view> (&choices)[Size], Value value) {
+    return std::ranges::find(choices, value, &std::pair<Value, std::string_view>::first)->second;
+}
 
 enum class DungeonItems { AnywhereInTheirDungeon, InTheirOwnChests, GivenAtTheStart };
 inline constexpr std::pair<DungeonItems, std::string_view> KeysChoices[] = {
@@ -72,24 +82,70 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
 };
 
 // A count's value is the number of goods it shuffles in each shop.
-enum class Shops {
-    Vanilla,
-    OnePerShopShuffled,
-    TwoPerShopShuffled,
-    ThreePerShopShuffled,
-    FourPerShopShuffled,
-    FivePerShopShuffled,
-    RandomPerShop,
+enum class ShopCount { OnePerShop = 1, TwoPerShop, ThreePerShop, FourPerShop, FivePerShop, RandomPerShop };
+inline constexpr std::pair<ShopCount, std::string_view> ShopCountChoices[] = {
+    { ShopCount::OnePerShop, "One per shop shuffled" },
+    { ShopCount::TwoPerShop, "Two per shop shuffled" },
+    { ShopCount::ThreePerShop, "Three per shop shuffled" },
+    { ShopCount::FourPerShop, "Four per shop shuffled" },
+    { ShopCount::FivePerShop, "Five per shop shuffled" },
+    { ShopCount::RandomPerShop, "A random number per shop" },
 };
-inline constexpr std::pair<Shops, std::string_view> ShopsChoices[] = {
-    { Shops::Vanilla, "Vanilla" },
-    { Shops::OnePerShopShuffled, "One per shop shuffled" },
-    { Shops::TwoPerShopShuffled, "Two per shop shuffled" },
-    { Shops::ThreePerShopShuffled, "Three per shop shuffled" },
-    { Shops::FourPerShopShuffled, "Four per shop shuffled" },
-    { Shops::FivePerShopShuffled, "Five per shop shuffled" },
-    { Shops::RandomPerShop, "A random number per shop" },
+// "Shop goods" at this leaves every shop's goods where the game has them.
+inline constexpr std::string_view VanillaShops = "Vanilla";
+
+// SoH sets one price, and each end of a range, from 0 to 995 rupees in steps of 5.
+inline constexpr int MostShopPrice = 995;
+inline constexpr int ShopPriceStep = 5;
+
+// Each slot's own price in the remake.
+struct VanillaPrices {
+    bool operator==(const VanillaPrices&) const = default;
 };
+struct CheapPrices {
+    bool operator==(const CheapPrices&) const = default;
+};
+struct BalancedPrices {
+    bool operator==(const BalancedPrices&) const = default;
+};
+struct OnePrice {
+    int price = 100;
+
+    bool operator==(const OnePrice&) const = default;
+};
+struct PricesBetween {
+    int lowest = 20;
+    int highest = 200;
+
+    bool operator==(const PricesBetween&) const = default;
+};
+using ShopPrices = std::variant<VanillaPrices, CheapPrices, BalancedPrices, OnePrice, PricesBetween>;
+// Each kind of price with its default numbers.
+inline constexpr std::pair<ShopPrices, std::string_view> ShopPricesChoices[] = {
+    { VanillaPrices{}, "Vanilla" },
+    { CheapPrices{}, "Cheap" },
+    { BalancedPrices{}, "Balanced" },
+    { OnePrice{}, "One price" },
+    { PricesBetween{}, "Between two prices" },
+};
+inline constexpr ShopPrices DefaultShopPrices = CheapPrices{};
+
+// The choice of the prices' kind.
+inline const std::pair<ShopPrices, std::string_view>& ShopPricesChoice(const ShopPrices& prices) {
+    return *std::ranges::find(ShopPricesChoices, prices.index(),
+                              [](const auto& choice) { return choice.first.index(); });
+}
+
+struct ShuffledShops {
+    ShopCount count;
+    ShopPrices prices = DefaultShopPrices;
+
+    bool operator==(const ShuffledShops&) const = default;
+};
+
+inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
+    return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;
+}
 
 enum class Lens { Needed, NeverNeeded };
 inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
@@ -103,11 +159,6 @@ inline constexpr std::pair<GossipStones, std::string_view> GossipStonesChoices[]
     { GossipStones::Vanilla, "Vanilla" },
 };
 
-template <typename Value, size_t Size>
-std::string_view Words(const std::pair<Value, std::string_view> (&choices)[Size], Value value) {
-    return std::ranges::find(choices, value, &std::pair<Value, std::string_view>::first)->second;
-}
-
 struct SeedSettings {
     std::set<Dungeon> shuffledDungeons{ std::begin(Dungeons), std::end(Dungeons) };
     DungeonItems keys = DungeonItems::AnywhereInTheirDungeon;
@@ -115,7 +166,7 @@ struct SeedSettings {
     Forest forest = Forest::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
-    Shops shops = Shops::Vanilla;
+    std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
 

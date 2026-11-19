@@ -24,6 +24,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
+#include <QSpinBox>
 #include <QSslCertificate>
 #include <QSslConfiguration>
 #include <QSslKey>
@@ -250,7 +251,7 @@ private:
     bool create(const QString& seed) {
         QLineEdit* field = nullptr;
         for (QLineEdit* candidate : window->findChildren<QLineEdit*>()) {
-            if (!candidate->isReadOnly()) {
+            if (!candidate->isReadOnly() && candidate->window() == window.get()) {
                 field = candidate;
             }
         }
@@ -634,6 +635,107 @@ private slots:
         dialogButton("Cancel")->click();
     }
 
+    QSpinBox* number(const QString& name) const {
+        for (QSpinBox* box : dialog()->findChildren<QSpinBox*>()) {
+            if (box->accessibleName() == name) {
+                return box;
+            }
+        }
+        return nullptr;
+    }
+
+    void shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice() {
+        button("Settings…")->click();
+        QStringList offered;
+        for (int index = 0; index < choice("Shop prices")->count(); ++index) {
+            offered << choice("Shop prices")->itemText(index);
+        }
+        QCOMPARE(offered, (QStringList{ "Vanilla", "Cheap", "Balanced", "One price", "Between two prices" }));
+        QCOMPARE(choice("Shop prices")->currentText(), QString("Cheap"));
+        const QStringList numbers{ "Shop price", "Lowest shop price", "Highest shop price" };
+        for (const QString& name : numbers) {
+            QCOMPARE(number(name)->minimum(), 0);
+            QCOMPARE(number(name)->maximum(), 995);
+            QCOMPARE(number(name)->singleStep(), 5);
+        }
+        const auto shown = [&] {
+            QStringList on;
+            for (const QString& name : numbers) {
+                if (number(name)->isVisibleTo(dialog())) {
+                    on << name;
+                }
+            }
+            if (label("to")->isVisibleTo(dialog())) {
+                on << "to";
+            }
+            return on;
+        };
+        const auto right = [&](const QWidget* widget) {
+            QCoreApplication::processEvents();
+            return widget->mapTo(dialog(), QPoint(widget->width(), 0)).x();
+        };
+        QVERIFY(!choice("Shop prices")->isEnabled());
+        choice("Shop prices")->setCurrentText("One price");
+        QCOMPARE(shown(), QStringList{});
+        choice("Shop goods")->setCurrentText("Four per shop shuffled");
+        QVERIFY(choice("Shop prices")->isEnabled());
+        QCOMPARE(shown(), QStringList{ "Shop price" });
+        choice("Shop prices")->setCurrentText("Between two prices");
+        QCOMPARE(shown(), (QStringList{ "Lowest shop price", "Highest shop price", "to" }));
+        choice("Shop prices")->setCurrentText("Balanced");
+        QCOMPARE(shown(), QStringList{});
+        // With no number, the choice spans the row as every other row's does.
+        QCOMPARE(right(choice("Shop prices")), right(choice("Shop goods")));
+        choice("Shop goods")->setCurrentText("Vanilla");
+        QVERIFY(!choice("Shop prices")->isEnabled());
+        QCOMPARE(right(choice("Shop prices")), right(choice("Shop goods")));
+        dialogButton("Cancel")->click();
+    }
+
+    void shopPricesAreRememberedAndShowInTheDetails() {
+        button("Settings…")->click();
+        choice("Shop goods")->setCurrentText("Four per shop shuffled");
+        choice("Shop prices")->setCurrentText("Between two prices");
+        number("Lowest shop price")->setValue(300);
+        number("Highest shop price")->setValue(150);
+        number("Shop price")->setValue(45);
+        dialogButton("OK")->click();
+        QVERIFY(shows("Shop goods shuffled"));
+        const QStringList details = label("Shop goods shuffled")->toolTip().split('\n');
+        QVERIFY(details.contains("Shop prices: Between 150 and 300 rupees"));
+        window = std::make_unique<Window>();
+        window->show();
+        button("Settings…")->click();
+        QCOMPARE(choice("Shop prices")->currentText(), QString("Between two prices"));
+        QCOMPARE(number("Lowest shop price")->value(), 150);
+        QCOMPARE(number("Highest shop price")->value(), 300);
+        // Only the prices in effect are kept, so the single price is back at its default.
+        QCOMPARE(number("Shop price")->value(), 100);
+        choice("Shop prices")->setCurrentText("One price");
+        number("Shop price")->setValue(45);
+        dialogButton("OK")->click();
+        QVERIFY(label("Shop goods shuffled")->toolTip().split('\n').contains("Shop prices: One price of 45 rupees"));
+    }
+
+    void goodsBackAtVanillaLeaveNoPriceChoice() {
+        button("Settings…")->click();
+        choice("Shop goods")->setCurrentText("Four per shop shuffled");
+        choice("Shop prices")->setCurrentText("One price");
+        choice("Shop goods")->setCurrentText("Vanilla");
+        dialogButton("OK")->click();
+        QVERIFY(shows("Default settings"));
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Default settings"));
+    }
+
+    void rememberedPricesWithVanillaGoodsStartAsTheDefaults() {
+        QSettings().setValue("seedSettings", R"({"Shop goods": "Vanilla", "Shop prices": "One price", "Shop price": 45})");
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Default settings"));
+    }
+
     void theChoicesStartInOneColumn() {
         button("Settings…")->click();
         QCoreApplication::processEvents();
@@ -652,7 +754,7 @@ private slots:
             titles << group->title();
         }
         QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
-        QCOMPARE(rows("Shuffle"), QStringList{ "Shop goods" });
+        QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 

@@ -86,17 +86,17 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
 // and SoH's logic counts only a shield Link can buy, so a count stops at five.
 static constexpr int ShopsanityOrder[] = { 7, 5, 8, 6, 3 };
 
-// The slots the setting shuffles, in table order: the first items of each shop in SoH's order, as many as the count.
+// The slots a count shuffles, in table order: the first items of each shop in SoH's order, as many as the count.
 // A random number per shop draws each shop's count, one to five, as the table reaches its item 1.
-static std::vector<RemakeShopSlot> ShuffledShops(const std::vector<RemakeShopSlot>& table, Shops shops) {
+static std::vector<RemakeShopSlot> ShuffledSlots(const std::vector<RemakeShopSlot>& table, ShopCount count) {
     std::vector<RemakeShopSlot> shuffled;
-    int count = 0;
+    int shopCount = 0;
     for (const RemakeShopSlot& slot : table) {
         if (slot.number == 1) {
-            count = shops == Shops::RandomPerShop ? static_cast<int>(Random(1, std::size(ShopsanityOrder) + 1))
-                                                  : static_cast<int>(shops);
+            shopCount = count == ShopCount::RandomPerShop ? static_cast<int>(Random(1, std::size(ShopsanityOrder) + 1))
+                                                          : static_cast<int>(count);
         }
-        if (std::ranges::find(ShopsanityOrder, slot.number) - std::begin(ShopsanityOrder) < count) {
+        if (std::ranges::find(ShopsanityOrder, slot.number) - std::begin(ShopsanityOrder) < shopCount) {
             shuffled.push_back(slot);
         }
     }
@@ -110,7 +110,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
     [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table), true);
     static const RemakeHintTables hintTables =
-        LoadRemakeHintTables(table, ShuffledShops(shopTable, Shops::FivePerShopShuffled));
+        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop));
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -124,7 +124,8 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
     // the seed and on what generation does, not on how the options are listed.
     Random_Init(SohUtils::Hash(seed));
-    const std::vector<RemakeShopSlot> shops = ShuffledShops(shopTable, settings.shops);
+    const std::vector<RemakeShopSlot> shops =
+        settings.shops ? ShuffledSlots(shopTable, settings.shops->count) : std::vector<RemakeShopSlot>{};
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.

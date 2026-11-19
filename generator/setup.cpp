@@ -8,6 +8,7 @@
 #include "soh/OTRGlobals.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 
+#include <algorithm>
 #include <utility>
 
 // The value of each option that describes the unmodified game. SoH carries out most options by changing the game
@@ -261,6 +262,11 @@ void InitializeRandomizer() {
     ctx->AddExcludedOptions();
 }
 
+template <typename... Calls>
+struct Overloaded : Calls... {
+    using Calls::operator()...;
+};
+
 void SetOptions(const SeedSettings& settings) {
     Rando::Settings::GetInstance()->SetAllToContext();
     auto ctx = Rando::Context::GetInstance();
@@ -283,8 +289,22 @@ void SetOptions(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         ctx->GetOption(RSK_GANONS_TRIALS).Set(RO_GANONS_TRIALS_SKIP);
     }
-    if (settings.shops != Shops::Vanilla) {
-        ctx->GetOption(RSK_SHOPSANITY_PRICES).Set(RO_PRICE_CHEAP_BALANCED);
+    if (settings.shops) {
+        auto& prices = ctx->GetOption(RSK_SHOPSANITY_PRICES);
+        // SoH's options hold one price and the ends of a range in steps.
+        std::visit(Overloaded{ [&](VanillaPrices) { prices.Set(RO_PRICE_VANILLA); },
+                               [&](CheapPrices) { prices.Set(RO_PRICE_CHEAP_BALANCED); },
+                               [&](BalancedPrices) { prices.Set(RO_PRICE_BALANCED); },
+                               [&](OnePrice one) {
+                                   prices.Set(RO_PRICE_FIXED);
+                                   ctx->GetOption(RSK_SHOPSANITY_PRICES_FIXED_PRICE).Set(one.price / ShopPriceStep);
+                               },
+                               [&](PricesBetween between) {
+                                   prices.Set(RO_PRICE_RANGE);
+                                   ctx->GetOption(RSK_SHOPSANITY_PRICES_RANGE_1).Set(between.lowest / ShopPriceStep);
+                                   ctx->GetOption(RSK_SHOPSANITY_PRICES_RANGE_2).Set(between.highest / ShopPriceStep);
+                               } },
+                   settings.shops->prices);
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
 }

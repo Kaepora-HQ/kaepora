@@ -7,15 +7,20 @@
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QStringList>
 #include <QVBoxLayout>
 
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
+#include <ranges>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 constexpr qsizetype NamedDungeons = 3;
@@ -64,7 +69,7 @@ QString Summary(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
-    if (settings.shops != Shops::Vanilla) {
+    if (settings.shops) {
         changed << "shop goods shuffled";
     }
     if (settings.lens == Lens::NeverNeeded) {
@@ -93,19 +98,31 @@ static QString ShuffledDungeons(const SeedSettings& settings) {
     return shuffled.size() < leftOut.size() ? Listed(shuffled) : "All but " + Listed(leftOut);
 }
 
+static QString ShopPricesDetail(const ShopPrices& prices) {
+    if (const auto* one = std::get_if<OnePrice>(&prices)) {
+        return QString("One price of %1 rupees").arg(one->price);
+    }
+    if (const auto* between = std::get_if<PricesBetween>(&prices)) {
+        return QString("Between %1 and %2 rupees").arg(between->lowest).arg(between->highest);
+    }
+    return QString::fromUtf8(ShopPricesChoice(prices).second);
+}
+
 QString Details(const SeedSettings& settings) {
-    return QStringList{ Line(ShuffledDungeonsSetting, ShuffledDungeons(settings)),
+    QStringList lines{ Line(ShuffledDungeonsSetting, ShuffledDungeons(settings)),
                         Line(KeysSetting, QString::fromUtf8(Words(KeysChoices, settings.keys))),
                         Line(MapsAndCompassesSetting,
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
-                        Line(ShopsSetting, QString::fromUtf8(Words(ShopsChoices, settings.shops))),
-                        Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens))),
-                        Line(GossipStonesSetting,
-                             QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones))) }
-        .join('\n');
+                        Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
+    if (settings.shops) {
+        lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
+    }
+    lines << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
+          << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)));
+    return lines.join('\n');
 }
 
 // Each group lays out its own labels. They all take the widest one's width, so the choices start in one column.
@@ -130,6 +147,20 @@ static QComboBox* Choice(const std::pair<Value, std::string_view> (&choices)[Siz
     for (const auto& [value, words] : choices) {
         box->addItem(QString::fromUtf8(words), static_cast<int>(value));
     }
+    return box;
+}
+
+static int RoundedPrice(int price) {
+    return (price + ShopPriceStep / 2) / ShopPriceStep * ShopPriceStep;
+}
+
+// A box for a price SoH can set. A typed price goes to the nearest step.
+static QSpinBox* PriceBox(const QString& name) {
+    auto* box = new QSpinBox;
+    box->setRange(0, MostShopPrice);
+    box->setSingleStep(ShopPriceStep);
+    box->setAccessibleName(name);
+    QObject::connect(box, &QSpinBox::editingFinished, box, [box] { box->setValue(RoundedPrice(box->value())); });
     return box;
 }
 
@@ -167,9 +198,28 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* dungeonGroup = new QGroupBox("Dungeons");
     dungeonGroup->setLayout(dungeonForm);
 
-    QComboBox* shops = Choice(ShopsChoices);
+    QComboBox* shops = Choice(ShopCountChoices);
+    shops->insertItem(0, QString::fromUtf8(VanillaShops));
+    auto* shopPrices = new QComboBox;
+    for (const std::string_view words : std::views::values(ShopPricesChoices)) {
+        shopPrices->addItem(QString::fromUtf8(words));
+    }
+    QSpinBox* shopPrice = PriceBox("Shop price");
+    QSpinBox* lowestShopPrice = PriceBox("Lowest shop price");
+    QSpinBox* highestShopPrice = PriceBox("Highest shop price");
+    auto* priceTo = new QLabel("to");
+    auto* shopPricesRow = new QHBoxLayout;
+    // The choice takes the width the numbers leave, so the row ends where every other row does.
+    shopPricesRow->addWidget(shopPrices, 1);
+    shopPricesRow->addWidget(shopPrice);
+    shopPricesRow->addWidget(lowestShopPrice);
+    shopPricesRow->addWidget(priceTo);
+    shopPricesRow->addWidget(highestShopPrice);
+    auto* shopPricesLabel = new QLabel(QString::fromUtf8(ShopPricesSetting));
+    shopPricesLabel->setBuddy(shopPrices);
     auto* shuffleForm = new QFormLayout;
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
+    shuffleForm->addRow(shopPricesLabel, shopPricesRow);
     auto* shuffleGroup = new QGroupBox("Shuffle");
     shuffleGroup->setLayout(shuffleForm);
 
@@ -209,6 +259,19 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     layout->addWidget(hintsGroup);
     layout->addWidget(buttons);
 
+    // Prices wait for shop goods to be shuffled, and a number shows only while its choice is picked.
+    const auto showPrices = [=] {
+        const bool shuffled = shops->currentIndex() != 0;
+        const ShopPrices& prices = ShopPricesChoices[shopPrices->currentIndex()].first;
+        shopPrices->setEnabled(shuffled);
+        shopPrice->setVisible(shuffled && std::holds_alternative<OnePrice>(prices));
+        for (QWidget* range : std::initializer_list<QWidget*>{ lowestShopPrice, priceTo, highestShopPrice }) {
+            range->setVisible(shuffled && std::holds_alternative<PricesBetween>(prices));
+        }
+    };
+    QObject::connect(shops, &QComboBox::currentIndexChanged, dialog, showPrices);
+    QObject::connect(shopPrices, &QComboBox::currentIndexChanged, dialog, showPrices);
+
     const auto show = [=](const SeedSettings& shown) {
         for (const auto& [dungeon, box] : dungeons) {
             box->setChecked(shown.shuffledDungeons.contains(dungeon));
@@ -218,7 +281,16 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(forest, shown.forest);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
-        Select(shops, shown.shops);
+        shops->setCurrentIndex(shown.shops ? shops->findData(static_cast<int>(shown.shops->count)) : 0);
+        const ShopPrices prices = shown.shops ? shown.shops->prices : DefaultShopPrices;
+        shopPrices->setCurrentIndex(static_cast<int>(&ShopPricesChoice(prices) - std::begin(ShopPricesChoices)));
+        const auto* one = std::get_if<OnePrice>(&prices);
+        shopPrice->setValue(one ? one->price : OnePrice{}.price);
+        const auto* between = std::get_if<PricesBetween>(&prices);
+        const PricesBetween range = between ? *between : PricesBetween{};
+        lowestShopPrice->setValue(range.lowest);
+        highestShopPrice->setValue(range.highest);
+        showPrices();
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
     };
@@ -239,7 +311,19 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.forest = Selected<Forest>(forest);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
-        shown.shops = Selected<Shops>(shops);
+        if (shops->currentIndex() != 0) {
+            ShopPrices prices = ShopPricesChoices[shopPrices->currentIndex()].first;
+            if (auto* one = std::get_if<OnePrice>(&prices)) {
+                one->price = RoundedPrice(shopPrice->value());
+            }
+            if (auto* between = std::get_if<PricesBetween>(&prices)) {
+                // Two prices are a range in either order.
+                const auto [lowest, highest] =
+                    std::minmax({ RoundedPrice(lowestShopPrice->value()), RoundedPrice(highestShopPrice->value()) });
+                *between = { lowest, highest };
+            }
+            shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
+        }
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);
         chosen(shown);

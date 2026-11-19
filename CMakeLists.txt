@@ -187,14 +187,17 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      loose_items_the_remake_keeps_in_chests_are_shuffled
                      dins_fire_comes_from_the_summit_great_fairy
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
-                     an_unknown_setting_is_refused a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
+                     an_unknown_setting_is_refused a_price_a_box_cannot_hold_or_a_range_upside_down_is_refused
+                     a_price_setting_nothing_applies_is_refused the_spoiler_log_holds_only_the_prices_in_effect
+                     a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
                      bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
                      each_count_shuffles_the_first_goods_of_every_shop_in_sohs_order
                      a_random_number_per_shop_shuffles_one_to_five_of_its_first_goods
-                     shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
+                     vanilla_prices_are_each_slots_own balanced_prices_go_past_cheap_ones one_price_for_every_slot
+                     prices_between_two_prices shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
                      hints_name_the_goods_only_five_per_shop_shuffle
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
@@ -217,6 +220,8 @@ if(Qt6Test_FOUND)
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn whatJoinsTheShuffleHasItsOwnGroup
                      aChoiceShowsInTheSummary defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
                      shopGoodsOffersEachCountUpToFiveAndARandomNumber
+                     shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
+                     goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
                      longSettingsLeaveTheWindowWidth settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing

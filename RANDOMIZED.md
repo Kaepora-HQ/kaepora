@@ -22,7 +22,9 @@ A dungeon's small keys, boss key, map and compass stay inside that dungeon, in a
 
 **Shop goods** puts places on the shelves of each of the eight shops into the shuffle: from **One per shop shuffled** to **Five per shop shuffled**, or **A random number per shop**. A shop can then sell the Longshot.
 
-What those places sold before is no longer for sale there, and a red rupee joins the shuffled items for each one. Each shuffled place gets its own price, from nothing up to 95 rupees. The other shelves keep their goods and prices. With **Vanilla**, shops sell what they always sold.
+What those places sold before is no longer for sale there, and a red rupee joins the shuffled items for each one. The other shelves keep their goods and prices. With **Vanilla**, shops sell what they always sold.
+
+**Shop prices** sets what the shuffled places cost. **Cheap** gives each its own price, from nothing up to 95 rupees, and **Balanced** goes up to 295. **Vanilla** keeps the price the shelf had. **One price** gives every place the price you type, and **Between two prices** picks each one between the two you type, up to 995 rupees. A seed never asks you to pay more than your wallet can hold when you get there.
 
 ## Hints
 
@@ -63,6 +65,5 @@ More is being worked on. Until each part lands, the game keeps its own.
 - **Songs.** The 12 songs, shuffled among the places that teach them.
 - **Gold Skulltulas.** What the 100 Gold Skulltulas leave behind.
 - **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.
-- **More shop choices.** One to five places per shop, or a random number, and a setting for their prices.
 - **Hints from characters.** Mido and others say where something went, as the gossip stones do.
 - **Going back to child sooner.** Putting the Master Sword back before the Forest Temple.

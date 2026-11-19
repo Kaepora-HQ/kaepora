@@ -386,6 +386,46 @@ class SeedgenTest(unittest.TestCase):
             self.assertIn(message, result.stderr)
             self.assertFalse((out / "spoiler.json").exists())
 
+    def test_a_price_a_box_cannot_hold_or_a_range_upside_down_is_refused(self):
+        out = pathlib.Path(self.tmp.name)
+        one = SHOPS_SHUFFLED | {"Shop prices": "One price"}
+        between = SHOPS_SHUFFLED | {"Shop prices": "Between two prices"}
+        for settings, message in ((one | {"Shop price": 101}, "Shop price: 101"),
+                                  (one | {"Shop price": 1000}, "Shop price: 1000"),
+                                  (one | {"Shop price": "100"}, 'Shop price: "100"'),
+                                  (between | {"Shop price range": [20]}, "Shop price range: [20]"),
+                                  (between | {"Shop price range": [200, 20]}, "first number is above its second")):
+            result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, settings)
+            self.assertIn(message, result.stderr)
+            self.assertFalse((out / "spoiler.json").exists())
+
+    def test_a_price_setting_nothing_applies_is_refused(self):
+        out = pathlib.Path(self.tmp.name)
+        for settings, key in (({"Shop prices": "One price"}, "Shop prices"),
+                              ({"Shop goods": "Vanilla", "Shop price": 100}, "Shop price"),
+                              ({"Shop goods": "Vanilla", "Shop price range": [20, 200]}, "Shop price range"),
+                              (SHOPS_SHUFFLED | {"Shop price": 135}, "Shop price"),
+                              (SHOPS_SHUFFLED | {"Shop prices": "One price", "Shop price range": [20, 40]},
+                               "Shop price range"),
+                              (SHOPS_SHUFFLED | {"Shop prices": "Between two prices", "Shop price": 100}, "Shop price")):
+            result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, settings)
+            self.assertIn(key + ":", result.stderr, settings)
+            self.assertFalse((out / "spoiler.json").exists())
+
+    def test_the_spoiler_log_holds_only_the_prices_in_effect(self):
+        for settings, prices in ((SHOPS_SHUFFLED, {"Shop prices": "Cheap"}),
+                                 (SHOPS_SHUFFLED | {"Shop prices": "One price"},
+                                  {"Shop prices": "One price", "Shop price": 100}),
+                                 (SHOPS_SHUFFLED | {"Shop prices": "Between two prices"},
+                                  {"Shop prices": "Between two prices", "Shop price range": [20, 200]})):
+            spoiler, _ = self.generate("12", settings)
+            self.assertEqual({key: value for key, value in spoiler["settings"].items() if key.startswith("Shop pric")},
+                             prices)
+
     def test_a_dungeon_left_out_keeps_its_chests(self):
         left_out = {"Forest Temple": "ForestTemple", "Deku Tree": "InsideTheDekuTree"}
         kept = [row for row in SHUFFLED if folder(row["files"]) in left_out.values()]
@@ -511,6 +551,38 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(rows, [row for row in SHOP_SLOTS if row in rows], seed)
             self.assert_shop_slots_sell_the_pool(spoiler, plan, rows)
         self.assertEqual(set(counts), set(range(1, 6)))
+
+    def shop_prices(self, seed, settings):
+        spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | settings)
+        self.assertEqual({key: spoiler["settings"][key] for key in settings}, settings)
+        prices = {row["location"]: entry["price"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+        self.assertEqual(prices, {location: spoiler["locations"][location]["price"] for location in prices})
+        return prices
+
+    def test_vanilla_prices_are_each_slots_own(self):
+        prices = self.shop_prices("19", {"Shop prices": "Vanilla"})
+        # A poe costs 200 and a fish 50 at the Market Potion Shop. 20, 15 and 30 bombchus cost 240, 210 and 300.
+        self.assertEqual({location: prices[location] for location in (
+            "Market Potion Shop Item 7", "Market Potion Shop Item 8", "Market Bombchu Shop Item 5",
+            "Market Bombchu Shop Item 7", "Market Bombchu Shop Item 8")}, {
+            "Market Potion Shop Item 7": 200, "Market Potion Shop Item 8": 50, "Market Bombchu Shop Item 5": 240,
+            "Market Bombchu Shop Item 7": 210, "Market Bombchu Shop Item 8": 300})
+        self.assertEqual(self.shop_prices("20", {"Shop prices": "Vanilla"}), prices)
+
+    def test_balanced_prices_go_past_cheap_ones(self):
+        prices = [price for seed in ("19", "20")
+                  for price in self.shop_prices(seed, {"Shop prices": "Balanced"}).values()]
+        self.assertLessEqual(set(prices), set(range(0, 300, 5)))
+        self.assertGreater(max(prices), 95)
+
+    def test_one_price_for_every_slot(self):
+        prices = self.shop_prices("19", {"Shop prices": "One price", "Shop price": 135})
+        self.assertEqual(set(prices.values()), {135})
+
+    def test_prices_between_two_prices(self):
+        prices = self.shop_prices("19", {"Shop prices": "Between two prices", "Shop price range": [40, 60]})
+        self.assertLessEqual(set(prices.values()), set(range(40, 61)))
+        self.assertGreater(len(set(prices.values())), 1)
 
     def test_shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse(self):
         sold = collections.Counter()
