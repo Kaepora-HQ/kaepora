@@ -59,6 +59,11 @@ struct Document {
 
 Document Parse(std::string_view data);
 
+Node* Find(Node& dict, std::string_view key);
+
+// The dict's value for the key, added in key order as the game's dicts are when the dict has none.
+Node& FindOrAdd(Node& dict, const std::string& key, Type type);
+
 // Lays the file out as the game's own files are: sorted key and string tables, then the 64-bit values in order of
 // first use, then the containers depth first, each distinct container and each distinct 64-bit value of a type
 // written once.

@@ -1,8 +1,8 @@
 // A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file, event flow and actor pack
-// the plan changes, the two English text packs and the stones' flow if the plan gives gossip stones texts, the size
-// table if a file outgrows its entry, the game data list if the plan names start values or shop slots, and the actor
-// packs that let a bomb out of the bag with no strength. Under exefs/ is the patch to the game's program
-// (program_patch.h).
+// the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English text packs and
+// the stones' flow if the plan gives gossip stones texts, the size table if a file outgrows its entry or is new, the
+// game data list if the plan names start values or shop slots, and the actor packs that let a bomb out of the bag with
+// no strength. Under exefs/ is the patch to the game's program (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>

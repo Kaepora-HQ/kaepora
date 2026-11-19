@@ -6,6 +6,7 @@
 #include "compression.h"
 #include "game_file.h"
 #include "msbt.h"
+#include "new_actor.h"
 #include "program_patch.h"
 #include "sarc.h"
 
@@ -171,19 +172,8 @@ Plan ParsePlan(const nlohmann::json& json) {
     return plan;
 }
 
-static byml::Node* Find(byml::Node& dict, std::string_view key) {
-    const auto entry = std::ranges::find(dict.dict, key, &byml::Entry::key);
-    return entry == dict.dict.end() ? nullptr : &entry->value;
-}
-
-// The dict's value for the key, added in key order as the game's dicts are when the dict has none.
-static byml::Node& FindOrAdd(byml::Node& dict, const std::string& key, byml::Type type) {
-    const auto at = std::ranges::lower_bound(dict.dict, key, {}, &byml::Entry::key);
-    if (at != dict.dict.end() && at->key == key) {
-        return at->value;
-    }
-    return dict.dict.insert(at, { .key = key, .value = { .type = type } })->value;
-}
+using byml::Find;
+using byml::FindOrAdd;
 
 static byml::Node* FindHash(byml::Node& array, uint64_t hash) {
     const auto found = std::ranges::find_if(array.array, [&](byml::Node& item) {
@@ -202,31 +192,19 @@ static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     return *actor;
 }
 
-// The goods actor that sells each item: its shelf model is the item's, and buying it gives the item.
-static const std::map<std::string, std::string, std::less<>> goodsActors = {
+// The goods actor the game has for an item: its shelf model is the item's, and buying it gives the item. Every other
+// item gets a goods actor of its own.
+static const std::map<std::string, std::string, std::less<>> gameGoods = {
     { "Item_BombBundle_Small", "Shop_BombBundle_01" },
     { "TBox_ArrowBundle_Large", "Shop_ArrowBundle_01" },
     { "TBox_Shield_Deku", "Shop_Weapon_Shield_Deku" },
     { "TBox_Shield_Hylian", "Shop_Weapon_Shield_Hylian" },
 };
 
-static const std::string& GoodsActor(const std::string& item) {
-    const auto found = goodsActors.find(item);
-    if (found == goodsActors.end()) {
-        throw std::runtime_error(std::format("no goods actor sells {}", item));
-    }
-    return found->second;
-}
-
-// A shop sells goods at their base price in this table, the row's BuyingPrice, plus the slot's PriceOffset.
-constexpr std::string_view PouchActorInfoPath = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs";
-
+// A shop sells the game's goods at their base price in this table, the row's BuyingPrice, plus the slot's
+// PriceOffset.
 static int32_t BasePrice(byml::Node& pouchActorInfo, const std::string& goodsActor) {
-    const auto row = std::ranges::find_if(pouchActorInfo.array, [&](byml::Node& r) {
-        const byml::Node* id = Find(r, "__RowId");
-        return id != nullptr && id->string == goodsActor;
-    });
-    byml::Node* price = row == pouchActorInfo.array.end() ? nullptr : Find(*row, "BuyingPrice");
+    byml::Node* price = Find(Row(pouchActorInfo, goodsActor), "BuyingPrice");
     if (price == nullptr || price->type != byml::Type::Int) {
         throw std::runtime_error(std::format("{} has no BuyingPrice for {}", PouchActorInfoPath, goodsActor));
     }
@@ -341,6 +319,8 @@ constexpr size_t PlacementOverhead = 264;
 constexpr size_t EventFlowOverhead = 272;
 constexpr size_t TextPackOverhead = 312;
 constexpr size_t ActorPackOverhead = 312;
+constexpr size_t ActorTableOverhead = 264;
+constexpr size_t ActorInfoOverhead = 3064;
 
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
 // the entry changed. The game silently skips a file that is too large for its entry, and loads one that is smaller.
@@ -358,6 +338,42 @@ static bool RaiseSize(std::string& table, std::string_view path, size_t size, si
         }
     }
     throw std::runtime_error(std::format("{}: the size table has no entry for this file", path));
+}
+
+// Adds the entry of a file the game does not have, in the CRC-32 order the table keeps.
+static void AddSize(std::string& table, std::string_view path, size_t size, size_t overhead) {
+    const std::string_view name = path.substr(0, path.size() - std::strlen(".zs"));
+    const uint32_t key = Crc32(name);
+    const uint32_t count = ReadAt<uint32_t>(table, 0x0E);
+    const size_t end = SizeTableHeaderSize + count * SizeTableEntrySize;
+    const size_t nameSize = ReadAt<uint32_t>(table, 0x0A);
+    for (size_t entry = end; entry < table.size(); entry += nameSize + 4) {
+        const std::string_view named = std::string_view(table).substr(entry, nameSize);
+        if (Crc32(named.substr(0, named.find('\0'))) == key) {
+            throw std::runtime_error(std::format("{}: the CRC-32 of this file's path collides with another's", path));
+        }
+    }
+    size_t entry = SizeTableHeaderSize;
+    while (entry < end && ReadAt<uint32_t>(table, entry) < key) {
+        entry += SizeTableEntrySize;
+    }
+    if (entry < end && ReadAt<uint32_t>(table, entry) == key) {
+        throw std::runtime_error(std::format("{}: the size table already has an entry for this file", path));
+    }
+    std::string added(SizeTableEntrySize, '\0');
+    WriteAt(added, 0, key);
+    WriteAt(added, 4, uint32_t(AlignUp(size, SizeAlignment) + overhead));
+    table.insert(entry, added);
+    WriteAt(table, 0x0E, count + 1);
+}
+
+// Adds the row in __RowId order, the order of the game's actor tables.
+static void AddRow(byml::Node& table, const byml::Node& row) {
+    const auto at = std::ranges::lower_bound(table.array, RowId(row), {}, RowId);
+    if (at != table.array.end() && RowId(*at) == RowId(row)) {
+        throw std::runtime_error(std::format("the game already has an actor {}", RowId(row)));
+    }
+    table.array.insert(at, row);
 }
 
 // A new game starts with the defaults this list gives every saved value.
@@ -534,14 +550,27 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const std::string packDictionary = Dictionary(game, "pack.zsdic");
     std::map<std::string, ShopPack> packs;
     std::set<std::string> soldOnce;
-    byml::Document pouchActorInfo;
+    ActorTables tables;
     if (!plan.shops.empty()) {
-        pouchActorInfo = byml::Parse(Decompress(game.Read(std::string(PouchActorInfoPath))));
+        for (const std::string_view path : ActorTablePaths) {
+            tables.emplace(path, byml::Parse(Decompress(game.Read(std::string(path)))));
+        }
     }
+    std::map<std::string, NewActor> newActors; // by item
     for (const PlannedShopSlot& slot : plan.shops) {
         try {
-            const std::string& goodsActor = GoodsActor(slot.item);
-            const int32_t priceOffset = slot.price - BasePrice(pouchActorInfo.root, goodsActor);
+            std::string goodsActor;
+            int32_t priceOffset = slot.price;
+            if (const auto goods = gameGoods.find(slot.item); goods != gameGoods.end()) {
+                goodsActor = goods->second;
+                priceOffset -= BasePrice(tables.find(PouchActorInfoPath)->second.root, goodsActor);
+            } else {
+                auto actor = newActors.find(slot.item);
+                if (actor == newActors.end()) {
+                    actor = newActors.emplace(slot.item, GoodsActor(game, packDictionary, tables, slot.item)).first;
+                }
+                goodsActor = actor->second.name;
+            }
             for (const Shopkeeper& keeper : slot.shopkeepers) {
                 const std::string path = std::format("Pack/Actor/{}.pack.zs", keeper.actor);
                 auto pack = packs.find(path);
@@ -632,6 +661,25 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         const std::string data = sarc::Write(pack.files, sarc::ActorPackAlignment);
         tableChanged |= RaiseSize(table, path, data.size(), ActorPackOverhead);
         addToRomfs(path, Compress(data, packDictionary));
+    }
+    // Each new actor's pack, and each actor table once, with every new row in name order.
+    for (const NewActor& actor : std::views::values(newActors)) {
+        const std::string path = std::format("Pack/Actor/{}.pack.zs", actor.name);
+        const std::string data = sarc::Write(actor.pack, sarc::ActorPackAlignment);
+        AddSize(table, path, data.size(), ActorPackOverhead);
+        tableChanged = true;
+        addToRomfs(path, Compress(data, packDictionary));
+    }
+    if (!newActors.empty()) {
+        for (auto& [path, rows] : tables) {
+            for (const NewActor& actor : std::views::values(newActors)) {
+                AddRow(rows.root, actor.rows.find(path)->second);
+            }
+            const std::string data = byml::Write(rows);
+            const size_t overhead = path == ActorInfoPath ? ActorInfoOverhead : ActorTableOverhead;
+            tableChanged |= RaiseSize(table, path, data.size(), overhead);
+            addToRomfs(path, Compress(data));
+        }
     }
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));

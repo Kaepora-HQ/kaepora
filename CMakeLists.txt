@@ -93,7 +93,7 @@ endif()
 
 add_library(kaepora-patch-files STATIC patcher/bfevfl.cpp patcher/byml.cpp patcher/compression.cpp
                                        patcher/game_file.cpp patcher/program_patch.cpp patcher/mod.cpp patcher/msbt.cpp
-                                       patcher/sarc.cpp)
+                                       patcher/new_actor.cpp patcher/sarc.cpp)
 target_include_directories(kaepora-patch-files PUBLIC patcher)
 target_link_libraries(kaepora-patch-files PUBLIC nlohmann_json::nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 target_compile_options(kaepora-patch-files PRIVATE ${WARNINGS})
@@ -239,6 +239,8 @@ set(KAEPORA_TESTED_GIFT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Boomerang in the potion shop child's bottle gift")
 set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
     "The romfs folders of the mods tested in the game with the event texts every plan carries, as a list")
+set(KAEPORA_TESTED_NEW_ACTOR_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with the Megaton Hammer for sale through a goods actor it adds")
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
@@ -251,7 +253,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
-                 gift-size-table stone-texts shop)
+                 gift-size-table stone-texts shop new-actors)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -294,6 +296,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-hammer-room-mod
             COMMAND ${PATCH_TEST} tested-hammer-room-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_HAMMER_ROOM_MOD}")
+    endif()
+    if(KAEPORA_TESTED_NEW_ACTOR_MOD)
+        add_test(NAME patch-tested-new-actor-mod
+            COMMAND ${PATCH_TEST} tested-new-actor-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_NEW_ACTOR_MOD}")
     endif()
     if(KAEPORA_TESTED_GIFT_MOD)
         add_test(NAME patch-tested-gift-mod

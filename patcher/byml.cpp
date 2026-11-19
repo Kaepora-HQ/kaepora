@@ -2,6 +2,7 @@
 
 #include "bytes.h"
 
+#include <algorithm>
 #include <format>
 #include <map>
 #include <stdexcept>
@@ -245,6 +246,19 @@ private:
 };
 
 } // namespace
+
+Node* Find(Node& dict, std::string_view key) {
+    const auto entry = std::ranges::find(dict.dict, key, &Entry::key);
+    return entry == dict.dict.end() ? nullptr : &entry->value;
+}
+
+Node& FindOrAdd(Node& dict, const std::string& key, Type type) {
+    const auto at = std::ranges::lower_bound(dict.dict, key, {}, &Entry::key);
+    if (at != dict.dict.end() && at->key == key) {
+        return at->value;
+    }
+    return dict.dict.insert(at, { .key = key, .value = { .type = type } })->value;
+}
 
 static Reader Open(std::string_view data) {
     Reader reader{ .data = data,

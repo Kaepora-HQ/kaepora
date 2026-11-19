@@ -9,9 +9,10 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
+       python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values|shop <kaepora-patch> <game.nup>
+           other-version|start-values|shop|new-actors <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -119,6 +120,11 @@ SOLD_NUM_HASHES = {("Npc_Goron_011_Shop_Child", 3): 3884178440, ("Npc_Goron_011_
                    ("Npc_Kokiri_001_Shop_Child", 5): 3688367492, ("Npc_Kokiri_001_Shop_Adult", 5): 138333967}
 # The game's size table entry for an actor pack, over its decompressed size rounded up to 32 bytes.
 PACK_OVERHEAD = 312
+ACTOR_INFO = "RSDB/ActorInfo.Product.111.rstbl.byml.zs"
+GAME_ACTOR_INFO = "RSDB/GameActorInfo.Product.111.rstbl.byml.zs"
+POUCH_ACTOR_INFO = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs"
+# The game's ActorInfo entry leaves this much over the file's size rounded up to 32 bytes.
+ACTOR_INFO_OVERHEAD = 3064
 
 
 class Game:
@@ -756,6 +762,108 @@ def shop(patch, game):
     assert game.game_data_list(mod[GAME_DATA_LIST]) == data
 
 
+def tested_new_actor_mod(patch, game, romfs):
+    """A slot that sells the Megaton Hammer adds the goods actor the game showed and sold: its pack, its rows in the
+    three actor tables and their size table entries are the tested mod's."""
+    romfs = pathlib.Path(romfs)
+    mod = patched(patch, game, plan([], shops=[(GORON_TUNIC_SLOT, "Item_Hammer", 9)]))
+    pack = "Pack/Actor/Shop_Item_Hammer.pack.zs"
+    assert zstd.decompress(mod[pack], zstd_dict=game.pack_dictionary) == \
+        zstd.decompress((romfs / pack).read_bytes(), zstd_dict=game.pack_dictionary)
+    assert_same_frame_header(mod[pack], game.read("Pack/Actor/Shop_Armor_Zora.pack.zs"))
+    for path in (ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
+        assert zstd.decompress(mod[path]) == zstd.decompress((romfs / path).read_bytes()), path
+    ours = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    theirs = dict(read_size_table(zstd.decompress((romfs / SIZE_TABLE).read_bytes()))[1])
+    for path in (pack, ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
+        assert ours[size_key(path)] == theirs[size_key(path)], path
+
+
+def resolved(files, member):
+    """A pack member's values with its $parent chain merged in, as far as the pack holds the chain."""
+    data = byml(files[member])
+    parent = data.pop("$parent", None)
+    path = parent and parent.removeprefix("Work/").removesuffix(".gyml") + ".bgyml"
+    if path not in files:
+        return data
+
+    def merge(base, over):
+        if isinstance(base, dict) and isinstance(over, dict):
+            return base | {key: merge(base[key], value) if key in base else value for key, value in over.items()}
+        return over
+
+    return merge(resolved(files, path), data)
+
+
+def new_actors(patch, game):
+    """Items with no goods actor in the game each get one, which every slot that sells the item names, at the slot's
+    price over a base of 0. Each shows and names the item as the item's own actor does, and gives what that actor
+    gives. The three actor tables take each new row in name order, and the size table takes each new pack."""
+    sales = [(GORON_TUNIC_SLOT, "TBox_Rupee_Blue", 10), (GORON_HEART_SLOT, "Item_Shield_Mirror", 20),
+             (KOKIRI_STICKS_SLOT, "TBox_Rupee_Blue", 30)]
+    mod = patched(patch, game, plan([], shops=sales))
+    new = {"TBox_Rupee_Blue": "Shop_TBox_Rupee_Blue", "Item_Shield_Mirror": "Shop_Item_Shield_Mirror"}
+    assert sorted(p for p in mod if p.startswith("Pack/Actor/Shop_")) == \
+        sorted(f"Pack/Actor/{actor}.pack.zs" for actor in new.values()), sorted(mod)
+
+    for (shopkeepers, index, _), item, price in sales:
+        for keeper, goods_list in shopkeepers:
+            member = f"Component/ShopParam/{goods_list}.game__component__ShopParam.bgyml"
+            entry = byml(game.pack(mod[f"Pack/Actor/{keeper}.pack.zs"])[member])["GoodsList"][index]
+            assert (entry["Actor"], entry["PriceOffset"]) == (goods(new[item]), (INT, price)), (keeper, entry)
+
+    zero_price = game.pack(game.read("Pack/Actor/Shop_Mask_Gerudo.pack.zs"))[
+        "GameParameter/PriceParam/Item_Mask_Gerudo.game__pouchcontent__PriceParam.bgyml"]
+    for item, actor in new.items():
+        ours = game.pack(mod[f"Pack/Actor/{actor}.pack.zs"])
+        theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
+        components = resolved(ours, f"Actor/{actor}.engine__actor__ActorParam.bgyml")["Components"]
+        own = resolved(theirs, f"Actor/{item}.engine__actor__ActorParam.bgyml")["Components"]
+        for ref in ("ActorNameRef", "ModelInfoRef", "AnimationRef"):
+            assert components[ref] == own[ref], (item, ref)
+        for ref in ("ModelInfoRef", "AnimationRef"):
+            member = own[ref].lstrip("?")
+            assert ours[member] == theirs[member], (item, member)
+        pouch = resolved(ours, components["PouchContentRef"].lstrip("?"))
+        item_pouch = resolved(theirs, own["PouchContentRef"].lstrip("?"))
+        gives = ("PouchActor", "BundleActor", "BundleActorNum")
+        assert {k: pouch.get(k) for k in gives} == ({k: item_pouch.get(k) for k in gives} if any(
+            k in item_pouch for k in gives) else {"PouchActor": goods(item), "BundleActor": None,
+                                                    "BundleActorNum": None}), (item, pouch)
+        table = resolved(ours, components["GameParameterTableRef"].lstrip("?"))
+        assert ours[table["Components"]["PriceParam"].lstrip("?")] == zero_price, item
+
+    rows = {path: byml(zstd.decompress(game.read(path))) for path in (ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO)}
+    by_id = {path: {row["__RowId"]: row for row in table} for path, table in rows.items()}
+    for path, table in rows.items():
+        ours = byml(zstd.decompress(mod[path]))
+        assert [row["__RowId"] for row in ours] == sorted([row["__RowId"] for row in table] + list(new.values()))
+        assert [row for row in ours if row["__RowId"] not in new.values()] == table, path
+        for item, actor in new.items():
+            row = next(row for row in ours if row["__RowId"] == actor)
+            if path == ACTOR_INFO:
+                for key in ("ActorName", "FmdbName", "ModelProjectName", "AnimationResources"):
+                    assert row[key] == by_id[path][item][key], (item, key)
+            elif path == GAME_ACTOR_INFO:
+                assert row == by_id[path]["Shop_Armor_Zora"] | {"__RowId": actor}, (item, row)
+            else:
+                expected = {key: value for key, value in by_id[path][item].items() if key != "BuyingPrice"}
+                assert row == expected | {"__RowId": actor}, (item, row)
+
+    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    ours_header, ours_entries, ours_names = read_size_table(zstd.decompress(mod[SIZE_TABLE]))
+    keys = [key for key, _ in ours_entries]
+    assert keys == sorted(keys) and names == ours_names and ours_header[6:] != header[6:]
+    ours_entries = dict(ours_entries)
+    for actor in new.values():
+        path = f"Pack/Actor/{actor}.pack.zs"
+        size = len(zstd.decompress(mod[path], zstd_dict=game.pack_dictionary))
+        assert ours_entries[size_key(path)] == load_size(size, PACK_OVERHEAD), path
+    for path, overhead in ((ACTOR_INFO, ACTOR_INFO_OVERHEAD), (GAME_ACTOR_INFO, 264), (POUCH_ACTOR_INFO, 264)):
+        assert ours_entries[size_key(path)] >= load_size(len(zstd.decompress(mod[path])), overhead), path
+    assert len(ours_entries) == len(entries) + len(new)
+
+
 def read_size_table(data):
     """A decompressed RESTBL size table: its header, its (CRC-32, size) entries in order, and the name entries."""
     assert data[:6] == b"RESTBL" and struct.unpack_from("<I", data, 6)[0] == 1, data[:10]
@@ -1041,7 +1149,7 @@ def bad_input(patch, game):
     elsewhere = {"file": GORON_ADULT_STATIC, "hash": str(KOKIRI_STICKS_SLOT[2][0][1])}
     shops = {
         "shop slot not this shape": (dict(valid_shop, price=-1), ["plan.json", "shops[1]"]),
-        "no goods actor": (dict(valid_shop, item="TBox_Rupee_Red"), ["TBox_Rupee_Red", "no goods actor"]),
+        "item with no actor": (dict(valid_shop, item="Item_Nowhere"), ["Item_Nowhere", "no such file"]),
         "shelf not in the file": (dict(valid_shop, shelves=[elsewhere]), [elsewhere["hash"], GORON_ADULT_STATIC]),
     }
     for name, (entry, named) in shops.items():
@@ -1129,6 +1237,8 @@ def main():
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
         "shop": shop,
+        "new-actors": new_actors,
+        "tested-new-actor-mod": tested_new_actor_mod,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")
