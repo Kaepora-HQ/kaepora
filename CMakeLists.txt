@@ -265,6 +265,8 @@ set(KAEPORA_TESTED_EVENT_TEXT_MODS "" CACHE STRING
     "The romfs folders of the mods tested in the game with the event texts every plan carries, as a list")
 set(KAEPORA_TESTED_NEW_ACTOR_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with the Megaton Hammer for sale through a goods actor it adds")
+set(KAEPORA_TESTED_SKULLTULA_MOD "" CACHE PATH
+    "The romfs folder of the mod tested in the game with a Gold Skulltula that drops a token giving the Boomerang")
 set(KAEPORA_TESTED_PROGRAM_MOD "" CACHE PATH "The folder of the mod tested in the game with the patch to its program")
 set(KAEPORA_TESTED_BOMB_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the bomb's lift grade at None")
@@ -288,7 +290,8 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
-                 single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth)
+                 single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth skulltulas
+                 goods-and-token-copies)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -337,6 +340,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-new-actor-mod
             COMMAND ${PATCH_TEST} tested-new-actor-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_NEW_ACTOR_MOD}")
+    endif()
+    if(KAEPORA_TESTED_SKULLTULA_MOD)
+        add_test(NAME patch-tested-skulltula-mod
+            COMMAND ${PATCH_TEST} tested-skulltula-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_SKULLTULA_MOD}")
     endif()
     if(KAEPORA_TESTED_GIFT_MOD)
         add_test(NAME patch-tested-gift-mod

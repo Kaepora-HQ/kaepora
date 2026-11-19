@@ -33,3 +33,7 @@ struct NewActor {
 // A goods actor that sells the item: the item's model, animation and name on a goods actor's shelf, and what the
 // item's own actor gives when bought. Its base price is 0, so a slot's PriceOffset is its whole price.
 NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);
+
+// A copy of the Gold Skulltula token that gives the item: the token's model, pick-up and record of the skulltula's
+// kill, with the item's name and what the item's own actor gives.
+NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);

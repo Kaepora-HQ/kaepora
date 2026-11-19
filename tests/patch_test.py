@@ -10,14 +10,16 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
-       python3 -I tests/patch_test.py tested-new-actor-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod <kaepora-patch> <game.nup> \
+           <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values|shop|shop-table|new-actors <kaepora-patch> <game.nup>
+           other-version|start-values|shop|shop-table|new-actors|skulltulas|goods-and-token-copies \
+           <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -139,6 +141,16 @@ GAME_ACTOR_INFO = "RSDB/GameActorInfo.Product.111.rstbl.byml.zs"
 POUCH_ACTOR_INFO = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs"
 # The game's ActorInfo entry leaves this much over the file's size rounded up to 32 bytes.
 ACTOR_INFO_OVERHEAD = 3064
+TOKEN = "Obj_Token_Gold"
+DODONGO_STATIC = "Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs"
+GRAVEYARD_ADULT_STATIC = "Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs"
+GRAVEYARD_CHILD_STATIC = "Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs"
+KAKARIKO_CHILD_STATIC = "Banc/KakarikoVillage/KakarikoVillage_Child_Static.bcett.byml.zs"
+# The Dodongo's Cavern side room skulltula has no Dynamic values.
+SIDE_ROOM_SKULLTULA = (1171854281537584829, [DODONGO_STATIC])
+GRAVEYARD_SKULLTULA = (229475726653285413, [GRAVEYARD_ADULT_STATIC, GRAVEYARD_CHILD_STATIC])
+TREE_SKULLTULA = (7677963516305772491, [KAKARIKO_CHILD_STATIC])
+WATCHTOWER_SKULLTULA = (15118290503807073158, [KAKARIKO_CHILD_STATIC])
 
 
 class Game:
@@ -449,7 +461,7 @@ def actor(placement, hash):
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
-         mido_castle_entry_removed=False):
+         mido_castle_entry_removed=False, skulltulas=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
@@ -457,7 +469,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
-            "mido_castle_entry_removed": mido_castle_entry_removed}
+            "mido_castle_entry_removed": mido_castle_entry_removed,
+            "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas]}
 
 
 def shop_slot(slot, item, price):
@@ -855,7 +868,7 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops")}
+             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops", "skulltulas")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -1141,6 +1154,117 @@ def tested_new_actor_mod(patch, game, romfs):
     theirs = dict(read_size_table(zstd.decompress((romfs / SIZE_TABLE).read_bytes()))[1])
     for path in (pack, ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
         assert ours[size_key(path)] == theirs[size_key(path)], path
+
+
+def decompressed(game, data):
+    dictionary_id = zstd.get_frame_info(data).dictionary_id
+    if not dictionary_id:
+        return zstd.decompress(data)
+    dictionary = next(d for d in (game.dictionary, game.zs_dictionary, game.pack_dictionary)
+                      if d.dict_id == dictionary_id)
+    return zstd.decompress(data, zstd_dict=dictionary)
+
+
+def tested_skulltula_mod(patch, game, romfs):
+    """The Dodongo's Cavern side room skulltula, planned to give the Boomerang, gives the files of the mod the game
+    showed: the skulltula dropped a token that gave the Boomerang, and stayed away after a reload."""
+    tested = files(pathlib.Path(romfs))
+    mod = patched(patch, game, plan([], skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")]))
+    assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
+    for path, data in tested.items():
+        assert_same_frame_header(mod[path], data)
+        assert decompressed(game, mod[path]) == decompressed(game, data), path
+
+
+def in_key_order(node):
+    """A parsed BYML value with each dict in key order, as the game's dicts are, so an added value takes its place."""
+    if isinstance(node, dict):
+        return {key: in_key_order(node[key]) for key in sorted(node)}
+    return [in_key_order(item) for item in node] if isinstance(node, list) else node
+
+
+def pouch_chain(files, member):
+    chain = []
+    while member in files:
+        chain.append(member)
+        member = byml(files[member]).get("$parent", "").removeprefix("Work/").removesuffix(".gyml") + ".bgyml"
+    return chain
+
+
+def assert_token_copy(game, mod, item, copy):
+    token = game.pack(game.read(f"Pack/Actor/{TOKEN}.pack.zs"))
+    ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
+    theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
+    token_param = f"Actor/{TOKEN}.engine__actor__ActorParam.bgyml"
+    token_pouch = f"Component/PouchContentParam/{TOKEN}.game__component__PouchContentParam.bgyml"
+    param = f"Actor/{copy}.engine__actor__ActorParam.bgyml"
+    pouch = f"Component/PouchContentParam/{copy}.game__component__PouchContentParam.bgyml"
+    own = resolved(theirs, f"Actor/{item}.engine__actor__ActorParam.bgyml")["Components"]
+    chain = pouch_chain(theirs, own["PouchContentRef"].lstrip("?"))
+    kept = token.keys() - {token_param, token_pouch}
+    assert ours.keys() == kept | {param, pouch, *chain}, (item, sorted(ours.keys() ^ token.keys()))
+    assert all(ours[name] == token[name] for name in kept) and all(ours[name] == theirs[name] for name in chain), item
+
+    expected = byml(token[token_param])
+    expected["Components"] |= {"ActorNameRef": own["ActorNameRef"], "PouchContentRef": f"?{pouch}"}
+    assert byml(ours[param]) == expected, item
+    picked_up = ("DefaultAutoGet", "GetDemoOffsetPos", "IsPickedUpEmitXlinkKey", "PickedUpEmitXlinkKey",
+                 "PlayGetEventManyTimes")
+    gives = ("PouchActor", "BundleActor", "BundleActorNum", "IsBundle")
+    item_pouch = resolved(theirs, own["PouchContentRef"].lstrip("?"))
+    copy_pouch = resolved(ours, pouch)
+    assert {key: copy_pouch[key] for key in picked_up} == {key: byml(token[token_pouch])[key] for key in picked_up}
+    gives_itself = "PouchActor" not in item_pouch and "BundleActor" not in item_pouch
+    assert {key: copy_pouch.get(key) for key in gives} == \
+        {key: item_pouch.get(key) for key in gives} | ({"PouchActor": goods(item)} if gives_itself else {}), item
+
+
+def skulltulas(patch, game):
+    planned = [(*SIDE_ROOM_SKULLTULA, "Item_Gauntlet_Silver"), (*GRAVEYARD_SKULLTULA, "TBox_Rupee_Red"),
+               (*TREE_SKULLTULA, "Item_Gauntlet_Silver"), (*WATCHTOWER_SKULLTULA, "Item_Token_Gold")]
+    mod = patched(patch, game, plan([], skulltulas=planned))
+    copies = {item: f"{TOKEN}_{item}" for item in ("Item_Gauntlet_Silver", "TBox_Rupee_Red")}
+
+    placements = {}
+    for h, paths, item in planned:
+        for path in paths:
+            skulltula = actor(placements.setdefault(path, game.placement(game.read(path))), h)
+            assert skulltula["Gyaml"] == "Enemy_Skulltula_Gold", (path, h)
+            assert "Drop__DropActor" not in skulltula.get("Dynamic", {}), (path, h)
+            if item in copies:
+                skulltula["Dynamic"] = skulltula.get("Dynamic", {}) | {"Drop__DropActor": copies[item]}
+    packs = [f"Pack/Actor/{copy}.pack.zs" for copy in copies.values()]
+    tables = [ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO]
+    assert sorted(mod) == sorted([*placements, *packs, *tables, SIZE_TABLE]), sorted(mod)
+    for path, placement in placements.items():
+        assert ordered(game.placement(mod[path])) == ordered(in_key_order(placement)), path
+    for item, copy in copies.items():
+        assert_token_copy(game, mod, item, copy)
+
+    rows = {path: {row["__RowId"]: row for row in byml(zstd.decompress(game.read(path)))} for path in tables}
+    for path in tables:
+        ours = {row["__RowId"]: row for row in byml(zstd.decompress(mod[path]))}
+        assert ours.keys() - rows[path].keys() == set(copies.values()), path
+        assert all(ours[actor_name] == row for actor_name, row in rows[path].items()), path
+        for item, copy in copies.items():
+            expected = {ACTOR_INFO: rows[ACTOR_INFO][TOKEN] | {"ActorName": rows[ACTOR_INFO][item]["ActorName"]},
+                        GAME_ACTOR_INFO: rows[GAME_ACTOR_INFO][TOKEN],
+                        POUCH_ACTOR_INFO: rows[POUCH_ACTOR_INFO][item]}[path]
+            assert ours[copy] == expected | {"__RowId": copy}, (path, item)
+    entries = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    for path in packs:
+        size = len(zstd.decompress(mod[path], zstd_dict=game.pack_dictionary))
+        assert entries[size_key(path)] == load_size(size, PACK_OVERHEAD), path
+
+
+def goods_and_token_copies(patch, game):
+    mod = patched(patch, game, plan([], shops=[(GORON_TUNIC_SLOT, "Item_Boomerang", 10)],
+                                    skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")]))
+    new = ["Obj_Token_Gold_Item_Boomerang", "Shop_Item_Boomerang"]
+    assert all(f"Pack/Actor/{name}.pack.zs" in mod for name in new), sorted(mod)
+    for path in (ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
+        game_rows = [row["__RowId"] for row in byml(zstd.decompress(game.read(path)))]
+        assert [row["__RowId"] for row in byml(zstd.decompress(mod[path]))] == sorted(game_rows + new), path
 
 
 def resolved(files, member):
@@ -1598,6 +1722,22 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in shops.items():
         plans[name] = (good | {"shops": [valid_shop, entry]}, named)
+    plans["no skulltulas"] = (
+        {key: value for key, value in good.items() if key != "skulltulas"}, ["plan.json", "skulltulas"])
+    valid_skulltula = {"hash": str(SIDE_ROOM_SKULLTULA[0]), "files": SIDE_ROOM_SKULLTULA[1], "item": "Item_Boomerang"}
+    skulltula_cases = {
+        "skulltula not this shape": (
+            dict(valid_skulltula, hash=SIDE_ROOM_SKULLTULA[0]), ["plan.json", "skulltulas[1]"]),
+        "skulltula with no files": (dict(valid_skulltula, files=[]), ["plan.json", "skulltulas[1]"]),
+        "skulltula with no item": (dict(valid_skulltula, item=""), ["plan.json", "skulltulas[1]"]),
+        "not a skulltula": (
+            {"hash": str(SLINGSHOT_CHEST), "files": [DEKU_STATIC], "item": "Item_Boomerang"},
+            [str(SLINGSHOT_CHEST), DEKU_STATIC, "not a Gold Skulltula"]),
+        "item with no actor for a skulltula": (
+            dict(valid_skulltula, item="Item_Nowhere"), ["Item_Nowhere", "no such file"]),
+    }
+    for name, (entry, named) in skulltula_cases.items():
+        plans[name] = (good | {"skulltulas": [valid_skulltula, entry]}, named)
     valid_gift = {"flow": SHOP_CHILD_FLOW, "event": "Event171", "param": "ActorName", "text": "Item_Boomerang"}
     nowhere = "Event/EventFlow/Nowhere.bfevfl.zs"
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
@@ -1697,6 +1837,9 @@ def main():
         "tested-new-actor-mod": tested_new_actor_mod,
         "tested-shop-goods-mod": tested_shop_goods_mod,
         "dive-depth": dive_depth,
+        "skulltulas": skulltulas,
+        "goods-and-token-copies": goods_and_token_copies,
+        "tested-skulltula-mod": tested_skulltula_mod,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

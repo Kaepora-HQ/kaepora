@@ -38,6 +38,10 @@ static std::string WorkPath(std::string_view actor) {
     return std::format("Work/Actor/{}.engine__actor__ActorParam.gyml", actor);
 }
 
+static std::string PouchMember(std::string_view actor) {
+    return std::format("Component/PouchContentParam/{}.game__component__PouchContentParam.bgyml", actor);
+}
+
 // The pack member a reference names: "?Component/X.bgyml" names Component/X.bgyml, and a $parent
 // "Work/Actor/X.gyml" names Actor/X.bgyml.
 static std::string Member(std::string_view ref) {
@@ -94,7 +98,7 @@ static byml::Node Resolved(const sarc::Files& pack, const std::string& member) {
 static void Add(sarc::Files& pack, const std::string& member, const std::string& data) {
     const auto [at, added] = pack.emplace(member, data);
     if (!added && at->second != data) {
-        throw std::runtime_error(std::format("the goods pack already holds another {}", member));
+        throw std::runtime_error(std::format("the new pack already holds another {}", member));
     }
 }
 
@@ -188,8 +192,7 @@ NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTabl
         byml::FindOrAdd(pouch.root, "PouchActor", byml::Type::String).string = WorkPath(item);
     }
     byml::FindOrAdd(pouch.root, "IsNotOpenStockNumDisplay", byml::Type::Bool).scalar = 1;
-    const std::string pouchMember =
-        std::format("Component/PouchContentParam/{}.game__component__PouchContentParam.bgyml", actor.name);
+    const std::string pouchMember = PouchMember(actor.name);
     Add(pack, pouchMember, byml::Write(pouch));
     Value(components, "PouchContentRef").string = "?" + pouchMember;
 
@@ -212,6 +215,56 @@ NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTabl
     actor.rows = { { std::string(ActorInfoPath), ActorInfoRow(tables, item) },
                    { std::string(GameActorInfoPath), Row(tables, GameActorInfoPath, GoodsTemplate) },
                    { std::string(PouchActorInfoPath), pouchRow } };
+    for (auto& [_, row] : actor.rows) {
+        Value(row, "__RowId").string = actor.name;
+    }
+    return actor;
+}
+
+constexpr std::string_view Token = "Obj_Token_Gold";
+constexpr std::array<std::string_view, 5> TokenPickUp = {
+    "DefaultAutoGet", "GetDemoOffsetPos", "IsPickedUpEmitXlinkKey", "PickedUpEmitXlinkKey", "PlayGetEventManyTimes",
+};
+
+NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item) {
+    NewActor actor{ .name = std::format("{}_{}", Token, item) };
+    if (game.Files().contains(std::format("Pack/Actor/{}.pack.zs", actor.name))) {
+        throw std::runtime_error(std::format("the game already has an actor {}", actor.name));
+    }
+    const sarc::Files own = Pack(game, packDictionary, item);
+    sarc::Files& pack = actor.pack = Pack(game, packDictionary, Token);
+    byml::Document param = byml::Parse(pack.at(ActorMember(Token)));
+    byml::Document pouch = byml::Parse(pack.at(PouchMember(Token)));
+    pack.erase(ActorMember(Token));
+    pack.erase(PouchMember(Token));
+
+    byml::Node ownActor = Resolved(own, ActorMember(item));
+    byml::Node& ownComponents = Value(ownActor, "Components");
+    byml::Node& components = Value(param.root, "Components");
+    Value(components, "ActorNameRef") = Value(ownComponents, "ActorNameRef");
+    const std::string ownPouch = Member(Value(ownComponents, "PouchContentRef").string);
+    AddWithParents(pack, own, ownPouch);
+
+    std::erase_if(pouch.root.dict, [](const byml::Entry& entry) {
+        return std::ranges::find(TokenPickUp, entry.key) == TokenPickUp.end();
+    });
+    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string =
+        std::format("Work/{}.gyml", ownPouch.substr(0, ownPouch.size() - std::string_view(".bgyml").size()));
+    byml::Node gives = Resolved(own, ownPouch);
+    if (const byml::Node* named = byml::Find(gives, "PouchActor")) {
+        byml::FindOrAdd(pouch.root, "PouchActor", byml::Type::String) = *named;
+    } else if (byml::Find(gives, "BundleActor") == nullptr) {
+        byml::FindOrAdd(pouch.root, "PouchActor", byml::Type::String).string = WorkPath(item);
+    }
+    Add(pack, PouchMember(actor.name), byml::Write(pouch));
+    Value(components, "PouchContentRef").string = "?" + PouchMember(actor.name);
+    Add(pack, ActorMember(actor.name), byml::Write(param));
+
+    byml::Node actorInfo = Row(tables, ActorInfoPath, Token);
+    Value(actorInfo, "ActorName") = Value(Row(tables, ActorInfoPath, item), "ActorName");
+    actor.rows = { { std::string(ActorInfoPath), actorInfo },
+                   { std::string(GameActorInfoPath), Row(tables, GameActorInfoPath, Token) },
+                   { std::string(PouchActorInfoPath), Row(tables, PouchActorInfoPath, item) } };
     for (auto& [_, row] : actor.rows) {
         Value(row, "__RowId").string = actor.name;
     }

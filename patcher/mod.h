@@ -65,6 +65,12 @@ struct PlannedShopSlot {
     int32_t price;
 };
 
+struct PlannedSkulltula {
+    uint64_t hash;
+    std::vector<std::string> files;
+    std::string item;
+};
+
 // A saved value as a new game starts with it: a Bool or an Int of the game data list.
 using StartValue = std::variant<bool, int32_t>;
 
@@ -76,6 +82,7 @@ struct Plan {
     std::vector<PlannedMessageText> messageTexts;
     std::vector<PlannedShopSlot> shops;
     bool midoCastleEntryRemoved;
+    std::vector<PlannedSkulltula> skulltulas;
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

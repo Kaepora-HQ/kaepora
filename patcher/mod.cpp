@@ -22,6 +22,7 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <utility>
 #include <variant>
 
 static uint64_t ParseHash(const nlohmann::json& json) {
@@ -72,6 +73,16 @@ static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
     }
     if (planned.shopkeepers.empty() || planned.shelves.empty() || planned.item.empty()) {
         throw std::runtime_error("shopkeepers, shelves and item must not be empty");
+    }
+    return planned;
+}
+
+static PlannedSkulltula ParseSkulltula(const nlohmann::json& skulltula) {
+    PlannedSkulltula planned{ .hash = ParseHash(skulltula.at("hash")),
+                              .files = skulltula.at("files").get<std::vector<std::string>>(),
+                              .item = skulltula.at("item").get<std::string>() };
+    if (planned.files.empty() || planned.item.empty()) {
+        throw std::runtime_error("files and item must not be empty");
     }
     return planned;
 }
@@ -212,6 +223,14 @@ Plan ParsePlan(const nlohmann::json& json) {
         }
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
+    const auto skulltulas = json.at("skulltulas").get<std::vector<nlohmann::json>>();
+    for (size_t i = 0; i < skulltulas.size(); ++i) {
+        try {
+            plan.skulltulas.push_back(ParseSkulltula(skulltulas[i]));
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("skulltulas[{}]: {}", i, e.what()));
+        }
+    }
     return plan;
 }
 
@@ -451,6 +470,22 @@ static bool SetItem(byml::Node& chest, const std::string& item) {
     }
     return changed;
 }
+
+// A Gold Skulltula drops its Dynamic.Drop__DropActor in place of the token its drop table names.
+static bool SetDrop(byml::Node& skulltula, const std::string& dropActor) {
+    const byml::Node* gyaml = Find(skulltula, "Gyaml");
+    if (gyaml == nullptr || gyaml->string != "Enemy_Skulltula_Gold") {
+        throw std::runtime_error("the actor is not a Gold Skulltula");
+    }
+    byml::Node& dynamic = FindOrAdd(skulltula, "Dynamic", byml::Type::Dict);
+    byml::Node& drop = FindOrAdd(dynamic, "Drop__DropActor", byml::Type::String);
+    if (drop.type != byml::Type::String) {
+        throw std::runtime_error("the skulltula's Dynamic.Drop__DropActor is not a string");
+    }
+    return std::exchange(drop.string, dropActor) != dropActor;
+}
+
+constexpr std::string_view TokenItem = "Item_Token_Gold";
 
 // The game reads the update's size table and ignores the base game's.
 constexpr std::string_view SizeTablePath = "System/Resource/ResourceSizeTable.Product.111.Nin_Ounce_NVN2.rsizetable.zs";
@@ -817,12 +852,13 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     std::map<std::string, ShopPack> packs;
     std::set<std::string> soldOnce;
     ActorTables tables;
-    if (!plan.shops.empty()) {
+    if (!plan.shops.empty() || !plan.skulltulas.empty()) {
         for (const std::string_view path : ActorTablePaths) {
             tables.emplace(path, byml::Parse(Decompress(game.Read(std::string(path)))));
         }
     }
-    std::map<std::string, NewActor> newActors; // by item
+    std::map<std::string, NewActor> goodsActors;
+    std::map<std::string, NewActor> tokenCopies;
     for (const PlannedShopSlot& slot : plan.shops) {
         try {
             std::string goodsActor;
@@ -833,9 +869,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 goodsActor = std::get<std::string>(goods);
                 priceOffset -= BasePrice(tables.find(PouchActorInfoPath)->second.root, goodsActor);
             } else {
-                auto actor = newActors.find(slot.item);
-                if (actor == newActors.end()) {
-                    actor = newActors.emplace(slot.item, GoodsActor(game, packDictionary, tables, slot.item)).first;
+                auto actor = goodsActors.find(slot.item);
+                if (actor == goodsActors.end()) {
+                    actor = goodsActors.emplace(slot.item, GoodsActor(game, packDictionary, tables, slot.item)).first;
                 }
                 goodsActor = actor->second.name;
             }
@@ -874,6 +910,30 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         } catch (const std::exception& e) {
             throw std::runtime_error(
                 std::format("shop slot {} of {}: {}", slot.slot, slot.shopkeepers.front().actor, e.what()));
+        }
+    }
+
+    for (const PlannedSkulltula& skulltula : plan.skulltulas) {
+        if (skulltula.item == TokenItem) {
+            continue;
+        }
+        auto copy = tokenCopies.find(skulltula.item);
+        if (copy == tokenCopies.end()) {
+            try {
+                copy = tokenCopies.emplace(skulltula.item, TokenCopy(game, packDictionary, tables, skulltula.item))
+                           .first;
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::format("skulltula {}: {}", skulltula.hash, e.what()));
+            }
+        }
+        for (const std::string& path : skulltula.files) {
+            try {
+                if (SetDrop(Actor(placement(path), skulltula.hash), copy->second.name)) {
+                    changed.insert(path);
+                }
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::format("skulltula {} in {}: {}", skulltula.hash, path, e.what()));
+            }
         }
     }
 
@@ -944,17 +1004,23 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         addToRomfs(path, Compress(data, packDictionary));
     }
     // Each new actor's pack, and each actor table once, with every new row in name order.
-    for (const NewActor& actor : std::views::values(newActors)) {
-        const std::string path = std::format("Pack/Actor/{}.pack.zs", actor.name);
-        const std::string data = sarc::Write(actor.pack, sarc::ActorPackAlignment);
+    std::vector<const NewActor*> newActors;
+    for (const auto* actors : { &goodsActors, &tokenCopies }) {
+        for (const NewActor& actor : std::views::values(*actors)) {
+            newActors.push_back(&actor);
+        }
+    }
+    for (const NewActor* actor : newActors) {
+        const std::string path = std::format("Pack/Actor/{}.pack.zs", actor->name);
+        const std::string data = sarc::Write(actor->pack, sarc::ActorPackAlignment);
         AddSize(table, path, data.size(), ActorPackOverhead);
         tableChanged = true;
         addToRomfs(path, Compress(data, packDictionary));
     }
     if (!newActors.empty()) {
         for (auto& [path, rows] : tables) {
-            for (const NewActor& actor : std::views::values(newActors)) {
-                AddRow(rows.root, actor.rows.find(path)->second);
+            for (const NewActor* actor : newActors) {
+                AddRow(rows.root, actor->rows.find(path)->second);
             }
             const std::string data = byml::Write(rows);
             const size_t overhead = path == ActorInfoPath ? ActorInfoOverhead : ActorTableOverhead;
