@@ -991,6 +991,7 @@ void Rando::StaticData::InitLocationTable() {
     locationTable[RC_DMC_UPPER_GROTTO_GOSSIP_STONE] =                             Location::HintStone(RC_DMC_UPPER_GROTTO_GOSSIP_STONE,                    RCQUEST_BOTH,   RCAREA_DEATH_MOUNTAIN_CRATER, SCENE_GROTTOS,                      -23802,                             "Upper Grotto Gossip Stone");
     // Gossip stones of the remake that pair with no SoH stone.
     locationTable[RC_SFM_SONG_OF_TIME_GROTTO_GOSSIP_STONE] =                      Location::HintStone(RC_SFM_SONG_OF_TIME_GROTTO_GOSSIP_STONE,             RCQUEST_BOTH,   RCAREA_SACRED_FOREST_MEADOW,  SCENE_GROTTOS,                      0x00,                               "Song of Time Grotto Gossip Stone");
+    locationTable[RC_DMT_COW_GROTTO_GOSSIP_STONE] =                               Location::HintStone(RC_DMT_COW_GROTTO_GOSSIP_STONE,                      RCQUEST_BOTH,   RCAREA_DEATH_MOUNTAIN_TRAIL,  SCENE_GROTTOS,                      0x00,                               "Cow Grotto Gossip Stone");
 
     // Other Hints
     locationTable[RC_GANONDORF_HINT]    =                                         Location::OtherHint(RC_GANONDORF_HINT,                                   RCQUEST_BOTH,                                                                             ACTOR_EN_GANON_MANT,  SCENE_GANON_BOSS,           "Ganondorf Hint");

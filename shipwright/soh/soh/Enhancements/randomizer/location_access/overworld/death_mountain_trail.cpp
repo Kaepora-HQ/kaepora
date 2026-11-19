@@ -120,6 +120,7 @@ void RegionTable_Init_DeathMountainTrail() {
     areaTable[RR_DMT_COW_GROTTO] = Region("DMT Cow Grotto", SCENE_GROTTOS, {}, {
         //Locations
         LOCATION(RC_DMT_COW_GROTTO_COW,                logic->CanUse(RG_EPONAS_SONG)),
+        LOCATION(RC_DMT_COW_GROTTO_GOSSIP_STONE,       true),
         LOCATION(RC_DMT_COW_GROTTO_BEEHIVE,            logic->CanBreakLowerBeehives()),
         LOCATION(RC_DMT_COW_GROTTO_LEFT_HEART,         true),
         LOCATION(RC_DMT_COW_GROTTO_MIDDLE_LEFT_HEART,  true),
