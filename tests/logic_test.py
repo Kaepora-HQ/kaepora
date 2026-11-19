@@ -630,6 +630,13 @@ class LogicTest(unittest.TestCase):
                        ("KF Mido Bottom Right Chest", "Progressive Magic Meter"))
         self.assertTrue(self.reachable("Spirit Temple Map Chest", *no_bomb_bag))
 
+    def test_meadow_song_of_time_grotto_stone_needs_the_song_of_time(self):
+        # The stone stands beside the grotto's chest, past the same Song of Time blocks.
+        stone = "SFM Song of Time Grotto Gossip Stone"
+        self.assertTrue(self.reachable(stone))
+        self.assertFalse(self.reachable(stone, ("Song from Ocarina of Time", "Green Rupee")))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+
 
 if __name__ == "__main__":
     reach.PROGRAM = sys.argv[1]

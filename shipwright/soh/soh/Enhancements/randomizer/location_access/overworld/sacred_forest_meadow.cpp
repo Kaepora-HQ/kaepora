@@ -50,6 +50,8 @@ void RegionTable_Init_SacredForestMeadow() {
         LOCATION(RC_SFM_SARIA_GOSSIP_STONE,           true),
         // In the grotto under a rock near Saria, which a bomb or the hammer breaks, past Song of Time blocks.
         LOCATION(RC_SFM_SONG_OF_TIME_GROTTO_CHEST,    logic->BlastOrSmash() && logic->CanUse(RG_SONG_OF_TIME) && logic->HasItem(RG_OPEN_CHEST)),
+        // Beside the chest, past the same blocks.
+        LOCATION(RC_SFM_SONG_OF_TIME_GROTTO_GOSSIP_STONE, logic->BlastOrSmash() && logic->CanUse(RG_SONG_OF_TIME)),
         LOCATION(RC_SFM_WONDER_MAZE_1,                true),
         LOCATION(RC_SFM_WONDER_MAZE_2,                true),
         LOCATION(RC_SFM_WONDER_MAZE_3,                true),
