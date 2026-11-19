@@ -17,6 +17,7 @@
 #include <map>
 #include <ranges>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <spdlog/spdlog.h>
 
@@ -725,7 +726,8 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
 
     // The spheres were numbered before the passes above, which can drop what a step counted on in an earlier sphere.
     // So the route is walked again over the steps it kept, with every other item that counts as progress set aside,
-    // and no step stands in a sphere before Link can reach it with what the spheres before it gave him.
+    // and no step stands in a sphere before Link can reach it with what the spheres before it gave him. A walk that
+    // stops short of Ganon would give the spoiler log a route that does not finish the seed.
     std::bitset<RC_MAX> kept;
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         for (RandomizerCheck loc : sphere) {
@@ -741,6 +743,9 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
     ctx->playthroughLocations.clear();
     GeneratePlaythrough();
+    if (!ctx->playthroughBeatable) {
+        throw std::runtime_error("the route the spoiler log would give does not reach Ganon");
+    }
 
     // Now we can add back items which were removed previously
     for (RandomizerCheck loc : toAddBackItem) {
