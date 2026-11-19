@@ -31,10 +31,18 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
             AddPlacement(log["locations"], chest.location);
         }
     }
-    const auto& spheres = Rando::Context::GetInstance()->playthroughLocations;
-    for (size_t sphere = 0; sphere < spheres.size(); ++sphere) {
-        for (RandomizerCheck location : spheres[sphere]) {
-            AddPlacement(log["playthrough"][std::format("sphere {:02}", sphere)], location);
+    auto ctx = Rando::Context::GetInstance();
+    for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
+        nlohmann::ordered_json steps = nlohmann::ordered_json::object();
+        for (RandomizerCheck location : sphere) {
+            // Every token stays where the game has it, and any ten buy the same Skulltula House reward, so the route
+            // names no token.
+            if (ctx->GetItemLocation(location)->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN) {
+                AddPlacement(steps, location);
+            }
+        }
+        if (!steps.empty()) {
+            log["playthrough"][std::format("sphere {:02}", log["playthrough"].size())] = std::move(steps);
         }
     }
     return log.dump(4) + "\n";

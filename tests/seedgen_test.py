@@ -169,6 +169,13 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["locations"]), list(dict.fromkeys(row["location"] for row in SHUFFLED)))
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
+    def test_route_names_no_gold_skulltula_token(self):
+        # Any ten tokens buy the same reward, so the route keeps the Skulltula House's rewards and names no token.
+        steps = playthrough_steps(self.generate(FIXED_SEED)[0])
+        self.assertNotIn("Gold Skulltula Token", steps.values())
+        self.assertEqual(steps["Kak 10 Gold Skulltula Reward"], "Progressive Wallet")
+        self.assertEqual(steps["Kak 30 Gold Skulltula Reward"], "Progressive Wallet")
+
     def test_plan_opens_the_doors_the_rules_count_open(self):
         _, plan = self.generate("6")
         self.assertEqual(plan["start_values"], DOORS_OPEN)

@@ -210,55 +210,22 @@
             "KF Shop Item 1": "Buy Deku Shield"
         },
         "sphere 01": {
-            "KF GS Know It All House": "Gold Skulltula Token",
             "GC Maze Center Chest": "Kokiri Sword",
-            "GC GS Boulder Maze": "Gold Skulltula Token",
-            "DMT Chest": "Lens of Truth",
-            "DMT GS Near Kak": "Gold Skulltula Token"
+            "DMT Chest": "Lens of Truth"
         },
         "sphere 02": {
-            "Deku Tree GS Compass Room": "Gold Skulltula Token",
             "Deku Tree Map Chest": "Megaton Hammer",
-            "Deku Tree GS Basement Gate": "Gold Skulltula Token",
-            "Deku Tree GS Basement Vines": "Gold Skulltula Token",
             "Queen Gohma": "Kokiri's Emerald",
-            "LH GS Small Island": "Gold Skulltula Token",
             "GV Crate Freestanding PoH": "Silver Gauntlets",
             "HC Malon Egg": "Weird Egg",
-            "HC GS in Tree": "Gold Skulltula Token",
-            "Market GS Guard House": "Gold Skulltula Token",
             "Kak Anju as Child": "Empty Bottle",
             "Kak Open Grotto Chest": "Boomerang",
-            "Kak GS House Under Construction": "Gold Skulltula Token",
-            "Kak GS Skulltula House": "Gold Skulltula Token",
-            "Kak GS Guards House": "Gold Skulltula Token",
-            "Kak GS Tree": "Gold Skulltula Token",
-            "Kak GS Watchtower": "Gold Skulltula Token",
-            "ZR GS Ladder": "Gold Skulltula Token",
-            "ZR GS Tree": "Gold Skulltula Token",
-            "LLR GS Tree": "Gold Skulltula Token",
-            "LLR GS Rain Shed": "Gold Skulltula Token",
             "LW Gift From Saria": "Progressive Ocarina"
         },
         "sphere 03": {
-            "KF GS Bean Patch": "Gold Skulltula Token",
-            "LW GS Bean Patch Near Bridge": "Gold Skulltula Token",
-            "LW GS Bean Patch Near Theater": "Gold Skulltula Token",
-            "DMT GS Bean Patch": "Gold Skulltula Token",
-            "DMC GS Crate": "Gold Skulltula Token",
-            "Deku Tree GS Basement Back Room": "Gold Skulltula Token",
-            "GV GS Small Bridge": "Gold Skulltula Token",
-            "GV GS Bean Patch": "Gold Skulltula Token",
-            "LH GS Bean Patch": "Gold Skulltula Token",
-            "LH GS Lab Wall": "Gold Skulltula Token",
             "Song from Impa": "Zelda's Lullaby",
             "Song from Saria": "Saria's Song",
-            "Kak 10 Gold Skulltula Reward": "Progressive Wallet",
-            "Graveyard GS Wall": "Gold Skulltula Token",
-            "Graveyard GS Bean Patch": "Gold Skulltula Token",
-            "LLR GS House Window": "Gold Skulltula Token",
-            "LLR GS Back Wall": "Gold Skulltula Token",
-            "HF GS Stone Bridge Tree Grotto": "Gold Skulltula Token"
+            "Kak 10 Gold Skulltula Reward": "Progressive Wallet"
         },
         "sphere 04": {
             "GC Darunias Joy": "Goron's Bracelet",
@@ -268,23 +235,12 @@
             "DMT Great Fairy Din's Fire": "Din's Fire"
         },
         "sphere 05": {
-            "Dodongos Cavern GS Side Room Near Lower Lizalfos": "Gold Skulltula Token",
-            "Dodongos Cavern GS Alcove Above Stairs": "Gold Skulltula Token",
-            "Dodongos Cavern GS Vines Above Stairs": "Gold Skulltula Token",
             "Dodongos Cavern Compass Chest": "Iron Boots",
-            "Dodongos Cavern GS Back Room": "Gold Skulltula Token",
             "King Dodongo": "Goron's Ruby",
-            "LH Underwater Item": "Bottle with Ruto's Letter",
-            "HF GS Cow Grotto": "Gold Skulltula Token"
+            "LH Underwater Item": "Bottle with Ruto's Letter"
         },
         "sphere 06": {
-            "Jabu Jabus Belly GS Lobby Basement Lower": "Gold Skulltula Token",
-            "Jabu Jabus Belly GS Lobby Basement Upper": "Gold Skulltula Token",
-            "Jabu Jabus Belly GS Water Switch Room": "Gold Skulltula Token",
-            "ZF GS Tree": "Gold Skulltula Token",
-            "ZF GS Above The Log": "Gold Skulltula Token",
-            "Barinade": "Zora's Sapphire",
-            "Jabu Jabus Belly GS Near Boss": "Gold Skulltula Token"
+            "Barinade": "Zora's Sapphire"
         },
         "sphere 07": {
             "HF Ocarina of Time Item": "Progressive Ocarina",
@@ -292,8 +248,6 @@
         },
         "sphere 08": {
             "Graveyard Hookshot Chest": "Progressive Hookshot",
-            "DMT GS Falling Rocks Path": "Gold Skulltula Token",
-            "DMT GS Above Dodongos Cavern": "Gold Skulltula Token",
             "GC Shop Item 5": "Buy Goron Tunic",
             "GV Octorok Grotto Chest": "Progressive Hookshot",
             "Market ToT Master Sword": "Master Sword",
