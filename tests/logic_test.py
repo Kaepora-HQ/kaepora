@@ -136,6 +136,36 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Spirit Temple Child Bridge Chest", *early, no_card))
         self.assertTrue(self.reachable("Spirit Temple Child Bridge Chest", *early))
 
+    def test_an_adult_warps_to_the_crater_only_where_he_gets_across_or_with_a_song_that_takes_him_out(self):
+        # An adult gets across from the crater's warp pad as the pad's own way to the pots asks: with the Hookshot,
+        # the Hover Boots or a planted bean. Here the Bolero is his only warp song, and he has no Hookshot.
+        def only_the_bolero(ice_cavern):
+            return (("Song from Malon", "Bolero of Fire"), ("Sheik in Crater", "Epona's Song"),
+                    ("Sheik in Forest", "Green Rupee"), ("Sheik in Ice Cavern", ice_cavern),
+                    ("Sheik in Kakariko", "Green Rupee"), ("Sheik at Colossus", "Green Rupee"),
+                    ("Sheik at Temple", "Song of Storms"), NO_HOOKSHOT)
+        self.assertFalse(self.reachable("Fire Temple Near Boss Chest", *only_the_bolero("Green Rupee")))
+        self.assertTrue(self.reachable("Fire Temple Near Boss Chest", *only_the_bolero("Serenade of Water")))
+
+    def test_an_adult_warps_to_the_colossus_only_with_a_song_that_takes_him_out(self):
+        # The Colossus's way into the Wasteland stands for an adult only once he has walked into the Wasteland from the
+        # fortress, a walk no route names, so he can no more walk out of the Colossus than a child. Here the Requiem is
+        # his only warp song, and Epona takes him across the valley to the fortress. Without the card he cannot walk to
+        # the Colossus either, and without the Hover Boots and the Longshot he cannot cross the sand. Sheik at the
+        # temple teaches the Song of Storms, so the child still comes back for the well's Lens.
+        def only_the_requiem(crater):
+            return (("Song from Malon", "Requiem of Spirit"), ("Sheik in Forest", "Epona's Song"),
+                    ("Sheik at Colossus", "Green Rupee"), ("Sheik in Crater", crater),
+                    ("Sheik in Ice Cavern", "Green Rupee"), ("Sheik in Kakariko", "Green Rupee"),
+                    ("Sheik at Temple", "Song of Storms"), SILVER_GAUNTLETS_AT_START)
+        no_card = ("GF Freed All Carpenters", "Green Rupee")
+        no_crossing = (("Shadow Temple Hover Boots Chest", "Green Rupee"), ("Water Temple Longshot Chest", "Green Rupee"))
+        self.assertFalse(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee"), no_card))
+        self.assertTrue(self.reachable("GF Freed All Carpenters", *only_the_requiem("Green Rupee"), *no_crossing))
+        self.assertFalse(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee"), *no_crossing))
+        self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee")))
+        self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Prelude of Light"), *no_crossing))
+
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 

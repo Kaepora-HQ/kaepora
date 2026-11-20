@@ -1,13 +1,37 @@
 #include "soh/Enhancements/randomizer/location_access.h"
 #include "soh/Enhancements/randomizer/entrance.h"
 
+#include <algorithm>
+
 using namespace Rando;
 
-// The remake has no save warp to bring Link back to his spawn, so a warp that lands a child where he cannot walk out
-// counts for him only when he knows a song that lands him where he can.
-static bool ChildKnowsAWarpHeWalksOutOf() {
-    return logic->CanUse(RG_MINUET_OF_FOREST) || logic->CanUse(RG_SERENADE_OF_WATER) ||
-           logic->CanUse(RG_NOCTURNE_OF_SHADOW) || logic->CanUse(RG_PRELUDE_OF_LIGHT);
+// Whether Link walks on from where a warp song lands him. The Minuet, the Serenade, the Nocturne and the Prelude land
+// him, at either age, in the meadow, at Lake Hylia, on the graveyard's ledge and in the Temple of Time, each a scene with
+// exits to the rest of the world.
+static bool WalksOnFrom(RandomizerGet song) {
+    switch (song) {
+        case RG_BOLERO_OF_FIRE:
+            // The middle of Death Mountain Crater. A child who warps there cannot get across to an exit. An adult gets
+            // across as the pad's own way to the pots asks.
+            return logic->IsAdult && (logic->FireTimer() >= 16 || logic->Health() >= 3 * 16) &&
+                   (logic->DMCPadToPots() || logic->BeanPlanted(LOGIC_PLANT_DEATH_MOUNTAIN_CRATER_BEAN));
+        case RG_REQUIEM_OF_SPIRIT:
+            // The Desert Colossus. A child cannot walk out of it: his Haunted Wasteland leads only back to it. Its way
+            // into the Wasteland stands for an adult only once he has walked into the Wasteland from the fortress, a
+            // walk the route of a seed cannot name.
+            return false;
+        default:
+            return true;
+    }
+}
+
+// The remake has no save warp to bring Link back to his spawn, so a warp song takes Link only where he can leave: he
+// walks on from where it lands him, or he knows a warp song that lands him where he walks on.
+static bool CanWarpWith(RandomizerGet song) {
+    static constexpr RandomizerGet warpSongs[] = { RG_MINUET_OF_FOREST,  RG_BOLERO_OF_FIRE,    RG_SERENADE_OF_WATER,
+                                                   RG_NOCTURNE_OF_SHADOW, RG_REQUIEM_OF_SPIRIT, RG_PRELUDE_OF_LIGHT };
+    return logic->CanUse(song) &&
+           std::ranges::any_of(warpSongs, [](RandomizerGet way) { return logic->CanUse(way) && WalksOnFrom(way); });
 }
 
 void RegionTable_Init_Root() {
@@ -45,14 +69,12 @@ void RegionTable_Init_Root() {
         //Exits
         ENTRANCE(RR_CHILD_SPAWN,             logic->IsChild),
         ENTRANCE(RR_ADULT_SPAWN,             logic->IsAdult),
-        ENTRANCE(RR_MINUET_OF_FOREST_WARP,   logic->CanUse(RG_MINUET_OF_FOREST)),
-        // A child who warps to the middle of Death Mountain Crater cannot get across to an exit.
-        ENTRANCE(RR_BOLERO_OF_FIRE_WARP,     logic->CanUse(RG_BOLERO_OF_FIRE) && (logic->IsAdult || ChildKnowsAWarpHeWalksOutOf())),
-        ENTRANCE(RR_SERENADE_OF_WATER_WARP,  logic->CanUse(RG_SERENADE_OF_WATER)),
-        ENTRANCE(RR_NOCTURNE_OF_SHADOW_WARP, logic->CanUse(RG_NOCTURNE_OF_SHADOW)),
-        // A child cannot walk out of the Desert Colossus: his Haunted Wasteland leads only back to it.
-        ENTRANCE(RR_REQUIEM_OF_SPIRIT_WARP,  logic->CanUse(RG_REQUIEM_OF_SPIRIT) && (logic->IsAdult || ChildKnowsAWarpHeWalksOutOf())),
-        ENTRANCE(RR_PRELUDE_OF_LIGHT_WARP,   logic->CanUse(RG_PRELUDE_OF_LIGHT)),
+        ENTRANCE(RR_MINUET_OF_FOREST_WARP,   CanWarpWith(RG_MINUET_OF_FOREST)),
+        ENTRANCE(RR_BOLERO_OF_FIRE_WARP,     CanWarpWith(RG_BOLERO_OF_FIRE)),
+        ENTRANCE(RR_SERENADE_OF_WATER_WARP,  CanWarpWith(RG_SERENADE_OF_WATER)),
+        ENTRANCE(RR_NOCTURNE_OF_SHADOW_WARP, CanWarpWith(RG_NOCTURNE_OF_SHADOW)),
+        ENTRANCE(RR_REQUIEM_OF_SPIRIT_WARP,  CanWarpWith(RG_REQUIEM_OF_SPIRIT)),
+        ENTRANCE(RR_PRELUDE_OF_LIGHT_WARP,   CanWarpWith(RG_PRELUDE_OF_LIGHT)),
     });
 
     areaTable[RR_CHILD_SPAWN] = Region("Child Spawn", SCENE_ID_MAX, TIME_DOESNT_PASS, {RA_LINKS_POCKET}, {}, {}, {
