@@ -51,8 +51,13 @@ void RegionTable_Init_DesertColossus() {
         ENTRANCE(RR_DESERT_COLOSSUS_OASIS,         logic->CanUse(RG_SONG_OF_STORMS) && (logic->HasItem(RG_BRONZE_SCALE) || logic->CanUse(RG_IRON_BOOTS) || logic->HasBottle() || (ctx->GetTrickOption(RT_VOIDOUT_COLLECTION) && logic->CanVoid()))),
         ENTRANCE(RR_DESERT_COLOSSUS_ARCH,          logic->IsAdult && logic->BeanPlanted(LOGIC_PLANT_DESERT_COLOSSUS_BEAN)),
         ENTRANCE(RR_COLOSSUS_GREAT_FAIRY_FOUNTAIN, logic->HasExplosives()),
-        ENTRANCE(RR_SPIRIT_TEMPLE_ENTRYWAY,        true),
-        ENTRANCE(RR_WASTELAND_NEAR_COLOSSUS,       true),
+        // Sheik's scene starts on the ground in front of the temple, not on the way out of it.
+        ENTRANCE(RR_DESERT_COLOSSUS_OUTSIDE_TEMPLE, true),
+        // The temple and the Wasteland's arrival here move the Spirit quest past the fortress's step, after which no
+        // carpenter's thief comes. A seed that can teach the Requiem elsewhere holds both back until the quest is past
+        // Step02.
+        ENTRANCE(RR_SPIRIT_TEMPLE_ENTRYWAY,        logic->Get(LOGIC_ADULT_ENTERED_WASTELAND)),
+        ENTRANCE(RR_WASTELAND_NEAR_COLOSSUS,       logic->Get(LOGIC_ADULT_ENTERED_WASTELAND)),
         ENTRANCE(RR_COLOSSUS_GROTTO,               logic->CanUse(RG_SILVER_GAUNTLETS)),
     });
 

@@ -5,8 +5,12 @@ using namespace Rando;
 
 void RegionTable_Init_HauntedWasteland() {
     // clang-format off
-    areaTable[RR_WASTELAND_NEAR_FORTRESS] = Region("Wasteland Near Fortress", SCENE_HAUNTED_WASTELAND, {},
-    {
+    areaTable[RR_WASTELAND_NEAR_FORTRESS] = Region("Wasteland Near Fortress", SCENE_HAUNTED_WASTELAND, {
+        //Events
+        // Entering the Wasteland from the fortress, through the gate the freed carpenters' card opens, moves the
+        // Spirit quest past Step02. The Desert Colossus's ways into the Spirit Temple and the Wasteland wait for it.
+        EVENT_ACCESS(LOGIC_ADULT_ENTERED_WASTELAND, logic->IsAdult),
+    }, {
         //Locations
         LOCATION(RC_HW_BEFORE_QUICKSAND_CRATE, logic->CanBreakCrates()),
     }, {

@@ -122,6 +122,20 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Song from Windmill", *no_lesson))
         self.assertFalse(self.reachable("GF HBA 1000 Points", *no_lesson))
 
+    def test_an_early_requiem_waits_for_the_fortress_at_the_spirit_temple(self):
+        # With the Requiem learned as a child, Link warps to the Desert Colossus before the Gerudo Fortress. The
+        # Colossus is open to him, but the Spirit Temple's front entrance waits for an adult who has entered the
+        # Wasteland from the fortress, through the gate the freed carpenters' card opens. Malon's Serenade takes him
+        # out again.
+        early = (("Song from Impa", "Requiem of Spirit"), ("Sheik at Colossus", "Zelda's Lullaby"),
+                 ("Song from Malon", "Serenade of Water"), ("Sheik in Ice Cavern", "Epona's Song"))
+        no_card = ("GF Freed All Carpenters", "Green Rupee")
+        for location in ("Sheik at Colossus", "Colossus Great Fairy Reward", "Colossus GS Tree",
+                         "Colossus Grotto Chest"):
+            self.assertTrue(self.reachable(location, *early, no_card, SILVER_GAUNTLETS_AT_START), location)
+        self.assertFalse(self.reachable("Spirit Temple Child Bridge Chest", *early, no_card))
+        self.assertTrue(self.reachable("Spirit Temple Child Bridge Chest", *early))
+
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
