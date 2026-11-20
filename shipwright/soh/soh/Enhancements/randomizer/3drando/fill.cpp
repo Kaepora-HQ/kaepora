@@ -1062,10 +1062,6 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
-bool KeptFromSkulltulas(RandomizerGet item) {
-    return FilledOnlyByChests(item) || item == RG_PROGRESSIVE_BOMB_BAG;
-}
-
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
          const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas) {
     auto ctx = Rando::Context::GetInstance();
@@ -1117,7 +1113,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
             }
         }
         if (!skulltulas.empty()) {
-            AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromSkulltulas), shuffledLocations);
+            AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
             for (const RemakeSkulltula& skulltula : skulltulas) {
                 shuffledLocations.push_back(skulltula.location);
             }

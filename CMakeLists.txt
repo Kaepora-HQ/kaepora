@@ -206,7 +206,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
                      only_chests_give_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
-                     gold_skulltulas_shuffled skulltulas_hold_no_bow_slingshot_or_bomb_bag
+                     gold_skulltulas_shuffled skulltulas_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot
                      a_dungeon_left_out_keeps_its_skulltulas
                      a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere
                      hints_name_the_place_a_skulltula_stands_in hints_name_gold_skulltulas_truly

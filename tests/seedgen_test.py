@@ -83,7 +83,6 @@ AGONY_GUIDE_SHUT = {"flow": "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "eve
                     "param": "GameDataName", "text": "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 WARPS_A_CHILD_WALKS_OUT_OF = ("Minuet of Forest", "Serenade of Water", "Nocturne of Shadow", "Prelude of Light")
-KEPT_FROM_SKULLTULAS = FILLED_ONLY_BY_CHESTS | {"Item_BombBag_Small"}
 SKULLTULAS = read_tsv("skulltulas.tsv")
 SKULLTULA_AT = {row["hash"]: row["location"] for row in SKULLTULAS}
 SKULLTULA_PLACES = {row["location"]: row["place"] for row in SKULLTULAS if row["place"]}
@@ -756,12 +755,14 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(collections.Counter(chests.values()) + given,
                              POOL + collections.Counter({TOKEN: len(shuffled)}), choice)
 
-    def test_skulltulas_hold_no_bow_slingshot_or_bomb_bag(self):
+    def test_skulltulas_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot(self):
+        # A token copy's Bomb Bag fills with bombs as a chest's does.
         given = collections.Counter()
         for seed in range(700, 730):
             _, plan = self.generate(str(seed), SKULLTULAS_SHUFFLED)
             given.update(entry["item"] for entry in plan["skulltulas"])
-        self.assertFalse(given.keys() & KEPT_FROM_SKULLTULAS, given)
+        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
+        self.assertIn("Item_BombBag_Small", given)
 
     def test_a_dungeon_left_out_keeps_its_skulltulas(self):
         left_out = {"Dodongo's Cavern": "DodongoCavern", "Shadow Temple": "ShadowTemple"}
@@ -776,7 +777,7 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere(self):
         log, _ = self.generate("23", SKULLTULAS_SHUFFLED)
         skulltulas = {row["location"] for row in SKULLTULAS}
-        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 6)
+        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 4)
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_seed_text_ignores_case(self):

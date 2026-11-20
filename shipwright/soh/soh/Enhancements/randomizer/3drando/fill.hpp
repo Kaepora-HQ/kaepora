@@ -66,7 +66,9 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
 // What only a chest gives whole, kept in chests from every other kind of shuffled place. A chest that gives the Fairy
 // Bow or the Fairy Slingshot also adds the quiver or the bullet bag and their ammunition, from its own AI; a gift gave
 // each with nothing to hold it. The fill places these before the first kind of place that is not a chest joins it. A
-// kind of place that gives another item short places that item too, just before it joins.
+// kind of place that gives another item short places that item too, just before it joins. The Bomb Bag is not one of
+// these: a bag fills its ammunition whenever it raises Link's limit for it, whoever gives it (read from the program),
+// and a Gold Skulltula's Bomb Bag gave 20 bombs to a Link whose limit was 0.
 bool FilledOnlyByChests(RandomizerGet item);
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
@@ -74,10 +76,6 @@ bool FilledOnlyByChests(RandomizerGet item);
 // quiver, the Goron Ruby or the empty bottle they may need, so they go to any other shuffled place, or to a chest for
 // FilledOnlyByChests.
 bool KeptFromShops(RandomizerGet item);
-
-// What a Gold Skulltula never holds: what FilledOnlyByChests keeps, and the Bomb Bag, which a token copy gave without
-// bombs. The fill places them just before skulltulas join it.
-bool KeptFromSkulltulas(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);
 

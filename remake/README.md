@@ -68,8 +68,9 @@ With "Gold Skulltulas" at "In dungeons", "In the overworld" or "All", the skullt
 outside them, or everywhere join the shuffle, as SoH splits them, but for those of a dungeon that "Shuffled dungeons"
 leaves out. Each adds a token to the pool, and gives the item the seed places there through a copy of the token that
 gives it. One that holds a token drops the game's own. A skulltula never holds the Fairy Bow or the Fairy Slingshot,
-which only a chest gives with their quiver or bullet bag (`FilledOnlyByChests`), nor the Bomb Bag, which a token copy
-gave without bombs (`KeptFromSkulltulas`). The fill places them before skulltulas join it.
+which only a chest gives with their quiver or bullet bag (`FilledOnlyByChests`); the fill places them before skulltulas
+join it. A skulltula may hold the Bomb Bag: a bag fills whenever it raises Link's bomb limit, whoever gives it, and a
+skulltula's gave 20 bombs to a Link whose limit was 0.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
