@@ -60,7 +60,9 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 More is being worked on. Until each part lands, the game keeps its own.
 
 - **Gifts.** The 21 items that characters and minigames hand over, such as the Skull Kid's and the House of Skulltula's.
-- **Songs.** 11 of the 12 songs, shuffled among the places that teach them.
-- **Gold Skulltulas.** 95 of the 100 tokens.
+- **Songs.** The 12 songs, shuffled among the places that teach them.
+- **Gold Skulltulas.** What the 100 Gold Skulltulas leave behind.
 - **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.
+- **More shop choices.** One to five places per shop, or a random number, and a setting for their prices.
 - **Hints from characters.** Mido and others say where something went, as the gossip stones do.
+- **Going back to child sooner.** Putting the Master Sword back before the Forest Temple.
