@@ -38,6 +38,16 @@ Set **Gifts** to **Shuffled**, and 21 things that characters and minigames hand 
 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone. With **Vanilla**, each gives what the game has.
 
+## Songs
+
+Set **Songs** to **Shuffled among themselves**, and the twelve songs change places. Every place that teaches a song still teaches one, so Impa may teach the Minuet of the Forest and Malon may teach Saria's Song.
+
+Two things change with it. If you learn the Requiem of Spirit early and warp to the Evil Desert Colossus, the Spirit Temple and the way into the Mirage Desert stay shut there until you have walked into the desert from Gerudo Fortress. Without that, the early visit could cost you the Gerudo Pass. Until then nobody walks out of the Colossus, so warp there only once you know another warp song. The same goes for the Bolero of Fire and the middle of Death Mountain Crater, which an adult leaves only with the Hookshot, the Hover Boots or a grown bean plant.
+
+A seed with shuffled songs also skips the short scene outside the Temple of Time after Link first draws the Master Sword. An adult who warped away before seeing it would otherwise have no map.
+
+With **Vanilla**, every song is where the game has it.
+
 ## Loose items
 
 Set **Loose items** to **Shuffled**, and the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**.
@@ -79,9 +89,3 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 - **The Master Sword goes back at any time.** In the game, adult Link can return the sword and be a child again only once the Forest Temple is done. With a seed he can from the start, and Sheik waits behind the pedestal, out of the way. One thing to watch: a child who warps to the Evil Desert Colossus or into Death Mountain Crater cannot walk out. Learn a warp song that lands somewhere else first: the Minuet, the Serenade, the Nocturne or the Prelude.
 - **Bombs need no strength.** Link can take a bomb out of the bag before he has a strength item.
 - **A few doors and scenes.** Four dungeon doors start open, and three story scenes no longer set a quest back.
-
-## In progress
-
-More is being worked on. Until each part lands, the game keeps its own.
-
-- **Songs.** The 12 songs, shuffled among the places that teach them.

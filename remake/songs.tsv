@@ -8,5 +8,6 @@ Song from Windmill	Item_Melody_StormSong	5	Event/EventFlow/Dm_MelodyGet_Storm.bf
 Sheik in Forest	Item_Melody_ForestMinuet	6	Event/EventFlow/Dm_MelodyGet_Forest.bfevfl.zs	Event7	Event9	EventFlowMsg/Dm_MelodyGet_Forest:Dm_MelodyGet_Forest_0009	Event/EventFlow/Dm_MelodyGet_Forest.bfevfl.zs:Event22
 Sheik in Crater	Item_Melody_FireBolero	7	Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs	Event2	Event3	EventFlowMsg/Dm_MelodyGet_Fire:Dm_MelodyGet_Fire_0004	Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs:Event192
 Sheik in Ice Cavern	Item_Melody_WaterSerenade	8	Event/EventFlow/Dm_MelodyGet_Water.bfevfl.zs	Event16	Event2	EventFlowMsg/Dm_MelodyGet_Water:Dm_MelodyGet_Water_0011	Event/EventFlow/Dm_MelodyGet_Water.bfevfl.zs:Event29
+Sheik at Colossus	Item_Melody_SpiritRequiem	9	Event/EventFlow/Dm_MelodyGet_Spilit.bfevfl.zs	Event8	Event9	EventFlowMsg/Dm_MelodyGet_Spilit:Dm_MelodyGet_Spilit_0005	Event/EventFlow/Dm_MelodyGet_Spilit.bfevfl.zs:Event17
 Sheik in Kakariko	Item_Melody_ShadowNocturne	10	Event/EventFlow/Dm_MelodyGet_Shadow.bfevfl.zs	Event12	Event13	EventFlowMsg/Dm_MelodyGet_Shadow:Dm_MelodyGet_Shadow_0009	Event/EventFlow/Dm_MelodyGet_Shadow.bfevfl.zs:Event21
 Sheik at Temple	Item_Melody_LightPrelude	11	Event/EventFlow/Dm_MelodyGet_Shine.bfevfl.zs	Event12	Event13	EventFlowMsg/Dm_MelodyGet_Shine:Dm_MelodyGet_Shine_0015	Event/EventFlow/Dm_MelodyGet_Shine.bfevfl.zs:Event53

@@ -90,7 +90,7 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(json.loads(plan.read_text())["event_numbers"]), 24)
+        self.assertEqual(len(json.loads(plan.read_text())["event_numbers"]), 26)
 
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:

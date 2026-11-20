@@ -653,12 +653,8 @@ std::vector<RemakeSongPlace> LoadRemakeSongs() {
         }
         places.push_back(std::move(place));
     }
-    // Sheik's scene at the Desert Colossus, the arrival there from the Wasteland and the Spirit Temple each set the
-    // Spirit quest's step whatever step it stands at. With the Requiem learned elsewhere, Link could warp there before
-    // the Gerudo Fortress and skip the fortress's steps, so the Colossus keeps its Requiem and has no row.
     for (const Rando::Location& location : Rando::StaticData::GetLocationTable()) {
-        if (location.GetRCType() == RCTYPE_SONG_LOCATION && location.GetRandomizerCheck() != RC_SHEIK_AT_COLOSSUS &&
-            !locations.contains(location.GetRandomizerCheck())) {
+        if (location.GetRCType() == RCTYPE_SONG_LOCATION && !locations.contains(location.GetRandomizerCheck())) {
             Fail("remake/songs.tsv: no row for the SoH song location \"" + location.GetName() + "\"");
         }
     }
@@ -730,6 +726,27 @@ static constexpr EventText songFixes[] = {
     // The Bolero's scene marks the Bolero known itself, whatever song it teaches. It marks its own lesson played
     // instead, which the game also does as the scene plays.
     { "Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs", "Event1", "GameDataName", "HavePlayedEvent.Dm_MelodyGet_Fire" },
+};
+
+struct Presence {
+    std::string_view file;
+    std::string_view hash;
+    std::string_view flag;
+};
+
+// Presences every seed that shuffles the songs carries. With the Requiem learned elsewhere, Link can warp to the Desert
+// Colossus before the Gerudo Fortress. Walking out into the Wasteland and back plays the Wasteland's arrival, and the
+// Spirit Temple moves the quest on too; either takes the Spirit quest past the fortress's step, after which no
+// carpenter's thief comes. So the Colossus's way into the Wasteland and the temple's front entrance stand, for both
+// ages, only once the quest is past Step02, which Link reaches by entering the Wasteland from the fortress.
+static constexpr std::string_view colossusAdult = "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs";
+static constexpr std::string_view colossusChild = "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs";
+static constexpr std::string_view pastSpiritStep02 = "SageOfSpirit_IsAfter_Step02_Exp";
+static constexpr Presence colossusGates[] = {
+    { colossusAdult, "12141577802165947392", pastSpiritStep02 }, // the way into the Wasteland
+    { colossusAdult, "13187812046230253833", pastSpiritStep02 }, // the Spirit Temple's front entrance
+    { colossusChild, "18409754566529742762", pastSpiritStep02 },
+    { colossusChild, "15448624735210695325", pastSpiritStep02 },
 };
 
 static constexpr std::string_view smallKeyDoors[] = {
@@ -824,6 +841,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["presences"] = nlohmann::ordered_json::array();
+    if (!songs.empty()) {
+        for (const auto& [file, hash, flag] : colossusGates) {
+            plan["presences"].push_back({ { "file", file }, { "hash", hash }, { "flag", flag } });
+        }
+    }
     const auto addText = [&](std::string_view flow, std::string_view event, std::string_view param,
                              std::string_view text) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });

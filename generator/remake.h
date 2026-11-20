@@ -131,7 +131,7 @@ inline constexpr std::string_view TokenName = "Item_Token_Gold";
 
 // The places of remake/songs.tsv, read from the copy built into the program. Throws when a row names anything but a SoH
 // song location, repeats one or its melody, names a song that is not the location's, or names a flow or a message
-// outside the event flows' folders, or when the table leaves out a song location other than Sheik at Colossus.
+// outside the event flows' folders, or when the table leaves a song location out.
 std::vector<RemakeSongPlace> LoadRemakeSongs();
 
 struct RemakeStone {
@@ -216,14 +216,14 @@ struct MessageText {
     std::string tagged;
 };
 
-// The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
-// Then the event flow strings every seed changes, and each site of each shuffled gift with its item and the text that
-// keeps the Stone of Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the
-// Bolero's lessons then name their own lesson where they named their song, and each song place's lesson takes the
-// melody type, the line and the gift of the song it teaches. Then the saved values a new game starts with that the
-// rules or the settings count on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot
-// with its item and price, each shuffled skulltula with its item, and each shuffled loose item that gives another item
-// than its own, with that item.
+// The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there,
+// and with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest. Then the event flow
+// strings every seed changes, and each site of each shuffled gift with its item and the text that keeps the Stone of
+// Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the Bolero's lessons then
+// name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and
+// the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
+// on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its item and price, each
+// shuffled skulltula with its item, and each shuffled loose item that gives another item than its own, with that item.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,

@@ -1322,7 +1322,7 @@ def song_table(patch, game):
     assert sorted(set(mod) - {SIZE_TABLE}) == sorted(expected), sorted(mod)
     for path, parsed in expected.items():
         assert game.event_flow(mod[path]) == parsed, path
-    assert len(rows) == 11 and len(numbers) == 24, (len(rows), len(numbers))
+    assert len(rows) == 12 and len(numbers) == 26, (len(rows), len(numbers))
 
 
 def tested_new_actor_mod(patch, game, romfs):

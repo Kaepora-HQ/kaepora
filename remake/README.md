@@ -247,11 +247,11 @@ container before the weapon, so that the weapon's own fill does nothing, is infe
 fill may place the Bow, the Slingshot and the Bomb Bag at a gift, a loose spot or a Gold Skulltula, but for a
 skulltula with shop goods shuffled (above).
 
-`songs.tsv` has a row for each of SoH's song locations but Sheik at Colossus. Each is a scene that teaches a song with
-the shared lesson in `Dm_SY_Ocarina`: the teacher plays an example tune, Link plays its notes, and the scene's gift
-names the song. With "Songs" at "Shuffled among themselves", the eleven songs go to the eleven places, as SoH's song
-locations setting puts them, and each place teaches the song placed there: its lesson takes that song's melody type and
-line, and its gift the song.
+`songs.tsv` has a row for each of SoH's 12 song locations. Each is a scene that teaches a song with the shared lesson in
+`Dm_SY_Ocarina`: the teacher plays an example tune, Link plays its notes, and the scene's gift names the song. With
+"Songs" at "Shuffled among themselves", the twelve songs go to the twelve places, as SoH's song locations setting puts
+them, and each place teaches the song placed there: its lesson takes that song's melody type and line, and its gift
+the song.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `song`: the song the place teaches in the game, by the remake's name.
@@ -268,18 +268,35 @@ line, and its gift the song.
 - `gift`: the flow and event that give the song with its window, as `flow:event`, by `ActorName`. The Sun's Song's
   gift is in a flow of its own.
 
-The Desert Colossus keeps the Requiem of Spirit. Sheik's scene there sets the Spirit quest to Step05 whatever step it
-stands at (`DesertColossus_Common_665d`), and so do the Wasteland's arrival scene there and the Spirit Temple's hand
-chest, Iron Knuckle and Twinrova. Learned elsewhere, the Requiem would take Link there before the Gerudo Fortress, whose
-guards and carpenters belong to the quest's first steps. Read from the game's data; what the fortress then does is not
-seen.
-
 Every seed that shuffles the songs also changes two scenes. The windmill man starts his lesson while it has not played,
 not while Link does not know the Song of Storms. The Bolero's scene marks its own lesson played where it marked the
 Bolero known.
 
-Seen in the game: Impa's lesson with the Minuet of Forest's melody type, line and gift taught the Minuet and not Zelda's
-Lullaby, also to a Link with no ocarina, and her send-off followed. The windmill's lesson with Epona's Song taught it to
-a Link who knew the Song of Storms, and gave no second lesson.
+And it holds two ways out of the Desert Colossus back, for both ages, until the Spirit quest is past Step02, which
+Link reaches by entering the Wasteland from the Gerudo Fortress: the way into the Wasteland and the Spirit Temple's
+front entrance. With the Requiem learned elsewhere, Link can warp to the Colossus before the fortress. Walking out into
+the Wasteland and back plays the Wasteland's arrival, which moves the quest to Step04, and the temple's hand chest, Iron
+Knuckle and Twinrova move it on too. Past Step01 the fortress's carpenters no longer call for help, no thief comes, and
+the card is lost. The rules ask the same: the temple and the Wasteland from the Colossus wait for an adult who has
+entered the Wasteland from the fortress.
 
-Read from the game's data and not yet seen: the other nine places and the Bolero's change.
+Seen in the game:
+
+- Impa's lesson with the Minuet of Forest's melody type, line and gift taught the Minuet and not Zelda's Lullaby, also
+  to a Link with no ocarina, and her send-off followed.
+- The windmill's lesson with Epona's Song taught it to a Link who knew the Song of Storms, and gave no second lesson.
+- Sheik's lesson in the crater taught Epona's Song, and the Bolero stayed unknown. No tune played at the end of his
+  scene. That none plays for the other songs outside his six is read from the same switch.
+- The royal tomb taught the Song of Time, and Zelda's ocarina at the moat taught the Minuet, which then warped Link to
+  the Sacred Forest Meadow.
+- Malon taught Saria's Song and moved Epona's quest on, and the adult then called Epona with her song and raced Ingo.
+- Without the Colossus's change, an adult who had met the carpenters' boss, warped to the Colossus and walked into the
+  Wasteland and back found no thief at the fortress. With it, he could enter neither the temple nor the Wasteland, and
+  the first carpenter's thief came. Arriving from the Wasteland at Step03, the arrival, Sheik's lesson and the temple
+  played as in the unmodified game, which stops the quest at Step04 there too.
+- Malon taught the Requiem of Spirit, and it warped a child to the Colossus. Sheik's scene played for him and taught
+  Zelda's Lullaby, the temple's doorway and the way into the Wasteland stayed shut, and the Nocturne took him out to
+  the graveyard's ledge. An adult who had met the carpenters' boss found the same.
+
+Read from the game's data and not yet seen: Saria's lesson, and Sheik's in the forest, the Ice Cavern, Kakariko and the
+Temple of Time.

@@ -113,6 +113,12 @@ QUEST_TEXTS = [
     {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event80", "param": "StepName", "text": "Complete"},
     {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
      "text": "Get_Epona_IsAfter_Ready_Exp"}]
+# The Desert Colossus's way into the Wasteland and the Spirit Temple's front entrance, in both ages' files, stand only
+# once the Spirit quest is past Step02 in every seed that shuffles the songs.
+COLOSSUS_GATES = [{"file": f"Banc/DesertColossus/DesertColossus_{age}_Static.bcett.byml.zs", "hash": hash,
+                   "flag": "SageOfSpirit_IsAfter_Step02_Exp"}
+                  for age, hash in (("Adult", "12141577802165947392"), ("Adult", "13187812046230253833"),
+                                    ("Child", "18409754566529742762"), ("Child", "15448624735210695325"))]
 # The windmill man starts his lesson while it has not played, and the Bolero's scene marks itself played, not the
 # Bolero known, in every seed that shuffles the songs.
 SONG_FIXES = [
@@ -424,6 +430,7 @@ class SeedgenTest(unittest.TestCase):
         _, plan = self.generate("12")
         self.assertEqual(plan["event_texts"], QUEST_TEXTS)
         self.assertEqual(plan["event_numbers"], [])
+        self.assertEqual(plan["presences"], [])
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
@@ -837,15 +844,12 @@ class SeedgenTest(unittest.TestCase):
         self.assertFalse(elsewhere & SONGS.keys())
         self.assertFalse({item for location, item in playthrough_steps(spoiler).items()
                           if location not in places} & SONGS.keys())
-        # Sheik's scene at the Colossus sets the Spirit quest's step, so the Colossus keeps its Requiem and its lesson.
-        self.assertNotIn("Sheik at Colossus", spoiler["locations"])
-        self.assertEqual(playthrough_steps(spoiler).get("Sheik at Colossus", "Requiem of Spirit"), "Requiem of Spirit")
+        self.assertEqual(len(places), 12)
         texts, numbers = song_lessons(spoiler)
         self.assertEqual(plan["event_texts"], QUEST_TEXTS + SONG_FIXES + texts)
         self.assertEqual(plan["event_numbers"], numbers)
-        self.assertFalse([edit for edit in plan["event_texts"] + plan["event_numbers"]
-                          if edit["flow"] == "Event/EventFlow/Dm_MelodyGet_Spilit.bfevfl.zs"])
-        self.assertEqual(len(numbers), 24)
+        self.assertEqual(len(numbers), 26)
+        self.assertEqual(plan["presences"], COLOSSUS_GATES)
 
     def test_a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere(self):
         # Seed 22's route learns songs at places that teach others in the game.
@@ -949,6 +953,27 @@ class SeedgenTest(unittest.TestCase):
         said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                 for location, item in placed_remake_items(spoiler, plan).items() if location in loose}
         self.assertTrue(said & set(spoiler["hints"].values()))
+
+    def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
+        # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the
+        # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 7's
+        # route takes a step there before the card. Seed 24's, with gifts shuffled, took one after the card with the
+        # Requiem as its only warp song, holding neither the Hover Boots nor the Longshot for the sand.
+        for seed, settings in (("7", SONGS_SHUFFLED), ("24", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
+            log, _ = self.generate(seed, settings)
+            spheres = list(log["playthrough"].values())
+            there = next(number for number, steps in enumerate(spheres)
+                         if any(step.startswith(("Colossus", "Spirit Temple")) or step == "Sheik at Colossus"
+                                for step in steps))
+            held = collections.Counter(item for steps in spheres[:there] for item in steps.values())
+            # Both ages walk on from where the Minuet, the Serenade, the Nocturne and the Prelude land them. An adult
+            # gets across the crater from the Bolero's landing with the Hookshot or the Hover Boots.
+            warps_out = held.keys() & {"Minuet of Forest", "Serenade of Water", "Nocturne of Shadow",
+                                       "Prelude of Light"} or held["Bolero of Fire"] and (
+                held["Progressive Hookshot"] or held["Hover Boots"])
+            walks_in = held["Gerudo Membership Card"] and held["Lens of Truth"] and (
+                held["Hover Boots"] or held["Progressive Hookshot"] >= 2)
+            self.assertTrue(warps_out or walks_in, (seed, spheres[there]))
 
     def test_seed_text_ignores_case(self):
         upper = self.run_seedgen("OWL")

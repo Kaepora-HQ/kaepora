@@ -215,7 +215,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_dungeon_left_out_keeps_its_loose_items
                      a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere hints_name_loose_items_truly
                      songs_shuffled_among_themselves a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere
-                     hints_name_song_places_truly
+                     hints_name_song_places_truly a_route_reaches_the_colossus_only_with_a_way_out
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
