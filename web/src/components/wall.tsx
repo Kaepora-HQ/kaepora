@@ -17,10 +17,12 @@ function file(picture: string, width: (typeof captureWidths)[number]) {
 
 const everyWidth = (picture: string) => captureWidths.map((width) => `${file(picture, width)} ${width}w`).join(', ')
 
-// A page load deals once and keeps the deal on the root element. This runs in the server's
-// HTML, right after the list: it deals, then gives each tile its size and its picture
-// before hydration.
-const dealPictures = `{
+// A page load deals once and keeps the deal on the root element. Two scripts in the server's
+// HTML do it before hydration. A browser can draw the list before the script after it has
+// run, so the first, before the list, marks the page as dealing, and the wall stays unseen
+// and loads no picture until the second has given each tile its size and its picture.
+const startDealing = `document.documentElement.dataset.dealing = ''`
+const dealPictures = `try {
   const deal = ${deal}
   const tileAt = ${tileAt}
   const parts = ${parts}
@@ -35,6 +37,8 @@ const dealPictures = `{
     tiles[place].className = className
     Object.assign(images[place], { sizes, srcset, src, alt })
   })
+} finally {
+  delete document.documentElement.dataset.dealing
 }`
 
 // A tile and the viewer showing the same picture share a name, so React moves one into the
@@ -87,7 +91,8 @@ export function Wall({ words }: { words: Copy['wall'] }) {
   return (
     <>
       <div className="@container">
-        <ul className="grid auto-rows-[calc((100cqi-0.5rem)/2*9/16)] grid-cols-2 gap-2 @min-[48rem]:auto-rows-[calc((100cqi-3.75rem)/6*9/16)] @min-[48rem]:grid-cols-6 @min-[48rem]:gap-3">
+        <ScriptOnce>{startDealing}</ScriptOnce>
+        <ul className="grid auto-rows-[calc((100cqi-0.5rem)/2*9/16)] grid-cols-2 gap-2 @min-[48rem]:auto-rows-[calc((100cqi-3.75rem)/6*9/16)] @min-[48rem]:grid-cols-6 @min-[48rem]:gap-3 [[data-dealing]_&]:invisible">
           {dealt.map((picture, place) => {
             const { className, sizes } = tile(place)
             return (
@@ -109,7 +114,7 @@ export function Wall({ words }: { words: Copy['wall'] }) {
                         alt={alt(picture)}
                         loading="lazy"
                         decoding="async"
-                        className="size-full object-cover"
+                        className="size-full object-cover [[data-dealing]_&]:hidden"
                       />
                     </button>
                   </ViewTransition>
