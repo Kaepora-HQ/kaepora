@@ -2,12 +2,16 @@
 // widths: writes every picture in the folder, and removes the ones no longer in it.
 // Usage: bun run captures <folder of screenshots>
 import { rm } from 'node:fs/promises'
-import { basename, extname, join } from 'node:path'
+import { join, parse } from 'node:path'
 import { captureWidths } from '../src/capture-widths'
 import { copy } from '../src/copy'
 
 const [folder] = Bun.argv.slice(2)
 if (!folder) throw new Error('usage: bun run captures <folder of screenshots>')
+
+// macOS and Windows resize with the system's own code unless told not to. With Bun's, a
+// screenshot gives the same bytes on every system, and an unchanged one leaves git clean.
+Bun.Image.backend = 'bun'
 
 const captures = join(import.meta.dir, '../src/captures')
 const widest = Math.max(...captureWidths)
@@ -21,14 +25,14 @@ for (const entry of (await Array.fromAsync(new Bun.Glob('*.{png,jpg,jpeg,webp}')
     tooSmall.push(`${entry} (${width} px wide)`)
     continue
   }
-  const picture = basename(entry, extname(entry))
+  const picture = parse(entry).name
   pictures.push(picture)
-  // The wall and the viewer crop a picture to 16:9, so one of another shape keeps its own.
+  // A file is as wide as its name says, whatever the screenshot's shape: the wall and the viewer crop to 16:9.
   await Promise.all(
     captureWidths.map((to) =>
       source
         .image()
-        .resize(to, (to * 9) / 16, { fit: 'inside' })
+        .resize(to)
         .webp({ quality: 75 })
         .write(join(captures, `${picture}-${to}.webp`)),
     ),
