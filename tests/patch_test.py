@@ -11,7 +11,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
        python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod| \
-           tested-song-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
+           tested-song-mod|tested-colossus-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
-           song-table <kaepora-patch> <game.nup>
+           song-table|presence <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -93,6 +93,15 @@ WINDMILL_MAN_FLOW = "Event/EventFlow/Npc_Hylia_009_Adult.bfevfl.zs"
 FIELD_ADULT_DYNAMIC = "Banc/HyruleField/HyruleField_Adult_Dynamic.bcett.byml.zs"
 # Hyrule Field's southwest Poe chest.
 FIELD_POE_CHEST = 17023457248274633121
+# The Colossus's way into the Wasteland and the Spirit Temple's front entrance, in the adult and the child files, and the
+# saved expression that holds them back until the Spirit quest is past Step02.
+COLOSSUS_ADULT_STATIC = "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs"
+COLOSSUS_CHILD_STATIC = "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs"
+COLOSSUS_GATES = [(COLOSSUS_ADULT_STATIC, 12141577802165947392), (COLOSSUS_ADULT_STATIC, 13187812046230253833),
+                  (COLOSSUS_CHILD_STATIC, 18409754566529742762), (COLOSSUS_CHILD_STATIC, 15448624735210695325)]
+PAST_SPIRIT_STEP02 = "SageOfSpirit_IsAfter_Step02_Exp"
+# The Colossus's gossip stone area, which the game shows only while the stone stands.
+COLOSSUS_STONE_AREA = 12757003145401657983
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
@@ -504,8 +513,9 @@ def actor(placement, hash):
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, skulltulas=(), loose_items=(),
-         event_numbers=()):
+         event_numbers=(), presences=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
+            "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
             "event_numbers": [{"flow": flow, "event": event, "param": param, "value": value}
@@ -645,6 +655,52 @@ def tested_song_mod(patch, game, romfs):
     for path, theirs in tested.items():
         dictionary = game.dictionary if path.startswith("Banc/") else game.zs_dictionary
         assert zstd.decompress(ours[path], zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
+
+
+def colossus_gates(flag=PAST_SPIRIT_STEP02):
+    return [(path, h, flag) for path, h in COLOSSUS_GATES]
+
+
+def with_presence(placement, h, flag):
+    """The placement with a presence on the actor, taking its place in the actor's key order as the game's dicts do."""
+    entry = actor(placement, h)
+    assert "Presence" not in entry, h
+    entry["Presence"] = {"FlagName": flag, "IsCheckLazy": (BOOL, 0), "IsNegation": (BOOL, 0)}
+    entries = sorted(entry.items())
+    entry.clear()
+    entry.update(entries)
+
+
+def presence(patch, game):
+    """The Colossus's ways into the Wasteland and the Spirit Temple stand only past Step02: read apart from the patcher,
+    each of the two files is the game's with a presence on those actors, and fits its size table entry."""
+    mod = patched(patch, game, plan([], presences=colossus_gates()))
+    paths = [COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC]
+    assert sorted(mod) == sorted(paths + [SIZE_TABLE]), sorted(mod)
+    sizes = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    for path in paths:
+        expected = game.placement(game.read(path))
+        for gate_path, h, flag in colossus_gates():
+            if gate_path == path:
+                with_presence(expected, h, flag)
+        assert ordered(game.placement(mod[path])) == ordered(expected), path
+        assert load_size(len(zstd.decompress(mod[path], zstd_dict=game.dictionary))) <= sizes[size_key(path)], path
+
+
+def tested_colossus_mod(patch, game, romfs):
+    """The Colossus's ways in, as the game ran them with a presence past Step02. An adult who had met the carpenters'
+    boss and warped there with the Requiem could enter neither the Spirit Temple nor the Wasteland, the Spirit quest
+    stayed at Step01, and the fortress then sent the first carpenter's thief. Arriving from the Wasteland at Step03, the
+    arrival, Sheik's lesson and the temple played as in the unmodified game."""
+    tested = files(pathlib.Path(romfs))
+    ours = patched(patch, game, plan([], presences=colossus_gates()))
+    assert sorted(ours) == sorted(tested), (sorted(ours), sorted(tested))
+    for path in (COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC):
+        assert_same_frame_header(ours[path], tested[path])
+        assert zstd.decompress(ours[path], zstd_dict=game.dictionary) == zstd.decompress(
+            tested[path], zstd_dict=game.dictionary), path
+    assert read_size_table(zstd.decompress(ours[SIZE_TABLE])) == \
+        raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
@@ -951,8 +1007,8 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "event_numbers", "stone_texts", "message_texts", "shops", "skulltulas",
-                         "loose_items")}
+             for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
+                         "shops", "skulltulas", "loose_items")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -1895,6 +1951,10 @@ def seed_plan(patch, game, plan_file):
             dynamic.clear()
             dynamic.update(entries)
     assert kinds == set(itertools.product((True, False), repeat=2)), kinds
+    for planned in seed["presences"]:
+        if planned["file"] not in expected:
+            expected[planned["file"]] = game.placement(game.read(planned["file"]))
+        with_presence(expected[planned["file"]], int(planned["hash"]), planned["flag"])
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
     edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"]}
@@ -1989,6 +2049,27 @@ def bad_input(patch, game):
     plans["no mido_castle_entry_removed"] = (
         {key: value for key, value in good.items() if key != "mido_castle_entry_removed"},
         ["plan.json", "mido_castle_entry_removed"])
+    plans["no presences"] = ({key: value for key, value in good.items() if key != "presences"}, ["plan.json", "presences"])
+    valid_presence = plan([], presences=colossus_gates()[:1])["presences"][0]
+    stone_area = {"file": COLOSSUS_ADULT_STATIC, "hash": str(COLOSSUS_STONE_AREA), "flag": PAST_SPIRIT_STEP02}
+    unknown_flag = "SageOfSpirit_IsAfter_Step99_Exp"
+    presences = {
+        "presence not this shape": (
+            {key: valid_presence[key] for key in ("file", "hash")}, ["plan.json", "presences[1]"]),
+        "presence without a flag": (dict(valid_presence, flag=""), ["plan.json", "presences[1]", "flag"]),
+        "presence listed twice": (
+            dict(valid_presence), ["plan.json", "presences[1]", valid_presence["hash"], COLOSSUS_ADULT_STATIC, "twice"]),
+        "presence on no actor": (
+            dict(valid_presence, hash=str(KOKIRI_SWORD_CHEST)),
+            [str(KOKIRI_SWORD_CHEST), COLOSSUS_ADULT_STATIC, "no actor"]),
+        "presence on an actor that has one": (
+            stone_area, [str(COLOSSUS_STONE_AREA), COLOSSUS_ADULT_STATIC, "already has a presence"]),
+        "presence on a flag not in the list": (
+            dict(valid_presence, file=COLOSSUS_CHILD_STATIC, hash=str(COLOSSUS_GATES[2][1]), flag=unknown_flag),
+            [unknown_flag, "game data list"]),
+    }
+    for name, (entry, named) in presences.items():
+        plans[name] = (good | {"presences": [valid_presence, entry]}, named)
     valid_stone = {"label": KOKIRI_STONE, "text": "They say."}
     other = SHORT_RUMOUR_STONE
     stones = {
@@ -2195,6 +2276,8 @@ def main():
         "loose-item-table": loose_item_table,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
+        "presence": presence,
+        "tested-colossus-mod": tested_colossus_mod,
         "event-numbers": event_numbers,
     }
     tests[test](patch, game, *rest)

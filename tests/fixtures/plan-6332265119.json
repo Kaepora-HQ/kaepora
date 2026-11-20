@@ -1311,6 +1311,7 @@
       "drop_actor": "TBox_Rupee_Red"
     }
   ],
+  "presences": [],
   "event_texts": [
     {
       "flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs",

@@ -65,6 +65,13 @@ struct PlacedActor {
     uint64_t hash;
 };
 
+// A placed actor that stands only while a saved true-or-false value or expression of the game data list holds, as the
+// game's own placements gate actors on quest steps. The Desert Colossus's ways out wait for the Spirit quest this way.
+struct PlannedPresence {
+    PlacedActor actor;
+    std::string flag;
+};
+
 // A shop slot that sells the item at the price, once from each shopkeeper. Each shelf shows the slot in one scene.
 struct PlannedShopSlot {
     std::vector<Shopkeeper> shopkeepers;
@@ -87,6 +94,7 @@ using StartValue = std::variant<bool, int32_t>;
 
 struct Plan {
     std::vector<PlannedChest> chests;
+    std::vector<PlannedPresence> presences;
     std::vector<PlannedEventText> eventTexts;
     std::vector<PlannedEventNumber> eventNumbers;
     std::map<std::string, StartValue> startValues;

@@ -45,6 +45,16 @@ static PlannedChest ParseChest(const nlohmann::json& chest) {
     return planned;
 }
 
+static PlannedPresence ParsePresence(const nlohmann::json& presence) {
+    PlannedPresence planned{ .actor = { .file = presence.at("file").get<std::string>(),
+                                        .hash = ParseHash(presence.at("hash")) },
+                             .flag = presence.at("flag").get<std::string>() };
+    if (planned.actor.file.empty() || planned.flag.empty()) {
+        throw std::runtime_error("file and flag must not be empty");
+    }
+    return planned;
+}
+
 static PlannedEventText ParseEventText(const nlohmann::json& text) {
     PlannedEventText planned{ .flow = text.at("flow").get<std::string>(),
                               .event = text.at("event").get<std::string>(),
@@ -256,6 +266,19 @@ Plan ParsePlan(const nlohmann::json& json) {
             } catch (const std::exception& e) {
                 throw std::runtime_error(std::format("{}[{}]: {}", key, i, e.what()));
             }
+        }
+    }
+    const auto presences = json.at("presences").get<std::vector<nlohmann::json>>();
+    std::set<std::pair<std::string, uint64_t>> placed;
+    for (size_t i = 0; i < presences.size(); ++i) {
+        try {
+            const PlannedPresence& presence = plan.presences.emplace_back(ParsePresence(presences[i]));
+            if (!placed.emplace(presence.actor.file, presence.actor.hash).second) {
+                throw std::runtime_error(
+                    std::format("actor {} in {} is listed twice", presence.actor.hash, presence.actor.file));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("presences[{}]: {}", i, e.what()));
         }
     }
     return plan;
@@ -724,6 +747,25 @@ static std::string GameDataList(GameFile& game, const std::string& dictionary,
     }
 }
 
+// The hashes of the game data list's true-or-false values and expressions, the flags a presence can name.
+static std::set<uint32_t> PresenceFlags(GameFile& game, const std::string& dictionary) {
+    byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
+    byml::Node* data = Find(list.root, "Data");
+    std::set<uint32_t> flags;
+    for (const std::string_view kind : { "Bool", "BoolExp" }) {
+        byml::Node* values = data == nullptr ? nullptr : Find(*data, kind);
+        if (values == nullptr) {
+            throw std::runtime_error(std::format("{} has no {} values", GameDataListPath, kind));
+        }
+        for (byml::Node& value : values->array) {
+            if (const byml::Node* hash = Find(value, "Hash"); hash != nullptr) {
+                flags.insert(uint32_t(hash->scalar));
+            }
+        }
+    }
+    return flags;
+}
+
 // Link takes a bomb out of the bag only when the bomb's lift grade is at most his, as he lifts a rock. A bomb's grade
 // is Low, which a child reaches only with Goron's Bracelet. At None, the bombchu's grade, a child with no strength
 // takes a bomb out and breaks a wall with it. Each of these packs holds a copy of the bomb's lift file, and which copy
@@ -1021,6 +1063,31 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
 
     const std::string zsDictionary = Dictionary(game, "zs.zsdic");
+    if (!plan.presences.empty()) {
+        const std::set<uint32_t> flags = PresenceFlags(game, zsDictionary);
+        for (const PlannedPresence& presence : plan.presences) {
+            try {
+                if (!flags.contains(Murmur3(presence.flag))) {
+                    throw std::runtime_error(std::format(
+                        "\"{}\" is not a true-or-false value or expression in the game data list", presence.flag));
+                }
+                byml::Node& actor = Actor(placement(presence.actor.file), presence.actor.hash);
+                if (Find(actor, "Presence") != nullptr) {
+                    throw std::runtime_error("the actor already has a presence");
+                }
+                // The game's presences that wait for a quest step take this shape.
+                FindOrAdd(actor, "Presence", byml::Type::Dict).dict = {
+                    { .key = "FlagName", .value = { .type = byml::Type::String, .string = presence.flag } },
+                    { .key = "IsCheckLazy", .value = { .type = byml::Type::Bool } },
+                    { .key = "IsNegation", .value = { .type = byml::Type::Bool } },
+                };
+                changed.insert(presence.actor.file);
+            } catch (const std::exception& e) {
+                throw std::runtime_error(
+                    std::format("presence {} in {}: {}", presence.actor.hash, presence.actor.file, e.what()));
+            }
+        }
+    }
     std::map<std::string, bfevfl::Flow> flows;
     std::set<std::string> changedFlows;
     const auto flowAt = [&](const std::string& path) -> bfevfl::Flow& {

@@ -823,6 +823,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                 { { "hash", actor.hash }, { "files", actor.files }, { "drop_actor", items.at(chest.location) } });
         }
     }
+    plan["presences"] = nlohmann::ordered_json::array();
     const auto addText = [&](std::string_view flow, std::string_view event, std::string_view param,
                              std::string_view text) {
         plan["event_texts"].push_back({ { "flow", flow }, { "event", event }, { "param", param }, { "text", text } });
