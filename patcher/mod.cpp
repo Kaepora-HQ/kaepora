@@ -77,10 +77,10 @@ static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
     return planned;
 }
 
-static PlannedSkulltula ParseSkulltula(const nlohmann::json& skulltula) {
-    PlannedSkulltula planned{ .hash = ParseHash(skulltula.at("hash")),
-                              .files = skulltula.at("files").get<std::vector<std::string>>(),
-                              .item = skulltula.at("item").get<std::string>() };
+static PlannedActorItem ParseActorItem(const nlohmann::json& entry) {
+    PlannedActorItem planned{ .hash = ParseHash(entry.at("hash")),
+                              .files = entry.at("files").get<std::vector<std::string>>(),
+                              .item = entry.at("item").get<std::string>() };
     if (planned.files.empty() || planned.item.empty()) {
         throw std::runtime_error("files and item must not be empty");
     }
@@ -223,12 +223,15 @@ Plan ParsePlan(const nlohmann::json& json) {
         }
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
-    const auto skulltulas = json.at("skulltulas").get<std::vector<nlohmann::json>>();
-    for (size_t i = 0; i < skulltulas.size(); ++i) {
-        try {
-            plan.skulltulas.push_back(ParseSkulltula(skulltulas[i]));
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::format("skulltulas[{}]: {}", i, e.what()));
+    for (const auto& [key, list] : { std::pair{ "skulltulas", &plan.skulltulas },
+                                     std::pair{ "loose_items", &plan.looseItems } }) {
+        const auto entries = json.at(key).get<std::vector<nlohmann::json>>();
+        for (size_t i = 0; i < entries.size(); ++i) {
+            try {
+                list->push_back(ParseActorItem(entries[i]));
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::format("{}[{}]: {}", key, i, e.what()));
+            }
         }
     }
     return plan;
@@ -253,6 +256,18 @@ static byml::Node& Actor(byml::Node& placement, uint64_t hash) {
     }
     return *actor;
 }
+
+static bool SetGyaml(byml::Node& placed, const std::string& actor) {
+    byml::Node* gyaml = Find(placed, "Gyaml");
+    if (gyaml == nullptr || gyaml->type != byml::Type::String) {
+        throw std::runtime_error("the actor has no Gyaml");
+    }
+    return std::exchange(gyaml->string, actor) != actor;
+}
+
+// Items whose own actor is a pickup that the game places loose. Fire Arrows are not one: their pickup's tag makes
+// taking it move the lake's Fire Arrows quest on, so it stays only at the lake, where the game places it.
+constexpr std::array<std::string_view, 2> LoosePickups = { "Obj_Heart_Container", "Obj_Heart_Piece" };
 
 static constexpr char shopGoodsTable[] = {
 #embed "../remake/shop_goods.tsv"
@@ -852,13 +867,14 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     std::map<std::string, ShopPack> packs;
     std::set<std::string> soldOnce;
     ActorTables tables;
-    if (!plan.shops.empty() || !plan.skulltulas.empty()) {
+    if (!plan.shops.empty() || !plan.skulltulas.empty() || !plan.looseItems.empty()) {
         for (const std::string_view path : ActorTablePaths) {
             tables.emplace(path, byml::Parse(Decompress(game.Read(std::string(path)))));
         }
     }
     std::map<std::string, NewActor> goodsActors;
     std::map<std::string, NewActor> tokenCopies;
+    std::map<std::string, NewActor> pickupCopies;
     for (const PlannedShopSlot& slot : plan.shops) {
         try {
             std::string goodsActor;
@@ -888,12 +904,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             for (const PlacedActor& shelf : slot.shelves) {
                 try {
                     byml::Node& shelfActor = Actor(placement(shelf.file), shelf.hash);
-                    byml::Node* gyaml = Find(shelfActor, "Gyaml");
-                    if (gyaml == nullptr || gyaml->type != byml::Type::String) {
-                        throw std::runtime_error("the actor has no Gyaml");
-                    }
-                    if (gyaml->string != goodsActor) {
-                        gyaml->string = goodsActor;
+                    if (SetGyaml(shelfActor, goodsActor)) {
                         changed.insert(shelf.file);
                     }
                     if (model != nullptr) {
@@ -913,7 +924,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
-    for (const PlannedSkulltula& skulltula : plan.skulltulas) {
+    for (const PlannedActorItem& skulltula : plan.skulltulas) {
         if (skulltula.item == TokenItem) {
             continue;
         }
@@ -933,6 +944,29 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 }
             } catch (const std::exception& e) {
                 throw std::runtime_error(std::format("skulltula {} in {}: {}", skulltula.hash, path, e.what()));
+            }
+        }
+    }
+    for (const PlannedActorItem& loose : plan.looseItems) {
+        std::string pickup = loose.item;
+        if (std::ranges::find(LoosePickups, loose.item) == LoosePickups.end()) {
+            auto copy = pickupCopies.find(loose.item);
+            if (copy == pickupCopies.end()) {
+                try {
+                    copy = pickupCopies.emplace(loose.item, PickupCopy(game, packDictionary, tables, loose.item)).first;
+                } catch (const std::exception& e) {
+                    throw std::runtime_error(std::format("loose item {}: {}", loose.hash, e.what()));
+                }
+            }
+            pickup = copy->second.name;
+        }
+        for (const std::string& path : loose.files) {
+            try {
+                if (SetGyaml(Actor(placement(path), loose.hash), pickup)) {
+                    changed.insert(path);
+                }
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::format("loose item {} in {}: {}", loose.hash, path, e.what()));
             }
         }
     }
@@ -1005,7 +1039,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
     // Each new actor's pack, and each actor table once, with every new row in name order.
     std::vector<const NewActor*> newActors;
-    for (const auto* actors : { &goodsActors, &tokenCopies }) {
+    for (const auto* actors : { &goodsActors, &tokenCopies, &pickupCopies }) {
         for (const NewActor& actor : std::views::values(*actors)) {
             newActors.push_back(&actor);
         }

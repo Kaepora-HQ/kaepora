@@ -37,3 +37,7 @@ NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTabl
 // A copy of the Gold Skulltula token that gives the item: the token's model, pick-up and record of the skulltula's
 // kill, with the item's name and what the item's own actor gives.
 NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);
+
+// A copy of the game's Hylian Shield pickup that gives the item: taken by touch, with the pickup's body and record of
+// being taken, the item's name, model, animation and parameters, and what the item's own actor gives.
+NewActor PickupCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);

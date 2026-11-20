@@ -10,16 +10,16 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>...
        python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
            <tested mod's folder>
-       python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod <kaepora-patch> <game.nup> \
-           <tested mod's romfs folder>
+       python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod <kaepora-patch> \
+           <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table| \
-           goods-and-token-copies <kaepora-patch> <game.nup>
+           other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
+           goods-and-copies <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -151,6 +151,17 @@ SIDE_ROOM_SKULLTULA = (1171854281537584829, [DODONGO_STATIC])
 GRAVEYARD_SKULLTULA = (229475726653285413, [GRAVEYARD_ADULT_STATIC, GRAVEYARD_CHILD_STATIC])
 TREE_SKULLTULA = (7677963516305772491, [KAKARIKO_CHILD_STATIC])
 WATCHTOWER_SKULLTULA = (15118290503807073158, [KAKARIKO_CHILD_STATIC])
+HYRULE_FIELD_ADULT_STATIC = "Banc/HyruleField/HyruleField_Adult_Static.bcett.byml.zs"
+HYRULE_FIELD_CHILD_STATIC = "Banc/HyruleField/HyruleField_Child_Static.bcett.byml.zs"
+KAKARIKO_STATICS = [f"Banc/KakarikoVillage/KakarikoVillage_{part}_Static.bcett.byml.zs"
+                    for part in ("Adult_Alternative", "Adult", "Child")]
+LON_LON_HEART_PIECE = (9814903750835309225, [HYRULE_FIELD_CHILD_STATIC])
+LAKE_HEART_PIECE = (13469300937852836203, [HYRULE_FIELD_ADULT_STATIC])
+IMPAS_HOUSE_HEART_PIECE = (17926402522258180222, KAKARIKO_STATICS)
+GOHMA_HEART_CONTAINER = (17948245526767051747, [DEKU_STATIC])
+FIRE_ARROWS_PICKUP = "Obj_Arrow_Fire"
+PICKUP_TEMPLATE = "Obj_Shield_Hylian"
+
 
 
 class Game:
@@ -461,7 +472,7 @@ def actor(placement, hash):
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
-         mido_castle_entry_removed=False, skulltulas=()):
+         mido_castle_entry_removed=False, skulltulas=(), loose_items=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
@@ -470,7 +481,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
             "mido_castle_entry_removed": mido_castle_entry_removed,
-            "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas]}
+            "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
+            "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items]}
 
 
 def shop_slot(slot, item, price):
@@ -868,7 +880,8 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops", "skulltulas")}
+             for key in ("chests", "event_texts", "stone_texts", "message_texts", "shops", "skulltulas",
+                         "loose_items")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -1232,6 +1245,17 @@ def assert_token_copy(game, mod, item, copy):
         {key: item_pouch.get(key) for key in gives} | ({"PouchActor": goods(item)} if gives_itself else {}), item
 
 
+def tested_pickup_mod(patch, game, romfs):
+    """The Lon Lon Ranch heart piece, planned to give the Mirror Shield, gives the files of the mod the game showed:
+    the Mirror Shield lay at the spot, Link took it by touch and got it, and the spot stayed empty after a reload."""
+    tested = files(pathlib.Path(romfs))
+    mod = patched(patch, game, plan([], loose_items=[(*LON_LON_HEART_PIECE, "Item_Shield_Mirror")]))
+    assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
+    for path, data in tested.items():
+        assert_same_frame_header(mod[path], data)
+        assert decompressed(game, mod[path]) == decompressed(game, data), path
+
+
 def skulltulas(patch, game):
     planned = [(*SIDE_ROOM_SKULLTULA, "Item_Gauntlet_Silver"), (*GRAVEYARD_SKULLTULA, "TBox_Rupee_Red"),
                (*TREE_SKULLTULA, "Item_Gauntlet_Silver"), (*WATCHTOWER_SKULLTULA, "Item_Token_Gold")]
@@ -1270,10 +1294,64 @@ def skulltulas(patch, game):
         assert entries[size_key(path)] == load_size(size, PACK_OVERHEAD), path
 
 
-def goods_and_token_copies(patch, game):
+def assert_pickup_copy(game, mod, item, copy):
+    ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
+    theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
+    pickup = game.pack(game.read(f"Pack/Actor/{PICKUP_TEMPLATE}.pack.zs"))
+    components = resolved(ours, f"Actor/{copy}.engine__actor__ActorParam.bgyml")["Components"]
+    own = resolved(theirs, f"Actor/{item}.engine__actor__ActorParam.bgyml")["Components"]
+    template = resolved(pickup, f"Actor/{PICKUP_TEMPLATE}.engine__actor__ActorParam.bgyml")["Components"]
+    for ref in ("ActorNameRef", "ModelInfoRef", "AnimationRef"):
+        assert components[ref] == own[ref], (item, ref)
+    for ref in ("AttentionSenderRef", "PhysicsRef", "ELinkRef", "SLinkRef"):
+        assert components[ref] == template[ref], (item, ref)
+    gives = ("PouchActor", "BundleActor", "BundleActorNum")
+    pouch = resolved(ours, components["PouchContentRef"].lstrip("?"))
+    item_pouch = resolved(theirs, own["PouchContentRef"].lstrip("?"))
+    assert {key: pouch.get(key) for key in gives if key in item_pouch} == \
+        {key: item_pouch[key] for key in gives if key in item_pouch}, (item, pouch)
+
+
+def loose_items(patch, game):
+    planned = [(*IMPAS_HOUSE_HEART_PIECE, "Item_Arrow_Fire"), (*GOHMA_HEART_CONTAINER, "Obj_Heart_Piece"),
+               (*LON_LON_HEART_PIECE, "Obj_Heart_Container"), (*LAKE_HEART_PIECE, "TBox_Rupee_Red")]
+    mod = patched(patch, game, plan([], loose_items=planned))
+    copies = {item: f"Obj_PickupShield_{item}" for item in ("Item_Arrow_Fire", "TBox_Rupee_Red")}
+    placements = {}
+    for h, paths, item in planned:
+        for path in paths:
+            actor(placements.setdefault(path, game.placement(game.read(path))), h)["Gyaml"] = copies.get(item, item)
+    packs = [f"Pack/Actor/{copy}.pack.zs" for copy in copies.values()]
+    tables = [ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO]
+    assert sorted(mod) == sorted([*placements, *packs, *tables, SIZE_TABLE]), sorted(mod)
+    for path, placement in placements.items():
+        assert game.placement(mod[path]) == placement, path
+    for item, copy in copies.items():
+        assert_pickup_copy(game, mod, item, copy)
+
+    rows = {path: {row["__RowId"]: row for row in byml(zstd.decompress(game.read(path)))} for path in tables}
+    for path in tables:
+        ours = {row["__RowId"]: row for row in byml(zstd.decompress(mod[path]))}
+        assert ours.keys() - rows[path].keys() == set(copies.values()), path
+        assert all(ours[name] == row for name, row in rows[path].items()), path
+        for item, copy in copies.items():
+            if path == ACTOR_INFO:
+                for key in ("ActorName", "FmdbName", "ModelProjectName", "AnimationResources"):
+                    assert ours[copy][key] == rows[path][item][key], (item, key)
+            else:
+                expected = rows[path][PICKUP_TEMPLATE if path == GAME_ACTOR_INFO else item]
+                assert ours[copy] == expected | {"__RowId": copy}, (path, item)
+    entries = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    for path in packs:
+        size = len(zstd.decompress(mod[path], zstd_dict=game.pack_dictionary))
+        assert entries[size_key(path)] == load_size(size, PACK_OVERHEAD), path
+
+
+def goods_and_copies(patch, game):
     mod = patched(patch, game, plan([], shops=[(GORON_TUNIC_SLOT, "Item_Boomerang", 10)],
-                                    skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")]))
-    new = ["Obj_Token_Gold_Item_Boomerang", "Shop_Item_Boomerang"]
+                                    skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")],
+                                    loose_items=[(*LON_LON_HEART_PIECE, "Item_Hammer")]))
+    new = ["Obj_PickupShield_Item_Hammer", "Obj_Token_Gold_Item_Boomerang", "Shop_Item_Boomerang"]
     assert all(f"Pack/Actor/{name}.pack.zs" in mod for name in new), sorted(mod)
     for path in (ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
         game_rows = [row["__RowId"] for row in byml(zstd.decompress(game.read(path)))]
@@ -1852,7 +1930,9 @@ def main():
         "dive-depth": dive_depth,
         "skulltulas": skulltulas,
         "skulltula-table": skulltula_table,
-        "goods-and-token-copies": goods_and_token_copies,
+        "goods-and-copies": goods_and_copies,
+        "tested-pickup-mod": tested_pickup_mod,
+        "loose-items": loose_items,
         "tested-skulltula-mod": tested_skulltula_mod,
     }
     tests[test](patch, game, *rest)

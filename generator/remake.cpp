@@ -752,5 +752,6 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                        { "files", skulltula.actor.files },
                                        { "item", items.at(skulltula.location) } });
     }
+    plan["loose_items"] = nlohmann::ordered_json::array();
     return plan;
 }

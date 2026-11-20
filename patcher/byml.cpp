@@ -40,7 +40,11 @@ struct Reader {
         return value;
     }
 
+    // A file with no keys or no strings, as a price file, has no table for them, and its header gives offset 0.
     std::vector<std::string_view> Table(uint32_t offset) const {
+        if (offset == 0) {
+            return {};
+        }
         if (ReadAt<uint8_t>(data, offset) != StringTable) {
             throw std::runtime_error("BYML string table expected");
         }

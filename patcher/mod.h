@@ -65,7 +65,9 @@ struct PlannedShopSlot {
     int32_t price;
 };
 
-struct PlannedSkulltula {
+// An item a placed actor gives: the actor's hash, every placement file that places it, and the item. A Gold Skulltula
+// drops it; a loose item is it.
+struct PlannedActorItem {
     uint64_t hash;
     std::vector<std::string> files;
     std::string item;
@@ -82,7 +84,8 @@ struct Plan {
     std::vector<PlannedMessageText> messageTexts;
     std::vector<PlannedShopSlot> shops;
     bool midoCastleEntryRemoved;
-    std::vector<PlannedSkulltula> skulltulas;
+    std::vector<PlannedActorItem> skulltulas;
+    std::vector<PlannedActorItem> looseItems;
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

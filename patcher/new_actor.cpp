@@ -25,8 +25,6 @@ constexpr std::array<std::string_view, 10> TemplateOwn = {
     "GameParameter/PlayerEquipmentActor/Obj_Armor_Zora.game__actor__PlayerEquipmentActor.bgyml",
     "GameParameter/PriceParam/Obj_Armor_Zora.game__pouchcontent__PriceParam.bgyml",
 };
-// Price files have no string table, which byml::Parse does not read, so the Gerudo Mask's, 0 to buy and 0 to sell, is
-// copied whole.
 constexpr std::string_view ZeroPricePack = "Shop_Mask_Gerudo";
 constexpr std::string_view ZeroPrice = "GameParameter/PriceParam/Item_Mask_Gerudo.game__pouchcontent__PriceParam.bgyml";
 
@@ -141,8 +139,8 @@ static float FloatOf(const byml::Node& node) {
 // The template's row, showing the item: its name, model, animation and bounds. Its heaps take the item's sizes plus
 // half again, since a goods actor needs less than the item's own actor with the same model (85,672 bytes for the
 // Hylian Shield's goods against 93,432 for its chest item), and its radii the larger of the two.
-static byml::Node ActorInfoRow(ActorTables& tables, const std::string& item) {
-    byml::Node row = Row(tables, ActorInfoPath, GoodsTemplate);
+static byml::Node ActorInfoRow(ActorTables& tables, std::string_view shownOn, const std::string& item) {
+    byml::Node row = Row(tables, ActorInfoPath, shownOn);
     byml::Node& own = Row(tables, ActorInfoPath, item);
     for (const std::string_view key :
          { "ActorName", "AnimationResources", "FmdbName", "ModelProjectName", "ModelAabbMax", "ModelAabbMin" }) {
@@ -212,7 +210,7 @@ NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTabl
     // The item's pouch row with no BuyingPrice, as the Megaton Hammer's has none, so the base price is 0 there too.
     byml::Node pouchRow = Row(tables, PouchActorInfoPath, item);
     std::erase_if(pouchRow.dict, [](const byml::Entry& entry) { return entry.key == "BuyingPrice"; });
-    actor.rows = { { std::string(ActorInfoPath), ActorInfoRow(tables, item) },
+    actor.rows = { { std::string(ActorInfoPath), ActorInfoRow(tables, GoodsTemplate, item) },
                    { std::string(GameActorInfoPath), Row(tables, GameActorInfoPath, GoodsTemplate) },
                    { std::string(PouchActorInfoPath), pouchRow } };
     for (auto& [_, row] : actor.rows) {
@@ -264,6 +262,124 @@ NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTable
     Value(actorInfo, "ActorName") = Value(Row(tables, ActorInfoPath, item), "ActorName");
     actor.rows = { { std::string(ActorInfoPath), actorInfo },
                    { std::string(GameActorInfoPath), Row(tables, GameActorInfoPath, Token) },
+                   { std::string(PouchActorInfoPath), Row(tables, PouchActorInfoPath, item) } };
+    for (auto& [_, row] : actor.rows) {
+        Value(row, "__RowId").string = actor.name;
+    }
+    return actor;
+}
+
+struct PickupTemplate {
+    std::string_view actor;
+    std::string_view copyPrefix;
+    std::array<std::string_view, 7> ownMembers;
+    std::array<std::string_view, 3> itemRefs;
+    std::array<std::string_view, 3> takeKeys;
+};
+
+// The game's Hylian Shield pickup, which Link takes by touch as he takes a rupee or a small key. Seen in the game with
+// another item: no glow and no sound, taken by touch, and recorded as taken.
+constexpr PickupTemplate Pickup{
+    .actor = "Obj_Shield_Hylian",
+    .copyPrefix = "Obj_PickupShield_",
+    .ownMembers = {
+        "Actor/Obj_Shield_Hylian.engine__actor__ActorParam.bgyml",
+        "Component/AnimationParam/Obj_Shield_Hylian.engine__component__AnimationParam.bgyml",
+        "Component/ModelInfo/Obj_Shield_Hylian.engine__component__ModelInfo.bgyml",
+        "Component/PouchContentParam/AutoPickShield.game__component__PouchContentParam.bgyml",
+        "Component/PouchContentParam/Obj_Shield_Hylian.game__component__PouchContentParam.bgyml",
+        "GameParameter/GameParameterTable/Obj_Shield_Hylian.engine__actor__GameParameterTable.bgyml",
+        "GameParameter/PlayerEquipmentActor/Obj_Shield_Hylian.game__actor__PlayerEquipmentActor.bgyml",
+    },
+    .itemRefs = { "ActorNameRef", "ModelInfoRef", "AnimationRef" },
+    .takeKeys = { "DefaultAutoGet", "IsPickedUpEmitXlinkKey", "PickedUpEmitXlinkKey" },
+};
+// Bundles and dungeon items have no parameter table of their own. Their pickup takes the pickup base's, which the small
+// key's pack holds.
+constexpr std::string_view BaseTablePack = "Obj_Dungeon_SmallKey";
+constexpr std::string_view BaseTable =
+    "GameParameter/GameParameterTable/Obj_Item_Base.engine__actor__GameParameterTable.bgyml";
+
+// A reference to an actor names that actor, not a member to carry.
+static void NamedMembers(const byml::Node& node, std::vector<std::string>& members) {
+    if (node.type == byml::Type::String &&
+        (node.string.starts_with('?') || (node.string.starts_with("Work/") && node.string.ends_with(".gyml"))) &&
+        !Member(node.string).starts_with("Actor/")) {
+        members.push_back(Member(node.string));
+    }
+    for (const byml::Node& item : node.array) {
+        NamedMembers(item, members);
+    }
+    for (const byml::Entry& entry : node.dict) {
+        NamedMembers(entry.value, members);
+    }
+}
+
+static void AddTree(sarc::Files& pack, const sarc::Files& from, const std::string& member) {
+    if (!from.contains(member)) {
+        return;
+    }
+    const bool carried = pack.contains(member);
+    Add(pack, member, from.at(member));
+    if (carried || !member.ends_with(".bgyml")) {
+        return;
+    }
+    std::vector<std::string> named;
+    NamedMembers(byml::Parse(from.at(member)).root, named);
+    for (const std::string& name : named) {
+        AddTree(pack, from, name);
+    }
+}
+
+NewActor PickupCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item) {
+    NewActor actor{ .name = std::format("{}{}", Pickup.copyPrefix, item) };
+    if (game.Files().contains(std::format("Pack/Actor/{}.pack.zs", actor.name))) {
+        throw std::runtime_error(std::format("the game already has an actor {}", actor.name));
+    }
+    const sarc::Files own = Pack(game, packDictionary, item);
+    sarc::Files& pack = actor.pack = Pack(game, packDictionary, Pickup.actor);
+    byml::Document param = byml::Parse(pack.at(ActorMember(Pickup.actor)));
+    byml::Node taken = Resolved(pack, Member(Value(Value(param.root, "Components"), "PouchContentRef").string));
+    for (const std::string_view member : Pickup.ownMembers) {
+        pack.erase(std::string(member));
+    }
+
+    byml::Node ownActor = Resolved(own, ActorMember(item));
+    byml::Node& ownComponents = Value(ownActor, "Components");
+    byml::Node& components = Value(param.root, "Components");
+    for (const std::string_view key : Pickup.itemRefs) {
+        const byml::Node& ref = Value(components, key) = Value(ownComponents, key);
+        AddTree(pack, own, Member(ref.string));
+    }
+    if (const byml::Node* table = byml::Find(ownComponents, "GameParameterTableRef")) {
+        Value(components, "GameParameterTableRef") = *table;
+        AddTree(pack, own, Member(table->string));
+    } else {
+        std::erase_if(components.dict, [](const byml::Entry& entry) { return entry.key == "GameParameterTableRef"; });
+        AddTree(pack, Pack(game, packDictionary, BaseTablePack), std::string(BaseTable));
+    }
+
+    // A child of the item's pouch content, which gives the item where the item's actor gives itself.
+    const std::string ownPouch = Member(Value(ownComponents, "PouchContentRef").string);
+    AddTree(pack, own, ownPouch);
+    byml::Document pouch{ .order = param.order, .root = { .type = byml::Type::Dict } };
+    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string =
+        std::format("Work/{}.gyml", ownPouch.substr(0, ownPouch.rfind(".bgyml")));
+    for (const std::string_view key : Pickup.takeKeys) {
+        const byml::Node& value = Value(taken, key);
+        byml::FindOrAdd(pouch.root, std::string(key), value.type) = value;
+    }
+    byml::Node gives = Resolved(own, ownPouch);
+    if (byml::Find(gives, "PouchActor") == nullptr && byml::Find(gives, "BundleActor") == nullptr) {
+        byml::FindOrAdd(pouch.root, "PouchActor", byml::Type::String).string = WorkPath(item);
+    }
+    Add(pack, PouchMember(actor.name), byml::Write(pouch));
+    Value(components, "PouchContentRef").string = "?" + PouchMember(actor.name);
+    Add(pack, ActorMember(actor.name), byml::Write(param));
+
+    // A pickup's PouchActorInfo row is its item's, as Obj_Arrow_Fire's is Item_Arrow_Fire's.
+    actor.rows = { { std::string(ActorInfoPath), ActorInfoRow(tables, Pickup.actor, item) },
+                   { std::string(GameActorInfoPath), Row(tables, GameActorInfoPath, Pickup.actor) },
                    { std::string(PouchActorInfoPath), Row(tables, PouchActorInfoPath, item) } };
     for (auto& [_, row] : actor.rows) {
         Value(row, "__RowId").string = actor.name;
