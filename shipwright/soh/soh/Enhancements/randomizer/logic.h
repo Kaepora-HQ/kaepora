@@ -108,6 +108,9 @@ class Logic {
     uint16_t Health();
     uint16_t EffectiveHealth();
     uint8_t StoneCount();
+    // Zelda flees with the Ocarina of Time once the blue warps after King Dodongo and Barinade have completed their
+    // quests, whatever stones Link holds. The Deku Tree's quest is asked for too, though the remake does not read it.
+    bool StoneBossesBeaten();
     uint8_t MedallionCount();
     uint8_t DungeonCount();
     uint16_t FireTimer();

@@ -893,11 +893,12 @@ void RegionTable_Init_ForestTemple() {
 
     areaTable[RR_FOREST_TEMPLE_BOSS_ROOM] = Region("Forest Temple Boss Room", SCENE_FOREST_TEMPLE_BOSS, {
         // Events
-        EVENT_ACCESS(LOGIC_FOREST_TEMPLE_CLEAR, logic->CanKillEnemy(RE_PHANTOM_GANON)),
+        EVENT_ACCESS(LOGIC_PHANTOM_GANON_BEATEN, logic->CanKillEnemy(RE_PHANTOM_GANON)),
+        EVENT_ACCESS(LOGIC_FOREST_TEMPLE_CLEAR, logic->Get(LOGIC_PHANTOM_GANON_BEATEN)),
     }, {
         // Locations
-        LOCATION(RC_FOREST_TEMPLE_PHANTOM_GANON_HEART, logic->Get(LOGIC_FOREST_TEMPLE_CLEAR)),
-        LOCATION(RC_PHANTOM_GANON,                     logic->Get(LOGIC_FOREST_TEMPLE_CLEAR)),
+        LOCATION(RC_FOREST_TEMPLE_PHANTOM_GANON_HEART, logic->Get(LOGIC_PHANTOM_GANON_BEATEN)),
+        LOCATION(RC_PHANTOM_GANON,                     logic->Get(LOGIC_PHANTOM_GANON_BEATEN)),
     }, {
         // Exits
         ENTRANCE(RR_FOREST_TEMPLE_BOSS_ENTRYWAY, false),

@@ -1587,11 +1587,12 @@ void RegionTable_Init_WaterTemple() {
 
     areaTable[RR_WATER_TEMPLE_BOSS_ROOM] = Region("Water Temple Boss Room", SCENE_WATER_TEMPLE_BOSS, {
         // Events
-        EVENT_ACCESS(LOGIC_WATER_TEMPLE_CLEAR, logic->CanKillEnemy(RE_MORPHA)),
+        EVENT_ACCESS(LOGIC_MORPHA_BEATEN, logic->CanKillEnemy(RE_MORPHA)),
+        EVENT_ACCESS(LOGIC_WATER_TEMPLE_CLEAR, logic->Get(LOGIC_MORPHA_BEATEN)),
     }, {
         // Locations
-        LOCATION(RC_WATER_TEMPLE_MORPHA_HEART, logic->Get(LOGIC_WATER_TEMPLE_CLEAR)),
-        LOCATION(RC_MORPHA,                    logic->Get(LOGIC_WATER_TEMPLE_CLEAR)),
+        LOCATION(RC_WATER_TEMPLE_MORPHA_HEART, logic->Get(LOGIC_MORPHA_BEATEN)),
+        LOCATION(RC_MORPHA,                    logic->Get(LOGIC_MORPHA_BEATEN)),
     }, {
         // Exits
         ENTRANCE(RR_WATER_TEMPLE_BOSS_ENTRYWAY, false),

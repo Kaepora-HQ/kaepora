@@ -8,7 +8,9 @@ void RegionTable_Init_HyruleField() {
     areaTable[RR_HYRULE_FIELD] = Region("Hyrule Field", SCENE_HYRULE_FIELD, {
         //Events
         EVENT_ACCESS(LOGIC_BIG_POE_KILL,       logic->HasBottle() && logic->CanUse(RG_FAIRY_BOW) && (logic->SummonEpona() || ctx->GetTrickOption(RT_HF_BIG_POE_WITHOUT_EPONA))),
-        EVENT_ACCESS(LOGIC_SOLD_BUNNY_HOOD,    logic->IsChild && logic->HasItem(RG_BUNNY_HOOD) && logic->HasItem(RG_KOKIRI_EMERALD) && logic->HasItem(RG_GORON_RUBY) && logic->HasItem(RG_ZORA_SAPPHIRE) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
+        // The running man comes with the mask quest's step after the hood is rented, which waits only for Link to
+        // hold the hood (HappyMaskSaleMan_UntilRentMaskOfBunny), and no stone is asked for.
+        EVENT_ACCESS(LOGIC_SOLD_BUNNY_HOOD,    logic->IsChild && logic->HasItem(RG_BUNNY_HOOD) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
         // The Fairy Thought beside the heart piece chest stands only in the adult field.
         EVENT_ACCESS(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT, logic->IsAdult),
         // A Skullwalltula hangs on the wall of the child field's south grotto. A bomb or the hammer opens the grotto
@@ -16,8 +18,8 @@ void RegionTable_Init_HyruleField() {
         EVENT_ACCESS(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA, logic->IsChild && AnyAgeTime([]{return logic->BlastOrSmash();}) && logic->CanKillEnemy(RE_WALLTULA)),
     }, {
         //Locations
-        LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
-        LOCATION(RC_SONG_FROM_OCARINA_OF_TIME,     logic->IsChild && logic->StoneCount() == 3 && logic->HasItem(RG_BRONZE_SCALE)),
+        LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneBossesBeaten() && logic->HasItem(RG_BRONZE_SCALE)),
+        LOCATION(RC_SONG_FROM_OCARINA_OF_TIME,     logic->IsChild && logic->StoneBossesBeaten() && logic->HasItem(RG_BRONZE_SCALE)),
         LOCATION(RC_HF_POND_STORMS_FAIRY,          logic->CanUse(RG_SONG_OF_STORMS)),
         // Only the adult field has the three chests with a Poe beside them. Reaching the south-west one may take the
         // refilled lake.

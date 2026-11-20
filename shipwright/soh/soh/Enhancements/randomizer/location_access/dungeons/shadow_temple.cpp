@@ -999,11 +999,12 @@ void RegionTable_Init_ShadowTemple() {
 
     areaTable[RR_SHADOW_TEMPLE_BOSS_ROOM] = Region("Shadow Temple Boss Room", SCENE_SHADOW_TEMPLE_BOSS, {
         // Events
-        EVENT_ACCESS(LOGIC_SHADOW_TEMPLE_CLEAR, logic->CanKillEnemy(RE_BONGO_BONGO)),
+        EVENT_ACCESS(LOGIC_BONGO_BONGO_BEATEN, logic->CanKillEnemy(RE_BONGO_BONGO)),
+        EVENT_ACCESS(LOGIC_SHADOW_TEMPLE_CLEAR, logic->Get(LOGIC_BONGO_BONGO_BEATEN)),
     }, {
         // Locations
-        LOCATION(RC_SHADOW_TEMPLE_BONGO_BONGO_HEART, logic->Get(LOGIC_SHADOW_TEMPLE_CLEAR)),
-        LOCATION(RC_BONGO_BONGO,                     logic->Get(LOGIC_SHADOW_TEMPLE_CLEAR)),
+        LOCATION(RC_SHADOW_TEMPLE_BONGO_BONGO_HEART, logic->Get(LOGIC_BONGO_BONGO_BEATEN)),
+        LOCATION(RC_BONGO_BONGO,                     logic->Get(LOGIC_BONGO_BONGO_BEATEN)),
     }, {
         // Exits
         ENTRANCE(RR_SHADOW_TEMPLE_BOSS_ENTRYWAY, false),

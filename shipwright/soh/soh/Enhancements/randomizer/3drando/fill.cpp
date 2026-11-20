@@ -25,6 +25,38 @@ using namespace Rando;
 
 static bool placementFailure = false;
 
+// The place after each boss, and the dungeon its blue warp clears.
+static constexpr std::pair<RandomizerCheck, LogicVal> bossPlaces[] = {
+    { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
+    { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
+    { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
+    { RC_BONGO_BONGO, LOGIC_SHADOW_TEMPLE_CLEAR }, { RC_TWINROVA, LOGIC_SPIRIT_TEMPLE_CLEAR },
+};
+
+// Set while the spoiler log's route is made.
+static bool routeTakesBosses = false;
+
+static bool IsBossPlace(RandomizerCheck location) {
+    return std::ranges::any_of(bossPlaces, [location](const auto& boss) { return boss.first == location; });
+}
+
+bool ClearedByItsBossPlace(LogicVal event) {
+    return routeTakesBosses &&
+           std::ranges::any_of(bossPlaces, [event](const auto& boss) { return boss.second == event; });
+}
+
+void ApplyCheck(Rando::ItemLocation* location) {
+    location->ApplyPlacedItemEffect();
+    if (!routeTakesBosses) {
+        return;
+    }
+    for (const auto& [place, clear] : bossPlaces) {
+        if (place == location->GetRandomizerCheck()) {
+            logic->Set(clear, true);
+        }
+    }
+}
+
 PriceSettingsStruct shopsanityPrices = {
     RSK_SHOPSANITY_PRICES,
     RSK_SHOPSANITY_PRICES_FIXED_PRICE,
@@ -329,12 +361,14 @@ void AddToPlaythrough(LocationAccess& locPair, GetAccessibleLocationsStruct& gal
     RandomizerCheck loc = locPair.GetLocation();
     Rando::ItemLocation* location = ctx->GetItemLocation(loc);
     RandomizerGet locItem = location->GetPlacedRandomizerGet();
+    // A boss's place is a step whatever it holds, for the dungeon it clears.
+    const bool bossPlace = routeTakesBosses && IsBossPlace(loc) && locItem != RG_NONE;
     // Reached after wincon, so never part of playthrough. Pare first
-    if (ctx->playthroughBeatable && location->GetPlacedItem().IsAdvancement()) {
+    if (ctx->playthroughBeatable && (bossPlace || location->GetPlacedItem().IsAdvancement())) {
         gals.lateLocations.push_back(loc);
     }
     // Item is an advancement item, figure out if it should be added to this sphere
-    if (!ctx->playthroughBeatable && location->GetPlacedItem().IsAdvancement()) {
+    if (!ctx->playthroughBeatable && (bossPlace || location->GetPlacedItem().IsAdvancement())) {
         ItemType type = location->GetPlacedItem().GetItemType();
 
         // Decide whether to exclude this location
@@ -343,8 +377,11 @@ void AddToPlaythrough(LocationAccess& locPair, GetAccessibleLocationsStruct& gal
         // 1) Tokens after the last potentially useful one (the last one that gives an advancement item or last for
         // token bridge) 2) Buy items of the same type, after the first (So only see Buy Deku Nut of any amount once)
         bool exclude = true;
+        if (bossPlace) {
+            exclude = false;
+        }
         // Exclude tokens after the last possibly useful one
-        if (type == ITEMTYPE_TOKEN && gals.gsCount < gals.maxGsCount) {
+        else if (type == ITEMTYPE_TOKEN && gals.gsCount < gals.maxGsCount) {
             gals.gsCount++;
             exclude = false;
         }
@@ -387,7 +424,7 @@ void ApplyOrStoreItem(Rando::ItemLocation* loc, GetAccessibleLocationsStruct& ga
     if (addToPlaythrough) {
         gals.newItemLocations.push_back(loc);
     } else {
-        loc->ApplyPlacedItemEffect();
+        ApplyCheck(loc);
     }
     gals.logicUpdated = true;
 }
@@ -690,9 +727,10 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
                 }
                 RandomizerGet locGet = ctx->GetItemLocation(loc)->GetPlacedRandomizerGet();
 
+                // Without a boss's place Link also lacks the dungeon it clears, whatever the place holds.
                 RandomizerGet ignore = RG_NONE;
-                if (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
-                    Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP) {
+                if (!IsBossPlace(loc) && (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
+                                          Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP)) {
                     ignore = locGet;
                 }
 
@@ -721,10 +759,10 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
 
     // The spheres were numbered before the passes above, which can drop what a step counted on in an earlier sphere.
-    // So the route is walked again over the steps it kept, with every other item that counts as progress set aside,
-    // and no step stands in a sphere before Link can reach it with what the spheres before it gave him. No token is set
-    // aside: the route names none, and the passes above counted on every one. A walk that stops short of Ganon would
-    // give the spoiler log a route that does not finish the seed.
+    // So the route is walked again over the steps it kept, with every other item that counts as progress and every
+    // boss's place it left out set aside, and no step stands in a sphere before Link can reach it with what the spheres
+    // before it gave him. No other token is set aside: the route names none, and the passes above counted on every one.
+    // A walk that stops short of Ganon would give the spoiler log a route that does not finish the seed.
     std::bitset<RC_MAX> kept;
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         for (RandomizerCheck loc : sphere) {
@@ -733,8 +771,10 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
     for (RandomizerCheck loc : ctx->allLocations) {
         Rando::ItemLocation* location = ctx->GetItemLocation(loc);
-        if (!kept[loc] && location->GetPlacedItem().IsAdvancement() &&
-            location->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN) {
+        // A place the passes above dropped already has its item set aside.
+        if (!kept[loc] && location->GetPlacedRandomizerGet() != RG_NONE &&
+            (IsBossPlace(loc) || (location->GetPlacedItem().IsAdvancement() &&
+                                  location->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN))) {
             location->DelayItem();
             toAddBackItem.push_back(loc);
         }
@@ -1149,11 +1189,13 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         SPDLOG_INFO("Shuffling Remaining Items");
         FastFill(std::move(itemPool), GetEmptyLocations(shuffledLocations));
 
+        routeTakesBosses = true;
         std::vector<RandomizerCheck> lateLocations = GeneratePlaythrough();
         // Successful placement, produced beatable result
         if (ctx->playthroughBeatable && !placementFailure) {
             SPDLOG_INFO("Calculating Playthrough...");
             PareDownPlaythrough(lateLocations);
+            routeTakesBosses = false;
             CalculateWotH();
             CalculateBarren();
             SPDLOG_INFO("Calculating Playthrough Done");
@@ -1163,6 +1205,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
             SPDLOG_DEBUG("Number of retries {}", retries);
             return 1;
         }
+        routeTakesBosses = false;
         // Unsuccessful placement
         if (retries < 9) {
             SPDLOG_DEBUG("Failed to generate a beatable seed. Retrying...");

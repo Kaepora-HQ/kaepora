@@ -365,6 +365,24 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("Kak 10 Gold Skulltula Reward", steps)
         self.assertNotIn("Kak 30 Gold Skulltula Reward", steps)
 
+    def test_route_names_each_boss_before_the_steps_that_wait_for_it(self):
+        # The game's gates wait for the bosses, not for their rewards. The stored seed's route takes the Ocarina of
+        # Time, the Nocturne and the Light Arrows, so it names in an earlier sphere each boss their rules ask for.
+        log, _ = self.generate(FIXED_SEED)
+        sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+        waits = {"HF Ocarina of Time Item": ("Queen Gohma", "King Dodongo", "Barinade"),
+                 "Sheik in Kakariko": ("Phantom Ganon", "Volvagia", "Morpha"),
+                 "Market ToT Light Arrow Cutscene": ("Bongo Bongo", "Twinrova")}
+        for step, bosses in waits.items():
+            for boss in bosses:
+                self.assertIn(boss, sphere, step)
+                self.assertLess(sphere[boss], sphere[step], (boss, step))
+        # With the songs shuffled, Twinrova waits for Phantom Ganon, though seed 1 needs nothing he holds.
+        log, _ = self.generate("1", SONGS_SHUFFLED)
+        sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+        self.assertIn("Phantom Ganon", sphere)
+        self.assertLess(sphere["Phantom Ganon"], sphere["Twinrova"])
+
     def route_out_of_reach(self, log):
         """The route's steps Link cannot reach in their sphere. He follows the route sphere by sphere, holding what the
         spheres before gave him, and a shuffled location off the route holds nothing that counts. A shop slot keeps

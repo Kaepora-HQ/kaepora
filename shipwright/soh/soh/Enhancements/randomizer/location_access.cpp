@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 #include <soh/OTRGlobals.h>
 
+#include "3drando/fill.hpp"
 #include "3drando/shops.hpp"
 extern "C" {
 extern PlayState* gPlayState;
@@ -293,7 +294,7 @@ bool Region::UpdateEvents() {
     bool eventsUpdated = false;
     for (EventAccess& event : events) {
         // If the event has already happened, there's no reason to check it
-        if (event.GetEvent()) {
+        if (event.GetEvent() || ClearedByItsBossPlace(event.GetLogicVal())) {
             continue;
         }
 

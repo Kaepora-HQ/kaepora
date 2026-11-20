@@ -511,11 +511,12 @@ void RegionTable_Init_DekuTree() {
 
     areaTable[RR_DEKU_TREE_BOSS_ROOM] = Region("Deku Tree Boss Room", SCENE_DEKU_TREE_BOSS, {
         // Events
-        EVENT_ACCESS(LOGIC_DEKU_TREE_CLEAR, logic->CanKillEnemy(RE_GOHMA)),
+        EVENT_ACCESS(LOGIC_GOHMA_BEATEN, logic->CanKillEnemy(RE_GOHMA)),
+        EVENT_ACCESS(LOGIC_DEKU_TREE_CLEAR, logic->Get(LOGIC_GOHMA_BEATEN)),
     }, {
         // Locations
-        LOCATION(RC_QUEEN_GOHMA,                   logic->Get(LOGIC_DEKU_TREE_CLEAR)),
-        LOCATION(RC_DEKU_TREE_QUEEN_GOHMA_HEART,   logic->Get(LOGIC_DEKU_TREE_CLEAR)),
+        LOCATION(RC_QUEEN_GOHMA,                   logic->Get(LOGIC_GOHMA_BEATEN)),
+        LOCATION(RC_DEKU_TREE_QUEEN_GOHMA_HEART,   logic->Get(LOGIC_GOHMA_BEATEN)),
         LOCATION(RC_DEKU_TREE_QUEEN_GOHMA_GRASS_1, logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_QUEEN_GOHMA_GRASS_2, logic->CanCutShrubs()),
         LOCATION(RC_DEKU_TREE_QUEEN_GOHMA_GRASS_3, logic->CanCutShrubs()),

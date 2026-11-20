@@ -6,6 +6,15 @@
 
 #include <vector>
 
+// Gives Link what location holds, in the search under way. While the spoiler log's route is made, the place after a
+// boss also clears the boss's dungeon (see ClearedByItsBossPlace).
+void ApplyCheck(Rando::ItemLocation* location);
+
+// Whether event is a dungeon clear that, while the spoiler log's route is made, only the place after its boss sets.
+// The game's gates wait for the bosses' blue warps, which come with those places, so the route names a boss wherever a
+// later step waits for it. The fill's own searches clear a dungeon as soon as its boss is beaten.
+bool ClearedByItsBossPlace(LogicVal event);
+
 // RANDOTODO merge into Logic once Logic is a class passed to logic funtions
 struct GetAccessibleLocationsStruct {
     std::vector<RandomizerCheck> accessibleLocations;
@@ -47,7 +56,7 @@ struct GetAccessibleLocationsStruct {
     void InitLoop() {
         logicUpdated = false;
         for (Rando::ItemLocation* location : newItemLocations) {
-            location->ApplyPlacedItemEffect();
+            ApplyCheck(location);
         }
         newItemLocations.clear();
         itemSphere.clear();

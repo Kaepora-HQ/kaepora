@@ -14,7 +14,8 @@ void RegionTable_Init_Kakariko() {
         EVENT_ACCESS(LOGIC_SOLD_KEATON_MASK,   logic->IsChild && logic->Get(LOGIC_KAKARIKO_GATE_OPEN) && logic->HasItem(RG_KEATON_MASK) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
     }, {
         //Locations
-        LOCATION(RC_SHEIK_IN_KAKARIKO,                     logic->IsAdult && logic->HasItem(RG_FOREST_MEDALLION) && logic->HasItem(RG_FIRE_MEDALLION) && logic->HasItem(RG_WATER_MEDALLION)),
+        // Kakariko burns once the Forest, the Fire and the Water Temples' blue warps have completed their quests.
+        LOCATION(RC_SHEIK_IN_KAKARIKO,                     logic->IsAdult && logic->Get(LOGIC_FOREST_TEMPLE_CLEAR) && logic->Get(LOGIC_FIRE_TEMPLE_CLEAR) && logic->Get(LOGIC_WATER_TEMPLE_CLEAR)),
         LOCATION(RC_KAK_ANJU_AS_ADULT,                     logic->IsAdult && logic->AtDay && logic->HasItem(RG_SPEAK_HYLIAN)),
         LOCATION(RC_KAK_TRADE_POCKET_CUCCO,                logic->IsAdult && logic->AtDay && (logic->CanUse(RG_POCKET_EGG) && logic->Get(LOGIC_WAKE_UP_ADULT_TALON))),
         // The lookout stands only in the adult village, and the Longshot gets Link up to it.

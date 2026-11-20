@@ -1238,11 +1238,12 @@ void RegionTable_Init_SpiritTemple() {
         // starts as Link walks into the Temple of Time. The Forest Temple's end then sets it back to Step01_00, and
         // nothing sets Step02 again. With the songs shuffled, an early Nocturne opens the Shadow Temple before the
         // Forest Temple, so Twinrova waits for Phantom Ganon.
-        EVENT_ACCESS(LOGIC_SPIRIT_TEMPLE_CLEAR, (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT)) && logic->CanKillEnemy(RE_TWINROVA) && (!logic->SongsShuffled || logic->Get(LOGIC_FOREST_TEMPLE_CLEAR))),
+        EVENT_ACCESS(LOGIC_TWINROVA_BEATEN, (logic->HasItem(RG_CLIMB) || logic->CanUse(RG_HOOKSHOT)) && logic->CanKillEnemy(RE_TWINROVA) && (!logic->SongsShuffled || logic->Get(LOGIC_FOREST_TEMPLE_CLEAR))),
+        EVENT_ACCESS(LOGIC_SPIRIT_TEMPLE_CLEAR, logic->Get(LOGIC_TWINROVA_BEATEN)),
     }, {
         // Locations
-        LOCATION(RC_SPIRIT_TEMPLE_TWINROVA_HEART, logic->Get(LOGIC_SPIRIT_TEMPLE_CLEAR)),
-        LOCATION(RC_TWINROVA,                     logic->Get(LOGIC_SPIRIT_TEMPLE_CLEAR)),
+        LOCATION(RC_SPIRIT_TEMPLE_TWINROVA_HEART, logic->Get(LOGIC_TWINROVA_BEATEN)),
+        LOCATION(RC_TWINROVA,                     logic->Get(LOGIC_TWINROVA_BEATEN)),
     }, {
         // Exits
         ENTRANCE(RR_SPIRIT_TEMPLE_BOSS_ENTRYWAY, false),

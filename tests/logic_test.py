@@ -26,10 +26,9 @@ NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 # The well holds the only Lens of Truth.
 NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
-# Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a bag, so without it Link holds no explosive. The
-# stones and the magic meter lie where no explosive is needed, so he still grows up.
-NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Goron's Ruby"),
-               ("KF Mido Bottom Left Chest", "Zora's Sapphire"), ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+# Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a bag, so without it Link holds no explosive.
+# King Dodongo falls only to explosives, so Link never becomes adult either.
+NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),)
 # The Boomerang, the Hookshot and the Longshot each fetch a Gold Skulltula's token from afar.
 NO_BOOMERANG = ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")
 NO_RANGED = (NO_BOOMERANG, NO_HOOKSHOT, ("Water Temple Longshot Chest", "Green Rupee"))
@@ -58,6 +57,52 @@ class LogicTest(unittest.TestCase):
                                  "Link's Pocket", "Green Rupee"], capture_output=True, text=True)
         self.assertEqual((result.returncode, result.stdout), (2, ""), result.stderr)
         self.assertIn("Link's Pocket", result.stderr)
+
+    # A Spiritual Stone or a medallion opens nothing in the remake. A boss's blue warp completes its dungeon's quest,
+    # whatever its place gives, and the game's doors and scenes wait for those quests. So a boss's place that gives
+    # something else opens all that its reward opened, and a reward found elsewhere opens nothing.
+
+    def test_the_ocarina_of_time_and_the_door_of_time_follow_king_dodongo_and_barinade(self):
+        # Zelda flees and drops the Ocarina of Time in the moat once the Fire and the Water quests are complete. Only
+        # Dodongo's Cavern holds a bomb bag, and King Dodongo falls only to explosives.
+        no_stones = (("King Dodongo", "Green Rupee"), ("Barinade", "Green Rupee"))
+        self.assertTrue(self.reachable("HF Ocarina of Time Item", *no_stones))
+        self.assertTrue(self.reachable("Gift from Rauru", *no_stones))
+        self.assertFalse(self.reachable("HF Ocarina of Time Item", *no_stones,
+                                        ("KF Mido Top Left Chest", "Goron's Ruby"),
+                                        ("KF Mido Top Right Chest", "Zora's Sapphire"),
+                                        ("Dodongos Cavern Bomb Bag Chest", "Green Rupee")))
+
+    def test_the_prelude_of_light_follows_phantom_ganon(self):
+        # Sheik waits at the pedestal once the Forest quest is complete. The Forest Temple's only bow lies on the way to
+        # Phantom Ganon.
+        self.assertTrue(self.reachable("Sheik at Temple", ("Phantom Ganon", "Green Rupee")))
+        self.assertFalse(self.reachable("Sheik at Temple", ("Phantom Ganon", "Green Rupee"),
+                                        ("KF Mido Top Left Chest", "Forest Medallion"),
+                                        ("Forest Temple Bow Chest", "Green Rupee")))
+
+    def test_the_nocturne_of_shadow_follows_phantom_ganon_volvagia_and_morpha(self):
+        # Kakariko burns once the Forest, the Fire and the Water quests are complete.
+        no_medallions = (("Phantom Ganon", "Green Rupee"), ("Volvagia", "Green Rupee"), ("Morpha", "Green Rupee"))
+        self.assertTrue(self.reachable("Sheik in Kakariko", *no_medallions))
+        self.assertFalse(self.reachable("Sheik in Kakariko", *no_medallions,
+                                        ("KF Mido Top Left Chest", "Forest Medallion"),
+                                        ("KF Mido Top Right Chest", "Fire Medallion"),
+                                        ("KF Mido Bottom Left Chest", "Water Medallion"),
+                                        ("Forest Temple Bow Chest", "Green Rupee")))
+
+    def test_the_light_arrows_and_the_bridge_follow_bongo_bongo_and_twinrova(self):
+        # Zelda waits once the Shadow and the Spirit sages have woken, in the scenes after Bongo Bongo and Twinrova, and
+        # the bridge appears after her. A Spirit Temple key at the start lets the search reach Twinrova at all: SoH
+        # counts the temple's keys for the worst order a player can spend them in. The well holds the Lens the Shadow
+        # Temple takes.
+        no_medallions = (("Bongo Bongo", "Green Rupee"), ("Twinrova", "Green Rupee"),
+                         ("Link's Pocket", "Spirit Temple Small Key"))
+        self.assertTrue(self.reachable("Market ToT Light Arrow Cutscene", *no_medallions))
+        self.assertTrue(self.reachable("Ganon's Castle Forest Trial Chest", *no_medallions))
+        self.assertFalse(self.reachable("Market ToT Light Arrow Cutscene", *no_medallions, NO_LENS,
+                                        ("KF Mido Top Left Chest", "Shadow Medallion"),
+                                        ("KF Mido Top Right Chest", "Spirit Medallion")))
 
     def test_child_comes_back_before_the_forest_temple(self):
         # Only child Link can drain the well, with the Song of Storms that only adult Link learns. With the Fairy Bow in
@@ -170,8 +215,8 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
     def test_bombchu_shop_opens_after_dodongos_cavern(self):
-        # Without Goron's Bracelet, child Link cannot open Dodongo's Cavern, so he never wins the Goron's Ruby inside
-        # it and never becomes adult.
+        # Without Goron's Bracelet, child Link cannot open Dodongo's Cavern, so he never beats King Dodongo and never
+        # becomes adult.
         self.assertFalse(self.reachable("Market Bombchu Shop Item 1", ("GC Darunias Joy", "Green Rupee")))
 
     def test_dodongos_cavern_opens_to_the_bomb_flower_above_it(self):
@@ -218,16 +263,6 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet))
         self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
 
-    def test_gauntlets_lift_what_the_bracelet_lifts_for_an_adult(self):
-        # Pushing the Forest Temple's blocks takes the bracelet's strength. Lifting reads one strength level, which
-        # either tier of gauntlets puts above the bracelet's. Without the bracelet, a child reaches neither the Goron's
-        # Ruby nor the Zora's Sapphire, so they come from elsewhere.
-        for gauntlets in ("Silver Gauntlets", "Golden Gauntlets"):
-            self.assertTrue(self.reachable("Phantom Ganon", ("GC Darunias Joy", "Green Rupee"),
-                                           ("KF Mido Top Left Chest", gauntlets),
-                                           ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                                           ("KF Mido Top Right Chest", "Goron's Ruby")))
-
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Boulders only the Silver Gauntlets lift ring the rightmost chest of the Goron City maze.
         self.assertTrue(self.reachable("GC Maze Right Chest", NO_SILVER_GAUNTLETS,
@@ -248,14 +283,9 @@ class LogicTest(unittest.TestCase):
 
     def test_goron_city_maze_first_row_takes_a_bomb_or_the_hammer(self):
         # Tan boulders close the maze's first row, and only a bomb or the hammer breaks them. Past it, the hammer or the
-        # Silver Gauntlets reach the left chest, and explosives alone do not. Without explosives the Fire Temple's hammer
-        # is out of reach, so it comes from elsewhere.
-        gauntlets_alone = (SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG, NO_HAMMER)
-        hammer_alone = (("KF Mido Top Right Chest", "Megaton Hammer"), *NO_BOMB_BAG, NO_SILVER_GAUNTLETS,
-                        NO_GOLDEN_GAUNTLETS)
-        for chest in ("GC Maze Center Chest", "GC Maze Left Chest"):
-            self.assertFalse(self.reachable(chest, *gauntlets_alone))
-            self.assertTrue(self.reachable(chest, *hammer_alone))
+        # Silver Gauntlets reach the left chest, and explosives alone do not.
+        self.assertTrue(self.reachable("GC Maze Center Chest", NEVER_ADULT))
+        self.assertFalse(self.reachable("GC Maze Center Chest", NEVER_ADULT, *NO_BOMB_BAG))
         self.assertTrue(self.reachable("GC Maze Left Chest", SILVER_GAUNTLETS_AT_START, NO_HAMMER))
         self.assertFalse(self.reachable("GC Maze Left Chest", NO_SILVER_GAUNTLETS, NO_GOLDEN_GAUNTLETS, NO_HAMMER))
 
@@ -335,23 +365,6 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
                                        ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
                                        ("Bottom of the Well Freestanding Key", "Green Rupee")))
-
-    def test_well_map_chest_needs_an_explosive(self):
-        # A child breaks the rocks in front of the basement's Map Chest only with an explosive. The basement has no bomb
-        # flower, and Din's Fire leaves the rocks standing. Without the only bomb bag, Link reaches neither the Goron's
-        # Ruby nor the Zora's Sapphire nor a magic meter, so they come from elsewhere, with Din's Fire.
-        kit = (("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-               ("KF Mido Bottom Right Chest", "Progressive Magic Meter"), ("KF Mido Top Right Chest", "Din's Fire"))
-        self.assertFalse(self.reachable("Bottom of the Well Map Chest",
-                                        ("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), *kit))
-        self.assertTrue(self.reachable("Bottom of the Well Map Chest", *kit))
-        # Adult Link's Silver Gauntlets push the Forest Temple's blocks and open Dodongo's Cavern, where the bomb bag
-        # lies. Without the bracelet, a child reaches neither the Goron's Ruby nor the Zora's Sapphire, so they come
-        # from elsewhere.
-        self.assertTrue(self.reachable("Bottom of the Well Map Chest", ("GC Darunias Joy", "Green Rupee"),
-                                       ("KF Mido Top Left Chest", "Silver Gauntlets"),
-                                       ("KF Mido Top Right Chest", "Goron's Ruby"),
-                                       ("KF Mido Bottom Left Chest", "Zora's Sapphire")))
 
     def test_forest_temple_locks_form_one_chain(self):
         # Five locked doors stand one behind the other: after the first room, into the west hallway, at the top of the
@@ -517,18 +530,6 @@ class LogicTest(unittest.TestCase):
         # The hammer room's door to the eye statue's lower room opens to its eye alone. Without the Lens, the way down
         # from above is shut, so that door is the only way in.
         self.assertTrue(self.reachable("Gerudo Training Ground Eye Statue Chest", NO_LENS, NO_HAMMER))
-        # In Dodongo's Cavern, the plain hookshot hits the eye across the fire in the first eye room, and only the
-        # Longshot reaches the two eyes of the second. Without the bracelet no child comes in with the slingshot, so
-        # adult Link opens the cavern with the Silver Gauntlets, and the Goron's Ruby and the Zora's Sapphire lie
-        # elsewhere. A second hookshot makes the Longshot.
-        no_longshot = ("Water Temple Longshot Chest", "Green Rupee")
-        second_hookshot = ("KF Mido Bottom Right Chest", "Progressive Hookshot")
-        adult_only = (("GC Darunias Joy", "Green Rupee"), ("KF Mido Top Left Chest", "Silver Gauntlets"),
-                      ("KF Mido Top Right Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"))
-        self.assertTrue(self.reachable("Dodongos Cavern Upper Lizalfos Chest", no_bow, no_longshot, *adult_only))
-        self.assertFalse(self.reachable("Dodongos Cavern Bomb Bag Chest", no_bow, no_longshot, *adult_only))
-        self.assertTrue(self.reachable("Dodongos Cavern Bomb Bag Chest", no_bow, no_longshot, second_hookshot,
-                                       *adult_only))
 
     def test_adult_link_walks_between_the_colossus_hands(self):
         # From the Mirror Shield hand an adult walks to the Silver Gauntlets hand, so he needs neither the Longshot nor
@@ -554,12 +555,6 @@ class LogicTest(unittest.TestCase):
         two_keys = (("KF Mido Top Left Chest", "Forest Temple Small Key"),
                     ("KF Mido Top Right Chest", "Forest Temple Small Key"))
         self.assertFalse(self.reachable("Forest Temple Falling Ceiling Room Chest", no_bow, *two_keys))
-
-    def test_a_beamos_falls_to_the_mirror_shield(self):
-        # The Mirror Shield sends a Beamos's beam back at it.
-        mirror_shield = ("KF Mido Top Right Chest", "Mirror Shield")
-        self.assertTrue(self.reachable("Gerudo Training Ground Beamos Chest", *NO_BOMB_BAG, mirror_shield))
-        self.assertFalse(self.reachable("Gerudo Training Ground Beamos Chest", *NO_BOMB_BAG))
 
     def test_a_childs_boomerang_hits_the_near_eyes(self):
         # Without the slingshot, a child's boomerang hits the Deku Tree's basement eye on the way to Gohma, its
@@ -613,14 +608,6 @@ class LogicTest(unittest.TestCase):
         no_iron_boots = ("Ice Cavern Iron Boots Chest", "Green Rupee")
         self.assertFalse(self.reachable("GV Octorok Grotto Chest", SILVER_GAUNTLETS_AT_START, no_iron_boots))
 
-    def test_colossus_grotto_chest_needs_the_beamos_killed(self):
-        # Under a boulder that takes the Silver Gauntlets. The chest appears once a Beamos and five Skullwalltulas die,
-        # and only explosives or the Mirror Shield kill the Beamos. Without the bomb bag Link does not reach the Mirror
-        # Shield chest either.
-        self.assertTrue(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START))
-        self.assertTrue(self.reachable("Colossus Deku Scrub Grotto Front", SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG))
-        self.assertFalse(self.reachable("Colossus Grotto Chest", SILVER_GAUNTLETS_AT_START, *NO_BOMB_BAG))
-
     def test_gerudo_fortress_grotto_chest_is_reachable(self):
         self.assertTrue(self.reachable("GF Grotto Chest"))
 
@@ -642,11 +629,6 @@ class LogicTest(unittest.TestCase):
     def test_hyrule_field_cow_grotto_skulltula_is_in_the_south_grotto_after_a_childs_kill(self):
         self.assertTrue(self.reachable("HF GS Cow Grotto"))
         self.assertFalse(self.reachable("HF GS Cow Grotto", NEVER_ADULT))
-        self.assertFalse(self.reachable("HF GS Cow Grotto", *NO_BOMB_BAG, NO_HAMMER))
-        # Adult Link's box holds it only once child Link has killed the Skullwalltula on that grotto's wall. With the
-        # only bomb bag in the adult field, adult Link opens the grotto, and child Link, back through the pedestal, gets
-        # in.
-        self.assertTrue(self.reachable("HF GS Cow Grotto", *NO_BOMB_BAG, ("HF North Poe Chest", "Progressive Bomb Bag")))
 
     def test_a_high_skulltula_s_token_is_taken_from_afar(self):
         # It hangs high with nothing beside it to climb, and its token stays at its web.
@@ -668,11 +650,27 @@ class LogicTest(unittest.TestCase):
         # It hangs beside the ledge of the room behind the east tower's cracked wall, where the sword kills it.
         self.assertTrue(self.reachable("Water Temple GS Falling Platform Room",
                                        ("Water Temple Longshot Chest", "Green Rupee")))
-        self.assertFalse(self.reachable("Water Temple GS Falling Platform Room", *NO_BOMB_BAG))
 
     def test_lon_lon_ranch_back_wall_skulltula_falls_from_a_field_tree(self):
         # A roll into the tree by the Big Poe fences drops it, by day or night, and the sword kills it.
         self.assertTrue(self.reachable("LLR GS Back Wall", *NO_RANGED))
+
+    def test_deku_theater_mask_of_truth_asks_for_no_stone(self):
+        # The running man buys the Bunny Hood once the mask quest has lent it, whatever stones Link holds.
+        no_stones = (("Queen Gohma", "Green Rupee"), ("King Dodongo", "Green Rupee"), ("Barinade", "Green Rupee"))
+        self.assertTrue(self.reachable("LW Deku Theater Mask of Truth", *no_stones))
+
+    def test_chests_behind_explosives_a_beamos_or_the_climb_room_are_reachable(self):
+        # A cracked wall, the well's rocks, a Beamos and the Spirit Temple's climb room door stand before them. Every
+        # adult holds bombs, since King Dodongo falls only to explosives. The Colossus grotto lies under a boulder that
+        # takes the Silver Gauntlets, and the Training Ground's heavy block room is past the gauntlets and the Lens.
+        heavy_block_room = (("KF Mido Top Right Chest", "Silver Gauntlets"),
+                            ("KF Mido Bottom Right Chest", "Lens of Truth"))
+        for chest, items in (("Colossus Grotto Chest", (SILVER_GAUNTLETS_AT_START,)),
+                             ("Gerudo Training Ground Heavy Block Cracked Wall Chest", heavy_block_room),
+                             ("Gerudo Training Ground Beamos Chest", ()), ("Bottom of the Well Map Chest", ()),
+                             ("Spirit Temple Map Chest", ())):
+            self.assertTrue(self.reachable(chest, *items), chest)
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):
@@ -742,59 +740,40 @@ class LogicTest(unittest.TestCase):
             self.assertTrue(self.reachable(chest))
             self.assertFalse(self.reachable(chest, NO_HOOKSHOT))
 
-    def test_training_ground_cracked_wall_chest_needs_explosives(self):
-        # The only bomb bag lies in Dodongo's Cavern, and bombchus count only with a bag. Without one, Link reaches
-        # neither the Goron's Ruby nor the Zora's Sapphire nor a magic meter, so those come from elsewhere, with the
-        # gauntlets and the Lens of Truth that the way into the room takes.
-        way_in = (("KF Mido Top Right Chest", "Silver Gauntlets"), ("KF Mido Bottom Right Chest", "Lens of Truth"))
-        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
-                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                       ("KF Storms Grotto Chest", "Progressive Magic Meter"), *way_in)
-        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Cracked Wall Chest", *way_in))
-        self.assertTrue(self.reachable("Gerudo Training Ground Heavy Block Third Chest", *no_bomb_bag))
-        self.assertFalse(self.reachable("Gerudo Training Ground Heavy Block Cracked Wall Chest", *no_bomb_bag))
-
-    def test_spirit_temple_climb_room_door_needs_no_explosives(self):
-        # A child reaches the statue room, where the Map Chest stands, only through the climb room's door, which stands
-        # open from the start. Without the only bomb bag, Link reaches neither the Goron's Ruby nor the Zora's Sapphire
-        # nor a magic meter nor fire for the Map Chest's torches, so those come from elsewhere.
-        no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
-                       ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                       ("KF Mido Bottom Right Chest", "Progressive Magic Meter"),
-                       ("KF Mido Top Right Chest", "Din's Fire"))
-        self.assertTrue(self.reachable("Spirit Temple Map Chest", *no_bomb_bag))
-
     def test_meadow_song_of_time_grotto_stone_needs_the_song_of_time(self):
         # The stone stands beside the grotto's chest, past the same Song of Time blocks.
         stone = "SFM Song of Time Grotto Gossip Stone"
         self.assertTrue(self.reachable(stone))
         self.assertFalse(self.reachable(stone, ("Song from Ocarina of Time", "Green Rupee")))
-        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
 
-    def test_trail_cow_grotto_stone_needs_a_bomb_or_the_hammer(self):
+    def test_trail_cow_grotto_stone_opens_to_a_childs_bomb(self):
+        # A bomb or the hammer opens the grotto. The hammer is an adult's, and every adult holds bombs.
         stone = "DMT Cow Grotto Gossip Stone"
-        self.assertTrue(self.reachable(stone))
-        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+        self.assertTrue(self.reachable(stone, NEVER_ADULT))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG))
 
-    def test_kakariko_beehive_grotto_stone_needs_a_bomb_or_the_hammer(self):
+    def test_kakariko_beehive_grotto_stone_opens_to_a_childs_bomb(self):
+        # A bomb or the hammer opens the grotto. The hammer is an adult's, and every adult holds bombs.
         stone = "Kak Beehive Grotto Gossip Stone"
-        self.assertTrue(self.reachable(stone))
-        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+        self.assertTrue(self.reachable(stone, NEVER_ADULT))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG))
 
     def test_river_storms_grotto_stone_needs_the_song_of_storms(self):
         stone = "ZR Storms Grotto Gossip Stone"
         self.assertTrue(self.reachable(stone))
         self.assertFalse(self.reachable(stone, ("Song from Windmill", "Green Rupee")))
 
-    def test_field_east_grotto_stone_needs_a_bomb_or_the_hammer(self):
+    def test_field_east_grotto_stone_opens_to_a_childs_bomb(self):
+        # A bomb or the hammer opens the grotto. The hammer is an adult's, and every adult holds bombs.
         stone = "HF East Grotto Gossip Stone"
-        self.assertTrue(self.reachable(stone))
-        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+        self.assertTrue(self.reachable(stone, NEVER_ADULT))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG))
 
-    def test_field_south_grotto_stone_needs_a_bomb_or_the_hammer(self):
+    def test_field_south_grotto_stone_opens_to_a_childs_bomb(self):
+        # A bomb or the hammer opens the grotto. The hammer is an adult's, and every adult holds bombs.
         stone = "HF South Grotto Gossip Stone"
-        self.assertTrue(self.reachable(stone))
-        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG, NO_HAMMER))
+        self.assertTrue(self.reachable(stone, NEVER_ADULT))
+        self.assertFalse(self.reachable(stone, *NO_BOMB_BAG))
 
 
 if __name__ == "__main__":

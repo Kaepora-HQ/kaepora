@@ -222,33 +222,35 @@
         },
         "sphere 02": {
             "Deku Tree Map Chest": "Megaton Hammer",
-            "Queen Gohma": "Kokiri's Emerald",
+            "Queen Gohma": "Kokiri's Emerald"
+        },
+        "sphere 03": {
             "HC Malon Egg": "Weird Egg",
             "Kak Anju as Child": "Empty Bottle",
             "Kak Open Grotto Chest": "Boomerang",
             "LW Gift From Saria": "Progressive Ocarina"
         },
-        "sphere 03": {
+        "sphere 04": {
             "Song from Impa": "Zelda's Lullaby",
             "Song from Saria": "Saria's Song"
         },
-        "sphere 04": {
+        "sphere 05": {
             "GC Darunias Joy": "Goron's Bracelet",
             "ZD Diving Minigame": "Progressive Scale"
         },
-        "sphere 05": {
+        "sphere 06": {
             "Dodongos Cavern Compass Chest": "Iron Boots",
             "King Dodongo": "Goron's Ruby",
             "LH Underwater Item": "Bottle with Ruto's Letter"
         },
-        "sphere 06": {
+        "sphere 07": {
             "Barinade": "Zora's Sapphire"
         },
-        "sphere 07": {
+        "sphere 08": {
             "HF Ocarina of Time Item": "Progressive Ocarina",
             "Song from Ocarina of Time": "Song of Time"
         },
-        "sphere 08": {
+        "sphere 09": {
             "Song from Windmill": "Song of Storms",
             "Graveyard Hookshot Chest": "Progressive Hookshot",
             "DMT Great Fairy Reward": "Progressive Magic Meter",
@@ -256,20 +258,20 @@
             "GC Rolling Goron as Adult": "Goron Tunic",
             "Market ToT Master Sword": "Master Sword"
         },
-        "sphere 09": {
+        "sphere 10": {
             "Forest Temple First Room Chest": "Forest Temple Small Key",
             "Bottom of the Well Before Dead Hand Chest": "Golden Gauntlets",
             "Fire Temple Near Boss Chest": "Fire Temple Small Key",
             "Fire Temple Boss Key Chest": "Fire Temple Small Key",
             "Fire Temple Flare Dancer Chest": "Fire Temple Small Key"
         },
-        "sphere 10": {
+        "sphere 11": {
             "GV Octorok Grotto Chest": "Progressive Hookshot",
             "Forest Temple First Stalfos Chest": "Forest Temple Small Key",
             "Forest Temple Well Chest": "Forest Temple Small Key",
             "Fire Temple Boulder Maze Lower Chest": "Fire Temple Small Key"
         },
-        "sphere 11": {
+        "sphere 12": {
             "GF Double Cell Carpenter": "Gerudo Fortress Small Key",
             "GF Dead End Carpenter": "Gerudo Fortress Small Key",
             "GF Steep Slope Carpenter": "Gerudo Fortress Small Key",
@@ -279,60 +281,60 @@
             "Fire Temple Scarecrow Chest": "Fire Temple Small Key",
             "Fire Temple Boulder Maze Upper Chest": "Fire Temple Small Key"
         },
-        "sphere 12": {
+        "sphere 13": {
             "GF Freed All Carpenters": "Gerudo Membership Card",
             "Morpha": "Water Medallion",
             "Fire Temple Highest Goron Chest": "Fire Temple Small Key"
         },
-        "sphere 13": {
+        "sphere 14": {
             "Sheik at Colossus": "Requiem of Spirit",
             "Spirit Temple Compass Chest": "Spirit Temple Small Key",
             "Gerudo Training Ground Stalfos Chest": "Progressive Bow",
             "Fire Temple Megaton Hammer Chest": "Fire Temple Boss Key"
         },
-        "sphere 14": {
+        "sphere 15": {
             "Forest Temple Eye Switch Chest": "Forest Temple Small Key",
             "Forest Temple Boss Key Chest": "Forest Temple Small Key",
             "Forest Temple Red Poe Chest": "Forest Temple Boss Key",
             "Volvagia": "Fire Medallion",
             "Spirit Temple Child Climb North Chest": "Spirit Temple Small Key"
         },
-        "sphere 15": {
+        "sphere 16": {
             "Phantom Ganon": "Forest Medallion",
             "Forest Temple Basement Chest": "Mirror Shield"
         },
-        "sphere 16": {
+        "sphere 17": {
             "Sheik in Kakariko": "Nocturne of Shadow"
         },
-        "sphere 17": {
+        "sphere 18": {
             "Shadow Temple Compass Chest": "Shadow Temple Small Key",
             "Shadow Temple Early Silver Rupee Chest": "Shadow Temple Small Key",
             "Spirit Temple Child Early Torches Chest": "Spirit Temple Small Key"
         },
-        "sphere 18": {
+        "sphere 19": {
             "Spirit Temple First Mirror Left Chest": "Spirit Temple Small Key",
             "Shadow Temple Freestanding Key": "Shadow Temple Small Key",
             "Shadow Temple Falling Spikes Lower Chest": "Shadow Temple Boss Key"
         },
-        "sphere 19": {
+        "sphere 20": {
             "Spirit Temple Near Four Armos Chest": "Spirit Temple Small Key",
             "Shadow Temple After Wind Enemy Chest": "Shadow Temple Small Key"
         },
-        "sphere 20": {
+        "sphere 21": {
             "Spirit Temple Boss Key Chest": "Spirit Temple Boss Key",
             "Bongo Bongo": "Shadow Medallion"
         },
-        "sphere 21": {
+        "sphere 22": {
             "Twinrova": "Spirit Medallion"
         },
-        "sphere 22": {
+        "sphere 23": {
             "Market ToT Light Arrow Cutscene": "Light Arrows"
         },
-        "sphere 23": {
+        "sphere 24": {
             "Ganon's Castle Light Trial First Left Chest": "Ganon's Castle Boss Key",
             "Ganon's Castle Light Trial Invisible Enemies Chest": "Ganon's Castle Small Key"
         },
-        "sphere 24": {
+        "sphere 25": {
             "Ganon": "Triforce"
         }
     },

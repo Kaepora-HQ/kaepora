@@ -1835,6 +1835,10 @@ uint8_t Logic::StoneCount() {
     return HasItem(RG_KOKIRI_EMERALD) + HasItem(RG_GORON_RUBY) + HasItem(RG_ZORA_SAPPHIRE);
 }
 
+bool Logic::StoneBossesBeaten() {
+    return Get(LOGIC_DEKU_TREE_CLEAR) && Get(LOGIC_DODONGOS_CAVERN_CLEAR) && Get(LOGIC_JABU_JABUS_BELLY_CLEAR);
+}
+
 uint8_t Logic::MedallionCount() {
     return HasItem(RG_FOREST_MEDALLION) + HasItem(RG_FIRE_MEDALLION) + HasItem(RG_WATER_MEDALLION) +
            HasItem(RG_SPIRIT_MEDALLION) + HasItem(RG_SHADOW_MEDALLION) + HasItem(RG_LIGHT_MEDALLION);
@@ -1931,8 +1935,8 @@ bool Logic::CanUseProjectile() {
 
 bool Logic::CanBuildRainbowBridge() {
     return ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_ALWAYS_OPEN) ||
-           (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_VANILLA) && HasItem(RG_SHADOW_MEDALLION) &&
-            HasItem(RG_SPIRIT_MEDALLION) && CanUse(RG_LIGHT_ARROWS)) ||
+           (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_VANILLA) && Get(LOGIC_SHADOW_TEMPLE_CLEAR) &&
+            Get(LOGIC_SPIRIT_TEMPLE_CLEAR) && CanUse(RG_LIGHT_ARROWS)) ||
            (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_STONES) &&
             StoneCount() + (HasItem(RG_GREG_RUPEE) && ctx->GetOption(RSK_BRIDGE_OPTIONS).Is(RO_BRIDGE_GREG_REWARD)) >=
                 ctx->GetOption(RSK_RAINBOW_BRIDGE_STONE_COUNT).Get()) ||

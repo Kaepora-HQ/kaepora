@@ -30,7 +30,8 @@ void RegionTable_Init_TempleOfTime() {
 
     areaTable[RR_TEMPLE_OF_TIME] = Region("Temple of Time", SCENE_TEMPLE_OF_TIME, {}, {
         //Locations
-        LOCATION(RC_TOT_LIGHT_ARROWS_CUTSCENE, logic->IsAdult && logic->HasItem(RG_SHADOW_MEDALLION) && logic->HasItem(RG_SPIRIT_MEDALLION)),
+        // Zelda waits once the Shadow and the Spirit sages have woken, in the scenes after their bosses.
+        LOCATION(RC_TOT_LIGHT_ARROWS_CUTSCENE, logic->IsAdult && logic->Get(LOGIC_SHADOW_TEMPLE_CLEAR) && logic->Get(LOGIC_SPIRIT_TEMPLE_CLEAR)),
         LOCATION(RC_ALTAR_HINT_CHILD,          logic->IsChild),
         LOCATION(RC_ALTAR_HINT_ADULT,          logic->IsAdult),
         LOCATION(RC_TOT_SHEIK_HINT,            logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN)),
@@ -38,14 +39,15 @@ void RegionTable_Init_TempleOfTime() {
     }, {
         //Exits
         ENTRANCE(RR_TOT_ENTRANCE,            true),
-        ENTRANCE(RR_TOT_BEYOND_DOOR_OF_TIME, ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_OPEN) || (logic->CanUse(RG_SONG_OF_TIME) && (ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_SONGONLY) || (logic->StoneCount() == 3 && logic->HasItem(RG_OCARINA_OF_TIME))))),
+        ENTRANCE(RR_TOT_BEYOND_DOOR_OF_TIME, ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_OPEN) || (logic->CanUse(RG_SONG_OF_TIME) && (ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_SONGONLY) || (logic->StoneBossesBeaten() && logic->HasItem(RG_OCARINA_OF_TIME))))),
     });
 
     areaTable[RR_TOT_BEYOND_DOOR_OF_TIME] = Region("Beyond Door of Time", SCENE_TEMPLE_OF_TIME, {}, {
         //Locations
         LOCATION(RC_TOT_MASTER_SWORD, logic->IsAdult),
         LOCATION(RC_GIFT_FROM_RAURU,  logic->IsAdult),
-        LOCATION(RC_SHEIK_AT_TEMPLE,  logic->IsAdult && logic->HasItem(RG_FOREST_MEDALLION)),
+        // Sheik waits at the pedestal once the Forest Temple's blue warp has completed its quest.
+        LOCATION(RC_SHEIK_AT_TEMPLE,  logic->IsAdult && logic->Get(LOGIC_FOREST_TEMPLE_CLEAR)),
     }, {
         //Exits
         ENTRANCE(RR_TEMPLE_OF_TIME, true),
