@@ -217,7 +217,8 @@ void RegionTable_Init_Kakariko() {
         EVENT_ACCESS(LOGIC_DRAIN_WELL, logic->IsChild && logic->CanUse(RG_SONG_OF_STORMS)),
     }, {
         //Locations
-        LOCATION(RC_KAK_WINDMILL_FREESTANDING_POH, logic->CanUse(RG_BOOMERANG)),
+        // The boomerang does not count for the heart piece here: a heart piece has no part it can carry, and whether it
+        // brings back what lies here is not known.
         LOCATION(RC_SONG_FROM_WINDMILL,            logic->IsAdult && logic->CanUse(RG_FAIRY_OCARINA)),
     }, {
         //Exits

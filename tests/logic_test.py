@@ -355,6 +355,10 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("LH Sun", ("Ice Cavern Iron Boots Chest", "Green Rupee"),
                                         ("Link's Pocket", "Progressive Hookshot")))
 
+    def test_the_boomerang_fetches_no_heart_piece(self):
+        self.assertTrue(self.reachable("Kak Windmill Freestanding PoH"))
+        self.assertFalse(self.reachable("Kak Windmill Freestanding PoH", NEVER_ADULT))
+
     def test_shadow_temple_fifth_lock_guards_the_boss_key(self):
         # The four other locks stand on the way to the maze, so the boss key room takes all five keys. The door before
         # the boss has no lock.
