@@ -239,14 +239,14 @@ if(Qt6Test_FOUND)
                                                       Qt6::Test)
     target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
     # The window's tests that make no seed need no game file.
-    set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn whatJoinsTheShuffleHasItsOwnGroup
+    set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesOfEachColumnLineUp whatJoinsTheShuffleHasItsOwnGroup
                      theHintsChoicesShareAGroup aChoiceShowsInTheSummary defaultsSetsEveryControlBack
                      theSummaryNamesUpToThreeDungeonsLeftOut shopGoodsOffersEachCountUpToFiveAndARandomNumber
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
                      longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
-                     aNewerVersionShowsTheNotice quietOutcomesShowNothing
+                     aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
                      untickingStopsARequestInFlight)
     if(APPLE)

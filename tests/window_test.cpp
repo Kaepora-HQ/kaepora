@@ -17,11 +17,15 @@
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMap>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
 #include <QProcess>
 #include <QPushButton>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QSet>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QSpinBox>
@@ -762,15 +766,30 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
-    void theChoicesStartInOneColumn() {
+    void theChoicesOfEachColumnLineUp() {
         button("Settings…")->click();
         QCoreApplication::processEvents();
-        QList<int> lefts;
+        QMap<int, QSet<int>> columns;
         for (QComboBox* box : dialog()->findChildren<QComboBox*>()) {
-            lefts << box->mapTo(dialog(), QPoint(0, 0)).x();
+            columns[box->parentWidget()->x()] << box->mapTo(dialog(), QPoint(0, 0)).x();
         }
-        QVERIFY(lefts.size() > 1);
-        QCOMPARE(lefts.count(lefts.front()), lefts.size());
+        QCOMPARE(columns.size(), 2);
+        for (const QSet<int>& lefts : std::as_const(columns)) {
+            QCOMPARE(lefts.size(), 1);
+        }
+    }
+
+    void theButtonsStayInAShortWindow() {
+        button("Settings…")->click();
+        const int height = dialog()->height() / 2;
+        dialog()->resize(dialog()->width(), height);
+        QCoreApplication::processEvents();
+        QCOMPARE(dialog()->height(), height);
+        for (const QString text : { "Defaults", "OK", "Cancel" }) {
+            const QPushButton* shown = dialogButton(text);
+            QVERIFY(dialog()->rect().contains(QRect(shown->mapTo(dialog(), QPoint(0, 0)), shown->size())));
+        }
+        QVERIFY(dialog()->findChild<QScrollArea*>()->verticalScrollBar()->isVisible());
     }
 
     void whatJoinsTheShuffleHasItsOwnGroup() {

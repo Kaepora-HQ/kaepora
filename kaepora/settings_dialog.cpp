@@ -1,5 +1,6 @@
 #include "settings_dialog.h"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
@@ -10,6 +11,9 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QScreen>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QSpinBox>
 #include <QStringList>
 #include <QVBoxLayout>
@@ -150,7 +154,7 @@ QString Details(const SeedSettings& settings) {
     return lines.join('\n');
 }
 
-// Each group lays out its own labels. They all take the widest one's width, so the choices start in one column.
+// Each group lays out its own labels. They all take the widest one's width, so the groups' choices start in line.
 static void AlignLabels(std::initializer_list<QFormLayout*> forms) {
     std::vector<QWidget*> labels;
     int width = 0;
@@ -166,6 +170,25 @@ static void AlignLabels(std::initializer_list<QFormLayout*> forms) {
     }
 }
 
+namespace {
+// QScrollArea caps its size hint at 36 by 24 times its font's height. It scrolls a newly focused control into view
+// only when Tab moves focus between two controls inside it.
+class WholeScrollArea final : public QScrollArea {
+public:
+    explicit WholeScrollArea(QWidget* whole) {
+        setFrameShape(QFrame::NoFrame);
+        setFocusPolicy(Qt::NoFocus);
+        setWidgetResizable(true);
+        setWidget(whole);
+        connect(qApp, &QApplication::focusChanged, this, [this](QWidget*, QWidget* now) { ensureWidgetVisible(now); });
+    }
+
+    QSize sizeHint() const override {
+        return widget()->sizeHint();
+    }
+};
+} // namespace
+
 template <typename Value, size_t Size>
 static QComboBox* Choice(const std::pair<Value, std::string_view> (&choices)[Size]) {
     auto* box = new QComboBox;
@@ -179,9 +202,11 @@ static int RoundedPrice(int price) {
     return (price + ShopPriceStep / 2) / ShopPriceStep * ShopPriceStep;
 }
 
-// A box for a price SoH can set. A typed price goes to the nearest step.
+// A box for a price SoH can set. A typed price goes to the nearest step. The box takes its row's height, so showing it
+// leaves the groups as tall as they were.
 static QSpinBox* PriceBox(const QString& name) {
     auto* box = new QSpinBox;
+    box->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Ignored, QSizePolicy::SpinBox));
     box->setRange(0, MostShopPrice);
     box->setSingleStep(ShopPriceStep);
     box->setAccessibleName(name);
@@ -279,20 +304,11 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     hintsForm->addRow(QString::fromUtf8(HintsFromCharactersSetting), hintsFromCharacters);
     auto* hintsGroup = new QGroupBox("Hints");
     hintsGroup->setLayout(hintsForm);
-    AlignLabels({ dungeonForm, shuffleForm, worldForm, logicForm, hintsForm });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel |
                                          QDialogButtonBox::Ok);
     QPushButton* defaults = buttons->button(QDialogButtonBox::RestoreDefaults);
     defaults->setText("Defaults");
-
-    auto* layout = new QVBoxLayout(dialog);
-    layout->addWidget(dungeonGroup);
-    layout->addWidget(shuffleGroup);
-    layout->addWidget(worldGroup);
-    layout->addWidget(logicGroup);
-    layout->addWidget(hintsGroup);
-    layout->addWidget(buttons);
 
     // Prices wait for shop goods to be shuffled, and a number shows only while its choice is picked.
     const auto showPrices = [=] {
@@ -374,5 +390,37 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         chosen(shown);
         dialog->accept();
     });
+
+    // Qt keeps a row's cached size hint when a price box in it hides before the window first shows, so the groups go
+    // into the scroll area only after show(settings).
+    auto* left = new QVBoxLayout;
+    left->addWidget(dungeonGroup);
+    left->addWidget(shuffleGroup);
+    left->addStretch();
+    AlignLabels({ dungeonForm, shuffleForm });
+    auto* right = new QVBoxLayout;
+    right->addWidget(worldGroup);
+    right->addWidget(logicGroup);
+    right->addWidget(hintsGroup);
+    right->addStretch();
+    AlignLabels({ worldForm, logicForm, hintsForm });
+    auto* groups = new QWidget;
+    auto* columns = new QHBoxLayout(groups);
+    columns->setContentsMargins({});
+    columns->addLayout(left);
+    columns->addLayout(right);
+    auto* scroll = new WholeScrollArea(groups);
+
+    auto* layout = new QVBoxLayout(dialog);
+    layout->addWidget(scroll);
+    layout->addWidget(buttons);
+
+    dialog->ensurePolished();
+    const QSize room = window->screen()->availableSize() - (window->frameGeometry().size() - window->size());
+    QSize size = dialog->sizeHint();
+    if (size.height() > room.height()) {
+        size.rwidth() += scroll->verticalScrollBar()->sizeHint().width();
+    }
+    dialog->resize(size.boundedTo(room));
     dialog->open();
 }
