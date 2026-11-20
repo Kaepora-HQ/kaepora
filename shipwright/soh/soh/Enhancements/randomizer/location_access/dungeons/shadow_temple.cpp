@@ -293,13 +293,17 @@ void RegionTable_Init_ShadowTemple() {
     areaTable[RR_SHADOW_TEMPLE_SKULL_JAR] = Region("Shadow Temple Skull Jar", SCENE_SHADOW_TEMPLE, {}, {
         //Locations
         LOCATION(RC_SHADOW_TEMPLE_FREESTANDING_KEY,    logic->CanUse(RG_BOMB_BAG) || logic->HasItem(RG_GORONS_BRACELET) || (ctx->GetTrickOption(RT_SHADOW_FREESTANDING_KEY) && logic->CanUse(RG_BOMBCHU_5))),
-        LOCATION(RC_SHADOW_TEMPLE_GS_SINGLE_GIANT_POT, logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
     }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_FLOOR_SPIKES_W_DOOR, AnyAgeTime([]{return logic->CanKillEnemy(RE_KEESE);})),
     });
 
-    areaTable[RR_SHADOW_TEMPLE_UPPER_WIND_TUNNEL] = Region("Shadow Temple Upper Wind Tunnel", SCENE_SHADOW_TEMPLE, {}, {}, {
+    areaTable[RR_SHADOW_TEMPLE_UPPER_WIND_TUNNEL] = Region("Shadow Temple Upper Wind Tunnel", SCENE_SHADOW_TEMPLE, {}, {
+        //Locations
+        // The remake hangs it on the pit's wall under this ledge. The hookshot kills it, and the Hover Boots take its
+        // token without a fall.
+        LOCATION(RC_SHADOW_TEMPLE_GS_SINGLE_GIANT_POT, logic->CanUse(RG_HOOKSHOT) && logic->CanUse(RG_HOVER_BOOTS)),
+    }, {
         //Exits
         ENTRANCE(RR_SHADOW_TEMPLE_SPIKES_DOOR_PLATFORM, logic->SmallKeys(SCENE_SHADOW_TEMPLE, 3)),
         ENTRANCE(RR_SHADOW_TEMPLE_LOWER_WIND_TUNNEL,    logic->CanUse(RG_HOOKSHOT) || ((logic->CanUse(RG_HOVER_BOOTS) || logic->BunnyHood()) && logic->CanPassEnemy(RE_BIG_SKULLTULA))),

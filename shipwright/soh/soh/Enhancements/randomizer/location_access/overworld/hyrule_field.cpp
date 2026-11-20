@@ -37,6 +37,8 @@ void RegionTable_Init_HyruleField() {
         // The remake's cow grotto has no Gold Skulltula. The one that stands for it is in a box in the adult field's
         // south grotto, which holds it only once child Link has killed that grotto's Skullwalltula.
         LOCATION(RC_HF_GS_COW_GROTTO,              logic->IsAdult && logic->Get(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA) && logic->CanBreakCrates() && logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
+        // A roll into the tree by the Big Poe fences drops it, by day or night, in either age's field.
+        LOCATION(RC_LLR_GS_BACK_WALL,              logic->CanBonkTrees() && logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
         LOCATION(RC_HF_CENTRAL_GRASS_1,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_2,            logic->CanCutShrubs() || logic->SummonEpona()),
         LOCATION(RC_HF_CENTRAL_GRASS_3,            logic->CanCutShrubs() || logic->SummonEpona()),

@@ -183,6 +183,8 @@ void RegionTable_Init_WaterTemple() {
     areaTable[RR_WATER_TEMPLE_CRACKED_WALL] = Region("Water Temple Cracked Wall", SCENE_WATER_TEMPLE, {}, {
         //Locations
         LOCATION(RC_WATER_TEMPLE_CRACKED_WALL_CHEST, (logic->WaterLevel(WL_LOW_OR_MID) || logic->CanOpenUnderwaterChest()) && logic->HasItem(RG_OPEN_CHEST)),
+        // The remake hangs it on the wall beside this room's ledge, where the sword kills it.
+        LOCATION(RC_WATER_TEMPLE_GS_FALLING_PLATFORM_ROOM, logic->CanKillEnemy(RE_GOLD_SKULLTULA)),
     }, {
         //Exits
         ENTRANCE(RR_WATER_TEMPLE_SIDE_TOWER_2F, true),
@@ -367,8 +369,6 @@ void RegionTable_Init_WaterTemple() {
 
     areaTable[RR_WATER_TEMPLE_GS_CAGE] = Region("Water Temple GS Cage", SCENE_WATER_TEMPLE, {}, {
         //Locations
-        LOCATION(RC_WATER_TEMPLE_GS_BEHIND_GATE,    (logic->IsAdult && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))) ||
-                                                    logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG) || logic->CanGroundJumpslash()),
         LOCATION(RC_WATER_TEMPLE_BEHIND_GATE_POT_1, logic->CanBreakPots()),
         LOCATION(RC_WATER_TEMPLE_BEHIND_GATE_POT_2, logic->CanBreakPots()),
         LOCATION(RC_WATER_TEMPLE_BEHIND_GATE_POT_3, logic->CanBreakPots()),
@@ -440,6 +440,8 @@ void RegionTable_Init_WaterTemple() {
     areaTable[RR_WATER_TEMPLE_PILLAR_B1] = Region("Water Temple Pillar B1", SCENE_WATER_TEMPLE, {}, {
         //Locations
         LOCATION(RC_WATER_TEMPLE_CENTRAL_PILLAR_CHEST, logic->CanUse(RG_HOOKSHOT) && logic->HasItem(RG_BRONZE_SCALE) && logic->HasItem(RG_OPEN_CHEST)),
+        // The remake hangs it on this side of the basement's grate, and the hookshot takes it.
+        LOCATION(RC_WATER_TEMPLE_GS_BEHIND_GATE,       logic->CanUse(RG_HOOKSHOT)),
     }, {
         //Exits
         //Can't know water level, so we'll just assume any possibility and skip to MAIN
@@ -541,12 +543,7 @@ void RegionTable_Init_WaterTemple() {
     });
 
     //This is specifically the initial entrance alcove and platform directly underneath
-    areaTable[RR_WATER_TEMPLE_WATERFALL] = Region("Water Temple Waterfall", SCENE_WATER_TEMPLE, {}, {
-        //Locations
-        LOCATION(RC_WATER_TEMPLE_GS_FALLING_PLATFORM_ROOM, logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_LONGSHOT) ||
-                                                           (ctx->GetTrickOption(RT_WATER_RANG_FALLING_PLATFORM_GS) && logic->CanUse(RG_BOOMERANG)) ||
-                                                           (ctx->GetTrickOption(RT_WATER_HOOKSHOT_FALLING_PLATFORM_GS) && logic->IsAdult && logic->CanUse(RG_HOOKSHOT))),
-    }, {
+    areaTable[RR_WATER_TEMPLE_WATERFALL] = Region("Water Temple Waterfall", SCENE_WATER_TEMPLE, {}, {}, {
         //Exits
         ENTRANCE(RR_WATER_TEMPLE_OUTSIDE_WATERFALL, logic->SmallKeys(SCENE_WATER_TEMPLE, 3)),
         ENTRANCE(RR_WATER_TEMPLE_WATERFALL_TOP,     logic->CanUse(RG_HOOKSHOT)),

@@ -403,7 +403,7 @@ class LogicTest(unittest.TestCase):
         no_fire = (("Forest Temple Bow Chest", "Green Rupee"), ("DMT Great Fairy Din's Fire", "Green Rupee"))
         self.assertFalse(self.reachable("Water Temple Central Pillar Chest", *no_fire))
         self.assertTrue(self.reachable("Water Temple Central Pillar Chest", *no_fire,
-                                       ("Water Temple GS Behind Gate", "Water Temple Small Key")))
+                                       ("Water Temple Like Like Chest", "Water Temple Small Key")))
 
     def test_water_temple_bow_target_chest_needs_the_longshot(self):
         # An arrow in the eye opens the gate to the chest's room, and it shuts before the Hover Boots get Link there.
@@ -580,6 +580,22 @@ class LogicTest(unittest.TestCase):
         # It hangs on a climbing net across from the top of the stairs, out of the sword's reach.
         self.assertTrue(self.reachable("Dodongos Cavern GS Vines Above Stairs", *NO_RANGED))
         self.assertFalse(self.reachable("Dodongos Cavern GS Vines Above Stairs", *NO_RANGED, *NO_SLINGSHOT_OR_BOW))
+
+    def test_dodongos_cavern_alcove_skulltula_is_behind_a_cracked_wall_off_the_balcony(self):
+        # A bomb opens the wall, and the sword kills the skulltula from the room's floor.
+        self.assertTrue(self.reachable("Dodongos Cavern GS Alcove Above Stairs", *NO_RANGED))
+        self.assertFalse(self.reachable("Dodongos Cavern GS Alcove Above Stairs",
+                                        ("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), NO_HAMMER))
+
+    def test_water_temple_falling_platform_room_skulltula_is_beyond_the_cracked_wall(self):
+        # It hangs beside the ledge of the room behind the east tower's cracked wall, where the sword kills it.
+        self.assertTrue(self.reachable("Water Temple GS Falling Platform Room",
+                                       ("Water Temple Longshot Chest", "Green Rupee")))
+        self.assertFalse(self.reachable("Water Temple GS Falling Platform Room", *NO_BOMB_BAG))
+
+    def test_lon_lon_ranch_back_wall_skulltula_falls_from_a_field_tree(self):
+        # A roll into the tree by the Big Poe fences drops it, by day or night, and the sword kills it.
+        self.assertTrue(self.reachable("LLR GS Back Wall", *NO_RANGED))
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):

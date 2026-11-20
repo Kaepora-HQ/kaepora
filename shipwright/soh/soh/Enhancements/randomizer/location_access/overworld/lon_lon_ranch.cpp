@@ -17,7 +17,6 @@ void RegionTable_Init_LonLonRanch() {
         // brings its token back.
         LOCATION(RC_LLR_GS_RAIN_SHED,       logic->IsChild && logic->CanGetNightTimeGS() && logic->CanUse(RG_BOOMERANG)),
         LOCATION(RC_LLR_GS_HOUSE_WINDOW,    logic->IsChild && logic->HookshotOrBoomerang() && logic->CanGetNightTimeGS()),
-        LOCATION(RC_LLR_GS_BACK_WALL,       logic->IsChild && logic->HookshotOrBoomerang() && logic->CanGetNightTimeGS()),
         LOCATION(RC_LLR_FRONT_POT_1,        logic->IsChild && logic->CanBreakPots()),
         LOCATION(RC_LLR_FRONT_POT_2,        logic->IsChild && logic->CanBreakPots()),
         LOCATION(RC_LLR_FRONT_POT_3,        logic->IsChild && logic->CanBreakPots()),
