@@ -196,8 +196,10 @@ struct MessageText {
 // Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
 // the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
 // the settings count on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its
-// item and price, and each shuffled skulltula with its item.
+// item and price, each shuffled skulltula with its item, and each shuffled loose item that gives another item than its
+// own, with that item.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
+                                  const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,

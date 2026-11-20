@@ -722,6 +722,7 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 }
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
+                                  const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
@@ -787,5 +788,12 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                        { "item", items.at(skulltula.location) } });
     }
     plan["loose_items"] = nlohmann::ordered_json::array();
+    for (const RemakeChest& looseItem : looseItems) {
+        const std::string& item = items.at(looseItem.location);
+        if (item != looseItem.item) {
+            const RemakeChest::Actor& actor = looseItem.actors.front();
+            plan["loose_items"].push_back({ { "hash", actor.hash }, { "files", actor.files }, { "item", item } });
+        }
+    }
     return plan;
 }

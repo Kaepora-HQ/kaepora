@@ -44,15 +44,15 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Lens of Truth": "Needed",
-                    "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
+                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Loose items": "Vanilla",
+                    "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
-    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Lens of Truth": "Never needed"}
+    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Loose items": "Shuffled", "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -88,6 +88,8 @@ SKULLTULA_AT = {row["hash"]: row["location"] for row in SKULLTULAS}
 SKULLTULA_PLACES = {row["location"]: row["place"] for row in SKULLTULAS if row["place"]}
 SKULLTULAS_SHUFFLED = {"Gold Skulltulas": "All"}
 TOKEN = "Item_Token_Gold"
+LOOSE_ITEMS = read_tsv("loose_items.tsv")
+LOOSE_SHUFFLED = {"Loose items": "Shuffled"}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -181,9 +183,12 @@ def gift_sites(plan):
             if (site := (entry["flow"], entry["event"], entry["param"])) in GIFT_LOCATIONS]
 
 
-def placed_remake_items(plan):
+def placed_remake_items(spoiler, plan):
     rows = {row["hash"]: row["location"] for row in SHUFFLED}
     placed = {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
+    loose = {entry["hash"]: entry["item"] for entry in plan["loose_items"]}
+    placed |= {row["location"]: loose.get(row["hash"], row["item"]) for row in LOOSE_ITEMS
+               if row["location"] in spoiler["locations"]}
     placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
     placed |= dict(gift_sites(plan))
     return placed | {SKULLTULA_AT[entry["hash"]]: entry["item"] for entry in plan["skulltulas"]}
@@ -780,6 +785,72 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 4)
         self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_loose_items_shuffled(self):
+        spoiler, plan = self.generate("21", LOOSE_SHUFFLED)
+        self.assertEqual(spoiler["settings"]["Loose items"], "Shuffled")
+        planned = {entry["hash"]: entry for entry in plan["loose_items"]}
+        for row in LOOSE_ITEMS:
+            placed = spoiler["locations"][row["location"]]
+            entry = planned.pop(row["hash"], None)
+            self.assertIn((row["item"] if entry is None else entry["item"], placed), ITEM_PAIRS, row["location"])
+            if entry is not None:
+                self.assertEqual(entry["files"], row["files"].split(","), row["location"])
+                self.assertNotEqual(entry["item"], row["item"], row["location"])
+        self.assertEqual(planned, {})
+        self.assertTrue(plan["loose_items"])
+        held = placed_remake_items(spoiler, plan)
+        self.assertEqual(collections.Counter(held.values()),
+                         POOL + collections.Counter(row["item"] for row in LOOSE_ITEMS))
+
+    def test_loose_keys_follow_the_keys_setting(self):
+        keys = {row["location"]: folder(row["files"]) for row in LOOSE_ITEMS if row["item"] == "Item_Dungeon_SmallKey"}
+        names = {"BottomOfTheWell": "Bottom of the Well", "ShadowTemple": "Shadow Temple"}
+        dungeon_item = re.compile(r".* (Small Key|Boss Key|Map|Compass)$")
+        spoiler, _ = self.generate("22", LOOSE_SHUFFLED | {"Small and boss keys": "In their own chests"})
+        self.assertFalse(keys.keys() & spoiler["locations"].keys())
+        for choice in ("Anywhere in their dungeon", "Not needed"):
+            moved = set()
+            for seed in map(str, range(700, 710)):
+                spoiler, _ = self.generate(seed, LOOSE_SHUFFLED | {"Small and boss keys": choice})
+                for location, dungeon in keys.items():
+                    item = spoiler["locations"][location]
+                    if dungeon_item.fullmatch(item):
+                        self.assertTrue(item.startswith(names[dungeon]), (seed, location, item))
+                    else:
+                        moved.add(location)
+            self.assertEqual(moved, keys.keys(), choice)
+
+    def test_loose_items_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot(self):
+        # A pickup copy's Bomb Bag fills with bombs as a chest's does.
+        given = collections.Counter()
+        for seed in range(300, 330):
+            _, plan = self.generate(str(seed), LOOSE_SHUFFLED)
+            given.update(entry["item"] for entry in plan["loose_items"])
+        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
+        self.assertIn("Item_BombBag_Small", given)
+
+    def test_a_dungeon_left_out_keeps_its_loose_items(self):
+        settings = LOOSE_SHUFFLED | {"Shuffled dungeons": [name for name in DUNGEONS if name != "Shadow Temple"]}
+        spoiler, _ = self.generate("23", settings)
+        shadow = {row["location"] for row in LOOSE_ITEMS if folder(row["files"]) == "ShadowTemple"}
+        self.assertTrue(shadow)
+        self.assertFalse(shadow & spoiler["locations"].keys())
+        self.assertIn("Bottom of the Well Freestanding Key", spoiler["locations"])
+
+    def test_a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere(self):
+        log, _ = self.generate("24", LOOSE_SHUFFLED)
+        self.assertTrue({row["location"] for row in LOOSE_ITEMS} & playthrough_steps(log).keys())
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_hints_name_loose_items_truly(self):
+        # Seed 5 hints at King Dodongo's heart container, the Zora's River heart piece near the domain and the Lon Lon
+        # Ranch heart piece by their sentences.
+        spoiler, plan = self.assert_hints_are_true("5", LOOSE_SHUFFLED)
+        loose = {row["location"] for row in LOOSE_ITEMS}
+        said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
+                for location, item in placed_remake_items(spoiler, plan).items() if location in loose}
+        self.assertTrue(said & set(spoiler["hints"].values()))
+
     def test_seed_text_ignores_case(self):
         upper = self.run_seedgen("OWL")
         self.assertEqual(self.run_seedgen("owl"), upper)
@@ -799,7 +870,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(hints), list(STONES.values()))
         self.assertEqual({entry["label"]: plain(entry["text"]) for entry in plan["stone_texts"]},
                          {label: hints[location] for label, location in STONES.items()})
-        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(plan).items()}
+        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(spoiler, plan).items()}
         chest_hints = {plain(CHEST_SENTENCES[location].replace("[[1]]", item)) for location, item in held.items()}
         junk = {plain(line) for line in JUNK}
         places = {phrase: area for area, phrase in PLACE_BY_AREA_PREFIX.items()}
@@ -866,7 +937,7 @@ class SeedgenTest(unittest.TestCase):
         hints, as SoH words them."""
         [sword] = [location for location, placed in spoiler["locations"].items()
                    if spoiler_item(placed) == "Kokiri Sword"]
-        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(plan).items()}
+        held = {location: ITEM_NAMES[item] for location, item in placed_remake_items(spoiler, plan).items()}
         named = {plain(CHEST_SENTENCES[sword].replace("[[1]]", held[sword])),
                  f"They say that the Kokiri Sword can be found at {PLACE_BY_AREA_PREFIX[place_of(sword)]}.",
                  f"They say that {PLACE_BY_AREA_PREFIX[place_of(sword)]} hoards the Kokiri Sword."}
@@ -922,7 +993,7 @@ class SeedgenTest(unittest.TestCase):
         seed, settings = HINT_SEED_AT_FIVE, {"Shop goods": "Five per shop shuffled"}
         self.assert_hints_are_true(seed, settings)
         spoiler, plan = self.generate(seed, settings)
-        held = placed_remake_items(plan)
+        held = placed_remake_items(spoiler, plan)
         sentences = {plain(CHEST_SENTENCES[row["location"]].replace("[[1]]", ITEM_NAMES[held[row["location"]]]))
                      for row in SHOP_SLOTS if row["number"] == "3"}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
@@ -932,9 +1003,9 @@ class SeedgenTest(unittest.TestCase):
         row = next(row for row in PRIZE_LINES if row["location"] == CHEST_GAME_PRIZE)
         named = set()
         for seed, settings in [(str(seed), None) for seed in range(700, 710)] + [("710", LENS_NEVER_NEEDED)]:
-            _, plan = self.generate(seed, settings)
-            item = placed_remake_items(plan).get(CHEST_GAME_PRIZE, "Obj_Heart_Piece")
-            self.assertEqual(settings is None, CHEST_GAME_PRIZE in placed_remake_items(plan), seed)
+            spoiler, plan = self.generate(seed, settings)
+            item = placed_remake_items(spoiler, plan).get(CHEST_GAME_PRIZE, "Obj_Heart_Piece")
+            self.assertEqual(settings is None, CHEST_GAME_PRIZE in placed_remake_items(spoiler, plan), seed)
             [entry] = [entry for entry in plan["message_texts"] if (entry["file"], entry["label"])
                        == (row["file"], row["label"])]
             self.assertEqual(plain(entry["text"]), plain(row["sentence"].replace("[[1]]", ITEM_NAMES[item])), seed)
@@ -968,7 +1039,7 @@ class SeedgenTest(unittest.TestCase):
         spoiler, plan = self.generate("23", SKULLTULAS_SHUFFLED)
         skulltulas = {row["location"] for row in SKULLTULAS}
         said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
-                for location, item in placed_remake_items(plan).items() if location in skulltulas}
+                for location, item in placed_remake_items(spoiler, plan).items() if location in skulltulas}
         self.assertTrue(said & set(spoiler["hints"].values()))
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):

@@ -210,6 +210,10 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_dungeon_left_out_keeps_its_skulltulas
                      a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere
                      hints_name_the_place_a_skulltula_stands_in hints_name_gold_skulltulas_truly
+                     loose_items_shuffled loose_keys_follow_the_keys_setting
+                     loose_items_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot
+                     a_dungeon_left_out_keeps_its_loose_items
+                     a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere hints_name_loose_items_truly
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
@@ -307,7 +311,8 @@ if(KAEPORA_GAME_NUP)
                 ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json)
     foreach(TEST IN ITEMS same_files_as_the_two_programs a_seed_with_shop_goods_shuffled_is_patched
                           a_seed_with_gifts_and_shop_goods_shuffled_is_patched
-                          a_seed_with_gold_skulltulas_shuffled_is_patched two_seeds_in_one_process
+                          a_seed_with_gold_skulltulas_shuffled_is_patched
+                          a_seed_with_loose_items_shuffled_is_patched two_seeds_in_one_process
                           same_seed_twice_in_one_process existing_folder_is_refused new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py

@@ -60,8 +60,9 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
                                            const std::vector<RemakeShopSlot>& shops,
                                            const std::vector<RemakeGift>& gifts,
                                            const std::vector<RemakeSkulltula>& skulltulas);
-int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-         const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas);
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
+         const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+         const std::vector<RemakeSkulltula>& skulltulas);
 
 // What only a chest gives whole, kept in chests from every other kind of shuffled place. A chest that gives the Fairy
 // Bow or the Fairy Slingshot also adds the quiver or the bullet bag and their ammunition, from its own AI; a gift gave

@@ -164,6 +164,12 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     std::vector<RemakeSkulltula> skulltulas;
     std::ranges::copy_if(skulltulaTable, std::back_inserter(skulltulas),
                          [&](const RemakeSkulltula& skulltula) { return Shuffled(skulltula, settings); });
+    std::vector<RemakeChest> looseItems;
+    if (settings.looseItems == LooseItems::Shuffled) {
+        std::ranges::copy_if(looseItemTable, std::back_inserter(looseItems),
+                             [&](const RemakeChest& looseItem) { return !KeptInPlace(looseItem, settings); });
+    }
+    const std::vector<RemakeChest> locations = Joined(chests, looseItems);
 
     SetOptions(settings);
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
@@ -174,10 +180,10 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops, gifts, skulltulas) <= 0) {
+    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, looseItems, shops, gifts, skulltulas) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts, skulltulas);
+    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(locations, shops, gifts, skulltulas);
     const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
                                                               ? CharacterHints(hintTables, items, settings)
                                                               : std::vector<CharacterHintText>{};
@@ -190,6 +196,6 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     const std::vector<StoneHint> hints = settings.gossipStones == GossipStones::GiveHints
                                              ? PickHints(hintTables, items, named)
                                              : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, chests, shops, gifts, skulltulas, hints, characterHints),
-             RemakePlan(seed, chests, shops, gifts, skulltulas, settings, items, hints, messages) };
+    return { SpoilerLog(seed, settings, locations, shops, gifts, skulltulas, hints, characterHints),
+             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, settings, items, hints, messages) };
 }

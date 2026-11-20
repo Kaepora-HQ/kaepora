@@ -1062,9 +1062,16 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
-int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-         const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas) {
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
+         const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+         const std::vector<RemakeSkulltula>& skulltulas) {
     auto ctx = Rando::Context::GetInstance();
+    std::vector<RemakeChest> places = chests;
+    places.insert(places.end(), looseItems.begin(), looseItems.end());
+    std::set<RandomizerCheck> looseLocations;
+    for (const RemakeChest& looseItem : looseItems) {
+        looseLocations.insert(looseItem.location);
+    }
     int retries = 0;
     SPDLOG_INFO("Starting seed generation...");
     while (retries < 10) {
@@ -1073,7 +1080,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
         // showItemProgress = false;
         ctx->playthroughLocations.clear();
         ctx->GetEntranceShuffler()->playthroughEntrances.clear();
-        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests, shops, gifts, skulltulas);
+        std::vector<const RemakeChest*> shuffled = SetUpWorld(places, shops, gifts, skulltulas);
 
         // Temporarily add shop items to the itemPool so that entrance randomization
         // can validate the world using deku/hylian shields
@@ -1093,13 +1100,21 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
         });
 
         std::vector<RandomizerCheck> shuffledLocations;
-        for (const RemakeChest* chest : shuffled) {
-            shuffledLocations.push_back(chest->location);
+        for (const RemakeChest* place : shuffled) {
+            if (!looseLocations.contains(place->location)) {
+                shuffledLocations.push_back(place->location);
+            }
         }
 
         SPDLOG_INFO("Shuffling and Placing Dungeon Items...");
         PlaceDungeonItems(shuffled);
 
+        if (!looseItems.empty()) {
+            AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
+            for (const RemakeChest& looseItem : looseItems) {
+                shuffledLocations.push_back(looseItem.location);
+            }
+        }
         if (!gifts.empty()) {
             AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
             for (const RemakeGift& gift : gifts) {

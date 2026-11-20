@@ -74,6 +74,15 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(len(skulltulas), 100)
         self.assertEqual({p.name for p in (mod / "romfs" / "Pack" / "Actor").glob("Obj_Token_Gold_*")}, copies)
 
+    def test_a_seed_with_loose_items_shuffled_is_patched(self):
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Loose items": "Shuffled"})
+        result = subprocess.run([SEEDGEN, "21", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(plan.read_text())["loose_items"])
+
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:
             result = self.make_seeds((seed, self.tmp / "alone" / seed))

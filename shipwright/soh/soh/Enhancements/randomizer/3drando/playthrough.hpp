@@ -7,6 +7,7 @@
 namespace Playthrough {
 // Draws from the random numbers as they stand, so the caller starts them.
 int Playthrough_Init(std::set<RandomizerCheck> excludedLocations, std::set<RandomizerTrick> enabledTricks,
-                     const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                     const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas);
+                     const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
+                     const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                     const std::vector<RemakeSkulltula>& skulltulas);
 } // namespace Playthrough

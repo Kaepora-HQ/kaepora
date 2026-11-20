@@ -84,6 +84,13 @@ with its record in its own AI.
   pieces stand in both a child's and an adult's file under one hash.
 - `item`: what the pickup gives, by the remake's name, and so what it adds to the pool when shuffled.
 
+With "Loose items" at "Shuffled", each row joins the shuffle as a chest does, and its item joins the pool. The two keys
+follow "Small and boss keys" as their dungeon's chests do, and a dungeon left out of the shuffle keeps its loose items.
+A boss's heart container is a place in its dungeon, as in SoH, so it may hold that dungeon's key, map or compass. A spot
+that a seed gives its own item keeps the game's pickup. Any other spot holds the game's own pickup for a heart piece or
+a heart container, and for any other item a copy of the game's Hylian Shield pickup that gives it, which Link takes by
+touch.
+
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
 

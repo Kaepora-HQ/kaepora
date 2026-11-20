@@ -12,7 +12,7 @@ Some chests stay as the game has them. [The chest table](https://github.com/Kaep
 
 ## Keys, maps and compasses
 
-A dungeon's small keys, boss key, map and compass stay inside that dungeon, in any of its chests.
+A dungeon's small keys, boss key, map and compass stay inside that dungeon, in any of its chests, or at one of its loose spots when **Loose items** is **Shuffled**.
 
 **Small and boss keys** has two other choices. **In their own chests** leaves each key where the game has it. **Not needed** starts the game with every small-key door unlocked and every boss key in hand.
 
@@ -37,6 +37,12 @@ The tokens they would have given join the shuffled items, so a token can turn up
 Set **Gifts** to **Shuffled**, and 21 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner.
 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. With **Vanilla**, each gives what the game has.
+
+## Loose items
+
+Set **Loose items** to **Shuffled**, and the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**.
+
+The seed's item lies where the game's did, and you take it by walking into it. A heart piece, a heart container and an item the seed left in its own spot are the game's own, and you take them as the game has you. A boss still shows a heart container as it falls, and what lies there afterwards is the seed's item. A dungeon you untick under **Shuffled dungeons** keeps its own. With **Vanilla**, each spot holds what the game has.
 
 ## Hints
 
@@ -79,4 +85,3 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 More is being worked on. Until each part lands, the game keeps its own.
 
 - **Songs.** The 12 songs, shuffled among the places that teach them.
-- **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.
