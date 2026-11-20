@@ -55,6 +55,9 @@ static constexpr unsigned char giftTable[] = {
 static constexpr unsigned char skulltulaTable[] = {
 #embed "../remake/skulltulas.tsv"
 };
+static constexpr unsigned char looseItemTable[] = {
+#embed "../remake/loose_items.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -214,6 +217,37 @@ std::vector<RemakeChest> LoadRemakeChests() {
         }
     }
     return chests;
+}
+
+std::vector<RemakeChest> LoadRemakeLooseItems() {
+    const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
+    std::vector<RemakeChest> looseItems;
+    std::set<RandomizerCheck> locations;
+    std::set<std::string> hashes;
+    size_t line = 1;
+    for (const auto& row : ReadTable("remake/loose_items.tsv", looseItemTable, "location\thash\tfiles\titem")) {
+        const std::string where = std::format("remake/loose_items.tsv line {}: ", ++line);
+        const auto location = Rando::StaticData::locationNameToEnum.find(row[0]);
+        if (location == Rando::StaticData::locationNameToEnum.end() ||
+            Rando::StaticData::GetLocation(location->second)->GetQuest() == RCQUEST_MQ ||
+            !locations.insert(location->second).second) {
+            Fail(where + "\"" + row[0] + "\" is not a location of SoH's vanilla layouts, or repeats");
+        }
+        const std::string& hash = row[1];
+        if (hash.empty() || hash.find_first_not_of("0123456789") != std::string::npos || !hashes.insert(hash).second) {
+            Fail(where + "the hash \"" + hash + "\" is not a decimal number or repeats");
+        }
+        const RemakeChest::Actor actor{ hash, SohUtils::StringSplit(row[2], ",") };
+        CheckSceneFiles(where, actor);
+        const auto candidates = items.find(row[3]);
+        const RandomizerGet sohItem =
+            candidates == items.end() ? RG_NONE : ResolveItem(candidates->second, location->second);
+        if (sohItem != Rando::StaticData::GetLocation(location->second)->GetVanillaItem()) {
+            Fail(where + "\"" + row[3] + "\" is not the remake item for what the location gives in SoH");
+        }
+        looseItems.push_back({ location->second, { actor }, row[3], sohItem, true });
+    }
+    return looseItems;
 }
 
 static RandomizerCheck LocationNamed(const std::string& where, const std::string& name) {

@@ -297,7 +297,7 @@ if(KAEPORA_GAME_NUP)
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth skulltulas
-                 skulltula-table loose-items goods-and-copies)
+                 skulltula-table loose-items goods-and-copies loose-item-table)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables

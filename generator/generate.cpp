@@ -135,16 +135,23 @@ static bool Shuffled(const RemakeSkulltula& skulltula, const SeedSettings& setti
     return false;
 }
 
+static std::vector<RemakeChest> Joined(std::vector<RemakeChest> first, const std::vector<RemakeChest>& second) {
+    first.insert(first.end(), second.begin(), second.end());
+    return first;
+}
+
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
     static const std::vector<RemakeChest> table = LoadRemakeChests();
+    static const std::vector<RemakeChest> looseItemTable = LoadRemakeLooseItems();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
     static const std::vector<RemakeGift> giftTable = LoadRemakeGifts(table);
-    [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table, giftTable), true);
+    [[maybe_unused]] static const bool shopGoodsChecked =
+        (CheckShopGoods(Joined(table, looseItemTable), giftTable), true);
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
-    static const RemakeHintTables hintTables =
-        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable, skulltulaTable);
+    static const RemakeHintTables hintTables = LoadRemakeHintTables(
+        Joined(table, looseItemTable), ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable, skulltulaTable);
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });

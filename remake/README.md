@@ -49,8 +49,9 @@ codes the game puts before a noun.
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
 is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
-slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so
-does each gift, with SoH's sentence for it where that is true of the remake, and each Gold Skulltula.
+slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so does
+each gift, with SoH's sentence for it where that is true of the remake, each Gold Skulltula, and each item of
+`loose_items.tsv`. No crate stands by the graveyard's heart piece in the remake, so its sentence is our own.
 
 `skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
 remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row
@@ -71,6 +72,17 @@ gives it. One that holds a token drops the game's own. A skulltula never holds t
 which only a chest gives with their quiver or bullet bag (`FilledOnlyByChests`); the fill places them before skulltulas
 join it. A skulltula may hold the Bomb Bag: a bag fills whenever it raises Link's bomb limit, whoever gives it, and a
 skulltula's gave 20 bombs to a Link whose limit was 0.
+
+`loose_items.tsv` has a row for each item that lies loose in the remake and can be shuffled: the 14 heart pieces, the
+8 heart containers the bosses leave, the loose keys of the Bottom of the Well and the Shadow Temple, and the Fire
+Arrows the sun over Lake Hylia gives. Each is one placed pickup. Two loose items are left out: Ruto's Letter at the
+bottom of the lake has no saved record of its own, and the Gerudo Fortress double cell key stands under two hashes
+with its record in its own AI.
+
+- `location`: the SoH location, by SoH's English name for it.
+- `hash` and `files`: the pickup's actor hash, and every romfs scene file that places it, comma separated. Ten heart
+  pieces stand in both a child's and an adult's file under one hash.
+- `item`: what the pickup gives, by the remake's name, and so what it adds to the pool when shuffled.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.

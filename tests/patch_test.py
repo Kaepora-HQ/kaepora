@@ -19,7 +19,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           goods-and-copies <kaepora-patch> <game.nup>
+           loose-item-table|goods-and-copies <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1294,6 +1294,21 @@ def skulltulas(patch, game):
         assert entries[size_key(path)] == load_size(size, PACK_OVERHEAD), path
 
 
+def loose_item_table(patch, game):
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "loose_items.tsv", newline="") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    pickups = {"Obj_Heart_Piece": {"Obj_Heart_Piece", "Obj_GerudoValley_Heart_Piece"},
+               "Obj_Heart_Container": {"Obj_Heart_Container"}, "Item_Dungeon_SmallKey": {"Obj_Dungeon_SmallKey"},
+               "Item_Arrow_Fire": {FIRE_ARROWS_PICKUP}}
+    mod = patched(patch, game, plan([], loose_items=[(int(row["hash"]), row["files"].split(","), "Item_Boomerang")
+                                                     for row in rows]))
+    for row in rows:
+        for path in row["files"].split(","):
+            ours, theirs = (actor(game.placement(data), int(row["hash"])) for data in (mod[path], game.read(path)))
+            assert theirs["Gyaml"] in pickups[row["item"]], (row["location"], path, theirs["Gyaml"])
+            assert ours["Gyaml"] == "Obj_PickupShield_Item_Boomerang", (row["location"], path)
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -1934,6 +1949,7 @@ def main():
         "tested-pickup-mod": tested_pickup_mod,
         "loose-items": loose_items,
         "tested-skulltula-mod": tested_skulltula_mod,
+        "loose-item-table": loose_item_table,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

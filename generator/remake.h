@@ -9,10 +9,11 @@
 #include <string_view>
 #include <vector>
 
-// A SoH location and the remake chest it is. Where the remake has no chest, actors is empty.
+// A SoH location and the remake chest it is, or the item that lies loose there. Where the remake has no chest for a
+// chest location, actors is empty.
 struct RemakeChest {
-    // One actor that places the chest: its hash, and the romfs paths of the scene files that hold it, all in one Banc
-    // folder.
+    // One actor that places the chest or the loose item: its hash, and the romfs paths of the scene files that hold it,
+    // all in one Banc folder.
     struct Actor {
         std::string hash;
         std::vector<std::string> files;
@@ -58,6 +59,11 @@ struct RemakeShopSlot {
 // location. Throws when a table names an unknown location or item, repeats a hash, repeats a location for anything but
 // another copy of its chest, gives an unshuffled row no note, or leaves out a chest location of SoH's vanilla layouts.
 std::vector<RemakeChest> LoadRemakeChests();
+
+// The items of remake/loose_items.tsv, read from the copy built into the program, each one actor that gives its
+// location's item, all of them shuffled. Throws, naming the row, on a table that is not in the form remake/README.md
+// gives.
+std::vector<RemakeChest> LoadRemakeLooseItems();
 
 // What each shuffled shop slot adds to the pool, and the remake's name for it.
 inline constexpr RandomizerGet ShopFiller = RG_RED_RUPEE;

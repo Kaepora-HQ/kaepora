@@ -1,5 +1,6 @@
 remake_item	label	name	article
 Item_AgonyStone	Item_AgonyStone_Name	Echo Gem	the
+Item_Arrow_Fire	Item_Arrow_Fire_Name	Fire Arrow	the
 Item_Arrow_Ice	Item_Arrow_Ice_Name	Ice Arrow	the
 Item_BombBag_Small	Item_BombBag_Small_Name	Bomb Bag	the
 Item_BombBundle_Small	Item_BombBundle_Small_Name	Five Bombs	
@@ -31,6 +32,7 @@ Item_Sword_Kokiri	Weapon_Sword_Kokiri_Name	Kokiri Sword	the
 Item_Token_Gold	Item_Token_Gold_Name	Token	a
 Item_Wallet_Large	Item_Wallet_Large_Name	Giant's Wallet	a
 Item_Wallet_Medium	Item_Wallet_Medium_Name	Adult's Wallet	an
+Obj_Heart_Container	Obj_Heart_Container_Name	Heart Container	a
 Obj_Heart_Piece	Obj_Heart_Piece_Name	Piece of Heart	a
 Obj_MiniGame_SmallKey	Obj_MiniGame_SmallKey_Name	Door Key	a
 TBox_ArrowBundle_Large	Obj_ArrowBundle_Large_Name	10 Arrows	

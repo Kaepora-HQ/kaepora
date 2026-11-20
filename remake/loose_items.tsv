@@ -1,0 +1,26 @@
+location	hash	files	item
+LH Sun	4598657944866228526	Banc/HyruleField/HyruleField_Adult_Static.bcett.byml.zs	Item_Arrow_Fire
+LH Freestanding PoH	13469300937852836203	Banc/HyruleField/HyruleField_Adult_Static.bcett.byml.zs	Obj_Heart_Piece
+GV Waterfall Freestanding PoH	16129198288828948135	Banc/GerudoValley/GerudoValley_Adult_Static.bcett.byml.zs,Banc/GerudoValley/GerudoValley_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+Colossus Freestanding PoH	10592092054086534681	Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs,Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+Kak Impas House Freestanding PoH	17926402522258180222	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Static.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Adult_Static.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+Kak Windmill Freestanding PoH	13389209437182306002	Banc/KakarikoVillage/KakarikoVillage_Adult_Alternative_Static.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Adult_Static.bcett.byml.zs,Banc/KakarikoVillage/KakarikoVillage_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+Graveyard Freestanding PoH	2157466067026784951	Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs,Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+DMT Freestanding PoH	715147239509454487	Banc/DeathMountainTrail/DeathMountainTrail_Adult_Static.bcett.byml.zs,Banc/DeathMountainTrail/DeathMountainTrail_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+DMC Wall Freestanding PoH	10331043360028932045	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+DMC Volcano Freestanding PoH	744856631664786545	Banc/DeathMountainCrater/DeathMountainCrater_Adult_Static.bcett.byml.zs,Banc/DeathMountainCrater/DeathMountainCrater_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+ZR Near Open Grotto Freestanding PoH	11455676800795329345	Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs,Banc/ZoraRiver/ZoraRiver_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+ZR Near Domain Freestanding PoH	4189391771527808272	Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs,Banc/ZoraRiver/ZoraRiver_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+ZF Iceberg Freestanding PoH	12406896586250888098	Banc/ZoraFountain/ZoraFountain_Adult_Static.bcett.byml.zs	Obj_Heart_Piece
+ZF Bottom Freestanding PoH	8030885465575590602	Banc/ZoraFountain/ZoraFountain_Adult_Static.bcett.byml.zs	Obj_Heart_Piece
+LLR Freestanding PoH	9814903750835309225	Banc/HyruleField/HyruleField_Child_Static.bcett.byml.zs	Obj_Heart_Piece
+Shadow Temple Freestanding Key	12562389953863361839	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Item_Dungeon_SmallKey
+Bottom of the Well Freestanding Key	17649154319341333603	Banc/BottomOfTheWell/BottomOfTheWell_Static.bcett.byml.zs	Item_Dungeon_SmallKey
+Deku Tree Queen Gohma Heart Container	17948245526767051747	Banc/InsideTheDekuTree/InsideTheDekuTree_Static.bcett.byml.zs	Obj_Heart_Container
+Dodongos Cavern King Dodongo Heart Container	5936534468710061389	Banc/DodongoCavern/DodongoCavern_Static.bcett.byml.zs	Obj_Heart_Container
+Jabu Jabus Belly Barinade Heart Container	17608884438514432711	Banc/InsideJabuJabuBelly/InsideJabuJabuBelly_Static.bcett.byml.zs	Obj_Heart_Container
+Forest Temple Phantom Ganon Heart Container	18379569660496940670	Banc/ForestTemple/ForestTemple_Static.bcett.byml.zs	Obj_Heart_Container
+Fire Temple Volvagia Heart Container	9478330070473364248	Banc/FireTemple/FireTemple_Static.bcett.byml.zs	Obj_Heart_Container
+Water Temple Morpha Heart Container	14426685265732353862	Banc/WaterTemple/WaterTemple_Static.bcett.byml.zs	Obj_Heart_Container
+Spirit Temple Twinrova Heart Container	4720088048159616469	Banc/SpiritTemple/SpiritTemple_Static.bcett.byml.zs	Obj_Heart_Container
+Shadow Temple Bongo Bongo Heart Container	17599164808183510748	Banc/ShadowTemple/ShadowTemple_Static.bcett.byml.zs	Obj_Heart_Container

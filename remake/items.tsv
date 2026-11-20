@@ -1,5 +1,6 @@
 remake_item	soh_item
 Item_AgonyStone	Stone of Agony
+Item_Arrow_Fire	Fire Arrows
 Item_Arrow_Ice	Ice Arrows
 Item_BombBag_Small	Progressive Bomb Bag
 Item_BombBundle_Small	Bombs (5)
@@ -61,6 +62,7 @@ Item_Sword_Kokiri	Kokiri Sword
 Item_Token_Gold	Gold Skulltula Token
 Item_Wallet_Large	Progressive Wallet
 Item_Wallet_Medium	Progressive Wallet
+Obj_Heart_Container	Heart Container
 Obj_Heart_Piece	Piece of Heart
 Obj_MiniGame_SmallKey	Chest Game Small Key
 TBox_ArrowBundle_Large	Arrows (30)
