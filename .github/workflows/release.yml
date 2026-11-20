@@ -12,6 +12,9 @@ on:
       - .github/workflows/release.yml
       - .release-please-manifest.json
       - release-please-config.json
+      - dist/kaepora.iss
+      - tools/install-inno-setup.ps1
+      - tools/package-windows-installer.sh
       - tools/release-draft.sh
       - tools/release-files.sh
 
@@ -69,14 +72,26 @@ jobs:
   # The release environment holds the Azure IDs and admits only main, and Azure trusts only tokens of jobs in that
   # environment, so a pull request's run cannot sign.
   sign:
-    name: Sign and zip the Windows package
-    needs: check
+    name: Sign the Windows package and installer
+    needs: [release-please, check]
     runs-on: windows-2022
     timeout-minutes: 15
     environment: ${{ github.event_name == 'push' && 'release' || '' }}
     permissions:
       id-token: write
     steps:
+      - name: Check out the installer's scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.commit }}
+          sparse-checkout: |
+            dist/kaepora.iss
+            dist/org.kaepora.Kaepora.ico
+            tools/install-inno-setup.ps1
+            tools/package-windows-installer.sh
+          sparse-checkout-cone-mode: false
+
       - name: Download the package
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -106,27 +121,46 @@ jobs:
           files: ${{ github.workspace }}\kaepora\kaepora.exe
           exclude-environment-credential: true
 
-      - name: Check the signature
-        if: github.event_name == 'push'
+      - name: Install Inno Setup
         shell: pwsh
-        run: |
-          $signature = Get-AuthenticodeSignature kaepora/kaepora.exe
-          if ($signature.Status -ne 'Valid') {
-            throw "kaepora.exe's signature is $($signature.Status): $($signature.StatusMessage)"
-          }
-          "kaepora.exe is signed by $($signature.SignerCertificate.Subject)"
+        run: tools/install-inno-setup.ps1
 
-      - name: Zip the package
+      - name: Zip the package and make the installer
         shell: bash
         run: |
           mkdir signed
           (cd kaepora && cmake -E tar cf ../signed/kaepora-windows-x86_64.zip --format=zip -- *)
+          tools/package-windows-installer.sh kaepora signed/kaepora-windows-x86_64-setup.exe
 
-      - name: Upload the release's package
+      - name: Sign the installer
+        if: github.event_name == 'push'
+        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+        with:
+          endpoint: https://eus.codesigning.azure.net
+          signing-account-name: alsup-innovations
+          certificate-profile-name: public-trust
+          files: ${{ github.workspace }}\signed\kaepora-windows-x86_64-setup.exe
+          exclude-environment-credential: true
+
+      - name: Check the signatures
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          foreach ($file in 'kaepora/kaepora.exe', 'signed/kaepora-windows-x86_64-setup.exe') {
+            $signature = Get-AuthenticodeSignature $file
+            if ($signature.Status -ne 'Valid') {
+              throw "$file's signature is $($signature.Status): $($signature.StatusMessage)"
+            }
+            "$file is signed by $($signature.SignerCertificate.Subject)"
+          }
+
+      - name: Upload the release's package and installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kaepora-windows-x86_64-release
-          path: signed/kaepora-windows-x86_64.zip
+          path: |
+            signed/kaepora-windows-x86_64.zip
+            signed/kaepora-windows-x86_64-setup.exe
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
@@ -156,6 +190,31 @@ jobs:
           Expand-Archive kaepora-windows-x86_64.zip -DestinationPath kaepora
           tools/check-windows-package.ps1 kaepora
 
+  windows-installer:
+    name: Signed Windows installer on a fresh runner
+    needs: [release-please, sign]
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out the check scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.commit }}
+          sparse-checkout: |
+            tools/check-windows-installer.ps1
+            tools/check-windows-package.ps1
+          sparse-checkout-cone-mode: false
+
+      - name: Download the installer
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-windows-x86_64-release
+
+      - name: Install, start and uninstall Kaepora
+        shell: pwsh
+        run: tools/check-windows-installer.ps1 kaepora-windows-x86_64-setup.exe
+
   files:
     name: Release files
     needs: [release-please, check, sign]
@@ -178,7 +237,7 @@ jobs:
         with:
           name: kaepora-linux-x86_64-${{ github.sha }}
 
-      - name: Download the release's Windows package
+      - name: Download the release's Windows package and installer
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kaepora-windows-x86_64-release
@@ -194,7 +253,7 @@ jobs:
         run: >-
           tools/release-files.sh release
           "kaepora-$GITHUB_SHA-linux-x86_64.AppImage" "kaepora-$GITHUB_SHA-linux-x86_64.tar.gz"
-          signed/kaepora-windows-x86_64.zip kaepora-macos-arm64.zip
+          signed/kaepora-windows-x86_64.zip signed/kaepora-windows-x86_64-setup.exe kaepora-macos-arm64.zip
 
       - name: Upload the release files
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -207,7 +266,7 @@ jobs:
 
   publish:
     name: Publish the release
-    needs: [release-please, files, windows-package]
+    needs: [release-please, files, windows-package, windows-installer]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

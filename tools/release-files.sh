@@ -2,7 +2,7 @@
 # Puts a release's packages into one folder under the names the website's download buttons ask for, with SHA256SUMS and
 # the latest.json that the window's update notice reads.
 #
-# Usage: tools/release-files.sh <folder> <AppImage> <tar.gz> <Windows zip> <macOS zip>
+# Usage: tools/release-files.sh <folder> <AppImage> <tar.gz> <Windows zip> <Windows installer> <macOS zip>
 # Runs at the top of the repository.
 set -euo pipefail
 
@@ -25,7 +25,8 @@ mkdir "$folder"
 cp "$2" "$folder/kaepora-linux-x86_64.AppImage"
 cp "$3" "$folder/kaepora-linux-x86_64.tar.gz"
 cp "$4" "$folder/kaepora-windows-x86_64.zip"
-cp "$5" "$folder/kaepora-macos-arm64.zip"
+cp "$5" "$folder/kaepora-windows-x86_64-setup.exe"
+cp "$6" "$folder/kaepora-macos-arm64.zip"
 (cd "$folder" && sha256sum kaepora-* > SHA256SUMS)
 jq -n --arg version "$version" --arg url "$releases/tag/v$version" '{ version: $version, url: $url }' \
     > "$folder/latest.json"

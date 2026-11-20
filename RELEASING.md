@@ -7,8 +7,8 @@ release-please keeps one pull request open, titled `chore(main): release <versio
 Squash-merge the release pull request. `.github/workflows/release.yml` runs on every push to `main`, one run at a time. On the merge's push, release-please tags the merge commit `v<version>` and creates the release as a draft. Every run then looks for a draft of the version in `main`'s manifest. While there is one, the run:
 
 1. Builds and tests the draft's tagged commit on Linux, Windows and macOS, with the jobs of `check.yml`.
-2. Signs `kaepora.exe` and zips the Windows package again. The macOS app keeps the ad hoc signature its build gave it.
-3. Starts the signed package on a fresh Windows runner.
+2. Signs `kaepora.exe` and zips the Windows package again. It makes the Windows installer from the same folder, so the installer holds the signed `kaepora.exe`, with the Inno Setup that `tools/install-inno-setup.ps1` pins and installs from upstream's release, and signs the setup file. The uninstaller, which Setup writes on the player's PC, and the copy of itself that Setup unpacks into TEMP and runs are not signed. The macOS app keeps the ad hoc signature its build gave it.
+3. Starts the signed package on a fresh Windows runner. On another, it installs the signed installer, starts Kaepora from where it installed, and uninstalls it.
 4. Writes `SHA256SUMS` and `latest.json`.
 5. Uploads the files to the draft and publishes it.
 
@@ -36,6 +36,6 @@ The release stays a draft until the last step publishes it, and until then nothi
 
 - If a runner, GitHub, or Azure failed, run the failed jobs again with `gh run rerun <run id> --failed`, or push the next commit to `main`. Either run finishes the draft. A run that finds the release already published changes nothing.
 - If `release.yml` or `check.yml` is at fault, merge the fix to `main`. Its push runs the fixed workflow, which finishes the same draft.
-- If the program or a script under `tools/` is at fault, the tagged commit holds the fault, and that version cannot ship. Delete the draft with `gh release delete v<version>`, which keeps the tag, and then merge the fix. release-please finds the failed release by its tag and lists the fix in the next release pull request. A fix typed `ci` or `build` waits for the next `feat` or `fix` commit.
+- If the program, a script under `tools/`, or the installer's script `dist/kaepora.iss` or its icon is at fault, the tagged commit holds the fault, and that version cannot ship. Delete the draft with `gh release delete v<version>`, which keeps the tag, and then merge the fix. release-please finds the failed release by its tag and lists the fix in the next release pull request. A fix typed `ci` or `build` waits for the next `feat` or `fix` commit.
 
 Never rewrite `main` after a release is tagged. release-please finds the last release by its tag.
