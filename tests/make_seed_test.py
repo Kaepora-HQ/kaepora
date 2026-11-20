@@ -4,6 +4,7 @@ Usage: python3 -I tests/make_seed_test.py <kaepora-make-seed> <kaepora-seedgen> 
            [test name ...]
 """
 
+import csv
 import json
 import pathlib
 import subprocess
@@ -91,6 +92,23 @@ class MakeSeedTest(unittest.TestCase):
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(json.loads(plan.read_text())["event_numbers"]), 26)
+
+    def test_a_seed_with_dungeon_rewards_shuffled_is_patched(self):
+        # A scene after a boss, or Rauru's in the Chamber of Sages, that gives another item than the game's is written.
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Dungeon rewards": "Shuffled", "Gifts": "Shuffled"})
+        result = subprocess.run([SEEDGEN, "31", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "rewards.tsv", newline="") as f:
+            own = {row["flow"]: row["item"] for row in csv.DictReader(f, delimiter="\t")}
+        placed = {entry["flow"]: entry["text"] for entry in json.loads(plan.read_text())["event_texts"]
+                  if entry["flow"] in own}
+        changed = {flow for flow, item in placed.items() if item != own[flow]}
+        self.assertEqual(placed.keys(), own.keys())
+        self.assertTrue(changed)
+        self.assertEqual({flow for flow in own if (mod / "romfs" / flow).is_file()}, changed)
 
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:

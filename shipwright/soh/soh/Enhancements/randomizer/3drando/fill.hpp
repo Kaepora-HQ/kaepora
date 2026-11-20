@@ -80,6 +80,12 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 // a loose spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
+// The Spiritual Stones and the medallions. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire,
+// each with its model, Link's hold-up pose and its named window (seen), and a gift raises an item the same way. No shop
+// slot, Gold Skulltula or loose spot has been seen to give one, so the fill places them before those join it: in a
+// chest, at a gift or at one of the nine places that hand one over.
+bool KeptInChestsAndCalls(RandomizerGet item);
+
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);
 
 void ProcessRegion(Region* region, GetAccessibleLocationsStruct& gals, RandomizerGet ignore = RG_NONE,

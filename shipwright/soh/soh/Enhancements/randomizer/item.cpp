@@ -401,8 +401,9 @@ bool Item::IsMajorItem() const {
         return false;
     }
 
-    if (type == ITEMTYPE_DUNGEONREWARD &&
-        ctx->GetOption(RSK_SHUFFLE_DUNGEON_REWARDS).Is(RO_DUNGEON_REWARDS_END_OF_DUNGEON)) {
+    // In the remake a stone or a medallion opens nothing: the game's gates wait for the bosses. So a hint names none as
+    // an item to find, and none keeps its area from being called foolish.
+    if (type == ITEMTYPE_DUNGEONREWARD) {
         return false;
     }
 

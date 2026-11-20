@@ -138,7 +138,21 @@ static bool Shuffled(const RemakeSkulltula& skulltula, const SeedSettings& setti
     return false;
 }
 
-static std::vector<RemakeChest> Joined(std::vector<RemakeChest> first, const std::vector<RemakeChest>& second) {
+// The dungeon of each boss whose place hands over a stone or a medallion. Rauru's place is in none.
+static constexpr std::pair<RandomizerCheck, std::string_view> BossDungeons[] = {
+    { RC_QUEEN_GOHMA, "Deku Tree" },     { RC_KING_DODONGO, "Dodongo's Cavern" }, { RC_BARINADE, "Jabu-Jabu's Belly" },
+    { RC_PHANTOM_GANON, "Forest Temple" }, { RC_VOLVAGIA, "Fire Temple" },         { RC_MORPHA, "Water Temple" },
+    { RC_BONGO_BONGO, "Shadow Temple" }, { RC_TWINROVA, "Spirit Temple" },
+};
+
+// A dungeon left out of the shuffle keeps what its boss hands over, as it keeps its chests.
+static bool KeptInPlace(const RemakeGift& reward, const SeedSettings& settings) {
+    const auto boss = std::ranges::find(BossDungeons, reward.location, &std::pair<RandomizerCheck, std::string_view>::first);
+    return boss != std::end(BossDungeons) &&
+           !settings.shuffledDungeons.contains(*std::ranges::find(Dungeons, boss->second, &Dungeon::name));
+}
+
+template <typename T> static std::vector<T> Joined(std::vector<T> first, const std::vector<T>& second) {
     first.insert(first.end(), second.begin(), second.end());
     return first;
 }
@@ -150,13 +164,16 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeChest> looseItemTable = LoadRemakeLooseItems();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
     static const std::vector<RemakeGift> giftTable = LoadRemakeGifts(table);
+    static const std::vector<RemakeGift> rewardTable = LoadRemakeRewards(table);
+    // The fill puts no stone or medallion in a shop slot.
     [[maybe_unused]] static const bool shopGoodsChecked =
         (CheckShopGoods(Joined(table, looseItemTable), giftTable), true);
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
     static const std::vector<RemakeSongPlace> songTable = LoadRemakeSongs();
     static const RemakeHintTables hintTables = LoadRemakeHintTables(Joined(table, looseItemTable),
                                                                     ShuffledSlots(shopTable, ShopCount::FivePerShop),
-                                                                    giftTable, skulltulaTable, songTable);
+                                                                    Joined(giftTable, rewardTable), skulltulaTable,
+                                                                    songTable);
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -165,7 +182,13 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
-    const std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
+    // The places that hand over a stone or a medallion give through an event flow's call, which the patcher writes as
+    // it writes a gift's.
+    std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
+    if (settings.rewards == Rewards::Shuffled) {
+        std::ranges::copy_if(rewardTable, std::back_inserter(gifts),
+                             [&](const RemakeGift& reward) { return !KeptInPlace(reward, settings); });
+    }
     std::vector<RemakeSkulltula> skulltulas;
     std::ranges::copy_if(skulltulaTable, std::back_inserter(skulltulas),
                          [&](const RemakeSkulltula& skulltula) { return Shuffled(skulltula, settings); });

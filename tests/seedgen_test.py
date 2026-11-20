@@ -45,7 +45,7 @@ DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywh
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Songs": "Vanilla",
-                    "Loose items": "Vanilla", "Lens of Truth": "Needed",
+                    "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
                     "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
@@ -54,6 +54,7 @@ EVERY_SETTING_CHANGED = {
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
     "Gold Skulltulas": "All", "Gifts": "Shuffled", "Songs": "Shuffled among themselves", "Loose items": "Shuffled",
+    "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
@@ -81,6 +82,14 @@ GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
 GIFTS_SHUFFLED = {"Gifts": "Shuffled"}
+REWARD_SITES = read_tsv("rewards.tsv")
+REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
+REWARDS = {row["item"] for row in REWARD_SITES}
+REWARDS_SHUFFLED = {"Dungeon rewards": "Shuffled"}
+# The SoH area a hint names each reward place by. Their names have no area in front.
+REWARD_AREAS = {"Queen Gohma": "Deku Tree", "King Dodongo": "Dodongos Cavern", "Barinade": "Jabu Jabus Belly",
+                "Phantom Ganon": "Forest Temple", "Volvagia": "Fire Temple", "Morpha": "Water Temple",
+                "Twinrova": "Spirit Temple", "Bongo Bongo": "Shadow Temple", "Gift from Rauru": "Market"}
 AGONY_GUIDE_SHUT = {"flow": "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "event": "Event371",
                     "param": "GameDataName", "text": "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
@@ -189,11 +198,12 @@ def playthrough_steps(log):
 
 
 def soh_area(location):
-    """The SoH area of a location: the prefix of its name, or for a song place, whose name names none, its area."""
+    """The SoH area of a location: the prefix of its name, or for a song place or a reward place, whose names name
+    none, its area."""
     if location in SONG_PLACE_AREAS:
         return SONG_PLACE_AREAS[location]
     prefixes = [area for area in PLACE_BY_AREA_PREFIX if location.startswith(area + " ")]
-    return max(prefixes, key=len) if prefixes else None
+    return max(prefixes, key=len) if prefixes else REWARD_AREAS.get(location)
 
 
 def place_of(location):
@@ -218,9 +228,13 @@ def shop_of(row):
     return row["location"].rsplit(" Item ", 1)[0]
 
 
-def gift_sites(plan):
-    return [(GIFT_LOCATIONS[site], entry["text"]) for entry in plan["event_texts"]
-            if (site := (entry["flow"], entry["event"], entry["param"])) in GIFT_LOCATIONS]
+def gift_sites(plan, locations=GIFT_LOCATIONS):
+    return [(locations[site], entry["text"]) for entry in plan["event_texts"]
+            if (site := (entry["flow"], entry["event"], entry["param"])) in locations]
+
+
+def reward_sites(plan):
+    return gift_sites(plan, REWARD_LOCATIONS)
 
 
 def placed_remake_items(spoiler, plan):
@@ -233,7 +247,7 @@ def placed_remake_items(spoiler, plan):
     lessons = {tuple(row["gift"].split(":")): row["location"] for row in SONG_PLACES}
     placed |= {lessons[text["flow"], text["event"]]: text["text"] for text in plan["event_texts"]
                if (text["flow"], text["event"]) in lessons}
-    placed |= dict(gift_sites(plan))
+    placed |= dict(gift_sites(plan)) | dict(reward_sites(plan))
     return placed | {SKULLTULA_AT[entry["hash"]]: entry["item"] for entry in plan["skulltulas"]}
 
 
@@ -646,9 +660,13 @@ class SeedgenTest(unittest.TestCase):
             self.assertIn("Bongo Bongo", playthrough_steps(never))
 
     def test_every_setting_changed_at_once(self):
+        # The place after a boss is a step for the boss whatever it holds, so only there may the Lens stand on the
+        # route. In seed 430 Volvagia's place holds it.
+        bosses = REWARD_AREAS.keys() - {"Gift from Rauru"}
         for seed in range(400, 500):
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
-            self.assertNotIn("Lens of Truth", playthrough_steps(spoiler).values())
+            lens = {place for place, item in playthrough_steps(spoiler).items() if item == "Lens of Truth"}
+            self.assertLessEqual(lens, bosses, seed)
 
     def assert_shop_slots_sell_the_pool(self, spoiler, plan, slots):
         """The plan's shop slots are the given rows, in table order, each with the spoiler log's item and a cheap price,
@@ -806,6 +824,62 @@ class SeedgenTest(unittest.TestCase):
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
+
+    def test_dungeon_rewards_shuffled(self):
+        # With the gifts at Vanilla the nine places join the chests' shuffle. Link's Pocket, where the patcher writes
+        # nothing, holds no reward: the Light Medallion is one of the nine.
+        spoiler, plan = self.generate("31", REWARDS_SHUFFLED)
+        self.assertEqual(spoiler["settings"]["Dungeon rewards"], "Shuffled")
+        sites = reward_sites(plan)
+        self.assertEqual([location for location, _ in sites], list(REWARD_LOCATIONS.values()))
+        for location, item in sites:
+            self.assertIn((item, spoiler["locations"][location]), ITEM_PAIRS, location)
+        rows = {row["hash"]: row for row in SHUFFLED}
+        chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+        self.assertEqual(collections.Counter(chests.values()) + collections.Counter(item for _, item in sites),
+                         POOL + collections.Counter(REWARDS))
+        self.assertTrue(REWARDS & set(chests.values()))
+        self.assertTrue({item for _, item in sites} - REWARDS)
+
+    def test_stones_and_medallions_go_to_chests_gifts_and_the_nine_places(self):
+        # A chest gave a stone and a medallion with their models and Link's hold-up pose, and a gift raises an item the
+        # same way. No shop slot, Gold Skulltula or loose spot has been seen to give one.
+        settings = REWARDS_SHUFFLED | GIFTS_SHUFFLED | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED
+        chests = {row["location"] for row in SHUFFLED}
+        held = collections.Counter()
+        for seed in range(600, 620):
+            spoiler, plan = self.generate(str(seed), settings)
+            placed = placed_remake_items(spoiler, plan)
+            self.assertEqual(sorted(item for item in placed.values() if item in REWARDS), sorted(REWARDS), seed)
+            for location, item in placed.items():
+                if item in REWARDS:
+                    kind = ("chest" if location in chests else "gift" if location in GIFT_LOCATIONS.values()
+                            else "reward place" if location in REWARD_AREAS else location)
+                    held[item.startswith("Item_Medal_"), kind] += 1
+        self.assertEqual({kind for _, kind in held}, {"chest", "gift", "reward place"}, held)
+        self.assertTrue(held[True, "chest"] and held[False, "chest"], held)
+
+    def test_a_dungeon_left_out_keeps_its_boss_reward(self):
+        settings = REWARDS_SHUFFLED | GIFTS_SHUFFLED | {"Shuffled dungeons": [name for name in DUNGEONS
+                                                                               if name != "Water Temple"]}
+        spoiler, plan = self.generate("1", settings)
+        self.assertNotIn("Morpha", spoiler["locations"])
+        self.assertNotIn("Morpha", dict(reward_sites(plan)))
+        self.assertNotIn("Item_Medal_Water", placed_remake_items(spoiler, plan).values())
+        self.assertIn("Twinrova", spoiler["locations"])
+
+    def test_hints_name_no_stone_or_medallion_as_an_item_to_find(self):
+        # They open nothing in the remake. A hint about a place may still say what it holds.
+        names = {ITEM_NAMES[item] for item in REWARDS}
+        for seed in range(620, 640):
+            spoiler, _ = self.generate(str(seed), REWARDS_SHUFFLED | GIFTS_SHUFFLED)
+            for hint in spoiler["hints"].values():
+                found = (re.fullmatch(r"They say that (.+) can be found at .+\.", hint)
+                         or re.fullmatch(r"They say that .+ hoards (.+)\.", hint))
+                self.assertFalse(found and found[1] in names, hint)
+
+    def test_hints_name_dungeon_rewards_truly(self):
+        self.assert_hints_are_true("32", REWARDS_SHUFFLED | GIFTS_SHUFFLED)
 
     def test_gold_skulltulas_shuffled(self):
         dungeon = [row for row in SKULLTULAS if in_a_dungeon(row["location"])]

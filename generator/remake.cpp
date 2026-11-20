@@ -53,6 +53,9 @@ static constexpr unsigned char shopGoodsTable[] = {
 static constexpr unsigned char giftTable[] = {
 #embed "../remake/gifts.tsv"
 };
+static constexpr unsigned char rewardTable[] = {
+#embed "../remake/rewards.tsv"
+};
 static constexpr unsigned char skulltulaTable[] = {
 #embed "../remake/skulltulas.tsv"
 };
@@ -539,12 +542,13 @@ void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<Re
     }
 }
 
-std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
+static std::vector<RemakeGift> LoadGives(const std::string& file, std::span<const unsigned char> table,
+                                         const std::vector<RemakeChest>& chests) {
     const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
     std::vector<RemakeGift> gifts;
     size_t line = 1;
-    for (const auto& row : ReadTable("remake/gifts.tsv", giftTable, "location\tflow\tevent\tparam\titem")) {
-        const std::string where = std::format("remake/gifts.tsv line {}: ", ++line);
+    for (const auto& row : ReadTable(file, table, "location\tflow\tevent\tparam\titem")) {
+        const std::string where = std::format("{} line {}: ", file, ++line);
         const std::string& name = row[0];
         const std::string& flow = row[1];
         const std::string& item = row[4];
@@ -569,6 +573,14 @@ std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) 
         gift->sites.push_back({ .flow = flow, .event = row[2], .param = row[3] });
     }
     return gifts;
+}
+
+std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
+    return LoadGives("remake/gifts.tsv", giftTable, chests);
+}
+
+std::vector<RemakeGift> LoadRemakeRewards(const std::vector<RemakeChest>& chests) {
+    return LoadGives("remake/rewards.tsv", rewardTable, chests);
 }
 
 std::vector<RemakeSkulltula> LoadRemakeSkulltulas() {

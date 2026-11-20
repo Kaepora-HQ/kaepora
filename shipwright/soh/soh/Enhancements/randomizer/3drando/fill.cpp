@@ -811,6 +811,10 @@ static void CalculateWotH() {
 }
 
 // Calculate barren locations and assign Barren Candidacy to all locations inside those areas
+static bool IsRewardPlace(RandomizerCheck location) {
+    return Rando::StaticData::GetLocation(location)->GetRCType() == RCTYPE_DUNGEON_REWARD && location != RC_GANON;
+}
+
 static void CalculateBarren() {
     auto ctx = Rando::Context::GetInstance();
     std::array<bool, RCAREA_INVALID + 1> NotBarren = {};
@@ -821,8 +825,10 @@ static void CalculateBarren() {
 
     for (RandomizerCheck loc : ctx->allLocations) {
         Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);
-        // If a location has a major item or is a way of the hero location, it is not barren
-        if (itemLoc->GetPlacedItem().IsMajorItem() || itemLoc->IsWothCandidate() ||
+        // If a location has a major item or is a way of the hero location, it is not barren. The remake's gates wait
+        // for the bosses, so a place that hands over a stone or a medallion keeps its area from being foolish whatever
+        // it holds, as it does when each holds its own reward.
+        if (itemLoc->GetPlacedItem().IsMajorItem() || itemLoc->IsWothCandidate() || IsRewardPlace(loc) ||
             (shieldTunicGate && itemLoc->GetPlacedItem().IsShieldOrTunic())) {
             NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()] = true;
         }
@@ -1096,6 +1102,10 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
 void ClearProgress() {
 }
 
+bool KeptInChestsAndCalls(RandomizerGet item) {
+    return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_DUNGEONREWARD;
+}
+
 bool KeptFromShops(RandomizerGet item) {
     const ItemType type = Rando::StaticData::RetrieveItem(item).GetItemType();
     return type == ITEMTYPE_SMALLKEY || type == ITEMTYPE_BOSSKEY || type == ITEMTYPE_MAP || type == ITEMTYPE_COMPASS ||
@@ -1162,6 +1172,12 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
                                                }),
                         songPlaces, true);
         }
+
+        std::vector<RandomizerCheck> chestsAndCalls = shuffledLocations;
+        for (const RemakeGift& gift : gifts) {
+            chestsAndCalls.push_back(gift.location);
+        }
+        AssumedFill(FilterAndEraseFromPool(itemPool, KeptInChestsAndCalls), chestsAndCalls);
 
         for (const RemakeChest& looseItem : looseItems) {
             shuffledLocations.push_back(looseItem.location);

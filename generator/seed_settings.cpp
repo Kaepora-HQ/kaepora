@@ -99,6 +99,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
     json[std::string(GiftsSetting)] = Words(GiftsChoices, settings.gifts);
     json[std::string(SongsSetting)] = Words(SongsChoices, settings.songs);
     json[std::string(LooseItemsSetting)] = Words(LooseItemsChoices, settings.looseItems);
+    json[std::string(RewardsSetting)] = Words(RewardsChoices, settings.rewards);
     json[std::string(LensSetting)] = Words(LensChoices, settings.lens);
     json[std::string(GossipStonesSetting)] = Words(GossipStonesChoices, settings.gossipStones);
     json[std::string(HintsFromCharactersSetting)] = Words(HintsFromCharactersChoices, settings.hintsFromCharacters);
@@ -134,6 +135,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             shops.emplace(*shop, value);
         } else if (setting == GiftsSetting) {
             settings.gifts = Parse(GiftsChoices, setting, value);
+        } else if (setting == RewardsSetting) {
+            settings.rewards = Parse(RewardsChoices, setting, value);
         } else if (setting == SkulltulasSetting) {
             settings.skulltulas = Parse(SkulltulasChoices, setting, value);
         } else if (setting == SongsSetting) {

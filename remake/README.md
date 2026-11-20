@@ -306,3 +306,13 @@ scenes after the eight bosses, and Rauru's in the Chamber of Sages, SoH's "Gift 
 `gifts.tsv`. The five sages' scenes are written in their `.110` copies, as Dampé's tour is. Each scene's call gives
 the item and moves no quest: the blue warp's chain completes the boss's quest by an event of its own, before or after
 the scene, and the scene shows the usual stone or medallion as a model of its own (read from the game's flows).
+
+With "Dungeon rewards" at "Shuffled" the nine join the shuffle, each written as a gift is, and the nine rewards join the
+pool. A dungeon left out of "Shuffled dungeons" keeps its boss's reward. Seen in the game by an agent: a chest gave the
+Kokiri Emerald, the Forest Medallion and the Zora Sapphire, each with its model, Link's hold-up pose and its named
+window. A stone's pack names `AS/Dummy`, no file, and a medallion's `AS/DemoDummy`, which only cutscene props share, and
+a medallion's pack has no sound link (read from the files); none of that showed in the chest's give. A gift raises an
+item with the same pose (`Dm_SY_GetInEvent`, read), so a reward at a gift is inferred. No shop slot, Gold Skulltula or
+loose spot has been seen to give one, so the fill places the rewards before those join it (`KeptInChestsAndCalls`). A
+reward opens nothing in the remake, so it is no major item: no hint names one as an item to find, and none keeps its
+area from being called foolish. The place after a boss, or Rauru's, keeps its area from being foolish whatever it holds.

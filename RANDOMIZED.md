@@ -54,6 +54,12 @@ Set **Loose items** to **Shuffled**, and the items that lie in the open join the
 
 The seed's item lies where the game's did, and you take it by walking into it. A heart piece, a heart container and an item the seed left in its own spot are the game's own, and you take them as the game has you. A boss still shows a heart container as it falls, and what lies there afterwards is the seed's item. A dungeon you untick under **Shuffled dungeons** keeps its own. With **Vanilla**, each spot holds what the game has.
 
+## Dungeon rewards
+
+Set **Dungeon rewards** to **Shuffled**, and the nine places where the game hands over a Spiritual Stone or a medallion join the shuffle: the eight dungeon bosses and Rauru. A boss can then leave you the Hookshot, and a stone or a medallion can turn up somewhere else. A dungeon you untick under **Shuffled dungeons** keeps its boss's own.
+
+The stones and medallions open nothing by themselves: the doors and scenes the story ties to them wait for their bosses, as the game has it. With **Vanilla**, each boss gives what the game has.
+
 ## Hints
 
 With **Gossip stones** at **Give hints**, a stone speaks without the Mask of Truth, and most stones say something true about your seed.

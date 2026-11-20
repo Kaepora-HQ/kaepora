@@ -207,6 +207,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
                      a_gift_can_hold_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
+                     dungeon_rewards_shuffled stones_and_medallions_go_to_chests_gifts_and_the_nine_places
+                     a_dungeon_left_out_keeps_its_boss_reward
+                     hints_name_no_stone_or_medallion_as_an_item_to_find hints_name_dungeon_rewards_truly
                      gold_skulltulas_shuffled skulltulas_hold_the_bomb_bag_the_bow_and_the_slingshot
                      a_dungeon_left_out_keeps_its_skulltulas
                      a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere
@@ -325,8 +328,8 @@ if(KAEPORA_GAME_NUP)
                           a_seed_with_gifts_and_shop_goods_shuffled_is_patched
                           a_seed_with_gold_skulltulas_shuffled_is_patched
                           a_seed_with_loose_items_shuffled_is_patched a_seed_with_songs_shuffled_is_patched
-                          two_seeds_in_one_process same_seed_twice_in_one_process existing_folder_is_refused
-                          new_folder_in_a_missing_folder)
+                          a_seed_with_dungeon_rewards_shuffled_is_patched two_seeds_in_one_process
+                          same_seed_twice_in_one_process existing_folder_is_refused new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py
                      $<TARGET_FILE:kaepora-make-seed> $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-patch>

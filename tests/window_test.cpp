@@ -557,6 +557,7 @@ private slots:
                                 "Gifts: Vanilla\n"
                                 "Songs: Vanilla\n"
                                 "Loose items: Vanilla\n"
+                                "Dungeon rewards: Vanilla\n"
                                 "Lens of Truth: Never needed\n"
                                 "Gossip stones: Give hints\n"
                                 "Hints from characters: Give hints";
@@ -631,6 +632,7 @@ private slots:
         choice("Gifts")->setCurrentText("Shuffled");
         choice("Songs")->setCurrentText("Shuffled among themselves");
         choice("Loose items")->setCurrentText("Shuffled");
+        choice("Dungeon rewards")->setCurrentText("Shuffled");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -646,6 +648,7 @@ private slots:
         QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Songs")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Loose items")->currentText(), QString("Vanilla"));
+        QCOMPARE(choice("Dungeon rewards")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
         QCOMPARE(choice("Hints from characters")->currentText(), QString("Give hints"));
@@ -799,8 +802,8 @@ private slots:
             titles << group->title();
         }
         QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
-        QCOMPARE(rows("Shuffle"),
-                 (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs", "Loose items" }));
+        QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
+                                                "Loose items", "Dungeon rewards" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 
@@ -844,6 +847,7 @@ private slots:
         QTest::newRow("gifts") << "Gifts" << "Shuffled" << "Gifts shuffled";
         QTest::newRow("songs") << "Songs" << "Shuffled among themselves" << "Songs shuffled";
         QTest::newRow("loose items") << "Loose items" << "Shuffled" << "Loose items shuffled";
+        QTest::newRow("dungeon rewards") << "Dungeon rewards" << "Shuffled" << "Dungeon rewards shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";

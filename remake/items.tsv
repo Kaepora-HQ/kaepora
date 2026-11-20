@@ -52,6 +52,12 @@ Item_HeavyBoot	Iron Boots
 Item_Hookshot	Progressive Hookshot
 Item_HoverBoot	Hover Boots
 Item_Longshot	Progressive Hookshot
+Item_Medal_Fire	Fire Medallion
+Item_Medal_Forest	Forest Medallion
+Item_Medal_Light	Light Medallion
+Item_Medal_Shadow	Shadow Medallion
+Item_Medal_Spirit	Spirit Medallion
+Item_Medal_Water	Water Medallion
 Item_Melody_EponaSong	Epona's Song
 Item_Melody_FireBolero	Bolero of Fire
 Item_Melody_ForestMinuet	Minuet of Forest
@@ -70,6 +76,9 @@ Item_Scale_Gold	Progressive Scale
 Item_Scale_Silver	Progressive Scale
 Item_ScrubBusinessSeed	Business Scrub Seed
 Item_Shield_Mirror	Mirror Shield
+Item_Stone_Fire	Goron's Ruby
+Item_Stone_Forest	Kokiri's Emerald
+Item_Stone_Water	Zora's Sapphire
 Item_Sword_Kokiri	Kokiri Sword
 Item_Token_Gold	Gold Skulltula Token
 Item_Wallet_Large	Progressive Wallet

@@ -22,6 +22,12 @@ Item_HeavyBoot	Armor_Adult_HeavyBoot_Name	Iron Boots	the
 Item_Hookshot	Item_Hookshot_Name	Hookshot	the
 Item_HoverBoot	Armor_Adult_HoverBoot_Name	Hover Boots	the
 Item_Longshot	Item_Longshot_Name	Longshot	the
+Item_Medal_Fire	Item_Medal_Fire_Name	Fire Medallion	the
+Item_Medal_Forest	Item_Medal_Forest_Name	Forest Medallion	the
+Item_Medal_Light	Item_Medal_Light_Name	Light Medallion	the
+Item_Medal_Shadow	Item_Medal_Shadow_Name	Shadow Medallion	the
+Item_Medal_Spirit	Item_Medal_Spirit_Name	Spirit Medallion	the
+Item_Medal_Water	Item_Medal_Water_Name	Water Medallion	the
 Item_Melody_EponaSong	Item_Melody_EponaSong_Name	Epona's Song	
 Item_Melody_FireBolero	Item_Melody_FireBolero_Name	Bolero of Fire	the
 Item_Melody_ForestMinuet	Item_Melody_ForestMinuet_Name	Minuet of the Forest	the
@@ -40,6 +46,9 @@ Item_Scale_Gold	Item_Scale_Gold_Name	Golden Scale	a
 Item_Scale_Silver	Item_Scale_Silver_Name	Silver Scale	a
 Item_ScrubBusinessSeed	Item_ScrubBusinessSeed_Name	Business Scrub Seed	a
 Item_Shield_Mirror	Weapon_Shield_Mirror_Name	Mirror Shield	the
+Item_Stone_Fire	Item_Stone_Fire_Name	Goron Ruby	the
+Item_Stone_Forest	Item_Stone_Forest_Name	Kokiri Emerald	the
+Item_Stone_Water	Item_Stone_Water_Name	Zora Sapphire	the
 Item_Sword_Kokiri	Weapon_Sword_Kokiri_Name	Kokiri Sword	the
 Item_Token_Gold	Item_Token_Gold_Name	Token	a
 Item_Wallet_Large	Item_Wallet_Large_Name	Giant's Wallet	a

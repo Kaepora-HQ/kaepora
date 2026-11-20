@@ -92,6 +92,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.looseItems == LooseItems::Shuffled) {
         changed << "loose items shuffled";
     }
+    if (settings.rewards == Rewards::Shuffled) {
+        changed << "dungeon rewards shuffled";
+    }
     if (settings.lens == Lens::NeverNeeded) {
         changed << "Lens never needed";
     }
@@ -147,6 +150,7 @@ QString Details(const SeedSettings& settings) {
           << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
           << Line(SongsSetting, QString::fromUtf8(Words(SongsChoices, settings.songs)))
           << Line(LooseItemsSetting, QString::fromUtf8(Words(LooseItemsChoices, settings.looseItems)))
+          << Line(RewardsSetting, QString::fromUtf8(Words(RewardsChoices, settings.rewards)))
           << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
           << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)))
           << Line(HintsFromCharactersSetting,
@@ -271,6 +275,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     QComboBox* gifts = Choice(GiftsChoices);
     QComboBox* songs = Choice(SongsChoices);
     QComboBox* looseItems = Choice(LooseItemsChoices);
+    QComboBox* rewards = Choice(RewardsChoices);
     auto* shuffleForm = new QFormLayout;
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     shuffleForm->addRow(shopPricesLabel, shopPricesRow);
@@ -278,6 +283,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shuffleForm->addRow(QString::fromUtf8(GiftsSetting), gifts);
     shuffleForm->addRow(QString::fromUtf8(SongsSetting), songs);
     shuffleForm->addRow(QString::fromUtf8(LooseItemsSetting), looseItems);
+    shuffleForm->addRow(QString::fromUtf8(RewardsSetting), rewards);
     auto* shuffleGroup = new QGroupBox("Shuffle");
     shuffleGroup->setLayout(shuffleForm);
 
@@ -346,6 +352,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(gifts, shown.gifts);
         Select(songs, shown.songs);
         Select(looseItems, shown.looseItems);
+        Select(rewards, shown.rewards);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
         Select(hintsFromCharacters, shown.hintsFromCharacters);
@@ -384,6 +391,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.gifts = Selected<Gifts>(gifts);
         shown.songs = Selected<Songs>(songs);
         shown.looseItems = Selected<LooseItems>(looseItems);
+        shown.rewards = Selected<Rewards>(rewards);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);
         shown.hintsFromCharacters = Selected<HintsFromCharacters>(hintsFromCharacters);
