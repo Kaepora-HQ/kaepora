@@ -350,6 +350,11 @@ class LogicTest(unittest.TestCase):
         no_hover_boots = ("Shadow Temple Hover Boots Chest", "Green Rupee")
         self.assertTrue(self.reachable("Shadow Temple Hover Boots Chest", no_hover_boots))
 
+    def test_the_lake_sun_gives_its_item_only_after_the_water_temple(self):
+        self.assertTrue(self.reachable("LH Sun"))
+        self.assertFalse(self.reachable("LH Sun", ("Ice Cavern Iron Boots Chest", "Green Rupee"),
+                                        ("Link's Pocket", "Progressive Hookshot")))
+
     def test_shadow_temple_fifth_lock_guards_the_boss_key(self):
         # The four other locks stand on the way to the maze, so the boss key room takes all five keys. The door before
         # the boss has no lock.
@@ -680,10 +685,11 @@ class LogicTest(unittest.TestCase):
     def test_spirit_temple_climb_room_door_needs_no_explosives(self):
         # A child reaches the statue room, where the Map Chest stands, only through the climb room's door, which stands
         # open from the start. Without the only bomb bag, Link reaches neither the Goron's Ruby nor the Zora's Sapphire
-        # nor a magic meter, so those come from elsewhere.
+        # nor a magic meter nor fire for the Map Chest's torches, so those come from elsewhere.
         no_bomb_bag = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),
                        ("KF Mido Top Left Chest", "Goron's Ruby"), ("KF Mido Bottom Left Chest", "Zora's Sapphire"),
-                       ("KF Mido Bottom Right Chest", "Progressive Magic Meter"))
+                       ("KF Mido Bottom Right Chest", "Progressive Magic Meter"),
+                       ("KF Mido Top Right Chest", "Din's Fire"))
         self.assertTrue(self.reachable("Spirit Temple Map Chest", *no_bomb_bag))
 
     def test_meadow_song_of_time_grotto_stone_needs_the_song_of_time(self):
