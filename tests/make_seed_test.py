@@ -50,10 +50,10 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(len(json.loads(plan.read_text())["shops"]), 40)
 
     def test_a_seed_with_gifts_and_shop_goods_shuffled_is_patched(self):
-        # Seed 1 sells the Giant's Wallet, which only a gift holds in the game, in a shop slot.
+        # Seed 17 sells the Giant's Wallet, which only a gift holds in the game, in a shop slot.
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
         settings = json.dumps({"Shop goods": "Four per shop shuffled", "Gifts": "Shuffled"})
-        result = subprocess.run([SEEDGEN, "1", spoiler, plan, settings], capture_output=True, text=True)
+        result = subprocess.run([SEEDGEN, "17", spoiler, plan, settings], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)

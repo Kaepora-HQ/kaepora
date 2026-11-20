@@ -72,9 +72,9 @@ SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 # A seed whose hints name a slot that only five per shop shuffle.
 HINT_SEED_AT_FIVE = "2"
-FILLED_ONLY_BY_CHESTS = {"Item_Range_Bow", "Item_Range_SlingShot"}
-KEPT_FROM_SHOPS = FILLED_ONLY_BY_CHESTS | {"Item_BombBag_Small", "Item_BombchuBundle_Small", "Item_BombchuBundle_Large",
-                                           "Item_Bottle", "Item_Bottle_Milk"}
+WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
+KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
+                                             "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk"}
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
@@ -700,18 +700,15 @@ class SeedgenTest(unittest.TestCase):
             sold.update(entry["item"] for entry in plan["shops"])
             given.update(item for _, item in gift_sites(plan))
         self.assertFalse(sold.keys() & KEPT_FROM_SHOPS, sold)
-        self.assertTrue(given.keys() & (KEPT_FROM_SHOPS - FILLED_ONLY_BY_CHESTS), given)
+        self.assertTrue(given.keys() & KEPT_FROM_SHOPS, given)
 
-    def test_only_chests_give_the_bow_and_the_slingshot(self):
-        # A chest adds the quiver or the bullet bag and its ammunition; a gift gives the Bow and the Slingshot with
-        # nowhere to hold it. A gift's Bomb Bag comes with its bombs.
+    def test_a_gift_can_hold_the_bow_and_the_slingshot(self):
         given = collections.Counter()
         for settings in (GIFTS_SHUFFLED, GIFTS_SHUFFLED | SHOPS_SHUFFLED):
             for seed in range(540, 560):
                 _, plan = self.generate(str(seed), settings)
                 given.update(item for _, item in gift_sites(plan))
-        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
-        self.assertIn("Item_BombBag_Small", given)
+        self.assertLessEqual(WEAPONS_WITH_CONTAINERS, given.keys(), given)
 
     def test_gifts_give_no_dungeon_item(self):
         given = collections.Counter()
@@ -760,14 +757,12 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(collections.Counter(chests.values()) + given,
                              POOL + collections.Counter({TOKEN: len(shuffled)}), choice)
 
-    def test_skulltulas_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot(self):
-        # A token copy's Bomb Bag fills with bombs as a chest's does.
+    def test_skulltulas_hold_the_bomb_bag_the_bow_and_the_slingshot(self):
         given = collections.Counter()
         for seed in range(700, 730):
             _, plan = self.generate(str(seed), SKULLTULAS_SHUFFLED)
             given.update(entry["item"] for entry in plan["skulltulas"])
-        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
-        self.assertIn("Item_BombBag_Small", given)
+        self.assertLessEqual(WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small"}, given.keys(), given)
 
     def test_a_dungeon_left_out_keeps_its_skulltulas(self):
         left_out = {"Dodongo's Cavern": "DodongoCavern", "Shadow Temple": "ShadowTemple"}
@@ -782,7 +777,7 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere(self):
         log, _ = self.generate("23", SKULLTULAS_SHUFFLED)
         skulltulas = {row["location"] for row in SKULLTULAS}
-        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 4)
+        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 5)
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_loose_items_shuffled(self):
@@ -820,14 +815,12 @@ class SeedgenTest(unittest.TestCase):
                         moved.add(location)
             self.assertEqual(moved, keys.keys(), choice)
 
-    def test_loose_items_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot(self):
-        # A pickup copy's Bomb Bag fills with bombs as a chest's does.
+    def test_loose_items_hold_the_bomb_bag_the_bow_and_the_slingshot(self):
         given = collections.Counter()
         for seed in range(300, 330):
             _, plan = self.generate(str(seed), LOOSE_SHUFFLED)
             given.update(entry["item"] for entry in plan["loose_items"])
-        self.assertFalse(given.keys() & FILLED_ONLY_BY_CHESTS, given)
-        self.assertIn("Item_BombBag_Small", given)
+        self.assertLessEqual(WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small"}, given.keys(), given)
 
     def test_a_dungeon_left_out_keeps_its_loose_items(self):
         settings = LOOSE_SHUFFLED | {"Shuffled dungeons": [name for name in DUNGEONS if name != "Shadow Temple"]}

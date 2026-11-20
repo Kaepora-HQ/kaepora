@@ -68,10 +68,11 @@ it, the only one in a room), then by named neighbours, then by rooms, and by pos
 With "Gold Skulltulas" at "In dungeons", "In the overworld" or "All", the skulltulas in the ten dungeons that have them,
 outside them, or everywhere join the shuffle, as SoH splits them, but for those of a dungeon that "Shuffled dungeons"
 leaves out. Each adds a token to the pool, and gives the item the seed places there through a copy of the token that
-gives it. One that holds a token drops the game's own. A skulltula never holds the Fairy Bow or the Fairy Slingshot,
-which only a chest gives with their quiver or bullet bag (`FilledOnlyByChests`); the fill places them before skulltulas
-join it. A skulltula may hold the Bomb Bag: a bag fills whenever it raises Link's bomb limit, whoever gives it, and a
-skulltula's gave 20 bombs to a Link whose limit was 0.
+gives it. One that holds a token drops the game's own. With shop goods as in the game, a skulltula may hold the Bomb
+Bag, the Fairy Bow and the Fairy Slingshot: a bag fills whenever it raises Link's limit, whoever gives it, and a
+skulltula's Bomb Bag gave 20 bombs to a Link whose limit was 0. The Bow and the Slingshot fill the same way, from rows
+every mod changes (below). With shop goods shuffled no skulltula holds anything `KeptFromShops` keeps, these three
+among them: the fill places those before skulltulas join it.
 
 `loose_items.tsv` has a row for each item that lies loose in the remake and can be shuffled: the 14 heart pieces, the
 8 heart containers the bosses leave, the loose keys of the Bottom of the Well and the Shadow Temple, and the Fire
@@ -242,5 +243,5 @@ bullet bag brings neither its container nor ammunition (read from the program). 
 rows changed: one talk in the House of Skulltula gave the Bow and the Slingshot, each with its small container, a limit
 of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the
 container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The
-fill places the Bow and the Slingshot in chests before gifts, loose spots and Gold Skulltulas join it
-(`FilledOnlyByChests`), and the Bomb Bag may sit at any of them.
+fill may place the Bow, the Slingshot and the Bomb Bag at a gift, a loose spot or a Gold Skulltula, but for a
+skulltula with shop goods shuffled (above).

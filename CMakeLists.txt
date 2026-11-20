@@ -204,14 +204,14 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      hints_name_the_goods_only_five_per_shop_shuffle
                      gifts_shuffled a_gift_given_at_two_sites_gives_one_item gifts_give_no_dungeon_item
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
-                     only_chests_give_the_bow_and_the_slingshot
+                     a_gift_can_hold_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
-                     gold_skulltulas_shuffled skulltulas_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot
+                     gold_skulltulas_shuffled skulltulas_hold_the_bomb_bag_the_bow_and_the_slingshot
                      a_dungeon_left_out_keeps_its_skulltulas
                      a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere
                      hints_name_the_place_a_skulltula_stands_in hints_name_gold_skulltulas_truly
                      loose_items_shuffled loose_keys_follow_the_keys_setting
-                     loose_items_hold_the_bomb_bag_but_not_the_bow_or_the_slingshot
+                     loose_items_hold_the_bomb_bag_the_bow_and_the_slingshot
                      a_dungeon_left_out_keeps_its_loose_items
                      a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere hints_name_loose_items_truly
                      every_setting_changed_at_once seed_text_ignores_case every_hint_is_true

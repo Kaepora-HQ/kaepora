@@ -36,7 +36,7 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 Set **Gifts** to **Shuffled**, and 21 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner.
 
-You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. With **Vanilla**, each gives what the game has.
+You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone. With **Vanilla**, each gives what the game has.
 
 ## Loose items
 

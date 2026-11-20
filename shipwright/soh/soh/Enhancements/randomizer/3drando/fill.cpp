@@ -1051,15 +1051,11 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
 void ClearProgress() {
 }
 
-bool FilledOnlyByChests(RandomizerGet item) {
-    return item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT;
-}
-
 bool KeptFromShops(RandomizerGet item) {
     const ItemType type = Rando::StaticData::RetrieveItem(item).GetItemType();
     return type == ITEMTYPE_SMALLKEY || type == ITEMTYPE_BOSSKEY || type == ITEMTYPE_MAP || type == ITEMTYPE_COMPASS ||
-           FilledOnlyByChests(item) || item == RG_PROGRESSIVE_BOMB_BAG || item == RG_BOMBCHU_5 ||
-           item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
+           item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT || item == RG_PROGRESSIVE_BOMB_BAG ||
+           item == RG_BOMBCHU_5 || item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
@@ -1109,17 +1105,11 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         SPDLOG_INFO("Shuffling and Placing Dungeon Items...");
         PlaceDungeonItems(shuffled);
 
-        if (!looseItems.empty()) {
-            AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
-            for (const RemakeChest& looseItem : looseItems) {
-                shuffledLocations.push_back(looseItem.location);
-            }
+        for (const RemakeChest& looseItem : looseItems) {
+            shuffledLocations.push_back(looseItem.location);
         }
-        if (!gifts.empty()) {
-            AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
-            for (const RemakeGift& gift : gifts) {
-                shuffledLocations.push_back(gift.location);
-            }
+        for (const RemakeGift& gift : gifts) {
+            shuffledLocations.push_back(gift.location);
         }
         if (!shops.empty()) {
             AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromShops), shuffledLocations);
@@ -1127,11 +1117,8 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
                 shuffledLocations.push_back(slot.location);
             }
         }
-        if (!skulltulas.empty()) {
-            AssumedFill(FilterAndEraseFromPool(itemPool, FilledOnlyByChests), shuffledLocations);
-            for (const RemakeSkulltula& skulltula : skulltulas) {
-                shuffledLocations.push_back(skulltula.location);
-            }
+        for (const RemakeSkulltula& skulltula : skulltulas) {
+            shuffledLocations.push_back(skulltula.location);
         }
 
         SPDLOG_INFO("Shuffling Advancement Items");
