@@ -233,5 +233,14 @@ A chest that gives the Fairy Bow or the Fairy Slingshot also adds the quiver or 
 seeds, from the chest's own AI (`AI/TreasureBox.module.ainb`, read from the files); a chest's Fairy Bow left 30 arrows.
 One talk in the House of Skulltula gave the Bomb Bag, the Fairy Bow and the Fairy Slingshot to a Link with none: the
 Bomb Bag came with 20 bombs and room for 20, and the Bow and the Slingshot came with no quiver and no bullet bag, so
-with room for no arrows or seeds. So with gifts shuffled the fill puts the Bow and the Slingshot in chests before gifts
-join it (`FilledOnlyByChests`), and the Bomb Bag may sit at a gift.
+with room for no arrows or seeds. The Bomb Bag's own row in `RSDB/PouchActorInfo` gives its bombs: for any row that
+lists actors to fill, the item's add raises the limit the row names and fills each listed actor to it (read from the
+program). So in every mod the Bow's and the Slingshot's rows list what the small quiver's and bullet bag's rows list,
+and the container too, which a shop asks for before it sells arrows or seeds (`DisplayShop.bfevfl`, read). The add
+skips all of it when Link's limit is already at or above the row's, so a weapon that comes after a bigger quiver or
+bullet bag brings neither its container nor ammunition (read from the program). Seen in the game by an agent, with the
+rows changed: one talk in the House of Skulltula gave the Bow and the Slingshot, each with its small container, a limit
+of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the
+container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The
+fill places the Bow and the Slingshot in chests before gifts, loose spots and Gold Skulltulas join it
+(`FilledOnlyByChests`), and the Bomb Bag may sit at any of them.

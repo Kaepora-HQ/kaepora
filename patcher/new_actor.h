@@ -18,10 +18,13 @@ constexpr std::array<std::string_view, 3> ActorTablePaths = { ActorInfoPath, Gam
 
 const std::string& RowId(const byml::Node& row);
 
+// How the game's tables and packs name an actor.
+std::string WorkPath(std::string_view actor);
+
 // The table's row whose __RowId is the actor. Throws when the table has none.
 byml::Node& Row(byml::Node& table, std::string_view actor);
 
-// The actor tables by path, each read once for every new actor of a plan.
+// The actor tables by path.
 using ActorTables = std::map<std::string, byml::Document, std::less<>>;
 
 struct NewActor {

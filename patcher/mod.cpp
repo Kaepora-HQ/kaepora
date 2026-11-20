@@ -447,8 +447,7 @@ static void SetGoods(byml::Node& goodsList, uint32_t slot, const std::string& go
         throw std::runtime_error(std::format("the goods list has no slot {}", slot));
     }
     byml::Node& goods = list->array[slot];
-    FindOrAdd(goods, "Actor", byml::Type::String).string =
-        std::format("Work/Actor/{}.engine__actor__ActorParam.gyml", goodsActor);
+    FindOrAdd(goods, "Actor", byml::Type::String).string = WorkPath(goodsActor);
     FindOrAdd(goods, "PriceOffset", byml::Type::Int).scalar = uint32_t(priceOffset);
     FindOrAdd(goods, "StockNum", byml::Type::Int).scalar = 1;
     if (byml::Node* release = Find(goods, "Release")) {
@@ -599,6 +598,33 @@ static void AddRow(byml::Node& table, const byml::Node& row) {
         throw std::runtime_error(std::format("the game already has an actor {}", RowId(row)));
     }
     table.array.insert(at, row);
+}
+
+// The Fairy Bow's and the Fairy Slingshot's rows, by the item's name and by the actor name the game counts each by,
+// and the small container of each. The pouch add treats any row that lists actors to fill as a bag's: it raises the
+// limit the row names and fills each listed actor to it. It asks for the list in the row of the name its caller gives
+// and reads the rest from the row of the actor name. A shop asks for the container before it sells arrows or seeds.
+constexpr std::array<std::pair<std::string_view, std::string_view>, 4> WeaponContainers{ {
+    { "Item_Range_Bow", "Item_Quiver_Small" },
+    { "Weapon_Range_Bow", "Item_Quiver_Small" },
+    { "Item_Range_SlingShot", "Item_BulletBag_Small" },
+    { "Weapon_Range_SlingShot", "Item_BulletBag_Small" },
+} };
+
+static void BringContainers(byml::Node& pouchActorInfo) {
+    for (const auto& [weapon, container] : WeaponContainers) {
+        byml::Node fills = Row(pouchActorInfo, container);
+        byml::Node& row = Row(pouchActorInfo, weapon);
+        for (const char* key :
+             { "MaxNumGameData", "AfterExpansionMaxNum", "IsItemStockMaxIfGet", "ExpansionMaxNumActor" }) {
+            const byml::Node* value = Find(fills, key);
+            if (value == nullptr) {
+                throw std::runtime_error(std::format("{}: {} has no {}", PouchActorInfoPath, container, key));
+            }
+            FindOrAdd(row, key, value->type) = *value;
+        }
+        FindOrAdd(row, "ExpansionMaxNumActor", byml::Type::String).string += "," + WorkPath(container);
+    }
 }
 
 // A new game starts with the defaults this list gives every saved value.
@@ -867,11 +893,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     std::map<std::string, ShopPack> packs;
     std::set<std::string> soldOnce;
     ActorTables tables;
-    if (!plan.shops.empty() || !plan.skulltulas.empty() || !plan.looseItems.empty()) {
-        for (const std::string_view path : ActorTablePaths) {
-            tables.emplace(path, byml::Parse(Decompress(game.Read(std::string(path)))));
-        }
+    for (const std::string_view path : ActorTablePaths) {
+        tables.emplace(path, byml::Parse(Decompress(game.Read(std::string(path)))));
     }
+    BringContainers(tables.find(PouchActorInfoPath)->second.root);
     std::map<std::string, NewActor> goodsActors;
     std::map<std::string, NewActor> tokenCopies;
     std::map<std::string, NewActor> pickupCopies;
@@ -1037,7 +1062,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), ActorPackOverhead);
         addToRomfs(path, Compress(data, packDictionary));
     }
-    // Each new actor's pack, and each actor table once, with every new row in name order.
+    // Each new actor's pack.
     std::vector<const NewActor*> newActors;
     for (const auto* actors : { &goodsActors, &tokenCopies, &pickupCopies }) {
         for (const NewActor& actor : std::views::values(*actors)) {
@@ -1051,16 +1076,17 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged = true;
         addToRomfs(path, Compress(data, packDictionary));
     }
-    if (!newActors.empty()) {
-        for (auto& [path, rows] : tables) {
-            for (const NewActor* actor : newActors) {
-                AddRow(rows.root, actor->rows.find(path)->second);
-            }
-            const std::string data = byml::Write(rows);
-            const size_t overhead = path == ActorInfoPath ? ActorInfoOverhead : ActorTableOverhead;
-            tableChanged |= RaiseSize(table, path, data.size(), overhead);
-            addToRomfs(path, Compress(data));
+    for (auto& [path, rows] : tables) {
+        if (newActors.empty() && path != PouchActorInfoPath) {
+            continue;
         }
+        for (const NewActor* actor : newActors) {
+            AddRow(rows.root, actor->rows.find(path)->second);
+        }
+        const std::string data = byml::Write(rows);
+        const size_t overhead = path == ActorInfoPath ? ActorInfoOverhead : ActorTableOverhead;
+        tableChanged |= RaiseSize(table, path, data.size(), overhead);
+        addToRomfs(path, Compress(data));
     }
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));

@@ -19,7 +19,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|goods-and-copies <kaepora-patch> <game.nup>
+           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies \
+           <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -28,6 +29,7 @@ from the patcher's tags.
 """
 
 import csv
+import functools
 import itertools
 import json
 import pathlib
@@ -139,6 +141,10 @@ PACK_OVERHEAD = 312
 ACTOR_INFO = "RSDB/ActorInfo.Product.111.rstbl.byml.zs"
 GAME_ACTOR_INFO = "RSDB/GameActorInfo.Product.111.rstbl.byml.zs"
 POUCH_ACTOR_INFO = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs"
+# The pouch rows of the Fairy Bow and the Fairy Slingshot, under the item's name and under the actor name the game
+# counts each by, and the small container a chest hands over with each.
+WEAPON_CONTAINERS = {"Item_Range_Bow": "Item_Quiver_Small", "Weapon_Range_Bow": "Item_Quiver_Small",
+                     "Item_Range_SlingShot": "Item_BulletBag_Small", "Weapon_Range_SlingShot": "Item_BulletBag_Small"}
 # The game's ActorInfo entry leaves this much over the file's size rounded up to 32 bytes.
 ACTOR_INFO_OVERHEAD = 3064
 TOKEN = "Obj_Token_Gold"
@@ -502,16 +508,26 @@ def files(folder):
     return {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
 
 
-def patched(patch, game, plan, part="romfs"):
+def mod_files(patch, game, plan, part="romfs"):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         result = run(patch, game, plan, tmp)
         assert result.returncode == 0, result.stderr
-        written = files(tmp / "mod" / part)
-    # Every mod carries the bomb's packs, the pedestal's module and the temple's placement, which tested-bomb-mod,
-    # tested-pedestal-mod and tested-sheik-mod check.
-    return {path: data for path, data in written.items()
-            if path not in [*BOMB_LIFT_PACKS, PEDESTAL_MODULE, TEMPLE_STATIC]}
+        return files(tmp / "mod" / part)
+
+
+@functools.cache
+def every_mod(patch, game):
+    """What every mod carries in its RomFS: the files of the empty plan's mod."""
+    return mod_files(patch, game, plan([]))
+
+
+def patched(patch, game, plan, part="romfs"):
+    """The files of the plan's mod in the part, but in the RomFS for those every mod carries as they are."""
+    written = mod_files(patch, game, plan, part)
+    if part != "romfs":
+        return written
+    return {path: data for path, data in written.items() if every_mod(patch, game).get(path) != data}
 
 
 def assert_same_frame_header(ours, theirs):
@@ -616,7 +632,10 @@ def tested_first_gifts_mod(patch, game, romfs):
              ("Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs", "Event71", "ActorName", "TBox_DekuNutBundle"),
              ("Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs", "Event113", "ReveiveItem", "Item_Hammer")]
     mod = patched(patch, game, plan(chests, event_texts=texts))
-    assert mod == files(pathlib.Path(romfs)), sorted(mod)
+    tested = files(pathlib.Path(romfs))
+    assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == \
+        raised_pouch_entry(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
+    assert mod == tested, sorted(mod)
 
 
 def tested_stone_text_mod(patch, game, romfs):
@@ -675,7 +694,8 @@ def tested_message_text_mod(patch, game, romfs):
         assert_same_frame_header(mod[path], tested[path])
         assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
             tested[path], zstd_dict=game.zs_dictionary), path
-    assert zstd.decompress(mod[SIZE_TABLE]) == zstd.decompress(tested[SIZE_TABLE])
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == \
+        raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
 def tested_added_item_mod(patch, game, romfs):
@@ -803,7 +823,7 @@ def tested_pedestal_mod(patch, game, plan_file, mod):
 def tested_sheik_mod(patch, game, plan_file, mod):
     """The Temple of Time's placement that the game ran, with Sheik's wait before the Forest Temple behind the
     Master Sword in place of in front of it, in the mod of any plan: an empty one and a seed's. It keeps the size of the
-    game's file, so the mod leaves the size table out."""
+    game's file, so the size table keeps the game's entry for it."""
     tested = (pathlib.Path(mod) / "romfs" / TEMPLE_STATIC).read_bytes()
     expected = zstd.decompress(tested, zstd_dict=game.dictionary)
     assert len(expected) == len(zstd.decompress(game.read(TEMPLE_STATIC), zstd_dict=game.dictionary))
@@ -817,12 +837,8 @@ def tested_sheik_mod(patch, game, plan_file, mod):
             ours = (tmp / "mod" / "romfs" / TEMPLE_STATIC).read_bytes()
             assert_same_frame_header(ours, tested)
             assert zstd.decompress(ours, zstd_dict=game.dictionary) == expected
-            # An empty plan writes no file that outgrows its entry, so the mod leaves the table out. A seed's flows may
-            # outgrow theirs, and the table it ships keeps the game's entry for the placement.
-            table = tmp / "mod" / "romfs" / SIZE_TABLE
-            assert planned["chests"] or not table.exists()
-            if table.exists():
-                assert dict(read_size_table(zstd.decompress(table.read_bytes()))[1])[size_key(TEMPLE_STATIC)] == entry
+            table = (tmp / "mod" / "romfs" / SIZE_TABLE).read_bytes()
+            assert dict(read_size_table(zstd.decompress(table))[1])[size_key(TEMPLE_STATIC)] == entry
 
 
 # Chests whose items rotate: each takes the next one's item. The Kokiri Sword chest sits in the child and adult files.
@@ -950,7 +966,7 @@ def shop(patch, game):
     for path in chest[1]:
         actor(placements[path], STORMS_GROTTO_CHEST)["Dynamic"]["Drop__DropActor"] = chest[2]
 
-    _, entries, _ = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    _, entries, _ = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     def needs(path, dictionary, overhead=264):
         return size_key(path), load_size(len(zstd.decompress(mod[path], zstd_dict=dictionary)), overhead)
 
@@ -1174,12 +1190,15 @@ def tested_new_actor_mod(patch, game, romfs):
     assert zstd.decompress(mod[pack], zstd_dict=game.pack_dictionary) == \
         zstd.decompress((romfs / pack).read_bytes(), zstd_dict=game.pack_dictionary)
     assert_same_frame_header(mod[pack], game.read("Pack/Actor/Shop_Armor_Zora.pack.zs"))
-    for path in (ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
+    for path in (ACTOR_INFO, GAME_ACTOR_INFO):
         assert zstd.decompress(mod[path]) == zstd.decompress((romfs / path).read_bytes()), path
+    pouch = zstd.decompress(mod[POUCH_ACTOR_INFO])
+    assert byml(pouch) == with_containers(byml(zstd.decompress((romfs / POUCH_ACTOR_INFO).read_bytes())))
     ours = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
     theirs = dict(read_size_table(zstd.decompress((romfs / SIZE_TABLE).read_bytes()))[1])
-    for path in (pack, ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO):
+    for path in (pack, ACTOR_INFO, GAME_ACTOR_INFO):
         assert ours[size_key(path)] == theirs[size_key(path)], path
+    assert ours[size_key(POUCH_ACTOR_INFO)] == max(theirs[size_key(POUCH_ACTOR_INFO)], load_size(len(pouch)))
 
 
 def decompressed(game, data):
@@ -1196,9 +1215,23 @@ def tested_skulltula_mod(patch, game, romfs):
     showed: the skulltula dropped a token that gave the Boomerang, and stayed away after a reload."""
     tested = files(pathlib.Path(romfs))
     mod = patched(patch, game, plan([], skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")]))
+    assert_as_the_game_ran(game, mod, tested)
+
+
+def assert_as_the_game_ran(game, mod, tested):
+    """The mod's files are those of a mod the game ran with the game's own rows for the weapons: the same files and
+    frames, the pouch table with the weapons' rows changed, and its size table entry raised to fit."""
     assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
     for path, data in tested.items():
         assert_same_frame_header(mod[path], data)
+    mod, tested = dict(mod), dict(tested)
+    pouch = zstd.decompress(mod.pop(POUCH_ACTOR_INFO))
+    assert byml(pouch) == with_containers(byml(zstd.decompress(tested.pop(POUCH_ACTOR_INFO))))
+    header, entries, names = read_size_table(zstd.decompress(tested.pop(SIZE_TABLE)))
+    pouch_key = size_key(POUCH_ACTOR_INFO)
+    raised = [(key, max(size, load_size(len(pouch))) if key == pouch_key else size) for key, size in entries]
+    assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == (header, raised, names)
+    for path, data in tested.items():
         assert decompressed(game, mod[path]) == decompressed(game, data), path
 
 
@@ -1250,10 +1283,7 @@ def tested_pickup_mod(patch, game, romfs):
     the Mirror Shield lay at the spot, Link took it by touch and got it, and the spot stayed empty after a reload."""
     tested = files(pathlib.Path(romfs))
     mod = patched(patch, game, plan([], loose_items=[(*LON_LON_HEART_PIECE, "Item_Shield_Mirror")]))
-    assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
-    for path, data in tested.items():
-        assert_same_frame_header(mod[path], data)
-        assert decompressed(game, mod[path]) == decompressed(game, data), path
+    assert_as_the_game_ran(game, mod, tested)
 
 
 def skulltulas(patch, game):
@@ -1278,7 +1308,7 @@ def skulltulas(patch, game):
     for item, copy in copies.items():
         assert_token_copy(game, mod, item, copy)
 
-    rows = {path: {row["__RowId"]: row for row in byml(zstd.decompress(game.read(path)))} for path in tables}
+    rows = every_mod_rows(game, tables)
     for path in tables:
         ours = {row["__RowId"]: row for row in byml(zstd.decompress(mod[path]))}
         assert ours.keys() - rows[path].keys() == set(copies.values()), path
@@ -1344,7 +1374,7 @@ def loose_items(patch, game):
     for item, copy in copies.items():
         assert_pickup_copy(game, mod, item, copy)
 
-    rows = {path: {row["__RowId"]: row for row in byml(zstd.decompress(game.read(path)))} for path in tables}
+    rows = every_mod_rows(game, tables)
     for path in tables:
         ours = {row["__RowId"]: row for row in byml(zstd.decompress(mod[path]))}
         assert ours.keys() - rows[path].keys() == set(copies.values()), path
@@ -1432,7 +1462,8 @@ def new_actors(patch, game):
     for path, table in rows.items():
         ours = byml(zstd.decompress(mod[path]))
         assert [row["__RowId"] for row in ours] == sorted([row["__RowId"] for row in table] + list(new.values()))
-        assert [row for row in ours if row["__RowId"] not in new.values()] == table, path
+        game_rows = with_containers(table) if path == POUCH_ACTOR_INFO else table
+        assert [row for row in ours if row["__RowId"] not in new.values()] == game_rows, path
         for item, actor in new.items():
             row = next(row for row in ours if row["__RowId"] == actor)
             if path == ACTOR_INFO:
@@ -1456,6 +1487,63 @@ def new_actors(patch, game):
     for path, overhead in ((ACTOR_INFO, ACTOR_INFO_OVERHEAD), (GAME_ACTOR_INFO, 264), (POUCH_ACTOR_INFO, 264)):
         assert ours_entries[size_key(path)] >= load_size(len(zstd.decompress(mod[path])), overhead), path
     assert len(ours_entries) == len(entries) + len(new)
+
+
+def with_containers(table):
+    """The game's pouch table with each weapon's row raising its kind's limit and filling it as its container's row
+    does, and adding the container too."""
+    by_id = {row["__RowId"]: row for row in table}
+    rows = []
+    for row in table:
+        if row["__RowId"] in WEAPON_CONTAINERS:
+            container = by_id[WEAPON_CONTAINERS[row["__RowId"]]]
+            raises = ("MaxNumGameData", "AfterExpansionMaxNum", "IsItemStockMaxIfGet")
+            row = row | {key: container[key] for key in raises}
+            row["ExpansionMaxNumActor"] = f"{container['ExpansionMaxNumActor']},{goods(container['__RowId'])}"
+        rows.append(row)
+    return rows
+
+
+def every_mod_rows(game, paths):
+    """Each actor table's rows by __RowId as every mod has them: the game's, with the weapons' pouch rows changed."""
+    rows = {}
+    for path in paths:
+        table = byml(zstd.decompress(game.read(path)))
+        rows[path] = {row["__RowId"]: row for row in (with_containers(table) if path == POUCH_ACTOR_INFO else table)}
+    return rows
+
+
+def weapon_copies(patch, game):
+    """A weapon planned at a Gold Skulltula or a loose spot is given by a copy whose pouch row is the weapon's as every
+    mod changes it, so the copy brings the container, its limit and its ammunition too."""
+    mod = patched(patch, game, plan([], skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Range_Bow")],
+                                    loose_items=[(*LAKE_HEART_PIECE, "Item_Range_SlingShot")]))
+    rows = every_mod_rows(game, [POUCH_ACTOR_INFO])[POUCH_ACTOR_INFO]
+    ours = {row["__RowId"]: row for row in byml(zstd.decompress(mod[POUCH_ACTOR_INFO]))}
+    for item, copy in (("Item_Range_Bow", f"{TOKEN}_Item_Range_Bow"),
+                       ("Item_Range_SlingShot", "Obj_PickupShield_Item_Range_SlingShot")):
+        assert ours[copy] == rows[item] | {"__RowId": copy}, copy
+
+
+def weapons_bring_containers(patch, game):
+    """In every mod, getting the Bow or the Slingshot gives what its small container gives: the limit of its arrows or
+    seeds, filled, and the container itself, which a shop asks for before it sells arrows or seeds. Every other row is
+    the game's, and the size table takes the larger table."""
+    mod = every_mod(patch, game)
+    table = byml(zstd.decompress(game.read(POUCH_ACTOR_INFO)))
+    assert byml(zstd.decompress(mod[POUCH_ACTOR_INFO])) == with_containers(table)
+    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    size = load_size(len(zstd.decompress(mod[POUCH_ACTOR_INFO])))
+    expected = [(key, max(entry, size) if key == size_key(POUCH_ACTOR_INFO) else entry) for key, entry in entries]
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
+
+
+def raised_pouch_entry(patch, game, table):
+    """A decompressed size table, read, with the pouch table's entry as every mod raises it."""
+    header, entries, names = read_size_table(table)
+    pouch = size_key(POUCH_ACTOR_INFO)
+    raised = dict(read_size_table(zstd.decompress(every_mod(patch, game)[SIZE_TABLE]))[1])[pouch]
+    return header, [(key, max(size, raised) if key == pouch else size) for key, size in entries], names
 
 
 def read_size_table(data):
@@ -1489,14 +1577,14 @@ def size_table_entries(patch, game):
     # what its entry lets the game load.
     chests = rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]
     game_frame = game.read(SIZE_TABLE)
-    header, entries, names = read_size_table(zstd.decompress(game_frame))
+    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game_frame))
     mod = patched(patch, game, plan(chests))
     changed = sorted({path for _, files, _ in chests for path in files})
     assert sorted(mod) == changed + [SIZE_TABLE], sorted(mod)
     sizes = placement_sizes(game, mod, changed)
     game_sizes = dict(entries)
     assert [p for p in changed if load_size(sizes[size_key(p)]) > game_sizes[size_key(p)]] == [WATER_STATIC]
-    # Each written file's entry is large enough for its size, and every other byte of the table is the game's.
+    # Each written file's entry is large enough for its size, and every other byte of the table is every mod's.
     expected = [(key, max(size, load_size(sizes[key])) if key in sizes else size) for key, size in entries]
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
     assert_same_frame_header(mod[SIZE_TABLE], game_frame)
@@ -1552,10 +1640,10 @@ def gift(patch, game):
 
 def gift_size_table(patch, game):
     """A gift that grows its flow past its size table entry: the entry is raised to what the flow needs, every other
-    byte of the table is the game's, and the flow, read apart from the patcher, is the game's with the one parameter
+    byte of the table is every mod's, and the flow, read apart from the patcher, is the game's with the one parameter
     changed."""
     path = DINS_FIRE_GIFT[0]
-    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     mod = patched(patch, game, plan([], event_texts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]))
     assert sorted(mod) == sorted([path, SIZE_TABLE]), sorted(mod)
     data = zstd.decompress(mod[path], zstd_dict=game.zs_dictionary)
@@ -1588,7 +1676,7 @@ def stone_texts(patch, game):
     game's pack with the two messages changed. Both grow past their size table entries, and the entries are raised.
     The stones' flow, read apart from the patcher, sends the mask question on to the stone's message, and keeps its
     size."""
-    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     packs = ENGLISH_PACKS
     planned = [(KOKIRI_STONE, TESTED_STONE_TEXT), (SHORT_RUMOUR_STONE, LONG_STONE_TEXT)]
     mod = patched(patch, game, plan([], stone_texts=planned))
@@ -1632,7 +1720,7 @@ def message_texts(patch, game):
     pack is the game's with the planned messages changed, each after the control codes the game's message opens
     with: Mido's face and voice, and none for a sign. A stone's text goes into the same packs in the same write. Both
     packs grow past their size table entries, and the entries are raised."""
-    header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     planned = [(MIDO_MESSAGES, MIDO_TALK, MIDO_TEXT), (SIGN_MESSAGES, MASK_SHOP_SIGN, SIGN_TEXT)]
     mod = patched(patch, game, plan([], stone_texts=[(KOKIRI_STONE, TESTED_STONE_TEXT)], message_texts=planned))
     assert sorted(mod) == sorted(ENGLISH_PACKS + [STONE_FLOW, SIZE_TABLE]), sorted(mod)
@@ -1940,6 +2028,8 @@ def main():
         "shop-scenes-whole": shop_scenes_whole,
         "gift-table": gift_table,
         "new-actors": new_actors,
+        "weapons-bring-containers": weapons_bring_containers,
+        "weapon-copies": weapon_copies,
         "tested-new-actor-mod": tested_new_actor_mod,
         "tested-shop-goods-mod": tested_shop_goods_mod,
         "dive-depth": dive_depth,

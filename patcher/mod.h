@@ -3,8 +3,9 @@
 // the plan gives texts to gossip stones or other messages, the stones' flow if it gives gossip stones texts, the size
 // table if a file outgrows its entry or is new, the game data list if the plan names start values or shop slots, the
 // actor packs that let a bomb out of the bag with no strength, the logic module that lets every adult put the Master
-// Sword back, and the Temple of Time's placement with Sheik waiting behind the sword. Under exefs/ is the patch to the
-// game's program (program_patch.h).
+// Sword back, the Temple of Time's placement with Sheik waiting behind the sword, and the pouch table in which the
+// Fairy Bow and the Fairy Slingshot bring their quiver and bullet bag. Under exefs/ is the patch to the game's program
+// (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>

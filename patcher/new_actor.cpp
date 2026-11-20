@@ -32,7 +32,7 @@ static std::string ActorMember(std::string_view actor) {
     return std::format("Actor/{}.engine__actor__ActorParam.bgyml", actor);
 }
 
-static std::string WorkPath(std::string_view actor) {
+std::string WorkPath(std::string_view actor) {
     return std::format("Work/Actor/{}.engine__actor__ActorParam.gyml", actor);
 }
 
