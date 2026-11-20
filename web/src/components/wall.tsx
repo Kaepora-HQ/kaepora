@@ -3,6 +3,7 @@ import { createIsomorphicFn } from '@tanstack/react-start'
 import { Activity, type KeyboardEvent, ViewTransition, startTransition, useLayoutEffect, useRef, useState } from 'react'
 import { captureWidths } from '@/capture-widths'
 import type { Copy } from '@/copy'
+import { deal, parts, tileAt, walls } from '@/deal'
 
 // Every picture in src/captures is on the wall. scripts/captures.ts writes each one at every width.
 const files = import.meta.glob<string>('../captures/*.webp', { eager: true, import: 'default' })
@@ -16,74 +17,6 @@ function file(picture: string, width: (typeof captureWidths)[number]) {
 
 const everyWidth = (picture: string) => captureWidths.map((width) => `${file(picture, width)} ${width}w`).join(', ')
 
-type Wall = { columns: number; rows: number; tiles: number[]; span: Record<number, string>; off: string; width: Record<number, string> }
-
-// The two walls: a wide one of six columns and a narrow one of two, each eight rows deep. A
-// tile is a square of so many cells a side, and a wall's tiles fill it exactly. `tiles` is
-// also the order the server lays them out in. A picture dealt past a wall's last tile sits out.
-const walls: { wide: Wall; narrow: Wall } = {
-  wide: {
-    columns: 6,
-    rows: 8,
-    tiles: [3, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 3, 1, 1, 1, 1],
-    span: { 3: '@min-[48rem]:col-span-3 @min-[48rem]:row-span-3', 2: '@min-[48rem]:col-span-2 @min-[48rem]:row-span-2', 1: '' },
-    off: '@min-[48rem]:hidden',
-    width: { 3: 'min(38rem, 50vw)', 2: 'min(25rem, 33vw)', 1: 'min(13rem, 17vw)' },
-  },
-  narrow: {
-    columns: 2,
-    rows: 8,
-    tiles: [2, 1, 1, 1, 1, 2, 1, 1, 1, 1],
-    span: { 2: '@max-[48rem]:col-span-2 @max-[48rem]:row-span-2', 1: '' },
-    off: '@max-[48rem]:hidden',
-    width: { 2: '100vw', 1: '50vw' },
-  },
-}
-
-// What one page load deals, as one string the root element can hold: the pictures' order,
-// then a tiling of each wall, each a list of tile sides in reading order. A tiling fills the
-// wall's first empty cell with a tile of a side picked at random from those left that fit
-// there, and starts over when none fits. This function and tileAt go into the page's script
-// as text, so they use nothing outside themselves.
-function deal(pictures: number, { wide, narrow }: typeof walls) {
-  const order = Array.from({ length: pictures }, (_, place) => place)
-  for (let last = pictures - 1; last > 0; last--) {
-    const pick = Math.floor(Math.random() * (last + 1))
-    ;[order[last], order[pick]] = [order[pick], order[last]]
-  }
-  const tiled = ({ columns, rows, tiles }: Wall) => {
-    for (;;) {
-      const left = [...tiles]
-      const taken = new Set<number>()
-      const tiling: number[] = []
-      for (let cell = 0; left.length; cell++) {
-        if (taken.has(cell)) continue
-        const square = (side: number) => Array.from({ length: side * side }, (_, n) => cell + (n % side) + Math.floor(n / side) * columns)
-        const fits = [...new Set(left)].filter(
-          (side) => (cell % columns) + side <= columns && Math.floor(cell / columns) + side <= rows && square(side).every((other) => !taken.has(other)),
-        )
-        if (!fits.length) break
-        const side = fits[Math.floor(Math.random() * fits.length)]
-        left.splice(left.indexOf(side), 1)
-        for (const other of square(side)) taken.add(other)
-        tiling.push(side)
-      }
-      if (!left.length) return tiling
-    }
-  }
-  return [order, tiled(wide), tiled(narrow)].join(';')
-}
-
-// A tile's classes and its picture's sizes hint, from its side on each wall. A tile past a wall's last has no side there.
-function tileAt(wideSide: number | undefined, narrowSide: number | undefined, { wide, narrow }: typeof walls) {
-  return {
-    className: `${wideSide ? wide.span[wideSide] : wide.off} ${narrowSide ? narrow.span[narrowSide] : narrow.off}`,
-    sizes: `(min-width: 52.2rem) ${wideSide ? wide.width[wideSide] : '1px'}, ${narrowSide ? narrow.width[narrowSide] : '1px'}`,
-  }
-}
-
-const parts = (dealt: string) => dealt.split(';').map((part) => part.split(',').map(Number))
-
 // A page load deals once and keeps the deal on the root element. This runs in the server's
 // HTML, right after the list: it deals, then gives each tile its size and its picture
 // before hydration.
@@ -93,14 +26,14 @@ const dealPictures = `{
   const parts = ${parts}
   const walls = ${JSON.stringify(walls)}
   const tiles = [...document.currentScript.previousElementSibling.children]
-  const pictures = tiles.map((tile) => tile.querySelector('img'))
-  const shots = pictures.map((picture) => [picture.getAttribute('srcset'), picture.getAttribute('src'), picture.alt])
+  const images = tiles.map((tile) => tile.querySelector('img'))
+  const shots = images.map((image) => [image.getAttribute('srcset'), image.getAttribute('src'), image.alt])
   const [order, wide, narrow] = parts((document.documentElement.dataset.deal ??= deal(tiles.length, walls)))
   order.forEach((shot, place) => {
     const { className, sizes } = tileAt(wide[place], narrow[place], walls)
     const [srcset, src, alt] = shots[shot]
     tiles[place].className = className
-    Object.assign(pictures[place], { sizes, srcset, src, alt })
+    Object.assign(images[place], { sizes, srcset, src, alt })
   })
 }`
 
@@ -154,7 +87,7 @@ export function Wall({ words }: { words: Copy['wall'] }) {
   return (
     <>
       <div className="@container">
-        <ul className="grid grid-flow-dense auto-rows-[calc((100cqi-0.5rem)/2*9/16)] grid-cols-2 gap-2 @min-[48rem]:auto-rows-[calc((100cqi-3.75rem)/6*9/16)] @min-[48rem]:grid-cols-6 @min-[48rem]:gap-3">
+        <ul className="grid auto-rows-[calc((100cqi-0.5rem)/2*9/16)] grid-cols-2 gap-2 @min-[48rem]:auto-rows-[calc((100cqi-3.75rem)/6*9/16)] @min-[48rem]:grid-cols-6 @min-[48rem]:gap-3">
           {dealt.map((picture, place) => {
             const { className, sizes } = tile(place)
             return (
