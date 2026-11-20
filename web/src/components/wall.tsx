@@ -1,19 +1,20 @@
 import { ScriptOnce } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { Activity, type KeyboardEvent, ViewTransition, startTransition, useLayoutEffect, useRef, useState } from 'react'
+import { captureWidths } from '@/capture-widths'
 import type { Copy } from '@/copy'
 
-type Shot = Copy['wall']['shots'][number]
+// Every picture in src/captures is on the wall. scripts/captures.ts writes each one at every width.
+const files = import.meta.glob<string>('../captures/*.webp', { eager: true, import: 'default' })
+const pictures = [...new Set(Object.keys(files).map((path) => path.replace(/^.*\/|-\d+\.webp$/g, '')))]
 
-const files = import.meta.glob<string>('../captures/*.avif', { eager: true, import: 'default' })
-
-function file(picture: string, width: 480 | 960 | 1920) {
-  const url = files[`../captures/${picture}-${width}.avif`]
+function file(picture: string, width: (typeof captureWidths)[number]) {
+  const url = files[`../captures/${picture}-${width}.webp`]
   if (!url) throw new Error(`the picture "${picture}" has no ${width} px file`)
   return url
 }
 
-const everyWidth = (picture: string) => `${file(picture, 480)} 480w, ${file(picture, 960)} 960w, ${file(picture, 1920)} 1920w`
+const everyWidth = (picture: string) => captureWidths.map((width) => `${file(picture, width)} ${width}w`).join(', ')
 
 // One row per place on the wall, in dealing order: its size on a wide wall of six columns,
 // then on a narrow wall of two. A picture dealt past the last place sits out.
@@ -39,12 +40,23 @@ const narrow = {
 const sizeAt = (place: number) => (place < onWall.length ? onWall[place] : offWall)
 const sizesAt = (place: number) => `(min-width: 52.2rem) ${wide[sizeAt(place)[0]].width}, ${narrow[sizeAt(place)[1]].width}`
 
-// The page's head deals a new order on every load (deal.ts). This runs in the server's
-// HTML, right after the list, and puts each dealt picture in its place before hydration.
+function shuffled(count: number) {
+  const order = Array.from({ length: count }, (_, place) => place)
+  for (let last = count - 1; last > 0; last--) {
+    const pick = Math.floor(Math.random() * (last + 1))
+    ;[order[last], order[pick]] = [order[pick], order[last]]
+  }
+  return order
+}
+
+// A page load deals the pictures one order and keeps it on the root element. This runs in the
+// server's HTML, right after the list: it deals the order and puts each picture in its place
+// before hydration.
 const dealPictures = `{
   const pictures = [...document.currentScript.previousElementSibling.querySelectorAll('img')]
   const shots = pictures.map((picture) => [picture.getAttribute('srcset'), picture.getAttribute('src'), picture.alt])
-  document.documentElement.dataset.deal.split(',').forEach((shot, place) => {
+  const deal = (document.documentElement.dataset.deal ??= (${shuffled})(pictures.length).join())
+  deal.split(',').forEach((shot, place) => {
     const [srcset, src, alt] = shots[shot]
     Object.assign(pictures[place], { srcset, src, alt })
   })
@@ -53,19 +65,21 @@ const dealPictures = `{
 // A tile and the viewer showing the same picture share a name, so React moves one into the
 // other. default="none" keeps every other tile out of the transition: left to its default,
 // React lifts each clipped element near a change into a layer of its own above the page.
-const named = (shot: Shot) => `shot-${shot.picture}`
+const named = (picture: string) => `shot-${picture}`
 
-// The server renders the listed order. In the browser the script above has dealt the pictures
-// in the page by the time React hydrates it, so the first render there uses the dealt order.
-const readDeal = createIsomorphicFn().client(() => document.documentElement.dataset.deal)
+// The server renders the pictures in the order of their names. In the browser the script above
+// has dealt them by the time React hydrates the page, so the first render there uses that
+// order. A visit that arrives by a link has no server HTML, and deals the order here.
+const readDeal = createIsomorphicFn().client(() => (document.documentElement.dataset.deal ??= shuffled(pictures.length).join()))
 
 const control = 'press grid size-11 place-items-center rounded-full bg-silhouette/70 text-starlight hover:bg-silhouette'
 
 export function Wall({ words }: { words: Copy['wall'] }) {
   const viewer = useRef<HTMLDialogElement>(null)
-  const [spot, setSpot] = useState<{ shot: Shot; open: boolean }>()
+  const [spot, setSpot] = useState<{ picture: string; open: boolean }>()
 
-  const dealt = readDeal()?.split(',').map((shot) => words.shots[Number(shot)]) ?? words.shots
+  const dealt = readDeal()?.split(',').map((picture) => pictures[Number(picture)]) ?? pictures
+  const alt = (picture: string) => words.alt[picture] ?? picture.replaceAll('-', ' ')
   const open = spot?.open === true
 
   // A layout effect runs inside React's view transition, so the new state is pictured with the dialog open.
@@ -74,8 +88,8 @@ export function Wall({ words }: { words: Copy['wall'] }) {
     else viewer.current?.close()
   }, [open])
 
-  function view(shot: Shot) {
-    startTransition(() => setSpot({ shot, open: true }))
+  function view(picture: string) {
+    startTransition(() => setSpot({ picture, open: true }))
   }
 
   function close() {
@@ -83,7 +97,7 @@ export function Wall({ words }: { words: Copy['wall'] }) {
   }
 
   function step(by: -1 | 1) {
-    startTransition(() => setSpot((now) => now && { shot: dealt[(dealt.indexOf(now.shot) + by + dealt.length) % dealt.length], open: true }))
+    startTransition(() => setSpot((now) => now && { picture: dealt[(dealt.indexOf(now.picture) + by + dealt.length) % dealt.length], open: true }))
   }
 
   function turn(event: KeyboardEvent) {
@@ -95,25 +109,25 @@ export function Wall({ words }: { words: Copy['wall'] }) {
     <>
       <div className="@container">
         <ul className="grid grid-flow-dense auto-rows-[calc((100cqi-0.5rem)/2*9/16)] grid-cols-2 gap-2 @min-[48rem]:auto-rows-[calc((100cqi-3.75rem)/6*9/16)] @min-[48rem]:grid-cols-6 @min-[48rem]:gap-3">
-          {dealt.map((shot, place) => {
+          {dealt.map((picture, place) => {
             const [onWide, onNarrow] = sizeAt(place)
             return (
               <li key={place} className={`${wide[onWide].span} ${narrow[onNarrow].span}`}>
                 {/* Hiding the tile while the viewer shows its picture is what pairs its boundary with the viewer's. */}
-                <Activity mode={open && shot === spot?.shot ? 'hidden' : 'visible'}>
-                  <ViewTransition name={named(shot)} default="none" share="shot">
+                <Activity mode={open && picture === spot?.picture ? 'hidden' : 'visible'}>
+                  <ViewTransition name={named(picture)} default="none" share="shot">
                     <button
                       type="button"
-                      onClick={() => view(shot)}
+                      onClick={() => view(picture)}
                       className="press block size-full cursor-zoom-in overflow-clip rounded-lg border border-mist/15 hover:border-moon"
                     >
                       <img
-                        src={file(shot.picture, 960)}
-                        srcSet={everyWidth(shot.picture)}
+                        src={file(picture, 960)}
+                        srcSet={everyWidth(picture)}
                         sizes={sizesAt(place)}
                         width={960}
                         height={540}
-                        alt={shot.alt}
+                        alt={alt(picture)}
                         loading="lazy"
                         decoding="async"
                         className="size-full object-cover"
@@ -147,13 +161,13 @@ export function Wall({ words }: { words: Copy['wall'] }) {
             {/* Each picture has a boundary of its own: one that changed its name to the next picture's
                 would share that name with the picture's tile for a moment, which React does not allow.
                 So on a step the picture shown goes back to its tile as the next comes out of its own. */}
-            <ViewTransition key={spot.shot.picture} name={named(spot.shot)} default="none" share="shot">
+            <ViewTransition key={spot.picture} name={named(spot.picture)} default="none" share="shot">
               {/* The box has its size before any file arrives. The file its tile shows, which the browser
                   already holds, fills it until the full one comes. A lazy picture does not hold the
                   transition back, so the viewer opens at the click. */}
-              <div className="grid aspect-video w-[min(100vw-2*var(--spacing-gutter),(100dvh-2*var(--spacing-gutter))*16/9)] overflow-clip rounded-xl border border-mist/15 *:size-full *:[grid-area:1/1]">
-                <img src={file(spot.shot.picture, 960)} srcSet={everyWidth(spot.shot.picture)} sizes={sizesAt(dealt.indexOf(spot.shot))} alt="" loading="lazy" />
-                <img src={file(spot.shot.picture, 1920)} srcSet={everyWidth(spot.shot.picture)} sizes="100vw" alt={spot.shot.alt} loading="lazy" />
+              <div className="grid aspect-video w-[min(100vw-2*var(--spacing-gutter),(100dvh-2*var(--spacing-gutter))*16/9)] overflow-clip rounded-xl border border-mist/15 *:size-full *:object-cover *:[grid-area:1/1]">
+                <img src={file(spot.picture, 960)} srcSet={everyWidth(spot.picture)} sizes={sizesAt(dealt.indexOf(spot.picture))} alt="" loading="lazy" />
+                <img src={file(spot.picture, 1920)} srcSet={everyWidth(spot.picture)} sizes="100vw" alt={alt(spot.picture)} loading="lazy" />
               </div>
             </ViewTransition>
             <button type="button" aria-label={words.close} onClick={close} className={`${control} absolute inset-bs-3 inset-e-3`}>
