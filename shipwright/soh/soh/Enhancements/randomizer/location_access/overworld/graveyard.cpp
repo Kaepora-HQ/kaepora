@@ -13,7 +13,9 @@ void RegionTable_Init_Graveyard() {
         EVENT_ACCESS(LOGIC_SOLD_SPOOKY_MASK,     logic->IsChild && logic->AtDay && logic->HasItem(RG_SPOOKY_MASK) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
     }, {
         //Locations
-        LOCATION(RC_GRAVEYARD_FREESTANDING_POH,        (((logic->IsAdult && logic->BeanPlanted(LOGIC_PLANT_GRAVEYARD_BEAN)) || logic->CanUse(RG_LONGSHOT)) && logic->CanBreakCrates()) || (ctx->GetTrickOption(RT_GY_POH) && logic->CanUse(RG_BOOMERANG))),
+        // The remake puts the heart piece on the royal tomb's ledge with no crate around it and nothing for the Longshot
+        // to catch, so only the bean's plant reaches it.
+        LOCATION(RC_GRAVEYARD_FREESTANDING_POH,        (logic->IsAdult && logic->BeanPlanted(LOGIC_PLANT_GRAVEYARD_BEAN)) || (ctx->GetTrickOption(RT_GY_POH) && logic->CanUse(RG_BOOMERANG))),
         LOCATION(RC_GRAVEYARD_DAMPE_GRAVEDIGGING_TOUR, logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->IsChild && logic->AtNight), //TODO: This needs to change
         LOCATION(RC_GRAVEYARD_GS_WALL,                 logic->IsChild && logic->HookshotOrBoomerang() && logic->AtNight && logic->CanGetNightTimeGS()),
         LOCATION(RC_GRAVEYARD_GS_BEAN_PATCH,           logic->CanSpawnSoilSkull(RG_GRAVEYARD_BEAN_SOUL) && logic->CanAttack()),
