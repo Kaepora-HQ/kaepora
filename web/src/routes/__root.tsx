@@ -1,4 +1,5 @@
 import fraunces from '@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2?url'
+import figtree from '@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url'
 import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { copy } from '@/copy'
@@ -23,11 +24,12 @@ export const Route = createRootRoute({
       { property: 'og:image', content: `${origin}/link-preview.png` },
       { property: 'og:image:width', content: String(previewCard.width) },
       { property: 'og:image:height', content: String(previewCard.height) },
-      { property: 'og:image:alt', content: `Kaepora. ${copy.preview.line} An owl on a branch across the moon.` },
+      { property: 'og:image:alt', content: `Kaepora. ${copy.preview.line}. An owl on a branch across the moon.` },
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
     links: [
       { rel: 'preload', href: fraunces, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
+      { rel: 'preload', href: figtree, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
       { rel: 'stylesheet', href: css },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
     ],
@@ -54,7 +56,7 @@ function Document({ children }: { children: ReactNode }) {
 function NotFound() {
   return (
     <main className="grid min-h-svh place-content-center gap-6 px-gutter text-center">
-      <h1 className="storybook text-title font-normal">Nothing is where you left it.</h1>
+      <h1 className="storybook text-title font-normal">Nothing is where you left it</h1>
       <p className="text-mist">There is no page at this address.</p>
       <Link to="/" className="moon-button mx-auto px-7 py-3">
         Go to the Kaepora home page

@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/fraunces/full.css';
+@import '@fontsource-variable/figtree/wght.css';
 
 @theme {
   --color-midnight: oklch(0.223 0.051 266);
@@ -10,21 +11,32 @@
   --color-moon: oklch(0.873 0.114 89.4);
   --color-moon-bright: oklch(0.96 0.05 95);
 
-  --font-serif: 'Fraunces Variable', serif;
+  /* Fraunces speaks: headlines and the name. Figtree informs: text, controls and small print. */
+  --font-display: 'Fraunces Variable', serif;
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --container-page: 76rem;
 
   --spacing-gutter: clamp(1.25rem, 0.5rem + 3vw, 3rem);
+  /* Where the page container's content starts, for a full-width box that lines up with it. */
+  --spacing-edge: max(var(--spacing-gutter), calc((100% - var(--container-page)) / 2));
   --spacing-section: clamp(4rem, 2rem + 6vw, 8rem);
 
-  --text-display: clamp(2.5rem, 1.1rem + 5.6vw, 6rem);
-  --text-display--line-height: 1;
-  --text-title: clamp(2rem, 1.2rem + 3vw, 3.25rem);
-  --text-title--line-height: 1.05;
-  --text-heading: clamp(1.4rem, 1.15rem + 0.9vw, 1.9rem);
+  /* The display size follows its column, so the longest headline line always fits. */
+  --text-display: clamp(2rem, 11.6cqi, 5.75rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: clamp(2.125rem, 1.4rem + 3.2vw, 3.75rem);
+  --text-title--line-height: 1.04;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);
   --text-heading--line-height: 1.15;
-  --text-lead: clamp(1.125rem, 1rem + 0.5vw, 1.4rem);
+  --text-lead: clamp(1.1875rem, 1.08rem + 0.5vw, 1.4375rem);
   --text-lead--line-height: 1.5;
-  --text-body: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --text-body: clamp(1.0625rem, 1.02rem + 0.2vw, 1.1875rem);
   --text-body--line-height: 1.6;
+  --text-small: clamp(0.875rem, 0.85rem + 0.12vw, 0.9375rem);
+  --text-small--line-height: 1.5;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
@@ -49,7 +61,25 @@
 }
 
 @utility storybook {
+  font-family: var(--font-display);
   font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+/* Tiles of unlike sizes, one star each, so the sky never shows a grid. The stars fade towards the box's edges. */
+@utility starfield {
+  background-image:
+    radial-gradient(circle at 23% 31%, var(--color-starlight) 0.8px, transparent 1.4px),
+    radial-gradient(circle at 71% 64%, var(--color-starlight) 0.6px, transparent 1.1px),
+    radial-gradient(circle at 48% 12%, var(--color-mist) 1px, transparent 1.6px),
+    radial-gradient(circle at 86% 83%, var(--color-starlight) 0.5px, transparent 1px),
+    radial-gradient(circle at 9% 72%, var(--color-mist) 0.7px, transparent 1.2px);
+  background-size:
+    337px 271px,
+    409px 331px,
+    523px 419px,
+    251px 389px,
+    613px 457px;
+  mask-image: radial-gradient(closest-side, black 55%, transparent);
 }
 
 @utility press {
@@ -57,7 +87,7 @@
 }
 
 @utility moon-button {
-  @apply press rounded-full bg-moon font-semibold text-midnight hover:bg-moon-bright;
+  @apply press rounded-full bg-moon font-bold text-midnight hover:bg-moon-bright;
 }
 
 @utility tap-target {
@@ -86,7 +116,7 @@
   }
 
   body {
-    @apply bg-midnight font-serif text-body text-starlight antialiased;
+    @apply bg-midnight text-body text-starlight antialiased;
     font-optical-sizing: auto;
     text-wrap: pretty;
   }
@@ -123,7 +153,7 @@
   }
 
   .markdown h2 {
-    @apply mbs-8 text-lead font-semibold;
+    @apply mbs-8 text-lead font-bold;
   }
 
   .markdown h2:first-child {
@@ -131,7 +161,7 @@
   }
 
   .markdown h3 {
-    @apply font-semibold text-mist;
+    @apply font-bold text-mist;
   }
 
   .markdown :is(ul, ol) {
@@ -164,7 +194,7 @@
   }
 
   .markdown th {
-    @apply font-semibold text-mist;
+    @apply font-bold text-mist;
   }
 
   .markdown tbody td {

@@ -5,9 +5,10 @@ const stars = [
   [566, 188, 1.2], [496, 26, 1], [20, 226, 1.2], [584, 292, 1.4], [440, 20, 1],
 ] as const
 
-export function MoonAndOwl({ className }: { className?: string }) {
+// The branch is drawn past the right edge, so it runs on to whatever clips the drawing.
+export function MoonAndOwl({ className }: { className: string }) {
   return (
-    <svg viewBox="0 0 600 420" aria-hidden="true" className={className}>
+    <svg viewBox="0 0 600 420" aria-hidden="true" className={`overflow-visible ${className}`}>
       <defs>
         <radialGradient id="moonlight" cx="44%" cy="38%" r="62%">
           <stop offset="0%" style={{ stopColor: 'var(--color-moon-bright)' }} />
@@ -29,7 +30,7 @@ export function MoonAndOwl({ className }: { className?: string }) {
       </g>
 
       <g className="fill-none stroke-silhouette" strokeLinecap="round">
-        <path strokeWidth="11" d="M600 322c-60-4-130-10-200-4s-150 16-280 22" />
+        <path strokeWidth="11" d="M1700 286C1300 312 860 334 600 322c-60-4-130-10-200-4s-150 16-280 22" />
         <path strokeWidth="6" d="M150 338c-30 2-60 0-90-8" />
         <path strokeWidth="5" d="M500 316c12-22 28-38 50-48" />
       </g>
