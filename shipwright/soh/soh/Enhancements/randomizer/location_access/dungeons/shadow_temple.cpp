@@ -425,7 +425,8 @@ void RegionTable_Init_ShadowTemple() {
 
     areaTable[RR_SHADOW_TEMPLE_THREE_SKULL_JARS] = Region("Shadow Temple Three Skull Jars", SCENE_SHADOW_TEMPLE, {}, {
         //Locations
-        LOCATION(RC_SHADOW_TEMPLE_GS_TRIPLE_GIANT_POT, logic->HasItem(RG_GORONS_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA, ED_SHORT_JUMPSLASH)),
+        // The remake's skulltula comes out of a skull pot that takes damage from a bomb and nothing else.
+        LOCATION(RC_SHADOW_TEMPLE_GS_TRIPLE_GIANT_POT, logic->CanUse(RG_BOMB_BAG) && logic->CanKillEnemy(RE_GOLD_SKULLTULA, ED_SHORT_JUMPSLASH)),
         LOCATION(RC_SHADOW_TEMPLE_WONDER_THREE_POTS,   logic->CanUse(RG_FAIRY_BOW)),
     }, {
         //Exits
