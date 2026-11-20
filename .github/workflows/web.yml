@@ -4,11 +4,19 @@ on:
   pull_request:
     paths:
       - web/**
+      - FAQ.md
+      - RANDOMIZED.md
+      - remake/chests.tsv
+      - remake/stones.tsv
       - .github/workflows/web.yml
   push:
     branches: [main]
     paths:
       - web/**
+      - FAQ.md
+      - RANDOMIZED.md
+      - remake/chests.tsv
+      - remake/stones.tsv
       - .github/workflows/web.yml
 
 permissions:

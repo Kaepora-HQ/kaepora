@@ -241,11 +241,15 @@ dialog:not([open])::backdrop {
     @apply font-bold text-mist;
   }
 
-  .markdown tbody td {
+  .markdown tbody :is(th, td) {
     @apply border-bs border-mist/15;
   }
 
-  .faq h2 {
+  .markdown table:not(:has(thead)) tr:first-child :is(th, td) {
+    @apply border-bs-0;
+  }
+
+  .article h2 {
     @apply storybook mbs-16 text-heading font-normal;
     scroll-margin-block-start: 2rem;
   }

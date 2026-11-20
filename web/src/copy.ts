@@ -23,6 +23,16 @@ export type Copy = {
     }
   }
   faqPage: { title: string; questions: string }
+  randomized: {
+    title: string
+    contents: string
+    all: string
+    counts: string
+    chests: string
+    of: string
+    stones: string
+    fixedRows: readonly (readonly [string, string])[]
+  }
   footer: {
     heart: { before: string; label: string; after: string }
     thanks: { before: string; name: string; after: string }
@@ -129,6 +139,22 @@ export const copy: Copy = {
       terminal: 'If you prefer Terminal:',
       command: 'xattr -dr com.apple.quarantine Kaepora.app',
     },
+  },
+  randomized: {
+    title: 'What is randomized',
+    contents: 'On this page',
+    all: 'Read all of it',
+    counts: 'The most a seed can shuffle',
+    chests: 'Chests a seed can shuffle',
+    of: 'of',
+    stones: 'Gossip stones that can give a hint',
+    fixedRows: [
+      ['Shop places a seed can shuffle', '4 of 8 in each shop'],
+      ['Gifts from characters', 'In progress'],
+      ['Songs', 'In progress'],
+      ['Gold Skulltula tokens', 'In progress'],
+      ['Loose items', 'In progress'],
+    ],
   },
   faqPage: {
     title: 'FAQ',

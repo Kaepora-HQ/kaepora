@@ -1,11 +1,12 @@
 import { FoldedMap, Lanterns, MoonAndOwl, OpenChest, Signpost, Treeline } from '@/components/night'
+import { Link } from '@tanstack/react-router'
 import { DownloadCall, SiteFooter, SiteHeader } from '@/components/site-chrome'
 import { Wall } from '@/components/wall'
 import type { Copy } from '@/copy'
 
 const drawings = [OpenChest, Signpost, Lanterns, FoldedMap] as const
 
-export function HomePage({ copy }: { copy: Copy }) {
+export function HomePage({ copy, randomized }: { copy: Copy; randomized: readonly { id: string; title: string; summary: string }[] }) {
   return (
     <>
       <SiteHeader />
@@ -46,6 +47,31 @@ export function HomePage({ copy }: { copy: Copy }) {
                   </li>
                 )
               })}
+            </ul>
+          </div>
+        </section>
+
+        <section aria-labelledby="randomized" className="@container bg-silhouette px-gutter pbe-section">
+          <div className="mx-auto grid max-w-page gap-x-16 gap-y-8 @min-[56rem]:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <div className="flex flex-col items-start gap-5 @min-[56rem]:sticky @min-[56rem]:inset-bs-8 @min-[56rem]:self-start">
+              <h2 id="randomized" className="storybook text-title font-normal">
+                {copy.randomized.title}
+              </h2>
+              <Link to="/randomized" className="underline decoration-mist/40 underline-offset-4 hover:decoration-starlight">
+                {copy.randomized.all}
+              </Link>
+            </div>
+            <ul>
+              {randomized.map(({ id, title, summary }) => (
+                <li key={id} className="group relative flex flex-col gap-1 border-be border-mist/15 py-5 first:pbs-0 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-moon">
+                  <h3 className="text-lead font-bold">
+                    <Link to="/randomized" hash={id} className="after:absolute after:inset-0 group-hover:text-moon focus-visible:outline-transparent">
+                      {title}
+                    </Link>
+                  </h3>
+                  <p className="text-mist">{summary}</p>
+                </li>
+              ))}
             </ul>
           </div>
         </section>
