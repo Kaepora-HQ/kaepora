@@ -122,8 +122,15 @@ static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
 }
 
+// A seed's settings as its spoiler log holds them. A log that leaves out hints from characters is of a seed that has
+// none.
 static SeedSettings SettingsOf(const QString& folder) {
-    return ParseSeedSettings(nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings"));
+    const nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
+    SeedSettings settings = ParseSeedSettings(logged);
+    if (!logged.contains(std::string(HintsFromCharactersSetting))) {
+        settings.hintsFromCharacters = HintsFromCharacters::Vanilla;
+    }
+    return settings;
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.

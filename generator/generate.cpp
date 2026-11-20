@@ -144,7 +144,9 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         throw std::runtime_error("generation failed");
     }
     const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts);
-    const std::vector<CharacterHintText> characterHints = CharacterHints(hintTables, items, settings);
+    const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
+                                                              ? CharacterHints(hintTables, items, settings)
+                                                              : std::vector<CharacterHintText>{};
     std::set<RandomizerCheck> named;
     std::vector<MessageText> messages = PrizeLines(hintTables, items);
     for (const CharacterHintText& hint : characterHints) {

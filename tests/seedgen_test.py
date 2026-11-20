@@ -45,8 +45,9 @@ DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywh
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
                     "Shop goods": "Vanilla", "Gifts": "Vanilla", "Lens of Truth": "Needed",
-                    "Gossip stones": "Give hints"}
+                    "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
+NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
@@ -804,6 +805,22 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(spoiler["hints from characters"], {})
             named += bool(self.stones_naming_the_sword(spoiler, plan))
         self.assertTrue(named)
+
+    def test_characters_give_no_hints_at_vanilla(self):
+        # Seed 811 puts the Kokiri Sword in a chest of Mido's House, and with Mido silent a stone names it there.
+        prize_lines = [(row["file"], row["label"]) for row in PRIZE_LINES]
+        spoiler, plan = self.generate("811", NO_CHARACTER_HINTS)
+        given, given_plan = self.generate("811")
+        self.assertEqual(spoiler["settings"]["Hints from characters"], "Vanilla")
+        self.assertEqual(spoiler["hints from characters"], {})
+        self.assertEqual([(entry["file"], entry["label"]) for entry in plan["message_texts"]], prize_lines)
+        self.assertEqual(plan["message_texts"], given_plan["message_texts"][:len(prize_lines)])
+        self.assertEqual({key: value for key, value in plan.items() if key not in ("stone_texts", "message_texts")},
+                         {key: value for key, value in given_plan.items()
+                          if key not in ("stone_texts", "message_texts")})
+        self.assertEqual((spoiler["locations"], spoiler["playthrough"]), (given["locations"], given["playthrough"]))
+        self.assertIn("They say that the Kokiri Sword can be found at Kokiri Forest.", spoiler["hints"].values())
+        self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
 
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.

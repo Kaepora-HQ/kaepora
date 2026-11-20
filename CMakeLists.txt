@@ -208,7 +208,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
                      mido_names_where_the_kokiri_sword_lies a_place_a_character_names_is_not_named_again_by_a_stone
-                     mido_gives_no_hint_with_the_forest_open)
+                     mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
@@ -225,11 +225,11 @@ if(Qt6Test_FOUND)
     target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
     # The window's tests that make no seed need no game file.
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn whatJoinsTheShuffleHasItsOwnGroup
-                     aChoiceShowsInTheSummary defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
-                     shopGoodsOffersEachCountUpToFiveAndARandomNumber
+                     theHintsChoicesShareAGroup aChoiceShowsInTheSummary defaultsSetsEveryControlBack
+                     theSummaryNamesUpToThreeDungeonsLeftOut shopGoodsOffersEachCountUpToFiveAndARandomNumber
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
-                     longSettingsLeaveTheWindowWidth settingsAreRemembered
+                     longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns

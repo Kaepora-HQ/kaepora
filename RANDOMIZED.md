@@ -40,6 +40,10 @@ A stone may name the place an item went, say that a place is on the way to finis
 
 With **Vanilla**, the stones are as the game has them, and ask for the mask.
 
+With **Hints from characters** at **Give hints**, Mido tells you where the Kokiri Sword went when he stops you on the way to the Deku Tree. With **Kokiri Forest** at **Open** he never stops you, so he gives no hint. With **Vanilla**, he keeps his own lines.
+
+Whatever you choose, the owner of the Treasure Chest Game names the prize your seed put there, since his own line would be wrong.
+
 ## How the game starts
 
 Three settings open the world sooner. They cover the way out of Kokiri Forest, the Rainbow Bridge and Ganon's trials.
@@ -70,5 +74,4 @@ More is being worked on. Until each part lands, the game keeps its own.
 - **Songs.** The 12 songs, shuffled among the places that teach them.
 - **Gold Skulltulas.** What the 100 Gold Skulltulas leave behind.
 - **Loose items.** The 25 items that lie in the open. They are the heart pieces, the bosses' heart containers, two keys and the Fire Arrows at Lake Hylia.
-- **Hints from characters.** Mido and others say where something went, as the gossip stones do.
 - **Going back to child sooner.** Putting the Master Sword back before the Forest Temple.

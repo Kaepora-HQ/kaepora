@@ -81,6 +81,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.gossipStones == GossipStones::Vanilla) {
         changed << "no gossip stone hints";
     }
+    if (settings.hintsFromCharacters == HintsFromCharacters::Vanilla) {
+        changed << "no hints from characters";
+    }
     QString summary = changed.join(", ");
     summary[0] = summary[0].toUpper();
     return summary;
@@ -125,7 +128,9 @@ QString Details(const SeedSettings& settings) {
     }
     lines << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
           << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
-          << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)));
+          << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)))
+          << Line(HintsFromCharactersSetting,
+                  QString::fromUtf8(Words(HintsFromCharactersChoices, settings.hintsFromCharacters)));
     return lines.join('\n');
 }
 
@@ -246,8 +251,10 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     logicGroup->setLayout(logicForm);
 
     QComboBox* gossipStones = Choice(GossipStonesChoices);
+    QComboBox* hintsFromCharacters = Choice(HintsFromCharactersChoices);
     auto* hintsForm = new QFormLayout;
     hintsForm->addRow(QString::fromUtf8(GossipStonesSetting), gossipStones);
+    hintsForm->addRow(QString::fromUtf8(HintsFromCharactersSetting), hintsFromCharacters);
     auto* hintsGroup = new QGroupBox("Hints");
     hintsGroup->setLayout(hintsForm);
     AlignLabels({ dungeonForm, shuffleForm, worldForm, logicForm, hintsForm });
@@ -300,6 +307,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(gifts, shown.gifts);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
+        Select(hintsFromCharacters, shown.hintsFromCharacters);
     };
     show(settings);
 
@@ -334,6 +342,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.gifts = Selected<Gifts>(gifts);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);
+        shown.hintsFromCharacters = Selected<HintsFromCharacters>(hintsFromCharacters);
         chosen(shown);
         dialog->accept();
     });

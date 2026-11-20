@@ -23,6 +23,7 @@ inline constexpr std::string_view ShopPriceRangeSetting = "Shop price range";
 inline constexpr std::string_view GiftsSetting = "Gifts";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
+inline constexpr std::string_view HintsFromCharactersSetting = "Hints from characters";
 
 struct Dungeon {
     std::string_view name;
@@ -166,6 +167,12 @@ inline constexpr std::pair<GossipStones, std::string_view> GossipStonesChoices[]
     { GossipStones::Vanilla, "Vanilla" },
 };
 
+enum class HintsFromCharacters { GiveHints, Vanilla };
+inline constexpr std::pair<HintsFromCharacters, std::string_view> HintsFromCharactersChoices[] = {
+    { HintsFromCharacters::GiveHints, "Give hints" },
+    { HintsFromCharacters::Vanilla, "Vanilla" },
+};
+
 struct SeedSettings {
     std::set<Dungeon> shuffledDungeons{ std::begin(Dungeons), std::end(Dungeons) };
     DungeonItems keys = DungeonItems::AnywhereInTheirDungeon;
@@ -177,6 +184,7 @@ struct SeedSettings {
     Gifts gifts = Gifts::Vanilla;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
+    HintsFromCharacters hintsFromCharacters = HintsFromCharacters::GiveHints;
 
     bool operator==(const SeedSettings&) const = default;
 };

@@ -551,7 +551,8 @@ private slots:
                                 "Shop goods: Vanilla\n"
                                 "Gifts: Vanilla\n"
                                 "Lens of Truth: Never needed\n"
-                                "Gossip stones: Give hints";
+                                "Gossip stones: Give hints\n"
+                                "Hints from characters: Give hints";
         QVERIFY(shows(summary));
         QCOMPARE(label(summary)->toolTip(), details);
 
@@ -574,6 +575,17 @@ private slots:
         const QJsonObject spoiler = ReadJson(library + "/7/spoiler.json");
         QCOMPARE(spoiler["settings"].toObject()["Gossip stones"].toString(), QString("Vanilla"));
         QVERIFY(spoiler["hints"].toObject().isEmpty());
+    }
+
+    void vanillaCharactersGoIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Hints from characters")->setCurrentText("Vanilla");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject spoiler = ReadJson(library + "/7/spoiler.json");
+        QCOMPARE(spoiler["settings"].toObject()["Hints from characters"].toString(), QString("Vanilla"));
+        QVERIFY(spoiler["hints from characters"].toObject().isEmpty());
+        QVERIFY(!spoiler["hints"].toObject().isEmpty());
     }
 
     void aClosedDekuForestGoesIntoTheSeed() {
@@ -606,6 +618,7 @@ private slots:
         chooseForestOutKeysInChestsLensNeverNeeded();
         choice("Maps and compasses")->setCurrentText("In their own chests");
         choice("Gossip stones")->setCurrentText("Vanilla");
+        choice("Hints from characters")->setCurrentText("Vanilla");
         choice("Shop goods")->setCurrentText("Four per shop shuffled");
         choice("Gifts")->setCurrentText("Shuffled");
         dialogButton("Defaults")->click();
@@ -622,6 +635,7 @@ private slots:
         QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
+        QCOMPARE(choice("Hints from characters")->currentText(), QString("Give hints"));
         dialogButton("OK")->click();
         QVERIFY(shows("Default settings"));
     }
@@ -761,6 +775,17 @@ private slots:
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
     }
 
+    void theHintsChoicesShareAGroup() {
+        button("Settings…")->click();
+        QCOMPARE(rows("Hints"), (QStringList{ "Gossip stones", "Hints from characters" }));
+        QCOMPARE(choice("Hints from characters")->currentText(), QString("Give hints"));
+        QStringList choices;
+        for (int index = 0; index < choice("Hints from characters")->count(); ++index) {
+            choices << choice("Hints from characters")->itemText(index);
+        }
+        QCOMPARE(choices, (QStringList{ "Give hints", "Vanilla" }));
+    }
+
     void theSummaryNamesUpToThreeDungeonsLeftOut() {
         leaveOut({ "Water Temple" });
         QVERIFY(shows("Water Temple not shuffled"));
@@ -787,6 +812,7 @@ private slots:
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";
+        QTest::newRow("characters") << "Hints from characters" << "Vanilla" << "No hints from characters";
     }
 
     void aChoiceShowsInTheSummary() {
@@ -813,6 +839,23 @@ private slots:
         QCoreApplication::processEvents();
         QCOMPARE(window->minimumSizeHint().width(), least);
         QCOMPARE(window->width(), width);
+    }
+
+    void aSeedMadeBeforeHintsFromCharactersHasNone() {
+        // The settings of a seed made by Kaepora 0.1.0, whose log ends at the stones.
+        QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
+        Write(library + "/OWL/spoiler.json",
+              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
+              "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
+              "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
+              "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
+              "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
+        window = std::make_unique<Window>();
+        window->show();
+        QCOMPARE(listed(1), QStringList{ "No hints from characters" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Hints from characters: Vanilla"));
+        QVERIFY(shows("Default settings"));
     }
 
     void settingsAreRemembered() {
