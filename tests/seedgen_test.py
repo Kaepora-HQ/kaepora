@@ -43,7 +43,7 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
             "Ganon's Castle"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
-                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
+                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Start with": [],
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Songs": "Vanilla",
                     "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
                     "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
@@ -52,9 +52,9 @@ NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
-    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
-    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Songs": "Shuffled among themselves", "Loose items": "Shuffled",
-    "Dungeon rewards": "Shuffled",
+    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Start with": ["Hover Boots", "Megaton Hammer"],
+    "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All", "Gifts": "Shuffled",
+    "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
@@ -137,6 +137,16 @@ SONG_FIXES = [
      "text": "HavePlayedEvent.Dm_MelodyGet_Storm"},
     {"flow": "Event/EventFlow/Dm_MelodyGet_Fire.bfevfl.zs", "event": "Event1", "param": "GameDataName",
      "text": "HavePlayedEvent.Dm_MelodyGet_Fire"}]
+# What a seed can start with, by the game's names, and the actor a new game holds for each.
+START_ITEMS = {"Kokiri Sword": "Weapon_Sword_Kokiri", "Deku Shield": "Weapon_Shield_Deku",
+               "Hylian Shield": "Weapon_Shield_Hylian", "Mirror Shield": "Weapon_Shield_Mirror",
+               "Iron Boots": "Armor_Adult_HeavyBoot", "Hover Boots": "Armor_Adult_HoverBoot",
+               "Goron Tunic": "Armor_Adult_Goron", "Zora Tunic": "Armor_Adult_Zora", "Megaton Hammer": "Item_Hammer",
+               "Boomerang": "Item_Boomerang"}
+# The shuffled chest copies a started item leaves out of the pool. Every Deku Shield stays, as in SoH's pool.
+START_COPIES = {"Kokiri Sword": "Item_Sword_Kokiri", "Hylian Shield": "TBox_Shield_Hylian",
+                "Mirror Shield": "Item_Shield_Mirror", "Iron Boots": "Item_HeavyBoot", "Hover Boots": "Item_HoverBoot",
+                "Megaton Hammer": "Item_Hammer", "Boomerang": "Item_Boomerang"}
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -536,7 +546,8 @@ class SeedgenTest(unittest.TestCase):
         out = pathlib.Path(self.tmp.name)
         for settings, message in (({"Lens of Truth": "Sometimes"}, "Sometimes"),
                                   ({"Shuffled dungeons": ["Deku Tree", "Hyrule Castle"]}, "Hyrule Castle"),
-                                  ({"Forest": "Open"}, "Forest")):
+                                  ({"Forest": "Open"}, "Forest"),
+                                  ({"Start with": ["Kokiri Sword", "Master Sword"]}, "Master Sword")):
             result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
@@ -661,12 +672,16 @@ class SeedgenTest(unittest.TestCase):
 
     def test_every_setting_changed_at_once(self):
         # The place after a boss is a step for the boss whatever it holds, so only there may the Lens stand on the
-        # route. In seed 430 Volvagia's place holds it.
+        # route. In seed 405 Queen Gohma's place holds it.
         bosses = REWARD_AREAS.keys() - {"Gift from Rauru"}
         for seed in range(400, 500):
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             lens = {place for place, item in playthrough_steps(spoiler).items() if item == "Lens of Truth"}
             self.assertLessEqual(lens, bosses, seed)
+            # No shuffled place, the nine reward places among them, holds an item the seed starts with.
+            placed = {spoiler_item(item) for item in spoiler["locations"].values()}
+            self.assertFalse(placed & set(EVERY_SETTING_CHANGED["Start with"]), seed)
+            self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
 
     def assert_shop_slots_sell_the_pool(self, spoiler, plan, slots):
         """The plan's shop slots are the given rows, in table order, each with the spoiler log's item and a cheap price,
@@ -1134,11 +1149,12 @@ class SeedgenTest(unittest.TestCase):
 
     def assert_character_hints_are_true(self, spoiler, plan):
         """Each character's hint names the place of the seed that holds its item, in each of its messages, and the
-        spoiler log has what each message says. With the forest open Mido says none."""
+        spoiler log has what each message says. With the forest open, or a seed that starts with the Kokiri Sword,
+        Mido says none."""
         texts = {(entry["file"], entry["label"]): plain(entry["text"]) for entry in plan["message_texts"]}
         said = collections.defaultdict(list)
         for row in CHARACTER_HINTS:
-            if spoiler["settings"]["Kokiri Forest"] == "Open":
+            if spoiler["settings"]["Kokiri Forest"] == "Open" or row["item"] in spoiler["settings"]["Start with"]:
                 self.assertNotIn((row["file"], row["label"]), texts, spoiler["seed"])
                 continue
             [location] = [location for location, placed in spoiler["locations"].items()
@@ -1183,6 +1199,25 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(spoiler["hints from characters"], {})
             named += bool(self.stones_naming_the_sword(spoiler, plan))
         self.assertTrue(named)
+
+    def test_a_seed_starts_with_what_is_chosen(self):
+        chosen = list(START_ITEMS)
+        spoiler, plan = self.generate("31", {"Start with": chosen[::-1]})
+        self.assertEqual(spoiler["settings"]["Start with"], chosen)
+        self.assertEqual(plan["start_items"], [START_ITEMS[name] for name in chosen])
+        # A Red Rupee takes the place of each started item's shuffled copy, as SoH's pool puts junk in its place.
+        rows = {row["hash"]: row for row in SHUFFLED}
+        chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+        self.assertEqual(collections.Counter(chests.values()),
+                         POOL - collections.Counter(START_COPIES.values())
+                         + collections.Counter({"TBox_Rupee_Red": len(START_COPIES)}))
+        # The logic holds each from the start, so the route takes none from a shuffled place, and Mido has no sword to
+        # tell of. As SoH's logic does, it counts a Deku or Hylian Shield only once bought, so a route may buy one.
+        self.assertFalse(set(START_ITEMS) & set(playthrough_steps(spoiler).values()))
+        self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assert_character_hints_are_true(spoiler, plan)
+        self.assertNotIn("KF Mido Hint", spoiler["hints from characters"])
+        self.assertEqual(self.route_out_of_reach(spoiler), [])
 
     def test_characters_give_no_hints_at_vanilla(self):
         # Seed 811 puts the Kokiri Sword in a chest of Mido's House, and with Mido silent a stone names it there.

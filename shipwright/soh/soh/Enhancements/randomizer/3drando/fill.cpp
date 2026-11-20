@@ -972,7 +972,7 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     }
     std::map<RandomizerCheck, RandomizerGet> pooled;
     for (const RemakeShopSlot& slot : shops) {
-        pooled.emplace(slot.location, ShopFiller);
+        pooled.emplace(slot.location, Filler);
     }
     for (const RemakeGift& gift : gifts) {
         pooled.emplace(gift.location, gift.sohItem);

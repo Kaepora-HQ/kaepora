@@ -81,9 +81,9 @@ std::vector<RemakeChest> LoadRemakeChests();
 // gives.
 std::vector<RemakeChest> LoadRemakeLooseItems();
 
-// What each shuffled shop slot adds to the pool, and the remake's name for it.
-inline constexpr RandomizerGet ShopFiller = RG_RED_RUPEE;
-inline constexpr std::string_view ShopFillerName = "TBox_Rupee_Red";
+// The pool's filler, and its remake name.
+inline constexpr RandomizerGet Filler = RG_RED_RUPEE;
+inline constexpr std::string_view FillerName = "TBox_Rupee_Red";
 
 // The slots of remake/shops.tsv, read from the copy built into the program. Throws when a row names anything but a SoH
 // shop location, repeats one, or gives a number outside 1 to 8 or a slot outside 0 to 7, or when the table leaves one
@@ -118,7 +118,7 @@ std::vector<RemakeGift> LoadRemakeRewards(const std::vector<RemakeChest>& chests
 
 // Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
 // program, or a row names any other item. A slot can hold the item of a shuffled chest or of a gift that KeptFromShops
-// lets into shops, the token a shuffled skulltula adds, and the shop filler.
+// lets into shops, the token a shuffled skulltula adds, and the filler.
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
 struct RemakeSkulltula {
@@ -227,7 +227,8 @@ struct MessageText {
 // name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and
 // the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
 // on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its item and price, each
-// shuffled skulltula with its item, and each shuffled loose item that gives another item than its own, with that item.
+// shuffled skulltula with its item, each shuffled loose item that gives another item than its own, with that item, and
+// the actor of each item the seed starts with.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <map>
 #include <ranges>
 #include <stdexcept>
@@ -39,6 +40,14 @@ static PricesBetween ShopPriceRange(const nlohmann::json& value) {
     return range;
 }
 
+static StartItem StartItemNamed(const std::string& setting, const nlohmann::json& name) {
+    const auto item = std::ranges::find(StartItems, name.get<std::string>(), &StartItem::name);
+    if (item == std::end(StartItems)) {
+        throw std::runtime_error(setting + ": unknown item " + name.dump());
+    }
+    return *item;
+}
+
 static void RefuseUnless(bool applies, std::string_view setting, std::string_view when) {
     if (!applies) {
         throw std::runtime_error(std::string(setting) + ": applies only " + std::string(when));
@@ -72,6 +81,13 @@ static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, 
     return shops;
 }
 
+std::vector<StartItem> StartWithInOrder(const SeedSettings& settings) {
+    std::vector<StartItem> items;
+    std::ranges::copy_if(StartItems, std::back_inserter(items),
+                         [&](const StartItem& item) { return settings.startWith.contains(item); });
+    return items;
+}
+
 nlohmann::ordered_json ToJson(const SeedSettings& settings) {
     nlohmann::ordered_json dungeons = nlohmann::ordered_json::array();
     for (const Dungeon& dungeon : Dungeons) {
@@ -84,7 +100,11 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { MapsAndCompassesSetting, Words(MapsAndCompassesChoices, settings.mapsAndCompasses) },
              { ForestSetting, Words(ForestChoices, settings.forest) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
-             { TrialsSetting, Words(TrialsChoices, settings.trials) } };
+             { TrialsSetting, Words(TrialsChoices, settings.trials) },
+             { StartWithSetting, nlohmann::ordered_json::array() } };
+    for (const StartItem& item : StartWithInOrder(settings)) {
+        json[std::string(StartWithSetting)].push_back(item.name);
+    }
     json[std::string(ShopsSetting)] = ShopsWords(settings.shops);
     if (settings.shops) {
         json[std::string(ShopPricesSetting)] = ShopPricesChoice(settings.shops->prices).second;
@@ -131,6 +151,10 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.bridge = Parse(BridgeChoices, setting, value);
         } else if (setting == TrialsSetting) {
             settings.trials = Parse(TrialsChoices, setting, value);
+        } else if (setting == StartWithSetting) {
+            for (const nlohmann::json& name : value) {
+                settings.startWith.insert(StartItemNamed(setting, name));
+            }
         } else if (const auto shop = std::ranges::find(ShopSettings, setting); shop != std::end(ShopSettings)) {
             shops.emplace(*shop, value);
         } else if (setting == GiftsSetting) {

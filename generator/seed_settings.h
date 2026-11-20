@@ -9,6 +9,7 @@
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 
 inline constexpr std::string_view ShuffledDungeonsSetting = "Shuffled dungeons";
 inline constexpr std::string_view KeysSetting = "Small and boss keys";
@@ -16,6 +17,7 @@ inline constexpr std::string_view MapsAndCompassesSetting = "Maps and compasses"
 inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
+inline constexpr std::string_view StartWithSetting = "Start with";
 inline constexpr std::string_view ShopsSetting = "Shop goods";
 inline constexpr std::string_view ShopPricesSetting = "Shop prices";
 inline constexpr std::string_view ShopPriceSetting = "Shop price";
@@ -85,6 +87,22 @@ enum class Trials { AllSix, None };
 inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::AllSix, "All six" },
     { Trials::None, "None" },
+};
+
+// An item a seed can start with: its name in the game's English text, and its actor.
+struct StartItem {
+    std::string_view name;
+    std::string_view actor;
+
+    auto operator<=>(const StartItem&) const = default;
+};
+
+inline constexpr StartItem StartItems[] = {
+    { "Kokiri Sword", "Weapon_Sword_Kokiri" },   { "Deku Shield", "Weapon_Shield_Deku" },
+    { "Hylian Shield", "Weapon_Shield_Hylian" }, { "Mirror Shield", "Weapon_Shield_Mirror" },
+    { "Iron Boots", "Armor_Adult_HeavyBoot" },   { "Hover Boots", "Armor_Adult_HoverBoot" },
+    { "Goron Tunic", "Armor_Adult_Goron" },      { "Zora Tunic", "Armor_Adult_Zora" },
+    { "Megaton Hammer", "Item_Hammer" },         { "Boomerang", "Item_Boomerang" },
 };
 
 // A count's value is the number of goods it shuffles in each shop.
@@ -210,6 +228,7 @@ struct SeedSettings {
     Forest forest = Forest::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
+    std::set<StartItem> startWith;
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Gifts gifts = Gifts::Vanilla;
     Rewards rewards = Rewards::Vanilla;
@@ -222,6 +241,9 @@ struct SeedSettings {
 
     bool operator==(const SeedSettings&) const = default;
 };
+
+// What the settings start with, in the list's order.
+std::vector<StartItem> StartWithInOrder(const SeedSettings& settings);
 
 nlohmann::ordered_json ToJson(const SeedSettings& settings);
 

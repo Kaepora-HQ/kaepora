@@ -9,7 +9,9 @@
 #include "soh/Enhancements/randomizer/randomizer.h"
 
 #include <algorithm>
+#include <iterator>
 #include <utility>
+#include <vector>
 
 // The value of each option that describes the unmodified game. SoH carries out most options by changing the game
 // while it runs, and the mod changes only which item a chest holds. An option that SoH reads only under another
@@ -222,6 +224,42 @@ static constexpr std::pair<RandomizerSettingKey, uint8_t> unmodifiedGame[] = {
     { RSK_DAMAGE_MULTIPLIER, RO_DAMAGE_MULTIPLIER_DEFAULT },
 };
 
+// SoH's starting option and item for an item a seed can start with.
+struct StartingOption {
+    std::string_view actor;
+    RandomizerSettingKey option;
+    RandomizerGet item;
+};
+
+static constexpr StartingOption startingOptions[] = {
+    { "Weapon_Sword_Kokiri", RSK_STARTING_KOKIRI_SWORD, RG_KOKIRI_SWORD },
+    { "Weapon_Shield_Deku", RSK_STARTING_DEKU_SHIELD, RG_DEKU_SHIELD },
+    { "Weapon_Shield_Hylian", RSK_STARTING_HYLIAN_SHIELD, RG_HYLIAN_SHIELD },
+    { "Weapon_Shield_Mirror", RSK_STARTING_MIRROR_SHIELD, RG_MIRROR_SHIELD },
+    { "Armor_Adult_HeavyBoot", RSK_STARTING_IRON_BOOTS, RG_IRON_BOOTS },
+    { "Armor_Adult_HoverBoot", RSK_STARTING_HOVER_BOOTS, RG_HOVER_BOOTS },
+    { "Armor_Adult_Goron", RSK_STARTING_GORON_TUNIC, RG_GORON_TUNIC },
+    { "Armor_Adult_Zora", RSK_STARTING_ZORA_TUNIC, RG_ZORA_TUNIC },
+    { "Item_Hammer", RSK_STARTING_MEGATON_HAMMER, RG_MEGATON_HAMMER },
+    { "Item_Boomerang", RSK_STARTING_BOOMERANG, RG_BOOMERANG },
+};
+
+static_assert(std::ranges::equal(startingOptions, StartItems, {}, &StartingOption::actor, &StartItem::actor));
+
+static std::vector<StartingOption> StartedOptions(const SeedSettings& settings) {
+    std::vector<StartingOption> started;
+    std::ranges::copy_if(startingOptions, std::back_inserter(started), [&](const StartingOption& option) {
+        return std::ranges::find(settings.startWith, option.actor, &StartItem::actor) != settings.startWith.end();
+    });
+    return started;
+}
+
+std::vector<RandomizerGet> StartingItems(const SeedSettings& settings) {
+    std::vector<RandomizerGet> items;
+    std::ranges::transform(StartedOptions(settings), std::back_inserter(items), &StartingOption::item);
+    return items;
+}
+
 // The game opens a hidden grotto to a bomb or the hammer, or the Song of Storms, and never checks the Echo Gem.
 const std::set<RandomizerTrick> enabledTricks = { RT_GROTTOS_WITHOUT_AGONY };
 
@@ -305,6 +343,9 @@ void SetOptions(const SeedSettings& settings) {
                                    ctx->GetOption(RSK_SHOPSANITY_PRICES_RANGE_2).Set(between.highest / ShopPriceStep);
                                } },
                    settings.shops->prices);
+    }
+    for (const StartingOption& started : StartedOptions(settings)) {
+        ctx->GetOption(started.option).Set(RO_GENERIC_ON);
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
     ctx->GetLogic()->SongsShuffled = settings.songs == Songs::ShuffledAmongThemselves;

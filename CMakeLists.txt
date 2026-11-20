@@ -227,7 +227,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla
                      with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter
                      with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple
-                     with_songs_shuffled_the_courtyard_scene_starts_played)
+                     with_songs_shuffled_the_courtyard_scene_starts_played
+                     a_seed_starts_with_what_is_chosen)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
@@ -252,7 +253,8 @@ if(Qt6Test_FOUND)
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
-                     untickingStopsARequestInFlight)
+                     untickingStopsARequestInFlight theStartWithListHasTheItems
+                     oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith)
     if(APPLE)
         list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)
     endif()

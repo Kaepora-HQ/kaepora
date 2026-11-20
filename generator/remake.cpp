@@ -408,7 +408,7 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
         }
     }
     for (const RemakeShopSlot& slot : shops) {
-        addShuffled(slot.location, std::string(ShopFillerName));
+        addShuffled(slot.location, std::string(FillerName));
     }
     for (const RemakeGift& gift : gifts) {
         addShuffled(gift.location, gift.item);
@@ -439,7 +439,7 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
             names[chest.sohItem].push_back(chest.item);
         }
     }
-    names[ShopFiller].insert(names[ShopFiller].end(), shops.size(), std::string(ShopFillerName));
+    names[Filler].insert(names[Filler].end(), shops.size(), std::string(FillerName));
     for (const RemakeGift& gift : gifts) {
         names[gift.sohItem].push_back(gift.item);
     }
@@ -515,7 +515,7 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
 }
 
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts) {
-    std::set<std::string> holdable{ std::string(ShopFillerName), std::string(TokenName) };
+    std::set<std::string> holdable{ std::string(FillerName), std::string(TokenName) };
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled && !KeptFromShops(chest.sohItem)) {
             holdable.insert(chest.item);
@@ -938,5 +938,8 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["start_items"] = nlohmann::ordered_json::array();
+    for (const StartItem& item : StartWithInOrder(settings)) {
+        plan["start_items"].push_back(item.actor);
+    }
     return plan;
 }

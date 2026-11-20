@@ -303,6 +303,44 @@ private:
         return nullptr;
     }
 
+    // The button of the "Start" group's "Items" row.
+    QPushButton* itemsToStartWith() const {
+        for (QLabel* text : dialog()->findChildren<QLabel*>()) {
+            if (text->text() == "Items") {
+                return qobject_cast<QPushButton*>(text->buddy());
+            }
+        }
+        return nullptr;
+    }
+
+    QDialog* startWithDialog() const {
+        for (QDialog* dialog : window->findChildren<QDialog*>()) {
+            if (dialog->isVisible() && dialog->windowTitle() == "Start with") {
+                return dialog;
+            }
+        }
+        return nullptr;
+    }
+
+    // Qt deletes a closed list later. Deleting it now keeps its boxes out of the settings dialog's children.
+    void closeStartWith(const QString& text) {
+        for (QPushButton* button : startWithDialog()->findChildren<QPushButton*>()) {
+            if (button->text() == text) {
+                button->click();
+                break;
+            }
+        }
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    void startWith(const QStringList& names) {
+        itemsToStartWith()->click();
+        for (QCheckBox* box : startWithDialog()->findChildren<QCheckBox*>()) {
+            box->setChecked(names.contains(box->text()));
+        }
+        closeStartWith("OK");
+    }
+
     // The labels of a group's rows, in order.
     QStringList rows(const QString& title) const {
         QStringList labels;
@@ -552,6 +590,7 @@ private slots:
                                 "Kokiri Forest: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
+                                "Start with: None\n"
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
                                 "Gifts: Vanilla\n"
@@ -801,10 +840,85 @@ private slots:
         for (QGroupBox* group : dialog()->findChildren<QGroupBox*>()) {
             titles << group->title();
         }
-        QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Logic", "Hints" }));
+        QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Start", "Logic", "Hints" }));
         QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
                                                 "Loose items", "Dungeon rewards" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
+        QCOMPARE(rows("Start"), QStringList{ "Items" });
+    }
+
+    void theStartWithListHasTheItems() {
+        button("Settings…")->click();
+        QCOMPARE(itemsToStartWith()->text(), QString("None"));
+        itemsToStartWith()->click();
+        QCOMPARE(startWithDialog()->windowTitle(), QString("Start with"));
+        QStringList names;
+        for (QGroupBox* column : startWithDialog()->findChildren<QGroupBox*>()) {
+            names << column->title();
+            for (QCheckBox* box : column->findChildren<QCheckBox*>()) {
+                QVERIFY(!box->isChecked());
+                names << box->text();
+            }
+        }
+        QCOMPARE(names,
+                 (QStringList{ "Items", "Kokiri Sword", "Deku Shield", "Hylian Shield", "Mirror Shield", "Iron Boots",
+                               "Hover Boots", "Goron Tunic", "Zora Tunic", "Megaton Hammer", "Boomerang" }));
+        QStringList buttons;
+        for (QPushButton* button : startWithDialog()->findChildren<QPushButton*>()) {
+            buttons << button->text();
+        }
+        buttons.sort();
+        QCOMPARE(buttons, (QStringList{ "Cancel", "OK" }));
+        closeStartWith("Cancel");
+    }
+
+    void itemsToStartWithGoIntoTheSeed() {
+        button("Settings…")->click();
+        startWith({ "Megaton Hammer", "Kokiri Sword", "Hover Boots", "Boomerang", "Hylian Shield" });
+        QVERIFY(startWithDialog() == nullptr);
+        QCOMPARE(itemsToStartWith()->text(), QString("5 items"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("Starts with 5 items"));
+        const QString line = "Start with: Kokiri Sword, Hylian Shield, Hover Boots, Megaton Hammer and Boomerang";
+        QVERIFY(label("Starts with 5 items")->toolTip().split('\n').contains(line));
+
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Start with"].toArray(),
+                 (QJsonArray{ "Kokiri Sword", "Hylian Shield", "Hover Boots", "Megaton Hammer", "Boomerang" }));
+        QCOMPARE(listed(1), QStringList{ "Starts with 5 items" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains(line));
+    }
+
+    void oneItemToStartWithIsOneItem() {
+        button("Settings…")->click();
+        startWith({ "Megaton Hammer" });
+        QCOMPARE(itemsToStartWith()->text(), QString("1 item"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("Starts with 1 item"));
+    }
+
+    void cancelLeavesTheItemsToStartWith() {
+        button("Settings…")->click();
+        startWith({ "Iron Boots", "Zora Tunic" });
+        itemsToStartWith()->click();
+        for (QCheckBox* box : startWithDialog()->findChildren<QCheckBox*>()) {
+            QCOMPARE(box->isChecked(), box->text() == "Iron Boots" || box->text() == "Zora Tunic");
+            box->setChecked(false);
+        }
+        closeStartWith("Cancel");
+        QCOMPARE(itemsToStartWith()->text(), QString("2 items"));
+        dialogButton("Cancel")->click();
+        QVERIFY(shows("Default settings"));
+    }
+
+    void defaultsClearsTheItemsToStartWith() {
+        button("Settings…")->click();
+        startWith({ "Boomerang" });
+        dialogButton("Defaults")->click();
+        QCOMPARE(itemsToStartWith()->text(), QString("None"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("Default settings"));
     }
 
     void theHintsChoicesShareAGroup() {

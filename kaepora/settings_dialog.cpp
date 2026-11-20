@@ -21,7 +21,9 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
+#include <memory>
 #include <ranges>
+#include <set>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -32,6 +34,10 @@ constexpr qsizetype NamedDungeons = 3;
 static QString Listed(QStringList names) {
     const QString last = names.takeLast();
     return names.isEmpty() ? last : names.join(", ") + " and " + last;
+}
+
+static QString Counted(size_t items) {
+    return items == 0 ? "None" : items == 1 ? "1 item" : QString("%1 items").arg(items);
 }
 
 static std::pair<QStringList, QStringList> ShuffledAndLeftOut(const SeedSettings& settings) {
@@ -72,6 +78,9 @@ QString Summary(const SeedSettings& settings) {
     }
     if (settings.trials == Trials::None) {
         changed << "no trials";
+    }
+    if (!settings.startWith.empty()) {
+        changed << "starts with " + Counted(settings.startWith.size());
     }
     if (settings.shops) {
         changed << "shop goods shuffled";
@@ -124,6 +133,14 @@ static QString ShuffledDungeons(const SeedSettings& settings) {
     return shuffled.size() < leftOut.size() ? Listed(shuffled) : "All but " + Listed(leftOut);
 }
 
+static QString StartWith(const SeedSettings& settings) {
+    QStringList names;
+    for (const StartItem& item : StartWithInOrder(settings)) {
+        names << QString::fromUtf8(item.name);
+    }
+    return names.isEmpty() ? "None" : Listed(names);
+}
+
 static QString ShopPricesDetail(const ShopPrices& prices) {
     if (const auto* one = std::get_if<OnePrice>(&prices)) {
         return QString("One price of %1 rupees").arg(one->price);
@@ -142,6 +159,7 @@ QString Details(const SeedSettings& settings) {
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
+                        Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
     if (settings.shops) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
@@ -228,6 +246,39 @@ static Value Selected(const QComboBox* box) {
     return static_cast<Value>(box->currentData().toInt());
 }
 
+static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartItem>& ticked,
+                            const std::function<void(const std::set<StartItem>&)>& chosen) {
+    auto* dialog = new QDialog(settingsDialog);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setWindowTitle(QString::fromUtf8(StartWithSetting));
+    std::vector<std::pair<StartItem, QCheckBox*>> boxes;
+    auto* column = new QVBoxLayout;
+    for (const StartItem& item : StartItems) {
+        auto* box = new QCheckBox(QString::fromUtf8(item.name));
+        box->setChecked(ticked.contains(item));
+        column->addWidget(box);
+        boxes.emplace_back(item, box);
+    }
+    auto* group = new QGroupBox("Items");
+    group->setLayout(column);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
+    auto* layout = new QVBoxLayout(dialog);
+    layout->addWidget(group);
+    layout->addWidget(buttons);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
+        std::set<StartItem> items;
+        for (const auto& [item, box] : boxes) {
+            if (box->isChecked()) {
+                items.insert(item);
+            }
+        }
+        chosen(items);
+        dialog->accept();
+    });
+    dialog->open();
+}
+
 void ChooseSettings(QWidget* window, const SeedSettings& settings,
                     const std::function<void(const SeedSettings&)>& chosen) {
     auto* dialog = new QDialog(window);
@@ -297,6 +348,19 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* worldGroup = new QGroupBox("World");
     worldGroup->setLayout(worldForm);
 
+    // What the button counts and the list opens with.
+    auto startWith = std::make_shared<std::set<StartItem>>();
+    auto* items = new QPushButton;
+    const auto showStartWith = [=](const std::set<StartItem>& shown) {
+        *startWith = shown;
+        items->setText(Counted(shown.size()));
+    };
+    QObject::connect(items, &QPushButton::clicked, dialog, [=] { ChooseStartWith(dialog, *startWith, showStartWith); });
+    auto* startForm = new QFormLayout;
+    startForm->addRow("Items", items);
+    auto* startGroup = new QGroupBox("Start");
+    startGroup->setLayout(startForm);
+
     QComboBox* lens = Choice(LensChoices);
     auto* logicForm = new QFormLayout;
     logicForm->addRow(QString::fromUtf8(LensSetting), lens);
@@ -338,6 +402,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(forest, shown.forest);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
+        showStartWith(shown.startWith);
         shops->setCurrentIndex(shown.shops ? shops->findData(static_cast<int>(shown.shops->count)) : 0);
         const ShopPrices prices = shown.shops ? shown.shops->prices : DefaultShopPrices;
         shopPrices->setCurrentIndex(static_cast<int>(&ShopPricesChoice(prices) - std::begin(ShopPricesChoices)));
@@ -374,6 +439,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.forest = Selected<Forest>(forest);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
+        shown.startWith = *startWith;
         if (shops->currentIndex() != 0) {
             ShopPrices prices = ShopPricesChoices[shopPrices->currentIndex()].first;
             if (auto* one = std::get_if<OnePrice>(&prices)) {
@@ -408,10 +474,11 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     AlignLabels({ dungeonForm, shuffleForm });
     auto* right = new QVBoxLayout;
     right->addWidget(worldGroup);
+    right->addWidget(startGroup);
     right->addWidget(logicGroup);
     right->addWidget(hintsGroup);
     right->addStretch();
-    AlignLabels({ worldForm, logicForm, hintsForm });
+    AlignLabels({ worldForm, startForm, logicForm, hintsForm });
     auto* groups = new QWidget;
     auto* columns = new QHBoxLayout(groups);
     columns->setContentsMargins({});

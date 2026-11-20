@@ -68,7 +68,7 @@ A stone may name the place an item went, say that a place is on the way to finis
 
 With **Vanilla**, the stones are as the game has them, and ask for the mask.
 
-With **Hints from characters** at **Give hints**, Mido tells you where the Kokiri Sword went when he stops you on the way to the Deku Tree. With **Kokiri Forest** at **Open** he never stops you, so he gives no hint. With **Vanilla**, he keeps his own lines.
+With **Hints from characters** at **Give hints**, Mido tells you where the Kokiri Sword went when he stops you on the way to the Deku Tree. With **Kokiri Forest** at **Open** he never stops you, so he gives no hint. If you start with the Kokiri Sword, he has nothing to tell and keeps his own lines. With **Vanilla**, he keeps his own lines.
 
 Whatever you choose, the owner of the Treasure Chest Game names the prize your seed put there, since his own line would be wrong.
 
@@ -79,6 +79,12 @@ Three settings open the world sooner. They cover the way out of Kokiri Forest, t
 - **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both.
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
+
+## What you start with
+
+Under **Start**, **Items** opens a list. Tick an item and every new game of that seed begins with it. The seed then keeps that item out of the shuffled places and puts a small prize in the pool in its stead.
+
+For now the list holds the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. The tunics are not shuffled, so a shop still sells them, and the Deku Shields stay in the shuffle, as a Deku Shield can burn. A seed also never counts on a started Deku Shield or Hylian Shield, as a shield can be lost: where it needs one, it has you buy one.
 
 ## The Lens of Truth
 

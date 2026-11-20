@@ -157,6 +157,20 @@ template <typename T> static std::vector<T> Joined(std::vector<T> first, const s
     return first;
 }
 
+// SoH's pool leaves out an item a seed starts with and fills its place with junk, but adds its Deku Shields whatever
+// the start (GenerateItemPool).
+static void LeaveOutOfThePool(std::vector<RemakeChest>& chests, RandomizerGet started) {
+    if (started == RG_DEKU_SHIELD) {
+        return;
+    }
+    const auto copy = std::ranges::find_if(
+        chests, [&](const RemakeChest& chest) { return chest.shuffled && chest.sohItem == started; });
+    if (copy != chests.end()) {
+        copy->item = std::string(FillerName);
+        copy->sohItem = Filler;
+    }
+}
+
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
@@ -181,6 +195,9 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     std::vector<RemakeChest> chests = table;
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
+    }
+    for (RandomizerGet started : StartingItems(settings)) {
+        LeaveOutOfThePool(chests, started);
     }
     // The places that hand over a stone or a medallion give through an event flow's call, which the patcher writes as
     // it writes a gift's.
