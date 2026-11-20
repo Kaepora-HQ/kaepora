@@ -14,7 +14,7 @@ bun run dev
 `.github/workflows/web.yml` runs those three checks with Bun 1.4.4 on each pull request and each push to `main` that changes `web/`.
 
 - The theme (colours, fonts, sizes) is in `src/styles.css`. The drawings are in `src/components/night.tsx`.
-- The pictures of the game are in `src/captures/`, each at 480, 960 and 1920 px. `src/copy.ts` lists them, and `src/components/wall.tsx` shows them on the homepage in a new order on every load (`src/deal.ts`).
+- The homepage's wall shows every picture in `src/captures/`. Every load deals a new order and a new arrangement of large, medium and small tiles (`src/components/wall.tsx`). `bun run captures <folder>` makes that folder hold the screenshots of `<folder>`: it writes each PNG, JPEG or WebP that is at least 1920 px wide as WebP at 480, 960 and 1920 px, and removes the pictures no longer in `<folder>`. A picture's file name is its name. The wall crops to 16:9. `wall.alt` in `src/copy.ts` gives a picture its alt text, and one without is named by its file name.
 - The download addresses are in `src/release.ts`.
 - The download page reads `CHANGELOG.md` from the root of the repository at build time and renders it with Bun's built-in Markdown. Until that file exists, the page says there are no releases yet.
 - The FAQ page reads `FAQ.md` the same way. That file must exist, or the build fails.

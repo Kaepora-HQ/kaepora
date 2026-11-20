@@ -1,14 +1,13 @@
 import type { System } from '@/release'
 
 type Moment = { title: string; text: string }
-type Shot = { picture: string; alt: string }
 
 export type Copy = {
   hero: { headline: string; lead: string }
   download: { forSystem: Record<System, string>; anySystem: string; allLink: string }
   middle: { heading: string; moments: readonly [Moment, Moment, Moment, Moment] }
-  // The wall shows its pictures in this order until the page deals its own.
-  wall: { viewer: string; close: string; previous: string; next: string; shots: readonly Shot[] }
+  // The wall shows every picture in src/captures. One with no alt text here is named by its file name.
+  wall: { viewer: string; close: string; previous: string; next: string; alt: Readonly<Partial<Record<string, string>>> }
   closing: { heading: string }
   downloadPage: {
     title: string
@@ -74,88 +73,42 @@ export const copy: Copy = {
     close: 'Close',
     previous: 'Previous picture',
     next: 'Next picture',
-    shots: [
-      {
-        picture: 'chest-hookshot-kokiri-sword-chest',
-        alt: 'Young Link holds up the Hookshot over the open Kokiri Sword chest. The game says: "You were given the Hookshot!"',
-      },
-      {
-        picture: 'shop-longshot-kakariko-bazaar',
-        alt: 'The Kakariko Bazaar\'s shelves, with the Longshot picked out among hearts, bombs and shields. The panel reads: Longshot, 15 rupees.',
-      },
-      {
-        picture: 'shop-zora-shop',
-        alt: 'The Zora shop\'s shelves, with the Boomerang picked out. The panel reads: Boomerang, 5 rupees.',
-      },
-      {
-        picture: 'shop-golden-gauntlets-kakariko-potion-shop',
-        alt: 'The Kakariko potion shop\'s shelves, with a pair of gauntlets picked out among the potions. The panel reads: Golden Gauntlets, 20 rupees.',
-      },
-      {
-        picture: 'start-ganons-tower-no-trials',
-        alt: 'Link stands in the dark hall of Ganon\'s Castle, facing the open way into the tower.',
-      },
-      {
-        picture: 'chest-adults-wallet-gerudo-valley',
-        alt: 'Link holds up a wallet among red rocks. The game says: "You got an adult\'s wallet!"',
-      },
-      {
-        picture: 'hint-gossip-stone-kokiri-forest',
-        alt: 'Young Link stands at a gossip stone in Kokiri Forest. The stone says: "They say that the Bottom of the Well hides the Megaton Hammer."',
-      },
-      {
-        picture: 'start-rainbow-bridge-standing',
-        alt: 'Link stands at the foot of a shining rainbow bridge that leads to Ganon\'s Castle.',
-      },
-      {
-        picture: 'chest-silver-scale-midos-house',
-        alt: 'Young Link holds up a silver scale in Mido\'s House. The game says: "You got a silver scale!"',
-      },
-      {
-        picture: 'song-windmill-teaches-eponas-song',
-        alt: 'The man in the windmill cranks his music box beside Link. A sheet of music reads: "This song has been stuck in my head ever since!"',
-      },
-      {
-        picture: 'song-minuet-lesson-castle-courtyard',
-        alt: 'Impa stands before Young Link in the castle courtyard. A sheet of music reads: "Play the Minuet of the Forest."',
-      },
-      {
-        picture: 'hint-cursed-child-hover-boots',
-        alt: 'A cursed boy, half spider, hangs before Link in the House of Skulltula and says: "Please save me by destroying 10 Gold Skulltulas, and I will give you the Hover Boots!"',
-      },
-      {
-        picture: 'hint-mido-kokiri-sword-in-kakariko',
-        alt: 'Mido stands in Young Link\'s way and says: "Hrmph! You\'ll never find the Kokiri Sword I hid in Kakariko Village! Without a sword and a shield, I won\'t let you through!"',
-      },
-      {
-        picture: 'hint-happy-mask-shop-sign',
-        alt: 'The sign in the Happy Mask Shop reads: "Show them the Skull Mask, and they\'ll give you the Fire Arrows."',
-      },
-      {
-        picture: 'gift-fairy-bow-kakariko-roof',
-        alt: 'Link holds up the Fairy Bow on a rooftop in Kakariko Village, with a man behind him. The game says: "You found the Fairy Bow!"',
-      },
-      {
-        picture: 'gift-hover-boots-house-of-skulltula',
-        alt: 'Link holds up the Hover Boots in the dark House of Skulltula. The game says: "You found the Hover Boots!"',
-      },
-      {
-        picture: 'chest-lon-lon-milk-hyrule-field',
-        alt: 'Link holds up a bottle of milk beside an open chest in a cave. The game says: "You got some Lon Lon milk!"',
-      },
-      {
-        picture: 'loose-megaton-hammer-gohma',
-        alt: 'Young Link holds up the Megaton Hammer beside the blue light in Gohma\'s lair. The game says: "You found the Megaton Hammer!"',
-      },
-      {
-        picture: 'loose-boomerang-lon-lon-ranch',
-        alt: 'Young Link stands over a Boomerang that lies in a ring of stones in a tower at Lon Lon Ranch.',
-      },
-      {
-        picture: 'gift-boomerang-lab-dive-child',
-        alt: 'Young Link holds up the Boomerang beside the tank in the lakeside laboratory. The game says: "You found the Boomerang!"',
-      },
-    ],
+    alt: {
+      'chest-adults-wallet-gerudo-valley': 'Link holds up a wallet among red rocks. The game says: "You got an adult\'s wallet!"',
+      'chest-hookshot-kokiri-sword-chest': 'Young Link holds up the Hookshot over the open Kokiri Sword chest. The game says: "You were given the Hookshot!"',
+      'chest-lon-lon-milk-hyrule-field': 'Link holds up a bottle of milk beside an open chest in a cave. The game says: "You got some Lon Lon milk!"',
+      'chest-silver-scale-midos-house': 'Young Link holds up a silver scale in Mido\'s House. The game says: "You got a silver scale!"',
+      'gift-boomerang-lab-dive-adult': 'Link holds up the Boomerang beside the tank in the lakeside laboratory. The game says: "You found the Boomerang!"',
+      'gift-boomerang-lab-dive-child': 'Young Link holds up the Boomerang beside the tank in the lakeside laboratory. The game says: "You found the Boomerang!"',
+      'gift-fairy-bow-kakariko-roof': 'Link holds up the Fairy Bow on a rooftop in Kakariko Village, with a man behind him. The game says: "You found the Fairy Bow!"',
+      'gift-hover-boots-house-of-skulltula': 'Link holds up the Hover Boots in the dark House of Skulltula. The game says: "You found the Hover Boots!"',
+      'hint-cursed-child-hover-boots': 'A cursed boy, half spider, hangs before Link in the House of Skulltula and says: "Please save me by destroying 10 Gold Skulltulas, and I will give you the Hover Boots!"',
+      'hint-gossip-stone-kokiri-forest': 'Young Link stands at a gossip stone in Kokiri Forest. The stone says: "They say that the Bottom of the Well hides the Megaton Hammer."',
+      'hint-happy-mask-shop-sign': 'The sign in the Happy Mask Shop reads: "Show them the Skull Mask, and they\'ll give you the Fire Arrows."',
+      'hint-mido-kokiri-sword-in-kakariko': 'Mido stands in Young Link\'s way and says: "Hrmph! You\'ll never find the Kokiri Sword I hid in Kakariko Village! Without a sword and a shield, I won\'t let you through!"',
+      'loose-boomerang-lon-lon-ranch': 'Young Link stands over a Boomerang that lies in a ring of stones in a tower at Lon Lon Ranch.',
+      'loose-megaton-hammer-gohma': 'Young Link holds up the Megaton Hammer beside the blue light in Gohma\'s lair. The game says: "You found the Megaton Hammer!"',
+      'shop-business-scrub-seed-goron-shop': 'The Goron shop\'s shelves, with a sprouting seed picked out among bombs, a rupee and a shield. The panel reads: Business Scrub Seed, 5 rupees.',
+      'shop-golden-gauntlets-kakariko-potion-shop': 'The Kakariko potion shop\'s shelves, with a pair of gauntlets picked out among the potions. The panel reads: Golden Gauntlets, 5 rupees.',
+      'shop-ice-arrow-bought-bombchu-shop': 'Young Link holds up an arrow tipped in ice in the Bombchu Shop. The game says: "You got the ice arrow!"',
+      'shop-ice-arrow-price-bombchu-shop': 'The Bombchu Shop\'s keeper shows an arrow tipped in ice and says: "Lookin\' at the ice arrow? That\'ll cost ya 5 rupees." The choices are "I\'ll buy!" and "Never mind."',
+      'shop-ice-arrows-bombchu-shop': 'The Bombchu Shop\'s shelves, with an arrow tipped in ice picked out among the Bombchus. The panel reads: Ice Arrow, 5 rupees.',
+      'shop-kokiri-sword-kokiri-shop': 'The Kokiri Shop\'s shelves, with a small sword picked out among nuts, sticks and seeds. The panel reads: Kokiri Sword, 5 rupees.',
+      'shop-longshot-kakariko-bazaar': 'The Kakariko Bazaar\'s shelves, with the Longshot picked out among hearts, bombs and shields. The panel reads: Longshot, 5 rupees.',
+      'shop-megaton-hammer-market-bazaar': 'The Market Bazaar\'s shelves, with a hammer picked out among hearts, bombs and shields. The panel reads: Megaton Hammer, 5 rupees.',
+      'shop-mirror-shield-market-potion-shop': 'The Market potion shop\'s shelves, with a shield picked out among the potions. The panel reads: Mirror Shield, 5 rupees.',
+      'shop-zora-shop': 'The Zora shop\'s shelves, with the Boomerang picked out. The panel reads: Boomerang, 5 rupees.',
+      'song-impa-plays-the-minuet': 'Impa, close up, with a hand to her chin. A sheet of music reads: "Play the Minuet of the Forest."',
+      'song-link-plays-song-of-time': 'Young Link plays the ocarina in a rush of blue light. A sheet of music reads: "You played the Song of Time!"',
+      'song-link-plays-the-minuet-moat': 'Young Link plays the ocarina in a white mist. A sheet of music reads: "You played the Minuet of the Forest!"',
+      'song-malon-teaches-sarias-song': 'Malon stands before Young Link in a grassy paddock. A sheet of music reads: "Try playing Saria\'s Song."',
+      'song-minuet-lesson-castle-courtyard': 'Impa stands before Young Link in the castle courtyard. A sheet of music reads: "Play the Minuet of the Forest."',
+      'song-royal-tomb-teaches-song-of-time': 'A stone carved with writing and a line of music, lit green. A sheet of music reads: "The melody that opens the Door of Time."',
+      'song-windmill-teaches-eponas-song': 'The man in the windmill cranks his music box beside Link. A sheet of music reads: "This song has been stuck in my head ever since!"',
+      'song-zelda-teaches-the-minuet-at-the-moat': 'Princess Zelda plays the ocarina in a white mist. A sheet of music reads: "Play the Minuet of the Forest."',
+      'start-ganons-tower-no-trials': 'Link stands in the dark hall of Ganon\'s Castle, facing the open way into the tower.',
+      'start-rainbow-bridge-standing': 'Link stands at the foot of a shining rainbow bridge that leads to Ganon\'s Castle.',
+    },
   },
   closing: {
     heading: 'Go find your Hookshot',
