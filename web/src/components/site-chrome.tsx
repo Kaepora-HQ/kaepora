@@ -79,6 +79,9 @@ export function SiteFooter({ words }: { words: Copy['footer'] }) {
           <Link to="/download" className="quiet-link">
             Downloads and changes
           </Link>
+          <Link to="/randomized" className="quiet-link">
+            What is randomized
+          </Link>
           <Link to="/faq" className="quiet-link">
             FAQ
           </Link>
