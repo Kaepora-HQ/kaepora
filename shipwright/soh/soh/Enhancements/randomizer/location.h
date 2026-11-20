@@ -91,6 +91,8 @@ class Location {
     SpoilerCollectionCheck GetCollectionCheck() const;
     RandomizerCheckQuest GetQuest() const;
     RandomizerCheckArea GetArea() const;
+    // Kaepora puts a location in the area where the remake has it, where that differs from SoH's.
+    void SetArea(RandomizerCheckArea area_);
     RandomizerCheckType GetRCType() const;
     ActorID GetActorID() const;
     int32_t GetActorParams() const;

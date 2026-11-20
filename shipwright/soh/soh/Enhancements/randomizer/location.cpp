@@ -19,6 +19,10 @@ RandomizerCheckArea Rando::Location::GetArea() const {
     return area;
 }
 
+void Rando::Location::SetArea(RandomizerCheckArea area_) {
+    area = area_;
+}
+
 RandomizerCheckType Rando::Location::GetRCType() const {
     return checkType;
 }

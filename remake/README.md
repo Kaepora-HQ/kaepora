@@ -52,6 +52,18 @@ is SoH's English sentence with the remake's place names. Every other sentence is
 slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so
 does each gift, with SoH's sentence for it where that is true of the remake.
 
+`skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
+remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row
+was matched by what only that skulltula of its scene has (soft soil, a box, a tree, a grotto, night, the age that sees
+it, the only one in a room), then by named neighbours, then by rooms, and by position last.
+
+- `location`: the SoH location, by SoH's English name for it.
+- `hash` and `files`: the skulltula's actor hash, and the romfs scene files that place it, comma separated.
+- `place`: where the skulltula stands, as an `area` of `places.tsv`, when that is not its location's SoH area, and
+  empty otherwise. Hints name it there.
+- `pairing`: `certain` or `likely`.
+- `note`: what the match rests on. A `likely` row needs one.
+
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
 

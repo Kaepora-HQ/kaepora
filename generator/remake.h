@@ -95,6 +95,16 @@ std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
 // lets into shops, and the shop filler.
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
+struct RemakeSkulltula {
+    RandomizerCheck location;
+    RemakeChest::Actor actor;
+};
+
+// The skulltulas of remake/skulltulas.tsv, read from the copy built into the program. A skulltula that stands outside
+// its location's SoH area moves the location into the area of its place, so hints and the barren areas name where it
+// is. Throws, naming the row, on a table that is not in the form remake/README.md gives.
+std::vector<RemakeSkulltula> LoadRemakeSkulltulas();
+
 struct RemakeStone {
     std::string label;
     RandomizerCheck location;

@@ -52,6 +52,9 @@ static constexpr unsigned char shopGoodsTable[] = {
 static constexpr unsigned char giftTable[] = {
 #embed "../remake/gifts.tsv"
 };
+static constexpr unsigned char skulltulaTable[] = {
+#embed "../remake/skulltulas.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -127,6 +130,14 @@ static RandomizerGet ResolveItem(const std::vector<RandomizerGet>& candidates, R
     return RG_NONE;
 }
 
+static void CheckSceneFiles(const std::string& where, const RemakeChest::Actor& actor) {
+    for (const std::string& file : actor.files) {
+        if (!file.starts_with("Banc/" + actor.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
+            Fail(where + "\"" + file + "\" is not a scene file in the Banc folder of the row's first file");
+        }
+    }
+}
+
 std::vector<RemakeChest> LoadRemakeChests() {
     const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
     std::vector<RemakeChest> chests;
@@ -157,11 +168,7 @@ std::vector<RemakeChest> LoadRemakeChests() {
         }
         const RemakeChest::Actor actor{ hash, SohUtils::StringSplit(files, ",") };
         if (!hash.empty()) {
-            for (const std::string& file : actor.files) {
-                if (!file.starts_with("Banc/" + actor.Folder() + "/") || !file.ends_with(".bcett.byml.zs")) {
-                    Fail(where + "\"" + file + "\" is not a scene file in the Banc folder of the row's first file");
-                }
-            }
+            CheckSceneFiles(where, actor);
         }
         if (name.empty()) {
             if (hash.empty() || shuffled == "yes") {
@@ -240,6 +247,16 @@ static Fit ReadFit(const std::string& where, const std::string& lineLength, cons
     return { .lineLength = Count(where, lineLength), .boxLines = Count(where, boxLines) };
 }
 
+// The SoH area whose locations' names start with the prefix.
+static RandomizerCheckArea AreaNamed(const std::string& where, const std::string& prefix) {
+    for (int area = RCAREA_KOKIRI_FOREST; area < RCAREA_INVALID; ++area) {
+        if (SohUtils::GetRandomizerCheckAreaPrefix(area) == prefix) {
+            return RandomizerCheckArea(area);
+        }
+    }
+    Fail(where + "\"" + prefix + "\" is not the prefix of a SoH area");
+}
+
 static std::string ItemPhrase(const std::string& where, const std::vector<std::string>& row) {
     const std::string& name = row[2];
     const std::string& article = row[3];
@@ -267,13 +284,8 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
     line = 1;
     for (const auto& row : ReadTable("remake/places.tsv", placeTable, "area\tlabel\tname\tsays")) {
         const std::string where = std::format("remake/places.tsv line {}: ", ++line);
-        int area = RCAREA_KOKIRI_FOREST;
-        while (area < RCAREA_INVALID && SohUtils::GetRandomizerCheckAreaPrefix(area) != row[0]) {
-            ++area;
-        }
-        if (area == RCAREA_INVALID || row[3].empty() ||
-            !tables.places.emplace(RandomizerCheckArea(area), row[3]).second) {
-            Fail(where + "\"" + row[0] + "\" is not the prefix of a SoH area, repeats one, or says nothing");
+        if (row[3].empty() || !tables.places.emplace(AreaNamed(where, row[0]), row[3]).second) {
+            Fail(where + "\"" + row[0] + "\" repeats an area, or says nothing");
         }
     }
 
@@ -498,6 +510,49 @@ std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) 
         gift->sites.push_back({ .flow = flow, .event = row[2], .param = row[3] });
     }
     return gifts;
+}
+
+std::vector<RemakeSkulltula> LoadRemakeSkulltulas() {
+    std::vector<RemakeSkulltula> skulltulas;
+    std::set<RandomizerCheck> locations;
+    std::set<std::string> hashes;
+    size_t line = 1;
+    for (const auto& row :
+         ReadTable("remake/skulltulas.tsv", skulltulaTable, "location\thash\tfiles\tplace\tpairing\tnote")) {
+        const std::string where = std::format("remake/skulltulas.tsv line {}: ", ++line);
+        const auto location = Rando::StaticData::locationNameToEnum.find(row[0]);
+        if (location == Rando::StaticData::locationNameToEnum.end() ||
+            Rando::StaticData::GetLocation(location->second)->GetRCType() != RCTYPE_SKULL_TOKEN ||
+            Rando::StaticData::GetLocation(location->second)->GetQuest() == RCQUEST_MQ ||
+            !locations.insert(location->second).second) {
+            Fail(where + "\"" + row[0] + "\" is not a Gold Skulltula of SoH's vanilla layouts, or repeats");
+        }
+        const std::string& hash = row[1];
+        if (hash.empty() || hash.find_first_not_of("0123456789") != std::string::npos || !hashes.insert(hash).second) {
+            Fail(where + "the hash \"" + hash + "\" is not a decimal number or repeats");
+        }
+        const RemakeChest::Actor actor{ hash, SohUtils::StringSplit(row[2], ",") };
+        CheckSceneFiles(where, actor);
+        Rando::Location* soh = Rando::StaticData::GetLocation(location->second);
+        if (const std::string& place = row[3]; !place.empty()) {
+            const RandomizerCheckArea area = AreaNamed(where, place);
+            if (area == soh->GetArea()) {
+                Fail(where + "the place \"" + place + "\" is SoH's own area for this location");
+            }
+            soh->SetArea(area);
+        }
+        if (const std::string& pairing = row[4]; pairing != "certain" && (pairing != "likely" || row[5].empty())) {
+            Fail(where + "the pairing is neither certain nor likely, or a likely row has no note");
+        }
+        skulltulas.push_back({ .location = location->second, .actor = actor });
+    }
+    for (const Rando::Location& location : Rando::StaticData::GetLocationTable()) {
+        if (location.GetRCType() == RCTYPE_SKULL_TOKEN && location.GetQuest() != RCQUEST_MQ &&
+            !locations.contains(location.GetRandomizerCheck())) {
+            Fail("remake/skulltulas.tsv: no row for the SoH Gold Skulltula \"" + location.GetName() + "\"");
+        }
+    }
+    return skulltulas;
 }
 
 // Saved values a new game starts with set. Each opens a locked door that SoH's rules count open. SoH itself opens the

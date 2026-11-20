@@ -18,8 +18,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
-           other-version|start-values|shop|shop-table|new-actors|skulltulas|goods-and-token-copies \
-           <kaepora-patch> <game.nup>
+           other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table| \
+           goods-and-token-copies <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1139,6 +1139,19 @@ def gift_table(patch, game):
         assert string_parameter(ours, row["event"], row["param"])[1] == "Item_Hammer", row
 
 
+def skulltula_table(patch, game):
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "skulltulas.tsv", newline="") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    planned = [(int(row["hash"]), row["files"].split(","), "Item_Boomerang") for row in rows]
+    mod = patched(patch, game, plan([], skulltulas=planned))
+    for h, paths, _ in planned:
+        for path in paths:
+            ours, theirs = actor(game.placement(mod[path]), h), actor(game.placement(game.read(path)), h)
+            assert theirs["Gyaml"] == "Enemy_Skulltula_Gold", (path, h)
+            assert ours["Dynamic"]["Drop__DropActor"] == "Obj_Token_Gold_Item_Boomerang", (path, h)
+    assert len(rows) == 100 and len({h for h, _, _ in planned}) == 100, len(rows)
+
+
 def tested_new_actor_mod(patch, game, romfs):
     """A slot that sells the Megaton Hammer adds the goods actor the game showed and sold: its pack, its rows in the
     three actor tables and their size table entries are the tested mod's."""
@@ -1838,6 +1851,7 @@ def main():
         "tested-shop-goods-mod": tested_shop_goods_mod,
         "dive-depth": dive_depth,
         "skulltulas": skulltulas,
+        "skulltula-table": skulltula_table,
         "goods-and-token-copies": goods_and_token_copies,
         "tested-skulltula-mod": tested_skulltula_mod,
     }
