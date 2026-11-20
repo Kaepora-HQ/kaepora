@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.2.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.1.0...v0.2.0) (2026-11-20)
+
+
+### Features
+
+* add a setting for hints from characters ([47a6c05](https://github.com/Kaepora-HQ/kaepora/commit/47a6c05a3e305b35e176ac2f1ee510dffbb53ef5))
+* add a setting for the prices of shuffled shop goods ([85dda38](https://github.com/Kaepora-HQ/kaepora/commit/85dda38e01e36f39566f197cd849c5d596ab04bd))
+* add a setting that shuffles 21 gifts from characters ([f9a3fa5](https://github.com/Kaepora-HQ/kaepora/commit/f9a3fa54f342a7a4c01ccf3d881d976ff4e7ae85))
+* add a setting that shuffles the loose items ([6acf09f](https://github.com/Kaepora-HQ/kaepora/commit/6acf09ffea047453c4a5a0617ba4eee29005a447))
+* add a setting that shuffles the songs among their places ([e031f6d](https://github.com/Kaepora-HQ/kaepora/commit/e031f6df37d38c3e7861ea685998e9de5af6fa7c))
+* add a setting that shuffles what the Gold Skulltulas give ([fe48c30](https://github.com/Kaepora-HQ/kaepora/commit/fe48c3001310482c22b8eab9d465ee2825782644))
+* install Kaepora on Windows with an installer ([dbc7e7d](https://github.com/Kaepora-HQ/kaepora/commit/dbc7e7d61e623029ec841a7955355daa04681055))
+* let a gift hold the Fairy Bow or the Fairy Slingshot ([51fe4bd](https://github.com/Kaepora-HQ/kaepora/commit/51fe4bd3b4aedcdc1e60625cc068c3d60a4b3675))
+* let adult Link go back to child before the Forest Temple ([050ea9d](https://github.com/Kaepora-HQ/kaepora/commit/050ea9d6e248f3e62f9685fdbb5f49747587905a))
+* list the Gold Skulltulas in remake/skulltulas.tsv ([dd5c472](https://github.com/Kaepora-HQ/kaepora/commit/dd5c4722506d91d355b110d7f26e17a0136d7fb6))
+* list the loose items in remake/loose_items.tsv ([f3f5ff5](https://github.com/Kaepora-HQ/kaepora/commit/f3f5ff5ddeacd15123ce09253e2284810d6bd44d))
+* Mido tells where the Kokiri Sword lies ([435aa50](https://github.com/Kaepora-HQ/kaepora/commit/435aa50281e8e91bcdf2e998ef2b6af0a71ee00c))
+* **patcher:** give a Gold Skulltula's item through a token copy ([84fe2cd](https://github.com/Kaepora-HQ/kaepora/commit/84fe2cda016c5a402cb94c99ad1953aee972182b))
+* **patcher:** give a loose item's item through a pickup copy ([c2b957a](https://github.com/Kaepora-HQ/kaepora/commit/c2b957a7e3d94c86dde3f6960b50598ba5f230f8))
+* **patcher:** let a placed actor stand only while a flag holds ([8bad37a](https://github.com/Kaepora-HQ/kaepora/commit/8bad37a110e13eab588b754fc95ffdd2e94e2d2d))
+* **patcher:** set an integer parameter of a named event ([8b7ad75](https://github.com/Kaepora-HQ/kaepora/commit/8b7ad75339471acacb54aaa62d5a3a7007c843f0))
+* **patcher:** write a planned message in any text file ([78105da](https://github.com/Kaepora-HQ/kaepora/commit/78105dad78007cc1f68897c171205d8707f1b27f))
+* **patch:** give the Bow and the Slingshot their quiver and bullet bag ([e33d589](https://github.com/Kaepora-HQ/kaepora/commit/e33d5892aa67c8a5a69476b559e81516dc570524))
+* **patch:** let every adult put the Master Sword back ([bb2b9cb](https://github.com/Kaepora-HQ/kaepora/commit/bb2b9cb28c8ec7db8d5ba875f4b629bb896fc5a1))
+* **patch:** stand Sheik behind the Master Sword pedestal ([ad787fb](https://github.com/Kaepora-HQ/kaepora/commit/ad787fb1c1c3c4fe03fe0bf0dc486421ccc94e42))
+* shuffle one to five goods per shop, or a random number ([a34a617](https://github.com/Kaepora-HQ/kaepora/commit/a34a6172ab2016f67ca54f96df9582c00d39df77))
+* shuffle the Requiem with the other songs ([e101a6b](https://github.com/Kaepora-HQ/kaepora/commit/e101a6be1c98e909144f4a2a221d7e1842ba0f37))
+* the Treasure Chest Game's owner names the seed's prize ([e6e6086](https://github.com/Kaepora-HQ/kaepora/commit/e6e60861c1df9dd4c97fbe5a3a582836b6cdd50e))
+* **web:** show what is randomized on the site ([#49](https://github.com/Kaepora-HQ/kaepora/issues/49)) ([26eb248](https://github.com/Kaepora-HQ/kaepora/commit/26eb248e81311a03f866fc55ca9d3a6688bf7096))
+
+
+### Bug Fixes
+
+* ask what the remake asks of six moved Gold Skulltulas ([1607028](https://github.com/Kaepora-HQ/kaepora/commit/160702801b4dd80bb2dada3670d7964d17b9c1d6))
+* break the Shadow Temple's triple pot with a bomb ([740341f](https://github.com/Kaepora-HQ/kaepora/commit/740341f842ea5f93f945177791f080075d83e7e9))
+* count on nothing from the chest game when the Lens is never needed ([416354c](https://github.com/Kaepora-HQ/kaepora/commit/416354c702a0685e852018109eba5fc8dd40a029))
+* free Epona only once child Malon has taught her lesson ([72e6808](https://github.com/Kaepora-HQ/kaepora/commit/72e68087e733b94ae5728e7922dfffcc7d31272d))
+* keep an early Requiem out of the Spirit Temple and the Wasteland ([daaef36](https://github.com/Kaepora-HQ/kaepora/commit/daaef36ab0e3c2ce0bc74d5906446d1f416f53c0))
+* keep the settings window's buttons on a small screen ([317e573](https://github.com/Kaepora-HQ/kaepora/commit/317e57317abfe293ea954f61b38671ecc7a9e50b))
+* leave the boomerang out of three heart pieces' rules ([e36d9b2](https://github.com/Kaepora-HQ/kaepora/commit/e36d9b208d4da2b28cc567f6c4fff01d07631ccc))
+* let a Gold Skulltula hold the Bomb Bag ([54cdb1e](https://github.com/Kaepora-HQ/kaepora/commit/54cdb1edadcccd5ff7af8cc96328cfed1a09b4a5))
+* let a warp song count only where Link can leave its landing ([11e1fb9](https://github.com/Kaepora-HQ/kaepora/commit/11e1fb986c0793b9e77b7b3dd750c43452c4b673))
+* show the running version in the window ([#57](https://github.com/Kaepora-HQ/kaepora/issues/57)) ([093043d](https://github.com/Kaepora-HQ/kaepora/commit/093043d7755d316ba6615cf9bf4bd34ee812b4a9))
+* take three high Gold Skulltulas from afar ([6b44ebc](https://github.com/Kaepora-HQ/kaepora/commit/6b44ebc2b226e134aa8d7a54527b80d47db28bc6))
+* the cow grotto's skulltula is in the field's south grotto ([987fa39](https://github.com/Kaepora-HQ/kaepora/commit/987fa390a156577bb945752ba8207bc507dd8940))
+* the graveyard's ledge heart piece needs the bean's plant ([5cba7b0](https://github.com/Kaepora-HQ/kaepora/commit/5cba7b00238817d3ec3138db9ba9ea3cd2d5e593))
+* the lake's sun gives its item only after the Water Temple ([f0dca6f](https://github.com/Kaepora-HQ/kaepora/commit/f0dca6f0d956582daae1b56b73b38a104d9f8b60))
+* the river's tree skulltula comes out of soft soil for bugs ([09f57cf](https://github.com/Kaepora-HQ/kaepora/commit/09f57cf7676392218c55008261831894762b5ee7))
+* the two loose keys ask what the remake asks ([be08c55](https://github.com/Kaepora-HQ/kaepora/commit/be08c55bd90a44e4bdabde03e121d2791a647590))
+
 ## 0.1.0 (2026-11-20)
 
 
