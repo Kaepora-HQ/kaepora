@@ -157,7 +157,7 @@ export const copy: Copy = {
       ['Gifts from characters', '21'],
       ['Songs', 'In progress'],
       ['Gold Skulltula tokens', '100 of 100'],
-      ['Loose items', 'In progress'],
+      ['Loose items', '25'],
     ],
   },
   faqPage: {
