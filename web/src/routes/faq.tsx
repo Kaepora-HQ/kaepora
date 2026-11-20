@@ -15,7 +15,7 @@ function Faq() {
       <main>
         <PageHero title={copy.faqPage.title} />
         <section className="@container bg-silhouette px-gutter pbs-6 pbe-section">
-          <div className="mx-auto grid max-w-5xl gap-x-16 gap-y-10 @min-[50rem]:grid-cols-[minmax(12rem,1fr)_minmax(0,38rem)]">
+          <div className="mx-auto grid max-w-page gap-x-16 gap-y-10 @min-[50rem]:grid-cols-[minmax(12rem,22rem)_minmax(0,38rem)]">
             <nav
               aria-label={copy.faqPage.questions}
               className="@min-[50rem]:sticky @min-[50rem]:inset-bs-8 @min-[50rem]:self-start"

@@ -14,10 +14,11 @@ try {
   }
 
   await using view = new Bun.WebView({ ...previewCard, backend: { type: 'chrome', url: false } })
+  await view.navigate('about:blank')
+  // Headless Chrome counts its window frame in the height; pin the page area. Mobile
+  // emulation draws overlay scrollbars, so the page's scrollbar gutter takes no width.
+  await view.cdp('Emulation.setDeviceMetricsOverride', { ...previewCard, deviceScaleFactor: 1, mobile: true })
   await view.navigate(card)
-  // Headless Chrome counts its window frame in the height; pin the page area.
-  await view.cdp('Emulation.setDeviceMetricsOverride', { ...previewCard, deviceScaleFactor: 1, mobile: false })
-  await view.cdp('Emulation.setScrollbarsHidden', { hidden: true })
   await view.evaluate('document.fonts.ready.then(() => true)')
   const png = await view.screenshot({ format: 'png', encoding: 'buffer' })
   await Bun.write('public/link-preview.png', png)

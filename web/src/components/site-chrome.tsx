@@ -12,13 +12,16 @@ const iconLink = 'press tap-target text-mist hover:text-starlight'
 
 export function SiteHeader() {
   return (
-    <header className="flex flex-wrap items-center gap-x-8 gap-y-3 px-gutter py-5">
-      <Link to="/" className="storybook inline-flex items-center gap-2.5 text-2xl font-semibold">
-        <OwlMark className="size-[1.3em] flex-none text-mist" />
+    <header className="@container mx-auto box-content flex max-w-page flex-wrap items-center gap-x-3 gap-y-2 px-gutter py-5">
+      <Link to="/" className="storybook inline-flex items-center gap-2.5 text-[clamp(1.375rem,1.1rem+1.4vw,1.625rem)] leading-none font-semibold">
+        <OwlMark className="size-[1.25em] flex-none text-mist" />
         Kaepora
       </Link>
-      <nav aria-label="Site" className="ms-auto flex items-center gap-5 [--control-size:calc(1lh+--spacing(4))]">
-        <Link to="/download" className="press inline-flex h-(--control-size) items-center rounded-full bg-starlight/10 px-4 font-semibold hover:bg-starlight/15">
+      <nav aria-label="Site" className="ms-auto flex items-center gap-2 text-small font-bold [--control-size:calc(1lh+--spacing(4))]">
+        <Link to="/faq" className="quiet-link text-mist @max-[26rem]:hidden">
+          FAQ
+        </Link>
+        <Link to="/download" className="press inline-flex h-(--control-size) items-center rounded-full bg-starlight/10 px-3.5 hover:bg-starlight/15">
           Download
         </Link>
         {/* Discord: put the invite link in href, then uncomment.
@@ -28,8 +31,8 @@ export function SiteHeader() {
           </svg>
         </a>
         */}
-        <a href={repository} aria-label="Kaepora on GitHub" className={iconLink}>
-          <GitHubMark className="block size-(--control-size)" />
+        <a href={repository} aria-label="Kaepora on GitHub" className={`${iconLink} ms-1`}>
+          <GitHubMark className="block size-[calc(var(--control-size)-0.25rem)]" />
         </a>
       </nav>
     </header>
@@ -38,12 +41,13 @@ export function SiteHeader() {
 
 export function PageHero({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <section className="bg-linear-to-b from-midnight to-dusk">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-gutter pbs-12 box-content">
+    <section className="relative overflow-clip bg-linear-to-b from-midnight to-dusk">
+      <div aria-hidden="true" className="starfield absolute inset-bs-0 inset-e-0 h-full w-3/5" />
+      <div className="relative mx-auto box-content flex max-w-page flex-col gap-3 px-gutter pbs-12">
         <h1 className="storybook text-title font-normal">{title}</h1>
         {children}
       </div>
-      <Treeline className="mbs-10 block h-[clamp(5rem,3rem+7vw,9rem)] w-full" />
+      <Treeline className="relative mbs-10 block h-[clamp(5rem,3rem+7vw,9rem)] w-full" />
     </section>
   )
 }
@@ -63,14 +67,15 @@ export function SiteFooter({ words }: { words: Copy['footer'] }) {
           {words.thanks.before}{' '}
           <a
             href={shipOfHarkinian}
-            className="storybook whitespace-nowrap text-starlight underline decoration-moon/50 underline-offset-4 hover:decoration-moon"
+            className="whitespace-nowrap text-starlight underline decoration-moon/50 underline-offset-4 hover:decoration-moon"
           >
             {words.thanks.name}
           </a>
           {words.thanks.after}
         </p>
-        <p className="text-sm text-mist/80">{words.smallPrint}</p>
-        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-2 text-sm text-mist">
+        <p className="text-small text-mist">{words.smallPrint}</p>
+        <p className="text-small text-mist">{words.disclosure}</p>
+        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-2 text-small font-bold text-mist">
           <Link to="/download" className="quiet-link">
             Downloads and changes
           </Link>
@@ -86,9 +91,9 @@ export function SiteFooter({ words }: { words: Copy['footer'] }) {
   )
 }
 
-export function DownloadCall({ words }: { words: Copy['download'] }) {
+export function DownloadCall({ words, className }: { words: Copy['download']; className: string }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
+    <div className={`flex flex-wrap items-center gap-x-6 gap-y-4 ${className}`}>
       {systems.map((system) => (
         <a key={system} href={homeOffers[system]} data-offer={system} className="moon-button px-7 py-3">
           {words.forSystem[system]}

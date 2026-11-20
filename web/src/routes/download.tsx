@@ -56,9 +56,9 @@ function Download() {
         </PageHero>
 
         <section aria-labelledby="files" className="bg-silhouette px-gutter pbs-6 pbe-section">
-          <div className="mx-auto flex max-w-5xl flex-col gap-6">
+          <div className="mx-auto flex max-w-page flex-col gap-6">
             <h2 id="files" className="sr-only">Files</h2>
-            {/* A 20.25rem card holds the longest requirement line beside its mark on one line; three fit in max-w-5xl. */}
+            {/* A 20.25rem card holds the longest requirement line beside its mark on one line; three fit in max-w-page. */}
             <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20.25rem),1fr))] gap-5">
               {platforms.map(({ system, name, requires, Mark, format, more }) => (
                 <li
@@ -69,8 +69,8 @@ function Download() {
                   <div className="flex items-center gap-4">
                     <Mark className="size-10 flex-none" />
                     <div>
-                      <h3 className="storybook text-heading font-normal">{name}</h3>
-                      <p className="text-sm text-mist">{requires}</p>
+                      <h3 className="text-lead font-bold">{name}</h3>
+                      <p className="text-small text-mist">{requires}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap content-start items-center gap-3">
@@ -82,7 +82,7 @@ function Download() {
                       <a
                         key={file.format}
                         href={file.href}
-                        className="press rounded-full border border-mist/40 px-5 py-2.5 font-semibold hover:border-starlight"
+                        className="press rounded-full border border-mist/40 px-5 py-2.5 font-bold hover:border-starlight"
                       >
                         {file.format}
                       </a>
@@ -93,7 +93,7 @@ function Download() {
             </ul>
             <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
               <FirstOpenGuide />
-              <p className="-me-3 ms-auto flex flex-wrap gap-2 text-mist">
+              <p className="-me-3 ms-auto flex flex-wrap gap-2 text-small font-bold text-mist">
                 <a href={downloads.checksums} className="quiet-link">
                   Checksums
                 </a>
@@ -109,7 +109,7 @@ function Download() {
         </section>
 
         <section aria-labelledby="changes" className="bg-silhouette px-gutter pbe-section">
-          <div className="mx-auto flex max-w-5xl flex-col gap-6">
+          <div className="mx-auto flex max-w-page flex-col gap-6">
             <h2 id="changes" className="storybook text-heading font-normal">What changed</h2>
             {changelog ? (
               <div className="markdown max-w-xl" dangerouslySetInnerHTML={{ __html: changelog }} />
@@ -154,7 +154,7 @@ function FirstOpenGuide() {
   return (
     <>
       <details suppressHydrationWarning>
-        <summary className="quiet-link -ms-3 w-fit cursor-pointer text-mist marker:text-moon">{words.heading}</summary>
+        <summary className="quiet-link -ms-3 w-fit cursor-pointer text-small font-bold text-mist marker:text-moon">{words.heading}</summary>
         <div className="flex max-w-xl flex-col gap-3 pbs-3">
           <p>{words.why}</p>
           <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
@@ -164,7 +164,7 @@ function FirstOpenGuide() {
           </ol>
           <p>{words.after}</p>
           <p>{words.terminal}</p>
-          <pre className="surface w-fit rounded-lg px-4 py-2 text-sm whitespace-pre-wrap">
+          <pre className="surface w-fit rounded-lg px-4 py-2 font-mono text-sm whitespace-pre-wrap">
             <code className="select-all">{words.command}</code>
           </pre>
         </div>
