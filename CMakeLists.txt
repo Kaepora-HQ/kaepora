@@ -214,7 +214,8 @@ if(Qt6Test_FOUND)
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesStartInOneColumn whatJoinsTheShuffleHasItsOwnGroup
                      aChoiceShowsInTheSummary defaultsSetsEveryControlBack theSummaryNamesUpToThreeDungeonsLeftOut
                      longSettingsLeaveTheWindowWidth settingsAreRemembered
-                     unreadableRememberedSettingsStartAsTheDefaults aNewerVersionShowsTheNotice quietOutcomesShowNothing
+                     unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
+                     aNewerVersionShowsTheNotice quietOutcomesShowNothing
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
                      untickingStopsARequestInFlight)
     if(APPLE)

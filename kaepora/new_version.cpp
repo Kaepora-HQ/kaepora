@@ -58,6 +58,7 @@ public:
         noticeLayout->addWidget(download);
         auto* layout = new QHBoxLayout(this);
         layout->setContentsMargins({});
+        layout->addWidget(new QLabel("Version " KAEPORA_VERSION));
         layout->addWidget(check);
         layout->addStretch();
         layout->addWidget(notice);
