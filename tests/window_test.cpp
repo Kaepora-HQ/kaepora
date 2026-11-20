@@ -732,6 +732,10 @@ private slots:
         }
     }
 
+    void theWindowShowsTheVersionRunning() {
+        QVERIFY(shows("Version " KAEPORA_VERSION));
+    }
+
     void aNewerVersionShowsTheNotice() {
         QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
         QVERIFY(shows("Kaepora 99.0.0 is out."));
