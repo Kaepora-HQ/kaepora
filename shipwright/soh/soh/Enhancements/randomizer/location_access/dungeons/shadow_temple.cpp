@@ -176,7 +176,9 @@ void RegionTable_Init_ShadowTemple() {
     areaTable[RR_SHADOW_TEMPLE_STONE_UMBRELLA] = Region("Shadow Temple Stone Umbrella", SCENE_SHADOW_TEMPLE, {}, {
         //Locations
         LOCATION(RC_SHADOW_TEMPLE_FALLING_SPIKES_LOWER_CHEST,    logic->HasItem(RG_OPEN_CHEST)),
-        LOCATION(RC_SHADOW_TEMPLE_GS_FALLING_SPIKES_ROOM,        logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG) || (logic->IsAdult && logic->CanGroundJumpslash())),
+        // The remake hangs it 5.5 units above the room's floor with nothing beside it to stand on, and its token stays at
+        // the web.
+        LOCATION(RC_SHADOW_TEMPLE_GS_FALLING_SPIKES_ROOM,        logic->CanGetEnemyDrop(RE_GOLD_SKULLTULA, ED_BOOMERANG)),
         LOCATION(RC_SHADOW_TEMPLE_FALLING_SPIKES_POT_1,          logic->CanBreakPots()),
         LOCATION(RC_SHADOW_TEMPLE_FALLING_SPIKES_POT_2,          logic->CanBreakPots()),
         LOCATION(RC_SHADOW_TEMPLE_FALLING_SPIKES_POT_3,          logic->CanUse(RG_BOOMERANG)),

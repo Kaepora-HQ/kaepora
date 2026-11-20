@@ -30,6 +30,12 @@ NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
 # stones and the magic meter lie where no explosive is needed, so he still grows up.
 NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Goron's Ruby"),
                ("KF Mido Bottom Left Chest", "Zora's Sapphire"), ("KF Storms Grotto Chest", "Progressive Magic Meter"))
+# The Boomerang, the Hookshot and the Longshot each fetch a Gold Skulltula's token from afar.
+NO_BOOMERANG = ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")
+NO_RANGED = (NO_BOOMERANG, NO_HOOKSHOT, ("Water Temple Longshot Chest", "Green Rupee"))
+# The Deku Tree's chest and the market's gallery give the slingshot, and the Forest Temple's chest gives the bow.
+NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Market Shooting Gallery", "Green Rupee"),
+                       ("Forest Temple Bow Chest", "Green Rupee"))
 NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Green Rupee"),
              ("Kak Anju as Child", "Green Rupee"), ("LLR Talons Chickens", "Green Rupee"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
@@ -564,6 +570,16 @@ class LogicTest(unittest.TestCase):
         # only bomb bag in the adult field, adult Link opens the grotto, and child Link, back through the pedestal, gets
         # in.
         self.assertTrue(self.reachable("HF GS Cow Grotto", *NO_BOMB_BAG, ("HF North Poe Chest", "Progressive Bomb Bag")))
+
+    def test_a_high_skulltula_s_token_is_taken_from_afar(self):
+        # It hangs high with nothing beside it to climb, and its token stays at its web.
+        self.assertTrue(self.reachable("LLR GS Rain Shed"))
+        self.assertFalse(self.reachable("LLR GS Rain Shed", NO_BOOMERANG))
+
+    def test_dodongos_cavern_vines_skulltula_needs_a_projectile(self):
+        # It hangs on a climbing net across from the top of the stairs, out of the sword's reach.
+        self.assertTrue(self.reachable("Dodongos Cavern GS Vines Above Stairs", *NO_RANGED))
+        self.assertFalse(self.reachable("Dodongos Cavern GS Vines Above Stairs", *NO_RANGED, *NO_SLINGSHOT_OR_BOW))
 
     def test_hyrule_field_poe_chests_need_adult_link(self):
         for chest in ("HF South Poe Chest", "HF North Poe Chest"):

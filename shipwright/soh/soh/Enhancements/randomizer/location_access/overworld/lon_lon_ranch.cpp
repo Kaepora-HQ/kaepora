@@ -13,7 +13,9 @@ void RegionTable_Init_LonLonRanch() {
         //Locations
         LOCATION(RC_SONG_FROM_MALON,        logic->IsChild && logic->Get(LOGIC_MALON_RETURNED_FROM_CASTLE) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->HasItem(RG_FAIRY_OCARINA) && logic->AtDay),
         LOCATION(RC_LLR_GS_TREE,            logic->IsChild && logic->CanBonkTrees() && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))),
-        LOCATION(RC_LLR_GS_RAIN_SHED,       logic->IsChild && logic->CanGetNightTimeGS() && (logic->HasItem(RG_POWER_BRACELET) || logic->CanKillEnemy(RE_GOLD_SKULLTULA))),
+        // The remake hangs it 8 units above the shed's floor with nothing beside it to climb. The Boomerang kills it and
+        // brings its token back.
+        LOCATION(RC_LLR_GS_RAIN_SHED,       logic->IsChild && logic->CanGetNightTimeGS() && logic->CanUse(RG_BOOMERANG)),
         LOCATION(RC_LLR_GS_HOUSE_WINDOW,    logic->IsChild && logic->HookshotOrBoomerang() && logic->CanGetNightTimeGS()),
         LOCATION(RC_LLR_GS_BACK_WALL,       logic->IsChild && logic->HookshotOrBoomerang() && logic->CanGetNightTimeGS()),
         LOCATION(RC_LLR_FRONT_POT_1,        logic->IsChild && logic->CanBreakPots()),
