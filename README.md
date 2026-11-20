@@ -17,7 +17,7 @@ Get the newest version from the [download page](https://kaepora.org) or from [Re
 | System | File |
 | --- | --- |
 | Linux | `kaepora-linux-x86_64.AppImage`, or `kaepora-linux-x86_64.tar.gz` |
-| Windows | `kaepora-windows-x86_64.zip` |
+| Windows | `kaepora-windows-x86_64-setup.exe`, or `kaepora-windows-x86_64.zip` |
 | macOS | `kaepora-macos-arm64.zip` |
 
 On a Mac, macOS blocks Kaepora the first time you open it. The download page has the three steps that let it through.
