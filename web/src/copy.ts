@@ -104,6 +104,7 @@ export const copy: Copy = {
       'shop-ice-arrow-price-bombchu-shop': 'The Bombchu Shop\'s keeper shows an arrow tipped in ice and says: "Lookin\' at the ice arrow? That\'ll cost ya 5 rupees." The choices are "I\'ll buy!" and "Never mind."',
       'shop-ice-arrows-bombchu-shop': 'The Bombchu Shop\'s shelves, with an arrow tipped in ice picked out among the Bombchus. The panel reads: Ice Arrow, 5 rupees.',
       'shop-kokiri-sword-kokiri-shop': 'The Kokiri Shop\'s shelves, with a small sword picked out beside sticks, nuts, arrows and a shield. The panel reads: Kokiri Sword, 5 rupees.',
+      'shop-kokiri-sword-price-zora-shop': 'The Zora shop\'s keeper shows a small sword and says: "The kokiri sword... That\'ll cost 54 rupees! Have we got a deal?" The choices are "I\'ll buy!" and "Never mind."',
       'shop-longshot-kakariko-bazaar': 'The Kakariko Bazaar\'s shelves, with the Longshot picked out beside a heart, bombs, boots and a shield. The panel reads: Longshot, 5 rupees.',
       'shop-megaton-hammer-market-bazaar': 'The Market Bazaar\'s shelves, with a hammer picked out beside a heart, bombs, a rupee and two shields. The panel reads: Megaton Hammer, 5 rupees.',
       'shop-mirror-shield-market-potion-shop': 'The Market potion shop\'s shelves, with a shield picked out among the potions. The panel reads: Mirror Shield, 5 rupees.',
@@ -149,7 +150,7 @@ export const copy: Copy = {
     of: 'of',
     stones: 'Gossip stones that can give a hint',
     fixedRows: [
-      ['Shop places a seed can shuffle', '4 of 8 in each shop'],
+      ['Shop places a seed can shuffle', 'up to 5 of 8 in each shop'],
       ['Gifts from characters', 'In progress'],
       ['Songs', 'In progress'],
       ['Gold Skulltula tokens', 'In progress'],
