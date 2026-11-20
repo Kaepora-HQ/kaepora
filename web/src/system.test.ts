@@ -8,7 +8,7 @@ const chrome = (os: string, tail = 'Safari/537.36') =>
 const firefox = (os: string) => `Mozilla/5.0 (${os}; rv:145.0) Gecko/20100101 Firefox/145.0`
 const safariMac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15'
 
-const windows = { button: 'Download for Windows', href: downloads.windowsZip, allDownloads: true }
+const windows = { button: 'Download for Windows', href: downloads.windowsInstaller, allDownloads: true }
 const macos = { button: 'Download for macOS', href: '/download#macos', allDownloads: true }
 const linux = { button: 'Download for Linux', href: downloads.linuxAppImage, allDownloads: true }
 const plain = { button: 'Download', href: '/download', allDownloads: false }

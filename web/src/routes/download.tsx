@@ -33,8 +33,8 @@ const platforms: readonly {
     name: 'Windows',
     requires: 'Windows 10 or later, 64-bit',
     Mark: WindowsMark,
-    format: 'zip',
-    more: [],
+    format: 'installer',
+    more: [{ format: 'zip', href: downloads.windowsZip }],
   },
   {
     system: 'macos',
