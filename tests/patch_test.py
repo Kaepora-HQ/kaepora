@@ -125,7 +125,7 @@ INT = 0xD1
 INT64 = 0xD4
 UINT64 = 0xD5
 
-# Saved values by name, and the MurmurHash3 x86_32 hash of each name that keys it in the game data list.
+# Names of saved values in the game data list.
 FIRE_LOCK = "IsChainLockDoorOpen.4189300454150217955"
 WATER_LOCK = "IsChainLockDoorOpen.2202807660383340401"
 MIDO_CHEST = "IsTreasureBoxOpen.12786193094758345086"
@@ -133,8 +133,10 @@ WATER_KEYS = "DungeonInfo.WaterTemple.SmallKeyTotalNum"
 IS_CHILD = "Sequence_IsChildhood"
 FOREST_EXIT_SHUT = "KokiriForest_Npc_Kokiri_007_Child_Blocker_00"
 TRIALS_LEFT = "InsideGanonCastle_Dungeon_Barrier_Count"
-HASHES = {FIRE_LOCK: 749909151, WATER_LOCK: 400117133, WATER_KEYS: 3683958665, IS_CHILD: 3466731731,
-          FOREST_EXIT_SHUT: 3856422516, TRIALS_LEFT: 2698978896}
+
+START_ITEMS = ["Weapon_Sword_Kokiri", "Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror",
+               "Armor_Adult_HeavyBoot", "Armor_Adult_HoverBoot", "Armor_Adult_Goron", "Armor_Adult_Zora", "Item_Hammer",
+               "Item_Boomerang"]
 
 GORON_SHOPKEEPERS = [("Npc_Goron_011_Shop_Child", "Npc_Goron_011_Shop_Child"),
                      ("Npc_Goron_011_Shop_Adult", "Npc_Goron_011_Shop_Child")]
@@ -154,11 +156,6 @@ STORMS_GROTTO_CHEST = 14818888396401495482
 KOKIRI_STICKS_SLOT = (KOKIRI_SHOPKEEPERS, 5, [(KOKIRI_ADULT_STATIC, 4359156404841200094),
                                               (KOKIRI_CHILD_STATIC, 15329846556357339265),
                                               (KOKIRI_CHILD_STATIC, 1748192465494650957)])
-# Each shopkeeper's count of a slot sold, Shop_SoldNum.<shopkeeper>.<slot>, by the hash of its name.
-SOLD_NUM_HASHES = {("Npc_Goron_011_Shop_Child", 3): 3884178440, ("Npc_Goron_011_Shop_Adult", 3): 3983252854,
-                   ("Npc_Goron_011_Shop_Child", 0): 1081991991, ("Npc_Goron_011_Shop_Adult", 0): 2258296172,
-                   ("Npc_Kokiri_001_Shop_Child_ShortStock", 5): 2755930899,
-                   ("Npc_Kokiri_001_Shop_Child", 5): 3688367492, ("Npc_Kokiri_001_Shop_Adult", 5): 138333967}
 # The game's size table entry for an actor pack, over its decompressed size rounded up to 32 bytes.
 PACK_OVERHEAD = 312
 ACTOR_INFO = "RSDB/ActorInfo.Product.111.rstbl.byml.zs"
@@ -507,13 +504,36 @@ def give(flow, gift, old, new):
     parameter[1] = new
 
 
+def murmur3(name):
+    """MurmurHash3 x86_32 of the name, which keys a saved value in the game data list."""
+    data = name.encode()
+    mask = 0xFFFFFFFF
+
+    def rotl(x, r):
+        return (x << r | x >> (32 - r)) & mask
+
+    def mix(k):
+        return rotl(k * 0xCC9E2D51 & mask, 15) * 0x1B873593 & mask
+
+    h = 0
+    blocks = len(data) // 4 * 4
+    for (k,) in struct.iter_unpack("<I", data[:blocks]):
+        h = (rotl(h ^ mix(k), 13) * 5 + 0xE6546B64) & mask
+    if blocks < len(data):
+        h ^= mix(int.from_bytes(data[blocks:], "little"))
+    h ^= len(data)
+    h = (h ^ h >> 16) * 0x85EBCA6B & mask
+    h = (h ^ h >> 13) * 0xC2B2AE35 & mask
+    return h ^ h >> 16
+
+
 def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, skulltulas=(), loose_items=(),
-         event_numbers=(), presences=()):
+         event_numbers=(), presences=(), start_items=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -526,7 +546,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
             "mido_castle_entry_removed": mido_castle_entry_removed,
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
-            "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items]}
+            "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
+            "start_items": list(start_items)}
 
 
 def shop_slot(slot, item, price):
@@ -992,7 +1013,7 @@ def with_defaults(game, values):
     data = game.game_data_list(game.read(GAME_DATA_LIST))
     for name, value in values.items():
         kind, tag = ("Bool", BOOL) if isinstance(value, bool) else ("Int", INT)
-        entry = next(e for e in data["Data"][kind] if e["Hash"][1] == HASHES[name])
+        entry = next(e for e in data["Data"][kind] if e["Hash"][1] == murmur3(name))
         assert entry["DefaultValue"][0] == tag and entry["DefaultValue"] != (tag, int(value)), (name, entry)
         entry["DefaultValue"] = (tag, int(value))
     return data
@@ -1008,7 +1029,7 @@ def together(patch, game):
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
-                         "shops", "skulltulas", "loose_items")}
+                         "shops", "skulltulas", "loose_items", "start_items")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
@@ -1026,6 +1047,18 @@ def start_values(patch, game):
     table entry."""
     values = {FIRE_LOCK: True, FOREST_EXIT_SHUT: False, TRIALS_LEFT: 0}
     mod = patched(patch, game, plan([], values))
+    assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
+    ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
+    assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
+
+
+def start_items(patch, game):
+    """A new game holds each item a seed can start with, counts its get scene played and has one in the pouch, as after
+    a find. The list keeps its size."""
+    values = {f"{record}.{item}": True for item in START_ITEMS for record in ("IsGet", "HavePlayedGetEvent")}
+    values |= {f"PouchData.{item}.StockNum": 1 for item in START_ITEMS}
+    mod = patched(patch, game, plan([], start_items=START_ITEMS))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
     assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
@@ -1065,7 +1098,7 @@ def shop(patch, game):
             member = f"Component/ShopParam/{goods_list}.game__component__ShopParam.bgyml"
             pack = packs.setdefault(path, game.pack(game.read(path)))
             goods_lists.setdefault((path, member), byml(pack[member]))["GoodsList"][index] = entries[keeper]
-            sold = next(e for e in data["Data"]["Int"] if e["Hash"][1] == SOLD_NUM_HASHES[keeper, index])
+            sold = next(e for e in data["Data"]["Int"] if e["Hash"][1] == murmur3(f"Shop_SoldNum.{keeper}.{index}"))
             assert sold["ResetTypeValue"] == (INT, 2), sold
             sold["ResetTypeValue"] = (INT, 0)
         for path, h in shelves:
@@ -2125,6 +2158,19 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in shops.items():
         plans[name] = (good | {"shops": [valid_shop, entry]}, named)
+    plans["no start_items"] = (
+        {key: value for key, value in good.items() if key != "start_items"}, ["plan.json", "start_items"])
+    plans["start item listed twice"] = (good | {"start_items": ["Item_Hammer", "Item_Hammer"]},
+                                        ["plan.json", "start_items", "Item_Hammer", "twice"])
+    # A find of each of these writes more than a start does: the Silver Scale how deep Link dives, a bottle its slot,
+    # the Bomb Bag how many bombs Link can carry, and Din's Fire the magic meter.
+    for item, reason in (("Item_Scale_Silver", "DiveDepthUP"), ("Item_Bottle", "Bottle"),
+                         ("Item_BombBag_Small", "MaxNumGameData"), ("Item_DinFire", "MPMaxUP")):
+        plans[f"start item {item}"] = (good | {"start_items": ["Item_Hammer", item]}, ["start item", item, reason])
+    plans["start item with no row"] = (good | {"start_items": ["Item_Nowhere"]}, ["start item", "Item_Nowhere"])
+    plans["start item a start value names"] = (
+        good | {"start_items": ["Item_Hammer"], "start_values": {"IsGet.Item_Hammer": True}},
+        ["start item", "Item_Hammer", "IsGet.Item_Hammer"])
     plans["no skulltulas"] = (
         {key: value for key, value in good.items() if key != "skulltulas"}, ["plan.json", "skulltulas"])
     valid_skulltula = {"hash": str(SIDE_ROOM_SKULLTULA[0]), "files": SIDE_ROOM_SKULLTULA[1], "item": "Item_Boomerang"}
@@ -2191,8 +2237,8 @@ def bad_input(patch, game):
         else:
             plans[name] = (good | {"event_numbers": [valid_melody, entry]}, named)
     values = game.game_data_list(game.read(GAME_DATA_LIST))["Data"]
-    assert any(e["Hash"][1] == HASHES[WATER_KEYS] for e in values["Int"])
-    assert next(e for e in values["Bool"] if e["Hash"][1] == HASHES[IS_CHILD])["DefaultValue"] == (BOOL, 1)
+    assert any(e["Hash"][1] == murmur3(WATER_KEYS) for e in values["Int"])
+    assert next(e for e in values["Bool"] if e["Hash"][1] == murmur3(IS_CHILD))["DefaultValue"] == (BOOL, 1)
     values = {
         "value not in the list": ("IsChainLockDoorOpen.1", True, ["not a true-or-false value"]),
         "value not true-or-false in the list": (WATER_KEYS, True, ["not a true-or-false value"]),
@@ -2250,6 +2296,7 @@ def main():
         "size-table-unchanged": size_table_unchanged,
         "together": together,
         "start-values": start_values,
+        "start-items": start_items,
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,

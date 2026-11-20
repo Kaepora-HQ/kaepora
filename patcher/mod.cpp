@@ -256,6 +256,12 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("shops[{}]: {}", i, e.what()));
         }
     }
+    plan.startItems = json.at("start_items").get<std::vector<std::string>>();
+    for (const std::string& item : plan.startItems) {
+        if (std::ranges::count(plan.startItems, item) > 1) {
+            throw std::runtime_error(std::format("start_items: {} is listed twice", item));
+        }
+    }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     for (const auto& [key, list] : { std::pair{ "skulltulas", &plan.skulltulas },
                                      std::pair{ "loose_items", &plan.looseItems } }) {
@@ -710,6 +716,25 @@ static byml::Node& DefaultValue(byml::Node& data, const std::string& name, const
         throw std::runtime_error(std::format("start value \"{}\" is not {} in the list", name, words));
     }
     return *defaultValue;
+}
+
+// The start values that give a new game the item as a find of it does: the item held, its get scene counted as played,
+// and one in the pouch. Its row in PouchActorInfo must name no special path of the program (PouchSpecialDeal None), no
+// ability (ExpansionAvility) and no limit (MaxNumGameData). Throws on any other row.
+static std::map<std::string, StartValue> StartItemValues(byml::Node& row, const std::string& item) {
+    const byml::Node* deal = Find(row, "PouchSpecialDeal");
+    if (deal == nullptr || deal->string != "None") {
+        throw std::runtime_error(std::format("its PouchSpecialDeal is {}, which a start does not write",
+                                             deal == nullptr ? "missing" : deal->string));
+    }
+    for (const std::string_view key : { "ExpansionAvility", "MaxNumGameData" }) {
+        if (const byml::Node* value = Find(row, key); value != nullptr && !value->string.empty()) {
+            throw std::runtime_error(std::format("its {} is {}, which a start does not write", key, value->string));
+        }
+    }
+    return { { "IsGet." + item, true },
+             { "HavePlayedGetEvent." + item, true },
+             { std::format("PouchData.{}.StockNum", item), 1 } };
 }
 
 // A new game starts with each start value as its default. Each count of a shop slot sold takes reset type 0 in place
@@ -1193,8 +1218,20 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));
     }
-    if (!plan.startValues.empty() || !soldOnce.empty()) {
-        addToRomfs(GameDataListPath, GameDataList(game, zsDictionary, plan.startValues, soldOnce));
+    std::map<std::string, StartValue> startValues = plan.startValues;
+    for (const std::string& item : plan.startItems) {
+        try {
+            for (auto& [name, value] : StartItemValues(Row(tables.find(PouchActorInfoPath)->second.root, item), item)) {
+                if (!startValues.emplace(name, value).second) {
+                    throw std::runtime_error(std::format("the plan's start values already name {}", name));
+                }
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("start item {}: {}", item, e.what()));
+        }
+    }
+    if (!startValues.empty() || !soldOnce.empty()) {
+        addToRomfs(GameDataListPath, GameDataList(game, zsDictionary, startValues, soldOnce));
     }
     return mod;
 }
