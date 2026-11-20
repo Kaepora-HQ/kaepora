@@ -207,6 +207,10 @@ jobs:
           Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP
           Join-Path $env:RUNNER_TEMP 'ccache-4.14.3-windows-x86_64' | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: tools/install-inno-setup.ps1
+
       - name: Restore compiler objects
         id: compiler-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -284,12 +288,20 @@ jobs:
           retention-days: 7
 
       - name: Package
-        run: tools/package-windows.sh build kaepora-windows-x86_64.zip
+        run: tools/package-windows.sh build kaepora-windows-x86_64.zip kaepora-windows-x86_64-setup.exe
 
       - name: Upload the package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           path: kaepora-windows-x86_64.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: kaepora-windows-x86_64-setup.exe
           archive: false
           if-no-files-found: error
           retention-days: 7
