@@ -1,16 +1,15 @@
-# Unzips the Windows package into a new folder and starts its window there, with a PATH that holds only Windows' own
-# folders. Checks that Windows starts it without a console, that its request to GitHub completes over Schannel, that it
-# loaded Qt, its platform plugin and the TLS plugin from the package, and that every library the package holds and every
+# Starts the window of an unzipped or installed Windows package, with a PATH that holds only Windows' own folders.
+# Checks that Windows starts it without a console, that its request to GitHub completes over Schannel, that it loaded
+# Qt, its platform plugin and the TLS plugin from the package, and that every library the package holds and every
 # Visual C++ runtime library came from the package. GitHub's Windows runners have the runtime in System32, which Windows
 # searches after the program's folder. Qt's HTTP/2 log names each response that arrives whole, whatever its status, and
 # Qt writes its log to stderr only when told to, since the window has no console.
 #
-# Usage: tools/check-windows-package.ps1 <zip>
-param([Parameter(Mandatory)] [string] $Zip)
+# Usage: tools/check-windows-package.ps1 <package folder>
+param([Parameter(Mandatory)] [string] $Package)
 $ErrorActionPreference = 'Stop'
 
-$folder = (New-Item -ItemType Directory (Join-Path $PWD "kaepora-$([guid]::NewGuid())")).FullName
-Expand-Archive $Zip -DestinationPath $folder
+$folder = (Resolve-Path $Package).Path
 $exe = Join-Path $folder 'kaepora.exe'
 
 # The subsystem in the program's PE header: 2 is a window program, 3 a console one.
@@ -45,6 +44,7 @@ if (-not (Select-String -Path $log -SimpleMatch $finished -Quiet)) {
 }
 $loaded = $process.Modules | ForEach-Object FileName | Sort-Object -Unique
 Stop-Process $process
+$process.WaitForExit()
 
 $inside = $loaded | Where-Object { $_.StartsWith("$folder\", 'OrdinalIgnoreCase') }
 $outside = $loaded | Where-Object { -not $_.StartsWith("$folder\", 'OrdinalIgnoreCase') }

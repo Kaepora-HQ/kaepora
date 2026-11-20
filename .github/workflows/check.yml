@@ -335,7 +335,36 @@ jobs:
 
       - name: Start the window from the unzipped package
         shell: pwsh
-        run: tools/check-windows-package.ps1 kaepora-windows-x86_64.zip
+        run: |
+          Expand-Archive kaepora-windows-x86_64.zip -DestinationPath kaepora
+          tools/check-windows-package.ps1 kaepora
+
+  # A runner of its own: the window asks GitHub for the latest version once a day per user, so a second start on the
+  # package's runner would ask nothing.
+  windows-installer:
+    name: Windows installer on a fresh runner
+    needs: windows
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out the check scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+          sparse-checkout: |
+            tools/check-windows-installer.ps1
+            tools/check-windows-package.ps1
+          sparse-checkout-cone-mode: false
+
+      - name: Download the installer
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kaepora-windows-x86_64-setup.exe
+
+      - name: Install, start and uninstall Kaepora
+        shell: pwsh
+        run: tools/check-windows-installer.ps1 kaepora-windows-x86_64-setup.exe
 
   macos:
     name: macOS build, tests and package

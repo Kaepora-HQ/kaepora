@@ -152,7 +152,9 @@ jobs:
 
       - name: Start the window from the unzipped package
         shell: pwsh
-        run: tools/check-windows-package.ps1 kaepora-windows-x86_64.zip
+        run: |
+          Expand-Archive kaepora-windows-x86_64.zip -DestinationPath kaepora
+          tools/check-windows-package.ps1 kaepora
 
   files:
     name: Release files
