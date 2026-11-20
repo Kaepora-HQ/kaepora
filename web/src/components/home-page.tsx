@@ -1,5 +1,6 @@
 import { FoldedMap, Lanterns, MoonAndOwl, OpenChest, Signpost, Treeline } from '@/components/night'
 import { DownloadCall, SiteFooter, SiteHeader } from '@/components/site-chrome'
+import { Wall } from '@/components/wall'
 import type { Copy } from '@/copy'
 
 const drawings = [OpenChest, Signpost, Lanterns, FoldedMap] as const
@@ -28,10 +29,11 @@ export function HomePage({ copy }: { copy: Copy }) {
 
         <section aria-labelledby="adventure" className="bg-silhouette px-gutter py-section">
           <div className="mx-auto max-w-page">
-            <h2 id="adventure" className="storybook text-title font-normal">
+            <h2 id="adventure" className="storybook mbe-8 text-title font-normal">
               {copy.middle.heading}
             </h2>
-            <ul className="mbs-14 grid grid-cols-[repeat(auto-fit,minmax(min(100%,26rem),1fr))] gap-x-16 gap-y-12">
+            <Wall words={copy.wall} />
+            <ul className="mbs-section grid grid-cols-[repeat(auto-fit,minmax(min(100%,26rem),1fr))] gap-x-16 gap-y-12">
               {copy.middle.moments.map(({ title, text }, index) => {
                 const Drawing = drawings[index]
                 return (

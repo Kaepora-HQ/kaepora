@@ -39,6 +39,7 @@
   --text-small--line-height: 1.5;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
   --animate-blink: blink 260ms var(--ease-out) 1.6s 1;
 
@@ -115,6 +116,10 @@
     scrollbar-gutter: stable;
   }
 
+  html:has(dialog:modal) {
+    overflow: hidden;
+  }
+
   body {
     @apply bg-midnight text-body text-starlight antialiased;
     font-optical-sizing: auto;
@@ -130,6 +135,45 @@
   :focus-visible {
     outline: max(2px, 0.08em) solid var(--color-moon);
     outline-offset: 0.25em;
+  }
+}
+
+/* A picture on the wall grows out to full size and back. React gives the moving boundaries the class "shot". */
+::view-transition-group(.shot) {
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.shot) {
+    animation: none;
+  }
+}
+
+/* A view transition draws over the whole page. Clicks pass through it to the page, which is already in its new state. */
+::view-transition {
+  pointer-events: none;
+}
+
+/* React leaves the page itself out of the transition, so the backdrop fades on its own,
+   and the dialog stays in view until it has. */
+dialog {
+  transition:
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+
+dialog::backdrop {
+  transition: background-color 300ms var(--ease-out);
+}
+
+dialog:not([open])::backdrop {
+  background-color: transparent;
+}
+
+@starting-style {
+  dialog[open]::backdrop {
+    background-color: transparent;
   }
 }
 

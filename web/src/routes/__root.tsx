@@ -3,6 +3,7 @@ import figtree from '@fontsource-variable/figtree/files/figtree-latin-wght-norma
 import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { copy } from '@/copy'
+import { markDeal } from '@/deal'
 import { previewCard } from '@/preview-card'
 import { markSystem } from '@/system'
 import css from '../styles.css?url'
@@ -33,7 +34,7 @@ export const Route = createRootRoute({
       { rel: 'stylesheet', href: css },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
     ],
-    scripts: [{ children: markSystem }],
+    scripts: [{ children: markSystem }, { children: markDeal(copy.wall.shots.length) }],
   }),
   shellComponent: Document,
   notFoundComponent: NotFound,
