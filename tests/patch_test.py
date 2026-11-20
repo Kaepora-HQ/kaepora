@@ -1264,10 +1264,10 @@ def shop_table(patch, game):
     assert len(rows) == 64 and len(sold) == 12 * 8, (len(rows), len(sold))
 
 
-def gift_table(patch, game):
-    """Every site of remake/gifts.tsv names its row's item in the game's flow, under an event name no other event of
-    the flow has, and the patcher writes the plan's item there."""
-    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "gifts.tsv", newline="") as f:
+def give_table(patch, game, table):
+    """Every site of a table of gives, remake/gifts.tsv or remake/rewards.tsv, names its row's item in the game's flow,
+    under an event name no other event of the flow has, and the patcher writes the plan's item there."""
+    with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / table, newline="") as f:
         rows = list(csv.DictReader(f, delimiter="\t"))
     mod = patched(patch, game, plan([], event_texts=[(row["flow"], row["event"], row["param"], "Item_Hammer")
                                                      for row in rows]))
@@ -2260,7 +2260,8 @@ def main():
         "single-goods-sign": single_goods_sign,
         "bundle-goods-sign": bundle_goods_sign,
         "shop-scenes-whole": shop_scenes_whole,
-        "gift-table": gift_table,
+        "gift-table": lambda patch, game: give_table(patch, game, "gifts.tsv"),
+        "reward-table": lambda patch, game: give_table(patch, game, "rewards.tsv"),
         "new-actors": new_actors,
         "weapons-bring-containers": weapons_bring_containers,
         "weapon-copies": weapon_copies,

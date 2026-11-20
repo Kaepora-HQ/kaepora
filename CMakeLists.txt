@@ -310,7 +310,7 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values gift
                  gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
-                 single-goods-sign bundle-goods-sign shop-scenes-whole gift-table dive-depth skulltulas
+                 single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
                  weapon-copies event-numbers song-table
                  presence)

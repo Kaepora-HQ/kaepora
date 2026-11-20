@@ -300,3 +300,9 @@ Seen in the game:
 
 Read from the game's data and not yet seen: Saria's lesson, and Sheik's in the forest, the Ice Cavern, Kakariko and the
 Temple of Time.
+
+`rewards.tsv` has a row for each place in the game's event flows that hands over a Spiritual Stone or a medallion: the
+scenes after the eight bosses, and Rauru's in the Chamber of Sages, SoH's "Gift from Rauru". Its columns are those of
+`gifts.tsv`. The five sages' scenes are written in their `.110` copies, as Dampé's tour is. Each scene's call gives
+the item and moves no quest: the blue warp's chain completes the boss's quest by an event of its own, before or after
+the scene, and the scene shows the usual stone or medallion as a model of its own (read from the game's flows).
