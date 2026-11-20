@@ -109,6 +109,18 @@
   @apply border border-mist/15 bg-starlight/3;
 }
 
+/* A popover that opens under its button and ends at the button's far edge.
+   A browser without anchor positioning opens it in the middle of the screen. */
+@utility under-trigger {
+  margin: auto;
+
+  @supports (position-area: block-end) {
+    margin: 0;
+    margin-block-start: 0.5rem;
+    position-area: block-end span-inline-start;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
