@@ -58,9 +58,10 @@ struct GetAccessibleLocationsStruct {
 void ClearProgress();
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
                                            const std::vector<RemakeShopSlot>& shops,
-                                           const std::vector<RemakeGift>& gifts);
+                                           const std::vector<RemakeGift>& gifts,
+                                           const std::vector<RemakeSkulltula>& skulltulas);
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-         const std::vector<RemakeGift>& gifts);
+         const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas);
 
 // What only a chest gives whole, kept in chests from every other kind of shuffled place. A chest that gives the Fairy
 // Bow or the Fairy Slingshot also adds the quiver or the bullet bag and their ammunition, from its own AI; a gift gave
@@ -73,6 +74,10 @@ bool FilledOnlyByChests(RandomizerGet item);
 // quiver, the Goron Ruby or the empty bottle they may need, so they go to any other shuffled place, or to a chest for
 // FilledOnlyByChests.
 bool KeptFromShops(RandomizerGet item);
+
+// What a Gold Skulltula never holds: what FilledOnlyByChests keeps, and the Bomb Bag, which a token copy gave without
+// bombs. The fill places them just before skulltulas join it.
+bool KeptFromSkulltulas(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);
 

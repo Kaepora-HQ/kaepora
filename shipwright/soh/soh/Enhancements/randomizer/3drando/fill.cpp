@@ -916,7 +916,8 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
 
 static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests,
                                                             const std::vector<RemakeShopSlot>& shops,
-                                                            const std::vector<RemakeGift>& gifts) {
+                                                            const std::vector<RemakeGift>& gifts,
+                                                            const std::vector<RemakeSkulltula>& skulltulas) {
     auto ctx = Rando::Context::GetInstance();
     std::map<RandomizerCheck, const RemakeChest*> chestAt;
     for (const RemakeChest& chest : chests) {
@@ -928,6 +929,9 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     }
     for (const RemakeGift& gift : gifts) {
         pooled.emplace(gift.location, gift.sohItem);
+    }
+    for (const RemakeSkulltula& skulltula : skulltulas) {
+        pooled.emplace(skulltula.location, RG_GOLD_SKULLTULA_TOKEN);
     }
     std::vector<const RemakeChest*> shuffled;
     itemPool.clear();
@@ -982,16 +986,18 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
 }
 
 // Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests, shop
-// slots and gifts what the unmodified game gives there. The shuffled chests' and gifts' items and a Red Rupee for each
-// shuffled shop slot make up the item pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
+// slots, gifts and Gold Skulltulas what the unmodified game gives there. The shuffled chests' and gifts' items, a Red
+// Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item pool, and each shuffled
+// shop slot takes a price. Returns the shuffled chests.
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
                                            const std::vector<RemakeShopSlot>& shops,
-                                           const std::vector<RemakeGift>& gifts) {
+                                           const std::vector<RemakeGift>& gifts,
+                                           const std::vector<RemakeSkulltula>& skulltulas) {
     auto ctx = Rando::Context::GetInstance();
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();
-    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops, gifts);
+    std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops, gifts, skulltulas);
     GenerateStartingInventory();
 
     for (const RemakeShopSlot& slot : shops) {
@@ -1056,8 +1062,12 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
+bool KeptFromSkulltulas(RandomizerGet item) {
+    return FilledOnlyByChests(item) || item == RG_PROGRESSIVE_BOMB_BAG;
+}
+
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-         const std::vector<RemakeGift>& gifts) {
+         const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas) {
     auto ctx = Rando::Context::GetInstance();
     int retries = 0;
     SPDLOG_INFO("Starting seed generation...");
@@ -1067,7 +1077,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
         // showItemProgress = false;
         ctx->playthroughLocations.clear();
         ctx->GetEntranceShuffler()->playthroughEntrances.clear();
-        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests, shops, gifts);
+        std::vector<const RemakeChest*> shuffled = SetUpWorld(chests, shops, gifts, skulltulas);
 
         // Temporarily add shop items to the itemPool so that entrance randomization
         // can validate the world using deku/hylian shields
@@ -1104,6 +1114,12 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlo
             AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromShops), shuffledLocations);
             for (const RemakeShopSlot& slot : shops) {
                 shuffledLocations.push_back(slot.location);
+            }
+        }
+        if (!skulltulas.empty()) {
+            AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromSkulltulas), shuffledLocations);
+            for (const RemakeSkulltula& skulltula : skulltulas) {
+                shuffledLocations.push_back(skulltula.location);
             }
         }
 

@@ -92,7 +92,7 @@ std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
 
 // Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
 // program, or a row names any other item. A slot can hold the item of a shuffled chest or of a gift that KeptFromShops
-// lets into shops, and the shop filler.
+// lets into shops, the token a shuffled skulltula adds, and the shop filler.
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
 struct RemakeSkulltula {
@@ -104,6 +104,8 @@ struct RemakeSkulltula {
 // its location's SoH area moves the location into the area of its place, so hints and the barren areas name where it
 // is. Throws, naming the row, on a table that is not in the form remake/README.md gives.
 std::vector<RemakeSkulltula> LoadRemakeSkulltulas();
+
+inline constexpr std::string_view TokenName = "Item_Token_Gold";
 
 struct RemakeStone {
     std::string label;
@@ -156,17 +158,20 @@ struct RemakeHintTables {
 
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
 // item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
-// shuffled or its area, or a gift, its area or its item, or when a prize line names a place that is no chest of the
-// chest table, or one whose own item has no name, or a character's hint names an unknown hint location or item.
+// shuffled or its area, a gift, its area or its item, or a skulltula or its area, or when a prize line names a place
+// that is no chest of the chest table, or one whose own item has no name, or a character's hint names an unknown hint
+// location or item.
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                                      const std::vector<RemakeGift>& gifts);
+                                      const std::vector<RemakeGift>& gifts,
+                                      const std::vector<RemakeSkulltula>& skulltulas);
 
-// The remake name of the item each shuffled chest, shop slot and gift gives. Where several remake names stand for one
-// SoH item, the chests in table order, then the slots, then the gifts give the names the shuffled chests held, the
-// slots' fillers and the gifts held, each as often as it occurred.
+// The remake name of the item each shuffled chest, shop slot, gift and skulltula gives. Where several remake names
+// stand for one SoH item, the chests in table order, then the slots, the gifts and the skulltulas give the names the
+// shuffled chests held, the slots' fillers, the gifts held and the skulltulas' tokens, each as often as it occurred.
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
                                                          const std::vector<RemakeShopSlot>& shops,
-                                                         const std::vector<RemakeGift>& gifts);
+                                                         const std::vector<RemakeGift>& gifts,
+                                                         const std::vector<RemakeSkulltula>& skulltulas);
 
 struct StoneHint {
     RemakeStone stone;
@@ -184,9 +189,10 @@ struct MessageText {
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there.
 // Then the event flow strings every seed changes, each site of each shuffled gift with its item and the text that keeps
 // the Stone of Agony's guide shut after the 20-token reward, the saved values a new game starts with that the rules or
-// the settings count on, the gossip stones' texts, the messages the seed rewrites, and each shuffled shop slot with its
-// item and price.
+// the settings count on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its
+// item and price, and each shuffled skulltula with its item.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
+                                  const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages);

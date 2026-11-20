@@ -24,7 +24,8 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
                               const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                              const std::vector<RemakeGift>& gifts, const std::vector<StoneHint>& hints,
+                              const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas,
+                              const std::vector<StoneHint>& hints,
                               const std::vector<CharacterHintText>& characterHints) {
     nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
                                    { "seed", seed },
@@ -48,12 +49,16 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
     for (const RemakeGift& gift : gifts) {
         AddPlacement(log["locations"], gift.location);
     }
+    for (const RemakeSkulltula& skulltula : skulltulas) {
+        AddPlacement(log["locations"], skulltula.location);
+    }
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         nlohmann::ordered_json steps = nlohmann::ordered_json::object();
         for (RandomizerCheck location : sphere) {
-            // Every token stays where the game has it, and any ten buy the same Skulltula House reward, so the route
-            // names no token.
-            if (ctx->GetItemLocation(location)->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN) {
+            // Any ten tokens buy the same Skulltula House reward, so a token where the game has it tells a player
+            // nothing.
+            if (ctx->GetItemLocation(location)->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN ||
+                log["locations"].contains(Rando::StaticData::GetLocation(location)->GetName())) {
                 AddPlacement(steps, location);
             }
         }
@@ -112,6 +117,24 @@ static std::vector<RemakeShopSlot> ShuffledSlots(const std::vector<RemakeShopSlo
     return shuffled;
 }
 
+static bool Shuffled(const RemakeSkulltula& skulltula, const SeedSettings& settings) {
+    const auto dungeon = std::ranges::find(Dungeons, skulltula.actor.Folder(), &Dungeon::folder);
+    if (dungeon != std::end(Dungeons) && !settings.shuffledDungeons.contains(*dungeon)) {
+        return false;
+    }
+    switch (settings.skulltulas) {
+        case Skulltulas::Vanilla:
+            return false;
+        case Skulltulas::InDungeons:
+            return Rando::StaticData::GetLocation(skulltula.location)->IsDungeon();
+        case Skulltulas::InTheOverworld:
+            return Rando::StaticData::GetLocation(skulltula.location)->IsOverworld();
+        case Skulltulas::All:
+            return true;
+    }
+    return false;
+}
+
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // SoH's start-up runs once per process. The tables are built in, so a table that fails to load fails every call.
     [[maybe_unused]] static const bool started = (InitializeRandomizer(), true);
@@ -121,7 +144,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     [[maybe_unused]] static const bool shopGoodsChecked = (CheckShopGoods(table, giftTable), true);
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
     static const RemakeHintTables hintTables =
-        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable);
+        LoadRemakeHintTables(table, ShuffledSlots(shopTable, ShopCount::FivePerShop), giftTable, skulltulaTable);
 
     std::string seed = text;
     std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
@@ -131,6 +154,9 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
     const std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
+    std::vector<RemakeSkulltula> skulltulas;
+    std::ranges::copy_if(skulltulaTable, std::back_inserter(skulltulas),
+                         [&](const RemakeSkulltula& skulltula) { return Shuffled(skulltula, settings); });
 
     SetOptions(settings);
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
@@ -141,10 +167,10 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
     // No location is excluded.
-    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops, gifts) <= 0) {
+    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, shops, gifts, skulltulas) <= 0) {
         throw std::runtime_error("generation failed");
     }
-    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts);
+    const std::map<RandomizerCheck, std::string> items = PlacedRemakeItems(chests, shops, gifts, skulltulas);
     const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
                                                               ? CharacterHints(hintTables, items, settings)
                                                               : std::vector<CharacterHintText>{};
@@ -157,6 +183,6 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     const std::vector<StoneHint> hints = settings.gossipStones == GossipStones::GiveHints
                                              ? PickHints(hintTables, items, named)
                                              : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, chests, shops, gifts, hints, characterHints),
-             RemakePlan(seed, chests, shops, gifts, settings, items, hints, messages) };
+    return { SpoilerLog(seed, settings, chests, shops, gifts, skulltulas, hints, characterHints),
+             RemakePlan(seed, chests, shops, gifts, skulltulas, settings, items, hints, messages) };
 }

@@ -39,10 +39,10 @@ A hint names places and items as the game's English text does, so it matches the
 game file, a test checks each `name` against the game's message at `label`, in both English text packs, leaving out the
 codes the game puts before a noun.
 
-- `places.tsv` names each SoH area that holds a shuffled chest, shop slot or gift. `area` is the prefix SoH gives the
-  names of the area's locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says` is what a hint
-  says: the name, with `the` where the game's text writes one before it, or the end of the name, as "Ganondorf's
-  Castle" for "Inside Ganondorf's Castle". A test checks that it is.
+- `places.tsv` names each SoH area that holds a shuffled chest, shop slot, gift or Gold Skulltula. `area` is the prefix
+  SoH gives the names of the area's locations, and `label` is the place's label in `LocationMsg/Location.msbt`. `says`
+  is what a hint says: the name, with `the` where the game's text writes one before it, or the end of the name, as
+  "Ganondorf's Castle" for "Inside Ganondorf's Castle". A test checks that it is.
 - `item_names.tsv` names each remake item of `items.tsv`. `label` is in `ActorMsg/PouchContent.msbt`: the game names an
   item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `an`, `the` or empty.
 
@@ -50,7 +50,7 @@ codes the game puts before a noun.
 the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
 is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
 slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop, and so
-does each gift, with SoH's sentence for it where that is true of the remake.
+does each gift, with SoH's sentence for it where that is true of the remake, and each Gold Skulltula.
 
 `skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
 remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row
@@ -63,6 +63,13 @@ it, the only one in a room), then by named neighbours, then by rooms, and by pos
   empty otherwise. Hints name it there.
 - `pairing`: `certain` or `likely`.
 - `note`: what the match rests on. A `likely` row needs one.
+
+With "Gold Skulltulas" at "In dungeons", "In the overworld" or "All", the skulltulas in the ten dungeons that have them,
+outside them, or everywhere join the shuffle, as SoH splits them, but for those of a dungeon that "Shuffled dungeons"
+leaves out. Each adds a token to the pool, and gives the item the seed places there through a copy of the token that
+gives it. One that holds a token drops the game's own. A skulltula never holds the Fairy Bow or the Fairy Slingshot,
+which only a chest gives with their quiver or bullet bag (`FilledOnlyByChests`), nor the Bomb Bag, which a token copy
+gave without bombs (`KeptFromSkulltulas`). The fill places them before skulltulas join it.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
@@ -132,12 +139,13 @@ four items fall under is unknown.
 
 `shop_goods.tsv` has a row for each item a shop slot can hold, and the generator fails when it starts if one has no row.
 A slot can hold what a shuffled chest or a gift holds, but for the dungeon items and the seven `KeptFromShops` keeps
-out, and the shop filler. Four items are sold as the game's own goods, named in `goods`. Every other item is sold from a
-goods actor of its own, which shows the item's own model. The game's own goods rest the lowest point of their shop pose
-between 26 mm under their shelf's origin (the Hylian Shield) and 34 mm over it (the heart), and the patcher raises each
-shelf so that its item rests on the origin. It also sizes the item as the game sizes its own goods, whose shop poses
-shrink some and grow others: an item taller or reaching farther than the game's goods shrinks to the largest size that
-fits them, and one smaller than the smallest of them grows toward its size, by at most the 1.4 the game grows its masks.
+out, the token a shuffled Gold Skulltula adds, and the shop filler. Four items are sold as the game's own goods, named
+in `goods`. Every other item is sold from a goods actor of its own, which shows the item's own model. The game's own
+goods rest the lowest point of their shop pose between 26 mm under their shelf's origin (the Hylian Shield) and 34 mm
+over it (the heart), and the patcher raises each shelf so that its item rests on the origin. It also sizes the item as
+the game sizes its own goods, whose shop poses shrink some and grow others: an item taller or reaching farther than the
+game's goods shrinks to the largest size that fits them, and one smaller than the smallest of them grows toward its
+size, by at most the 1.4 the game grows its masks.
 
 - `item`: the remake item.
 - `goods`: the game's goods actor that sells the item, or empty for goods of its own.

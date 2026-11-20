@@ -44,7 +44,7 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-                    "Shop goods": "Vanilla", "Gifts": "Vanilla", "Lens of Truth": "Needed",
+                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Lens of Truth": "Needed",
                     "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
 NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
@@ -52,7 +52,7 @@ EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Shop goods": "Four per shop shuffled",
-    "Gifts": "Shuffled", "Lens of Truth": "Never needed"}
+    "Gold Skulltulas": "All", "Gifts": "Shuffled", "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
 # bow chest room and the Spirit Temple's door between the statue room and the child climb room start open in every seed.
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
@@ -83,6 +83,12 @@ AGONY_GUIDE_SHUT = {"flow": "Event/EventFlow/GatheringTokenGold.bfevfl.zs", "eve
                     "param": "GameDataName", "text": "KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 WARPS_A_CHILD_WALKS_OUT_OF = ("Minuet of Forest", "Serenade of Water", "Nocturne of Shadow", "Prelude of Light")
+KEPT_FROM_SKULLTULAS = FILLED_ONLY_BY_CHESTS | {"Item_BombBag_Small"}
+SKULLTULAS = read_tsv("skulltulas.tsv")
+SKULLTULA_AT = {row["hash"]: row["location"] for row in SKULLTULAS}
+SKULLTULA_PLACES = {row["location"]: row["place"] for row in SKULLTULAS if row["place"]}
+SKULLTULAS_SHUFFLED = {"Gold Skulltulas": "All"}
+TOKEN = "Item_Token_Gold"
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -143,9 +149,16 @@ def playthrough_steps(log):
     return {location: item for sphere in log["playthrough"].values() for location, item in sphere.items()}
 
 
-def place_of(location):
+def soh_area(location):
+    """The SoH area of a location, the prefix of its name."""
     prefixes = [area for area in PLACE_BY_AREA_PREFIX if location.startswith(area + " ")]
     return max(prefixes, key=len) if prefixes else None
+
+
+def place_of(location):
+    """Where the remake has a location: the place remake/skulltulas.tsv gives a skulltula that stands elsewhere, or its
+    SoH area."""
+    return SKULLTULA_PLACES.get(location) or soh_area(location)
 
 
 def plain(text):
@@ -173,7 +186,12 @@ def placed_remake_items(plan):
     rows = {row["hash"]: row["location"] for row in SHUFFLED}
     placed = {rows[entry["hash"]]: entry["drop_actor"] for entry in plan["chests"]}
     placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
-    return placed | dict(gift_sites(plan))
+    placed |= dict(gift_sites(plan))
+    return placed | {SKULLTULA_AT[entry["hash"]]: entry["item"] for entry in plan["skulltulas"]}
+
+
+def in_a_dungeon(location):
+    return soh_area(location) in DUNGEON_PLACES
 
 
 def spoiler_item(placed):
@@ -717,6 +735,50 @@ class SeedgenTest(unittest.TestCase):
                      for location, item in gift_sites(plan)}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
+    def test_gold_skulltulas_shuffled(self):
+        dungeon = [row for row in SKULLTULAS if in_a_dungeon(row["location"])]
+        overworld = [row for row in SKULLTULAS if not in_a_dungeon(row["location"])]
+        self.assertEqual((len(SKULLTULAS), len(dungeon)), (100, 44))
+        rows = {row["hash"]: row for row in SHUFFLED}
+        for choice, shuffled in (("All", SKULLTULAS), ("In dungeons", dungeon),
+                                 ("In the overworld", overworld)):
+            spoiler, plan = self.generate("21", {"Gold Skulltulas": choice})
+            self.assertEqual(spoiler["settings"]["Gold Skulltulas"], choice)
+            self.assertEqual([{"hash": entry["hash"], "files": entry["files"]} for entry in plan["skulltulas"]],
+                             [{"hash": row["hash"], "files": row["files"].split(",")} for row in shuffled])
+            for row, entry in zip(shuffled, plan["skulltulas"]):
+                self.assertIn((entry["item"], spoiler["locations"][row["location"]]), ITEM_PAIRS, row["location"])
+            kept = {row["location"] for row in SKULLTULAS} - {row["location"] for row in shuffled}
+            self.assertFalse(kept & spoiler["locations"].keys())
+            given = collections.Counter(entry["item"] for entry in plan["skulltulas"])
+            self.assertFalse(given.keys() & (KEYS | MAPS_AND_COMPASSES | {"Obj_MiniGame_SmallKey"}), choice)
+            chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+            self.assertEqual(collections.Counter(chests.values()) + given,
+                             POOL + collections.Counter({TOKEN: len(shuffled)}), choice)
+
+    def test_skulltulas_hold_no_bow_slingshot_or_bomb_bag(self):
+        given = collections.Counter()
+        for seed in range(700, 730):
+            _, plan = self.generate(str(seed), SKULLTULAS_SHUFFLED)
+            given.update(entry["item"] for entry in plan["skulltulas"])
+        self.assertFalse(given.keys() & KEPT_FROM_SKULLTULAS, given)
+
+    def test_a_dungeon_left_out_keeps_its_skulltulas(self):
+        left_out = {"Dodongo's Cavern": "DodongoCavern", "Shadow Temple": "ShadowTemple"}
+        settings = {"Shuffled dungeons": [name for name in DUNGEONS if name not in left_out], **SKULLTULAS_SHUFFLED}
+        spoiler, plan = self.generate("1053", settings)
+        kept = {row["location"] for row in SKULLTULAS if folder(row["files"]) in left_out.values()}
+        self.assertTrue(kept)
+        self.assertFalse(kept & spoiler["locations"].keys())
+        self.assertEqual({SKULLTULA_AT[entry["hash"]] for entry in plan["skulltulas"]},
+                         {row["location"] for row in SKULLTULAS} - kept)
+
+    def test_a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere(self):
+        log, _ = self.generate("23", SKULLTULAS_SHUFFLED)
+        skulltulas = {row["location"] for row in SKULLTULAS}
+        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 6)
+        self.assertEqual(self.route_out_of_reach(log), [])
+
     def test_seed_text_ignores_case(self):
         upper = self.run_seedgen("OWL")
         self.assertEqual(self.run_seedgen("owl"), upper)
@@ -744,8 +806,11 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(reach.reachable("Ganon", *placed, settings=spoiler["settings"]))
         steps = playthrough_steps(spoiler)
 
-        def items_at(area):
-            return [item for location, item in held.items() if place_of(location) == area]
+        def items_at(area, dungeon):
+            """Items that a hint names at the place, with "hoards" for a dungeon location and "can be found at" for
+            any other, as SoH words it."""
+            return [item for location, item in held.items()
+                    if place_of(location) == area and in_a_dungeon(location) == dungeon]
 
         self.assert_character_hints_are_true(spoiler, plan)
         for stone, hint in hints.items():
@@ -771,12 +836,10 @@ class SeedgenTest(unittest.TestCase):
                                         for location in steps if location in chests))
                 elif found := re.fullmatch(r"They say that (.+) can be found at (.+)\.", hint):
                     area = places[found[2]]
-                    self.assertNotIn(area, DUNGEON_PLACES)
-                    self.assertIn(found[1], items_at(area))
+                    self.assertIn(found[1], items_at(area, False))
                 elif found := re.fullmatch(r"They say that (.+) hoards (.+)\.", hint):
                     area = places[found[1]]
-                    self.assertIn(area, DUNGEON_PLACES)
-                    self.assertIn(found[2], items_at(area))
+                    self.assertIn(found[2], items_at(area, True))
                 else:
                     self.fail("not a hint")
         return spoiler, plan
@@ -891,6 +954,21 @@ class SeedgenTest(unittest.TestCase):
                         self.assertTrue(line.strip(), entry)
                         self.assertLessEqual(len(re.sub(r"\{[^}]*\}", "", line).encode()), int(site["line_length"]),
                                              entry)
+
+    def test_hints_name_the_place_a_skulltula_stands_in(self):
+        # Seed 408's route takes the Megaton Hammer from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall,
+        # and a hint says Hyrule Field is on the way of the hero. Seed 664's route takes the Megaton Hammer from HC OGC
+        # GS, in the scene the game calls Ganondorf's Castle, and a hint says that scene is on the way.
+        for seed in ("408", "664"):
+            self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
+
+    def test_hints_name_gold_skulltulas_truly(self):
+        self.assert_hints_are_true("23", SKULLTULAS_SHUFFLED)
+        spoiler, plan = self.generate("23", SKULLTULAS_SHUFFLED)
+        skulltulas = {row["location"] for row in SKULLTULAS}
+        said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
+                for location, item in placed_remake_items(plan).items() if location in skulltulas}
+        self.assertTrue(said & set(spoiler["hints"].values()))
 
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):

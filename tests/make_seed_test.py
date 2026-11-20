@@ -61,6 +61,19 @@ class MakeSeedTest(unittest.TestCase):
         self.assertIn("Item_Wallet_Large", sold)
         self.assertTrue((mod / "romfs/Pack/Actor/Shop_Item_Wallet_Large.pack.zs").is_file())
 
+    def test_a_seed_with_gold_skulltulas_shuffled_is_patched(self):
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Gold Skulltulas": "All"})
+        result = subprocess.run([SEEDGEN, "21", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        skulltulas = json.loads(plan.read_text())["skulltulas"]
+        copies = {f"Obj_Token_Gold_{entry['item']}.pack.zs" for entry in skulltulas
+                  if entry["item"] != "Item_Token_Gold"}
+        self.assertEqual(len(skulltulas), 100)
+        self.assertEqual({p.name for p in (mod / "romfs" / "Pack" / "Actor").glob("Obj_Token_Gold_*")}, copies)
+
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:
             result = self.make_seeds((seed, self.tmp / "alone" / seed))

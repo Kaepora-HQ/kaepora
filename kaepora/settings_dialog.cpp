@@ -72,6 +72,13 @@ QString Summary(const SeedSettings& settings) {
     if (settings.shops) {
         changed << "shop goods shuffled";
     }
+    if (settings.skulltulas == Skulltulas::InDungeons) {
+        changed << "dungeon Gold Skulltulas shuffled";
+    } else if (settings.skulltulas == Skulltulas::InTheOverworld) {
+        changed << "overworld Gold Skulltulas shuffled";
+    } else if (settings.skulltulas == Skulltulas::All) {
+        changed << "Gold Skulltulas shuffled";
+    }
     if (settings.gifts == Gifts::Shuffled) {
         changed << "gifts shuffled";
     }
@@ -126,7 +133,8 @@ QString Details(const SeedSettings& settings) {
     if (settings.shops) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
-    lines << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
+    lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
+          << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
           << Line(LensSetting, QString::fromUtf8(Words(LensChoices, settings.lens)))
           << Line(GossipStonesSetting, QString::fromUtf8(Words(GossipStonesChoices, settings.gossipStones)))
           << Line(HintsFromCharactersSetting,
@@ -226,10 +234,12 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shopPricesRow->addWidget(highestShopPrice);
     auto* shopPricesLabel = new QLabel(QString::fromUtf8(ShopPricesSetting));
     shopPricesLabel->setBuddy(shopPrices);
+    QComboBox* skulltulas = Choice(SkulltulasChoices);
     QComboBox* gifts = Choice(GiftsChoices);
     auto* shuffleForm = new QFormLayout;
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     shuffleForm->addRow(shopPricesLabel, shopPricesRow);
+    shuffleForm->addRow(QString::fromUtf8(SkulltulasSetting), skulltulas);
     shuffleForm->addRow(QString::fromUtf8(GiftsSetting), gifts);
     auto* shuffleGroup = new QGroupBox("Shuffle");
     shuffleGroup->setLayout(shuffleForm);
@@ -304,6 +314,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         lowestShopPrice->setValue(range.lowest);
         highestShopPrice->setValue(range.highest);
         showPrices();
+        Select(skulltulas, shown.skulltulas);
         Select(gifts, shown.gifts);
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
@@ -339,6 +350,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
             }
             shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
         }
+        shown.skulltulas = Selected<Skulltulas>(skulltulas);
         shown.gifts = Selected<Gifts>(gifts);
         shown.lens = Selected<Lens>(lens);
         shown.gossipStones = Selected<GossipStones>(gossipStones);

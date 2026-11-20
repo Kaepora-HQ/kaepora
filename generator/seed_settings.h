@@ -21,6 +21,7 @@ inline constexpr std::string_view ShopPricesSetting = "Shop prices";
 inline constexpr std::string_view ShopPriceSetting = "Shop price";
 inline constexpr std::string_view ShopPriceRangeSetting = "Shop price range";
 inline constexpr std::string_view GiftsSetting = "Gifts";
+inline constexpr std::string_view SkulltulasSetting = "Gold Skulltulas";
 inline constexpr std::string_view LensSetting = "Lens of Truth";
 inline constexpr std::string_view GossipStonesSetting = "Gossip stones";
 inline constexpr std::string_view HintsFromCharactersSetting = "Hints from characters";
@@ -155,6 +156,14 @@ inline constexpr std::pair<Gifts, std::string_view> GiftsChoices[] = {
     { Gifts::Shuffled, "Shuffled" },
 };
 
+enum class Skulltulas { Vanilla, InDungeons, InTheOverworld, All };
+inline constexpr std::pair<Skulltulas, std::string_view> SkulltulasChoices[] = {
+    { Skulltulas::Vanilla, "Vanilla" },
+    { Skulltulas::InDungeons, "In dungeons" },
+    { Skulltulas::InTheOverworld, "In the overworld" },
+    { Skulltulas::All, "All" },
+};
+
 enum class Lens { Needed, NeverNeeded };
 inline constexpr std::pair<Lens, std::string_view> LensChoices[] = {
     { Lens::Needed, "Needed" },
@@ -182,6 +191,7 @@ struct SeedSettings {
     Trials trials = Trials::AllSix;
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Gifts gifts = Gifts::Vanilla;
+    Skulltulas skulltulas = Skulltulas::Vanilla;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
     HintsFromCharacters hintsFromCharacters = HintsFromCharacters::GiveHints;

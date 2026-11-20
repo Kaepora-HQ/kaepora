@@ -267,7 +267,8 @@ static std::string ItemPhrase(const std::string& where, const std::vector<std::s
 }
 
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
-                                      const std::vector<RemakeGift>& gifts) {
+                                      const std::vector<RemakeGift>& gifts,
+                                      const std::vector<RemakeSkulltula>& skulltulas) {
     RemakeHintTables tables;
     size_t line = 1;
     for (const auto& row : ReadTable("remake/stones.tsv", stoneTable, "label\tlocation")) {
@@ -370,10 +371,13 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
     for (const RemakeGift& gift : gifts) {
         addShuffled(gift.location, gift.item);
     }
+    for (const RemakeSkulltula& skulltula : skulltulas) {
+        addShuffled(skulltula.location, std::string(TokenName));
+    }
     for (const auto& [location, sentence] : tables.chestSentences) {
         if (!shuffled.contains(location)) {
             Fail("remake/chest_hints.tsv: \"" + Rando::StaticData::GetLocation(location)->GetName() +
-                 "\" is not a shuffled chest, or a shop slot or gift that can be shuffled");
+                 "\" is not a shuffled chest, or a shop slot, gift or skulltula that can be shuffled");
         }
     }
     return tables;
@@ -381,7 +385,8 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
 
 std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<RemakeChest>& chests,
                                                          const std::vector<RemakeShopSlot>& shops,
-                                                         const std::vector<RemakeGift>& gifts) {
+                                                         const std::vector<RemakeGift>& gifts,
+                                                         const std::vector<RemakeSkulltula>& skulltulas) {
     std::map<RandomizerGet, std::deque<std::string>> names;
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
@@ -392,6 +397,8 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
     for (const RemakeGift& gift : gifts) {
         names[gift.sohItem].push_back(gift.item);
     }
+    names[RG_GOLD_SKULLTULA_TOKEN].insert(names[RG_GOLD_SKULLTULA_TOKEN].end(), skulltulas.size(),
+                                          std::string(TokenName));
     std::map<RandomizerCheck, std::string> placed;
     const auto place = [&](RandomizerCheck location) {
         RandomizerGet item = Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedRandomizerGet();
@@ -409,6 +416,9 @@ std::map<RandomizerCheck, std::string> PlacedRemakeItems(const std::vector<Remak
     }
     for (const RemakeGift& gift : gifts) {
         place(gift.location);
+    }
+    for (const RemakeSkulltula& skulltula : skulltulas) {
+        place(skulltula.location);
     }
     return placed;
 }
@@ -453,7 +463,7 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
 }
 
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts) {
-    std::set<std::string> holdable{ std::string(ShopFillerName) };
+    std::set<std::string> holdable{ std::string(ShopFillerName), std::string(TokenName) };
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled && !KeptFromShops(chest.sohItem)) {
             holdable.insert(chest.item);
@@ -679,7 +689,8 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
-                                  const SeedSettings& settings, const std::map<RandomizerCheck, std::string>& items,
+                                  const std::vector<RemakeSkulltula>& skulltulas, const SeedSettings& settings,
+                                  const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
@@ -736,5 +747,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     // Only with the exit open and Mido still blocking can Link meet Zelda before Mido lets him by.
     plan["mido_castle_entry_removed"] = settings.forest == Forest::ClosedDeku;
     plan["skulltulas"] = nlohmann::ordered_json::array();
+    for (const RemakeSkulltula& skulltula : skulltulas) {
+        plan["skulltulas"].push_back({ { "hash", skulltula.actor.hash },
+                                       { "files", skulltula.actor.files },
+                                       { "item", items.at(skulltula.location) } });
+    }
     return plan;
 }
