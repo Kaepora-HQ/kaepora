@@ -267,6 +267,12 @@ class LogicTest(unittest.TestCase):
             self.assertFalse(self.reachable(location, NO_LENS), location)
             self.assertTrue(self.reachable(location, NO_LENS, settings=LENS_NEVER_NEEDED), location)
 
+    def test_lens_never_needed_counts_on_nothing_from_the_chest_game(self):
+        # The prize asks for the Lens, so with the Lens never needed the chest keeps the game's heart piece. A seed that
+        # counted that heart toward Link's health would wait for the Lens to win it.
+        self.assertTrue(self.reachable("Market Treasure Chest Game Reward"))
+        self.assertFalse(self.reachable("Market Treasure Chest Game Reward", settings=LENS_NEVER_NEEDED))
+
     def test_well_hidden_pits_door_has_no_lock(self):
         self.assertTrue(self.reachable("Bottom of the Well Fire Keese Chest",
                                        ("Bottom of the Well Right Bottom Fake Wall Chest", "Green Rupee"),
