@@ -181,6 +181,7 @@ add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route route_names_no_gold_skulltula_token
                      route_names_each_boss_before_the_steps_that_wait_for_it
+                     a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree
                      route_takes_what_link_is_handed_over_what_he_buys route_steps_are_in_reach_in_their_sphere
                      a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere
                      a_route_warps_a_child_to_the_colossus_only_after_a_song_that_takes_him_out

@@ -76,7 +76,7 @@ Whatever you choose, the owner of the Treasure Chest Game names the prize your s
 
 Three settings open the world sooner. They cover the way out of Kokiri Forest, the Rainbow Bridge and Ganon's trials.
 
-- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both.
+- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both. With **Closed Deku** or **Open**, a seed may never send you into the Deku Tree: the Ocarina of Time and the Door of Time wait for King Dodongo and Barinade, not for Queen Gohma.
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 

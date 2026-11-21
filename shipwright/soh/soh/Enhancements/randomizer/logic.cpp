@@ -1836,7 +1836,7 @@ uint8_t Logic::StoneCount() {
 }
 
 bool Logic::StoneBossesBeaten() {
-    return Get(LOGIC_DEKU_TREE_CLEAR) && Get(LOGIC_DODONGOS_CAVERN_CLEAR) && Get(LOGIC_JABU_JABUS_BELLY_CLEAR);
+    return Get(LOGIC_DODONGOS_CAVERN_CLEAR) && Get(LOGIC_JABU_JABUS_BELLY_CLEAR);
 }
 
 uint8_t Logic::MedallionCount() {

@@ -396,7 +396,8 @@ class SeedgenTest(unittest.TestCase):
         # Time, the Nocturne and the Light Arrows, so it names in an earlier sphere each boss their rules ask for.
         log, _ = self.generate(FIXED_SEED)
         sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
-        waits = {"HF Ocarina of Time Item": ("Queen Gohma", "King Dodongo", "Barinade"),
+        waits = {"HF Ocarina of Time Item": ("King Dodongo", "Barinade"),
+                 "Song from Ocarina of Time": ("King Dodongo", "Barinade"),
                  "Sheik in Kakariko": ("Phantom Ganon", "Volvagia", "Morpha"),
                  "Market ToT Light Arrow Cutscene": ("Bongo Bongo", "Twinrova")}
         for step, bosses in waits.items():
@@ -408,6 +409,12 @@ class SeedgenTest(unittest.TestCase):
         sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
         self.assertIn("Phantom Ganon", sphere)
         self.assertLess(sphere["Phantom Ganon"], sphere["Twinrova"])
+
+    def test_a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree(self):
+        # Closed Deku opens the way out of the forest.
+        steps = playthrough_steps(self.generate("1", {"Kokiri Forest": "Closed Deku"})[0])
+        self.assertIn("HF Ocarina of Time Item", steps)
+        self.assertEqual([step for step in steps if step == "Queen Gohma" or step.startswith("Deku Tree ")], [])
 
     def route_out_of_reach(self, log):
         """The route's steps Link cannot reach in their sphere. He follows the route sphere by sphere, holding what the
