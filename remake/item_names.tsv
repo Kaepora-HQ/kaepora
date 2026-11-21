@@ -2,6 +2,8 @@ remake_item	label	name	article
 Item_AgonyStone	Item_AgonyStone_Name	Echo Gem	the
 Item_Arrow_Fire	Item_Arrow_Fire_Name	Fire Arrow	the
 Item_Arrow_Ice	Item_Arrow_Ice_Name	Ice Arrow	the
+Item_BombBag_Large	Item_BombBag_Large_Name	Biggest Bomb Bag	the
+Item_BombBag_Medium	Item_BombBag_Medium_Name	Bigger Bomb Bag	a
 Item_BombBag_Small	Item_BombBag_Small_Name	Bomb Bag	the
 Item_BombBundle_Small	Item_BombBundle_Small_Name	Five Bombs	
 Item_BombchuBundle_Large	Item_BombchuBundle_Large_Name	20 Bombchus	
@@ -9,6 +11,8 @@ Item_BombchuBundle_Small	Item_BombchuBundle_Small_Name	Five Bombchus
 Item_Boomerang	Item_Boomerang_Name	Boomerang	the
 Item_Bottle	Item_Bottle_Name	Empty Bottle	an
 Item_Bottle_Milk	Item_Bottle_Milk_Name	Lon Lon Milk	
+Item_BulletBag_Large	Item_BulletBag_Large_Name	Biggest Deku-Seed Bag	the
+Item_BulletBag_Medium	Item_BulletBag_Medium_Name	Bigger Deku-Seed Bag	a
 Item_DekuStickBundle_Small	Item_DekuStickBundle_Small_Name	Three Deku Sticks	
 Item_Dungeon_BossKey	Item_Dungeon_BossKey_Name	Boss Key	a
 Item_Dungeon_Compass	Item_Dungeon_Compass_Name	Compass	a
@@ -40,12 +44,16 @@ Item_Melody_SunSong	Item_Melody_SunSong_Name	Sun's Song	the
 Item_Melody_TimeSong	Item_Melody_TimeSong_Name	Song of Time	the
 Item_Melody_WaterSerenade	Item_Melody_WaterSerenade_Name	Serenade of Water	the
 Item_Melody_ZeldaLullaby	Item_Melody_ZeldaLullaby_Name	Zelda's Lullaby	
+Item_NutBag_Medium	Item_NutBag_Medium_Name	Bigger Deku-Nut Bag	a
+Item_Quiver_Large	Item_Quiver_Large_Name	Biggest Quiver	the
+Item_Quiver_Medium	Item_Quiver_Medium_Name	Bigger Quiver	a
 Item_Range_Bow	Weapon_Range_Bow_Name	Fairy Bow	the
 Item_Range_SlingShot	Weapon_Range_SlingShot_Name	Fairy Slingshot	the
 Item_Scale_Gold	Item_Scale_Gold_Name	Golden Scale	a
 Item_Scale_Silver	Item_Scale_Silver_Name	Silver Scale	a
 Item_ScrubBusinessSeed	Item_ScrubBusinessSeed_Name	Business Scrub Seed	a
 Item_Shield_Mirror	Weapon_Shield_Mirror_Name	Mirror Shield	the
+Item_StickBag_Medium	Item_StickBag_Medium_Name	Bigger Deku-Stick Bag	a
 Item_Stone_Fire	Item_Stone_Fire_Name	Goron Ruby	the
 Item_Stone_Forest	Item_Stone_Forest_Name	Kokiri Emerald	the
 Item_Stone_Water	Item_Stone_Water_Name	Zora Sapphire	the

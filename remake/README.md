@@ -191,16 +191,29 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 21 SoH locations: the five
-House of Skulltula rewards, and the heart pieces, bottles and scales that minigames and characters give. With "Gifts" at
-"Shuffled" the 21 join the shuffle. Each adds to the pool what it gives in the game, and the plan writes the placed
-item at each of its places.
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 29 SoH locations: the five
+House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, and the eight
+prizes that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger. With "Gifts" at "Shuffled" the 29 join
+the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
 - `event`: the event whose call gives the item, by its name, which no other event of the flow has.
 - `param`: the call's string parameter that names the item.
-- `item`: what the call gives in the unmodified game, by its remake name. Every row of a location names the same item.
+- `gives`: what the call gives in the unmodified game, by its remake name.
+- `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
+
+A bag prize gives the bigger of two sizes from one event and the biggest from another: the biggest only to a Link who
+already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko galleries, the
+bowling alley and the Deku theater add the bigger bag, and the Lost Woods target, horseback archery and the rolling
+Goron the biggest. No shuffled place adds the biggest stick or nut bag; a Business Scrub that is not shuffled sells each
+to a Link who holds the bigger one (read from its flow). No rule of SoH's logic reads what these eight items set: their
+logic values, and for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger quiver
+or bullet bag is no Bow or Slingshot to the logic, and the logic makes the rolling Goron wait for the Bomb Bag itself.
+That is stricter than the game, where a bigger bomb bag brings the small one he asks for. No shelf has been seen to sell
+a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. With "Gifts" at "Vanilla", the logic counts what
+SoH's location list says each place gives, so a row's item must be that, and the list gives the eight places their bags
+and the 40-token reward its 20 Bombchus.
 
 A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
 retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
@@ -221,8 +234,11 @@ Seen in the game:
 - The Big Poe buyer's first prize sale gave the Iron Boots and the next sale only rupees. Horseback archery gave the
   Megaton Hammer for 770 points. The frogs' game gave the Boomerang when won on the retry.
 - A chest gives Lon Lon Milk to a Link with no bottle, the Echo Gem, the Giant's Wallet and the Silver Scale.
+- The Lost Woods target's scrub gave a placed Boomerang. He held the seed bag's model while the Boomerang's own get
+  scene played, and the Boomerang was kept after a reload. The rolling Goron gave a placed Boomerang, and his scene
+  played out. The other six bag prizes hand over through the same entries as gifts seen above (read from the flows).
 
-So every way the 21 hand over their item has given another item. Read from the game's files and not yet seen: a prize
+So every way the 29 hand over their item has given another item. Read from the game's files and not yet seen: a prize
 talk may still name the usual prize, and the map may keep a heart on these places until each is won.
 
 A shop refuses bottle contents to a Link with no empty bottle, and which kind the Empty Bottle and Lon Lon Milk fall

@@ -84,6 +84,17 @@ GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
 GIFTS_SHUFFLED = {"Gifts": "Shuffled"}
+# The eight places whose prize makes a bag bigger, and the bigger bag each adds to the shuffle, by SoH's name and the
+# remake's.
+BAG_PRIZES = {"Market Shooting Gallery": ("Big Deku Seed Bullet Bag", "Item_BulletBag_Medium"),
+              "LW Target in Woods": ("Biggest Deku Seed Bullet Bag", "Item_BulletBag_Large"),
+              "Kak Shooting Gallery Reward": ("Big Quiver", "Item_Quiver_Medium"),
+              "GF HBA 1500 Points": ("Biggest Quiver", "Item_Quiver_Large"),
+              "Market Bombchu Bowling First Prize": ("Big Bomb Bag", "Item_BombBag_Medium"),
+              "GC Rolling Goron as Child": ("Biggest Bomb Bag", "Item_BombBag_Large"),
+              "LW Deku Theater Skull Mask": ("Deku Stick Capacity (20)", "Item_StickBag_Medium"),
+              "LW Deku Theater Mask of Truth": ("Deku Nut Capacity (30)", "Item_NutBag_Medium")}
+BIGGER_BAGS = dict(BAG_PRIZES.values())
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -162,9 +173,12 @@ START_STEPS = {
     "Deku Nuts (40)": ["Item_DekuNut", "Item_NutBag_Medium", "Item_NutBag_Large"],
     "Fairy Ocarina": ["Item_Ocarina_Fairy"],
 }
-# The items that shuffled places name for those steps: chests, and with gifts shuffled the scales and the wallets.
+# The items that shuffled places name for those steps: chests, and with gifts shuffled the scales, the wallets and the
+# bigger bags.
 STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Silver",
-               "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large"]
+               "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large",
+               "Item_BulletBag_Medium", "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large",
+               "Item_BombBag_Medium", "Item_BombBag_Large", "Item_StickBag_Medium", "Item_NutBag_Medium"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -877,8 +891,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes the Hover Boots from the 50-token reward, the Megaton Hammer from the bowling alley and
-        # three more gifts. The route names no token, and without every token it stops at Twinrova.
+        # Seed 10's route takes five gifts, among them the Kokiri Sword from the 30-token reward and the Lens of Truth
+        # from the man on the roof.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -887,12 +901,74 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 23 hints at four gifts by their sentences: Anju's, the Skull Kid's, Bombchu Bowling's and the frogs' in
-        # the rain.
+        # Seed 23 hints at a gift by its sentence: the adult fishing prize.
         spoiler, plan = self.assert_hints_are_true("23", GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
+
+    def test_each_bag_prize_gives_its_placed_item_at_both_sites(self):
+        spoiler, plan = self.generate("31", GIFTS_SHUFFLED)
+        sites = collections.defaultdict(list)
+        for location, item in gift_sites(plan):
+            sites[location].append(item)
+        for location in BAG_PRIZES:
+            self.assertEqual(len(sites[location]), 2, location)
+            self.assertEqual(len(set(sites[location])), 1, location)
+            self.assertIn((sites[location][0], spoiler["locations"][location]), ITEM_PAIRS, location)
+
+    def test_a_bigger_bag_has_one_name_wherever_it_lands(self):
+        landed = collections.Counter()
+        for seed in map(str, range(1400, 1410)):
+            spoiler, plan = self.generate(seed, GIFTS_SHUFFLED | LOOSE_SHUFFLED | SKULLTULAS_SHUFFLED)
+            for location, item in placed_remake_items(spoiler, plan).items():
+                if (bag := spoiler_item(spoiler["locations"][location])) in BIGGER_BAGS:
+                    self.assertEqual(item, BIGGER_BAGS[bag], (seed, location))
+                    landed[bag] += 1
+        self.assertEqual(landed, collections.Counter({bag: 10 for bag in BIGGER_BAGS}))
+
+    def test_bigger_bags_stay_out_of_shops(self):
+        # As the Bomb Bag: no shelf has been seen to sell a bag.
+        sold, landed = collections.Counter(), 0
+        for seed in map(str, range(1410, 1420)):
+            spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | GIFTS_SHUFFLED)
+            sold.update(entry["item"] for entry in plan["shops"])
+            landed += sum(spoiler_item(placed) in BIGGER_BAGS for placed in spoiler["locations"].values())
+        self.assertFalse(sold.keys() & set(BIGGER_BAGS.values()), sold)
+        self.assertEqual(landed, 10 * len(BIGGER_BAGS))
+
+    def assert_bags_count_for_nothing(self, item, bags, target):
+        """Some seed puts one of the bags in reach before any copy of the item. With every copy held back the target
+        stays out of reach, and the item where that bag lies would reach it."""
+        for seed in map(str, range(1420, 1460)):
+            spoiler, _ = self.generate(seed, GIFTS_SHUFFLED)
+            settings = spoiler["settings"]
+            held = [(location, "Green Rupee" if placed == item else placed)
+                    for location, placed in spoiler["locations"].items()]
+            early = [location for location, placed in spoiler["locations"].items()
+                     if placed in bags and location != target and reach.reachable(location, *held, settings=settings)]
+            if early:
+                self.assertFalse(reach.reachable(target, *held, settings=settings), seed)
+                self.assertTrue(reach.reachable(target, *held, (early[0], item), settings=settings), seed)
+                return
+        self.fail(f"no seed puts {bags} in reach before {item}")
+
+    def test_a_bigger_quiver_or_bullet_bag_is_no_weapon(self):
+        self.assert_bags_count_for_nothing("Progressive Bow", {"Big Quiver", "Biggest Quiver"},
+                                           "Kak Shooting Gallery Reward")
+        self.assert_bags_count_for_nothing("Progressive Slingshot",
+                                           {"Big Deku Seed Bullet Bag", "Biggest Deku Seed Bullet Bag"},
+                                           "LW Target in Woods")
+
+    def test_the_rolling_goron_waits_for_the_small_bomb_bag(self):
+        self.assert_bags_count_for_nothing("Progressive Bomb Bag", {"Big Bomb Bag", "Biggest Bomb Bag"},
+                                           "GC Rolling Goron as Child")
+
+    def test_a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver(self):
+        # The start holds the bigger quiver, so the Kakariko gallery adds no copy of it to the pool.
+        spoiler, plan = self.generate("1480", GIFTS_SHUFFLED | {"Start with": ["Fairy Bow (40 arrows)"]})
+        self.assertNotIn("Item_Quiver_Medium", placed_remake_items(spoiler, plan).values())
+        self.assertIn("Item_Quiver_Medium", placed_remake_items(*self.generate("1480", GIFTS_SHUFFLED)).values())
 
     def test_dungeon_rewards_shuffled(self):
         # With the gifts at Vanilla the nine places join the chests' shuffle. Link's Pocket, where the patcher writes
@@ -1127,9 +1203,10 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the
         # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 7's
-        # route takes a step there before the card. Seed 24's, with gifts shuffled, took one after the card with the
-        # Requiem as its only warp song, holding neither the Hover Boots nor the Longshot for the sand.
-        for seed, settings in (("7", SONGS_SHUFFLED), ("24", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
+        # route takes a step there before the card. Were an adult's Requiem to count once the card is held, seed 3's
+        # route, with gifts shuffled, would take one after the card with the Requiem as its only warp song and no Lens
+        # of Truth for the Wasteland.
+        for seed, settings in (("7", SONGS_SHUFFLED), ("3", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
             log, _ = self.generate(seed, settings)
             spheres = list(log["playthrough"].values())
             there = next(number for number, steps in enumerate(spheres)

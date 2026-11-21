@@ -1,10 +1,10 @@
-location	flow	event	param	item
-Queen Gohma	Event/EventFlow/Dm_Kokiri_0130.bfevfl.zs	Event22	ActorName	Item_Stone_Forest
-King Dodongo	Event/EventFlow/Dm_DeathMtTrail_0025.bfevfl.zs	Event26	ActorName	Item_Stone_Fire
-Barinade	Event/EventFlow/Dm_ZoraFountain_0030.bfevfl.zs	Event3	ActorName	Item_Stone_Water
-Phantom Ganon	Event/EventFlow/Dm_Awake_Forest_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Forest
-Volvagia	Event/EventFlow/Dm_Awake_Fire_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Fire
-Morpha	Event/EventFlow/Dm_Awake_Water_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Water
-Twinrova	Event/EventFlow/Dm_Awake_Spirit_Get.110.bfevfl.zs	Event14	ActorName	Item_Medal_Spirit
-Bongo Bongo	Event/EventFlow/Dm_Awake_Shadow_Get.110.bfevfl.zs	Event3	ActorName	Item_Medal_Shadow
-Gift from Rauru	Event/EventFlow/Dm_SageRoom_0005.bfevfl.zs	Event48	ActorName	Item_Medal_Light
+location	flow	event	param	gives	item
+Queen Gohma	Event/EventFlow/Dm_Kokiri_0130.bfevfl.zs	Event22	ActorName	Item_Stone_Forest	Item_Stone_Forest
+King Dodongo	Event/EventFlow/Dm_DeathMtTrail_0025.bfevfl.zs	Event26	ActorName	Item_Stone_Fire	Item_Stone_Fire
+Barinade	Event/EventFlow/Dm_ZoraFountain_0030.bfevfl.zs	Event3	ActorName	Item_Stone_Water	Item_Stone_Water
+Phantom Ganon	Event/EventFlow/Dm_Awake_Forest_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Forest	Item_Medal_Forest
+Volvagia	Event/EventFlow/Dm_Awake_Fire_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Fire	Item_Medal_Fire
+Morpha	Event/EventFlow/Dm_Awake_Water_Get.110.bfevfl.zs	Event13	ActorName	Item_Medal_Water	Item_Medal_Water
+Twinrova	Event/EventFlow/Dm_Awake_Spirit_Get.110.bfevfl.zs	Event14	ActorName	Item_Medal_Spirit	Item_Medal_Spirit
+Bongo Bongo	Event/EventFlow/Dm_Awake_Shadow_Get.110.bfevfl.zs	Event3	ActorName	Item_Medal_Shadow	Item_Medal_Shadow
+Gift from Rauru	Event/EventFlow/Dm_SageRoom_0005.bfevfl.zs	Event48	ActorName	Item_Medal_Light	Item_Medal_Light
