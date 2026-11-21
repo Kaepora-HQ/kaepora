@@ -241,6 +241,7 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Minigames", "", "Minigames" },
     { "Characters", "", "Characters" },
     { "House of Skulltula", "", "House of Skulltula" },
+    { "Great Fairies", "", "Great Fairies" },
     { "Story gifts", "", "Story gifts" },
     { "Malon's Egg", "", "Malon's Egg" },
     { "Anju's Egg", "", "Anju's Egg" },

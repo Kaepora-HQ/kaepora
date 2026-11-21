@@ -58,7 +58,7 @@ static std::set<StartStep> StartWith(const std::string& setting, const nlohmann:
 }
 
 // The settings of released seeds name no group "Vanilla" and every group of their time "Shuffled". No release
-// shuffled a Deku Scrub.
+// shuffled a Deku Scrub or a Great Fairy.
 static constexpr std::string_view ReleasedGiftGroups[] = { "Minigames", "Characters", "House of Skulltula",
                                                            "Story gifts" };
 

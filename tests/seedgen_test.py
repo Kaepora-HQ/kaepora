@@ -95,10 +95,10 @@ KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_Bombchu
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Anju's Egg",
-               "Deku Scrubs (One Time Rewards)"]
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts", "Malon's Egg",
+               "Anju's Egg", "Deku Scrubs (One Time Rewards)"]
 # Released seeds' "Shuffled" and the settings stored by their Kaepora name these, all the groups of their time.
-RELEASED_GIFT_GROUPS = GIFT_GROUPS[:4]
+RELEASED_GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
 GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
 DEKU_SCRUBS_SHUFFLED = {"Gifts": ["Deku Scrubs (One Time Rewards)"]}
 # The ten places whose prize or sale makes a bag bigger, and the bigger bag each adds to the shuffle, by SoH's name and
@@ -114,6 +114,15 @@ BAG_PRIZES = {"Market Shooting Gallery": ("Big Deku Seed Bullet Bag", "Item_Bull
               "LW Deku Scrub Near Bridge": ("Deku Stick Capacity (30)", "Item_StickBag_Large"),
               "LW Deku Scrub Grotto Front": ("Deku Nut Capacity (40)", "Item_NutBag_Large")}
 BIGGER_BAGS = dict(BAG_PRIZES.values())
+# Each Great Fairy's saved Bool of the mod's own, and the two events of her flow that name it.
+FOUNTAIN_CLAIMS = read_tsv("fountain_claims.tsv")
+# The items whose find brings the meter to a Link who has none, by SoH's names: a spell, the Lens, magic arrows or a
+# blessing.
+METER_ITEMS = {"Din's Fire", "Farore's Wind", "Nayru's Love", "Lens of Truth", "Fire Arrows", "Ice Arrows",
+               "Light Arrows", "Progressive Magic Meter"}
+# What the six Great Fairies give in the game, by their remake names.
+FAIRY_ITEMS = {"Item_FairyBless_MP", "Item_DinFire", "Item_FairyBless_MPDouble", "Item_FairyBless_DefenseDouble",
+               "Item_FaroreWind", "Item_NayruLove"}
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
@@ -136,6 +145,7 @@ WARPS_A_CHILD_WALKS_OUT_OF = ("Minuet of Forest", "Serenade of Water", "Nocturne
 SKULLTULAS = read_tsv("skulltulas.tsv")
 SKULLTULA_AT = {row["hash"]: row["location"] for row in SKULLTULAS}
 SKULLTULA_PLACES = {row["location"]: row["place"] for row in SKULLTULAS if row["place"]}
+GIFT_PLACES = {row["location"]: row["place"] for row in GIFT_SITES if row["place"]}
 SKULLTULAS_SHUFFLED = {"Gold Skulltulas": "All"}
 TOKEN = "Item_Token_Gold"
 LOOSE_ITEMS = read_tsv("loose_items.tsv")
@@ -299,9 +309,9 @@ def soh_area(location):
 
 
 def place_of(location):
-    """Where the remake has a location: the place remake/skulltulas.tsv gives a skulltula that stands elsewhere, or its
-    SoH area."""
-    return SKULLTULA_PLACES.get(location) or soh_area(location)
+    """Where the remake has a location: the place remake/skulltulas.tsv or remake/gifts.tsv gives one that stands
+    elsewhere, or its SoH area."""
+    return SKULLTULA_PLACES.get(location) or GIFT_PLACES.get(location) or soh_area(location)
 
 
 def plain(text):
@@ -919,7 +929,7 @@ class SeedgenTest(unittest.TestCase):
                          POOL + GIFT_POOL)
 
     def test_shuffled_is_every_gift_group_of_its_release_and_vanilla_is_none(self):
-        # No release shuffled an egg or a Deku Scrub.
+        # No release shuffled an egg, a Deku Scrub or a Great Fairy.
         for seed in ("21", "22"):
             self.assertEqual(self.run_seedgen(seed, {"Gifts": RELEASED_GIFT_GROUPS}),
                              self.run_seedgen(seed, {"Gifts": "Shuffled"}))
@@ -1219,6 +1229,54 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
         self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_each_great_fairy_gives_her_placed_item_and_asks_her_own_bool_on_a_return(self):
+        # Her paid path writes a saved Bool of the mod's own and her return question asks it, so she gives her placed
+        # item once. With her group left out the plan names neither, and adds no Bool.
+        spoiler, plan = self.generate("31", {"Gifts": ["Great Fairies"]})
+        texts = {(entry["flow"], entry["event"], entry["param"]): entry["text"] for entry in plan["event_texts"]}
+        given = dict(gift_sites(plan))
+        self.assertEqual(plan["claims"], [row["claim"] for row in FOUNTAIN_CLAIMS])
+        for row in FOUNTAIN_CLAIMS:
+            self.assertIn((given[row["location"]], spoiler["locations"][row["location"]]), ITEM_PAIRS, row["location"])
+            for event in (row["paid"], row["question"]):
+                self.assertEqual(texts[row["flow"], event, "GameDataName"], row["claim"], (row["location"], event))
+        _, plan = self.generate("31", {"Gifts": [group for group in GIFT_GROUPS if group != "Great Fairies"]})
+        self.assertEqual(plan["claims"], [])
+        self.assertFalse({row["flow"] for row in FOUNTAIN_CLAIMS} & {entry["flow"] for entry in plan["event_texts"]})
+
+    def test_a_great_fairy_may_hold_an_item_another_place_gives(self):
+        # She asks her own Bool, not the item's record, so what she holds may come from another place as well.
+        for seed in map(str, range(1460, 1480)):
+            spoiler, plan = self.generate(seed, GIFTS_SHUFFLED)
+            placed = placed_remake_items(spoiler, plan)
+            names = collections.Counter(placed.values())
+            texts = {(entry["flow"], entry["event"], entry["param"]): entry["text"] for entry in plan["event_texts"]}
+            for row in FOUNTAIN_CLAIMS:
+                if names[placed[row["location"]]] > 1:
+                    self.assertEqual(texts[row["flow"], row["question"], "GameDataName"], row["claim"], seed)
+                    return
+        self.fail("no fountain holds an item another place gives")
+
+    def test_hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle(self):
+        # Her mark stands in the scene the game names Ganondorf's Castle, where the stones place that scene's
+        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 9's route takes the Lens
+        # of Truth from her, and seed 41's the Megaton Hammer.
+        for seed in ("9", "41"):
+            self.assert_hints_are_true(seed, {"Gifts": ["Great Fairies"]})
+
+    def test_the_summit_passes_her_meter_scene_with_an_item_that_brings_none(self):
+        # For a Link with no meter her entry plays the meter's birth and waits for its end. With an item that brings no
+        # meter there is none to be born, so the two questions of that scene ask her claim, false until her paid path
+        # writes it after the gift. Seed 1 puts a Blue Rupee at the summit, and seed 29 the Ice Arrows.
+        summit = next(row for row in FOUNTAIN_CLAIMS if row["location"] == "DMT Great Fairy Din's Fire")
+        scene = [("Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs", event, "GameDataName")
+                 for event in ("Event555", "Event554")]
+        for seed, brings in (("1", False), ("29", True)):
+            spoiler, plan = self.generate(seed, {"Gifts": ["Great Fairies"]})
+            self.assertEqual(spoiler_item(spoiler["locations"][summit["location"]]) in METER_ITEMS, brings, seed)
+            texts = {(e["flow"], e["event"], e["param"]): e["text"] for e in plan["event_texts"]}
+            self.assertEqual([texts.get(site) for site in scene], [None] * 2 if brings else [summit["claim"]] * 2, seed)
+
     def test_dungeon_rewards_shuffled(self):
         # With the gifts at Vanilla the nine places join the chests' shuffle. Link's Pocket, where the patcher writes
         # nothing, holds no reward: the Light Medallion is one of the nine.
@@ -1427,17 +1485,17 @@ class SeedgenTest(unittest.TestCase):
                 for location, item in placed_remake_items(spoiler, plan).items() if location in loose}
         self.assertTrue(said & set(spoiler["hints"].values()))
 
-    def test_rutos_letter_lies_only_in_chests(self):
-        # King Zora was seen to take the letter a chest gave. Whether he takes one that a gift, a shop, a skulltula or a
-        # loose spot gave is unseen.
+    def test_the_letter_and_the_fairies_gifts_lie_only_in_chests(self):
+        # King Zora was seen to take the letter a chest gave, and chests were seen to give Farore's Wind and the three
+        # blessings. Whether a gift, a shop, a skulltula or a loose spot gives any of them is unseen.
         settings = LOOSE_SHUFFLED | GIFTS_SHUFFLED | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | REWARDS_SHUFFLED
         chests = {row["location"] for row in SHUFFLED}
+        kept = FAIRY_ITEMS | {"Item_Bottle_Letter"}
         for seed in range(830, 840):
             spoiler, plan = self.generate(str(seed), settings)
-            letters = [location for location, item in placed_remake_items(spoiler, plan).items()
-                       if item == "Item_Bottle_Letter"]
-            self.assertEqual(len(letters), 1, (seed, letters))
-            self.assertIn(letters[0], chests, seed)
+            held = sorted((item, location in chests) for location, item in placed_remake_items(spoiler, plan).items()
+                          if item in kept)
+            self.assertEqual(held, [(item, True) for item in sorted(kept)], seed)
 
     def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the

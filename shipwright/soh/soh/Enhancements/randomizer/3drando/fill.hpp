@@ -92,8 +92,9 @@ bool KeptFromShops(RandomizerGet item);
 // places that hand over a stone or a medallion.
 bool KeptInChestsAndCalls(RandomizerGet item);
 
-// Ruto's Letter. King Zora took the letter a chest gave (seen). Whether he takes one that a gift, a shop slot, a Gold
-// Skulltula or a loose spot gave is unseen, so the fill places it in a chest before the others join it.
+// Ruto's Letter, and the Great Fairies' three spells and three blessings. King Zora took the letter a chest gave
+// (seen), and chests gave Farore's Wind and the three blessings, each with its record (seen). Whether another place
+// gives them as well is unseen, so the fill places them in chests before the others join.
 bool KeptInChests(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);

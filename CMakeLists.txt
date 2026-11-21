@@ -232,6 +232,10 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts
                      the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
                      a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon
+                     each_great_fairy_gives_her_placed_item_and_asks_her_own_bool_on_a_return
+                     a_great_fairy_may_hold_an_item_another_place_gives
+                     hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle
+                     the_summit_passes_her_meter_scene_with_an_item_that_brings_none
                      dungeon_rewards_shuffled stones_and_medallions_go_to_chests_gifts_and_the_nine_places
                      a_dungeon_left_out_keeps_its_boss_reward
                      hints_name_no_stone_or_medallion_as_an_item_to_find hints_name_dungeon_rewards_truly
@@ -243,7 +247,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      loose_items_hold_the_bomb_bag_the_bow_and_the_slingshot
                      a_dungeon_left_out_keeps_its_loose_items
                      a_route_with_loose_items_shuffled_is_in_reach_in_its_sphere hints_name_loose_items_truly
-                     rutos_letter_lies_only_in_chests
+                     the_letter_and_the_fairies_gifts_lie_only_in_chests
                      songs_shuffled_among_themselves a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere
                      hints_name_song_places_truly a_route_reaches_the_colossus_only_with_a_way_out
                      every_setting_changed_at_once_400_to_419 every_setting_changed_at_once_420_to_439
@@ -368,6 +372,8 @@ if(KAEPORA_GAME_NUP)
                  both-stones-before-zelda)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
+    add_test(NAME patch-fountain-claims COMMAND ${PATCH_TEST} fountain-claims $<TARGET_FILE:kaepora-patch>
+                                                "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME remake-tables
         COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-vine-hatch

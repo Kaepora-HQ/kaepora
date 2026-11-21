@@ -1141,7 +1141,8 @@ bool KeptInChestsAndCalls(RandomizerGet item) {
 }
 
 bool KeptInChests(RandomizerGet item) {
-    return item == RG_RUTOS_LETTER;
+    return item == RG_RUTOS_LETTER || item == RG_DINS_FIRE || item == RG_FARORES_WIND || item == RG_NAYRUS_LOVE ||
+           item == RG_DOUBLE_DEFENSE || item == RG_PROGRESSIVE_MAGIC_METER;
 }
 
 bool KeptFromShops(RandomizerGet item) {

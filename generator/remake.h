@@ -105,6 +105,15 @@ struct RemakeGift {
     // What the sites give in the unmodified game, by its remake name, and the SoH item it stands for.
     std::string item;
     RandomizerGet sohItem;
+    // A Great Fairy asks on a return visit whether Link has got her own item, and sells it again if not. So a saved
+    // Bool of the mod's own, named by her claim, records her paid visit: her paid path's write, which sets a value
+    // nothing reads, sets it, and her question asks it.
+    struct Claim {
+        std::string name;
+        Site paid;
+        Site question;
+    };
+    std::optional<Claim> claim;
 };
 
 struct GroupedGift {
@@ -112,10 +121,12 @@ struct GroupedGift {
     RemakeGift gift;
 };
 
-// The gifts of remake/gifts.tsv, read from the copy built into the program, one per location, in table order. Throws
-// when a row names an unknown location or group, a location of the chest table, a flow that is not an event flow under
-// Event/EventFlow/, or an item that is not one SoH item of remake/items.tsv, when the rows of a location name
-// different items or groups, or when a group of "Gifts" has no row.
+// The gifts of remake/gifts.tsv, read from the copy built into the program, one per location, in table order, each
+// with its claim of remake/fountain_claims.tsv if it has one. Throws when a row names an unknown location or group, a
+// location of the chest table, a flow that is not an event flow under Event/EventFlow/, or an item that is not one SoH
+// item of remake/items.tsv, when the rows of a location name different items or groups, when a group of "Gifts" has
+// no row, or when a claim's location is no gift's or has a claim already, its flow is not its gift's, or its name is
+// not Kaepora_Once_ and a number.
 std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
 
 // The places of remake/rewards.tsv that hand over a Spiritual Stone or a medallion, read and checked as the gifts are.
@@ -124,8 +135,8 @@ std::vector<RemakeGift> LoadRemakeRewards(const std::vector<RemakeChest>& chests
 
 // Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
 // program, or a row names any other item. A slot can hold the item of a shuffled chest that KeptFromShops and
-// KeptInChests let into shops, of a gift that KeptFromShops and KeptInChestsAndCalls let in, the token a shuffled
-// skulltula adds, and the filler.
+// KeptInChests let into shops, of a gift that those and KeptInChestsAndCalls let in, the token a shuffled skulltula
+// adds, and the filler.
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
 struct RemakeSkulltula {

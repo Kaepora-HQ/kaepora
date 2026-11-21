@@ -18,6 +18,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
+       python3 -I tests/patch_test.py fountain-claims <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -1996,6 +1997,68 @@ def claims(patch, game):
     assert save_layout(ours) == grown
 
 
+def flow_reach(flow, blocked=()):
+    """The events of a parsed flow that its entry points reach without passing an event of blocked, following each
+    call into another entry of the same flow. A scene's cuts, entries named "C" and a number, are not entry points:
+    their scene starts them."""
+    names, entries = flow["entry points"]
+    by_name = {name: entry for (_, name), entry in zip(names[1:], entries)}
+    roots = [entry for name, entry in by_name.items() if not re.fullmatch(r"C\d.*", name)]
+    todo, seen = [struct.unpack_from("<H", entry[0], 4)[0] for entry in roots], set()
+    while todo:
+        index = todo.pop()
+        if index == 0xFFFF or index in seen or index in blocked:
+            continue
+        seen.add(index)
+        event = flow["events"][index]
+        kind, first, second = event[1][0], *struct.unpack_from("<HH", event[1], 2)
+        if kind in (0, 3, 4):  # action, join, sub-flow: the next event
+            todo.append(first)
+        if kind in (1, 5):  # switch, sub-flow switch: each case's event
+            todo += [struct.unpack_from("<H", event[3], 8 * case + 4)[0] for case in range(first)]
+        if kind == 2:  # fork: the forked events and the join
+            todo += [*struct.unpack_from(f"<{first}H", event[2]), second]
+        if kind in (4, 5) and event[-2] in ("", flow["flowchart"]) and event[-1] in by_name:
+            todo.append(struct.unpack_from("<H", by_name[event[-1]][0], 4)[0])
+    return seen
+
+
+def fountain_claims(patch, game, seedgen):
+    """In the mod of a seed with the Great Fairies' gifts shuffled, each Great Fairy's paid path writes her claim and
+    her return question asks it. remake/fountain_claims.tsv names, for each, the write of GreatFairy_AlreadyAppeared
+    that no path of her flow reaches without her Pay call, and the question that asks IsGet of her own item. The mod's
+    game data list holds every claim."""
+    remake = pathlib.Path(__file__).resolve().parent.parent / "remake"
+    tables = {}
+    for table in ("fountain_claims.tsv", "gifts.tsv", "item_names.tsv"):
+        with open(remake / table, newline="") as f:
+            tables[table] = list(csv.DictReader(f, delimiter="\t"))
+    items = {row["location"]: row["item"] for row in tables["gifts.tsv"]}
+    saved = {row["remake_item"]: row["label"].removesuffix("_Name") for row in tables["item_names.tsv"]}
+    rows = tables["fountain_claims.tsv"]
+    with tempfile.TemporaryDirectory() as tmp:
+        spoiler, plan = pathlib.Path(tmp) / "spoiler.json", pathlib.Path(tmp) / "plan.json"
+        result = subprocess.run([seedgen, "1", spoiler, plan, json.dumps({"Gifts": ["Great Fairies"]})],
+                                capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        mod = patched(patch, game, json.loads(plan.read_text()))
+    flows = {path: (game.event_flow(game.read(path)), path in mod and game.event_flow(mod[path]))
+             for path in {r["flow"] for r in rows}}
+    for row in rows:
+        theirs, ours = flows[row["flow"]]
+        assert ours, f"{row['location']}: the mod leaves her flow as the game's"
+        index = {named[0]: i for i, named in enumerate(theirs["events"])}
+        pay = {i for i, event in enumerate(theirs["events"]) if event[1][0] in (4, 5) and event[-1] == "Pay"}
+        assert string_parameter(theirs, row["paid"], "GameDataName")[1] == "GreatFairy_AlreadyAppeared", row
+        assert index[row["paid"]] in flow_reach(theirs) - flow_reach(theirs, pay), (row["location"], row["paid"])
+        asks = "IsGet." + saved[items[row["location"]]]
+        assert string_parameter(theirs, row["question"], "GameDataName")[1] == asks, row
+        for event in (row["paid"], row["question"]):
+            assert string_parameter(ours, event, "GameDataName")[1] == row["claim"], (row["location"], event)
+    held = {entry["Hash"] for entry in game.game_data_list(mod[GAME_DATA_LIST])["Data"]["Bool"]}
+    assert {(UINT, murmur3(row["claim"])) for row in rows} <= held
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -2940,6 +3003,7 @@ def main():
         "loose-item-table": loose_item_table,
         "loose-spot-keys": loose_spot_keys,
         "claims": claims,
+        "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
         "presence": presence,

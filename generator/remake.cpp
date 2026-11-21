@@ -3,6 +3,7 @@
 #include "soh/Enhancements/randomizer/3drando/fill.hpp"
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/dungeon.h"
+#include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/util.h"
 
@@ -57,6 +58,9 @@ static constexpr unsigned char giftTable[] = {
 };
 static constexpr unsigned char rewardTable[] = {
 #embed "../remake/rewards.tsv"
+};
+static constexpr unsigned char fountainClaimTable[] = {
+#embed "../remake/fountain_claims.tsv"
 };
 static constexpr unsigned char skulltulaTable[] = {
 #embed "../remake/skulltulas.tsv"
@@ -532,7 +536,7 @@ void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<Re
         }
     }
     for (const RemakeGift& gift : gifts) {
-        if (!KeptFromShops(gift.sohItem) && !KeptInChestsAndCalls(gift.sohItem)) {
+        if (!KeptFromShops(gift.sohItem) && !KeptInChestsAndCalls(gift.sohItem) && !KeptInChests(gift.sohItem)) {
             holdable.insert(gift.item);
         }
     }
@@ -593,15 +597,31 @@ static std::vector<RemakeGift> LoadGives(const std::string& file, const std::vec
 
 std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
     const std::string file = "remake/gifts.tsv";
-    const auto rows = ReadTable(file, giftTable, std::string(GivesHeader) + "\tgroup");
+    const auto rows = ReadTable(file, giftTable, std::string(GivesHeader) + "\tgroup\tplace");
     std::map<RandomizerCheck, GiftGroup> groups;
+    std::map<RandomizerCheck, std::string> places;
     size_t line = 1;
     for (const auto& row : rows) {
         const std::string where = std::format("{} line {}: ", file, ++line);
+        const RandomizerCheck location = LocationNamed(where, row[0]);
         const auto group = std::ranges::find(GiftGroups, row[6], &GiftGroup::name);
-        if (group == std::end(GiftGroups) ||
-            groups.try_emplace(LocationNamed(where, row[0]), *group).first->second != *group) {
+        if (group == std::end(GiftGroups) || groups.try_emplace(location, *group).first->second != *group) {
             Fail(where + "\"" + row[6] + "\" is no group of \"Gifts\", or not the group of the location's other rows");
+        }
+        if (places.try_emplace(location, row[7]).first->second != row[7]) {
+            Fail(where + "\"" + row[7] + "\" is not the place of the location's other rows");
+        }
+    }
+    // A gift that stands outside its location's SoH area moves the location into the area of its place, as a skulltula
+    // does, so hints and the barren areas name where it is.
+    for (const auto& [location, place] : places) {
+        if (!place.empty()) {
+            Rando::Location* soh = Rando::StaticData::GetLocation(location);
+            const RandomizerCheckArea area = AreaNamed(file + ": ", place);
+            if (area == soh->GetArea()) {
+                Fail(file + ": the place \"" + place + "\" is SoH's own area for " + soh->GetName());
+            }
+            soh->SetArea(area);
         }
     }
     for (const GiftGroup& group : GiftGroups) {
@@ -612,6 +632,25 @@ std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests)
     std::vector<GroupedGift> gifts;
     for (RemakeGift& gift : LoadGives(file, rows, chests)) {
         gifts.push_back({ groups.at(gift.location), std::move(gift) });
+    }
+    line = 1;
+    for (const auto& row :
+         ReadTable("remake/fountain_claims.tsv", fountainClaimTable, "location\tflow\tpaid\tquestion\tclaim")) {
+        const std::string where = std::format("remake/fountain_claims.tsv line {}: ", ++line);
+        const RandomizerCheck location = LocationNamed(where, row[0]);
+        const auto grouped = std::ranges::find(gifts, location, [](const GroupedGift& g) { return g.gift.location; });
+        constexpr std::string_view prefix = "Kaepora_Once_";
+        if (grouped == gifts.end() || grouped->gift.claim || grouped->gift.sites.front().flow != row[1] ||
+            !row[4].starts_with(prefix) || row[4].size() == prefix.size() ||
+            !std::ranges::all_of(row[4].substr(prefix.size()), [](char c) { return c >= '0' && c <= '9'; })) {
+            Fail(where + "\"" + row[0] +
+                 "\" is no gift of remake/gifts.tsv, has a claim already or another flow, or \"" + row[4] +
+                 "\" is not Kaepora_Once_ and a number");
+        }
+        grouped->gift.claim =
+            RemakeGift::Claim{ .name = row[4],
+                               .paid = { .flow = row[1], .event = row[2], .param = "GameDataName" },
+                               .question = { .flow = row[1], .event = row[3], .param = "GameDataName" } };
     }
     return gifts;
 }
@@ -780,6 +819,19 @@ static constexpr EventText eventTexts[] = {
     // makes Event179 ask whether the quest is past Ready, so the write moves only a quest still at Ready.
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
 };
+
+// The summit's Great Fairy gives through her own entry of the shared get flow. For a Link who had no meter, which her
+// flow marks before the gift, that entry reserves the meter's birth and plays it, asking the mark before each. The
+// birth ends only when its animation reaches its last frame (read from the program). With an item that brings no meter
+// there is none to be born, so the plan points both questions at her claim, false until her paid path writes it after
+// the gift.
+static constexpr std::string_view summitMeterBirthFlow = "Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs";
+static constexpr std::string_view summitMeterBirthQuestions[] = { "Event555", "Event554" };
+
+static bool BringsTheMeter(RandomizerGet item) {
+    return item == RG_PROGRESSIVE_MAGIC_METER ||
+           std::ranges::find(Rando::SpellsLensAndMagicArrows, item) != Rando::SpellsLensAndMagicArrows.end();
+}
 
 // After the 20-token reward, Event371 of the House of Skulltula's flow opens the Stone of Agony's guide once the
 // reward's flag is set, whatever the reward gave. Reading the flag the guide sets once shown, it ends the talk on
@@ -955,6 +1007,18 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         for (const RemakeGift::Site& site : gift.sites) {
             addText(site.flow, site.event, site.param, items.at(gift.location));
         }
+        if (gift.claim) {
+            for (const RemakeGift::Site& site : { gift.claim->paid, gift.claim->question }) {
+                addText(site.flow, site.event, site.param, gift.claim->name);
+            }
+            const RandomizerGet placed =
+                Rando::Context::GetInstance()->GetItemLocation(gift.location)->GetPlacedRandomizerGet();
+            if (gift.location == RC_DMT_GREAT_FAIRY_DINS_FIRE && !BringsTheMeter(placed)) {
+                for (const std::string_view event : summitMeterBirthQuestions) {
+                    addText(summitMeterBirthFlow, event, "GameDataName", gift.claim->name);
+                }
+            }
+        }
         if (gift.location == RC_KAK_20_GOLD_SKULLTULA_REWARD) {
             addText(agonyGuideShut.flow, agonyGuideShut.event, agonyGuideShut.param, agonyGuideShut.text);
         }
@@ -1034,6 +1098,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["claims"] = nlohmann::ordered_json::array();
+    for (const RemakeGift& gift : gifts) {
+        if (gift.claim) {
+            plan["claims"].push_back(gift.claim->name);
+        }
+    }
     plan["start_items"] = nlohmann::ordered_json::array();
     for (const StartStep& started : StartWithInOrder(settings)) {
         for (const StartStep& step : StepsTo(started)) {

@@ -39,6 +39,7 @@ Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**,
 - **Minigames:** both fishing prizes, the Zora diving game, horseback archery's two prizes, Bombchu Bowling's two prizes, the frogs' two prizes, the ocarina memory game in the Lost Woods, both shooting galleries, the target in the Lost Woods, the rolling Goron in Goron City, Talon's cuccos, Anju's cuccos and Dampé's digging tour.
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer and the lakeside laboratory's dive.
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
+- **Great Fairies:** the gifts of the six Great Fairies.
 - **Story gifts:** the scene after the carpenters' rescue, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
 - **Anju's Egg:** what Anju hands you as an adult.
@@ -53,6 +54,8 @@ The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the G
 With **Malon's Egg** or **Anju's Egg** ticked, that egg is one of the shuffled items, and Malon at the castle or Anju as an adult hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, Malon's egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle. Anju's hatches at the next dawn.
 
 A Deku Scrub still asks its price: 40 rupees by the bridge in the Lost Woods and in the Lost Woods grotto, 100 in the Hyrule Field grotto and in Death Mountain Crater. The one in the Hyrule Field grotto sells only to young Link, and only once adult Link has read the password on the tree outside.
+
+A Great Fairy still asks for her offering, and each but the summit's for Din's Fire as well, as she does in the game. What she hands you is the seed's item, and she hands it over once.
 
 ## Songs
 

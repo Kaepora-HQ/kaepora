@@ -206,14 +206,15 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 38 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 44 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, three places where the story moves (the scene
 after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
-of Time), the two eggs, and four Business Scrubs that sell once: the stick bag by the Lost Woods bridge, the nut bag in
-the Lost Woods grotto, and a Piece of Heart in a Hyrule Field grotto and in the crater. Each group ticked in "Gifts"
-puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its
-places. A location of a group left out keeps what the game gives, and the plan names none of its places.
+of Time), the two eggs, four Business Scrubs that sell once (the stick bag by the Lost Woods bridge, the nut bag in the
+Lost Woods grotto, and a Piece of Heart in a Hyrule Field grotto and in the crater), and the gifts of the six Great
+Fairies. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item to the pool, and the plan
+writes the placed item at each of its places. A location of a group left out keeps what the game gives, and the plan
+names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -224,8 +225,11 @@ places. A location of a group left out keeps what the game gives, and the plan n
 - `gives`: what the call gives in the unmodified game, by its remake name.
 - `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
 - `group`: the group of "Gifts" that shuffles the location, by its name in a seed's settings. Every row of a location
-  names the same group. Released seeds' "Shuffled" names the four groups of its time, so it keeps the eggs and the Deku
-  Scrubs.
+  names the same group. Released seeds' "Shuffled" names the four groups of its time, so it keeps the eggs, the Deku
+  Scrubs and the Great Fairies.
+- `place`: where the place stands, as an `area` of `places.tsv`, when that is not its location's SoH area, and empty
+  otherwise. Hints name it there. SoH files the Great Fairy outside Ganon's Castle under Hyrule Castle; her mark stands
+  in the scene the game names Ganondorf's Castle, where `skulltulas.tsv` places that scene's skulltula too.
 
 A bag prize or sale gives the bigger of two sizes from one event and the biggest from another: the biggest only to a
 Link who already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko
@@ -332,9 +336,42 @@ Seen in the game:
   sale took its price and set the item's record and the scrub's own flag.
 
 So every way the 29, Malon, adult Anju and the Business Scrubs that sell once hand over their item has given another
-item. Read from the game's files and
-not yet seen: a prize talk may still name the usual prize, and the map may keep a heart on these places until each is
-won.
+item. Read from the game's files and not yet seen: a prize talk may still name the usual prize, and the map may keep a
+heart on these places until each is won.
+
+A Great Fairy gives her item once Link has paid her offering. On a return visit she asks whether he has got her own
+item, and sells it again if not (read from her flow). `fountain_claims.tsv` has a row for each of the six: by `location`
+and `flow` as in `gifts.tsv`, the event of her paid path that writes `GreatFairy_AlreadyAppeared` (`paid`), the event
+that asks on a return (`question`), and a saved Bool of the mod's own (`claim`), named `Kaepora_Once_` and the lowest
+placement hash of her Triforce mark. The plan points both events' `GameDataName` at the Bool and lists it, and the
+patcher adds it to the game data list. So she gives the placed item once, whatever it is. With "Great Fairies" left out
+of "Gifts" the plan names neither, and the list and the fountains stay the game's. Her paid path writes
+`GreatFairy_AlreadyAppeared` after her gift, and no path reaches that write without her `Pay` call; the healing all six
+share writes it again, at the summit flow's `Event140` (read from the flows). Nothing reads it: no game file but the six
+flows names it, and the program holds neither its name nor its hash as a constant (measured).
+
+Seen in the game, with cutscenes skipped: the castle's Great Fairy gave a placed Boomerang once, took nothing after that
+first paid visit and healed Link on every return; she gave a Deku Shield to a Link who held one, and a fourth Piece of
+Heart, which added its heart. The summit's gave a placed Boomerang to a Link with a meter and to a Link with none. The
+crater's and the one outside Ganon's Castle each gave a placed Boomerang through her own entry, and her scene ended.
+Each save held her claim true and her own item not got. The game took a list grown by one claim, and the list of a whole
+seed's mod, with all six claims and the loose spots' keys.
+
+The summit's Great Fairy gives through her own entry of `Dm_SY_GetInEvent`. For a Link who had no meter, which her flow
+marks in `GreatFairy_HasNoMPOnDinDemo` before the gift, the entry reserves the meter's birth and plays it, asking that
+mark before each (`Event555`, `Event554`). The birth ends only when its animation reaches its last frame (read from the
+program). With an item that brings no meter there is none to be born, so the plan points both questions at her claim,
+false until her paid path writes it, and the entry passes the scene. Seen in the game: given the Boomerang, she gave it
+to a Link with no meter, no meter appeared, and nothing waited.
+
+The fill keeps the six fairy items, Din's Fire, Farore's Wind, Nayru's Love, the gift of halved damage and the two magic
+blessings, in chests, as it keeps Ruto's Letter (`KeptInChests`). Seen in the game, from chests: Farore's Wind brought
+the meter, the two magic blessings set their records and doubled it, and the gift of halved damage set halved damage.
+The castle's and the crater's blessings stand for SoH's Progressive Magic Meter, and either found first brings the meter
+(measured from the program).
+
+With "Cutscenes" at "Skipped" the skip ends only a fairy's appearance. Her gift comes after that window on both of her
+flow's paths, and the summit's gift has no window at all (read from the flows).
 
 The three story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage quest to Complete and the Ganon quest

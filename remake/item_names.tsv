@@ -16,10 +16,15 @@ Item_Bottle_Milk	Item_Bottle_Milk_Name	Lon Lon Milk
 Item_BulletBag_Large	Item_BulletBag_Large_Name	Biggest Deku-Seed Bag	the
 Item_BulletBag_Medium	Item_BulletBag_Medium_Name	Bigger Deku-Seed Bag	a
 Item_DekuStickBundle_Small	Item_DekuStickBundle_Small_Name	Three Deku Sticks	
+Item_DinFire	Item_DinFire_Name	Din's Fire	
 Item_Dungeon_BossKey	Item_Dungeon_BossKey_Name	Boss Key	a
 Item_Dungeon_Compass	Item_Dungeon_Compass_Name	Compass	a
 Item_Dungeon_Map	Item_Dungeon_Map_Name	Dungeon Map	a
 Item_Dungeon_SmallKey	Item_Dungeon_SmallKey_Name	Small Key	a
+Item_FairyBless_DefenseDouble	Item_FairyBless_DefenseDouble_Name	Gift of Halved Damage	the
+Item_FairyBless_MP	Item_FairyBless_MP_Name	Gift of Improved Spin	the
+Item_FairyBless_MPDouble	Item_FairyBless_MPDouble_Name	Gift of Doubled Magic	the
+Item_FaroreWind	Item_FaroreWind_Name	Farore's Wind	
 Item_Gauntlet_Gold	Armor_Adult_Gauntlet_Gold_Name	Golden Gauntlets	the
 Item_Gauntlet_Silver	Armor_Adult_Gauntlet_Silver_Name	Silver Gauntlets	the
 Item_GlassTruth	Armor_GlassTruth_Name	Lenses of Truth	the
@@ -46,6 +51,7 @@ Item_Melody_SunSong	Item_Melody_SunSong_Name	Sun's Song	the
 Item_Melody_TimeSong	Item_Melody_TimeSong_Name	Song of Time	the
 Item_Melody_WaterSerenade	Item_Melody_WaterSerenade_Name	Serenade of Water	the
 Item_Melody_ZeldaLullaby	Item_Melody_ZeldaLullaby_Name	Zelda's Lullaby	
+Item_NayruLove	Item_NayruLove_Name	Nayru's Love	
 Item_NutBag_Large	Item_NutBag_Large_Name	Biggest Deku-Nut Bag	the
 Item_NutBag_Medium	Item_NutBag_Medium_Name	Bigger Deku-Nut Bag	a
 Item_PocketEgg	Item_PocketEgg_Name	Pocket Egg	the

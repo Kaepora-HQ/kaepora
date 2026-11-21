@@ -16,6 +16,7 @@ Item_Bottle_Milk	Bottle with Milk
 Item_BulletBag_Large	Biggest Deku Seed Bullet Bag
 Item_BulletBag_Medium	Big Deku Seed Bullet Bag
 Item_DekuStickBundle_Small	Deku Stick (1)
+Item_DinFire	Din's Fire
 Item_Dungeon_BossKey	Fire Temple Boss Key
 Item_Dungeon_BossKey	Forest Temple Boss Key
 Item_Dungeon_BossKey	Ganon's Castle Boss Key
@@ -50,6 +51,10 @@ Item_Dungeon_SmallKey	Shadow Temple Small Key
 Item_Dungeon_SmallKey	Spirit Temple Small Key
 Item_Dungeon_SmallKey	Training Ground Small Key
 Item_Dungeon_SmallKey	Water Temple Small Key
+Item_FairyBless_DefenseDouble	Double Defense
+Item_FairyBless_MP	Progressive Magic Meter
+Item_FairyBless_MPDouble	Progressive Magic Meter
+Item_FaroreWind	Farore's Wind
 Item_Gauntlet_Gold	Golden Gauntlets
 Item_Gauntlet_Silver	Silver Gauntlets
 Item_GlassTruth	Lens of Truth
@@ -76,6 +81,7 @@ Item_Melody_SunSong	Sun's Song
 Item_Melody_TimeSong	Song of Time
 Item_Melody_WaterSerenade	Serenade of Water
 Item_Melody_ZeldaLullaby	Zelda's Lullaby
+Item_NayruLove	Nayru's Love
 Item_NutBag_Large	Deku Nut Capacity (40)
 Item_NutBag_Medium	Deku Nut Capacity (30)
 Item_PocketEgg	Pocket Egg
