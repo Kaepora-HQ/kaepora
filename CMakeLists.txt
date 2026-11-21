@@ -249,7 +249,8 @@ if(Qt6Test_FOUND)
                      theSummaryNamesUpToThreeDungeonsLeftOut shopGoodsOffersEachCountUpToFiveAndARandomNumber
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
-                     longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone settingsAreRemembered
+                     longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone
+                     aSeedWhoseSpoilerLogCannotBeReadIsListed settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
