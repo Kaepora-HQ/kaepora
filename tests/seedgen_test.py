@@ -937,13 +937,14 @@ class SeedgenTest(unittest.TestCase):
         self.assertFalse(sold.keys() & set(BIGGER_BAGS.values()), sold)
         self.assertEqual(landed, 10 * len(BIGGER_BAGS))
 
-    def assert_bags_count_for_nothing(self, item, bags, target):
-        """Some seed puts one of the bags in reach before any copy of the item. With every copy held back the target
-        stays out of reach, and the item where that bag lies would reach it."""
+    def assert_bags_count_for_nothing(self, item, bags, target, others=()):
+        """Some seed puts one of the bags in reach before any copy of the item. With every copy held back, and every
+        copy of the others that also reach the target, the target stays out of reach, and the item where that bag lies
+        would reach it."""
         for seed in map(str, range(1420, 1460)):
             spoiler, _ = self.generate(seed, GIFTS_SHUFFLED)
             settings = spoiler["settings"]
-            held = [(location, "Green Rupee" if placed == item else placed)
+            held = [(location, "Green Rupee" if placed in {item, *others} else placed)
                     for location, placed in spoiler["locations"].items()]
             early = [location for location, placed in spoiler["locations"].items()
                      if placed in bags and location != target and reach.reachable(location, *held, settings=settings)]
@@ -958,7 +959,7 @@ class SeedgenTest(unittest.TestCase):
                                            "Kak Shooting Gallery Reward")
         self.assert_bags_count_for_nothing("Progressive Slingshot",
                                            {"Big Deku Seed Bullet Bag", "Biggest Deku Seed Bullet Bag"},
-                                           "LW Target in Woods")
+                                           "LW Target in Woods", others=("Boomerang",))
 
     def test_the_rolling_goron_waits_for_the_small_bomb_bag(self):
         self.assert_bags_count_for_nothing("Progressive Bomb Bag", {"Big Bomb Bag", "Biggest Bomb Bag"},

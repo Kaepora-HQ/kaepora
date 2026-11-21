@@ -248,11 +248,19 @@ class LogicTest(unittest.TestCase):
 
     def test_the_market_shooting_gallery_lends_a_slingshot(self):
         # Seen in the game: the gallery lends a slingshot to a child who has none. Its prize is a bigger bullet bag, no
-        # Slingshot, so the Lost Woods target, which takes Link's own, stays out of reach. With the forest closed, a
-        # child leaves it only past Gohma, who takes the slingshot.
+        # Slingshot, so the Lost Woods target, which takes Link's own or the Boomerang, stays out of reach. With the
+        # forest closed, a child leaves it only past Gohma, who takes the slingshot.
         no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
         self.assertTrue(self.reachable("Market Shooting Gallery", no_slingshot, settings=FOREST_OPEN))
-        self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, settings=FOREST_OPEN))
+        self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, NO_BOOMERANG, settings=FOREST_OPEN))
+
+    def test_a_child_wins_the_lost_woods_target_with_the_boomerang(self):
+        # Seen in the game: the Boomerang wins the target as the Slingshot does. The target stands only in the child's
+        # Lost Woods (measured). With the forest closed, a child leaves it only past Gohma, who takes the slingshot.
+        no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
+        self.assertTrue(self.reachable("LW Target in Woods", no_slingshot, ("Link's Pocket", "Boomerang"),
+                                       settings=FOREST_OPEN))
+        self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, NO_BOOMERANG, settings=FOREST_OPEN))
 
     # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
     # tier found, and only adult Link can use them.

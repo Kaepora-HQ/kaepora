@@ -31,7 +31,8 @@ void RegionTable_Init_LostWoods() {
                                                                                                               //4 buttons        => 25.3125%
                                                                                                               //5 buttons        => 100%
         LOCATION(RC_LW_OCARINA_MEMORY_GAME,             logic->IsChild && logic->HasItem(RG_FAIRY_OCARINA) && logic->OcarinaButtons() >= 5),
-        LOCATION(RC_LW_TARGET_IN_WOODS,                 logic->IsChild && logic->CanUse(RG_FAIRY_SLINGSHOT)),
+        // The Boomerang wins the target as the Slingshot does.
+        LOCATION(RC_LW_TARGET_IN_WOODS,                 logic->IsChild && (logic->CanUse(RG_FAIRY_SLINGSHOT) || logic->CanUse(RG_BOOMERANG))),
         LOCATION(RC_LW_GS_BEAN_PATCH_NEAR_BRIDGE,       logic->CanSpawnSoilSkull(RG_LOST_WOODS_BRIDGE_BEAN_SOUL) && logic->CanAttack()),
         // The chest stands by the bridge, out of reach from it. Adult Link gets there on the bean's platform.
         LOCATION(RC_LW_BRIDGE_CHEST,                    logic->IsAdult && logic->BeanPlanted(LOGIC_PLANT_LOST_WOODS_BRIDGE_BEAN) && logic->HasItem(RG_OPEN_CHEST)),
