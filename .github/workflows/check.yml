@@ -73,6 +73,17 @@ jobs:
           tar -xJf "$archive" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/ccache-4.14.3-linux-x86_64-glibc" >> "$GITHUB_PATH"
 
+      # The Qt action installs its tools with pip on every run. Three packages they need have no built wheels for
+      # Python 3.15, so pip compiles them. pip's cache keeps what it compiled for the next run.
+      - &python-with-pips-cache
+        name: Set up Python with pip's cache
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15"
+          cache: pip
+          # The action wants a file to key the cache by. This one names the Qt action, which decides what pip installs.
+          cache-dependency-path: .github/workflows/check.yml
+
       - name: Install Qt
         uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
         with:
@@ -81,6 +92,7 @@ jobs:
           target: desktop
           arch: linux_gcc_64
           cache: true
+          setup-python: false
 
       # Objects are keyed by content, so the newest cache of this branch or main always helps. Restored and saved
       # separately so a test failure still keeps the compiled objects.
@@ -234,6 +246,8 @@ jobs:
           path: ${{ runner.temp }}/llvm
           key: ${{ steps.llvm.outputs.cache-primary-key }}
 
+      - *python-with-pips-cache
+
       - name: Install Qt
         uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
         with:
@@ -242,6 +256,7 @@ jobs:
           target: desktop
           arch: win64_msvc2022_64
           cache: true
+          setup-python: false
 
       - &windows-install-ccache
         name: Install ccache
@@ -467,6 +482,8 @@ jobs:
           tar -xzf "$archive" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/ccache-4.14.3-darwin" >> "$GITHUB_PATH"
 
+      - *python-with-pips-cache
+
       - name: Install Qt
         uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
         with:
@@ -475,6 +492,7 @@ jobs:
           target: desktop
           arch: clang_64
           cache: true
+          setup-python: false
 
       - &macos-restore-compiler-objects
         name: Restore compiler objects
