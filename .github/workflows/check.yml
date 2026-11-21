@@ -37,15 +37,16 @@ jobs:
     name: Linux build, tests and packages
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    defaults:
+    defaults: &bash
       run:
         shell: bash
-    env:
+    env: &ccache-settings
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       CCACHE_MAXSIZE: 1G
       CCACHE_COMPILERCHECK: content
     steps:
-      - name: Check out source
+      - &check-out-source
+        name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -62,7 +63,8 @@ jobs:
 
       # Ubuntu's ccache 4.9 does not see the files #embed reads, so an edited remake table would come back as a stale
       # cached object. From 4.14, ccache compiles a file that uses #embed through the preprocessor.
-      - name: Install ccache
+      - &linux-install-ccache
+        name: Install ccache
         run: |
           archive="$RUNNER_TEMP/ccache.tar.xz"
           curl -fsSL -o "$archive" \
@@ -82,7 +84,8 @@ jobs:
 
       # Objects are keyed by content, so the newest cache of this branch or main always helps. Restored and saved
       # separately so a test failure still keeps the compiled objects.
-      - name: Restore compiler objects
+      - &linux-restore-compiler-objects
+        name: Restore compiler objects
         id: compiler-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -91,7 +94,8 @@ jobs:
           restore-keys: |
             clang${{ env.LLVM_VERSION }}-qt${{ env.QT_VERSION }}-${{ runner.os }}-
 
-      - name: Configure
+      - &linux-configure
+        name: Configure
         run: >-
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -115,17 +119,6 @@ jobs:
         run: |
           command -v openssl
           ctest --test-dir build --output-on-failure --no-tests=error --parallel "$(nproc)"
-
-      - name: Make the seeds to compare with Windows
-        run: python3 -I tests/same_seeds.py build/kaepora-seedgen seeds
-
-      - name: Upload the seeds
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: seeds-linux-${{ github.sha }}
-          path: seeds/
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Package
         env:
@@ -152,29 +145,63 @@ jobs:
           path: .ccache
           key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
 
+  # A seed job restores its build job's caches under the same keys and never saves them. A cache key is saved only once,
+  # so the build job, which compiles every target, is the one writer.
+  linux-seeds:
+    name: Linux seeds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults: *bash
+    env: *ccache-settings
+    steps:
+      - *check-out-source
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            "clang-$LLVM_VERSION" ninja-build nlohmann-json3-dev libspdlog-dev libzstd-dev
+          "clang-$LLVM_VERSION" --version
+
+      - *linux-install-ccache
+      - *linux-restore-compiler-objects
+      - *linux-configure
+
+      - name: Build the seed generator
+        run: |
+          ccache --zero-stats
+          cmake --build build --target kaepora-seedgen
+          ccache --show-stats
+
+      - name: Make the seeds to compare with Windows
+        run: python3 -I tests/same_seeds.py build/kaepora-seedgen seeds
+
+      - name: Upload the seeds
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: seeds-linux-${{ github.sha }}
+          path: seeds/
+          if-no-files-found: error
+          retention-days: 7
 
   windows:
     name: Windows build, tests and package
     runs-on: windows-2022
     timeout-minutes: 90
-    defaults:
-      run:
-        shell: bash
-    env:
+    defaults: *bash
+    env: &windows-ccache-settings
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       CCACHE_MAXSIZE: 1G
     steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ inputs.ref }}
+      - *check-out-source
 
-      - name: Set up MSVC
+      - &windows-set-up-msvc
+        name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       # clang-cl compiles against the MSVC headers, libraries and SDK that the previous step puts in INCLUDE and LIB.
-      - name: Install LLVM
+      - &windows-install-llvm
+        name: Install LLVM
         shell: pwsh
         run: |
           $installer = Join-Path $env:RUNNER_TEMP 'llvm.exe'
@@ -196,7 +223,8 @@ jobs:
           arch: win64_msvc2022_64
           cache: true
 
-      - name: Install ccache
+      - &windows-install-ccache
+        name: Install ccache
         shell: pwsh
         run: |
           $zip = Join-Path $env:RUNNER_TEMP 'ccache.zip'
@@ -211,7 +239,8 @@ jobs:
         shell: pwsh
         run: tools/install-inno-setup.ps1
 
-      - name: Restore compiler objects
+      - &windows-restore-compiler-objects
+        name: Restore compiler objects
         id: compiler-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -220,7 +249,8 @@ jobs:
           restore-keys: |
             clang-cl${{ env.CLANG_CL_VERSION }}-qt${{ env.QT_VERSION }}-${{ runner.os }}-
 
-      - name: Configure
+      - &windows-configure
+        name: Configure
         run: >-
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -276,17 +306,6 @@ jobs:
           command -v openssl
           ctest --test-dir build --output-on-failure --no-tests=error --parallel "$NUMBER_OF_PROCESSORS"
 
-      - name: Make the seeds to compare with Linux
-        run: python -I tests/same_seeds.py build/kaepora-seedgen.exe seeds
-
-      - name: Upload the seeds
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: seeds-windows-${{ github.sha }}
-          path: seeds/
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Package
         run: tools/package-windows.sh build kaepora-windows-x86_64.zip kaepora-windows-x86_64-setup.exe
 
@@ -312,6 +331,39 @@ jobs:
         with:
           path: .ccache
           key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
+
+  windows-seeds:
+    name: Windows seeds
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults: *bash
+    env: *windows-ccache-settings
+    steps:
+      - *check-out-source
+      - *windows-set-up-msvc
+      - *windows-install-llvm
+      - *windows-install-ccache
+      - *windows-restore-compiler-objects
+      - *windows-configure
+
+      - name: Build the seed generator
+        env:
+          CCACHE_COMPILERCHECK: string:${{ env.CLANG_CL_VERSION }}
+        run: |
+          ccache --zero-stats
+          cmake --build build --target kaepora-seedgen
+          ccache --show-stats
+
+      - name: Make the seeds to compare with Linux
+        run: python -I tests/same_seeds.py build/kaepora-seedgen.exe seeds
+
+      - name: Upload the seeds
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: seeds-windows-${{ github.sha }}
+          path: seeds/
+          if-no-files-found: error
+          retention-days: 7
 
   windows-package:
     name: Windows package on a fresh runner
@@ -370,26 +422,19 @@ jobs:
     name: macOS build, tests and package
     runs-on: macos-15
     timeout-minutes: 60
-    defaults:
-      run:
-        shell: bash
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CCACHE_MAXSIZE: 1G
-      CCACHE_COMPILERCHECK: content
+    defaults: *bash
+    env: *ccache-settings
     steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ inputs.ref }}
+      - *check-out-source
 
-      - name: Show the compiler
+      - &macos-show-the-compiler
+        name: Show the compiler
         run: |
           xcode-select -p
           clang --version
 
-      - name: Install ccache
+      - &macos-install-ccache
+        name: Install ccache
         run: |
           archive="$RUNNER_TEMP/ccache.tar.gz"
           curl -fsSL -o "$archive" \
@@ -407,7 +452,8 @@ jobs:
           arch: clang_64
           cache: true
 
-      - name: Restore compiler objects
+      - &macos-restore-compiler-objects
+        name: Restore compiler objects
         id: compiler-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -416,7 +462,8 @@ jobs:
           restore-keys: |
             appleclang-qt${{ env.QT_VERSION }}-${{ runner.os }}-
 
-      - name: Configure
+      - &macos-configure
+        name: Configure
         run: >-
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -444,17 +491,6 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build --output-on-failure --no-tests=error --parallel "$(sysctl -n hw.ncpu)"
 
-      - name: Make the seeds to compare with Linux
-        run: python3 -I tests/same_seeds.py build/kaepora-seedgen seeds
-
-      - name: Upload the seeds
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: seeds-macos-${{ github.sha }}
-          path: seeds/
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Package
         run: tools/package-macos.sh build kaepora-macos-arm64.zip
 
@@ -472,6 +508,36 @@ jobs:
         with:
           path: .ccache
           key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
+
+  macos-seeds:
+    name: macOS seeds
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults: *bash
+    env: *ccache-settings
+    steps:
+      - *check-out-source
+      - *macos-show-the-compiler
+      - *macos-install-ccache
+      - *macos-restore-compiler-objects
+      - *macos-configure
+
+      - name: Build the seed generator
+        run: |
+          ccache --zero-stats
+          cmake --build build --target kaepora-seedgen
+          ccache --show-stats
+
+      - name: Make the seeds to compare with Linux
+        run: python3 -I tests/same_seeds.py build/kaepora-seedgen seeds
+
+      - name: Upload the seeds
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: seeds-macos-${{ github.sha }}
+          path: seeds/
+          if-no-files-found: error
+          retention-days: 7
 
   macos-package:
     name: macOS package on a fresh runner
@@ -498,7 +564,7 @@ jobs:
 
   same-seeds:
     name: Same seeds on Linux, Windows and macOS
-    needs: [linux, windows, macos]
+    needs: [linux-seeds, windows-seeds, macos-seeds]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
