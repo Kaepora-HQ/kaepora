@@ -283,11 +283,12 @@ struct PickupTemplate {
     std::string_view copyPrefix;
     std::array<std::string_view, 7> ownMembers;
     std::array<std::string_view, 3> itemRefs;
-    std::array<std::string_view, 3> takeKeys;
+    std::array<std::string_view, 4> takeKeys;
 };
 
 // The game's Hylian Shield pickup, which Link takes by touch as he takes a rupee or a small key. Seen in the game with
-// another item: no glow and no sound, taken by touch, and recorded as taken.
+// another item: no glow and no sound, taken by touch, and recorded as taken. A get plays once for each item unless its
+// pouch content has PlayGetEventManyTimes, so a copy keeps the pickup's and shows its item to a Link who holds it.
 constexpr PickupTemplate Pickup{
     .actor = "Obj_Shield_Hylian",
     .copyPrefix = "Obj_PickupShield_",
@@ -301,7 +302,7 @@ constexpr PickupTemplate Pickup{
         "GameParameter/PlayerEquipmentActor/Obj_Shield_Hylian.game__actor__PlayerEquipmentActor.bgyml",
     },
     .itemRefs = { "ActorNameRef", "ModelInfoRef", "AnimationRef" },
-    .takeKeys = { "DefaultAutoGet", "IsPickedUpEmitXlinkKey", "PickedUpEmitXlinkKey" },
+    .takeKeys = { "DefaultAutoGet", "IsPickedUpEmitXlinkKey", "PickedUpEmitXlinkKey", "PlayGetEventManyTimes" },
 };
 // Bundles and dungeon items have no parameter table of their own. Their pickup takes the pickup base's, which the small
 // key's pack holds.

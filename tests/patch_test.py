@@ -19,9 +19,9 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
-           song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped|sword-scene-left-out| \
-           sword-scene-kept <kaepora-patch> <game.nup>
+           loose-item-table|copies-play-every-get|goods-and-copies|weapons-bring-containers|weapon-copies| \
+           event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
+           sword-scene-left-out|sword-scene-kept <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1604,9 +1604,10 @@ def tested_skulltula_mod(patch, game, romfs):
     assert_as_the_game_ran(game, mod, tested)
 
 
-def assert_as_the_game_ran(game, mod, tested):
+def assert_as_the_game_ran(game, mod, tested, rebuilt=()):
     """The mod's files are those of a mod the game ran with the game's own rows for the weapons: the same files and
-    frames, the pouch table with the weapons' rows changed, and its size table entry raised to fit."""
+    frames, the pouch table with the weapons' rows changed, and its size table entry raised to fit. A rebuilt file is
+    the caller's to check, and its size table entry is raised to fit it too."""
     assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
     for path, data in tested.items():
         assert_same_frame_header(mod[path], data)
@@ -1614,9 +1615,14 @@ def assert_as_the_game_ran(game, mod, tested):
     pouch = zstd.decompress(mod.pop(POUCH_ACTOR_INFO))
     assert byml(pouch) == with_containers(byml(zstd.decompress(tested.pop(POUCH_ACTOR_INFO))))
     header, entries, names = read_size_table(zstd.decompress(tested.pop(SIZE_TABLE)))
+    entries = dict(entries)
     pouch_key = size_key(POUCH_ACTOR_INFO)
-    raised = [(key, max(size, load_size(len(pouch))) if key == pouch_key else size) for key, size in entries]
-    assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == (header, raised, names)
+    entries[pouch_key] = max(entries[pouch_key], load_size(len(pouch)))
+    for path in rebuilt:
+        tested.pop(path)
+        size = load_size(len(decompressed(game, mod.pop(path))), PACK_OVERHEAD if path.startswith("Pack/") else 264)
+        entries[size_key(path)] = max(entries[size_key(path)], size)
+    assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == (header, list(entries.items()), names)
     for path, data in tested.items():
         assert decompressed(game, mod[path]) == decompressed(game, data), path
 
@@ -1666,10 +1672,31 @@ def assert_token_copy(game, mod, item, copy):
 
 def tested_pickup_mod(patch, game, romfs):
     """The Lon Lon Ranch heart piece, planned to give the Mirror Shield, gives the files of the mod the game showed:
-    the Mirror Shield lay at the spot, Link took it by touch and got it, and the spot stayed empty after a reload."""
+    the Mirror Shield lay at the spot, Link took it by touch and got it, and the spot stayed empty after a reload. That
+    mod's copy has no PlayGetEventManyTimes in its pouch content, which copies-play-every-get checks."""
     tested = files(pathlib.Path(romfs))
     mod = patched(patch, game, plan([], loose_items=[(*LON_LON_HEART_PIECE, "Item_Shield_Mirror")]))
-    assert_as_the_game_ran(game, mod, tested)
+    copy = "Obj_PickupShield_Item_Shield_Mirror"
+    pack = f"Pack/Actor/{copy}.pack.zs"
+    pouch = f"Component/PouchContentParam/{copy}.game__component__PouchContentParam.bgyml"
+    ours, theirs = game.pack(mod[pack]), game.pack(tested[pack])
+    assert byml(ours.pop(pouch)) | {"PlayGetEventManyTimes": (BOOL, 1)} == \
+        byml(theirs.pop(pouch)) | {"PlayGetEventManyTimes": (BOOL, 1)}
+    assert ours == theirs
+    assert_as_the_game_ran(game, mod, tested, rebuilt=[pack])
+
+
+def copies_play_every_get(patch, game):
+    """A copy plays its item's get each time it is taken, as the Hylian Shield pickup it copies does, so an item Link
+    already holds still shows its get and its message. Seen without it: the Megaton Hammer's copy taken by a Link who
+    held the Hammer, and a token's copy taken with 57 tokens, each gave the item with neither."""
+    items = ("Item_Hammer", "Item_Token_Gold")
+    mod = patched(patch, game, plan([], loose_items=[(*LON_LON_HEART_PIECE, items[0]), (*LAKE_HEART_PIECE, items[1])]))
+    for item in items:
+        copy = f"Obj_PickupShield_{item}"
+        pack = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
+        pouch = resolved(pack, f"Actor/{copy}.engine__actor__ActorParam.bgyml")["Components"]["PouchContentRef"]
+        assert resolved(pack, pouch.lstrip("?")).get("PlayGetEventManyTimes") == (BOOL, 1), item
 
 
 def skulltulas(patch, game):
@@ -2542,6 +2569,7 @@ def main():
         "goods-and-copies": goods_and_copies,
         "tested-pickup-mod": tested_pickup_mod,
         "loose-items": loose_items,
+        "copies-play-every-get": copies_play_every_get,
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
         "tested-song-mod": tested_song_mod,

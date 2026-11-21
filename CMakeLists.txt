@@ -338,8 +338,8 @@ if(KAEPORA_GAME_NUP)
     foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values start-items
                  start-steps gift gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table dive-depth skulltulas
-                 skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
-                 weapon-copies event-numbers song-table
+                 skulltula-table loose-items copies-play-every-get goods-and-copies loose-item-table
+                 weapons-bring-containers weapon-copies event-numbers song-table
                  presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out sword-scene-kept)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
