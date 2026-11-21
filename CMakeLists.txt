@@ -229,7 +229,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter
                      with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple
                      with_songs_shuffled_the_courtyard_scene_starts_played
-                     a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played)
+                     a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played
+                     cutscenes_are_skipped_unless_played)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
@@ -251,7 +252,7 @@ if(Qt6Test_FOUND)
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
                      longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone
-                     aSeedMadeBeforeTheOpeningSettingPlaysIt
+                     aSeedMadeBeforeTheOpeningSettingPlaysIt aSeedMadeBeforeTheCutscenesSettingPlaysThem
                      aSeedWhoseSpoilerLogCannotBeReadIsListed settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
@@ -307,6 +308,8 @@ set(KAEPORA_TESTED_PEDESTAL_MOD "" CACHE PATH
 set(KAEPORA_TESTED_SHEIK_MOD "" CACHE PATH
     "The folder of the mod tested in the game with Sheik waiting behind the Master Sword pedestal")
 set(KAEPORA_TESTED_OPENING_MOD "" CACHE PATH "The folder of the mod tested in the game with the opening skipped")
+set(KAEPORA_TESTED_CUTSCENES_MOD "" CACHE PATH
+    "The folder of the mod tested in the game with every skippable cutscene skipped")
 set(KAEPORA_TESTED_STONE_TEXT_MOD "" CACHE PATH
     "The romfs folder of the mod tested in the game with a text of ours on the Kokiri Forest gossip stone")
 set(KAEPORA_TESTED_MESSAGE_TEXT_MOD "" CACHE PATH
@@ -322,7 +325,7 @@ if(KAEPORA_GAME_NUP)
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
                  weapon-copies event-numbers song-table
-                 presence lichii-built-ins opening-skipped)
+                 presence lichii-built-ins opening-skipped cutscenes-skipped)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME remake-tables
@@ -454,6 +457,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-opening-mod
             COMMAND ${PATCH_TEST} tested-opening-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_OPENING_MOD}")
+    endif()
+    if(KAEPORA_TESTED_CUTSCENES_MOD)
+        add_test(NAME patch-tested-cutscenes-mod
+            COMMAND ${PATCH_TEST} tested-cutscenes-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    "${KAEPORA_TESTED_CUTSCENES_MOD}")
     endif()
 endif()
 

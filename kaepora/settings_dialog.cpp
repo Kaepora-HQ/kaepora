@@ -82,6 +82,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.opening == Opening::Played) {
         changed << "opening played";
     }
+    if (settings.cutscenes == Cutscenes::Played) {
+        changed << "cutscenes played";
+    }
     if (!settings.startWith.empty()) {
         changed << "starts with " + Counted(settings.startWith.size());
     }
@@ -163,6 +166,7 @@ QString Details(const SeedSettings& settings) {
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
                         Line(OpeningSetting, QString::fromUtf8(Words(OpeningChoices, settings.opening))),
+                        Line(CutscenesSetting, QString::fromUtf8(Words(CutscenesChoices, settings.cutscenes))),
                         Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
     if (settings.shops) {
@@ -361,8 +365,10 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     };
     QObject::connect(items, &QPushButton::clicked, dialog, [=] { ChooseStartWith(dialog, *startWith, showStartWith); });
     QComboBox* opening = Choice(OpeningChoices);
+    QComboBox* cutscenes = Choice(CutscenesChoices);
     auto* startForm = new QFormLayout;
     startForm->addRow(QString::fromUtf8(OpeningSetting), opening);
+    startForm->addRow(QString::fromUtf8(CutscenesSetting), cutscenes);
     startForm->addRow("Items", items);
     auto* startGroup = new QGroupBox("Start");
     startGroup->setLayout(startForm);
@@ -409,6 +415,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
         Select(opening, shown.opening);
+        Select(cutscenes, shown.cutscenes);
         showStartWith(shown.startWith);
         shops->setCurrentIndex(shown.shops ? shops->findData(static_cast<int>(shown.shops->count)) : 0);
         const ShopPrices prices = shown.shops ? shown.shops->prices : DefaultShopPrices;
@@ -447,6 +454,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
         shown.opening = Selected<Opening>(opening);
+        shown.cutscenes = Selected<Cutscenes>(cutscenes);
         shown.startWith = *startWith;
         if (shops->currentIndex() != 0) {
             ShopPrices prices = ShopPricesChoices[shopPrices->currentIndex()].first;

@@ -123,7 +123,7 @@ static QString SeedOf(const QTreeWidgetItem* item) {
 }
 
 // A seed's settings as its spoiler log holds them. A log that leaves out hints from characters is of a seed that has
-// none, and one that leaves out the opening is of a seed whose mod plays it.
+// none, and one that leaves out the opening or the cutscenes is of a seed whose mod plays them.
 static SeedSettings SettingsOf(const QString& folder) {
     const nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
     SeedSettings settings = ParseSeedSettings(logged);
@@ -132,6 +132,9 @@ static SeedSettings SettingsOf(const QString& folder) {
     }
     if (!logged.contains(std::string(OpeningSetting))) {
         settings.opening = Opening::Played;
+    }
+    if (!logged.contains(std::string(CutscenesSetting))) {
+        settings.cutscenes = Cutscenes::Played;
     }
     return settings;
 }

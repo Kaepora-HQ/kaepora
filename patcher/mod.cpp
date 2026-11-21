@@ -264,6 +264,7 @@ Plan ParsePlan(const nlohmann::json& json) {
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     plan.openingSkipped = json.at("opening_skipped").get<bool>();
+    plan.cutscenesSkipped = json.at("cutscenes_skipped").get<bool>();
     for (const auto& [key, list] : { std::pair{ "skulltulas", &plan.skulltulas },
                                      std::pair{ "loose_items", &plan.looseItems } }) {
         const auto entries = json.at(key).get<std::vector<nlohmann::json>>();
@@ -1172,7 +1173,8 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
 
-    std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId), ProgramPatch() } };
+    std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId),
+                                              ProgramPatch(plan.cutscenesSkipped) } };
     const auto addToRomfs = [&](std::string_view path, std::string data) {
         mod.emplace(std::format("romfs/{}", path), std::move(data));
     };
