@@ -36,6 +36,15 @@ std::string WorkPath(std::string_view actor) {
     return std::format("Work/Actor/{}.engine__actor__ActorParam.gyml", actor);
 }
 
+std::string WorkPathActor(std::string_view path) {
+    constexpr std::string_view prefix = "Work/Actor/";
+    constexpr std::string_view suffix = ".engine__actor__ActorParam.gyml";
+    if (!path.starts_with(prefix) || !path.ends_with(suffix)) {
+        throw std::runtime_error(std::format("\"{}\" names no actor", path));
+    }
+    return std::string(path.substr(prefix.size(), path.size() - prefix.size() - suffix.size()));
+}
+
 static std::string PouchMember(std::string_view actor) {
     return std::format("Component/PouchContentParam/{}.game__component__PouchContentParam.bgyml", actor);
 }
@@ -61,7 +70,7 @@ static sarc::Files Pack(GameFile& game, const std::string& dictionary, std::stri
     }
 }
 
-static byml::Node& Value(byml::Node& dict, std::string_view key) {
+byml::Node& Value(byml::Node& dict, std::string_view key) {
     byml::Node* value = byml::Find(dict, key);
     if (value == nullptr) {
         throw std::runtime_error(std::format("no {}", key));

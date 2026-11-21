@@ -90,8 +90,15 @@ struct PlannedActorItem {
     std::string item;
 };
 
-// A saved value as a new game starts with it: a Bool or an Int of the game data list.
-using StartValue = std::variant<bool, int32_t>;
+// An Enum's value, by its name.
+struct Choice {
+    std::string name;
+
+    auto operator<=>(const Choice&) const = default;
+};
+
+// A saved value as a new game starts with it: a Bool, an Int, a Float, an Enum or a String64 of the game data list.
+using StartValue = std::variant<bool, int32_t, float, Choice, std::string>;
 
 struct Plan {
     std::vector<PlannedChest> chests;
@@ -107,7 +114,7 @@ struct Plan {
     bool cutscenesSkipped;
     std::vector<PlannedActorItem> skulltulas;
     std::vector<PlannedActorItem> looseItems;
-    std::vector<std::string> startItems; // actors a new game holds, as after a find
+    std::vector<std::string> startItems; // actors a new game holds, as after a find of each in turn
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

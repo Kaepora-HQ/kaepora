@@ -600,6 +600,7 @@ constexpr size_t TextPackOverhead = 312;
 constexpr size_t ActorPackOverhead = 312;
 constexpr size_t ActorTableOverhead = 264;
 constexpr size_t ActorInfoOverhead = 3064;
+constexpr size_t GameDataListOverhead = 264;
 
 // Raises the size table entry of the file at this path if its decompressed size needs a larger one. Returns whether
 // the entry changed. The game silently skips a file that is too large for its entry, and loads one that is smaller.
@@ -707,41 +708,152 @@ static uint32_t Murmur3(std::string_view name) {
 static constexpr std::tuple<std::string_view, byml::Type, std::string_view> startValueKinds[] = {
     { "Bool", byml::Type::Bool, "a true-or-false value" },
     { "Int", byml::Type::Int, "a whole number" },
+    { "Float", byml::Type::Float, "a number with a fraction" },
+    { "Enum", byml::Type::UInt, "a choice of names" },
+    { "String64", byml::Type::String, "a name" },
 };
 
-static byml::Node& DefaultValue(byml::Node& data, const std::string& name, const StartValue& value) {
+static byml::Node& StartValueEntry(byml::Node& data, const std::string& name, const StartValue& value) {
     const auto& [kind, type, words] = startValueKinds[value.index()];
     byml::Node* values = Find(data, kind);
     byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
-    byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
+    const byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
     if (defaultValue == nullptr || defaultValue->type != type) {
         throw std::runtime_error(std::format("start value \"{}\" is not {} in the list", name, words));
     }
-    return *defaultValue;
+    return *entry;
 }
 
-// The start values that give a new game the item as a find of it does: the item held, its get scene counted as played,
-// and one in the pouch. Its row in PouchActorInfo must name no special path of the program (PouchSpecialDeal None), no
-// ability (ExpansionAvility) and no limit (MaxNumGameData). Throws on any other row.
-static std::map<std::string, StartValue> StartItemValues(byml::Node& row, const std::string& item) {
-    const byml::Node* deal = Find(row, "PouchSpecialDeal");
-    if (deal == nullptr || deal->string != "None") {
-        throw std::runtime_error(std::format("its PouchSpecialDeal is {}, which a start does not write",
-                                             deal == nullptr ? "missing" : deal->string));
+static byml::Node StartedDefault(byml::Node& entry, const std::string& name, const StartValue& value) {
+    byml::Node started = *Find(entry, "DefaultValue");
+    std::visit(
+        [&]<typename T>(const T& v) {
+            if constexpr (std::is_same_v<T, std::string>) {
+                started.string = v;
+            } else if constexpr (std::is_same_v<T, Choice>) {
+                const byml::Node* choices = Find(entry, "Values");
+                started.scalar = Murmur3(v.name);
+                if (choices == nullptr ||
+                    std::ranges::find(choices->array, started.scalar, &byml::Node::scalar) == choices->array.end()) {
+                    throw std::runtime_error(std::format("start value \"{}\" has no choice {}", name, v.name));
+                }
+            } else if constexpr (std::is_same_v<T, float>) {
+                started.scalar = std::bit_cast<uint32_t>(v);
+            } else {
+                started.scalar = uint32_t(v);
+            }
+        },
+        value);
+    return started;
+}
+
+static std::string Shown(const StartValue& value) {
+    return std::visit(
+        []<typename T>(const T& v) {
+            if constexpr (std::is_same_v<T, Choice>) {
+                return v.name;
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                return std::format("\"{}\"", v);
+            } else {
+                return std::format("{}", v);
+            }
+        },
+        value);
+}
+
+static std::string Text(byml::Node& row, std::string_view key) {
+    const byml::Node* value = Find(row, key);
+    return value == nullptr ? "" : value->string;
+}
+
+static bool IsTrue(byml::Node& row, std::string_view key) {
+    const byml::Node* value = Find(row, key);
+    return value != nullptr && value->scalar != 0;
+}
+
+static std::vector<std::string> Actors(byml::Node& row, std::string_view key) {
+    const std::string paths = Text(row, key);
+    std::vector<std::string> actors;
+    if (paths.empty()) {
+        return actors;
     }
-    for (const std::string_view key : { "ExpansionAvility", "MaxNumGameData" }) {
-        if (const byml::Node* value = Find(row, key); value != nullptr && !value->string.empty()) {
-            throw std::runtime_error(std::format("its {} is {}, which a start does not write", key, value->string));
+    for (const auto path : std::views::split(paths, ',')) {
+        actors.push_back(WorkPathActor(std::string_view(path.begin(), path.end())));
+    }
+    return actors;
+}
+
+// As in the game, a container never lowers a limit.
+static int32_t RaiseLimit(byml::Node& container, std::map<std::string, StartValue>& values) {
+    const auto limit = values.try_emplace("PouchContentMaxNum." + Text(container, "MaxNumGameData"), 0).first;
+    limit->second =
+        std::max(std::get<int32_t>(limit->second), int32_t(Value(container, "AfterExpansionMaxNum").scalar));
+    return std::get<int32_t>(limit->second);
+}
+
+// A container that comes with another find has no get scene of its own.
+static void Bring(byml::Node& rows, const std::string& container, std::map<std::string, StartValue>& values) {
+    values["IsGet." + container] = true;
+    values[std::format("PouchData.{}.StockNum", container)] = 1;
+    RaiseLimit(Row(rows, container), values);
+}
+
+// What a find of the actor leaves in the save, as the game's pouch add writes it from the actor's row in
+// PouchActorInfo. A find also names a container in CurrentExpansionActor_<kind>. With those empty, a new game's rupee
+// and bomb counters show their limits and a bomb comes out (seen in the game), so a start leaves them empty.
+static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::string, StartValue>& values) {
+    byml::Node& row = Row(rows, actor);
+    values["IsGet." + actor] = true;
+    values["HavePlayedGetEvent." + actor] = true;
+    values[std::format("PouchData.{}.StockNum", actor)] = 1;
+    if (const std::string deal = Text(row, "PouchSpecialDeal"); deal == "Ocarina") {
+        values["PlayerStatus.EquipOcarina"] = actor;
+    } else if (deal == "Gauntlet") {
+        values["PlayerStatus.EquipHandArmor"] = actor;
+    } else if (deal != "None" && deal != "GoronGauntlet") {
+        throw std::runtime_error(std::format("its PouchSpecialDeal is {}, which a start does not write", deal));
+    }
+    if (const std::string ability = Text(row, "ExpansionAvility"); ability == "LiftGradeUP") {
+        values["PlayerStatus.LiftGrade"] = Choice{ Text(row, "LiftableGrade") };
+    } else if (ability == "DiveDepthUP") {
+        values["PlayerStatus.DiveDepth"] = std::bit_cast<float>(uint32_t(Value(row, "DiveDepth").scalar));
+    } else if (!ability.empty()) {
+        throw std::runtime_error(std::format("its ExpansionAvility is {}, which a start does not write", ability));
+    }
+    const std::string kind = Text(row, "MaxNumGameData");
+    if (kind.empty()) {
+        return;
+    }
+    if (IsTrue(row, "PouchStockable")) {
+        if (IsTrue(row, "IsAbleToGetBagIfGet")) {
+            Bring(rows, WorkPathActor(Text(row, "SmallBagActor")), values);
+        }
+        const auto limit = values.find("PouchContentMaxNum." + kind);
+        if (limit == values.end()) {
+            throw std::runtime_error(std::format("it goes into a {} bag, which the start does not hold", kind));
+        }
+        values[std::format("PouchData.{}.StockNum", actor)] = limit->second;
+        return;
+    }
+    const int32_t limit = RaiseLimit(row, values);
+    if (!IsTrue(row, "IsItemStockMaxIfGet")) {
+        return;
+    }
+    const std::vector<std::string> onlyIfHeld = Actors(row, "ActorFullOnlyIfIsGetWhenGetBag");
+    for (const std::string& filled : Actors(row, "ExpansionMaxNumActor")) {
+        if (!IsTrue(Row(rows, filled), "PouchStockable")) {
+            Bring(rows, filled, values);
+        } else if (std::ranges::find(onlyIfHeld, filled) == onlyIfHeld.end() || values.contains("IsGet." + filled)) {
+            values["IsGet." + filled] = true;
+            values[std::format("PouchData.{}.StockNum", filled)] = limit;
         }
     }
-    return { { "IsGet." + item, true },
-             { "HavePlayedGetEvent." + item, true },
-             { std::format("PouchData.{}.StockNum", item), 1 } };
 }
 
 // A new game starts with each start value as its default. Each count of a shop slot sold takes reset type 0 in place
-// of the game's 2, the type that the game's data has a day change reset. A Bool's or an Int's default and an entry's
-// reset type sit inside the entry, so the list keeps its size and still fits its size table entry.
+// of the game's 2, the type that the game's data has a day change reset. An entry's reset type and every default but a
+// String64's sit inside the entry. A String64's default is a name in the list's string table, which holds none of the
+// item names a start writes, so each such name grows the list.
 static std::string GameDataList(GameFile& game, const std::string& dictionary,
                                 const std::map<std::string, StartValue>& values, const std::set<std::string>& soldOnce) {
     try {
@@ -751,13 +863,14 @@ static std::string GameDataList(GameFile& game, const std::string& dictionary,
             throw std::runtime_error("the list has no Data");
         }
         for (const auto& [name, value] : values) {
-            byml::Node& defaultValue = DefaultValue(*data, name, value);
-            const uint64_t scalar = std::visit([](auto v) { return uint64_t(uint32_t(v)); }, value);
-            if (defaultValue.scalar == scalar) {
-                throw std::runtime_error(std::format("start value \"{}\" is already {} by default", name,
-                                                     std::visit([](auto v) { return std::format("{}", v); }, value)));
+            byml::Node& entry = StartValueEntry(*data, name, value);
+            byml::Node& defaultValue = *Find(entry, "DefaultValue");
+            const byml::Node started = StartedDefault(entry, name, value);
+            if (started == defaultValue) {
+                throw std::runtime_error(
+                    std::format("start value \"{}\" is already {} by default", name, Shown(value)));
             }
-            defaultValue.scalar = scalar;
+            defaultValue = started;
         }
         for (const std::string& name : soldOnce) {
             byml::Node* ints = Find(*data, "Int");
@@ -768,7 +881,7 @@ static std::string GameDataList(GameFile& game, const std::string& dictionary,
             }
             reset->scalar = 0;
         }
-        return Compress(byml::Write(list), dictionary);
+        return byml::Write(list);
     } catch (const std::exception& e) {
         throw std::runtime_error(std::format("{}: {}", GameDataListPath, e.what()));
     }
@@ -1255,26 +1368,30 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), overhead);
         addToRomfs(path, Compress(data));
     }
-    if (tableChanged) {
-        addToRomfs(SizeTablePath, Compress(table));
-    }
     std::map<std::string, StartValue> startValues = plan.startValues;
     if (plan.openingSkipped && !startValues.emplace(NaviWokeLink, true).second) {
         throw std::runtime_error(std::format("the plan's start values already name {}", NaviWokeLink));
     }
+    std::map<std::string, StartValue> found;
     for (const std::string& item : plan.startItems) {
         try {
-            for (auto& [name, value] : StartItemValues(Row(tables.find(PouchActorInfoPath)->second.root, item), item)) {
-                if (!startValues.emplace(name, value).second) {
-                    throw std::runtime_error(std::format("the plan's start values already name {}", name));
-                }
-            }
+            AddFind(tables.find(PouchActorInfoPath)->second.root, item, found);
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("start item {}: {}", item, e.what()));
         }
     }
+    for (auto& [name, value] : found) {
+        if (!startValues.emplace(name, value).second) {
+            throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
+        }
+    }
     if (!startValues.empty() || !soldOnce.empty()) {
-        addToRomfs(GameDataListPath, GameDataList(game, zsDictionary, startValues, soldOnce));
+        const std::string data = GameDataList(game, zsDictionary, startValues, soldOnce);
+        tableChanged |= RaiseSize(table, GameDataListPath, data.size(), GameDataListOverhead);
+        addToRomfs(GameDataListPath, Compress(data, zsDictionary));
+    }
+    if (tableChanged) {
+        addToRomfs(SizeTablePath, Compress(table));
     }
     return mod;
 }
