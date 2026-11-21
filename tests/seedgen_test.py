@@ -63,20 +63,29 @@ EVERY_SETTING_CHANGED = {
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
 SHOP_SLOTS = read_tsv("shops.tsv")
-# SoH's shopsanity takes a shop's items in this order. A count stops at five.
-SHOPSANITY_ORDER = [7, 5, 8, 6, 3]
+# SoH's shopsanity takes a shop's items in this order. The Kokiri Shop keeps its items 1 and 4, the Deku Shield and the
+# single Deku Stick, and takes its item 2 sixth.
+SHOPSANITY_ORDER = [7, 5, 8, 6, 3, 1, 4]
+KOKIRI_SHOP_ORDER = [7, 5, 8, 6, 3, 2]
 SHOP_COUNTS = {"One per shop shuffled": 1, "Two per shop shuffled": 2, "Three per shop shuffled": 3,
-               "Four per shop shuffled": 4, "Five per shop shuffled": 5}
+               "Four per shop shuffled": 4, "Five per shop shuffled": 5, "Six per shop shuffled": 6,
+               "Seven per shop shuffled": 7}
+
+
+def shop_order(shop):
+    return KOKIRI_SHOP_ORDER if shop == "KF Shop" else SHOPSANITY_ORDER
 
 
 def shuffled_shop_slots(count):
-    return [row for row in SHOP_SLOTS if int(row["number"]) in SHOPSANITY_ORDER[:count]]
+    return [row for row in SHOP_SLOTS if int(row["number"]) in shop_order(shop_of(row))[:count]]
 
 
 SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
-# A seed whose hints name a slot that only five per shop shuffle.
+SEVEN_PER_SHOP = {"Shop goods": "Seven per shop shuffled"}
+# A seed whose hints name a slot that only five per shop shuffle, and one for six and seven.
 HINT_SEED_AT_FIVE = "2"
+HINT_SEED_AT_SEVEN = "27"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
                                              "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk",
@@ -791,15 +800,14 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(collections.Counter(chests.values()) + collections.Counter(e["item"] for e in plan["shops"]),
                          POOL + collections.Counter({"TBox_Rupee_Red": len(slots)}))
 
-    def test_each_count_shuffles_the_first_goods_of_every_shop_in_sohs_order(self):
+    def test_each_count_shuffles_the_first_goods_of_every_shop_in_its_order(self):
         for words, count in SHOP_COUNTS.items():
             with self.subTest(words):
                 spoiler, plan = self.generate("19", {"Shop goods": words})
                 self.assertEqual(spoiler["settings"]["Shop goods"], words)
-                self.assertEqual(len(plan["shops"]), 8 * count)
                 self.assert_shop_slots_sell_the_pool(spoiler, plan, shuffled_shop_slots(count))
 
-    def test_a_random_number_per_shop_shuffles_one_to_five_of_its_first_goods(self):
+    def test_a_random_number_per_shop_shuffles_one_to_seven_of_its_first_goods(self):
         counts = collections.Counter()
         for seed in range(520, 530):
             spoiler, plan = self.generate(str(seed), SHOPS_AT_RANDOM)
@@ -810,12 +818,30 @@ class SeedgenTest(unittest.TestCase):
                 numbers[shop_of(row)].add(int(row["number"]))
             self.assertEqual(set(numbers), {shop_of(row) for row in SHOP_SLOTS}, seed)
             for shop, taken in numbers.items():
-                self.assertIn(len(taken), range(1, 6), (seed, shop))
-                self.assertEqual(taken, set(SHOPSANITY_ORDER[:len(taken)]), (seed, shop))
+                self.assertIn(len(taken), range(1, 8), (seed, shop))
+                self.assertEqual(taken, set(shop_order(shop)[:len(taken)]), (seed, shop))
                 counts[len(taken)] += 1
             self.assertEqual(rows, [row for row in SHOP_SLOTS if row in rows], seed)
             self.assert_shop_slots_sell_the_pool(spoiler, plan, rows)
-        self.assertEqual(set(counts), set(range(1, 6)))
+        self.assertEqual(set(counts), set(range(1, 8)))
+
+    def test_the_kokiri_shop_keeps_its_deku_stick_for_sale_at_every_count(self):
+        # No other shelf sells a Deku Stick from one per shop on, and a pot gives a child who has never held one a
+        # Green Rupee in its place.
+        for settings, seeds in (({"Shop goods": "Six per shop shuffled"}, ["19"]), (SEVEN_PER_SHOP, ["19"]),
+                                (SHOPS_AT_RANDOM, [str(seed) for seed in range(520, 530)])):
+            for seed in seeds:
+                spoiler, plan = self.generate(seed, settings)
+                self.assertNotIn("KF Shop Item 4", spoiler["locations"], (settings, seed))
+                self.assertNotIn("KF Shop Item 4", [row["location"] for row in shop_rows(plan)], (settings, seed))
+
+    def test_seven_per_shop_keeps_the_deku_shield_for_sale_and_queen_gohma_in_reach(self):
+        # The way out of a closed forest waits for Queen Gohma, whose door asks for a nut sent back with a Deku Shield.
+        spoiler, _ = self.generate("19", SEVEN_PER_SHOP)
+        self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed")
+        self.assertNotIn("KF Shop Item 1", spoiler["locations"])
+        self.assertIn("KF Shop Item 2", spoiler["locations"])
+        self.assertTrue(reach.reachable("Queen Gohma", *spoiler["locations"].items(), settings=spoiler["settings"]))
 
     def shop_prices(self, seed, settings):
         spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | settings)
@@ -1542,6 +1568,16 @@ class SeedgenTest(unittest.TestCase):
                      for row in SHOP_SLOTS if row["number"] == "3"}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
+    def test_hints_name_the_goods_only_six_and_seven_per_shop_shuffle(self):
+        # Seed HINT_SEED_AT_SEVEN hints that the Kakariko Village Potion Shop offers the Longshot, at its item 4.
+        self.assert_hints_are_true(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
+        spoiler, plan = self.generate(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
+        held = placed_remake_items(spoiler, plan)
+        new = {row["location"] for row in shuffled_shop_slots(7)} - {row["location"] for row in shuffled_shop_slots(5)}
+        sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[held[location]])) for location in new}
+        self.assertTrue(sentences & set(spoiler["hints"].values()))
+        self.assert_stone_texts_fit_their_boxes(plan)
+
     def test_the_chest_game_owner_names_the_prize(self):
         # Without the Lens the prize stays the game's own, a Piece of Heart.
         row = next(row for row in PRIZE_LINES if row["location"] == CHEST_GAME_PRIZE)
@@ -1598,14 +1634,17 @@ class SeedgenTest(unittest.TestCase):
     def test_every_stone_has_a_hint_that_fits_its_boxes(self):
         for seed in (FIXED_SEED, *map(str, range(620, 640))):
             _, plan = self.generate(seed)
-            self.assertEqual([entry["label"] for entry in plan["stone_texts"]], list(STONES))
-            for entry in plan["stone_texts"]:
-                for box in entry["text"].split("{page}"):
-                    lines = box.split("\n")
-                    self.assertLessEqual(len(lines), BOX_LINES, entry)
-                    for line in lines:
-                        self.assertTrue(line.strip(), entry)
-                        self.assertLessEqual(len(re.sub(r"\{[^}]*\}", "", line)), LINE_LENGTH, entry)
+            self.assert_stone_texts_fit_their_boxes(plan)
+
+    def assert_stone_texts_fit_their_boxes(self, plan):
+        self.assertEqual([entry["label"] for entry in plan["stone_texts"]], list(STONES))
+        for entry in plan["stone_texts"]:
+            for box in entry["text"].split("{page}"):
+                lines = box.split("\n")
+                self.assertLessEqual(len(lines), BOX_LINES, entry)
+                for line in lines:
+                    self.assertTrue(line.strip(), entry)
+                    self.assertLessEqual(len(re.sub(r"\{[^}]*\}", "", line)), LINE_LENGTH, entry)
 
     def test_hints_never_move_an_item(self):
         for seed in map(str, range(640, 650)):

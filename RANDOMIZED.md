@@ -20,7 +20,7 @@ A dungeon's small keys, boss key, map and compass stay inside that dungeon, in a
 
 ## Shops
 
-**Shop goods** puts places on the shelves of each of the eight shops into the shuffle: from **One per shop shuffled** to **Five per shop shuffled**, or **A random number per shop**. A shop can then sell the Longshot.
+**Shop goods** puts places on the shelves of each of the eight shops into the shuffle: from **One per shop shuffled** to **Seven per shop shuffled**, or **A random number per shop**, which picks from one to seven for each shop. A shop can then sell the Longshot. The Kokiri Shop always keeps its Deku Shield and its Deku Stick for sale, since a shield can burn and a stick gets used up, and a seed may need you to buy another. So it shuffles six of its places at most: at **Seven per shop shuffled**, and when **A random number per shop** picks seven for it, it shuffles six.
 
 What those places sold before is no longer for sale there, and a red rupee joins the shuffled items for each one. The other shelves keep their goods and prices. With **Vanilla**, shops sell what they always sold.
 
@@ -103,7 +103,7 @@ Under **Start**, **Cutscenes** decides what happens to the scenes you could skip
 
 Under **Start**, **Items** opens a list. Tick an item and every new game of that seed begins with it. The seed then keeps that item out of the shuffled places and puts a small prize in the pool in its stead.
 
-Ten items are boxes: the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. A shop still sells each tunic, and a seed still places its Deku Shields, as a Deku Shield can burn.
+Ten items are boxes: the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. A seed still places its Deku Shields, as a Deku Shield can burn.
 
 Nine more come in steps, and each has a row where you choose how far up it starts: the Fairy Slingshot, the Fairy Bow and the Bomb Bag by how much they hold; the Hookshot or the Longshot; the Goron Bracelet or the Silver or Golden Gauntlets; the Silver or Golden Scale; the Adult's or Giant's Wallet; Deku Sticks and Deku Nuts by how many you can carry. A step includes the ones before it, and a bag starts full. The last row is the Fairy Ocarina.
 

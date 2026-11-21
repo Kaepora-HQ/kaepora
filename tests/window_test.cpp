@@ -754,7 +754,7 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
-    void shopGoodsOffersEachCountUpToFiveAndARandomNumber() {
+    void shopGoodsOffersEachCountUpToSevenAndARandomNumber() {
         button("Settings…")->click();
         QStringList offered;
         for (int index = 0; index < choice("Shop goods")->count(); ++index) {
@@ -762,6 +762,7 @@ private slots:
         }
         QCOMPARE(offered, (QStringList{ "Vanilla", "One per shop shuffled", "Two per shop shuffled",
                                         "Three per shop shuffled", "Four per shop shuffled", "Five per shop shuffled",
+                                        "Six per shop shuffled", "Seven per shop shuffled",
                                         "A random number per shop" }));
         dialogButton("Cancel")->click();
     }
