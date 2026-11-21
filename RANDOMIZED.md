@@ -34,9 +34,13 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 ## Gifts
 
-Set **Gifts** to **Shuffled**, and 29 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner. Eight more are the prizes that make a bag bigger: both shooting galleries, the target in the Lost Woods, horseback archery's second prize, Bombchu Bowling's bomb bag, the rolling Goron in Goron City, and the two prizes of the Deku theater in the Lost Woods. Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot.
+Set **Gifts** to **Shuffled**, and 32 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner. Eight more are the prizes that make a bag bigger: both shooting galleries, the target in the Lost Woods, horseback archery's second prize, Bombchu Bowling's bomb bag, the rolling Goron in Goron City, and the two prizes of the Deku theater in the Lost Woods. Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot. Three more come where the story moves on: the Gerudo Pass you get for freeing the carpenters, King Zora's tunic, and Zelda's Light Arrows in the Temple of Time.
 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone. With **Vanilla**, each gives what the game has.
+
+The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
+
+Thaw King Zora before you finish the Water Temple. Once the temple is done his ice is gone, and so is what he would have handed you. The seed's route always thaws him first.
 
 ## Songs
 
@@ -92,7 +96,7 @@ Under **Start**, **Cutscenes** decides what happens to the scenes you could skip
 
 Under **Start**, **Items** opens a list. Tick an item and every new game of that seed begins with it. The seed then keeps that item out of the shuffled places and puts a small prize in the pool in its stead.
 
-Ten items are boxes: the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. The tunics are not shuffled, so a shop still sells them, and a seed still places its Deku Shields, as a Deku Shield can burn.
+Ten items are boxes: the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. A shop still sells each tunic, and a seed still places its Deku Shields, as a Deku Shield can burn.
 
 Nine more come in steps, and each has a row where you choose how far up it starts: the Fairy Slingshot, the Fairy Bow and the Bomb Bag by how much they hold; the Hookshot or the Longshot; the Goron Bracelet or the Silver or Golden Gauntlets; the Silver or Golden Scale; the Adult's or Giant's Wallet; Deku Sticks and Deku Nuts by how many you can carry. A step includes the ones before it, and a bag starts full. The last row is the Fairy Ocarina.
 

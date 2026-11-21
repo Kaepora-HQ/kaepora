@@ -79,7 +79,8 @@ SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 HINT_SEED_AT_FIVE = "2"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
-                                             "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk"}
+                                             "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk",
+                                             "Obj_Armor_Zora"}
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
@@ -95,6 +96,9 @@ BAG_PRIZES = {"Market Shooting Gallery": ("Big Deku Seed Bullet Bag", "Item_Bull
               "LW Deku Theater Skull Mask": ("Deku Stick Capacity (20)", "Item_StickBag_Medium"),
               "LW Deku Theater Mask of Truth": ("Deku Nut Capacity (30)", "Item_NutBag_Medium")}
 BIGGER_BAGS = dict(BAG_PRIZES.values())
+# Three gifts where the story moves, and what each gives in the game.
+STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
+               "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -982,6 +986,62 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("Item_Quiver_Medium", placed_remake_items(spoiler, plan).values())
         self.assertIn("Item_Quiver_Medium", placed_remake_items(*self.generate("1480", GIFTS_SHUFFLED)).values())
 
+    def test_the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts(self):
+        # Each of the three places writes the item placed there at its one event, and each item, wherever it lands,
+        # goes by its one name. The pass goes only to a chest, a gift or a reward's place, as a stone does. A shop
+        # refuses a tunic to a child, so none sells the Zora Tunic.
+        settings = GIFTS_SHUFFLED | REWARDS_SHUFFLED | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED
+        chests = {row["location"] for row in SHUFFLED}
+        shops = {row["location"] for row in SHOP_SLOTS}
+        skulltulas = {row["location"] for row in SKULLTULAS}
+        kinds, moved = collections.defaultdict(set), set()
+        for seed in map(str, range(640, 660)):
+            spoiler, plan = self.generate(seed, settings)
+            sites = gift_sites(plan)
+            for location in STORY_GIFTS:
+                given = [item for at, item in sites if at == location]
+                self.assertEqual(len(given), 1, (seed, location))
+                self.assertIn((given[0], spoiler["locations"][location]), ITEM_PAIRS, (seed, location))
+            placed = placed_remake_items(spoiler, plan)
+            for location, item in STORY_GIFTS.items():
+                at = [place for place, held in placed.items() if held == item]
+                self.assertEqual(len(at), 1, (seed, item))
+                kinds[item].add("chest" if at[0] in chests else "gift" if at[0] in GIFT_LOCATIONS.values()
+                                else "reward place" if at[0] in REWARD_AREAS else "shop" if at[0] in shops
+                                else "skulltula" if at[0] in skulltulas else "loose")
+                if at[0] != location:
+                    moved.add(item)
+        self.assertEqual(moved, set(STORY_GIFTS.values()))
+        self.assertLessEqual(kinds["Item_Token_Gerudo"], {"chest", "gift", "reward place"}, kinds)
+        self.assertNotIn("shop", kinds["Obj_Armor_Zora"], kinds)
+
+    def test_the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them(self):
+        # The Gerudo let Link pass after the last carpenter's scene, and the bridge follows Zelda's scene, whatever
+        # their places give. So the route names each place before any step that waits for it.
+        other = set()
+        for seed in map(str, range(660, 680)):
+            log, _ = self.generate(seed, GIFTS_SHUFFLED)
+            sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+            for step, number in sphere.items():
+                if step.startswith(("Gerudo Training Ground", "Wasteland", "GF HBA")):
+                    self.assertLess(sphere.get("GF Freed All Carpenters", number), number, (seed, step))
+                if step.startswith("Ganon's Castle") or step == "Ganon":
+                    self.assertLess(sphere.get("Market ToT Light Arrow Cutscene", number), number, (seed, step))
+            other |= {location for location in ("GF Freed All Carpenters", "Market ToT Light Arrow Cutscene")
+                      if location in sphere and (STORY_GIFTS[location], log["locations"][location]) not in ITEM_PAIRS}
+        self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
+
+    def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
+        # Seed 2 puts the Gerudo Pass in Dodongo's Cavern, the Zora Tunic in Hyrule Field's Redead grotto and the Light
+        # Arrows in the Ice Cavern, and its route takes the carpenters' rescue and Zelda's scene for what they open.
+        log, _ = self.generate("2", GIFTS_SHUFFLED)
+        for location, item in STORY_GIFTS.items():
+            self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
+        self.assertLessEqual({"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"},
+                             playthrough_steps(log).keys())
+        self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assertEqual(self.route_out_of_reach(log), [])
+
     def test_dungeon_rewards_shuffled(self):
         # With the gifts at Vanilla the nine places join the chests' shuffle. Link's Pocket, where the patcher writes
         # nothing, holds no reward: the Light Medallion is one of the nine.
@@ -1215,10 +1275,10 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the
         # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 7's
-        # route takes a step there before the card. Were an adult's Requiem to count once the card is held, seed 3's
-        # route, with gifts shuffled, would take one after the card with the Requiem as its only warp song and no Lens
-        # of Truth for the Wasteland.
-        for seed, settings in (("7", SONGS_SHUFFLED), ("3", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
+        # route takes a step there before the carpenters' rescue. Were an adult's Requiem to count once the rescue is
+        # done, seed 5's route, with gifts shuffled, would take one after the rescue with the Requiem as its only warp
+        # song and no Lens of Truth for the Wasteland.
+        for seed, settings in (("7", SONGS_SHUFFLED), ("5", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
             log, _ = self.generate(seed, settings)
             spheres = list(log["playthrough"].values())
             there = next(number for number, steps in enumerate(spheres)
@@ -1230,8 +1290,8 @@ class SeedgenTest(unittest.TestCase):
             warps_out = held.keys() & {"Minuet of Forest", "Serenade of Water", "Nocturne of Shadow",
                                        "Prelude of Light"} or held["Bolero of Fire"] and (
                 held["Progressive Hookshot"] or held["Hover Boots"])
-            walks_in = held["Gerudo Membership Card"] and held["Lens of Truth"] and (
-                held["Hover Boots"] or held["Progressive Hookshot"] >= 2)
+            rescued = any("GF Freed All Carpenters" in steps for steps in spheres[:there])
+            walks_in = rescued and held["Lens of Truth"] and (held["Hover Boots"] or held["Progressive Hookshot"] >= 2)
             self.assertTrue(warps_out or walks_in, (seed, spheres[there]))
 
     def test_seed_text_ignores_case(self):
@@ -1383,6 +1443,16 @@ class SeedgenTest(unittest.TestCase):
                          list(unstarted.values()).count("TBox_Rupee_Red") + len(STEP_COPIES))
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
         self.assertEqual(self.route_out_of_reach(spoiler), [])
+
+    def test_a_started_zora_tunic_leaves_the_gifts(self):
+        # With the gifts shuffled, King Zora's place adds a Zora Tunic to the pool. A seed that starts with one leaves
+        # it out, with a Red Rupee in its stead.
+        for seed in ("1", "2", "3"):
+            placed = placed_remake_items(*self.generate(seed, {"Gifts": "Shuffled", "Start with": ["Zora Tunic"]}))
+            unstarted = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED))
+            self.assertNotIn("Obj_Armor_Zora", placed.values(), seed)
+            self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
+                             list(unstarted.values()).count("TBox_Rupee_Red") + 1, seed)
 
     def test_a_place_that_gives_a_started_step_again_counts_for_nothing(self):
         # Dampé's race, Saria, the diving game, the two wallet rewards and the Bomb Bag's chest of a dungeon left out

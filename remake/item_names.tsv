@@ -2,6 +2,7 @@ remake_item	label	name	article
 Item_AgonyStone	Item_AgonyStone_Name	Echo Gem	the
 Item_Arrow_Fire	Item_Arrow_Fire_Name	Fire Arrow	the
 Item_Arrow_Ice	Item_Arrow_Ice_Name	Ice Arrow	the
+Item_Arrow_Light	Item_Arrow_Light_Name	Light Arrow	the
 Item_BombBag_Large	Item_BombBag_Large_Name	Biggest Bomb Bag	the
 Item_BombBag_Medium	Item_BombBag_Medium_Name	Bigger Bomb Bag	a
 Item_BombBag_Small	Item_BombBag_Small_Name	Bomb Bag	the
@@ -58,9 +59,11 @@ Item_Stone_Fire	Item_Stone_Fire_Name	Goron Ruby	the
 Item_Stone_Forest	Item_Stone_Forest_Name	Kokiri Emerald	the
 Item_Stone_Water	Item_Stone_Water_Name	Zora Sapphire	the
 Item_Sword_Kokiri	Weapon_Sword_Kokiri_Name	Kokiri Sword	the
+Item_Token_Gerudo	Item_Token_Gerudo_Name	Gerudo Pass	the
 Item_Token_Gold	Item_Token_Gold_Name	Token	a
 Item_Wallet_Large	Item_Wallet_Large_Name	Giant's Wallet	a
 Item_Wallet_Medium	Item_Wallet_Medium_Name	Adult's Wallet	an
+Obj_Armor_Zora	Armor_Adult_Zora_Name	Zora Tunic	a
 Obj_Heart_Container	Obj_Heart_Container_Name	Heart Container	a
 Obj_Heart_Piece	Obj_Heart_Piece_Name	Piece of Heart	a
 Obj_MiniGame_SmallKey	Obj_MiniGame_SmallKey_Name	Door Key	a

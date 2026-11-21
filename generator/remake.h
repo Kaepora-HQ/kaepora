@@ -118,7 +118,7 @@ std::vector<RemakeGift> LoadRemakeRewards(const std::vector<RemakeChest>& chests
 
 // Throws when an item a shop slot can hold has no row in remake/shop_goods.tsv, read from the copy built into the
 // program, or a row names any other item. A slot can hold the item of a shuffled chest or of a gift that KeptFromShops
-// lets into shops, the token a shuffled skulltula adds, and the filler.
+// and KeptInChestsAndCalls let into shops, the token a shuffled skulltula adds, and the filler.
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts);
 
 struct RemakeSkulltula {

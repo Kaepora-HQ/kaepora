@@ -78,14 +78,16 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
 // slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the
-// quiver, the Goron Ruby or the empty bottle they may need, nor that a shelf sells a bag. So with shop goods shuffled
-// they go to a chest, a gift or a loose spot: the fill places them before shop slots and Gold Skulltulas join it.
+// quiver, the Goron Ruby or the empty bottle they may need, nor that a shelf sells a bag. A shop refuses the Zora
+// Tunic to a child, and a slot's rule asks for no age. So with shop goods shuffled they go to a chest, a gift or a
+// loose spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
-// The Spiritual Stones and the medallions. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire,
-// each with its model, Link's hold-up pose and its named window (seen), and a gift raises an item the same way. No shop
-// slot, Gold Skulltula or loose spot has been seen to give one, so the fill places them before those join it: in a
-// chest, at a gift or at one of the nine places that hand one over.
+// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch. A chest gave the Kokiri
+// Emerald, the Forest Medallion and the Zora Sapphire, each with its model, Link's hold-up pose and its named window
+// (seen), and a gift raises an item the same way. No shop slot, Gold Skulltula or loose spot has been seen to give one,
+// so the fill places them before those join it: in a chest, at a gift or at one of the nine places that hand over a
+// stone or a medallion.
 bool KeptInChestsAndCalls(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);

@@ -2,6 +2,7 @@ remake_item	soh_item
 Item_AgonyStone	Stone of Agony
 Item_Arrow_Fire	Fire Arrows
 Item_Arrow_Ice	Ice Arrows
+Item_Arrow_Light	Light Arrows
 Item_BombBag_Large	Biggest Bomb Bag
 Item_BombBag_Medium	Big Bomb Bag
 Item_BombBag_Small	Progressive Bomb Bag
@@ -88,9 +89,11 @@ Item_Stone_Fire	Goron's Ruby
 Item_Stone_Forest	Kokiri's Emerald
 Item_Stone_Water	Zora's Sapphire
 Item_Sword_Kokiri	Kokiri Sword
+Item_Token_Gerudo	Gerudo Membership Card
 Item_Token_Gold	Gold Skulltula Token
 Item_Wallet_Large	Progressive Wallet
 Item_Wallet_Medium	Progressive Wallet
+Obj_Armor_Zora	Zora Tunic
 Obj_Heart_Container	Heart Container
 Obj_Heart_Piece	Piece of Heart
 Obj_MiniGame_SmallKey	Chest Game Small Key

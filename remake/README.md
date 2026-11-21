@@ -191,10 +191,12 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 29 SoH locations: the five
-House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, and the eight
-prizes that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger. With "Gifts" at "Shuffled" the 29 join
-the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its places.
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 32 SoH locations: the five
+House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
+that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, and three places where the story moves: the scene
+after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
+of Time. With "Gifts" at "Shuffled" the 32 join the shuffle. Each adds its item to the pool, and the plan writes the
+placed item at each of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -240,6 +242,34 @@ Seen in the game:
 
 So every way the 29 hand over their item has given another item. Read from the game's files and not yet seen: a prize
 talk may still name the usual prize, and the map may keep a heart on these places until each is won.
+
+The three story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
+Step02, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage quest to Complete and the Ganon quest
+to Step01 (read from the flows). The fortress's guards, the Wasteland's gate keeper and the archery range follow the
+Spirit quest, the Training Ground's keeper asks for 30 rupees and no card, and the bridge to Ganon's Castle follows the
+Ganon quest, so the rules ask for the scenes, not the Gerudo's card or the Light Arrows. Of the game's flows and logic
+modules, one reads the card: a module that takes two of the fortress's sneak areas away. The program also reads it,
+inferred to be for the fortress's key counter on the screen, and a map picture's table picks its light by it (read).
+
+Seen in the game: the scene after the fourth carpenter gave a placed Zora Tunic, the Spirit quest then stood at Step02
+with no card held, no guard caught Link, the gate keeper opened the gate to the Wasteland, and walking into the
+Wasteland wrote Step03. With the pass already found, the rescue played the same and gave its item once, and Link still
+held one pass. King Zora gives through horseback archery's call and Zelda through the reward scenes', and each of those
+has given another item (seen); their own scenes have not. Zelda's scene still shows the Light Arrows: two of its events
+pick the fanfare and the sparkle by the arrows' name, and three more bind the arrows' model, set its detail and turn it
+(read). Its window names the seed's item.
+
+King Zora's ice stands only while the Water quest is not complete, and his thanks come only after the thaw (read from
+the placement files and his talk). So a Link who finishes the Water Temple first never gets what King Zora would hand
+over: his talk then sends a Link with no Zora Tunic to the Zora shop's keeper, who gives one, whatever King Zora's place
+holds. With "Gifts" at "Shuffled", Morpha waits for King Zora's thanks, and the route names King Zora before Morpha.
+
+The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
+A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a
+child, seen), and a slot's rule asks for no age, so no shop sells the Zora Tunic. The Light Arrows may go wherever the
+Fire and Ice Arrows go. Seen in the game: a chest gave the pass; a chest, a Gold Skulltula and a loose spot gave the
+Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the Light Arrows, the shelf to a child. A seed that starts
+with the Zora Tunic leaves King Zora's tunic out of the pool, with a Red Rupee in its stead.
 
 A shop refuses bottle contents to a Link with no empty bottle, and which kind the Empty Bottle and Lon Lon Milk fall
 under is unknown, so the fill keeps both bottles out of shops, and 20 Bombchus with the other Bombchus. The scales, the

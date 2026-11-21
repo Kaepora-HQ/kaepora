@@ -2,6 +2,7 @@ item	goods	pose	bottom	top	width	reach
 Item_AgonyStone		Pose_Common	-124	49	170	91
 Item_Arrow_Fire		Pose_Common	35	569	471	255
 Item_Arrow_Ice		Pose_Common	42	569	479	255
+Item_Arrow_Light		Pose_Common	-107	571	591	368
 Item_BombBundle_Small	Shop_BombBundle_01					
 Item_Boomerang		Pose_Common	-13	249	343	244
 Item_DekuStickBundle_Small		Pose_Shop	-3	492	340	209

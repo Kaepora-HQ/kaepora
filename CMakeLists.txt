@@ -218,6 +218,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
                      the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
+                     the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts
+                     the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
+                     a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon
                      dungeon_rewards_shuffled stones_and_medallions_go_to_chests_gifts_and_the_nine_places
                      a_dungeon_left_out_keeps_its_boss_reward
                      hints_name_no_stone_or_medallion_as_an_item_to_find hints_name_dungeon_rewards_truly
@@ -245,6 +248,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played
                      cutscenes_are_skipped_unless_played
                      a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step
+                     a_started_zora_tunic_leaves_the_gifts
                      a_place_that_gives_a_started_step_again_counts_for_nothing)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}

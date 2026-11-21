@@ -522,7 +522,7 @@ void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<Re
         }
     }
     for (const RemakeGift& gift : gifts) {
-        if (!KeptFromShops(gift.sohItem)) {
+        if (!KeptFromShops(gift.sohItem) && !KeptInChestsAndCalls(gift.sohItem)) {
             holdable.insert(gift.item);
         }
     }

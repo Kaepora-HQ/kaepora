@@ -15,6 +15,7 @@ LH Lab Dive	Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs	Event113	ReveiveItem	O
 GF HBA 1000 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event322	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
 GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event320	ActorName	Item_Quiver_Medium	Item_Quiver_Large
 GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event319	ActorName	Item_Quiver_Large	Item_Quiver_Large
+GF Freed All Carpenters	Event/EventFlow/Dm_Gerudo_0025.bfevfl.zs	Event294	ActorName	Item_Token_Gerudo	Item_Token_Gerudo
 Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event304	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Medium
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event306	ReveiveItem	Item_BombBag_Large	Item_BombBag_Medium
@@ -22,6 +23,7 @@ Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event241	Re
 Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event378	ReveiveItem	Item_BulletBag_Large	Item_BulletBag_Medium
 Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
 Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle	Item_Bottle
+Market ToT Light Arrow Cutscene	Event/EventFlow/Dm_TimeTemple_0130.bfevfl.zs	Event85	ActorName	Item_Arrow_Light	Item_Arrow_Light
 Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium	Item_Wallet_Medium
 Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone	Item_AgonyStone
 Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large
@@ -38,4 +40,5 @@ ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	Acto
 ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event161	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
 ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event75	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
 ZD Diving Minigame	Event/EventFlow/MiniGame_Diving.bfevfl.zs	Event21	ActorName	Item_Scale_Silver	Item_Scale_Silver
+ZD King Zora Thawed	Event/EventFlow/SageOfWater.bfevfl.zs	Event242	ActorName	Obj_Armor_Zora	Obj_Armor_Zora
 LLR Talons Chickens	Event/EventFlow/Minigame_FindOutCucco.bfevfl.zs	Event23	ReveiveItem	Item_Bottle_Milk	Item_Bottle_Milk

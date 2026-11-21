@@ -125,9 +125,9 @@ inline constexpr StartStep StartSteps[] = {
     { "Mirror Shield", "", "Mirror Shield", "Weapon_Shield_Mirror", "Item_Shield_Mirror" },
     { "Iron Boots", "", "Iron Boots", "Armor_Adult_HeavyBoot", "Item_HeavyBoot" },
     { "Hover Boots", "", "Hover Boots", "Armor_Adult_HoverBoot", "Item_HoverBoot" },
-    // No place of ours holds a tunic.
+    // No place of ours holds a Goron Tunic. King Zora's holds the Zora Tunic.
     { "Goron Tunic", "", "Goron Tunic", "Armor_Adult_Goron", "" },
-    { "Zora Tunic", "", "Zora Tunic", "Armor_Adult_Zora", "" },
+    { "Zora Tunic", "", "Zora Tunic", "Armor_Adult_Zora", "Obj_Armor_Zora" },
     { "Megaton Hammer", "", "Megaton Hammer", "Item_Hammer", "Item_Hammer" },
     { "Boomerang", "", "Boomerang", "Item_Boomerang", "Item_Boomerang" },
     { "Fairy Slingshot", "30 seeds", "Fairy Slingshot (30 seeds)", "Weapon_Range_SlingShot", "Item_Range_SlingShot" },
