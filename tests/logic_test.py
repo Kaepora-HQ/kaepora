@@ -32,9 +32,8 @@ NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),)
 # The Boomerang, the Hookshot and the Longshot each fetch a Gold Skulltula's token from afar.
 NO_BOOMERANG = ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")
 NO_RANGED = (NO_BOOMERANG, NO_HOOKSHOT, ("Water Temple Longshot Chest", "Green Rupee"))
-# The Deku Tree's chest and the market's gallery give the slingshot, and the Forest Temple's chest gives the bow.
-NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Market Shooting Gallery", "Green Rupee"),
-                       ("Forest Temple Bow Chest", "Green Rupee"))
+# The Deku Tree's chest gives the slingshot, and the Forest Temple's chest gives the bow.
+NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Forest Temple Bow Chest", "Green Rupee"))
 NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Green Rupee"),
              ("Kak Anju as Child", "Green Rupee"), ("LLR Talons Chickens", "Green Rupee"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}

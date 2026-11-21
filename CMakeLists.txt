@@ -208,6 +208,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
                      a_gift_can_hold_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
+                     each_bag_prize_gives_its_placed_item_at_both_sites a_bigger_bag_has_one_name_wherever_it_lands
+                     bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
+                     the_rolling_goron_waits_for_the_small_bomb_bag
                      dungeon_rewards_shuffled stones_and_medallions_go_to_chests_gifts_and_the_nine_places
                      a_dungeon_left_out_keeps_its_boss_reward
                      hints_name_no_stone_or_medallion_as_an_item_to_find hints_name_dungeon_rewards_truly

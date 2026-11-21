@@ -1391,8 +1391,8 @@ def shop_table(patch, game):
 
 
 def give_table(patch, game, table):
-    """Every site of a table of gives, remake/gifts.tsv or remake/rewards.tsv, names its row's item in the game's flow,
-    under an event name no other event of the flow has, and the patcher writes the plan's item there."""
+    """Every site of a table of gives, remake/gifts.tsv or remake/rewards.tsv, names the item its row says it gives in
+    the game's flow, under an event name no other event of the flow has, and the patcher writes the plan's item there."""
     with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / table, newline="") as f:
         rows = list(csv.DictReader(f, delimiter="\t"))
     mod = patched(patch, game, plan([], event_texts=[(row["flow"], row["event"], row["param"], "Item_Hammer")
@@ -1401,7 +1401,7 @@ def give_table(patch, game, table):
     for row in rows:
         theirs, ours = flows[row["flow"]]
         assert [event[0] for event in theirs["events"]].count(row["event"]) == 1, row
-        assert string_parameter(theirs, row["event"], row["param"])[1] == row["item"], row
+        assert string_parameter(theirs, row["event"], row["param"])[1] == row["gives"], row
         assert string_parameter(ours, row["event"], row["param"])[1] == "Item_Hammer", row
 
 

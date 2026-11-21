@@ -547,11 +547,11 @@ static std::vector<RemakeGift> LoadGives(const std::string& file, std::span<cons
     const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
     std::vector<RemakeGift> gifts;
     size_t line = 1;
-    for (const auto& row : ReadTable(file, table, "location\tflow\tevent\tparam\titem")) {
+    for (const auto& row : ReadTable(file, table, "location\tflow\tevent\tparam\tgives\titem")) {
         const std::string where = std::format("{} line {}: ", file, ++line);
         const std::string& name = row[0];
         const std::string& flow = row[1];
-        const std::string& item = row[4];
+        const std::string& item = row[5];
         const RandomizerCheck location = LocationNamed(where, name);
         if (std::ranges::find(chests, location, &RemakeChest::location) != chests.end()) {
             Fail(where + "\"" + name + "\" is a location of remake/chests.tsv");
@@ -562,6 +562,10 @@ static std::vector<RemakeGift> LoadGives(const std::string& file, std::span<cons
         const auto candidates = items.find(item);
         if (candidates == items.end() || candidates->second.size() != 1) {
             Fail(where + "\"" + item + "\" is not an item of remake/items.tsv that stands for one SoH item");
+        }
+        // With the place left out of the shuffle, the logic counts what SoH's location list says it gives.
+        if (candidates->second.front() != Rando::StaticData::GetLocation(location)->GetVanillaItem()) {
+            Fail(where + "\"" + item + "\" is not the remake item for what the location gives in SoH");
         }
         auto gift = std::ranges::find(gifts, location, &RemakeGift::location);
         if (gift == gifts.end()) {
