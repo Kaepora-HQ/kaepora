@@ -14,6 +14,19 @@ Open an issue with one of the forms. The most useful report is a seed that canno
 
 The [README](README.md#build-from-source) has the steps. Some tests read the game file, and GitHub cannot run those. Run them yourself with `-DKAEPORA_GAME_NUP=<your game file>` and say in the pull request that they passed.
 
+## Choose a test's language
+
+The tests are in Python and in C++, and neither is the default. A test goes in the language that makes it smaller. These reasons usually decide it:
+
+- A test that runs one of the programs and reads what it wrote is usually smaller in Python. The standard library starts the program, reads the JSON and the tables, and compares the files, so the test holds little more than its question.
+- A test that calls a C++ function or drives the window is usually C++. When a few lines around the function are enough, a Python test can run that small program instead, as `tests/make_seed.cpp` shows.
+- The patcher's tests read the game's files with readers written apart from the patcher's, so a bug in either reader shows as a difference. A C++ test that used the patcher's own readers would lose that.
+- The language does not decide how long a test takes. Most of the time goes to the programs the test starts.
+
+Weigh these reasons against the case in front of you. Where they do not fit, write the smaller and plainer test and say why in the pull request.
+
+Python tests use the standard library only and run with `python3 -I`.
+
 ## Change a rule of the logic
 
 The logic under `shipwright/` is Ship of Harkinian's, changed where the remake differs from the original game. A rule changes only on evidence from the remake:
