@@ -267,6 +267,11 @@ if(Qt6Test_FOUND)
         # On Windows, QTest writes to the debugger rather than to stderr when no console is attached, as under ctest.
         set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT
                              "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
+        if(WIN32)
+            # On Windows, Qt asks the system for the folder that holds the seeds, and no variable moves it, so every
+            # run of the test program shares one folder.
+            set_tests_properties(window_${TEST} PROPERTIES RESOURCE_LOCK window-seeds-folder)
+        endif()
     endforeach()
 endif()
 
