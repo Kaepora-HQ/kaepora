@@ -116,7 +116,8 @@ void RegionTable_Init_DesertColossus() {
 
     areaTable[RR_COLOSSUS_GREAT_FAIRY_FOUNTAIN] = Region("Colossus Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_SPELLS, {}, {
         //Locations
-        LOCATION(RC_COLOSSUS_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY)),
+        // Her Triforce mark asks whether Link holds Din's Fire, and she asks 300 rupees.
+        LOCATION(RC_COLOSSUS_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE) && GetWalletCapacity() >= 300),
     }, {
         //Exits
         ENTRANCE(RR_DESERT_COLOSSUS, true),

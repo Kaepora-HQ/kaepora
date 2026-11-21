@@ -13,6 +13,9 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import reach  # noqa: E402
 
+# SoH counts the Spirit Temple's keys for the worst order a player can spend them in, so the search reaches the
+# temple's Silver Gauntlets, and the Golden ones after them, only with one key at the start.
+SPIRIT_KEY_AT_START = ("Link's Pocket", "Spirit Temple Small Key")
 # The 10 and 30 Gold Skulltula rewards are the only wallet upgrades.
 NO_WALLET_UPGRADE = (("Kak 10 Gold Skulltula Reward", "Green Rupee"), ("Kak 30 Gold Skulltula Reward", "Green Rupee"))
 ONE_WALLET_UPGRADE = ("Kak 30 Gold Skulltula Reward", "Green Rupee")
@@ -229,8 +232,21 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee")))
         self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Prelude of Light"), *no_crossing))
 
-    def test_crater_great_fairy_needs_magic(self):
-        self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
+    def test_four_great_fairies_wait_for_dins_fire(self):
+        # Every fountain's Triforce mark but the summit's asks whether Link holds Din's Fire, which the summit's Great
+        # Fairy gives (read from the flows; seen in the game at the castle). A Spirit Temple key at the start lets the
+        # search reach the Golden Gauntlets that open the fountain outside Ganon's Castle.
+        no_dins_fire = ("DMT Great Fairy Din's Fire", "Green Rupee")
+        for fairy in ("DMC Great Fairy Reward", "OGC Great Fairy Reward", "ZF Great Fairy Reward",
+                      "Colossus Great Fairy Reward"):
+            self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
+            self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, no_dins_fire), fairy)
+
+    def test_two_great_fairies_ask_more_than_a_childs_wallet_holds(self):
+        # Outside Ganon's Castle she asks 500 rupees and at the Colossus 300 (read from the flows).
+        for fairy in ("OGC Great Fairy Reward", "Colossus Great Fairy Reward"):
+            self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
+            self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, *NO_WALLET_UPGRADE), fairy)
 
     def test_only_the_bean_lifts_link_to_the_volcano_heart_piece(self):
         # The remake has no bomb or bombchu hover.

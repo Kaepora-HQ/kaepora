@@ -221,7 +221,8 @@ void RegionTable_Init_CastleGrounds() {
 
     areaTable[RR_OGC_GREAT_FAIRY_FOUNTAIN] = Region("OGC Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC, {}, {
         //Locations
-        LOCATION(RC_OGC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY)),
+        // Her Triforce mark asks whether Link holds Din's Fire, and she asks 500 rupees.
+        LOCATION(RC_OGC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE) && GetWalletCapacity() >= 500),
     }, {
         //Exits
         ENTRANCE(RR_CASTLE_GROUNDS_FROM_GREAT_FAIRY, true),
