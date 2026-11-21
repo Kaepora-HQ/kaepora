@@ -237,7 +237,7 @@ class LogicTest(unittest.TestCase):
         # program; seen for Din's Fire, the Fire Arrows and the Ice Arrows). Each check below asks for one source's own
         # use, which takes the meter, with every other source and both blessings taken out. No check asks for Farore's
         # Wind or the Ice Arrows, and the one that asks for the meter alone has other ways.
-        no_sources = (("DMT Great Fairy Reward", "Green Rupee"), ("DMC Great Fairy Reward", "Green Rupee"),
+        no_sources = (("HC Great Fairy Reward", "Green Rupee"), ("DMC Great Fairy Reward", "Green Rupee"),
                       ("DMT Great Fairy Din's Fire", "Green Rupee"), ("ZF Great Fairy Reward", "Green Rupee"),
                       ("Colossus Great Fairy Reward", "Green Rupee"),
                       ("Bottom of the Well Lens of Truth Chest", "Green Rupee"), ("LH Sun", "Green Rupee"),
@@ -283,6 +283,12 @@ class LogicTest(unittest.TestCase):
         for fairy in ("OGC Great Fairy Reward", "Colossus Great Fairy Reward"):
             self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
             self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, *NO_WALLET_UPGRADE), fairy)
+
+    def test_the_castle_great_fairy_gives_the_meter_once_link_holds_dins_fire(self):
+        # Seen in the game: the castle's Great Fairy gives her blessing, with the meter, only to a Link who holds Din's
+        # Fire, which the summit's Great Fairy gives.
+        self.assertTrue(self.reachable("HC Great Fairy Reward"))
+        self.assertFalse(self.reachable("HC Great Fairy Reward", ("DMT Great Fairy Din's Fire", "Green Rupee")))
 
     def test_only_the_bean_lifts_link_to_the_volcano_heart_piece(self):
         # The remake has no bomb or bombchu hover.

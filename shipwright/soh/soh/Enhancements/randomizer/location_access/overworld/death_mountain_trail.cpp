@@ -162,7 +162,7 @@ void RegionTable_Init_DeathMountainTrail() {
 
     areaTable[RR_DMT_GREAT_FAIRY_FOUNTAIN] = Region("DMT Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC, {}, {
         //Locations
-        LOCATION(RC_DMT_GREAT_FAIRY_REWARD,    logic->CanUse(RG_ZELDAS_LULLABY)),
+        // She gives Din's Fire, and the meter comes with it.
         LOCATION(RC_DMT_GREAT_FAIRY_DINS_FIRE, logic->CanUse(RG_ZELDAS_LULLABY)),
     }, {
         //Exits

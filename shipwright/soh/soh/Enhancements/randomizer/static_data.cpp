@@ -381,7 +381,7 @@ std::unordered_map<std::string, RandomizerCheck> StaticData::excludedLocationToE
     { "185", RC_DMT_TRADE_BROKEN_SWORD },
     { "186", RC_DMT_TRADE_EYEDROPS },
     { "187", RC_DMT_TRADE_CLAIM_CHECK },
-    { "188", RC_DMT_GREAT_FAIRY_REWARD },
+    { "188", RC_HC_GREAT_FAIRY_REWARD },
     { "189", RC_DMT_COW_GROTTO_COW },
     { "190", RC_DMT_GS_NEAR_KAK },
     { "191", RC_DMT_GS_BEAN_PATCH },

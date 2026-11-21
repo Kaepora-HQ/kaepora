@@ -150,8 +150,8 @@ void RegionTable_Init_CastleGrounds() {
 
     areaTable[RR_HC_GREAT_FAIRY_FOUNTAIN] = Region("HC Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_SPELLS, {}, {
         //Locations
-        // She gives nothing until Link holds Din's Fire, which the Great Fairy on Death Mountain's summit gives,
-        // and then nothing the logic tracks.
+        // She gives the improved spin attack, and the meter to a Link who has none, once he holds Din's Fire.
+        LOCATION(RC_HC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE)),
     }, {
         //Exits
         ENTRANCE(RR_CASTLE_GROUNDS_FROM_GREAT_FAIRY, true),
