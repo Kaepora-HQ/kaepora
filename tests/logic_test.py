@@ -32,9 +32,8 @@ NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),)
 # The Boomerang, the Hookshot and the Longshot each fetch a Gold Skulltula's token from afar.
 NO_BOOMERANG = ("Jabu Jabus Belly Boomerang Chest", "Green Rupee")
 NO_RANGED = (NO_BOOMERANG, NO_HOOKSHOT, ("Water Temple Longshot Chest", "Green Rupee"))
-# The Deku Tree's chest and the market's gallery give the slingshot, and the Forest Temple's chest gives the bow.
-NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Market Shooting Gallery", "Green Rupee"),
-                       ("Forest Temple Bow Chest", "Green Rupee"))
+# The Deku Tree's chest gives the slingshot, and the Forest Temple's chest gives the bow.
+NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Forest Temple Bow Chest", "Green Rupee"))
 NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Green Rupee"),
              ("Kak Anju as Child", "Green Rupee"), ("LLR Talons Chickens", "Green Rupee"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
@@ -246,6 +245,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Deku Tree Slingshot Room Side Chest"))
         no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
         self.assertFalse(self.reachable("Deku Tree Slingshot Room Side Chest", no_slingshot))
+
+    def test_the_market_shooting_gallery_lends_a_slingshot(self):
+        # Seen in the game by Devin: the gallery lends a slingshot to a child who has none. Its prize is a bigger bullet
+        # bag, no Slingshot, so the Lost Woods target, which takes Link's own, stays out of reach. With the forest
+        # closed, a child leaves it only past Gohma, who takes the slingshot.
+        no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Market Shooting Gallery", no_slingshot, settings=FOREST_OPEN))
+        self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, settings=FOREST_OPEN))
 
     # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
     # tier found, and only adult Link can use them.

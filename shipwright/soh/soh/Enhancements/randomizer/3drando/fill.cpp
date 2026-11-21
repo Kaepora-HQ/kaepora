@@ -1110,7 +1110,10 @@ bool KeptFromShops(RandomizerGet item) {
     const ItemType type = Rando::StaticData::RetrieveItem(item).GetItemType();
     return type == ITEMTYPE_SMALLKEY || type == ITEMTYPE_BOSSKEY || type == ITEMTYPE_MAP || type == ITEMTYPE_COMPASS ||
            item == RG_PROGRESSIVE_BOW || item == RG_PROGRESSIVE_SLINGSHOT || item == RG_PROGRESSIVE_BOMB_BAG ||
-           item == RG_BOMBCHU_5 || item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
+           item == RG_BIG_QUIVER || item == RG_BIGGEST_QUIVER || item == RG_BIG_BULLET_BAG ||
+           item == RG_BIGGEST_BULLET_BAG || item == RG_BIG_BOMB_BAG || item == RG_BIGGEST_BOMB_BAG ||
+           item == RG_DEKU_STICK_CAPACITY_20 || item == RG_DEKU_NUT_CAPACITY_30 || item == RG_BOMBCHU_5 ||
+           item == RG_BOMBCHU_20 || item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,

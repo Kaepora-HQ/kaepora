@@ -2,6 +2,8 @@ remake_item	soh_item
 Item_AgonyStone	Stone of Agony
 Item_Arrow_Fire	Fire Arrows
 Item_Arrow_Ice	Ice Arrows
+Item_BombBag_Large	Biggest Bomb Bag
+Item_BombBag_Medium	Big Bomb Bag
 Item_BombBag_Small	Progressive Bomb Bag
 Item_BombBundle_Small	Bombs (5)
 Item_BombchuBundle_Large	Bombchus (20)
@@ -9,6 +11,8 @@ Item_BombchuBundle_Small	Bombchus (5)
 Item_Boomerang	Boomerang
 Item_Bottle	Empty Bottle
 Item_Bottle_Milk	Bottle with Milk
+Item_BulletBag_Large	Biggest Deku Seed Bullet Bag
+Item_BulletBag_Medium	Big Deku Seed Bullet Bag
 Item_DekuStickBundle_Small	Deku Stick (1)
 Item_Dungeon_BossKey	Fire Temple Boss Key
 Item_Dungeon_BossKey	Forest Temple Boss Key
@@ -70,12 +74,16 @@ Item_Melody_SunSong	Sun's Song
 Item_Melody_TimeSong	Song of Time
 Item_Melody_WaterSerenade	Serenade of Water
 Item_Melody_ZeldaLullaby	Zelda's Lullaby
+Item_NutBag_Medium	Deku Nut Capacity (30)
+Item_Quiver_Large	Biggest Quiver
+Item_Quiver_Medium	Big Quiver
 Item_Range_Bow	Progressive Bow
 Item_Range_SlingShot	Progressive Slingshot
 Item_Scale_Gold	Progressive Scale
 Item_Scale_Silver	Progressive Scale
 Item_ScrubBusinessSeed	Business Scrub Seed
 Item_Shield_Mirror	Mirror Shield
+Item_StickBag_Medium	Deku Stick Capacity (20)
 Item_Stone_Fire	Goron's Ruby
 Item_Stone_Forest	Kokiri's Emerald
 Item_Stone_Water	Zora's Sapphire

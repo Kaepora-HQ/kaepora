@@ -76,8 +76,8 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
 // slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the
-// quiver, the Goron Ruby or the empty bottle they may need. So with shop goods shuffled they go to a chest, a gift or
-// a loose spot: the fill places them before shop slots and Gold Skulltulas join it.
+// quiver, the Goron Ruby or the empty bottle they may need, nor that a shelf sells a bag. So with shop goods shuffled
+// they go to a chest, a gift or a loose spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
 // The Spiritual Stones and the medallions. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire,

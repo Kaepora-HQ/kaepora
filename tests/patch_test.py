@@ -172,6 +172,10 @@ POUCH_ACTOR_INFO = "RSDB/PouchActorInfo.Product.111.rstbl.byml.zs"
 # counts each by, and the small container a chest hands over with each.
 WEAPON_CONTAINERS = {"Item_Range_Bow": "Item_Quiver_Small", "Weapon_Range_Bow": "Item_Quiver_Small",
                      "Item_Range_SlingShot": "Item_BulletBag_Small", "Weapon_Range_SlingShot": "Item_BulletBag_Small"}
+# The pouch rows of the bigger quivers, bullet bags, bomb bags, stick bags and nut bags, and the small container of
+# each kind.
+BIGGER_CONTAINERS = {f"Item_{kind}_{size}": f"Item_{kind}_Small"
+                     for kind in ("Quiver", "BulletBag", "BombBag", "StickBag", "NutBag") for size in ("Medium", "Large")}
 # The game's ActorInfo entry leaves this much over the file's size rounded up to 32 bytes.
 ACTOR_INFO_OVERHEAD = 3064
 TOKEN = "Obj_Token_Gold"
@@ -1387,8 +1391,8 @@ def shop_table(patch, game):
 
 
 def give_table(patch, game, table):
-    """Every site of a table of gives, remake/gifts.tsv or remake/rewards.tsv, names its row's item in the game's flow,
-    under an event name no other event of the flow has, and the patcher writes the plan's item there."""
+    """Every site of a table of gives, remake/gifts.tsv or remake/rewards.tsv, names the item its row says it gives in
+    the game's flow, under an event name no other event of the flow has, and the patcher writes the plan's item there."""
     with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / table, newline="") as f:
         rows = list(csv.DictReader(f, delimiter="\t"))
     mod = patched(patch, game, plan([], event_texts=[(row["flow"], row["event"], row["param"], "Item_Hammer")
@@ -1397,7 +1401,7 @@ def give_table(patch, game, table):
     for row in rows:
         theirs, ours = flows[row["flow"]]
         assert [event[0] for event in theirs["events"]].count(row["event"]) == 1, row
-        assert string_parameter(theirs, row["event"], row["param"])[1] == row["item"], row
+        assert string_parameter(theirs, row["event"], row["param"])[1] == row["gives"], row
         assert string_parameter(ours, row["event"], row["param"])[1] == "Item_Hammer", row
 
 
@@ -1757,7 +1761,7 @@ def new_actors(patch, game):
 
 def with_containers(table):
     """The game's pouch table with each weapon's row raising its kind's limit and filling it as its container's row
-    does, and adding the container too."""
+    does, and adding the container too, and with each bigger container adding its small one."""
     by_id = {row["__RowId"]: row for row in table}
     rows = []
     for row in table:
@@ -1766,6 +1770,9 @@ def with_containers(table):
             raises = ("MaxNumGameData", "AfterExpansionMaxNum", "IsItemStockMaxIfGet")
             row = row | {key: container[key] for key in raises}
             row["ExpansionMaxNumActor"] = f"{container['ExpansionMaxNumActor']},{goods(container['__RowId'])}"
+        elif row["__RowId"] in BIGGER_CONTAINERS:
+            small = goods(BIGGER_CONTAINERS[row["__RowId"]])
+            row = row | {"ExpansionMaxNumActor": f"{row['ExpansionMaxNumActor']},{small}"}
         rows.append(row)
     return rows
 
@@ -1802,6 +1809,17 @@ def weapons_bring_containers(patch, game):
     size = load_size(len(zstd.decompress(mod[POUCH_ACTOR_INFO])))
     expected = [(key, max(entry, size) if key == size_key(POUCH_ACTOR_INFO) else entry) for key, entry in entries]
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
+
+
+def bigger_containers_bring_the_small_one(patch, game):
+    """In every mod, a bigger quiver, bullet bag, bomb bag, stick bag or nut bag gives the small one of its kind too,
+    which a shop asks for before it sells arrows or seeds and the rolling Goron asks for before he gives his prize. Its
+    limit, its fill and every other value are the game's."""
+    theirs = {row["__RowId"]: row for row in byml(zstd.decompress(game.read(POUCH_ACTOR_INFO)))}
+    ours = {row["__RowId"]: row for row in byml(zstd.decompress(every_mod(patch, game)[POUCH_ACTOR_INFO]))}
+    for bigger, small in BIGGER_CONTAINERS.items():
+        listed = theirs[bigger]["ExpansionMaxNumActor"]
+        assert ours[bigger] == theirs[bigger] | {"ExpansionMaxNumActor": f"{listed},{goods(small)}"}, bigger
 
 
 def raised_pouch_entry(patch, game, table):
@@ -2408,6 +2426,7 @@ def main():
         "reward-table": lambda patch, game: give_table(patch, game, "rewards.tsv"),
         "new-actors": new_actors,
         "weapons-bring-containers": weapons_bring_containers,
+        "bigger-containers-bring-the-small-one": bigger_containers_bring_the_small_one,
         "weapon-copies": weapon_copies,
         "tested-new-actor-mod": tested_new_actor_mod,
         "tested-shop-goods-mod": tested_shop_goods_mod,

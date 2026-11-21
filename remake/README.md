@@ -191,16 +191,26 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 21 SoH locations: the five
-House of Skulltula rewards, and the heart pieces, bottles and scales that minigames and characters give. With "Gifts" at
-"Shuffled" the 21 join the shuffle. Each adds to the pool what it gives in the game, and the plan writes the placed
-item at each of its places.
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 29 SoH locations: the five
+House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, and the eight
+prizes that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger. With "Gifts" at "Shuffled" the 29 join
+the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
 - `event`: the event whose call gives the item, by its name, which no other event of the flow has.
 - `param`: the call's string parameter that names the item.
-- `item`: what the call gives in the unmodified game, by its remake name. Every row of a location names the same item.
+- `gives`: what the call gives in the unmodified game, by its remake name.
+- `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
+
+A bag prize gives the bigger of two sizes from one event and the biggest from another: the biggest only to a Link who
+already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko galleries, the
+bowling alley and the Deku theater add the bigger bag, and the Lost Woods target, horseback archery and the rolling
+Goron the biggest. SoH's logic gives these eight items no effect, so a bigger quiver or bullet bag is no Bow or
+Slingshot to it, and the rolling Goron waits for the small Bomb Bag, as he does in the game. No shelf has been seen to
+sell a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. With "Gifts" at "Vanilla", the logic counts
+what SoH's location list says each place gives, so a row's item must be that, and the list gives the eight places
+their bags and the 40-token reward its 20 Bombchus.
 
 A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
 retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
@@ -240,7 +250,10 @@ lists actors to fill, the item's add raises the limit the row names and fills ea
 program). So in every mod the Bow's and the Slingshot's rows list what the small quiver's and bullet bag's rows list,
 and the container too, which a shop asks for before it sells arrows or seeds (`DisplayShop.bfevfl`, read). The add
 skips all of it when Link's limit is already at or above the row's, so a weapon that comes after a bigger quiver or
-bullet bag brings neither its container nor ammunition (read from the program). Seen in the game by an agent, with the
+bullet bag brings neither its container nor ammunition (read from the program). So in every mod each medium and large
+quiver, bullet bag, bomb bag, stick bag and nut bag also lists the small one of its kind, after its ammunition: one that
+comes first brings the small one, which shops and the rolling Goron ask for (read). That the game hands the small one
+over this way is unseen. Seen in the game by an agent, with the
 rows changed: one talk in the House of Skulltula gave the Bow and the Slingshot, each with its small container, a limit
 of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the
 container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The
