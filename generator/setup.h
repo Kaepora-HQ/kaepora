@@ -12,8 +12,5 @@ void InitializeRandomizer();
 // seed rewrites some options, so each seed starts with these, as in SoH's menu.
 void SetOptions(const SeedSettings& settings);
 
-// SoH's item for each item the settings start with.
-std::vector<RandomizerGet> StartingItems(const SeedSettings& settings);
-
 // SoH tricks whose rule is what the game asks. SoH's FinalizeSettings turns on these and no others.
 extern const std::set<RandomizerTrick> enabledTricks;

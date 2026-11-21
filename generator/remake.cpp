@@ -940,8 +940,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["start_items"] = nlohmann::ordered_json::array();
-    for (const StartItem& item : StartWithInOrder(settings)) {
-        plan["start_items"].push_back(item.actor);
+    for (const StartStep& started : StartWithInOrder(settings)) {
+        for (const StartStep& step : StepsTo(started)) {
+            plan["start_items"].push_back(step.actor);
+        }
     }
     return plan;
 }
