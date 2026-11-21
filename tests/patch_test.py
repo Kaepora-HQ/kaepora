@@ -19,8 +19,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|copies-play-every-get|goods-and-copies|weapons-bring-containers|weapon-copies| \
-           event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
+           loose-item-table|copies-play-every-get|loose-item-heights|goods-and-copies|weapons-bring-containers| \
+           weapon-copies|event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
            sword-scene-left-out|sword-scene-kept <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
@@ -204,6 +204,8 @@ LON_LON_HEART_PIECE = (9814903750835309225, [HYRULE_FIELD_CHILD_STATIC])
 LAKE_HEART_PIECE = (13469300937852836203, [HYRULE_FIELD_ADULT_STATIC])
 IMPAS_HOUSE_HEART_PIECE = (17926402522258180222, KAKARIKO_STATICS)
 GOHMA_HEART_CONTAINER = (17948245526767051747, [DEKU_STATIC])
+RIVER_HEART_PIECE = (4189391771527808272, [f"Banc/ZoraRiver/ZoraRiver_{age}_Static.bcett.byml.zs"
+                                           for age in ("Adult", "Child")])
 FIRE_ARROWS_PICKUP = "Obj_Arrow_Fire"
 PICKUP_TEMPLATE = "Obj_Shield_Hylian"
 
@@ -1363,6 +1365,12 @@ def as_float(node):
     return struct.unpack("<f", struct.pack("<I", node[1]))[0]
 
 
+def float_node(value):
+    """The value as the reader gives a float, rounded to 32 bits."""
+    return (0xD2, struct.unpack("<I", struct.pack("<f", value))[0])
+
+
+
 def shelf_placement(patch, game):
     """An item sold from goods of its own stands on its shelf as the game's goods stand theirs: the shelf rises by what
     hangs under the item's origin in its pose, at the size the item takes. The Longshot hangs 250 mm under its origin
@@ -1638,7 +1646,7 @@ def pouch_chain(files, member):
     chain = []
     while member in files:
         chain.append(member)
-        member = byml(files[member]).get("$parent", "").removeprefix("Work/").removesuffix(".gyml") + ".bgyml"
+        member = work_member(byml(files[member]).get("$parent", ""))
     return chain
 
 
@@ -1673,17 +1681,89 @@ def assert_token_copy(game, mod, item, copy):
 def tested_pickup_mod(patch, game, romfs):
     """The Lon Lon Ranch heart piece, planned to give the Mirror Shield, gives the files of the mod the game showed:
     the Mirror Shield lay at the spot, Link took it by touch and got it, and the spot stayed empty after a reload. That
-    mod's copy has no PlayGetEventManyTimes in its pouch content, which copies-play-every-get checks."""
+    mod's copy has neither PlayGetEventManyTimes in its pouch content nor a body of its own with the spot moved to
+    match, which copies-play-every-get and loose-item-heights check."""
     tested = files(pathlib.Path(romfs))
     mod = patched(patch, game, plan([], loose_items=[(*LON_LON_HEART_PIECE, "Item_Shield_Mirror")]))
     copy = "Obj_PickupShield_Item_Shield_Mirror"
     pack = f"Pack/Actor/{copy}.pack.zs"
+    param = f"Actor/{copy}.engine__actor__ActorParam.bgyml"
     pouch = f"Component/PouchContentParam/{copy}.game__component__PouchContentParam.bgyml"
     ours, theirs = game.pack(mod[pack]), game.pack(tested[pack])
+    for members in (ours, theirs):
+        for member in body_members(members, copy):
+            members.pop(member)
+    ours_param, theirs_param = byml(ours.pop(param)), byml(theirs.pop(param))
+    theirs_param["Components"]["PhysicsRef"] = ours_param["Components"]["PhysicsRef"]
+    assert ours_param == theirs_param
     assert byml(ours.pop(pouch)) | {"PlayGetEventManyTimes": (BOOL, 1)} == \
         byml(theirs.pop(pouch)) | {"PlayGetEventManyTimes": (BOOL, 1)}
     assert ours == theirs
-    assert_as_the_game_ran(game, mod, tested, rebuilt=[pack])
+    h, (path,) = LON_LON_HEART_PIECE
+    spot, tested_spot = game.placement(mod[path]), game.placement(tested[path])
+    actor(tested_spot, h)["Translate"] = actor(spot, h)["Translate"]
+    assert spot == tested_spot
+    assert_as_the_game_ran(game, mod, tested, rebuilt=[pack, path])
+
+
+def body_members(files, name):
+    """The members that make an actor's body: its physics parameters, its controller set and its shapes."""
+    physics = resolved(files, f"Actor/{name}.engine__actor__ActorParam.bgyml")["Components"]["PhysicsRef"].lstrip("?")
+    controllers = work_member(byml(files[physics])["ControllerSetPath"])
+    shapes = [work_member(shape["FilePath"]) for shape in byml(files[controllers])["ShapeNamePathAry"]]
+    return [physics, controllers, *shapes]
+
+
+def work_member(path):
+    """The pack member a Work path names: Work/Phive/X.gyml is Phive/X.bgyml."""
+    return path.removeprefix("Work/").removesuffix(".gyml") + ".bgyml"
+
+
+def heights(shape):
+    """Each height a shape gives over its body's origin, in metres: its spheres' and cylinders' lowest and highest
+    points, and the centre and bounds it lists."""
+    def y(point):
+        return as_float(point["Y"])
+    spheres = [y(s["Center"]) + side * as_float(s["Radius"]) for s in shape.get("Sphere", []) for side in (-1, 1)]
+    cylinders = [y(c[end]) for c in shape.get("Cylinder", []) for end in ("CenterA", "CenterB")]
+    return spheres + cylinders + [y(shape["AutoCalc"][key]) for key in ("Center", "Min", "Max")]
+
+
+def shapes(files, name):
+    """The shapes of an actor's body, by their names in its controller set."""
+    _, controllers, *_ = body_members(files, name)
+    return {shape["Name"]: byml(files[work_member(shape["FilePath"])])
+            for shape in byml(files[controllers])["ShapeNamePathAry"]}
+
+
+def loose_item_heights(patch, game):
+    """A copy's body lies under its model as the Hylian Shield pickup's lies under a model whose lowest point is its
+    origin: each shape sinks into its body by how far the model reaches under its origin, and the spot rises by as much,
+    so the body starts where the pickup's would. With the pickup's own body, two copies were seen sunk into the floor:
+    the dungeon map, whose model reaches 213 mm under its origin, and the Gold Skulltula Token, 193 mm. Two were seen
+    lying well: the small key, 3 mm, and the compass, 33 mm. Only that way are a model's bounds trusted. The Lens of
+    Truth's start 919 mm above its origin, and its copy was seen out of sight when lowered by as much, so its copy and
+    its spot stay as the pickup's. The body's files are the copy's own, since the pickup's keep the pickup's shapes."""
+    depths = {"Item_Dungeon_Map": 0.2125, "Item_Token_Gold": 0.1929, "Item_Dungeon_SmallKey": 0.0032,
+              "Item_Dungeon_Compass": 0.0325, "Item_GlassTruth": 0.0}
+    spots = dict(zip(depths, (GOHMA_HEART_CONTAINER, LON_LON_HEART_PIECE, LAKE_HEART_PIECE, RIVER_HEART_PIECE,
+                              IMPAS_HOUSE_HEART_PIECE)))
+    mod = patched(patch, game, plan([], loose_items=[(*spots[item], item) for item in depths]))
+    template = shapes(game.pack(game.read(f"Pack/Actor/{PICKUP_TEMPLATE}.pack.zs")), PICKUP_TEMPLATE)
+    for item, depth in depths.items():
+        copy = f"Obj_PickupShield_{item}"
+        pack = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
+        ours = shapes(pack, copy)
+        assert ours.keys() == template.keys(), item
+        for name, shape in ours.items():
+            moved = [a - b for a, b in zip(heights(shape), heights(template[name]))]
+            assert all(abs(by + depth) < 0.0005 for by in moved), (item, name, moved)
+        h, paths = spots[item]
+        for path in paths:
+            ours_spot, theirs = (actor(game.placement(data), h) for data in (mod[path], game.read(path)))
+            moved = [as_float(a) - as_float(b) for a, b in zip(ours_spot["Translate"], theirs["Translate"])]
+            assert moved[0] == moved[2] == 0 and abs(moved[1] - depth) < 0.0005, (item, path, moved)
+        assert not any(PICKUP_TEMPLATE in member for member in body_members(pack, copy)), item
 
 
 def copies_play_every_get(patch, game):
@@ -1761,7 +1841,7 @@ def assert_pickup_copy(game, mod, item, copy):
     template = resolved(pickup, f"Actor/{PICKUP_TEMPLATE}.engine__actor__ActorParam.bgyml")["Components"]
     for ref in ("ActorNameRef", "ModelInfoRef", "AnimationRef"):
         assert components[ref] == own[ref], (item, ref)
-    for ref in ("AttentionSenderRef", "PhysicsRef", "ELinkRef", "SLinkRef"):
+    for ref in ("AttentionSenderRef", "ELinkRef", "SLinkRef"):
         assert components[ref] == template[ref], (item, ref)
     gives = ("PouchActor", "BundleActor", "BundleActorNum")
     pouch = resolved(ours, components["PouchContentRef"].lstrip("?"))
@@ -1775,10 +1855,15 @@ def loose_items(patch, game):
                (*LON_LON_HEART_PIECE, "Obj_Heart_Container"), (*LAKE_HEART_PIECE, "TBox_Rupee_Red")]
     mod = patched(patch, game, plan([], loose_items=planned))
     copies = {item: f"Obj_PickupShield_{item}" for item in ("Item_Arrow_Fire", "TBox_Rupee_Red")}
+    actor_info = {row["__RowId"]: row for row in byml(zstd.decompress(game.read(ACTOR_INFO)))}
     placements = {}
     for h, paths, item in planned:
         for path in paths:
-            actor(placements.setdefault(path, game.placement(game.read(path))), h)["Gyaml"] = copies.get(item, item)
+            spot = actor(placements.setdefault(path, game.placement(game.read(path))), h)
+            spot["Gyaml"] = copies.get(item, item)
+            if item in copies:
+                depth = max(0.0, -as_float(actor_info[item]["ModelAabbMin"]["Y"]))
+                spot["Translate"][1] = float_node(as_float(spot["Translate"][1]) + depth)
     packs = [f"Pack/Actor/{copy}.pack.zs" for copy in copies.values()]
     tables = [ACTOR_INFO, GAME_ACTOR_INFO, POUCH_ACTOR_INFO]
     assert sorted(mod) == sorted([*placements, *packs, *tables, SIZE_TABLE]), sorted(mod)
@@ -1820,7 +1905,7 @@ def resolved(files, member):
     """A pack member's values with its $parent chain merged in, as far as the pack holds the chain."""
     data = byml(files[member])
     parent = data.pop("$parent", None)
-    path = parent and parent.removeprefix("Work/").removesuffix(".gyml") + ".bgyml"
+    path = parent and work_member(parent)
     if path not in files:
         return data
 
@@ -2570,6 +2655,7 @@ def main():
         "tested-pickup-mod": tested_pickup_mod,
         "loose-items": loose_items,
         "copies-play-every-get": copies_play_every_get,
+        "loose-item-heights": loose_item_heights,
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
         "tested-song-mod": tested_song_mod,

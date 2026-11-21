@@ -52,6 +52,11 @@ inline std::strong_ordering Node::operator<=>(const Node& other) const {
            std::tie(other.type, other.scalar, other.string, other.array, other.dict);
 }
 
+// A Float node's value.
+inline float FloatOf(const Node& node) {
+    return std::bit_cast<float>(uint32_t(node.scalar));
+}
+
 struct Document {
     std::endian order;
     Node root;

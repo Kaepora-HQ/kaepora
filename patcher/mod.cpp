@@ -294,6 +294,7 @@ Plan ParsePlan(const nlohmann::json& json) {
 
 using byml::Find;
 using byml::FindOrAdd;
+using byml::FloatOf;
 
 static byml::Node* FindHash(byml::Node& array, uint64_t hash) {
     const auto found = std::ranges::find_if(array.array, [&](byml::Node& item) {
@@ -377,18 +378,23 @@ constexpr double LongestReach = 395;
 constexpr double SmallestGoods = 318;
 constexpr double MostRaised = 1.4;
 
+// Moves a placed actor up by the height, in metres, or down where the height is negative.
+static void MoveUp(byml::Node& placed, double height) {
+    byml::Node* translate = Find(placed, "Translate");
+    if (translate == nullptr || translate->array.size() != 3) {
+        throw std::runtime_error("the actor has no Translate");
+    }
+    byml::Node& y = translate->array[1];
+    y.scalar = std::bit_cast<uint32_t>(float(FloatOf(y) + height));
+}
+
 // The game's goods rest the lowest point of their pose on their shelf's origin, so the shelf rises by what hangs below
 // it. Every shelf stands upright.
 static void StandOnShelf(byml::Node& shelf, const GoodsModel& model) {
     const double height = model.top - model.bottom;
     const double raised = std::max(1.0, std::min(MostRaised, SmallestGoods / std::max<double>(height, model.width)));
     const double scale = std::min({ TallestGoods / height, LongestReach / model.reach, raised });
-    byml::Node* translate = Find(shelf, "Translate");
-    if (translate == nullptr || translate->array.size() != 3) {
-        throw std::runtime_error("the shelf has no Translate");
-    }
-    byml::Node& y = translate->array[1];
-    y.scalar = std::bit_cast<uint32_t>(float(std::bit_cast<float>(uint32_t(y.scalar)) - scale * model.bottom / 1000));
+    MoveUp(shelf, -scale * model.bottom / 1000);
     if (scale != 1) {
         const byml::Node size{ .type = byml::Type::Float, .scalar = std::bit_cast<uint32_t>(float(scale)) };
         FindOrAdd(shelf, "Scale", byml::Type::Array).array = { size, size, size };
@@ -816,7 +822,7 @@ static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::st
     if (const std::string ability = Text(row, "ExpansionAvility"); ability == "LiftGradeUP") {
         values["PlayerStatus.LiftGrade"] = Choice{ Text(row, "LiftableGrade") };
     } else if (ability == "DiveDepthUP") {
-        values["PlayerStatus.DiveDepth"] = std::bit_cast<float>(uint32_t(Value(row, "DiveDepth").scalar));
+        values["PlayerStatus.DiveDepth"] = FloatOf(Value(row, "DiveDepth"));
     } else if (!ability.empty()) {
         throw std::runtime_error(std::format("its ExpansionAvility is {}, which a start does not write", ability));
     }
@@ -1200,6 +1206,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
     for (const PlannedActorItem& loose : plan.looseItems) {
         std::string pickup = loose.item;
+        // A copy's body sinks by its model's depth under its origin, so the spot rises by as much: the body starts
+        // where the template's would, and the model's lowest point stands at the spot.
+        float depth = 0;
         if (std::ranges::find(LoosePickups, loose.item) == LoosePickups.end()) {
             auto copy = pickupCopies.find(loose.item);
             if (copy == pickupCopies.end()) {
@@ -1210,10 +1219,13 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 }
             }
             pickup = copy->second.name;
+            depth = DepthUnderOrigin(copy->second.rows.find(ActorInfoPath)->second);
         }
         for (const std::string& path : loose.files) {
             try {
-                if (SetGyaml(Actor(placement(path), loose.hash), pickup)) {
+                byml::Node& spot = Actor(placement(path), loose.hash);
+                if (SetGyaml(spot, pickup)) {
+                    MoveUp(spot, depth);
                     changed.insert(path);
                 }
             } catch (const std::exception& e) {

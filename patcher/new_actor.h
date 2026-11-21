@@ -47,6 +47,13 @@ NewActor GoodsActor(GameFile& game, const std::string& packDictionary, ActorTabl
 // kill, with the item's name and what the item's own actor gives.
 NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);
 
-// A copy of the game's Hylian Shield pickup that gives the item: taken by touch, with the pickup's body and record of
-// being taken, the item's name, model, animation and parameters, and what the item's own actor gives.
+// A copy of the game's Hylian Shield pickup that gives the item: taken by touch, with the pickup's record of being
+// taken and its body sunk by the model's depth under its origin, the item's name, model, animation and parameters, and
+// what the item's own actor gives.
 NewActor PickupCopy(GameFile& game, const std::string& packDictionary, ActorTables& tables, const std::string& item);
+
+// How far an actor's model reaches under its origin, in metres, from its ActorInfo row's bounds, and 0 for a model
+// whose bounds start above it. The bounds are trusted only that way: seen in the game, they put a copy of the token,
+// the map and the Megaton Hammer on the floor, and one of the Lens of Truth, whose bounds start 0.92 m above its
+// origin, out of sight under it.
+float DepthUnderOrigin(byml::Node& actorInfoRow);

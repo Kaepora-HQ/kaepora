@@ -61,6 +61,11 @@ static std::string Member(std::string_view ref) {
     return std::format("{}.bgyml", ref.substr(5, ref.size() - 10));
 }
 
+// The reference by which a $parent or a path names a pack member: Component/X.bgyml is Work/Component/X.gyml.
+static std::string WorkRef(std::string_view member) {
+    return std::format("Work/{}.gyml", member.substr(0, member.size() - std::string_view(".bgyml").size()));
+}
+
 static sarc::Files Pack(GameFile& game, const std::string& dictionary, std::string_view actor) {
     const std::string path = std::format("Pack/Actor/{}.pack.zs", actor);
     try {
@@ -141,8 +146,8 @@ static byml::Node& Row(ActorTables& tables, std::string_view table, std::string_
     return Row(tables.find(table)->second.root, actor);
 }
 
-static float FloatOf(const byml::Node& node) {
-    return std::bit_cast<float>(uint32_t(node.scalar));
+float DepthUnderOrigin(byml::Node& actorInfoRow) {
+    return std::max(0.0f, -byml::FloatOf(Value(Value(actorInfoRow, "ModelAabbMin"), "Y")));
 }
 
 // The template's row, showing the item: its name, model, animation and bounds. Its heaps take the item's sizes plus
@@ -161,7 +166,7 @@ static byml::Node ActorInfoRow(ActorTables& tables, std::string_view shownOn, co
     }
     for (const std::string_view key : { "CalcRadius", "DisplayRadius", "LoadRadius" }) {
         byml::Node& radius = Value(row, key);
-        radius = FloatOf(Value(own, key)) > FloatOf(radius) ? Value(own, key) : radius;
+        radius = byml::FloatOf(Value(own, key)) > byml::FloatOf(radius) ? Value(own, key) : radius;
     }
     return row;
 }
@@ -255,8 +260,7 @@ NewActor TokenCopy(GameFile& game, const std::string& packDictionary, ActorTable
     std::erase_if(pouch.root.dict, [](const byml::Entry& entry) {
         return std::ranges::find(TokenPickUp, entry.key) == TokenPickUp.end();
     });
-    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string =
-        std::format("Work/{}.gyml", ownPouch.substr(0, ownPouch.size() - std::string_view(".bgyml").size()));
+    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string = WorkRef(ownPouch);
     byml::Node gives = Resolved(own, ownPouch);
     if (const byml::Node* named = byml::Find(gives, "PouchActor")) {
         byml::FindOrAdd(pouch.root, "PouchActor", byml::Type::String) = *named;
@@ -310,6 +314,51 @@ constexpr std::string_view BaseTablePack = "Obj_Dungeon_SmallKey";
 constexpr std::string_view BaseTable =
     "GameParameter/GameParameterTable/Obj_Item_Base.engine__actor__GameParameterTable.bgyml";
 
+// The points of a shape: a sphere's centre, a cylinder's two ends, and the bounds of the shape.
+constexpr std::array<std::string_view, 5> ShapePoints = { "Center", "CenterA", "CenterB", "Min", "Max" };
+
+static void MoveShapeUp(byml::Node& node, float height) {
+    for (byml::Node& item : node.array) {
+        MoveShapeUp(item, height);
+    }
+    for (byml::Entry& entry : node.dict) {
+        if (std::ranges::find(ShapePoints, entry.key) == ShapePoints.end()) {
+            MoveShapeUp(entry.value, height);
+            continue;
+        }
+        byml::Node& y = Value(entry.value, "Y");
+        y.scalar = std::bit_cast<uint32_t>(byml::FloatOf(y) + height);
+    }
+}
+
+// The template names its physics parameters, controller set and shapes after itself. The copy takes them under its own
+// name, with every shape moved up by the height. Returns the member of its physics parameters.
+static std::string OwnBody(sarc::Files& pack, const std::string& physics, std::string_view copy, float height) {
+    const auto renamed = [&](std::string member) {
+        member.replace(member.find(Pickup.actor), Pickup.actor.size(), copy);
+        return member;
+    };
+    byml::Document param = byml::Parse(pack.at(physics));
+    byml::Node& setRef = Value(param.root, "ControllerSetPath");
+    const std::string set = Member(setRef.string);
+    byml::Document controllers = byml::Parse(pack.at(set));
+    for (byml::Node& shape : Value(controllers.root, "ShapeNamePathAry").array) {
+        byml::Node& shapeRef = Value(shape, "FilePath");
+        const std::string member = Member(shapeRef.string);
+        byml::Document moved = byml::Parse(pack.at(member));
+        MoveShapeUp(moved.root, height);
+        pack.erase(member);
+        Add(pack, renamed(member), byml::Write(moved));
+        shapeRef.string = WorkRef(renamed(member));
+    }
+    setRef.string = WorkRef(renamed(set));
+    pack.erase(set);
+    pack.erase(physics);
+    Add(pack, renamed(set), byml::Write(controllers));
+    Add(pack, renamed(physics), byml::Write(param));
+    return renamed(physics);
+}
+
 // A reference to an actor names that actor, not a member to carry.
 static void NamedMembers(const byml::Node& node, std::vector<std::string>& members) {
     if (node.type == byml::Type::String &&
@@ -361,6 +410,10 @@ NewActor PickupCopy(GameFile& game, const std::string& packDictionary, ActorTabl
         const byml::Node& ref = Value(components, key) = Value(ownComponents, key);
         AddTree(pack, own, Member(ref.string));
     }
+    // The copy's body lies under its model as the template's lies under a model whose lowest point is its origin.
+    byml::Node& physics = Value(components, "PhysicsRef");
+    physics.string =
+        "?" + OwnBody(pack, Member(physics.string), actor.name, -DepthUnderOrigin(Row(tables, ActorInfoPath, item)));
     if (const byml::Node* table = byml::Find(ownComponents, "GameParameterTableRef")) {
         Value(components, "GameParameterTableRef") = *table;
         AddTree(pack, own, Member(table->string));
@@ -373,8 +426,7 @@ NewActor PickupCopy(GameFile& game, const std::string& packDictionary, ActorTabl
     const std::string ownPouch = Member(Value(ownComponents, "PouchContentRef").string);
     AddTree(pack, own, ownPouch);
     byml::Document pouch{ .order = param.order, .root = { .type = byml::Type::Dict } };
-    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string =
-        std::format("Work/{}.gyml", ownPouch.substr(0, ownPouch.rfind(".bgyml")));
+    byml::FindOrAdd(pouch.root, "$parent", byml::Type::String).string = WorkRef(ownPouch);
     for (const std::string_view key : Pickup.takeKeys) {
         const byml::Node& value = Value(taken, key);
         byml::FindOrAdd(pouch.root, std::string(key), value.type) = value;
