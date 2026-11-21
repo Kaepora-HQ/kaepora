@@ -5,7 +5,9 @@
 #include <memory>
 #include <stdexcept>
 
-constexpr int Level = 19;
+// zstd writes a single segment frame, the header the game's own files have, only while the content fits the level's
+// window: 4 MiB at level 9.
+constexpr int Level = 9;
 
 static size_t Check(size_t result) {
     if (ZSTD_isError(result)) {
