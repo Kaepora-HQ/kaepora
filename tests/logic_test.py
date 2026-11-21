@@ -112,6 +112,17 @@ class LogicTest(unittest.TestCase):
                                         ("KF Mido Top Left Chest", "Shadow Medallion"),
                                         ("KF Mido Top Right Chest", "Spirit Medallion")))
 
+    def test_the_bridge_waits_for_zeldas_scene_and_ganondorf_for_the_light_arrows(self):
+        # Zelda's scene in the Temple of Time moves the Ganon quest on, and the bridge appears at that step, whatever
+        # Link holds. Ganondorf and the trials' barriers still take the Light Arrows. As above, a Spirit Temple key at
+        # the start lets the search reach Twinrova.
+        no_arrows = (("Market ToT Light Arrow Cutscene", "Green Rupee"), ("Link's Pocket", "Spirit Temple Small Key"))
+        self.assertTrue(self.reachable("Ganon's Castle Forest Trial Chest", *no_arrows))
+        self.assertFalse(self.reachable("Ganon", *no_arrows))
+        self.assertFalse(self.reachable("Ganon", *no_arrows, settings=NO_TRIALS))
+        self.assertTrue(self.reachable("Ganon", *no_arrows, ("Ganon's Castle Forest Trial Chest", "Light Arrows"),
+                                       settings=NO_TRIALS))
+
     def test_child_comes_back_before_the_forest_temple(self):
         # Only child Link can drain the well, with the Song of Storms that only adult Link learns. With the Fairy Bow in
         # the well, adult Link cannot finish the Forest Temple, and he still puts the Master Sword back.

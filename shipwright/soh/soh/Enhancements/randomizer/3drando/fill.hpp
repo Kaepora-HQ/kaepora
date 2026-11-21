@@ -11,9 +11,10 @@
 void ApplyCheck(Rando::ItemLocation* location);
 
 // Whether event is one that, while the spoiler log's route is made, only its scene's place sets: a dungeon clear, which
-// the boss's blue warp sets, or the Gerudo letting Link pass, which the scene after the last carpenter sets. The game's
-// gates wait for those scenes, which come with those places whatever they give, so the route names a place wherever a
-// later step waits for its scene. The fill's own searches set each as soon as its scene can play.
+// the boss's blue warp sets, the Gerudo letting Link pass, which the scene after the last carpenter sets, or Zelda's
+// scene in the Temple of Time, which the bridge to Ganon's Castle follows. The game's gates wait for those scenes,
+// which come with those places whatever they give, so the route names a place wherever a later step waits for its
+// scene. The fill's own searches set each as soon as its scene can play.
 bool SetByItsScenePlace(LogicVal event);
 
 // RANDOTODO merge into Logic once Logic is a class passed to logic funtions

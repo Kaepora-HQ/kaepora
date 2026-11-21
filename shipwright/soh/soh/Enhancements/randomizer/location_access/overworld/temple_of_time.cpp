@@ -28,9 +28,13 @@ void RegionTable_Init_TempleOfTime() {
         ENTRANCE(RR_TEMPLE_OF_TIME, true),
     });
 
-    areaTable[RR_TEMPLE_OF_TIME] = Region("Temple of Time", SCENE_TEMPLE_OF_TIME, {}, {
+    areaTable[RR_TEMPLE_OF_TIME] = Region("Temple of Time", SCENE_TEMPLE_OF_TIME, {
+        //Events
+        // Zelda waits once the Shadow and the Spirit sages have woken, in the scenes after their bosses. Her scene
+        // moves the Ganon quest on, and the bridge to Ganon's Castle follows the quest, whatever her place gives.
+        EVENT_ACCESS(LOGIC_SHEIK_REVEALS_ZELDA, logic->IsAdult && logic->Get(LOGIC_SHADOW_TEMPLE_CLEAR) && logic->Get(LOGIC_SPIRIT_TEMPLE_CLEAR)),
+    }, {
         //Locations
-        // Zelda waits once the Shadow and the Spirit sages have woken, in the scenes after their bosses.
         LOCATION(RC_TOT_LIGHT_ARROWS_CUTSCENE, logic->IsAdult && logic->Get(LOGIC_SHADOW_TEMPLE_CLEAR) && logic->Get(LOGIC_SPIRIT_TEMPLE_CLEAR)),
         LOCATION(RC_ALTAR_HINT_CHILD,          logic->IsChild),
         LOCATION(RC_ALTAR_HINT_ADULT,          logic->IsAdult),

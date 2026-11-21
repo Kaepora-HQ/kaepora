@@ -1935,8 +1935,7 @@ bool Logic::CanUseProjectile() {
 
 bool Logic::CanBuildRainbowBridge() {
     return ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_ALWAYS_OPEN) ||
-           (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_VANILLA) && Get(LOGIC_SHADOW_TEMPLE_CLEAR) &&
-            Get(LOGIC_SPIRIT_TEMPLE_CLEAR) && CanUse(RG_LIGHT_ARROWS)) ||
+           (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_VANILLA) && Get(LOGIC_SHEIK_REVEALS_ZELDA)) ||
            (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_STONES) &&
             StoneCount() + (HasItem(RG_GREG_RUPEE) && ctx->GetOption(RSK_BRIDGE_OPTIONS).Is(RO_BRIDGE_GREG_REWARD)) >=
                 ctx->GetOption(RSK_RAINBOW_BRIDGE_STONE_COUNT).Get()) ||
