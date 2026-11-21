@@ -360,9 +360,18 @@ if(KAEPORA_GAME_NUP)
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(Qt6Test_FOUND)
-        add_test(NAME window COMMAND kaepora-window-test)
-        set_tests_properties(window PROPERTIES ENVIRONMENT
-            "QT_QPA_PLATFORM=offscreen;KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};KAEPORA_MAKE_SEED=$<TARGET_FILE:kaepora-make-seed>")
+        # Every case of the window, in parts that ctest runs side by side. Each part takes its cases from the program.
+        set(WINDOW_PARTS 4)
+        foreach(PART RANGE 1 ${WINDOW_PARTS})
+            add_test(NAME window_${PART}_of_${WINDOW_PARTS}
+                     COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/window_part.py
+                             $<TARGET_FILE:kaepora-window-test> ${PART} ${WINDOW_PARTS})
+            set_tests_properties(window_${PART}_of_${WINDOW_PARTS} PROPERTIES ENVIRONMENT
+                "QT_QPA_PLATFORM=offscreen;KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};KAEPORA_MAKE_SEED=$<TARGET_FILE:kaepora-make-seed>")
+            if(WIN32)
+                set_tests_properties(window_${PART}_of_${WINDOW_PARTS} PROPERTIES RESOURCE_LOCK window-seeds-folder)
+            endif()
+        endforeach()
     endif()
     if(KAEPORA_TESTED_MOD)
         add_test(NAME patch-tested-mod
