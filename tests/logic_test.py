@@ -26,6 +26,9 @@ NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
 NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 # The well holds the only Lens of Truth.
 NO_LENS = ("Bottom of the Well Lens of Truth Chest", "Green Rupee")
+# Each guard's key opens one carpenter's cell, so without the first guard's key one carpenter stays and the scene
+# after the last never plays.
+NO_RESCUE = ("GF 1 Torch Carpenter", "Green Rupee")
 # Only Dodongo's Cavern holds a bomb bag, and bombchus count only with a bag, so without it Link holds no explosive.
 # King Dodongo falls only to explosives, so Link never becomes adult either.
 NO_BOMB_BAG = (("Dodongos Cavern Bomb Bag Chest", "Green Rupee"),)
@@ -172,18 +175,26 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Song from Windmill", *no_lesson))
         self.assertFalse(self.reachable("GF HBA 1000 Points", *no_lesson))
 
+    def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_not_for_the_card(self):
+        # After the last carpenter a scene moves the Spirit quest on. The guards, the Wasteland's gate keeper and the
+        # archery range follow the quest, not the card the scene gives.
+        card = ("Link's Pocket", "Gerudo Membership Card")
+        no_card = ("GF Freed All Carpenters", "Green Rupee")
+        for location in ("GF HBA 1000 Points", "Wasteland Chest", "Gerudo Training Ground Lobby Left Chest"):
+            self.assertFalse(self.reachable(location, NO_RESCUE, card), location)
+            self.assertTrue(self.reachable(location, no_card), location)
+
     def test_an_early_requiem_waits_for_the_fortress_at_the_spirit_temple(self):
         # With the Requiem learned as a child, Link warps to the Desert Colossus before the Gerudo Fortress. The
         # Colossus is open to him, but the Spirit Temple's front entrance waits for an adult who has entered the
-        # Wasteland from the fortress, through the gate the freed carpenters' card opens. Malon's Serenade takes him
-        # out again.
+        # Wasteland from the fortress, through the gate its keeper opens once the carpenters are free. Malon's Serenade
+        # takes him out again.
         early = (("Song from Impa", "Requiem of Spirit"), ("Sheik at Colossus", "Zelda's Lullaby"),
                  ("Song from Malon", "Serenade of Water"), ("Sheik in Ice Cavern", "Epona's Song"))
-        no_card = ("GF Freed All Carpenters", "Green Rupee")
         for location in ("Sheik at Colossus", "Colossus Great Fairy Reward", "Colossus GS Tree",
                          "Colossus Grotto Chest"):
-            self.assertTrue(self.reachable(location, *early, no_card, SILVER_GAUNTLETS_AT_START), location)
-        self.assertFalse(self.reachable("Spirit Temple Child Bridge Chest", *early, no_card))
+            self.assertTrue(self.reachable(location, *early, NO_RESCUE, SILVER_GAUNTLETS_AT_START), location)
+        self.assertFalse(self.reachable("Spirit Temple Child Bridge Chest", *early, NO_RESCUE))
         self.assertTrue(self.reachable("Spirit Temple Child Bridge Chest", *early))
 
     def test_an_adult_warps_to_the_crater_only_where_he_gets_across_or_with_a_song_that_takes_him_out(self):
@@ -200,17 +211,16 @@ class LogicTest(unittest.TestCase):
     def test_an_adult_warps_to_the_colossus_only_with_a_song_that_takes_him_out(self):
         # The Colossus's way into the Wasteland stands for an adult only once he has walked into the Wasteland from the
         # fortress, a walk no route names, so he can no more walk out of the Colossus than a child. Here the Requiem is
-        # his only warp song, and Epona takes him across the valley to the fortress. Without the card he cannot walk to
-        # the Colossus either, and without the Hover Boots and the Longshot he cannot cross the sand. Sheik at the
-        # temple teaches the Song of Storms, so the child still comes back for the well's Lens.
+        # his only warp song, and Epona takes him across the valley to the fortress. Without the carpenters free he
+        # cannot walk to the Colossus either, and without the Hover Boots and the Longshot he cannot cross the sand.
+        # Sheik at the temple teaches the Song of Storms, so the child still comes back for the well's Lens.
         def only_the_requiem(crater):
             return (("Song from Malon", "Requiem of Spirit"), ("Sheik in Forest", "Epona's Song"),
                     ("Sheik at Colossus", "Green Rupee"), ("Sheik in Crater", crater),
                     ("Sheik in Ice Cavern", "Green Rupee"), ("Sheik in Kakariko", "Green Rupee"),
                     ("Sheik at Temple", "Song of Storms"), SILVER_GAUNTLETS_AT_START)
-        no_card = ("GF Freed All Carpenters", "Green Rupee")
         no_crossing = (("Shadow Temple Hover Boots Chest", "Green Rupee"), ("Water Temple Longshot Chest", "Green Rupee"))
-        self.assertFalse(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee"), no_card))
+        self.assertFalse(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee"), NO_RESCUE))
         self.assertTrue(self.reachable("GF Freed All Carpenters", *only_the_requiem("Green Rupee"), *no_crossing))
         self.assertFalse(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee"), *no_crossing))
         self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee")))
@@ -552,11 +562,8 @@ class LogicTest(unittest.TestCase):
 
     def test_the_hookshot_hits_the_eyes_that_take_it(self):
         # Most of the remake's eye switches take the hookshot, and a few keep to the bow.
-        # The Gerudo card lets Link past the fortress's guards without the bow or the hookshot.
         no_bow = ("Forest Temple Bow Chest", "Green Rupee")
-        card = ("KF Mido Bottom Right Chest", "Gerudo Membership Card")
         self.assertTrue(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow))
-        self.assertFalse(self.reachable("Gerudo Training Ground Lobby Right Chest", no_bow, NO_HOOKSHOT, card))
         self.assertFalse(self.reachable("Gerudo Training Ground Eye Statue Chest", no_bow))
         # The hammer room's door to the eye statue's lower room opens to its eye alone. Without the Lens, the way down
         # from above is shut, so that door is the only way in.

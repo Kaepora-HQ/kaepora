@@ -6,14 +6,15 @@
 
 #include <vector>
 
-// Gives Link what location holds, in the search under way. While the spoiler log's route is made, the place after a
-// boss also clears the boss's dungeon (see ClearedByItsBossPlace).
+// Gives Link what location holds, in the search under way. While the spoiler log's route is made, a place whose scene
+// later steps wait for also sets what its scene sets (see SetByItsScenePlace).
 void ApplyCheck(Rando::ItemLocation* location);
 
-// Whether event is a dungeon clear that, while the spoiler log's route is made, only the place after its boss sets.
-// The game's gates wait for the bosses' blue warps, which come with those places, so the route names a boss wherever a
-// later step waits for it. The fill's own searches clear a dungeon as soon as its boss is beaten.
-bool ClearedByItsBossPlace(LogicVal event);
+// Whether event is one that, while the spoiler log's route is made, only its scene's place sets: a dungeon clear, which
+// the boss's blue warp sets, or the Gerudo letting Link pass, which the scene after the last carpenter sets. The game's
+// gates wait for those scenes, which come with those places whatever they give, so the route names a place wherever a
+// later step waits for its scene. The fill's own searches set each as soon as its scene can play.
+bool SetByItsScenePlace(LogicVal event);
 
 // RANDOTODO merge into Logic once Logic is a class passed to logic funtions
 struct GetAccessibleLocationsStruct {

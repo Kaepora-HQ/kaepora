@@ -1184,10 +1184,10 @@ bool Logic::CanPassEnemy(RandomizerEnemy enemy, EnemyDistance distance, bool wal
         case RE_OCTOROK:
             return true;
         case RE_GERUDO_GUARD:
-            return ctx->GetTrickOption(RT_PASS_GUARDS_WITH_NOTHING) || HasItem(RG_GERUDO_MEMBERSHIP_CARD) ||
+            return ctx->GetTrickOption(RT_PASS_GUARDS_WITH_NOTHING) || Get(LOGIC_GERUDOS_ACCEPT_LINK) ||
                    CanUse(RG_FAIRY_BOW) || CanUse(RG_HOOKSHOT);
         case RE_BREAK_ROOM_GUARD:
-            return HasItem(RG_GERUDO_MEMBERSHIP_CARD) || CanUse(RG_FAIRY_BOW) || CanUse(RG_HOOKSHOT);
+            return Get(LOGIC_GERUDOS_ACCEPT_LINK) || CanUse(RG_FAIRY_BOW) || CanUse(RG_HOOKSHOT);
         case RE_BIG_SKULLTULA:
             // hammer jumpslash can pass, but only on flat land where you can kill with hammer swing
             return CanUse(RG_NUTS) || CanUse(RG_BOOMERANG) ||

@@ -294,7 +294,7 @@ bool Region::UpdateEvents() {
     bool eventsUpdated = false;
     for (EventAccess& event : events) {
         // If the event has already happened, there's no reason to check it
-        if (event.GetEvent() || ClearedByItsBossPlace(event.GetLogicVal())) {
+        if (event.GetEvent() || SetByItsScenePlace(event.GetLogicVal())) {
             continue;
         }
 

@@ -10,6 +10,9 @@ void RegionTable_Init_ThievesHideout() {
         //Events
         EVENT_ACCESS(LOGIC_TH_COULD_FREE_1_TORCH_CARPENTER, logic->CanKillEnemy(RE_GERUDO_WARRIOR) && logic->HasItem(RG_SPEAK_HYLIAN)),
         EVENT_ACCESS(LOGIC_TH_RESCUED_ALL_CARPENTERS,       logic->SmallKeys(SCENE_THIEVES_HIDEOUT, ctx->GetOption(RSK_GERUDO_FORTRESS).Is(RO_GF_CARPENTERS_NORMAL) ? 4 : 1) && logic->Get(LOGIC_TH_COULD_FREE_1_TORCH_CARPENTER) && logic->Get(LOGIC_TH_COULD_FREE_DOUBLE_CELL_CARPENTER) && logic->Get(LOGIC_TH_COULD_FREE_DEAD_END_CARPENTER) && logic->Get(LOGIC_TH_COULD_FREE_SLOPE_CARPENTER)),
+        // After the last carpenter a scene moves the Spirit quest on: the guards stop watching, the gate keeper
+        // opens the Wasteland's gate and the archery range opens. They follow the quest, not the card the scene gives.
+        EVENT_ACCESS(LOGIC_GERUDOS_ACCEPT_LINK,             logic->Get(LOGIC_TH_RESCUED_ALL_CARPENTERS)),
     }, {
         //Locations
         LOCATION(RC_TH_1_TORCH_CARPENTER,      logic->Get(LOGIC_TH_COULD_FREE_1_TORCH_CARPENTER)),

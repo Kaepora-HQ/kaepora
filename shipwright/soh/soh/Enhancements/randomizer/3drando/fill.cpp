@@ -25,34 +25,37 @@ using namespace Rando;
 
 static bool placementFailure = false;
 
-// The place after each boss, and the dungeon its blue warp clears.
-static constexpr std::pair<RandomizerCheck, LogicVal> bossPlaces[] = {
+// The places whose scene sets what later steps wait for, whatever the place gives, and what each sets: the place after
+// each boss and the dungeon its blue warp clears, and the scene after the last carpenter and the Gerudo letting Link
+// pass.
+static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
     { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
     { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
     { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
     { RC_BONGO_BONGO, LOGIC_SHADOW_TEMPLE_CLEAR }, { RC_TWINROVA, LOGIC_SPIRIT_TEMPLE_CLEAR },
+    { RC_TH_FREED_CARPENTERS, LOGIC_GERUDOS_ACCEPT_LINK },
 };
 
 // Set while the spoiler log's route is made.
-static bool routeTakesBosses = false;
+static bool routeTakesScenes = false;
 
-static bool IsBossPlace(RandomizerCheck location) {
-    return std::ranges::any_of(bossPlaces, [location](const auto& boss) { return boss.first == location; });
+static bool IsScenePlace(RandomizerCheck location) {
+    return std::ranges::any_of(scenePlaces, [location](const auto& scene) { return scene.first == location; });
 }
 
-bool ClearedByItsBossPlace(LogicVal event) {
-    return routeTakesBosses &&
-           std::ranges::any_of(bossPlaces, [event](const auto& boss) { return boss.second == event; });
+bool SetByItsScenePlace(LogicVal event) {
+    return routeTakesScenes &&
+           std::ranges::any_of(scenePlaces, [event](const auto& scene) { return scene.second == event; });
 }
 
 void ApplyCheck(Rando::ItemLocation* location) {
     location->ApplyPlacedItemEffect();
-    if (!routeTakesBosses) {
+    if (!routeTakesScenes) {
         return;
     }
-    for (const auto& [place, clear] : bossPlaces) {
+    for (const auto& [place, event] : scenePlaces) {
         if (place == location->GetRandomizerCheck()) {
-            logic->Set(clear, true);
+            logic->Set(event, true);
         }
     }
 }
@@ -361,14 +364,14 @@ void AddToPlaythrough(LocationAccess& locPair, GetAccessibleLocationsStruct& gal
     RandomizerCheck loc = locPair.GetLocation();
     Rando::ItemLocation* location = ctx->GetItemLocation(loc);
     RandomizerGet locItem = location->GetPlacedRandomizerGet();
-    // A boss's place is a step whatever it holds, for the dungeon it clears.
-    const bool bossPlace = routeTakesBosses && IsBossPlace(loc) && locItem != RG_NONE;
+    // A scene's place is a step whatever it holds, for what its scene sets.
+    const bool scenePlace = routeTakesScenes && IsScenePlace(loc) && locItem != RG_NONE;
     // Reached after wincon, so never part of playthrough. Pare first
-    if (ctx->playthroughBeatable && (bossPlace || location->GetPlacedItem().IsAdvancement())) {
+    if (ctx->playthroughBeatable && (scenePlace || location->GetPlacedItem().IsAdvancement())) {
         gals.lateLocations.push_back(loc);
     }
     // Item is an advancement item, figure out if it should be added to this sphere
-    if (!ctx->playthroughBeatable && (bossPlace || location->GetPlacedItem().IsAdvancement())) {
+    if (!ctx->playthroughBeatable && (scenePlace || location->GetPlacedItem().IsAdvancement())) {
         ItemType type = location->GetPlacedItem().GetItemType();
 
         // Decide whether to exclude this location
@@ -377,7 +380,7 @@ void AddToPlaythrough(LocationAccess& locPair, GetAccessibleLocationsStruct& gal
         // 1) Tokens after the last potentially useful one (the last one that gives an advancement item or last for
         // token bridge) 2) Buy items of the same type, after the first (So only see Buy Deku Nut of any amount once)
         bool exclude = true;
-        if (bossPlace) {
+        if (scenePlace) {
             exclude = false;
         }
         // Exclude tokens after the last possibly useful one
@@ -727,9 +730,9 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
                 }
                 RandomizerGet locGet = ctx->GetItemLocation(loc)->GetPlacedRandomizerGet();
 
-                // Without a boss's place Link also lacks the dungeon it clears, whatever the place holds.
+                // Without a scene's place Link also lacks what its scene sets, whatever the place holds.
                 RandomizerGet ignore = RG_NONE;
-                if (!IsBossPlace(loc) && (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
+                if (!IsScenePlace(loc) && (locGet == RG_GOLD_SKULLTULA_TOKEN || IsBombchus(locGet, true) ||
                                           Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP)) {
                     ignore = locGet;
                 }
@@ -760,9 +763,9 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
 
     // The spheres were numbered before the passes above, which can drop what a step counted on in an earlier sphere.
     // So the route is walked again over the steps it kept, with every other item that counts as progress and every
-    // boss's place it left out set aside, and no step stands in a sphere before Link can reach it with what the spheres
-    // before it gave him. No other token is set aside: the route names none, and the passes above counted on every one.
-    // A walk that stops short of Ganon would give the spoiler log a route that does not finish the seed.
+    // scene's place it left out set aside, and no step stands in a sphere before Link can reach it with what the
+    // spheres before it gave him. No other token is set aside: the route names none, and the passes above counted on
+    // every one. A walk that stops short of Ganon would give the spoiler log a route that does not finish the seed.
     std::bitset<RC_MAX> kept;
     for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
         for (RandomizerCheck loc : sphere) {
@@ -773,7 +776,7 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
         Rando::ItemLocation* location = ctx->GetItemLocation(loc);
         // A place the passes above dropped already has its item set aside.
         if (!kept[loc] && location->GetPlacedRandomizerGet() != RG_NONE &&
-            (IsBossPlace(loc) || (location->GetPlacedItem().IsAdvancement() &&
+            (IsScenePlace(loc) || (location->GetPlacedItem().IsAdvancement() &&
                                   location->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN))) {
             location->DelayItem();
             toAddBackItem.push_back(loc);
@@ -826,9 +829,10 @@ static void CalculateBarren() {
     for (RandomizerCheck loc : ctx->allLocations) {
         Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);
         // If a location has a major item or is a way of the hero location, it is not barren. The remake's gates wait
-        // for the bosses, so a place that hands over a stone or a medallion keeps its area from being foolish whatever
-        // it holds, as it does when each holds its own reward.
+        // for the bosses and for scenes, so a place that hands over a stone or a medallion, or whose scene later steps
+        // wait for, keeps its area from being foolish whatever it holds, as it does when it holds its own item.
         if (itemLoc->GetPlacedItem().IsMajorItem() || itemLoc->IsWothCandidate() || IsRewardPlace(loc) ||
+            IsScenePlace(loc) ||
             (shieldTunicGate && itemLoc->GetPlacedItem().IsShieldOrTunic())) {
             NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()] = true;
         }
@@ -1211,13 +1215,13 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         SPDLOG_INFO("Shuffling Remaining Items");
         FastFill(std::move(itemPool), GetEmptyLocations(shuffledLocations));
 
-        routeTakesBosses = true;
+        routeTakesScenes = true;
         std::vector<RandomizerCheck> lateLocations = GeneratePlaythrough();
         // Successful placement, produced beatable result
         if (ctx->playthroughBeatable && !placementFailure) {
             SPDLOG_INFO("Calculating Playthrough...");
             PareDownPlaythrough(lateLocations);
-            routeTakesBosses = false;
+            routeTakesScenes = false;
             CalculateWotH();
             CalculateBarren();
             SPDLOG_INFO("Calculating Playthrough Done");
@@ -1227,7 +1231,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
             SPDLOG_DEBUG("Number of retries {}", retries);
             return 1;
         }
-        routeTakesBosses = false;
+        routeTakesScenes = false;
         // Unsuccessful placement
         if (retries < 9) {
             SPDLOG_DEBUG("Failed to generate a beatable seed. Retrying...");
