@@ -223,7 +223,7 @@
         "Banc/KakarikoVillage/KakarikoVillage_Adult_Dynamic.bcett.byml.zs",
         "Banc/KakarikoVillage/KakarikoVillage_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_Boomerang"
+      "drop_actor": "TBox_Rupee_Red"
     },
     {
       "hash": "13080955777249750889",
@@ -245,7 +245,7 @@
         "Banc/Graveyard/Graveyard_Adult_Dynamic.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Red"
+      "drop_actor": "Item_Boomerang"
     },
     {
       "hash": "9622128545943056087",
@@ -253,14 +253,14 @@
         "Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs",
         "Banc/Graveyard/Graveyard_Child_Static.bcett.byml.zs"
       ],
-      "drop_actor": "Obj_Heart_Piece"
+      "drop_actor": "TBox_Rupee_Blue"
     },
     {
       "hash": "5534919361313859554",
       "files": [
         "Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Blue"
+      "drop_actor": "Item_ScrubBusinessSeed"
     },
     {
       "hash": "9809508929088891725",
@@ -284,7 +284,7 @@
         "Banc/GoronCity/GoronCity_Adult_Dynamic.bcett.byml.zs",
         "Banc/GoronCity/GoronCity_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "Item_ScrubBusinessSeed"
+      "drop_actor": "TBox_Rupee_Purple"
     },
     {
       "hash": "14647422914070455120",
@@ -324,7 +324,7 @@
         "Banc/DeathMountainCrater/DeathMountainCrater_Adult_Dynamic.bcett.byml.zs",
         "Banc/DeathMountainCrater/DeathMountainCrater_Child_Dynamic.bcett.byml.zs"
       ],
-      "drop_actor": "TBox_Rupee_Purple"
+      "drop_actor": "Obj_Heart_Piece"
     },
     {
       "hash": "9128916506605227251",
@@ -1451,7 +1451,7 @@
     },
     {
       "label": "GOSSIP_LAKE_HYLIA_02",
-      "text": "They say that {color:0}a Piece of Heart{color:65535} can be found at {color:0}the Graveyard{color:65535}."
+      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}the Graveyard{color:65535}."
     },
     {
       "label": "GOSSIP_LAKE_HYLIA_03",
@@ -1491,7 +1491,7 @@
     },
     {
       "label": "GOSSIP_DEATH_MOUNTAIN_TRAIL_01",
-      "text": "They say that {color:0}a Blue Rupee{color:65535} can be found at {color:0}the Graveyard{color:65535}."
+      "text": "They say that {color:0}a Business Scrub Seed{color:65535} can be found at {color:0}the\nGraveyard{color:65535}."
     },
     {
       "label": "GOSSIP_GRAVEYARD_01",
@@ -1531,7 +1531,7 @@
     },
     {
       "label": "GOSSIP_ZORA_RIVER_02",
-      "text": "They say that {color:0}Kakariko Village{color:65535} is on {color:0}the way of the hero{color:65535}."
+      "text": "They say that {color:0}the Graveyard{color:65535} is on {color:0}the way of the hero{color:65535}."
     },
     {
       "label": "GOSSIP_ZORA_RIVER_03",

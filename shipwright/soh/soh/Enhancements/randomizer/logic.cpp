@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <type_traits>
 #include <utility>
@@ -98,7 +99,8 @@ bool Logic::HasItem(RandomizerGet itemName) {
         case RG_BOMB_BAG:
             return CurrentUpgrade(UPG_BOMB_BAG);
         case RG_MAGIC_SINGLE:
-            return GetSaveContext()->magicLevel >= 1 || GetSaveContext()->isMagicAcquired;
+            return GetSaveContext()->magicLevel >= 1 || GetSaveContext()->isMagicAcquired ||
+                   std::ranges::any_of(SpellsLensAndMagicArrows, [this](RandomizerGet item) { return HasItem(item); });
             // Songs
         case RG_ZELDAS_LULLABY:
         case RG_EPONAS_SONG:

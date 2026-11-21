@@ -87,7 +87,7 @@ SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 SEVEN_PER_SHOP = {"Shop goods": "Seven per shop shuffled"}
 # A seed whose hints name a slot that only five per shop shuffle, and one for six and seven.
 HINT_SEED_AT_FIVE = "2"
-HINT_SEED_AT_SEVEN = "27"
+HINT_SEED_AT_SEVEN = "11"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
                                              "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk",
@@ -1316,7 +1316,7 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere(self):
         log, _ = self.generate("23", SKULLTULAS_SHUFFLED)
         skulltulas = {row["location"] for row in SKULLTULAS}
-        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 5)
+        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 7)
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_songs_shuffled_among_themselves(self):
@@ -1671,7 +1671,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
     def test_hints_name_the_goods_only_six_and_seven_per_shop_shuffle(self):
-        # Seed HINT_SEED_AT_SEVEN hints that the Kakariko Village Potion Shop offers the Longshot, at its item 4.
+        # Seed HINT_SEED_AT_SEVEN hints that a Goron shopkeeper sells the Ice Arrow, at the Goron Shop's item 1.
         self.assert_hints_are_true(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
         spoiler, plan = self.generate(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
         held = placed_remake_items(spoiler, plan)

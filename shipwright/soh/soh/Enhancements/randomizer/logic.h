@@ -19,6 +19,11 @@ enum class GlitchType {
     EquipSwap,
 };
 
+// In the remake the first spell, Lens or magic arrows Link gets brings the meter, as a blessing does.
+inline constexpr std::array<RandomizerGet, 7> SpellsLensAndMagicArrows = {
+    RG_DINS_FIRE, RG_FARORES_WIND, RG_NAYRUS_LOVE, RG_LENS_OF_TRUTH, RG_FIRE_ARROWS, RG_ICE_ARROWS, RG_LIGHT_ARROWS
+};
+
 class Logic {
   public:
     uint8_t Bottles = 0;

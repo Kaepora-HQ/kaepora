@@ -232,6 +232,31 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Green Rupee")))
         self.assertTrue(self.reachable("Colossus Grotto Chest", *only_the_requiem("Prelude of Light"), *no_crossing))
 
+    def test_a_spell_the_lens_or_magic_arrows_bring_the_meter(self):
+        # The first of them gives a Link with no meter the meter, as a Great Fairy's blessing does (measured from the
+        # program; seen for Din's Fire, the Fire Arrows and the Ice Arrows). Each check below asks for one source's own
+        # use, which takes the meter, with every other source and both blessings taken out. No check asks for Farore's
+        # Wind or the Ice Arrows, and the one that asks for the meter alone has other ways.
+        no_sources = (("DMT Great Fairy Reward", "Green Rupee"), ("DMC Great Fairy Reward", "Green Rupee"),
+                      ("DMT Great Fairy Din's Fire", "Green Rupee"), ("ZF Great Fairy Reward", "Green Rupee"),
+                      ("Colossus Great Fairy Reward", "Green Rupee"),
+                      ("Bottom of the Well Lens of Truth Chest", "Green Rupee"), ("LH Sun", "Green Rupee"),
+                      ("Gerudo Training Ground Maze Path Final Chest", "Green Rupee"),
+                      ("Market ToT Light Arrow Cutscene", "Green Rupee"))
+        # A child with no shield climbs past the summit's falling rocks only under Nayru's Love.
+        a_child_with_no_shield = (NEVER_ADULT, ("Graveyard Shield Grave Chest", "Green Rupee"),
+                                  *((f"Market Bazaar Item {slot}", "Green Rupee") for slot in range(1, 9)))
+        cases = (("Din's Fire", "LH Grotto Chest", (), {}),
+                 ("Fire Arrows", "LH Grotto Chest", (), {}),
+                 ("Lens of Truth", "Market Treasure Chest Game Reward", (), {}),
+                 ("Nayru's Love", "DMT Great Fairy Din's Fire", a_child_with_no_shield, {}),
+                 ("Light Arrows", "Ganon", (SPIRIT_KEY_AT_START,), BRIDGE_OPEN | NO_TRIALS))
+        for source, check, others, settings in cases:
+            with self.subTest(source=source):
+                self.assertFalse(self.reachable(check, *no_sources, *others, settings=settings))
+                self.assertTrue(self.reachable(check, *no_sources, *others, ("KF Mido Top Right Chest", source),
+                                               settings=settings))
+
     def test_four_great_fairies_wait_for_dins_fire(self):
         # Every fountain's Triforce mark but the summit's asks whether Link holds Din's Fire, which the summit's Great
         # Fairy gives (read from the flows; seen in the game at the castle). A Spirit Temple key at the start lets the

@@ -1,5 +1,5 @@
 {
-    "kaepora": "0.0.0",
+    "kaepora": "0.4.0",
     "seed": "6332265119",
     "settings": {
         "Shuffled dungeons": [
@@ -61,18 +61,18 @@
         "Wasteland Chest": "Bombchus (5)",
         "Colossus Grotto Chest": "Piece of Heart",
         "Market Treasure Chest Game Reward": "Deku Nuts (5)",
-        "Kak Open Grotto Chest": "Boomerang",
+        "Kak Open Grotto Chest": "Red Rupee",
         "Kak Lookout Chest": "Deku Nuts (5)",
-        "Graveyard Shield Grave Chest": "Red Rupee",
-        "Graveyard Heart Piece Grave Chest": "Piece of Heart",
-        "Graveyard Dampe Race Freestanding PoH": "Blue Rupee",
+        "Graveyard Shield Grave Chest": "Boomerang",
+        "Graveyard Heart Piece Grave Chest": "Blue Rupee",
+        "Graveyard Dampe Race Freestanding PoH": "Business Scrub Seed",
         "DMT Chest": "Lens of Truth",
         "GC Maze Left Chest": "Business Scrub Seed",
-        "GC Maze Right Chest": "Business Scrub Seed",
+        "GC Maze Right Chest": "Purple Rupee",
         "GC Maze Center Chest": "Kokiri Sword",
         "GC Maze Center Side Chest": "Arrows (10)",
         "GC Grotto Chest": "Business Scrub Seed",
-        "DMC Upper Grotto Chest": "Purple Rupee",
+        "DMC Upper Grotto Chest": "Piece of Heart",
         "DMC Hammer Grotto Chest": "Business Scrub Seed",
         "ZR Open Grotto Chest": "Purple Rupee",
         "ZD Chest": "Business Scrub Seed",
@@ -230,8 +230,8 @@
         },
         "sphere 03": {
             "HC Malon Egg": "Weird Egg",
+            "Graveyard Shield Grave Chest": "Boomerang",
             "Kak Anju as Child": "Empty Bottle",
-            "Kak Open Grotto Chest": "Boomerang",
             "LW Gift From Saria": "Progressive Ocarina"
         },
         "sphere 04": {
@@ -257,7 +257,6 @@
         "sphere 09": {
             "Song from Windmill": "Song of Storms",
             "Graveyard Hookshot Chest": "Progressive Hookshot",
-            "DMT Great Fairy Reward": "Progressive Magic Meter",
             "DMT Great Fairy Din's Fire": "Din's Fire",
             "GC Rolling Goron as Adult": "Goron Tunic",
             "Market ToT Master Sword": "Master Sword"
@@ -355,7 +354,7 @@
         "HF East Grotto Gossip Stone": "They say this stone used to ask for a mask. Nobody misses it.",
         "HF South Grotto Gossip Stone": "They say that the Bottom of the Well is on the way of the hero.",
         "LH Southeast Gossip Stone": "They say that four candles beneath the lake light the way to a Green Rupee.",
-        "LH Southwest Gossip Stone": "They say that a Piece of Heart can be found at the Graveyard.",
+        "LH Southwest Gossip Stone": "They say that a Blue Rupee can be found at the Graveyard.",
         "LH Lab Gossip Stone": "They say that the Great Deku Tree hoards a Piece of Heart.",
         "Market ToT Left Gossip Stone": "They say that a hole along a river holds a Purple Rupee.",
         "Market ToT Left Center Gossip Stone": "They say Ingo is not very good at planning ahead.",
@@ -365,7 +364,7 @@
         "HC Rock Wall Gossip Stone": "They say that a Poe near Lake Hylia guards a Red Rupee.",
         "HC Storms Grotto Gossip Stone": "They say that the Fire Temple hoards a Business Scrub Seed.",
         "Kak Open Grotto Gossip Stone": "They say that quest guidance can be found at a talking rock.",
-        "Kak Beehive Grotto Gossip Stone": "They say that a Blue Rupee can be found at the Graveyard.",
+        "Kak Beehive Grotto Gossip Stone": "They say that a Business Scrub Seed can be found at the Graveyard.",
         "Graveyard Gossip Stone": "They say that the Great Deku Tree hoards a Blue Rupee.",
         "DMT Gossip Stone": "They say that the Silver Gauntlets can be found at Gerudo Valley.",
         "DMT Cow Grotto Gossip Stone": "They say that beside the heart of the Goron City maze lies Five Arrows.",
@@ -375,7 +374,7 @@
         "DMC Upper Grotto Gossip Stone": "They say that a Poe in northern Hyrule Field guards a Large Magic Jar.",
         "Dodongos Cavern Gossip Stone": "They say that the Shadow Temple hoards Five Bombs.",
         "ZR Near Grottos Gossip Stone": "They say the remake moved this chest. It did not say where.",
-        "ZR Open Grotto Gossip Stone": "They say that Kakariko Village is on the way of the hero.",
+        "ZR Open Grotto Gossip Stone": "They say that the Graveyard is on the way of the hero.",
         "ZR Near Domain Gossip Stone": "They say that Gerudo Valley is on the way of the hero.",
         "ZR Storms Grotto Gossip Stone": "They say that above a maze of stone in Dodongo Cavern lies a Blue Rupee.",
         "ZD Gossip Stone": "They say that the Forest Temple is on the way of the hero.",
