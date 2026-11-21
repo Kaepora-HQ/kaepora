@@ -21,6 +21,9 @@ const std::string& RowId(const byml::Node& row);
 // How the game's tables and packs name an actor.
 std::string WorkPath(std::string_view actor);
 
+// The actor a work path names. Throws when the path names none.
+std::string WorkPathActor(std::string_view path);
+
 // The table's row whose __RowId is the actor. Throws when the table has none.
 byml::Node& Row(byml::Node& table, std::string_view actor);
 
