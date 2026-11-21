@@ -246,6 +246,14 @@ class LogicTest(unittest.TestCase):
         no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
         self.assertFalse(self.reachable("Deku Tree Slingshot Room Side Chest", no_slingshot))
 
+    def test_the_market_shooting_gallery_lends_a_slingshot(self):
+        # Seen in the game by Devin: the gallery lends a slingshot to a child who has none. Its prize is a bigger bullet
+        # bag, no Slingshot, so the Lost Woods target, which takes Link's own, stays out of reach. With the forest
+        # closed, a child leaves it only past Gohma, who takes the slingshot.
+        no_slingshot = ("Deku Tree Slingshot Chest", "Green Rupee")
+        self.assertTrue(self.reachable("Market Shooting Gallery", no_slingshot, settings=FOREST_OPEN))
+        self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, settings=FOREST_OPEN))
+
     # Goron's Bracelet has a slot of its own. The Silver and Golden Gauntlets share another, which keeps the higher
     # tier found, and only adult Link can use them.
 
