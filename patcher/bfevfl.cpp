@@ -58,6 +58,11 @@ uint64_t EventOffset(std::string_view data, uint64_t flowchart, uint16_t index) 
     return ReadAt<uint64_t>(data, flowchart + 0x30) + 0x30 * index;
 }
 
+// The DIC's 16-byte nodes start at 0x08 with its tree's root, and each points to its name at 0x08.
+std::string_view DicName(std::string_view data, uint64_t dic, uint16_t index) {
+    return Text(data, ReadAt<uint64_t>(data, dic + 0x08 + 0x10 * (index + 1) + 0x08));
+}
+
 // The flowchart holds its event count at 0x16, and an event points to its name first.
 uint16_t EventIndex(std::string_view data, uint64_t flowchart, std::string_view name) {
     for (uint16_t i = 0; i < ReadAt<uint16_t>(data, flowchart + 0x16); ++i) {
@@ -77,11 +82,10 @@ uint64_t FindParam(std::string_view data, uint64_t event, std::string_view name)
     const uint64_t params = hasParams ? ReadAt<uint64_t>(data, event + 0x10) : 0;
     if (params != 0) {
         // The parameters hold their count at 0x02, point to a DIC of their names at 0x08, and from 0x10 point to each
-        // value in the DIC's order. The DIC's 16-byte nodes start at 0x08 with its tree's root, and each points to its
-        // name at 0x08.
+        // value in the DIC's order.
         const uint64_t names = ReadAt<uint64_t>(data, params + 0x08);
         for (uint16_t i = 0; i < ReadAt<uint16_t>(data, params + 0x02); ++i) {
-            if (Text(data, ReadAt<uint64_t>(data, names + 0x08 + 0x10 * (i + 1) + 0x08)) == name) {
+            if (DicName(data, names, i) == name) {
                 return ReadAt<uint64_t>(data, params + 0x10 + 8 * i);
             }
         }
@@ -196,6 +200,23 @@ bool SetNext(Flow& flow, std::string_view event, std::string_view next) {
         WriteAt(flow.data, field, target);
     }
     return changed;
+}
+
+bool SetEntry(Flow& flow, std::string_view entryPoint, std::string_view event) {
+    const uint64_t flowchart = Flowchart(flow.data);
+    const uint16_t target = EventIndex(flow.data, flowchart, event);
+    // The flowchart holds its entry point count at 0x18, points to a DIC of their names at 0x38, and to the entry
+    // points at 0x40, in the DIC's order. An entry point is 0x20 bytes and holds the index of its first event at 0x1C.
+    const uint64_t names = ReadAt<uint64_t>(flow.data, flowchart + 0x38);
+    for (uint16_t i = 0; i < ReadAt<uint16_t>(flow.data, flowchart + 0x18); ++i) {
+        if (DicName(flow.data, names, i) == entryPoint) {
+            const uint64_t field = ReadAt<uint64_t>(flow.data, flowchart + 0x40) + 0x20 * i + 0x1C;
+            const bool changed = ReadAt<uint16_t>(flow.data, field) != target;
+            WriteAt(flow.data, field, target);
+            return changed;
+        }
+    }
+    throw std::runtime_error(std::format("no entry point in the flow is named {}", entryPoint));
 }
 
 std::string Write(const Flow& flow) {

@@ -79,6 +79,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
+    if (settings.opening == Opening::Played) {
+        changed << "opening played";
+    }
     if (!settings.startWith.empty()) {
         changed << "starts with " + Counted(settings.startWith.size());
     }
@@ -159,6 +162,7 @@ QString Details(const SeedSettings& settings) {
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
+                        Line(OpeningSetting, QString::fromUtf8(Words(OpeningChoices, settings.opening))),
                         Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
     if (settings.shops) {
@@ -356,7 +360,9 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         items->setText(Counted(shown.size()));
     };
     QObject::connect(items, &QPushButton::clicked, dialog, [=] { ChooseStartWith(dialog, *startWith, showStartWith); });
+    QComboBox* opening = Choice(OpeningChoices);
     auto* startForm = new QFormLayout;
+    startForm->addRow(QString::fromUtf8(OpeningSetting), opening);
     startForm->addRow("Items", items);
     auto* startGroup = new QGroupBox("Start");
     startGroup->setLayout(startForm);
@@ -402,6 +408,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(forest, shown.forest);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
+        Select(opening, shown.opening);
         showStartWith(shown.startWith);
         shops->setCurrentIndex(shown.shops ? shops->findData(static_cast<int>(shown.shops->count)) : 0);
         const ShopPrices prices = shown.shops ? shown.shops->prices : DefaultShopPrices;
@@ -439,6 +446,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.forest = Selected<Forest>(forest);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
+        shown.opening = Selected<Opening>(opening);
         shown.startWith = *startWith;
         if (shops->currentIndex() != 0) {
             ShopPrices prices = ShopPricesChoices[shopPrices->currentIndex()].first;

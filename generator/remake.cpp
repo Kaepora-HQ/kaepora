@@ -923,6 +923,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     // Only with the exit open and Mido still blocking can Link meet Zelda before Mido lets him by.
     plan["mido_castle_entry_removed"] = settings.forest == Forest::ClosedDeku;
+    plan["opening_skipped"] = settings.opening == Opening::Skipped;
     plan["skulltulas"] = nlohmann::ordered_json::array();
     for (const RemakeSkulltula& skulltula : skulltulas) {
         plan["skulltulas"].push_back({ { "hash", skulltula.actor.hash },

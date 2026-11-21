@@ -263,6 +263,7 @@ Plan ParsePlan(const nlohmann::json& json) {
         }
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
+    plan.openingSkipped = json.at("opening_skipped").get<bool>();
     for (const auto& [key, list] : { std::pair{ "skulltulas", &plan.skulltulas },
                                      std::pair{ "loose_items", &plan.looseItems } }) {
         const auto entries = json.at(key).get<std::vector<nlohmann::json>>();
@@ -908,6 +909,17 @@ constexpr std::string_view StoneMessage = "Event18";
 constexpr std::pair<std::string_view, std::string_view> StoneFlowNext[] = { { MaskHeldQuery, StoneTalkOpening },
                                                                             { StoneTalkOpening, StoneMessage } };
 
+// A new game runs this flow. The loading entry point plays the narrated opening, then asks whether Kokiri Forest has
+// loaded. The introduction waits, plays Navi waking Link, and fades out before it shows him in his house. The Deku
+// Tree's quest and the forest's first tutorial wait for Navi's scene to count as played, which a scene left out never
+// does.
+constexpr std::string_view OpeningFlow = "Event/EventFlow/OpeningEvent.bfevfl.zs";
+constexpr std::string_view LoadingEntry = "Opening_LoadingKokiriForest";
+constexpr std::string_view ForestLoadedQuery = "Event18";
+constexpr std::string_view WaitBeforeNavi = "Event27";
+constexpr std::string_view FadeOutAfterNavi = "Event25";
+constexpr std::string_view NaviWokeLink = "HavePlayedEvent.Dm_Kokiri_0030";
+
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
 // message opens with.
 static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan) {
@@ -1150,6 +1162,15 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             }
         }
     }
+    if (plan.openingSkipped) {
+        const std::string path(OpeningFlow);
+        if (bfevfl::SetEntry(flowAt(path), LoadingEntry, ForestLoadedQuery)) {
+            changedFlows.insert(path);
+        }
+        if (bfevfl::SetNext(flowAt(path), WaitBeforeNavi, FadeOutAfterNavi)) {
+            changedFlows.insert(path);
+        }
+    }
 
     std::map<std::string, std::string> mod{ { std::format("exefs/{}.ips", PatchedBuildId), ProgramPatch() } };
     const auto addToRomfs = [&](std::string_view path, std::string data) {
@@ -1219,6 +1240,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         addToRomfs(SizeTablePath, Compress(table));
     }
     std::map<std::string, StartValue> startValues = plan.startValues;
+    if (plan.openingSkipped && !startValues.emplace(NaviWokeLink, true).second) {
+        throw std::runtime_error(std::format("the plan's start values already name {}", NaviWokeLink));
+    }
     for (const std::string& item : plan.startItems) {
         try {
             for (auto& [name, value] : StartItemValues(Row(tables.find(PouchActorInfoPath)->second.root, item), item)) {
