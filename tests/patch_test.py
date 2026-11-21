@@ -617,6 +617,13 @@ def assert_same_frame_header(ours, theirs):
     assert zstd.get_frame_info(ours).dictionary_id == zstd.get_frame_info(theirs).dictionary_id
 
 
+def assert_same_file(game, path, ours, theirs):
+    """Two zstd files give the game the same: the same frame header and the same content. Their bytes also depend on
+    the level each was compressed at."""
+    assert_same_frame_header(ours, theirs)
+    assert decompressed(game, ours) == decompressed(game, theirs), path
+
+
 def tested_mod(patch, game, mod_file):
     """The one-chest change the game accepted: the Deku Tree Slingshot chest gives the Hookshot."""
     tested = pathlib.Path(mod_file).read_bytes()
@@ -667,9 +674,7 @@ def tested_gift_mod(patch, game, romfs):
     tested = (pathlib.Path(romfs) / SHOP_CHILD_FLOW).read_bytes()
     mod = patched(patch, game, plan([], event_texts=[(*BOTTLE_GIFT, "Item_Boomerang")]))
     assert sorted(mod) == [SHOP_CHILD_FLOW], sorted(mod)
-    ours = mod[SHOP_CHILD_FLOW]
-    assert_same_frame_header(ours, tested)
-    assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(tested, zstd_dict=game.zs_dictionary)
+    assert_same_file(game, SHOP_CHILD_FLOW, mod[SHOP_CHILD_FLOW], tested)
 
 
 def tested_song_mod(patch, game, romfs):
@@ -738,9 +743,7 @@ def tested_colossus_mod(patch, game, romfs):
     ours = patched(patch, game, plan([], presences=colossus_gates()))
     assert sorted(ours) == sorted(tested), (sorted(ours), sorted(tested))
     for path in (COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC):
-        assert_same_frame_header(ours[path], tested[path])
-        assert zstd.decompress(ours[path], zstd_dict=game.dictionary) == zstd.decompress(
-            tested[path], zstd_dict=game.dictionary), path
+        assert_same_file(game, path, ours[path], tested[path])
     assert read_size_table(zstd.decompress(ours[SIZE_TABLE])) == \
         raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
@@ -756,11 +759,8 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
     mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts]))
     # The list may name played mods for texts this plan does not carry.
     assert set(mod) <= set(tested), sorted(set(mod) - set(tested))
-    dictionary = game.zs_dictionary
     for path, ours in mod.items():
-        theirs = tested[path]
-        assert_same_frame_header(ours, theirs)
-        assert zstd.decompress(ours, zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
+        assert_same_file(game, path, ours, tested[path])
 
 
 def tested_first_gifts_mod(patch, game, romfs):
@@ -768,7 +768,7 @@ def tested_first_gifts_mod(patch, game, romfs):
     arrows, a Hylian Shield, the Fairy Slingshot and a Large Magic Jar, and the Stone of Agony's guide did not open; the
     man on the roof gave the Kokiri Sword, the lab's dive the Megaton Hammer, and the Skull Kid three Deku Nuts; four
     Hyrule Field chests gave Lon Lon Milk to a Link with no bottle, the Echo Gem, the Giant's Wallet and the Silver
-    Scale. The patcher writes every file of that mod byte for byte."""
+    Scale. The patcher writes every file of that mod, each the same to the game."""
     field = "Banc/HyruleField/HyruleField_{}_Dynamic.bcett.byml.zs"
     chests = [(17023457248274633121, [field.format("Adult")], "Item_Bottle_Milk"),
               (1163740567397714729, [field.format("Adult")], "Item_AgonyStone"),
@@ -788,7 +788,9 @@ def tested_first_gifts_mod(patch, game, romfs):
     tested = files(pathlib.Path(romfs))
     assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == \
         raised_pouch_entry(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
-    assert mod == tested, sorted(mod)
+    assert sorted(mod) == sorted(tested), sorted(mod)
+    for path, data in tested.items():
+        assert_same_file(game, path, mod[path], data)
 
 
 def tested_stone_text_mod(patch, game, romfs):
@@ -798,9 +800,7 @@ def tested_stone_text_mod(patch, game, romfs):
     tested = (pathlib.Path(romfs) / path).read_bytes()
     mod = patched(patch, game, plan([], stone_texts=[(KOKIRI_STONE, TESTED_STONE_TEXT)]))
     assert path in mod, sorted(mod)
-    assert_same_frame_header(mod[path], tested)
-    assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
-        tested, zstd_dict=game.zs_dictionary)
+    assert_same_file(game, path, mod[path], tested)
 
 
 # The texts of the mod seen in the game: seed 811's lines of the Treasure Chest Game's owner and of Mido, a line for
@@ -844,9 +844,7 @@ def tested_message_text_mod(patch, game, romfs):
     tested = {path: (pathlib.Path(romfs) / path).read_bytes() for path in ENGLISH_PACKS + [SIZE_TABLE]}
     assert sorted(mod) == sorted(tested), sorted(mod)
     for path in ENGLISH_PACKS:
-        assert_same_frame_header(mod[path], tested[path])
-        assert zstd.decompress(mod[path], zstd_dict=game.zs_dictionary) == zstd.decompress(
-            tested[path], zstd_dict=game.zs_dictionary), path
+        assert_same_file(game, path, mod[path], tested[path])
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == \
         raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
@@ -875,9 +873,7 @@ def tested_hammer_room_mod(patch, game, mod_file):
     tested = pathlib.Path(mod_file).read_bytes()
     mod = patched(patch, game, plan([(HAMMER_ROOM_CHEST, [TRAINING_GROUND_STATIC], "TBox_Rupee_Red")]))
     assert sorted(mod) == [TRAINING_GROUND_STATIC], sorted(mod)
-    ours = mod[TRAINING_GROUND_STATIC]
-    assert_same_frame_header(ours, tested)
-    assert zstd.decompress(ours, zstd_dict=game.dictionary) == zstd.decompress(tested, zstd_dict=game.dictionary)
+    assert_same_file(game, TRAINING_GROUND_STATIC, mod[TRAINING_GROUND_STATIC], tested)
 
 
 # The function that adds an item to Link's pouch writes the dive depth with a call to the game's set-float function.
@@ -986,9 +982,7 @@ def tested_bomb_mod(patch, game, mod):
     assert sorted(ours) == sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), \
         (sorted(ours), sorted(tested))
     for name, data in ours.items():
-        assert_same_frame_header(data, tested[name])
-        assert zstd.decompress(data, zstd_dict=game.pack_dictionary) == zstd.decompress(
-            tested[name], zstd_dict=game.pack_dictionary), name
+        assert_same_file(game, name, data, tested[name])
 
 
 def tested_mido_mod(patch, game, mod):
@@ -1215,7 +1209,7 @@ def tested_opening_mod(patch, game, mod):
     with no movie and no scene of Navi waking him. Link could move, and Saria greeted him when he walked out."""
     romfs = pathlib.Path(mod) / "romfs"
     tested = (romfs / OPENING_FLOW).read_bytes()
-    assert patched(patch, game, plan([], opening_skipped=True)).get(OPENING_FLOW) == tested
+    assert_same_file(game, OPENING_FLOW, patched(patch, game, plan([], opening_skipped=True))[OPENING_FLOW], tested)
     data = game.game_data_list((romfs / GAME_DATA_LIST).read_bytes())
     entry = next(e for e in data["Data"]["Bool"] if e["Hash"][1] == murmur3(NAVI_WOKE_LINK))
     assert entry["DefaultValue"] == (BOOL, 1), entry
@@ -1485,13 +1479,13 @@ LOOK_SALES = {
 def tested_shop_goods_mod(patch, game, mod):
     """The shelves as the game showed them: each item standing on its board at its size, under the quantity sign of
     its count or none, in all eight shops. For the look's plan the patcher writes each scene file the played mod
-    holds, byte for byte."""
+    holds, each the same to the game."""
     slots = table_slots()
     tested = {path: data for path, data in files(pathlib.Path(mod) / "romfs").items() if path.startswith("Banc/")}
     ours = patched(patch, game, plan([], shops=[(slots[location], item, 5) for location, item in LOOK_SALES.items()]))
     assert sorted(path for path in ours if path.startswith("Banc/")) == sorted(tested), sorted(ours)
     for path, data in tested.items():
-        assert ours[path] == data, path
+        assert_same_file(game, path, ours[path], data)
 
 
 def shop_table(patch, game):
