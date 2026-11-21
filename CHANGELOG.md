@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.4.0...v0.5.0) (2026-11-21)
+
+
+### Features
+
+* add a setting that skips every cutscene a player could skip ([#81](https://github.com/Kaepora-HQ/kaepora/issues/81)) ([3569933](https://github.com/Kaepora-HQ/kaepora/commit/356993323cc641469694668c06f1120ffe9eb706))
+
+
+### Bug Fixes
+
+* let Mido pass a child with the Hylian Shield ([#82](https://github.com/Kaepora-HQ/kaepora/issues/82)) ([d42c4cc](https://github.com/Kaepora-HQ/kaepora/commit/d42c4ccca9229fb54582368a74df68dfc32c7e90))
+* let the Ocarina of Time wait for King Dodongo and Barinade only ([#77](https://github.com/Kaepora-HQ/kaepora/issues/77)) ([279c253](https://github.com/Kaepora-HQ/kaepora/commit/279c253ef9e889f774c2941f0a1e6c2eb7a0053d))
+* **patch:** skip the sword's scene when its chest holds another item ([#78](https://github.com/Kaepora-HQ/kaepora/issues/78)) ([ef6f060](https://github.com/Kaepora-HQ/kaepora/commit/ef6f0602f6688a731564278174ce8279c8d0bbed))
+
 ## [0.4.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.3.1...v0.4.0) (2026-11-21)
 
 
