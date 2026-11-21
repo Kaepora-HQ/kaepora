@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.2.0...v0.3.0) (2026-11-21)
+
+
+### Features
+
+* add a setting for the items a seed starts with ([d4544a1](https://github.com/Kaepora-HQ/kaepora/commit/d4544a1012d198a420b1b2f7b09097a696967d55))
+* add a setting that shuffles the nine dungeon rewards ([ba600a6](https://github.com/Kaepora-HQ/kaepora/commit/ba600a6ad065642dbb60b6db9631fef34f68c12c))
+* list the nine places that hand over a stone or a medallion ([7f745f3](https://github.com/Kaepora-HQ/kaepora/commit/7f745f301d615a1c9929b10dc49e22b4bb149b5c))
+* **patcher:** start a new game with items the plan names ([f75c051](https://github.com/Kaepora-HQ/kaepora/commit/f75c0519877c1065c25df3b12f8c597c765861c6))
+
+
+### Bug Fixes
+
+* ask for the bosses the game's gates wait for, not their rewards ([027e0a5](https://github.com/Kaepora-HQ/kaepora/commit/027e0a5c8f86f80909a836399069c51361dc702d))
+* open the window when a seed's spoiler log cannot be read ([#73](https://github.com/Kaepora-HQ/kaepora/issues/73)) ([44dd907](https://github.com/Kaepora-HQ/kaepora/commit/44dd9072a4ab2bc22b0861854007421b3a481782))
+
 ## [0.2.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.1.0...v0.2.0) (2026-11-20)
 
 
