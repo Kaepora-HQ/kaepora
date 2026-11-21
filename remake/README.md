@@ -238,14 +238,21 @@ Bomb Bag came with 20 bombs and room for 20, and the Bow and the Slingshot came 
 with room for no arrows or seeds. The Bomb Bag's own row in `RSDB/PouchActorInfo` gives its bombs: for any row that
 lists actors to fill, the item's add raises the limit the row names and fills each listed actor to it (read from the
 program). So in every mod the Bow's and the Slingshot's rows list what the small quiver's and bullet bag's rows list,
-and the container too, which a shop asks for before it sells arrows or seeds (`DisplayShop.bfevfl`, read). The add
-skips all of it when Link's limit is already at or above the row's, so a weapon that comes after a bigger quiver or
-bullet bag brings neither its container nor ammunition (read from the program). Seen in the game by an agent, with the
-rows changed: one talk in the House of Skulltula gave the Bow and the Slingshot, each with its small container, a limit
-of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the
-container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The
-fill may place the Bow, the Slingshot and the Bomb Bag at a gift, a loose spot or a Gold Skulltula, but for a
-skulltula with shop goods shuffled (above).
+and the container too, which a shop asks for before it sells arrows or seeds (`DisplayShop.bfevfl`, read). The add skips
+all of it when Link's limit is already at or above the row's, so a weapon that comes after a bigger quiver or bullet bag
+brings neither its container nor ammunition (read from the program). So in every mod each medium and large quiver,
+bullet bag, bomb bag, stick bag and nut bag also lists the small one of its kind, after its ammunition: one that comes
+first brings the small one. Shops ask for the small quiver or bullet bag before they sell arrows or seeds, and the
+rolling Goron for the small Bomb Bag; nothing in the game's files reads the small stick or nut bag (read). Seen in the
+game, with the rows changed: a large quiver given to an adult with no Bow brought the small quiver, and the save held 50
+arrows and a limit of 50 while the screen showed 0/50 with no Bow. The Bow after it, from a chest and from a gift, left
+the 50 arrows and the limit at 50. A bigger quiver given to a Link with the Bow and 17 of 30 arrows left a limit of 40
+and 40 arrows, with the Bow and both quivers held. In the same talk, a bigger bomb bag and then the Bomb Bag left 30 of
+30 bombs, with both bags held. Seen in the game by an agent, with the weapon rows changed: one talk in the House of
+Skulltula gave the Bow and the Slingshot, each with its small container, a limit of 30 and 30 arrows or seeds, and the
+Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the container before the weapon, so that the
+weapon's own fill does nothing, is inferred; either order ends the same. The fill may place the Bow, the Slingshot and
+the Bomb Bag at a gift, a loose spot or a Gold Skulltula, but for a skulltula with shop goods shuffled (above).
 
 `songs.tsv` has a row for each of SoH's 12 song locations. Each is a scene that teaches a song with the shared lesson in
 `Dm_SY_Ocarina`: the teacher plays an example tune, Link plays its notes, and the scene's gift names the song. With
