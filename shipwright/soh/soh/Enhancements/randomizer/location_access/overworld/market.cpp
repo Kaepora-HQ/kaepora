@@ -176,8 +176,9 @@ void RegionTable_Init_Market() {
         EVENT_ACCESS(LOGIC_COULD_PLAY_BOWLING, logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN) && logic->Get(LOGIC_DODONGOS_CAVERN_CLEAR)),
     }, {
         //Locations
-        LOCATION(RC_MARKET_BOMBCHU_BOWLING_FIRST_PRIZE,  logic->Get(LOGIC_COULD_PLAY_BOWLING) && logic->BombchusEnabled()),
-        LOCATION(RC_MARKET_BOMBCHU_BOWLING_SECOND_PRIZE, logic->Get(LOGIC_COULD_PLAY_BOWLING) && logic->BombchusEnabled()),
+        // The alley lends its bombchus, and asks for no Bomb Bag and no bombchus of Link's own.
+        LOCATION(RC_MARKET_BOMBCHU_BOWLING_FIRST_PRIZE,  logic->Get(LOGIC_COULD_PLAY_BOWLING)),
+        LOCATION(RC_MARKET_BOMBCHU_BOWLING_SECOND_PRIZE, logic->Get(LOGIC_COULD_PLAY_BOWLING)),
     }, {
         //Exits
         ENTRANCE(RR_THE_MARKET, true),
