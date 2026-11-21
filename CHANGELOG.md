@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.4.0...v0.5.0) (2026-11-21)
+
+
+### Features
+
+* add a setting that skips every cutscene a player could skip ([#81](https://github.com/Kaepora-HQ/kaepora/issues/81)) ([3569933](https://github.com/Kaepora-HQ/kaepora/commit/356993323cc641469694668c06f1120ffe9eb706))
+* choose the steps to start with in the list ([d48f57c](https://github.com/Kaepora-HQ/kaepora/commit/d48f57c890c836aa724ed900c1f98a0a11945a02))
+* **patcher:** start a new game with items that come in steps ([8854c2c](https://github.com/Kaepora-HQ/kaepora/commit/8854c2c32da3c4131ef78b2a2df8e09be9914dcc))
+* start a seed with items that come in steps ([6a2b344](https://github.com/Kaepora-HQ/kaepora/commit/6a2b3441d4dd6503a9aaa42c2e3462c22ea62500))
+
+
+### Bug Fixes
+
+* let both stone bosses wait for Zelda's Letter in every seed ([0c7e40f](https://github.com/Kaepora-HQ/kaepora/commit/0c7e40fc102f5bc008ae3d193540186a0317ad00))
+* let Mido pass a child with the Hylian Shield ([#82](https://github.com/Kaepora-HQ/kaepora/issues/82)) ([d42c4cc](https://github.com/Kaepora-HQ/kaepora/commit/d42c4ccca9229fb54582368a74df68dfc32c7e90))
+* let the Ocarina of Time wait for King Dodongo and Barinade only ([#77](https://github.com/Kaepora-HQ/kaepora/issues/77)) ([279c253](https://github.com/Kaepora-HQ/kaepora/commit/279c253ef9e889f774c2941f0a1e6c2eb7a0053d))
+* **patch:** rest a loose item's copy on the floor ([5f89656](https://github.com/Kaepora-HQ/kaepora/commit/5f8965672304782afbbb51ac5ce81400501ec02b))
+* **patch:** show a loose item's get when Link already holds the item ([3bb30a3](https://github.com/Kaepora-HQ/kaepora/commit/3bb30a33e6f1a060efc06f5561a2e81034a9d7ba))
+* **patch:** skip the sword's scene when its chest holds another item ([#78](https://github.com/Kaepora-HQ/kaepora/issues/78)) ([ef6f060](https://github.com/Kaepora-HQ/kaepora/commit/ef6f0602f6688a731564278174ce8279c8d0bbed))
+
+
+### Performance Improvements
+
+* **patch:** compress a mod's files at zstd level 9 ([b934546](https://github.com/Kaepora-HQ/kaepora/commit/b934546f5fa5158157f506cb0ef0cf3d7f0ca173))
+
 ## [0.4.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.3.1...v0.4.0) (2026-11-21)
 
 
