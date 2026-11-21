@@ -12,6 +12,8 @@ void RegionTable_Init_ZorasDomain() {
         EVENT_ACCESS(LOGIC_STICK_ACCESS,         logic->IsChild && logic->CanBreakPots()),
         EVENT_ACCESS(LOGIC_FISH_ACCESS,          logic->IsChild),
         EVENT_ACCESS(LOGIC_KING_ZORA_THAWED,     logic->IsAdult && logic->BlueFire()),
+        // King Zora's thanks, after his thaw, whatever his place gives.
+        EVENT_ACCESS(LOGIC_KING_ZORA_THANKS_LINK, logic->IsAdult && logic->Get(LOGIC_KING_ZORA_THAWED) && logic->HasItem(RG_SPEAK_ZORA)),
         EVENT_ACCESS(LOGIC_DELIVER_RUTOS_LETTER, logic->CanUse(RG_RUTOS_LETTER) && logic->IsChild && ctx->GetOption(RSK_ZORAS_FOUNTAIN).IsNot(RO_ZF_OPEN)),
     }, {
         //Locations

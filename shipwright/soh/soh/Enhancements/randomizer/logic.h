@@ -37,6 +37,7 @@ class Logic {
     bool ACProcessUndiscoveredExits = false;
     bool LensNeeded = true;
     bool SongsShuffled = false;
+    bool GiftsShuffled = false;
 
     SaveContext* mSaveContext = nullptr;
     Logic();

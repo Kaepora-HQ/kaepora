@@ -349,4 +349,5 @@ void SetOptions(const SeedSettings& settings) {
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
     ctx->GetLogic()->SongsShuffled = settings.songs == Songs::ShuffledAmongThemselves;
+    ctx->GetLogic()->GiftsShuffled = settings.gifts == Gifts::Shuffled;
 }

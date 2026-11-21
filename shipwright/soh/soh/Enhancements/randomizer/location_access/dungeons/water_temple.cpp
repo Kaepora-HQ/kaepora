@@ -1587,7 +1587,10 @@ void RegionTable_Init_WaterTemple() {
 
     areaTable[RR_WATER_TEMPLE_BOSS_ROOM] = Region("Water Temple Boss Room", SCENE_WATER_TEMPLE_BOSS, {
         // Events
-        EVENT_ACCESS(LOGIC_MORPHA_BEATEN, logic->CanKillEnemy(RE_MORPHA)),
+        // King Zora's ice stands only while the Water quest is not complete, and the quest completes after Morpha. So
+        // a Link who finishes the temple before he thaws King Zora never gets what King Zora hands over: with the gifts
+        // as in the game the Zora shop then gives the tunic, and with the gifts shuffled the seed's item is lost.
+        EVENT_ACCESS(LOGIC_MORPHA_BEATEN, logic->CanKillEnemy(RE_MORPHA) && (!logic->GiftsShuffled || logic->Get(LOGIC_KING_ZORA_THANKS_LINK))),
         EVENT_ACCESS(LOGIC_WATER_TEMPLE_CLEAR, logic->Get(LOGIC_MORPHA_BEATEN)),
     }, {
         // Locations
