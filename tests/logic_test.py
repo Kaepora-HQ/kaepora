@@ -72,6 +72,12 @@ class LogicTest(unittest.TestCase):
                                         ("KF Mido Top Left Chest", "Goron's Ruby"),
                                         ("KF Mido Top Right Chest", "Zora's Sapphire"),
                                         ("Dodongos Cavern Bomb Bag Chest", "Green Rupee")))
+        # Mido keeps a child without the Kokiri Sword from the Deku Tree, and the forest's chest holds the only one.
+        # Dodongo's Cavern's eye switches want the slingshot, and the first one lies in the Deku Tree.
+        never_gohma = (("KF Kokiri Sword Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Progressive Slingshot"))
+        self.assertFalse(self.reachable("Queen Gohma", *never_gohma, settings=CLOSED_DEKU))
+        for location in ("HF Ocarina of Time Item", "Song from Ocarina of Time", "Gift from Rauru"):
+            self.assertTrue(self.reachable(location, *never_gohma, settings=CLOSED_DEKU), location)
 
     def test_the_prelude_of_light_follows_phantom_ganon(self):
         # Sheik waits at the pedestal once the Forest quest is complete. The Forest Temple's only bow lies on the way to
