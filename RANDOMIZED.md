@@ -92,7 +92,11 @@ Under **Start**, **Cutscenes** decides what happens to the scenes you could skip
 
 Under **Start**, **Items** opens a list. Tick an item and every new game of that seed begins with it. The seed then keeps that item out of the shuffled places and puts a small prize in the pool in its stead.
 
-For now the list holds the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. The tunics are not shuffled, so a shop still sells them, and the Deku Shields stay in the shuffle, as a Deku Shield can burn. A seed also never counts on a started Deku Shield or Hylian Shield, as a shield can be lost: where it needs one, it has you buy one.
+Ten items are boxes: the Kokiri Sword, the three shields, the Iron and Hover Boots, the Goron and Zora Tunics, the Megaton Hammer and the Boomerang. The tunics are not shuffled, so a shop still sells them, and a seed still places its Deku Shields, as a Deku Shield can burn.
+
+Nine more come in steps, and each has a row where you choose how far up it starts: the Fairy Slingshot, the Fairy Bow and the Bomb Bag by how much they hold; the Hookshot or the Longshot; the Goron Bracelet or the Silver or Golden Gauntlets; the Silver or Golden Scale; the Adult's or Giant's Wallet; Deku Sticks and Deku Nuts by how many you can carry. A step includes the ones before it, and a bag starts full. The last row is the Fairy Ocarina.
+
+A place that is not shuffled and always gives one of these, such as Saria on the bridge, still gives it, though you hold it already. An item for adult Link shows grey in the menu until you are an adult.
 
 ## The Lens of Truth
 
