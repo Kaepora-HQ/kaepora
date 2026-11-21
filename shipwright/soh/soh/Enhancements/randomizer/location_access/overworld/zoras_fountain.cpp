@@ -45,7 +45,8 @@ void RegionTable_Init_ZorasFountain() {
         ENTRANCE(RR_ZF_HIDDEN_CAVE,            logic->CanUse(RG_SILVER_GAUNTLETS) && logic->BlastOrSmash()),
         ENTRANCE(RR_ZF_ROCK,                   logic->IsAdult && logic->ReachScarecrow()),
         ENTRANCE(RR_JABU_JABUS_BELLY_ENTRYWAY, logic->IsChild && (ctx->GetOption(RSK_JABU_OPEN).Is(RO_JABU_OPEN) || logic->CanUse(RG_BOTTLE_WITH_FISH))),
-        ENTRANCE(RR_ZF_GREAT_FAIRY_FOUNTAIN,   logic->HasExplosives() || (ctx->GetTrickOption(RT_ZF_GREAT_FAIRY_WITHOUT_EXPLOSIVES) && logic->CanUse(RG_MEGATON_HAMMER) && logic->CanUse(RG_SILVER_GAUNTLETS))),
+        // A bomb or the Megaton Hammer breaks the fairy's wall.
+        ENTRANCE(RR_ZF_GREAT_FAIRY_FOUNTAIN,   logic->BlastOrSmash()),
     });
 
     areaTable[RR_ZF_ICEBERGS] = Region("ZF Icebergs", SCENE_ZORAS_FOUNTAIN, {}, {
