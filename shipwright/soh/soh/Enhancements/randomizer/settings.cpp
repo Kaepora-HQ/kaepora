@@ -317,6 +317,7 @@ void Settings::CreateOptions() {
     OPT_U8(RSK_STARTING_BOW, {"Off", "Bow (Quiver 30)", "Bow (Quiver 40)", "Bow (Quiver 50)"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingBow"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_STARTING_SLINGSHOT, {"Off", "Slingshot (30)", "Slingshot (40)", "Slingshot (50)"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingSlingshot"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_STARTING_BOMB_BAG, {"Off", "Bomb Bag (20)", "Bomb Bag (30)", "Bomb Bag (40)"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingBombBag"), WIDGET_CVAR_COMBOBOX, 0);
+    OPT_U8(RSK_STARTING_STRENGTH, {"Off", "Goron's Bracelet", "Silver Gauntlets", "Golden Gauntlets"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingStrength"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_STARTING_SCALE, {"Off", "Silver Scale", "Golden Scale"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingScale"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_STARTING_WALLET, {"Off", "Adult's Wallet", "Giant's Wallet"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingWallet"), WIDGET_CVAR_COMBOBOX, 0);
     OPT_U8(RSK_STARTING_MAGIC_METER, {"Off", "Single Magic", "Double Magic"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingMagicMeter"), WIDGET_CVAR_COMBOBOX, 0);
@@ -810,6 +811,9 @@ void Context::FinalizeSettings(const std::set<RandomizerCheck>& excludedLocation
     if (mOptions[RSK_SHUFFLE_SWIM]) {
         mOptions[RSK_STARTING_SCALE].Set(0);
     }
+    if (mOptions[RSK_SHUFFLE_GRAB]) {
+        mOptions[RSK_STARTING_STRENGTH].Set(0);
+    }
     if (mOptions[RSK_SHUFFLE_CHILD_WALLET]) {
         mOptions[RSK_STARTING_WALLET].Set(0);
     }
@@ -1235,6 +1239,7 @@ void Settings::RandomizeAllSettings() {
             case RSK_STARTING_BOW:
             case RSK_STARTING_SLINGSHOT:
             case RSK_STARTING_BOMB_BAG:
+            case RSK_STARTING_STRENGTH:
             case RSK_STARTING_SCALE:
             case RSK_STARTING_WALLET:
             case RSK_STARTING_MAGIC_METER:

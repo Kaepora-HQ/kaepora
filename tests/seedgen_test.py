@@ -149,6 +149,22 @@ START_ITEMS = {"Kokiri Sword": "Weapon_Sword_Kokiri", "Deku Shield": "Weapon_Shi
 START_COPIES = {"Kokiri Sword": "Item_Sword_Kokiri", "Hylian Shield": "TBox_Shield_Hylian",
                 "Mirror Shield": "Item_Shield_Mirror", "Iron Boots": "Item_HeavyBoot", "Hover Boots": "Item_HoverBoot",
                 "Megaton Hammer": "Item_Hammer", "Boomerang": "Item_Boomerang"}
+START_STEPS = {
+    "Fairy Slingshot, 50 seeds": ["Weapon_Range_SlingShot", "Item_BulletBag_Medium", "Item_BulletBag_Large"],
+    "Fairy Bow, 50 arrows": ["Weapon_Range_Bow", "Item_Quiver_Medium", "Item_Quiver_Large"],
+    "Bomb Bag, 40 bombs": ["Item_BombBag_Small", "Item_BombBag_Medium", "Item_BombBag_Large"],
+    "Longshot": ["Item_Hookshot", "Item_Longshot"],
+    "Golden Gauntlets": ["Armor_Child_Gauntlet_Goron", "Armor_Adult_Gauntlet_Silver",
+                         "Armor_Adult_Gauntlet_Gold"],
+    "Golden Scale": ["Item_Scale_Silver", "Item_Scale_Gold"],
+    "Giant's Wallet": ["Item_Wallet_Medium", "Item_Wallet_Large"],
+    "Deku Sticks, 30 sticks": ["Item_DekuStick", "Item_StickBag_Medium", "Item_StickBag_Large"],
+    "Deku Nuts, 40 nuts": ["Item_DekuNut", "Item_NutBag_Medium", "Item_NutBag_Large"],
+    "Ocarina of Time": ["Item_Ocarina_Fairy", "Item_Ocarina_Time"],
+}
+# The items that shuffled places name for those steps: chests, and with gifts shuffled the scales and the wallets.
+STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Silver",
+               "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -556,7 +572,8 @@ class SeedgenTest(unittest.TestCase):
         for settings, message in (({"Lens of Truth": "Sometimes"}, "Sometimes"),
                                   ({"Shuffled dungeons": ["Deku Tree", "Hyrule Castle"]}, "Hyrule Castle"),
                                   ({"Forest": "Open"}, "Forest"),
-                                  ({"Start with": ["Kokiri Sword", "Master Sword"]}, "Master Sword")):
+                                  ({"Start with": ["Kokiri Sword", "Master Sword"]}, "Master Sword"),
+                                  ({"Start with": ["Hookshot", "Longshot"]}, "Hookshot and Longshot")):
             result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
@@ -1233,6 +1250,32 @@ class SeedgenTest(unittest.TestCase):
         self.assert_character_hints_are_true(spoiler, plan)
         self.assertNotIn("KF Mido Hint", spoiler["hints from characters"])
         self.assertEqual(self.route_out_of_reach(spoiler), [])
+
+    def test_a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step(self):
+        chosen = list(START_STEPS)
+        spoiler, plan = self.generate("32", {"Start with": chosen[::-1], "Gifts": "Shuffled"})
+        self.assertEqual(spoiler["settings"]["Start with"], chosen)
+        self.assertEqual(plan["start_items"], [actor for name in chosen for actor in START_STEPS[name]])
+        placed = placed_remake_items(spoiler, plan)
+        self.assertFalse(set(STEP_COPIES) & set(placed.values()))
+        unstarted = placed_remake_items(*self.generate("32", {"Gifts": "Shuffled"}))
+        self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
+                         list(unstarted.values()).count("TBox_Rupee_Red") + len(STEP_COPIES))
+        self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assertEqual(self.route_out_of_reach(spoiler), [])
+
+    def test_a_place_that_gives_a_started_step_again_counts_for_nothing(self):
+        # Dampé's race, Saria, the diving game and the two wallet rewards each give one named step, which a seed that
+        # starts with it already holds. The logic would count the next step there.
+        again = {"Graveyard Hookshot Chest", "LW Gift From Saria", "ZD Diving Minigame", "Kak 10 Gold Skulltula Reward",
+                 "Kak 30 Gold Skulltula Reward"}
+        # In seed 4 the Giant's Wallet and both rewards would make four wallets, more than the logic's count holds.
+        for seed in ("4", "33", "34", "35", "36"):
+            spoiler, _ = self.generate(seed, {"Start with": ["Hookshot", "Silver Scale", "Giant's Wallet",
+                                                             "Fairy Ocarina"]})
+            self.assertFalse(again & set(playthrough_steps(spoiler)), seed)
+            self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
+            self.assertEqual(self.route_out_of_reach(spoiler), [], seed)
 
     def test_characters_give_no_hints_at_vanilla(self):
         # Seed 811 puts the Kokiri Sword in a chest of Mido's House, and with Mido silent a stone names it there.

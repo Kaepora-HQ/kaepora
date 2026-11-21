@@ -138,7 +138,7 @@ static QString ShuffledDungeons(const SeedSettings& settings) {
 
 static QString StartWith(const SeedSettings& settings) {
     QStringList names;
-    for (const StartItem& item : StartWithInOrder(settings)) {
+    for (const StartStep& item : StartWithInOrder(settings)) {
         names << QString::fromUtf8(item.name);
     }
     return names.isEmpty() ? "None" : Listed(names);
@@ -250,34 +250,58 @@ static Value Selected(const QComboBox* box) {
     return static_cast<Value>(box->currentData().toInt());
 }
 
-static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartItem>& ticked,
-                            const std::function<void(const std::set<StartItem>&)>& chosen) {
+static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& started,
+                            const std::function<void(const std::set<StartStep>&)>& chosen) {
     auto* dialog = new QDialog(settingsDialog);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->setWindowTitle(QString::fromUtf8(StartWithSetting));
-    std::vector<std::pair<StartItem, QCheckBox*>> boxes;
+    std::vector<std::pair<StartStep, QCheckBox*>> boxes;
+    std::vector<QComboBox*> rows;
+    std::string_view rowItem;
     auto* column = new QVBoxLayout;
-    for (const StartItem& item : StartItems) {
-        auto* box = new QCheckBox(QString::fromUtf8(item.name));
-        box->setChecked(ticked.contains(item));
-        column->addWidget(box);
-        boxes.emplace_back(item, box);
+    auto* form = new QFormLayout;
+    for (const StartStep& step : StartSteps) {
+        if (step.choice.empty()) {
+            auto* box = new QCheckBox(QString::fromUtf8(step.name));
+            box->setChecked(started.contains(step));
+            column->addWidget(box);
+            boxes.emplace_back(step, box);
+            continue;
+        }
+        if (step.item != rowItem) {
+            rowItem = step.item;
+            rows.push_back(new QComboBox);
+            rows.back()->addItem("None");
+            form->addRow(QString::fromUtf8(step.item), rows.back());
+        }
+        rows.back()->addItem(QString::fromUtf8(step.choice), int(&step - StartSteps));
+        if (started.contains(step)) {
+            rows.back()->setCurrentIndex(rows.back()->count() - 1);
+        }
     }
+    auto* columns = new QHBoxLayout;
+    columns->addLayout(column);
+    columns->addLayout(form);
     auto* group = new QGroupBox("Items");
-    group->setLayout(column);
+    group->setLayout(columns);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
     auto* layout = new QVBoxLayout(dialog);
     layout->addWidget(group);
     layout->addWidget(buttons);
     QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
     QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
-        std::set<StartItem> items;
-        for (const auto& [item, box] : boxes) {
+        std::set<StartStep> steps;
+        for (const auto& [step, box] : boxes) {
             if (box->isChecked()) {
-                items.insert(item);
+                steps.insert(step);
             }
         }
-        chosen(items);
+        for (const QComboBox* row : rows) {
+            if (row->currentIndex() > 0) {
+                steps.insert(StartSteps[row->currentData().toInt()]);
+            }
+        }
+        chosen(steps);
         dialog->accept();
     });
     dialog->open();
@@ -353,9 +377,9 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     worldGroup->setLayout(worldForm);
 
     // What the button counts and the list opens with.
-    auto startWith = std::make_shared<std::set<StartItem>>();
+    auto startWith = std::make_shared<std::set<StartStep>>();
     auto* items = new QPushButton;
-    const auto showStartWith = [=](const std::set<StartItem>& shown) {
+    const auto showStartWith = [=](const std::set<StartStep>& shown) {
         *startWith = shown;
         items->setText(Counted(shown.size()));
     };

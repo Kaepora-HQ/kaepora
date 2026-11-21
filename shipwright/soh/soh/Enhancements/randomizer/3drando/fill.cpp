@@ -989,6 +989,9 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
         auto chest = chestAt.find(loc);
         if (auto item = pooled.find(loc); item != pooled.end()) {
             itemPool.push_back(item->second);
+        } else if ((chest == chestAt.end() || !chest->second->shuffled) && ctx->GetItemLocation(loc)->IsExcluded()) {
+            // A kept place that is excluded holds junk, as SoH's own fill gives one.
+            ctx->GetItemLocation(loc)->SetPlacedItem(Filler);
         } else if (chest == chestAt.end()) {
             ctx->GetItemLocation(loc)->PlaceVanillaItem();
         } else if (chest->second->shuffled) {

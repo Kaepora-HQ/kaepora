@@ -152,6 +152,10 @@ void GenerateStartingInventory() {
     AddItemToInventory(RG_MASTER_SWORD, ctx->GetOption(RSK_STARTING_MASTER_SWORD) ? 1 : 0);
     AddItemToInventory(RG_DEKU_SHIELD, ctx->GetOption(RSK_STARTING_DEKU_SHIELD) ? 1 : 0);
     AddItemToInventory(RG_PROGRESSIVE_MAGIC_METER, ctx->GetOption(RSK_STARTING_MAGIC_METER).Get());
+    // Each step of strength is an item of its own. A child lifts only with the bracelet, so every step includes it.
+    AddItemToInventory(RG_GORONS_BRACELET, ctx->GetOption(RSK_STARTING_STRENGTH).Get() >= 1 ? 1 : 0);
+    AddItemToInventory(RG_SILVER_GAUNTLETS, ctx->GetOption(RSK_STARTING_STRENGTH).Get() >= 2 ? 1 : 0);
+    AddItemToInventory(RG_GOLDEN_GAUNTLETS, ctx->GetOption(RSK_STARTING_STRENGTH).Get() >= 3 ? 1 : 0);
     AddItemToInventory(RG_PROGRESSIVE_SCALE, ctx->GetOption(RSK_STARTING_SCALE).Get());
     AddItemToInventory(RG_PROGRESSIVE_WALLET, ctx->GetOption(RSK_STARTING_WALLET).Get());
     // AddItemToInventory(RG_DOUBLE_DEFENSE,            StartingDoubleDefense.Value<uint8_t>());

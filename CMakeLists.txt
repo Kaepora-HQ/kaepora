@@ -229,7 +229,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter
                      with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple
                      with_songs_shuffled_the_courtyard_scene_starts_played
-                     a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played)
+                     a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played
+                     a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step
+                     a_place_that_gives_a_started_step_again_counts_for_nothing)
     add_test(NAME ${TEST} COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/seedgen_test.py
                                   $<TARGET_FILE:kaepora-seedgen> $<TARGET_FILE:kaepora-reach> ${PROJECT_VERSION}
                                   SeedgenTest.test_${TEST})
@@ -317,8 +319,8 @@ if(KAEPORA_GAME_NUP)
     add_test(NAME patch-flow-roundtrip COMMAND kaepora-patch-flow-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-pack-roundtrip COMMAND kaepora-patch-pack-roundtrip "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-text-roundtrip COMMAND kaepora-patch-text-roundtrip "${KAEPORA_GAME_NUP}")
-    foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values
-                 start-items gift gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
+    foreach(test larger-plan bad-input other-version size-table size-table-unchanged together start-values start-items
+                 start-steps gift gift-size-table stone-texts message-texts shop shop-table new-actors shelf-placement
                  single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table dive-depth skulltulas
                  skulltula-table loose-items goods-and-copies loose-item-table weapons-bring-containers
                  weapon-copies event-numbers song-table

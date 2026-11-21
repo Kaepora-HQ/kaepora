@@ -228,7 +228,7 @@ struct MessageText {
 // the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
 // on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its item and price, each
 // shuffled skulltula with its item, each shuffled loose item that gives another item than its own, with that item, and
-// the actor of each item the seed starts with.
+// for each step the seed starts with the actors of the finds that bring a new game to it.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,

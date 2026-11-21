@@ -129,6 +129,8 @@ MASK_SHOP_SIGN = "HrlCity_001"
 TEXT_PACK_OVERHEAD = 312
 BOOL = 0xD0
 INT = 0xD1
+FLOAT = 0xD2
+UINT = 0xD3
 INT64 = 0xD4
 UINT64 = 0xD5
 
@@ -144,6 +146,13 @@ TRIALS_LEFT = "InsideGanonCastle_Dungeon_Barrier_Count"
 START_ITEMS = ["Weapon_Sword_Kokiri", "Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror",
                "Armor_Adult_HeavyBoot", "Armor_Adult_HoverBoot", "Armor_Adult_Goron", "Armor_Adult_Zora", "Item_Hammer",
                "Item_Boomerang"]
+START_STEPS = ["Weapon_Range_SlingShot", "Item_BulletBag_Medium", "Item_BulletBag_Large", "Weapon_Range_Bow",
+               "Item_Quiver_Medium", "Item_Quiver_Large", "Item_BombBag_Small", "Item_BombBag_Medium",
+               "Item_BombBag_Large", "Item_Hookshot", "Item_Longshot", "Armor_Child_Gauntlet_Goron",
+               "Armor_Adult_Gauntlet_Silver", "Armor_Adult_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold",
+               "Item_Wallet_Medium", "Item_Wallet_Large", "Item_DekuStick", "Item_StickBag_Medium",
+               "Item_StickBag_Large", "Item_DekuNut", "Item_NutBag_Medium", "Item_NutBag_Large", "Item_Ocarina_Fairy",
+               "Item_Ocarina_Time"]
 
 GORON_SHOPKEEPERS = [("Npc_Goron_011_Shop_Child", "Npc_Goron_011_Shop_Child"),
                      ("Npc_Goron_011_Shop_Adult", "Npc_Goron_011_Shop_Child")]
@@ -1027,14 +1036,40 @@ def larger_plan(patch, game):
         assert game.placement(mod[path]) == expected, path
 
 
+class Choice(str):
+    """An Enum's value, by its name."""
+
+
 def with_defaults(game, values):
     data = game.game_data_list(game.read(GAME_DATA_LIST))
     for name, value in values.items():
-        kind, tag = ("Bool", BOOL) if isinstance(value, bool) else ("Int", INT)
+        if isinstance(value, Choice):
+            kind, default = "Enum", (UINT, murmur3(value))
+        elif isinstance(value, str):
+            kind, default = "String64", value
+        elif isinstance(value, float):
+            kind, default = "Float", (FLOAT, struct.unpack("<I", struct.pack("<f", value))[0])
+        else:
+            kind, default = ("Bool", (BOOL, int(value))) if isinstance(value, bool) else ("Int", (INT, value))
         entry = next(e for e in data["Data"][kind] if e["Hash"][1] == murmur3(name))
-        assert entry["DefaultValue"][0] == tag and entry["DefaultValue"] != (tag, int(value)), (name, entry)
-        entry["DefaultValue"] = (tag, int(value))
+        assert type(entry["DefaultValue"]) is type(default) and entry["DefaultValue"] != default, (name, entry)
+        assert isinstance(default, str) or entry["DefaultValue"][0] == default[0], (name, entry)
+        entry["DefaultValue"] = default
     return data
+
+
+def found(*actors):
+    return ({f"{record}.{actor}": True for actor in actors for record in ("IsGet", "HavePlayedGetEvent")}
+            | {f"PouchData.{actor}.StockNum": 1 for actor in actors})
+
+
+def brought(container):
+    return {f"IsGet.{container}": True, f"PouchData.{container}.StockNum": 1}
+
+
+def filled(ammunition, kind, limit):
+    return {f"PouchContentMaxNum.{kind}": limit, f"IsGet.{ammunition}": True,
+            f"PouchData.{ammunition}.StockNum": limit}
 
 
 def together(patch, game):
@@ -1081,6 +1116,36 @@ def start_items(patch, game):
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
     assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
+
+
+def start_steps(patch, game):
+    """A new game holds each item that comes in steps at its highest step, as after a find of each of its steps in
+    turn: every container at its largest and full, the small containers that come with the Bow, the Slingshot and the
+    first stick and nut with no get scene of their own, the dive depth and the lift grade, and the ocarina and the
+    gauntlets in hand. Their names grow the list, which raises its size table entry."""
+    expected = (found("Weapon_Range_SlingShot", "Item_BulletBag_Medium", "Item_BulletBag_Large")
+                | brought("Item_BulletBag_Small") | filled("Item_DekuSeed", "DekuSeed", 50)
+                | found("Weapon_Range_Bow", "Item_Quiver_Medium", "Item_Quiver_Large") | brought("Item_Quiver_Small")
+                | filled("Item_Arrow_Normal", "Arrow", 50)
+                | found("Item_BombBag_Small", "Item_BombBag_Medium", "Item_BombBag_Large")
+                | filled("Item_Bomb", "Bomb", 40)
+                | found("Item_Hookshot", "Item_Longshot")
+                | found("Armor_Child_Gauntlet_Goron", "Armor_Adult_Gauntlet_Silver", "Armor_Adult_Gauntlet_Gold")
+                | {"PlayerStatus.LiftGrade": Choice("High"), "PlayerStatus.EquipHandArmor": "Armor_Adult_Gauntlet_Gold"}
+                | found("Item_Scale_Silver", "Item_Scale_Gold") | {"PlayerStatus.DiveDepth": 9.0}
+                | found("Item_Wallet_Medium", "Item_Wallet_Large") | {"PouchContentMaxNum.Rupee": 1000}
+                | found("Item_DekuStick", "Item_StickBag_Medium", "Item_StickBag_Large") | brought("Item_StickBag_Small")
+                | filled("Item_DekuStick", "DekuStick", 30)
+                | found("Item_DekuNut", "Item_NutBag_Medium", "Item_NutBag_Large") | brought("Item_NutBag_Small")
+                | filled("Item_DekuNut", "DekuNut", 40)
+                | found("Item_Ocarina_Fairy", "Item_Ocarina_Time") | {"PlayerStatus.EquipOcarina": "Item_Ocarina_Time"})
+    mod = patched(patch, game, plan([], start_items=START_STEPS))
+    assert sorted(mod) == [GAME_DATA_LIST, SIZE_TABLE], sorted(mod)
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, expected)
+    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    size = load_size(len(zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)))
+    entries = [(key, size if key == size_key(GAME_DATA_LIST) else entry) for key, entry in entries]
+    assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, entries, names)
 
 
 def skipped_opening(flow):
@@ -2223,10 +2288,9 @@ def bad_input(patch, game):
         {key: value for key, value in good.items() if key != "start_items"}, ["plan.json", "start_items"])
     plans["start item listed twice"] = (good | {"start_items": ["Item_Hammer", "Item_Hammer"]},
                                         ["plan.json", "start_items", "Item_Hammer", "twice"])
-    # A find of each of these writes more than a start does: the Silver Scale how deep Link dives, a bottle its slot,
-    # the Bomb Bag how many bombs Link can carry, and Din's Fire the magic meter.
-    for item, reason in (("Item_Scale_Silver", "DiveDepthUP"), ("Item_Bottle", "Bottle"),
-                         ("Item_BombBag_Small", "MaxNumGameData"), ("Item_DinFire", "MPMaxUP")):
+    # A find of each of these writes more than a start does: a bottle its slot and Din's Fire the magic meter. A
+    # bombchu goes into a bomb bag, which the start does not hold.
+    for item, reason in (("Item_Bottle", "Bottle"), ("Item_DinFire", "MPMaxUP"), ("Item_Bombchu", "bag")):
         plans[f"start item {item}"] = (good | {"start_items": ["Item_Hammer", item]}, ["start item", item, reason])
     plans["start item with no row"] = (good | {"start_items": ["Item_Nowhere"]}, ["start item", "Item_Nowhere"])
     plans["start item a start value names"] = (
@@ -2359,6 +2423,7 @@ def main():
         "together": together,
         "start-values": start_values,
         "start-items": start_items,
+        "start-steps": start_steps,
         "opening-skipped": opening_skipped,
         "tested-opening-mod": tested_opening_mod,
         "gift": gift,

@@ -333,10 +333,22 @@ private:
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     }
 
-    void startWith(const QStringList& names) {
+    QComboBox* stepsOf(const QString& item) const {
+        for (QLabel* text : startWithDialog()->findChildren<QLabel*>()) {
+            if (text->text() == item) {
+                return qobject_cast<QComboBox*>(text->buddy());
+            }
+        }
+        return nullptr;
+    }
+
+    void startWith(const QStringList& names, const QMap<QString, QString>& steps = {}) {
         itemsToStartWith()->click();
         for (QCheckBox* box : startWithDialog()->findChildren<QCheckBox*>()) {
             box->setChecked(names.contains(box->text()));
+        }
+        for (const auto& [item, step] : steps.asKeyValueRange()) {
+            stepsOf(item)->setCurrentText(step);
         }
         closeStartWith("OK");
     }
@@ -877,6 +889,27 @@ private slots:
         QCOMPARE(names,
                  (QStringList{ "Items", "Kokiri Sword", "Deku Shield", "Hylian Shield", "Mirror Shield", "Iron Boots",
                                "Hover Boots", "Goron Tunic", "Zora Tunic", "Megaton Hammer", "Boomerang" }));
+        QList<QStringList> rows;
+        for (QLabel* text : startWithDialog()->findChildren<QLabel*>()) {
+            auto* steps = qobject_cast<QComboBox*>(text->buddy());
+            QCOMPARE(steps->currentText(), QString("None"));
+            rows << QStringList{ text->text() };
+            for (int index = 0; index < steps->count(); ++index) {
+                rows.back() << steps->itemText(index);
+            }
+        }
+        QCOMPARE(rows, (QList<QStringList>{
+                           { "Fairy Slingshot", "None", "30 seeds", "40 seeds", "50 seeds" },
+                           { "Fairy Bow", "None", "30 arrows", "40 arrows", "50 arrows" },
+                           { "Bomb Bag", "None", "20 bombs", "30 bombs", "40 bombs" },
+                           { "Hookshot", "None", "Hookshot", "Longshot" },
+                           { "Strength", "None", "Goron Bracelet", "Silver Gauntlets", "Golden Gauntlets" },
+                           { "Scale", "None", "Silver Scale", "Golden Scale" },
+                           { "Wallet", "None", "Adult's Wallet", "Giant's Wallet" },
+                           { "Deku Sticks", "None", "10 sticks", "20 sticks", "30 sticks" },
+                           { "Deku Nuts", "None", "20 nuts", "30 nuts", "40 nuts" },
+                           { "Ocarina", "None", "Fairy Ocarina", "Ocarina of Time" },
+                       }));
         QStringList buttons;
         for (QPushButton* button : startWithDialog()->findChildren<QPushButton*>()) {
             buttons << button->text();
@@ -904,6 +937,19 @@ private slots:
         QVERIFY(entry("7")->toolTip(1).split('\n').contains(line));
     }
 
+    void stepsToStartWithGoIntoTheSeed() {
+        button("Settings…")->click();
+        startWith({ "Kokiri Sword" }, { { "Fairy Bow", "40 arrows" }, { "Hookshot", "Longshot" } });
+        QCOMPARE(itemsToStartWith()->text(), QString("3 items"));
+        dialogButton("OK")->click();
+        const QString line = "Start with: Kokiri Sword, Fairy Bow, 40 arrows and Longshot";
+        QVERIFY(label("Starts with 3 items")->toolTip().split('\n').contains(line));
+
+        QVERIFY(create("8"));
+        const QJsonObject settings = ReadJson(library + "/8/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Start with"].toArray(), (QJsonArray{ "Kokiri Sword", "Fairy Bow, 40 arrows", "Longshot" }));
+    }
+
     void oneItemToStartWithIsOneItem() {
         button("Settings…")->click();
         startWith({ "Megaton Hammer" });
@@ -928,7 +974,7 @@ private slots:
 
     void defaultsClearsTheItemsToStartWith() {
         button("Settings…")->click();
-        startWith({ "Boomerang" });
+        startWith({ "Boomerang" }, { { "Scale", "Golden Scale" } });
         dialogButton("Defaults")->click();
         QCOMPARE(itemsToStartWith()->text(), QString("None"));
         dialogButton("OK")->click();

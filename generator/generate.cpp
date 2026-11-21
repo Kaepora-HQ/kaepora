@@ -157,18 +157,9 @@ template <typename T> static std::vector<T> Joined(std::vector<T> first, const s
     return first;
 }
 
-// SoH's pool leaves out an item a seed starts with and fills its place with junk, but adds its Deku Shields whatever
-// the start (GenerateItemPool).
-static void LeaveOutOfThePool(std::vector<RemakeChest>& chests, RandomizerGet started) {
-    if (started == RG_DEKU_SHIELD) {
-        return;
-    }
-    const auto copy = std::ranges::find_if(
-        chests, [&](const RemakeChest& chest) { return chest.shuffled && chest.sohItem == started; });
-    if (copy != chests.end()) {
-        copy->item = std::string(FillerName);
-        copy->sohItem = Filler;
-    }
+template <typename Place> static void GiveFiller(Place& place) {
+    place.item = std::string(FillerName);
+    place.sohItem = Filler;
 }
 
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
@@ -196,15 +187,24 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     for (RemakeChest& chest : chests) {
         chest.shuffled = chest.shuffled && !KeptInPlace(chest, settings);
     }
-    for (RandomizerGet started : StartingItems(settings)) {
-        LeaveOutOfThePool(chests, started);
-    }
     // The places that hand over a stone or a medallion give through an event flow's call, which the patcher writes as
     // it writes a gift's.
     std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
     if (settings.rewards == Rewards::Shuffled) {
         std::ranges::copy_if(rewardTable, std::back_inserter(gifts),
                              [&](const RemakeGift& reward) { return !KeptInPlace(reward, settings); });
+    }
+    // SoH's pool puts junk in place of a started item. A kept place that names a started step gives it again, which
+    // adds nothing, so it is excluded: the logic counts junk there.
+    for (const std::string_view copy : StartedCopies(settings)) {
+        const auto names = [&](const auto& place) { return place.item == copy; };
+        if (const auto chest =
+                std::ranges::find_if(chests, [&](const RemakeChest& chest) { return chest.shuffled && names(chest); });
+            chest != chests.end()) {
+            GiveFiller(*chest);
+        } else if (const auto gift = std::ranges::find_if(gifts, names); gift != gifts.end()) {
+            GiveFiller(*gift);
+        }
     }
     std::vector<RemakeSkulltula> skulltulas;
     std::ranges::copy_if(skulltulaTable, std::back_inserter(skulltulas),
@@ -226,8 +226,8 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         settings.songs == Songs::ShuffledAmongThemselves ? songTable : std::vector<RemakeSongPlace>{};
     auto ctx = Rando::Context::GetInstance();
     ctx->ClearItemLocations();
-    // No location is excluded.
-    if (Playthrough::Playthrough_Init({}, enabledTricks, chests, looseItems, shops, gifts, skulltulas, songs) <= 0) {
+    if (Playthrough::Playthrough_Init(GivenAgain(settings, chests, giftTable), enabledTricks, chests, looseItems, shops,
+                                      gifts, skulltulas, songs) <= 0) {
         throw std::runtime_error("generation failed");
     }
     const std::map<RandomizerCheck, std::string> items =
