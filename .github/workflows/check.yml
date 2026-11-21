@@ -353,7 +353,10 @@ jobs:
           key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
 
   windows-seeds:
-    name: Windows seeds
+    name: Windows seeds, part ${{ matrix.part }} of 2
+    strategy:
+      matrix:
+        part: [1, 2]
     runs-on: windows-2022
     timeout-minutes: 45
     defaults: *bash
@@ -376,12 +379,12 @@ jobs:
           ccache --show-stats
 
       - name: Make the seeds to compare with Linux
-        run: python -I tests/same_seeds.py build/kaepora-seedgen.exe seeds
+        run: python -I tests/same_seeds.py build/kaepora-seedgen.exe seeds "${{ matrix.part }}/2"
 
       - name: Upload the seeds
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: seeds-windows-${{ github.sha }}
+          name: seeds-windows-${{ github.sha }}-${{ matrix.part }}
           path: seeds/
           if-no-files-found: error
           retention-days: 7
@@ -589,10 +592,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Download the seeds
+      - name: Download the Linux and macOS seeds
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: seeds-*-${{ github.sha }}
+          pattern: seeds-{linux,macos}-${{ github.sha }}
+
+      - name: Download both parts of the Windows seeds into one folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: seeds-windows-${{ github.sha }}-*
+          path: seeds-windows-${{ github.sha }}
+          merge-multiple: true
 
       - name: Compare
         run: |

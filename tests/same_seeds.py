@@ -1,9 +1,11 @@
 """Write the spoiler log and the plan of every seed below under every group of settings below, so that CI can compare
-the files Linux and Windows make.
+the files Linux, Windows and macOS make.
 
-Usage: python3 -I tests/same_seeds.py <kaepora-seedgen> <folder>
+Usage: python3 -I tests/same_seeds.py <kaepora-seedgen> <folder> [<part>/<parts>]
 Writes <folder>/<settings>/<n>.spoiler.json and <n>.plan.json, where n is the seed's place in SEEDS. Stops at the
-first seed that fails.
+first seed that fails. With <part>/<parts>, such as 1/2, writes only the seeds whose place leaves part - 1 when divided
+by parts, under every group of settings, so the runs of parts 1 to <parts> together write the files of one run
+without a part.
 """
 
 import concurrent.futures
@@ -60,16 +62,18 @@ SETTINGS = {
 
 def main():
     seedgen, folder = sys.argv[1], pathlib.Path(sys.argv[2])
+    part, parts = map(int, (sys.argv[3] if len(sys.argv) > 3 else "1/1").split("/"))
+    places = range(part - 1, len(SEEDS), parts)
     runs = []
     for name, settings in SETTINGS.items():
         (folder / name).mkdir(parents=True)
-        for n, seed in enumerate(SEEDS):
+        for n in places:
             out = folder / name / f"{n:03}"
-            runs.append([seedgen, seed, f"{out}.spoiler.json", f"{out}.plan.json", json.dumps(settings)])
+            runs.append([seedgen, SEEDS[n], f"{out}.spoiler.json", f"{out}.plan.json", json.dumps(settings)])
     with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
         for _ in pool.map(lambda args: subprocess.run(args, check=True, stdout=subprocess.DEVNULL), runs):
             pass
-    print(f"{len(SEEDS)} seeds under {len(SETTINGS)} groups of settings written to {folder}")
+    print(f"{len(places)} seeds under {len(SETTINGS)} groups of settings written to {folder}")
 
 
 if __name__ == "__main__":
