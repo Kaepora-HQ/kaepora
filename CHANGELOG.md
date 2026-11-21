@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Kaepora-HQ/kaepora/compare/v0.3.0...v0.3.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **patch:** let Lichii's text speed work with a Kaepora mod ([fdac946](https://github.com/Kaepora-HQ/kaepora/commit/fdac94618999a34065fd3c2c6b8d8b76c8175d13))
+
 ## [0.3.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.2.0...v0.3.0) (2026-11-21)
 
 
