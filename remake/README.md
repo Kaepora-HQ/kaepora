@@ -240,7 +240,10 @@ lists actors to fill, the item's add raises the limit the row names and fills ea
 program). So in every mod the Bow's and the Slingshot's rows list what the small quiver's and bullet bag's rows list,
 and the container too, which a shop asks for before it sells arrows or seeds (`DisplayShop.bfevfl`, read). The add
 skips all of it when Link's limit is already at or above the row's, so a weapon that comes after a bigger quiver or
-bullet bag brings neither its container nor ammunition (read from the program). Seen in the game by an agent, with the
+bullet bag brings neither its container nor ammunition (read from the program). So in every mod each medium and large
+quiver, bullet bag, bomb bag, stick bag and nut bag also lists the small one of its kind, after its ammunition: one that
+comes first brings the small one, which shops and the rolling Goron ask for (read). That the game hands the small one
+over this way is unseen. Seen in the game by an agent, with the
 rows changed: one talk in the House of Skulltula gave the Bow and the Slingshot, each with its small container, a limit
 of 30 and 30 arrows or seeds, and the Bow shot; a chest's Bow left 30 arrows of 30. That the chest's AI adds the
 container before the weapon, so that the weapon's own fill does nothing, is inferred; either order ends the same. The

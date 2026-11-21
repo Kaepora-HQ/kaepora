@@ -666,7 +666,21 @@ constexpr std::array<std::pair<std::string_view, std::string_view>, 4> WeaponCon
     { "Weapon_Range_SlingShot", "Item_BulletBag_Small" },
 } };
 
+// The kinds of container that come in a small, a medium and a large size. A bigger one lists the small one of its kind
+// too, so it brings the small one when it comes first, which shops and the rolling Goron ask for.
+constexpr std::array<std::string_view, 5> ContainerKinds{ "Quiver", "BulletBag", "BombBag", "StickBag", "NutBag" };
+
 static void BringContainers(byml::Node& pouchActorInfo) {
+    for (const std::string_view kind : ContainerKinds) {
+        for (const std::string_view size : { "Medium", "Large" }) {
+            const std::string bigger = std::format("Item_{}_{}", kind, size);
+            byml::Node* listed = Find(Row(pouchActorInfo, bigger), "ExpansionMaxNumActor");
+            if (listed == nullptr) {
+                throw std::runtime_error(std::format("{}: {} has no ExpansionMaxNumActor", PouchActorInfoPath, bigger));
+            }
+            listed->string += "," + WorkPath(std::format("Item_{}_Small", kind));
+        }
+    }
     for (const auto& [weapon, container] : WeaponContainers) {
         byml::Node fills = Row(pouchActorInfo, container);
         byml::Node& row = Row(pouchActorInfo, weapon);
