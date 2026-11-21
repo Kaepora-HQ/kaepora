@@ -448,9 +448,15 @@ void Window::refresh(QString select) {
         if (!IsWholeSeed(folder)) {
             continue;
         }
-        const SeedSettings made = SettingsOf(folder.filePath());
-        auto* item = new QTreeWidgetItem(seeds, { seed == inUse ? seed + " (in use)" : seed, Summary(made) });
-        item->setToolTip(1, Details(made));
+        auto* item = new QTreeWidgetItem(seeds, { seed == inUse ? seed + " (in use)" : seed });
+        try {
+            const SeedSettings made = SettingsOf(folder.filePath());
+            item->setText(1, Summary(made));
+            item->setToolTip(1, Details(made));
+        } catch (const std::exception& e) {
+            item->setText(1, "Spoiler log cannot be read");
+            item->setToolTip(1, QString::fromUtf8(e.what()));
+        }
         item->setData(0, Qt::UserRole, folder.absoluteFilePath());
         if (seed == select) {
             seeds->setCurrentItem(item);

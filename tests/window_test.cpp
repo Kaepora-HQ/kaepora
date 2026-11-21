@@ -1011,6 +1011,16 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
+    void aSeedWhoseSpoilerLogCannotBeReadIsListed() {
+        // What an editor leaves when a letter is typed in front of the log and saved.
+        QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
+        Write(library + "/OWL/spoiler.json", R"(d{"seed": "OWL", "settings": {}})");
+        window = std::make_unique<Window>();
+        window->show();
+        QCOMPARE(listed(), QStringList{ "OWL" });
+        QCOMPARE(listed(1), QStringList{ "Spoiler log cannot be read" });
+    }
+
     void settingsAreRemembered() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         dialogButton("OK")->click();
