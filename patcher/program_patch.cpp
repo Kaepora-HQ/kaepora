@@ -6,6 +6,7 @@
 #include <bit>
 #include <cstdint>
 #include <span>
+#include <vector>
 
 namespace {
 
@@ -188,6 +189,16 @@ constexpr std::array AwardDungeonItemInstructions{
     0xD65F03C0u, // ret
 };
 
+// The skip controller of an event's runner, in its state for a scene that allows Skip now, tests a flag here to choose
+// between the prompt of a flowchart's skip window and that of a timeline or movie. The branch in its place goes to the
+// code the Plus button's confirm runs, which sets the state of a confirmed skip and clears the prompt's flags, so the
+// runner skips the scene as it does for a player. Every gate before this state stays, so a scene whose SkipSetting
+// disables skip, or a flowchart scene outside its skip window, never reaches it.
+constexpr uint32_t SkipPromptChoice = 0x572944;
+constexpr std::array ConfirmSkip{
+    0x1400002Eu, // b    0x5729FC             the confirm, in place of tbnz w8, #0, 0x5729B8 (0x370003A8)
+};
+
 // The routines lie in three pieces of the zero space after the program's code, around two places they leave alone.
 // In the order of the checks below, the pieces run from Lichii's FPS Unlock movie routine to the code tomvita's cheats
 // write after the game loads, from that code to Lichii's text speed routine, and from the text speed routine to
@@ -215,9 +226,13 @@ constexpr std::array Records{
 
 } // namespace
 
-std::string ProgramPatch() {
+std::string ProgramPatch(bool cutscenesSkipped) {
+    std::vector<Code> records(Records.begin(), Records.end());
+    if (cutscenesSkipped) {
+        records.push_back({ SkipPromptChoice, ConfirmSkip });
+    }
     std::string ips = "IPS32";
-    for (const Code& code : Records) {
+    for (const Code& code : records) {
         const uint32_t offset = code.address + NsoHeaderSize;
         const uint16_t size = uint16_t(code.instructions.size_bytes());
         const size_t record = ips.size();

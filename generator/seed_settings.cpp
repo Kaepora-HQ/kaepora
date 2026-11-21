@@ -102,6 +102,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
              { OpeningSetting, Words(OpeningChoices, settings.opening) },
+             { CutscenesSetting, Words(CutscenesChoices, settings.cutscenes) },
              { StartWithSetting, nlohmann::ordered_json::array() } };
     for (const StartItem& item : StartWithInOrder(settings)) {
         json[std::string(StartWithSetting)].push_back(item.name);
@@ -154,6 +155,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.trials = Parse(TrialsChoices, setting, value);
         } else if (setting == OpeningSetting) {
             settings.opening = Parse(OpeningChoices, setting, value);
+        } else if (setting == CutscenesSetting) {
+            settings.cutscenes = Parse(CutscenesChoices, setting, value);
         } else if (setting == StartWithSetting) {
             for (const nlohmann::json& name : value) {
                 settings.startWith.insert(StartItemNamed(setting, name));

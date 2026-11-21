@@ -44,7 +44,7 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Opening": "Skipped",
-                    "Start with": [],
+                    "Cutscenes": "Skipped", "Start with": [],
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Songs": "Vanilla",
                     "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
                     "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
@@ -53,7 +53,7 @@ NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
-    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played",
+    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All", "Gifts": "Shuffled",
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
@@ -643,6 +643,12 @@ class SeedgenTest(unittest.TestCase):
             spoiler, plan = self.generate("20", settings)
             self.assertEqual(spoiler["settings"]["Opening"], "Played" if settings else "Skipped")
             self.assertIs(plan["opening_skipped"], skipped, settings)
+
+    def test_cutscenes_are_skipped_unless_played(self):
+        for settings, skipped in (({}, True), ({"Cutscenes": "Played"}, False)):
+            spoiler, plan = self.generate("20", settings)
+            self.assertEqual(spoiler["settings"]["Cutscenes"], "Played" if settings else "Skipped")
+            self.assertIs(plan["cutscenes_skipped"], skipped, settings)
 
     def test_bridge_always_open(self):
         spoiler, plan = self.generate("17", {"Rainbow Bridge": "Always open"})

@@ -82,7 +82,11 @@ Three settings open the world sooner. They cover the way out of Kokiri Forest, t
 
 ## The opening
 
-Under **Start**, **Opening** decides how a new game begins. **Skipped** leaves out the narrated movie and the scene of Navi waking Link, so a new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes. **Played** keeps both, as the game has them.
+Under **Start**, **Opening** decides how a new game begins. **Skipped** leaves out the narrated movie and the scene of Navi waking Link, so a new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes. **Played** keeps both, as the game has them. With **Cutscenes** at **Skipped**, the scene of Navi waking Link goes by itself even then.
+
+## Cutscenes
+
+Under **Start**, **Cutscenes** decides what happens to the scenes you could skip yourself. **Skipped** skips each one the moment it starts, as if you had pressed Skip: the screen goes black for a moment and the game goes on. It covers every scene the game would let you skip, such as boss introductions and the credits. Scenes in which someone talks to you in a text box, and item, song and ocarina scenes, still play, since the game does not let you skip them. **Played** leaves skipping to you, as the game has it.
 
 ## What you start with
 

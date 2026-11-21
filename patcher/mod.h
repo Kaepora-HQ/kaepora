@@ -103,6 +103,7 @@ struct Plan {
     std::vector<PlannedShopSlot> shops;
     bool midoCastleEntryRemoved;
     bool openingSkipped;
+    bool cutscenesSkipped;
     std::vector<PlannedActorItem> skulltulas;
     std::vector<PlannedActorItem> looseItems;
     std::vector<std::string> startItems; // actors a new game holds, as after a find

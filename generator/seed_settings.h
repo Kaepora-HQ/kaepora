@@ -18,6 +18,7 @@ inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
 inline constexpr std::string_view OpeningSetting = "Opening";
+inline constexpr std::string_view CutscenesSetting = "Cutscenes";
 inline constexpr std::string_view StartWithSetting = "Start with";
 inline constexpr std::string_view ShopsSetting = "Shop goods";
 inline constexpr std::string_view ShopPricesSetting = "Shop prices";
@@ -94,6 +95,12 @@ enum class Opening { Skipped, Played };
 inline constexpr std::pair<Opening, std::string_view> OpeningChoices[] = {
     { Opening::Skipped, "Skipped" },
     { Opening::Played, "Played" },
+};
+
+enum class Cutscenes { Skipped, Played };
+inline constexpr std::pair<Cutscenes, std::string_view> CutscenesChoices[] = {
+    { Cutscenes::Skipped, "Skipped" },
+    { Cutscenes::Played, "Played" },
 };
 
 // An item a seed can start with: its name in the game's English text, and its actor.
@@ -236,6 +243,7 @@ struct SeedSettings {
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
     Opening opening = Opening::Skipped;
+    Cutscenes cutscenes = Cutscenes::Skipped;
     std::set<StartItem> startWith;
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Gifts gifts = Gifts::Vanilla;

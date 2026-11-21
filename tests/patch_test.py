@@ -8,8 +8,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-event-text-mods <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote> \
            <tested mod's romfs folder>...
-       python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod <kaepora-patch> <game.nup> \
-           <tested mod's folder>
+       python3 -I tests/patch_test.py tested-program-mod|tested-bomb-mod|tested-cutscenes-mod <kaepora-patch> \
+           <game.nup> <tested mod's folder>
        python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod| \
            tested-song-mod|tested-colossus-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
-           song-table|presence|lichii-built-ins|opening-skipped <kaepora-patch> <game.nup>
+           song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -539,8 +539,8 @@ def actor(placement, hash):
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
-         mido_castle_entry_removed=False, opening_skipped=False, skulltulas=(), loose_items=(),
-         event_numbers=(), presences=(), start_items=()):
+         mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
+         loose_items=(), event_numbers=(), presences=(), start_items=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -553,6 +553,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
             "mido_castle_entry_removed": mido_castle_entry_removed,
             "opening_skipped": opening_skipped,
+            "cutscenes_skipped": cutscenes_skipped,
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
             "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
             "start_items": list(start_items)}
@@ -925,10 +926,39 @@ def dive_depth(patch, game):
 def lichii_built_ins(patch, game):
     """The program patch leaves the bytes of Lichii's text speed and Epona jump patches as the game has them, so Lichii
     applies the speed a player turns on in Add-Ons and the jump's fix with FPS Unlock."""
-    (ips,) = patched(patch, game, plan([]), part="exefs").values()
-    overlaps = [(hex(start), len(data)) for start, data in ips_records(ips).items()
-                for place, length in LICHII_BUILT_INS if start < place + length and place < start + len(data)]
-    assert not overlaps, overlaps
+    for planned in (plan([]), plan([], cutscenes_skipped=True)):
+        (ips,) = patched(patch, game, planned, part="exefs").values()
+        overlaps = [(hex(start), len(data)) for start, data in ips_records(ips).items()
+                    for place, length in LICHII_BUILT_INS if start < place + length and place < start + len(data)]
+        assert not overlaps, overlaps
+
+
+# The skip controller's update, in its state for a scene that allows Skip now, tests a flag here to choose the prompt of
+# a flowchart's skip window or that of a timeline or movie. The Plus button's confirm starts at CONFIRMED_SKIP.
+SKIP_PROMPT_CHOICE, CONFIRMED_SKIP = 0x572944, 0x5729FC
+
+
+def cutscenes_skipped(patch, game):
+    (played,) = patched(patch, game, plan([]), part="exefs").values()
+    (skipped,) = patched(patch, game, plan([], cutscenes_skipped=True), part="exefs").values()
+    played, skipped = ips_records(played), ips_records(skipped)
+    touching = [hex(start) for start, data in played.items() if start <= SKIP_PROMPT_CHOICE < start + len(data)]
+    assert not touching, touching
+    assert SKIP_PROMPT_CHOICE in skipped, sorted(map(hex, skipped))
+    (word,) = struct.unpack("<I", skipped.pop(SKIP_PROMPT_CHOICE))
+    assert word == 0x1400002E and branch_target(SKIP_PROMPT_CHOICE, word) == CONFIRMED_SKIP, hex(word)
+    assert skipped == played
+
+
+def tested_cutscenes_mod(patch, game, mod):
+    """The skip word as the game ran it as the only mod: Navi waking Link, Saria at the ladder and Gohma's intro each
+    went by itself, the game went on after each, and Navi's scene counted as played."""
+    tested = files(pathlib.Path(mod) / "exefs")
+    ours = patched(patch, game, plan([], cutscenes_skipped=True), part="exefs")
+    assert sorted(ours) == sorted(tested), (sorted(ours), sorted(tested))
+    (path,) = tested
+    (record,) = ips_records(tested[path]).items()
+    assert record in ips_records(ours[path]).items(), record
 
 
 def tested_bomb_mod(patch, game, mod):
@@ -1048,7 +1078,8 @@ def together(patch, game):
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items")}
-    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False}
+    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
+              "cutscenes_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
     assert len(tables) == 3, len(tables)
@@ -2361,6 +2392,8 @@ def main():
         "start-items": start_items,
         "opening-skipped": opening_skipped,
         "tested-opening-mod": tested_opening_mod,
+        "cutscenes-skipped": cutscenes_skipped,
+        "tested-cutscenes-mod": tested_cutscenes_mod,
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,

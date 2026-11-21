@@ -10,6 +10,9 @@
 // A boss key, map or compass counts from any chest. The large chest's event flow sets a dungeon's own value for one,
 // and the small chest's does not, so from a small chest the boss door would stay chained and the map grey. With the
 // patch the function that adds an item to Link's pouch sets the value for these three as the large chest does.
+//
+// With cutscenes skipped, the game presses Skip by itself on each scene a player could skip, the moment the scene
+// allows it.
 #pragma once
 
 #include <string>
@@ -20,4 +23,4 @@
 constexpr std::string_view PatchedBuildId = "E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348";
 
 // The patch as the IPS32 file the emulator reads from a mod's exefs folder.
-std::string ProgramPatch();
+std::string ProgramPatch(bool cutscenesSkipped);
