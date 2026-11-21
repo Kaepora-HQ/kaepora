@@ -96,20 +96,60 @@ inline constexpr std::pair<Opening, std::string_view> OpeningChoices[] = {
     { Opening::Played, "Played" },
 };
 
-// An item a seed can start with: its name in the game's English text, and its actor.
-struct StartItem {
-    std::string_view name;
+// A step of an item a seed can start with. An item comes in one step or in several, and a step includes the ones
+// before it. Each step is one find: the actor whose records a new game holds after it, and the item that a place of
+// the game names for that step, whose copy a seed that starts with the step leaves out of the pool. The names are the
+// game's English ones.
+struct StartStep {
+    std::string_view item;
+    std::string_view choice; // the words of a step among several; empty for an item of one step
+    std::string_view name;   // in the settings, the spoiler log and the seed's details
     std::string_view actor;
+    std::string_view copy; // empty where no copy leaves the pool
 
-    auto operator<=>(const StartItem&) const = default;
+    auto operator<=>(const StartStep&) const = default;
 };
 
-inline constexpr StartItem StartItems[] = {
-    { "Kokiri Sword", "Weapon_Sword_Kokiri" },   { "Deku Shield", "Weapon_Shield_Deku" },
-    { "Hylian Shield", "Weapon_Shield_Hylian" }, { "Mirror Shield", "Weapon_Shield_Mirror" },
-    { "Iron Boots", "Armor_Adult_HeavyBoot" },   { "Hover Boots", "Armor_Adult_HoverBoot" },
-    { "Goron Tunic", "Armor_Adult_Goron" },      { "Zora Tunic", "Armor_Adult_Zora" },
-    { "Megaton Hammer", "Item_Hammer" },         { "Boomerang", "Item_Boomerang" },
+inline constexpr StartStep StartSteps[] = {
+    { "Kokiri Sword", "", "Kokiri Sword", "Weapon_Sword_Kokiri", "Item_Sword_Kokiri" },
+    // SoH's pool keeps its Deku Shields whatever the start.
+    { "Deku Shield", "", "Deku Shield", "Weapon_Shield_Deku", "" },
+    { "Hylian Shield", "", "Hylian Shield", "Weapon_Shield_Hylian", "TBox_Shield_Hylian" },
+    { "Mirror Shield", "", "Mirror Shield", "Weapon_Shield_Mirror", "Item_Shield_Mirror" },
+    { "Iron Boots", "", "Iron Boots", "Armor_Adult_HeavyBoot", "Item_HeavyBoot" },
+    { "Hover Boots", "", "Hover Boots", "Armor_Adult_HoverBoot", "Item_HoverBoot" },
+    // No place of ours holds a tunic.
+    { "Goron Tunic", "", "Goron Tunic", "Armor_Adult_Goron", "" },
+    { "Zora Tunic", "", "Zora Tunic", "Armor_Adult_Zora", "" },
+    { "Megaton Hammer", "", "Megaton Hammer", "Item_Hammer", "Item_Hammer" },
+    { "Boomerang", "", "Boomerang", "Item_Boomerang", "Item_Boomerang" },
+    { "Fairy Slingshot", "30 seeds", "Fairy Slingshot, 30 seeds", "Weapon_Range_SlingShot", "Item_Range_SlingShot" },
+    { "Fairy Slingshot", "40 seeds", "Fairy Slingshot, 40 seeds", "Item_BulletBag_Medium", "Item_BulletBag_Medium" },
+    { "Fairy Slingshot", "50 seeds", "Fairy Slingshot, 50 seeds", "Item_BulletBag_Large", "Item_BulletBag_Large" },
+    { "Fairy Bow", "30 arrows", "Fairy Bow, 30 arrows", "Weapon_Range_Bow", "Item_Range_Bow" },
+    { "Fairy Bow", "40 arrows", "Fairy Bow, 40 arrows", "Item_Quiver_Medium", "Item_Quiver_Medium" },
+    { "Fairy Bow", "50 arrows", "Fairy Bow, 50 arrows", "Item_Quiver_Large", "Item_Quiver_Large" },
+    { "Bomb Bag", "20 bombs", "Bomb Bag, 20 bombs", "Item_BombBag_Small", "Item_BombBag_Small" },
+    { "Bomb Bag", "30 bombs", "Bomb Bag, 30 bombs", "Item_BombBag_Medium", "Item_BombBag_Medium" },
+    { "Bomb Bag", "40 bombs", "Bomb Bag, 40 bombs", "Item_BombBag_Large", "Item_BombBag_Large" },
+    { "Hookshot", "Hookshot", "Hookshot", "Item_Hookshot", "Item_Hookshot" },
+    { "Hookshot", "Longshot", "Longshot", "Item_Longshot", "Item_Longshot" },
+    { "Strength", "Goron Bracelet", "Goron Bracelet", "Armor_Child_Gauntlet_Goron", "Item_Gauntlet_Goron" },
+    { "Strength", "Silver Gauntlets", "Silver Gauntlets", "Armor_Adult_Gauntlet_Silver", "Item_Gauntlet_Silver" },
+    { "Strength", "Golden Gauntlets", "Golden Gauntlets", "Armor_Adult_Gauntlet_Gold", "Item_Gauntlet_Gold" },
+    { "Scale", "Silver Scale", "Silver Scale", "Item_Scale_Silver", "Item_Scale_Silver" },
+    { "Scale", "Golden Scale", "Golden Scale", "Item_Scale_Gold", "Item_Scale_Gold" },
+    { "Wallet", "Adult's Wallet", "Adult's Wallet", "Item_Wallet_Medium", "Item_Wallet_Medium" },
+    { "Wallet", "Giant's Wallet", "Giant's Wallet", "Item_Wallet_Large", "Item_Wallet_Large" },
+    // The first stick and the first nut are ammunition, which a place may give again.
+    { "Deku Sticks", "10 sticks", "Deku Sticks, 10 sticks", "Item_DekuStick", "" },
+    { "Deku Sticks", "20 sticks", "Deku Sticks, 20 sticks", "Item_StickBag_Medium", "Item_StickBag_Medium" },
+    { "Deku Sticks", "30 sticks", "Deku Sticks, 30 sticks", "Item_StickBag_Large", "Item_StickBag_Large" },
+    { "Deku Nuts", "20 nuts", "Deku Nuts, 20 nuts", "Item_DekuNut", "" },
+    { "Deku Nuts", "30 nuts", "Deku Nuts, 30 nuts", "Item_NutBag_Medium", "Item_NutBag_Medium" },
+    { "Deku Nuts", "40 nuts", "Deku Nuts, 40 nuts", "Item_NutBag_Large", "Item_NutBag_Large" },
+    { "Ocarina", "Fairy Ocarina", "Fairy Ocarina", "Item_Ocarina_Fairy", "Item_Ocarina_Fairy" },
+    { "Ocarina", "Ocarina of Time", "Ocarina of Time", "Item_Ocarina_Time", "Item_Ocarina_Time" },
 };
 
 // A count's value is the number of goods it shuffles in each shop.
@@ -236,7 +276,7 @@ struct SeedSettings {
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
     Opening opening = Opening::Skipped;
-    std::set<StartItem> startWith;
+    std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     Gifts gifts = Gifts::Vanilla;
     Rewards rewards = Rewards::Vanilla;
@@ -250,8 +290,11 @@ struct SeedSettings {
     bool operator==(const SeedSettings&) const = default;
 };
 
-// What the settings start with, in the list's order.
-std::vector<StartItem> StartWithInOrder(const SeedSettings& settings);
+// The steps the settings start with, in the list's order.
+std::vector<StartStep> StartWithInOrder(const SeedSettings& settings);
+
+// The step's item's steps up to it, in order: the finds that bring a new game to the step.
+std::vector<StartStep> StepsTo(const StartStep& step);
 
 nlohmann::ordered_json ToJson(const SeedSettings& settings);
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <format>
 #include <iterator>
 #include <map>
 #include <ranges>
@@ -40,12 +41,20 @@ static PricesBetween ShopPriceRange(const nlohmann::json& value) {
     return range;
 }
 
-static StartItem StartItemNamed(const std::string& setting, const nlohmann::json& name) {
-    const auto item = std::ranges::find(StartItems, name.get<std::string>(), &StartItem::name);
-    if (item == std::end(StartItems)) {
-        throw std::runtime_error(setting + ": unknown item " + name.dump());
+static std::set<StartStep> StartWith(const std::string& setting, const nlohmann::json& names) {
+    std::set<StartStep> steps;
+    for (const nlohmann::json& name : names) {
+        const auto step = std::ranges::find(StartSteps, name.get<std::string>(), &StartStep::name);
+        if (step == std::end(StartSteps)) {
+            throw std::runtime_error(setting + ": unknown item " + name.dump());
+        }
+        if (const auto other = std::ranges::find(steps, step->item, &StartStep::item); other != steps.end()) {
+            throw std::runtime_error(
+                std::format("{}: {} and {} are steps of one item", setting, other->name, step->name));
+        }
+        steps.insert(*step);
     }
-    return *item;
+    return steps;
 }
 
 static void RefuseUnless(bool applies, std::string_view setting, std::string_view when) {
@@ -81,11 +90,24 @@ static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, 
     return shops;
 }
 
-std::vector<StartItem> StartWithInOrder(const SeedSettings& settings) {
-    std::vector<StartItem> items;
-    std::ranges::copy_if(StartItems, std::back_inserter(items),
-                         [&](const StartItem& item) { return settings.startWith.contains(item); });
-    return items;
+std::vector<StartStep> StartWithInOrder(const SeedSettings& settings) {
+    std::vector<StartStep> steps;
+    std::ranges::copy_if(StartSteps, std::back_inserter(steps),
+                         [&](const StartStep& step) { return settings.startWith.contains(step); });
+    return steps;
+}
+
+std::vector<StartStep> StepsTo(const StartStep& step) {
+    std::vector<StartStep> steps;
+    for (const StartStep& other : StartSteps) {
+        if (other.item == step.item) {
+            steps.push_back(other);
+        }
+        if (other == step) {
+            break;
+        }
+    }
+    return steps;
 }
 
 nlohmann::ordered_json ToJson(const SeedSettings& settings) {
@@ -103,8 +125,8 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
              { OpeningSetting, Words(OpeningChoices, settings.opening) },
              { StartWithSetting, nlohmann::ordered_json::array() } };
-    for (const StartItem& item : StartWithInOrder(settings)) {
-        json[std::string(StartWithSetting)].push_back(item.name);
+    for (const StartStep& step : StartWithInOrder(settings)) {
+        json[std::string(StartWithSetting)].push_back(step.name);
     }
     json[std::string(ShopsSetting)] = ShopsWords(settings.shops);
     if (settings.shops) {
@@ -155,9 +177,7 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
         } else if (setting == OpeningSetting) {
             settings.opening = Parse(OpeningChoices, setting, value);
         } else if (setting == StartWithSetting) {
-            for (const nlohmann::json& name : value) {
-                settings.startWith.insert(StartItemNamed(setting, name));
-            }
+            settings.startWith = StartWith(setting, value);
         } else if (const auto shop = std::ranges::find(ShopSettings, setting); shop != std::end(ShopSettings)) {
             shops.emplace(*shop, value);
         } else if (setting == GiftsSetting) {

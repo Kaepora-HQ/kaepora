@@ -1,5 +1,6 @@
 // Answers one question about the logic: with the given items at the given locations, and every other location holding
-// what the unmodified game gives there, can Link ever collect what is at the target location? A shop slot's item may
+// what the unmodified game gives there or, where it gives a started step again, junk as in the seed, can Link ever
+// collect what is at the target location? A shop slot's item may
 // come as the spoiler log gives it, with the slot's price.
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/static_data.h"
@@ -40,16 +41,20 @@ int main(int argc, char** argv) {
     }
 
     InitializeRandomizer();
+    SeedSettings settings;
     std::vector<RemakeChest> chests;
+    std::vector<RemakeGift> gifts;
     try {
-        SetOptions(ParseSeedSettings(nlohmann::json::parse(argv[1])));
+        settings = ParseSeedSettings(nlohmann::json::parse(argv[1]));
+        SetOptions(settings);
         chests = LoadRemakeChests();
+        gifts = LoadRemakeGifts(chests);
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());
         return 1;
     }
     auto ctx = Rando::Context::GetInstance();
-    ctx->FinalizeSettings({}, enabledTricks);
+    ctx->FinalizeSettings(GivenAgain(settings, chests, gifts), enabledTricks);
     for (const RemakeChest* chest : SetUpWorld(chests, {}, {}, {}, {})) {
         ctx->GetItemLocation(chest->location)->SetPlacedItem(chest->sohItem);
     }
