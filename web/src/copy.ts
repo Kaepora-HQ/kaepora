@@ -120,6 +120,7 @@ export const copy: Copy = {
       'song-royal-tomb-teaches-song-of-time': 'A stone carved with writing and a line of music, lit green. A sheet of music reads: "The melody that opens the Door of Time."',
       'song-windmill-teaches-eponas-song': 'The man in the windmill cranks his music box beside Link. A sheet of music reads: "This song has been stuck in my head ever since!"',
       'song-zelda-teaches-the-minuet-at-the-moat': 'Princess Zelda plays the ocarina in a white mist. A sheet of music reads: "Play the Minuet of the Forest."',
+      'song-zeldas-lullaby-impa-no-ocarina': 'Young Link holds up his empty hands as if playing an ocarina in the castle courtyard, with Navi beside him. The game says: "You learned Zelda\'s Lullaby!"',
       'start-ganons-tower-no-trials': 'Link stands in the dark hall of Ganon\'s Castle, facing the open way into the tower.',
       'start-rainbow-bridge-standing': 'Link stands at the foot of a shining rainbow bridge that leads to Ganon\'s Castle.',
     },
