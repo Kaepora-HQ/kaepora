@@ -891,8 +891,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes five gifts, among them the Kokiri Sword from the 30-token reward and the Lens of Truth
-        # from the man on the roof.
+        # Seed 10's route takes the Kokiri Sword from child fishing and the Lens of Truth from the man on the roof, among
+        # other gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
