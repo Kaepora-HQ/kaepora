@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
 # Lichii needs macOS 15 or later, so the programs need no older one. project() reads this, so it comes first.
 set(CMAKE_OSX_DEPLOYMENT_TARGET 15.0 CACHE STRING "The oldest macOS the programs run on")
+# With no build type, CMake passes no optimization flag, and the tests take several times as long. project() sets
+# Debug by itself for clang-cl, so this comes first.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "The type of build" FORCE)
+endif()
 project(kaepora VERSION 0.4.0 LANGUAGES C CXX) # x-release-please-version
 
 set(CMAKE_CXX_STANDARD 20)

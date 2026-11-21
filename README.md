@@ -51,6 +51,8 @@ cmake --build build
 ctest --test-dir build
 ```
 
+The build is a Release build unless you name another type, as with `-DCMAKE_BUILD_TYPE=Debug`.
+
 Some tests read the game file. To run them, name your game file when you configure:
 
 ```sh
