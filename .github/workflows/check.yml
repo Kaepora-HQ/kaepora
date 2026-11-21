@@ -195,24 +195,44 @@ jobs:
     steps:
       - *check-out-source
 
+      # clang-cl reads the MSVC and Windows SDK headers from INCLUDE, and lld-link reads their libraries from LIB. This
+      # step sets both.
       - &windows-set-up-msvc
         name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      # clang-cl compiles against the MSVC headers, libraries and SDK that the previous step puts in INCLUDE and LIB.
+      - &windows-restore-llvm
+        name: Restore LLVM
+        id: llvm
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/llvm
+          key: LLVM-${{ env.CLANG_CL_VERSION }}-win64
+
       - &windows-install-llvm
         name: Install LLVM
         shell: pwsh
+        env:
+          LLVM_RESTORED: ${{ steps.llvm.outputs.cache-hit }}
         run: |
-          $installer = Join-Path $env:RUNNER_TEMP 'llvm.exe'
-          Invoke-WebRequest -OutFile $installer "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:CLANG_CL_VERSION/LLVM-$env:CLANG_CL_VERSION-win64.exe"
-          if ((Get-FileHash -Algorithm SHA256 $installer).Hash -ne '16e5709785fef73c854646241c4a92c5cd574318d1b33c63330dd7721903e55c') {
-            throw 'LLVM installer checksum mismatch'
-          }
           $root = Join-Path $env:RUNNER_TEMP 'llvm'
-          Start-Process -Wait -FilePath $installer -ArgumentList '/S', "/D=$root"
+          if ($env:LLVM_RESTORED -ne 'true') {
+            $installer = Join-Path $env:RUNNER_TEMP 'llvm.exe'
+            Invoke-WebRequest -OutFile $installer "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:CLANG_CL_VERSION/LLVM-$env:CLANG_CL_VERSION-win64.exe"
+            if ((Get-FileHash -Algorithm SHA256 $installer).Hash -ne '16e5709785fef73c854646241c4a92c5cd574318d1b33c63330dd7721903e55c') {
+              throw 'LLVM installer checksum mismatch'
+            }
+            Start-Process -Wait -FilePath $installer -ArgumentList '/S', "/D=$root"
+          }
           & "$root/bin/clang-cl.exe" --version
           "LLVM_ROOT=$($root.Replace('\', '/'))" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Save LLVM
+        if: steps.llvm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/llvm
+          key: ${{ steps.llvm.outputs.cache-primary-key }}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
@@ -341,6 +361,7 @@ jobs:
     steps:
       - *check-out-source
       - *windows-set-up-msvc
+      - *windows-restore-llvm
       - *windows-install-llvm
       - *windows-install-ccache
       - *windows-restore-compiler-objects
