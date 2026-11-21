@@ -708,11 +708,11 @@ class SeedgenTest(unittest.TestCase):
             self.assertNotIn("Lens of Truth", playthrough_steps(never).values())
             self.assertIn("Bongo Bongo", playthrough_steps(never))
 
-    def test_every_setting_changed_at_once(self):
+    def assert_every_setting_changed_at_once(self, seeds):
         # The place after a boss is a step for the boss whatever it holds, so only there may the Lens stand on the
-        # route. In seed 405 Queen Gohma's place holds it.
+        # route.
         bosses = REWARD_AREAS.keys() - {"Gift from Rauru"}
-        for seed in range(400, 500):
+        for seed in seeds:
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             lens = {place for place, item in playthrough_steps(spoiler).items() if item == "Lens of Truth"}
             self.assertLessEqual(lens, bosses, seed)
@@ -720,6 +720,22 @@ class SeedgenTest(unittest.TestCase):
             placed = {spoiler_item(item) for item in spoiler["locations"].values()}
             self.assertFalse(placed & set(EVERY_SETTING_CHANGED["Start with"]), seed)
             self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
+
+    def test_every_setting_changed_at_once_400_to_419(self):
+        # In seed 405 Queen Gohma's place holds the Lens.
+        self.assert_every_setting_changed_at_once(range(400, 420))
+
+    def test_every_setting_changed_at_once_420_to_439(self):
+        self.assert_every_setting_changed_at_once(range(420, 440))
+
+    def test_every_setting_changed_at_once_440_to_459(self):
+        self.assert_every_setting_changed_at_once(range(440, 460))
+
+    def test_every_setting_changed_at_once_460_to_479(self):
+        self.assert_every_setting_changed_at_once(range(460, 480))
+
+    def test_every_setting_changed_at_once_480_to_499(self):
+        self.assert_every_setting_changed_at_once(range(480, 500))
 
     def assert_shop_slots_sell_the_pool(self, spoiler, plan, slots):
         """The plan's shop slots are the given rows, in table order, each with the spoiler log's item and a cheap price,
