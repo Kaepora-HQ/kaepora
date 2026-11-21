@@ -590,6 +590,7 @@ private slots:
                                 "Kokiri Forest: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
+                                "Opening: Skipped\n"
                                 "Start with: None\n"
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
@@ -646,6 +647,17 @@ private slots:
         QVERIFY(entry("7")->toolTip(1).split('\n').contains("Kokiri Forest: Closed Deku"));
     }
 
+    void aPlayedOpeningGoesIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Opening")->setCurrentText("Played");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Opening"].toString(), QString("Played"));
+        QCOMPARE(listed(1), QStringList{ "Opening played" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Opening: Played"));
+    }
+
     void cancelChangesNothing() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         dialogButton("Cancel")->click();
@@ -672,6 +684,7 @@ private slots:
         choice("Songs")->setCurrentText("Shuffled among themselves");
         choice("Loose items")->setCurrentText("Shuffled");
         choice("Dungeon rewards")->setCurrentText("Shuffled");
+        choice("Opening")->setCurrentText("Played");
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -682,6 +695,7 @@ private slots:
         QCOMPARE(choice("Kokiri Forest")->currentText(), QString("Closed"));
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
+        QCOMPARE(choice("Opening")->currentText(), QString("Skipped"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
@@ -844,7 +858,7 @@ private slots:
         QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
                                                 "Loose items", "Dungeon rewards" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
-        QCOMPARE(rows("Start"), QStringList{ "Items" });
+        QCOMPARE(rows("Start"), (QStringList{ "Opening", "Items" }));
     }
 
     void theStartWithListHasTheItems() {
@@ -952,6 +966,7 @@ private slots:
         QTest::newRow("forest") << "Kokiri Forest" << "Open" << "Forest open";
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
+        QTest::newRow("opening") << "Opening" << "Played" << "Opening played";
         QTest::newRow("shops") << "Shop goods" << "Four per shop shuffled" << "Shop goods shuffled";
         QTest::newRow("shops at random") << "Shop goods" << "A random number per shop" << "Shop goods shuffled";
         QTest::newRow("dungeon skulltulas") << "Gold Skulltulas" << "In dungeons" << "Dungeon Gold Skulltulas shuffled";
@@ -1006,9 +1021,27 @@ private slots:
               "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "No hints from characters" });
+        QCOMPARE(listed(1), QStringList{ "Opening played, no hints from characters" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Hints from characters: Vanilla"));
         QVERIFY(shows("Default settings"));
+    }
+
+    void aSeedMadeBeforeTheOpeningSettingPlaysIt() {
+        // The settings of a seed made by Kaepora 0.3.0 with its defaults.
+        QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
+        Write(library + "/OWL/spoiler.json",
+              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
+              "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
+              "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
+              "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
+              "Start with": [], "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla",
+              "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
+              "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
+        window = std::make_unique<Window>();
+        window->show();
+        QCOMPARE(listed(1), QStringList{ "Opening played" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Opening: Played"));
     }
 
     void aSeedWhoseSpoilerLogCannotBeReadIsListed() {

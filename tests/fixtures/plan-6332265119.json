@@ -1537,6 +1537,7 @@
   ],
   "shops": [],
   "mido_castle_entry_removed": false,
+  "opening_skipped": true,
   "skulltulas": [],
   "loose_items": [],
   "start_items": []

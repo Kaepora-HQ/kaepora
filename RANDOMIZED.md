@@ -80,6 +80,10 @@ Three settings open the world sooner. They cover the way out of Kokiri Forest, t
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 
+## The opening
+
+Under **Start**, **Opening** decides how a new game begins. **Skipped** leaves out the narrated movie and the scene of Navi waking Link, so a new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes. **Played** keeps both, as the game has them.
+
 ## What you start with
 
 Under **Start**, **Items** opens a list. Tick an item and every new game of that seed begins with it. The seed then keeps that item out of the shuffled places and puts a small prize in the pool in its stead.

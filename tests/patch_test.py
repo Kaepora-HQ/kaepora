@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|goods-and-copies|weapons-bring-containers|weapon-copies|event-numbers| \
-           song-table|presence|lichii-built-ins <kaepora-patch> <game.nup>
+           song-table|presence|lichii-built-ins|opening-skipped <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -119,6 +119,8 @@ SHORT_RUMOUR_STONE = "GOSSIP_SACRED_FOREST_MEADOW_03"
 # A label no stone of the game has.
 NO_STONE = "GOSSIP_NOWHERE"
 STONE_FLOW = "Event/EventFlow/GossipStone.bfevfl.zs"
+OPENING_FLOW = "Event/EventFlow/OpeningEvent.bfevfl.zs"
+NAVI_WOKE_LINK = "HavePlayedEvent.Dm_Kokiri_0030"
 # Mido's talk opens with his face and his voice, and a wooden sign's text with no code at all.
 MIDO_MESSAGES = "EventFlowMsg/Npc_Kokiri_Mido_Child.msbt"
 MIDO_TALK = "Talk_03"
@@ -537,7 +539,7 @@ def actor(placement, hash):
 
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
-         mido_castle_entry_removed=False, skulltulas=(), loose_items=(),
+         mido_castle_entry_removed=False, opening_skipped=False, skulltulas=(), loose_items=(),
          event_numbers=(), presences=(), start_items=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
@@ -550,6 +552,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
             "mido_castle_entry_removed": mido_castle_entry_removed,
+            "opening_skipped": opening_skipped,
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
             "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
             "start_items": list(start_items)}
@@ -1045,7 +1048,7 @@ def together(patch, game):
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items")}
-    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False}
+    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
     assert len(tables) == 3, len(tables)
@@ -1078,6 +1081,46 @@ def start_items(patch, game):
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
     assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
+
+
+def skipped_opening(flow):
+    """A parsed OpeningEvent flow whose loading entry point starts at the check that the forest has loaded, past the
+    narrated movie, and whose wait before Navi's scene goes on to the fade out after it."""
+    events = flow["events"]
+    index = {event[0]: i for i, event in enumerate(events)}
+    names = [name for _, name in flow["entry points"][0][1:]]
+    loading = flow["entry points"][1][names.index("Opening_LoadingKokiriForest")]
+    assert struct.unpack_from("<H", loading[0], 4)[0] == index["Event3"], loading[0]
+    loading[0] = loading[0][:4] + struct.pack("<H", index["Event18"])
+    wait = events[index["Event27"]]
+    assert struct.unpack_from("<H", wait[1], 2)[0] == index["Event5"], wait[1]
+    wait[1] = wait[1][:2] + struct.pack("<H", index["Event25"]) + wait[1][4:]
+    return flow
+
+
+def opening_skipped(patch, game):
+    mod = patched(patch, game, plan([], opening_skipped=True))
+    assert sorted(mod) == sorted([OPENING_FLOW, GAME_DATA_LIST]), sorted(mod)
+    assert game.event_flow(mod[OPENING_FLOW]) == skipped_opening(game.event_flow(game.read(OPENING_FLOW)))
+    ours = zstd.decompress(mod[OPENING_FLOW], zstd_dict=game.zs_dictionary)
+    theirs = zstd.decompress(game.read(OPENING_FLOW), zstd_dict=game.zs_dictionary)
+    changed = [at for at, (a, b) in enumerate(zip(ours, theirs)) if a != b]
+    assert len(ours) == len(theirs) and len(changed) == 2, changed
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, {NAVI_WOKE_LINK: True})
+
+    assert OPENING_FLOW not in every_mod(patch, game)
+
+
+def tested_opening_mod(patch, game, mod):
+    """The opening flow with the opening skipped, as the game ran it in a mod whose game data list starts Navi's scene
+    played: with it, a new game showed the loading screen and then Link and Navi in his lit house 15 s after it began,
+    with no movie and no scene of Navi waking him. Link could move, and Saria greeted him when he walked out."""
+    romfs = pathlib.Path(mod) / "romfs"
+    tested = (romfs / OPENING_FLOW).read_bytes()
+    assert patched(patch, game, plan([], opening_skipped=True)).get(OPENING_FLOW) == tested
+    data = game.game_data_list((romfs / GAME_DATA_LIST).read_bytes())
+    entry = next(e for e in data["Data"]["Bool"] if e["Hash"][1] == murmur3(NAVI_WOKE_LINK))
+    assert entry["DefaultValue"] == (BOOL, 1), entry
 
 
 def goods(actor):
@@ -1981,8 +2024,9 @@ def message_bytes(text, page=RUMOUR_PAGE):
 
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
-    substitute where it has one, and as an added value where it names none, and every planned stone and message saying
-    its text in both English text packs. Each fits the size table entry the game reads."""
+    substitute where it has one, and as an added value where it names none, every planned stone and message saying
+    its text in both English text packs, and the opening skipped where the plan skips it. Each fits the size table entry
+    the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -2007,6 +2051,8 @@ def seed_plan(patch, game, plan_file):
                      if ordered(placement) != ordered(game.placement(game.read(path))))
     edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"]}
     flows = {path: game.event_flow(game.read(path)) for path in edited}
+    if seed["opening_skipped"]:
+        flows[OPENING_FLOW] = skipped_opening(game.event_flow(game.read(OPENING_FLOW)))
     for text in seed["event_texts"]:
         string_parameter(flows[text["flow"]], text["event"], text["param"])[1] = text["text"]
     for number in seed["event_numbers"]:
@@ -2313,6 +2359,8 @@ def main():
         "together": together,
         "start-values": start_values,
         "start-items": start_items,
+        "opening-skipped": opening_skipped,
+        "tested-opening-mod": tested_opening_mod,
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
