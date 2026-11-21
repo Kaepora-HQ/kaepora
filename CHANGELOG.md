@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.3.1...v0.4.0) (2026-11-21)
+
+
+### Features
+
+* add a setting that skips the opening of a new game ([#75](https://github.com/Kaepora-HQ/kaepora/issues/75)) ([1e0615d](https://github.com/Kaepora-HQ/kaepora/commit/1e0615db1d865dd4c49418bef79e646524e944a1))
+
 ## [0.3.1](https://github.com/Kaepora-HQ/kaepora/compare/v0.3.0...v0.3.1) (2026-11-21)
 
 
