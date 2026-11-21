@@ -768,12 +768,12 @@ void RegionTable_Init_DodongosCavern() {
         // Blue Fire Arrows need similar accuracy as hammer trick, only put in logic when both hammer & blue fire tricks enabled
         // The Door of Time's quest counts the two stones only as each stone's dungeon ends, and only once Zelda has
         // been met: before that it refuses the step. So a child who beats King Dodongo and Barinade both first never
-        // gets the Ocarina of Time. With the songs shuffled, Malon can teach Zelda's Lullaby before he meets Zelda.
+        // gets the Ocarina of Time.
         EVENT_ACCESS(LOGIC_KING_DODONGO_BEATEN, AnyAgeTime([]{return logic->HasExplosives() ||
                                                                 (ctx->GetTrickOption(RT_DC_HAMMER_FLOOR) ? logic->CanUse(RG_MEGATON_HAMMER) || (ctx->GetTrickOption(RT_BLUE_FIRE_MUD_WALLS) && logic->BlueFire()) :
                                                                                                            ctx->GetTrickOption(RT_BLUE_FIRE_MUD_WALLS) && logic->CanUse(RG_BOTTLE_WITH_BLUE_FIRE));})
                                                                 && logic->CanKillEnemy(RE_KING_DODONGO)
-                                                                && (!logic->SongsShuffled || logic->HasItem(RG_ZELDAS_LETTER))),
+                                                                && logic->HasItem(RG_ZELDAS_LETTER)),
         EVENT_ACCESS(LOGIC_DODONGOS_CAVERN_CLEAR, logic->Get(LOGIC_KING_DODONGO_BEATEN)),
     }, {
         // Locations

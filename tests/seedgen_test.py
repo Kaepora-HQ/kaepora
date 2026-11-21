@@ -997,6 +997,15 @@ class SeedgenTest(unittest.TestCase):
             self.assertLess(sphere["HC Zeldas Letter"], sphere[boss], boss)
         self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_both_stone_bosses_wait_for_zeldas_letter(self):
+        # With the bracelet, a scale and the Bomb Bag in Mido's chests, a child opens both stone dungeons without the
+        # courtyard, songs as they are in the game or not.
+        early = [("KF Mido Top Left Chest", "Goron's Bracelet"), ("KF Mido Top Right Chest", "Progressive Scale"),
+                 ("KF Mido Bottom Left Chest", "Progressive Bomb Bag")]
+        for boss in ("King Dodongo", "Barinade"):
+            self.assertTrue(reach.reachable(boss, *early), boss)
+            self.assertFalse(reach.reachable(boss, *early, ("HC Zeldas Letter", "Green Rupee")), boss)
+
     def test_with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple(self):
         # The second of the Shadow and Spirit sages sets AllSage to Step02, the one step at which the Light Arrows scene
         # starts as Link walks into the Temple of Time. The Forest Temple's end then sets it back to Step01_00, and
