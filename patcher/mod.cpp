@@ -1066,6 +1066,21 @@ constexpr std::string_view SwordFlow = "Event/EventFlow/Get_StoneOfForest.bfevfl
 constexpr std::string_view SwordChestGive = "Event16";
 constexpr std::string_view NaviLineAfterSword = "Event152";
 
+// The Door of Time's quest takes the stones' steps only from DoorOfTime_CheckStoneNum, which runs as each stone's
+// dungeon ends. Until Zelda is met the quest refuses every step, so a child who finishes both stone dungeons first
+// never brings the quest to Step03, which Zelda's escape past the moat waits for. Impa's send-off, DoorOfTime_SendOff,
+// writes Step02 and ends in Event62. Going on from there to the check's first event, Event38, it gives the quest the
+// stones done by then. With both, the check writes Step03 in Event37 and then raises the drawbridge to the Market in
+// Event77, a saved flag that no quest state refuses and only Zelda's escape lowers. Going from Event37 straight on to
+// the stone count in Event4, the check leaves the bridge down for a child who has not met her yet.
+constexpr std::string_view DoorOfTimeFlow = "Event/EventFlow/DoorOfTime.bfevfl.zs";
+constexpr std::string_view SendOffEnd = "Event62";
+constexpr std::string_view StoneCheck = "Event38";
+constexpr std::string_view BothStonesStep = "Event37";
+constexpr std::string_view StoneCount = "Event4";
+constexpr std::pair<std::string_view, std::string_view> DoorOfTimeNext[] = { { SendOffEnd, StoneCheck },
+                                                                             { BothStonesStep, StoneCount } };
+
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
 // message opens with.
 static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan) {
@@ -1338,6 +1353,12 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         const std::string path(SwordFlow);
         if (bfevfl::SetNext(flowAt(path), SwordChestGive, NaviLineAfterSword)) {
             changedFlows.insert(path);
+        }
+    }
+    const std::string doorOfTime(DoorOfTimeFlow);
+    for (const auto& [event, next] : DoorOfTimeNext) {
+        if (bfevfl::SetNext(flowAt(doorOfTime), event, next)) {
+            changedFlows.insert(doorOfTime);
         }
     }
 

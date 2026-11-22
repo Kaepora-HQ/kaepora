@@ -21,7 +21,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|goods-and-copies|weapons-bring-containers| \
            weapon-copies|event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
-           sword-scene-left-out|sword-scene-kept <kaepora-patch> <game.nup>
+           sword-scene-left-out|sword-scene-kept|both-stones-before-zelda <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -130,6 +130,7 @@ NAVI_WOKE_LINK = "HavePlayedEvent.Dm_Kokiri_0030"
 SWORD_CHEST_FILES = ["Banc/KokiriForest/KokiriForest_Adult_Dynamic.bcett.byml.zs",
                      "Banc/KokiriForest/KokiriForest_Child_Dynamic.bcett.byml.zs"]
 SWORD_FLOW = "Event/EventFlow/Get_StoneOfForest.bfevfl.zs"
+DOOR_OF_TIME_FLOW = "Event/EventFlow/DoorOfTime.bfevfl.zs"
 # Mido's talk opens with his face and his voice, and a wooden sign's text with no code at all.
 MIDO_MESSAGES = "EventFlowMsg/Npc_Kokiri_Mido_Child.msbt"
 MIDO_TALK = "Talk_03"
@@ -1305,6 +1306,34 @@ def sword_scene_kept(patch, game):
     """With the Kokiri Sword in its own chest, the chest's event is the game's, and Link raises the sword he found."""
     mod = mod_files(patch, game, plan([(KOKIRI_SWORD_CHEST, SWORD_CHEST_FILES, "Item_Sword_Kokiri")]))
     assert SWORD_FLOW not in mod, sorted(mod)
+
+
+def both_stones_before_zelda(patch, game):
+    """In every mod the Door of Time's flow is the game's but for two next events, so a child who ends both stone
+    dungeons before he meets Zelda still reaches her and her escape. Impa's send-off, entry point DoorOfTime_SendOff,
+    goes on from its last event to the first of DoorOfTime_CheckStoneNum, which moves the quest on by the stones whose
+    quests are complete. With both, the check goes from its Step03 write straight on to the stone count, past the event
+    that raises the drawbridge to the Market."""
+    mod = every_mod(patch, game)
+    assert DOOR_OF_TIME_FLOW in mod, sorted(mod)
+    expected = game.event_flow(game.read(DOOR_OF_TIME_FLOW))
+    events = expected["events"]
+    index = {event[0]: i for i, event in enumerate(events)}
+    names = [name for _, name in expected["entry points"][0][1:]]
+    check = expected["entry points"][1][names.index("DoorOfTime_CheckStoneNum")]
+    assert struct.unpack_from("<H", check[0], 4)[0] == index["Event38"], check[0]
+    nexts = {"Event62": (0xFFFF, index["Event38"]), "Event37": (index["Event77"], index["Event4"])}
+    for event, (now, then) in nexts.items():
+        record = events[index[event]]
+        assert struct.unpack_from("<H", record[1], 2)[0] == now, record[1]
+        record[1] = record[1][:2] + struct.pack("<H", then) + record[1][4:]
+    flow = game.event_flow(mod[DOOR_OF_TIME_FLOW])
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], events) if ours != theirs]
+    ours = zstd.decompress(mod[DOOR_OF_TIME_FLOW], zstd_dict=game.zs_dictionary)
+    theirs = zstd.decompress(game.read(DOOR_OF_TIME_FLOW), zstd_dict=game.zs_dictionary)
+    changed = [at for at, (a, b) in enumerate(zip(ours, theirs)) if a != b]
+    in_nexts = [a != b for now, then in nexts.values() for a, b in zip(struct.pack("<H", now), struct.pack("<H", then))]
+    assert len(ours) == len(theirs) and len(changed) == sum(in_nexts), changed
 
 
 def goods(actor):
@@ -2679,6 +2708,7 @@ def main():
         "tested-cutscenes-mod": tested_cutscenes_mod,
         "sword-scene-left-out": sword_scene_left_out,
         "sword-scene-kept": sword_scene_kept,
+        "both-stones-before-zelda": both_stones_before_zelda,
         "gift": gift,
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
