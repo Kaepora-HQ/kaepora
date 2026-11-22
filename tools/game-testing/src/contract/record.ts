@@ -28,15 +28,16 @@ export const Instant = Schema.String.pipe(
 );
 
 /**
- * How a run ended. `passed`: it finished and every check held. `failed`: a check did not hold, or the script failed
- * on the game's answer, so the game said no. `broken`: the run could not ask, because the emulator, the place, the
- * connection or the script itself failed. Only `broken` is worth a rerun to tell a flaky machine from a real fault.
- * `running` while it lasts; `stopped` when its caller ended it before the script finished; `skipped` when it needs a
- * person and had none.
+ * How a run ended. `passed`: it finished and every check held. `unchecked`: it finished with no check, so it proved
+ * nothing. `failed`: a check did not hold, or the script failed on the game's answer, so the game said no. `broken`:
+ * the run could not ask, because the emulator, the place, the connection or the script itself failed. Only `broken`
+ * is worth a rerun to tell a flaky machine from a real fault. `running` while it lasts; `stopped` when its caller ended
+ * it before the script finished; `skipped` when it needs a person and had none.
  */
 export const Outcome = Schema.Union([
 	Schema.TaggedStruct("running", {}),
 	Schema.TaggedStruct("passed", {}),
+	Schema.TaggedStruct("unchecked", {}),
 	Schema.TaggedStruct("failed", { reason: Schema.String }),
 	Schema.TaggedStruct("broken", {
 		reason: Schema.String,
@@ -64,20 +65,25 @@ export const Step = Schema.Struct({
 	]),
 	/** The command's input, as sent. */
 	input: Schema.Unknown,
-	/** Its result, or the failure's message. */
+	/** Its result, absent for a command that gives none, or the failure's tag and message. */
 	result: Schema.Union([
-		Schema.TaggedStruct("ok", { value: Schema.Unknown }),
+		Schema.TaggedStruct("ok", { value: Schema.optionalKey(Schema.Unknown) }),
 		Schema.TaggedStruct("error", {
 			tag: Schema.String,
 			message: Schema.String,
 		}),
 	]),
 	milliseconds: Schema.Finite,
-	/** For a check: the value expected and whether it held. */
+	/**
+	 * For a check: its form, the value expected, what the value held at the start when a save holds it, what it holds
+	 * now, and whether the check held.
+	 */
 	check: Schema.optionalKey(
 		Schema.Struct({
+			form: Schema.Literals(["check", "still"]),
 			value: Schema.String,
 			expected: Value,
+			start: Schema.optionalKey(Value),
 			actual: Value,
 			held: Schema.Boolean,
 		})
@@ -104,9 +110,13 @@ export class RunRecord extends Schema.Class<
 	id: RunId,
 	session: SessionId,
 	machine: Schema.String,
-	place: PlaceId,
-	/** Lichii's build, as its log names it, and the program's path. */
-	emulator: Schema.Struct({ build: Schema.String, program: Schema.String }),
+	/** The place the game ran in, absent when the start ended before one was taken. */
+	place: Schema.optionalKey(PlaceId),
+	/** The Lichii folder the place ran, and the build its debug server names once it answers. */
+	emulator: Schema.Struct({
+		program: Schema.String,
+		build: Schema.optionalKey(Schema.String),
+	}),
 	/** The key the game file's tables are cached under. */
 	game: Schema.String,
 	mod: Schema.optionalKey(
@@ -114,8 +124,8 @@ export class RunRecord extends Schema.Class<
 	),
 	script: Schema.optionalKey(ScriptSource),
 	state: StartState,
-	/** Every value the state wrote, as the running game held it after the start. */
-	readBack: ReadBack,
+	/** Every value the state wrote, as the running game held it once Link could move; absent until then. */
+	readBack: Schema.optionalKey(ReadBack),
 	steps: Schema.Array(Step),
 	/** What the script returned, encoded. */
 	result: Schema.optionalKey(Schema.Unknown),
@@ -124,7 +134,7 @@ export class RunRecord extends Schema.Class<
 	endedAt: Schema.optionalKey(Instant),
 	/** The run this one repeats, when `run --rerun-broken` ran it again after a broken run. */
 	attemptOf: Schema.optionalKey(RunId),
-	/** The OpenTelemetry trace of the run, when traces are sent. */
+	/** The OpenTelemetry trace the run's start belongs to, which the collector holds when traces are sent. */
 	traceId: Schema.optionalKey(Schema.String),
 }) {}
 

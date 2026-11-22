@@ -95,6 +95,8 @@ export const fakePodman = (options: {
 	readonly devices: readonly string[];
 	/** What a container's command does once `podman start` has run, such as write its log and exit. */
 	readonly onStart?: (container: FakeContainer) => Effect.Effect<void>;
+	/** Runs every command that is not podman's. */
+	readonly otherwise?: ChildProcessSpawner.ChildProcessSpawner["Service"];
 }) =>
 	Effect.gen(function* () {
 		const containers = yield* Ref.make(new Map<string, FakeContainer>());
@@ -218,7 +220,10 @@ export const fakePodman = (options: {
 					command._tag !== "StandardCommand" ||
 					command.command !== "podman"
 				) {
-					throw new Error("the fake spawner runs only podman");
+					if (options.otherwise === undefined) {
+						throw new Error("the fake spawner runs only podman");
+					}
+					return options.otherwise.spawn(command);
 				}
 				return handle(
 					podman(

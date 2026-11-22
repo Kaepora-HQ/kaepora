@@ -8,8 +8,9 @@
  */
 import { Array as Arr, Effect, Option } from "effect";
 import type { Value } from "../contract/values.ts";
+import type { GameValue } from "../data/game-data.ts";
 import type { WriteUnsupported } from "../errors.ts";
-import { ValueNotFound, ValueRefused } from "../errors.ts";
+import { ValueNotFound, ValueRefused, ValueUnreadable } from "../errors.ts";
 import type { Emulator, EmulatorError } from "./emulator.ts";
 
 const programBytes = Uint8Array.fromHex("010000005c70c4039070c403");
@@ -31,6 +32,8 @@ export type ValueEntry = { readonly name: string; readonly hash: number } & (
 );
 
 export interface Values {
+	/** Where the game's program starts in guest memory this boot. */
+	readonly program: bigint;
 	readonly read: (
 		entry: ValueEntry
 	) => Effect.Effect<Value, EmulatorError | ValueNotFound>;
@@ -201,6 +204,28 @@ export const encodeValue = (entry: ValueEntry, value: Value) => {
 	);
 };
 
+const readable = ["Bool", "Int", "UInt", "Float", "Enum", "String64"] as const;
+
+/** How the game's memory holds a value of the game data list, or `ValueUnreadable` for a type it is not read for. */
+export const entryOf = (value: GameValue) => {
+	const type = Arr.findFirst(readable, (each) => each === value.type);
+	if (Option.isNone(type)) {
+		return Effect.fail(
+			ValueUnreadable.make({ value: value.name, type: value.type })
+		);
+	}
+	const entry: ValueEntry =
+		type.value === "Enum"
+			? {
+					name: value.name,
+					hash: value.hash,
+					type: "Enum",
+					choices: value.choices,
+				}
+			: { name: value.name, hash: value.hash, type: type.value };
+	return Effect.succeed(entry);
+};
+
 export const attach = Effect.fn("Values.attach")(function* (
 	emulator: Emulator
 ) {
@@ -282,6 +307,7 @@ export const attach = Effect.fn("Values.attach")(function* (
 	});
 
 	const values: Values = {
+		program,
 		read: Effect.fn("Values.read")(function* (entry) {
 			const codec = codecOf(entry);
 			const address = yield* addressOf(entry, codec);

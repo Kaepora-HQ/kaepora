@@ -40,8 +40,10 @@ export interface Plan extends StatePlan {
 	readonly base: Base;
 }
 
+/** A place's save: the state written into the base's `progress.sav` and `caption.sav`, and the base's `option.sav`. */
 export interface Saves {
 	readonly caption: Uint8Array;
+	readonly option: Uint8Array;
 	readonly progress: Uint8Array;
 }
 
@@ -134,11 +136,18 @@ export class StartStates extends Context.Service<
 			const questNames = yield* data.names("quest");
 			const quests = new Set(questNames);
 
-			const load = Effect.fn("StartStates.load")(function* (
+			/** A file of the base, checked against the SHA-256 `tables/bases.tsv` gives it. */
+			const bytesOf = Effect.fnUntraced(function* (
 				base: Base,
-				file: "progress" | "caption"
+				file: "progress" | "caption" | "option"
 			) {
 				const path = `${home}/bases/${base.name}/${file}.sav`;
+				if (base[file] === "") {
+					return yield* SaveUnreadable.make({
+						path,
+						detail: `tables/bases.tsv gives ${base.name} no ${file}.sav`,
+					});
+				}
 				const bytes = yield* fs
 					.readFile(path)
 					.pipe(
@@ -152,7 +161,14 @@ export class StartStates extends Context.Service<
 						detail: `its SHA-256 is ${sha256(bytes)}, not the ${base[file]} that tables/bases.tsv gives`,
 					});
 				}
-				return yield* decode(path, bytes);
+				return bytes;
+			});
+			const load = Effect.fn("StartStates.load")(function* (
+				base: Base,
+				file: "progress" | "caption"
+			) {
+				const bytes = yield* bytesOf(base, file);
+				return yield* decode(`${home}/bases/${base.name}/${file}.sav`, bytes);
 			});
 
 			const plan = Effect.fn("StartStates.plan")(function* (state: StartState) {
@@ -213,6 +229,7 @@ export class StartStates extends Context.Service<
 				const saves: Saves = {
 					progress: yield* written("progress", progress),
 					caption: yield* written("caption", caption),
+					option: yield* bytesOf(planned.base, "option"),
 				};
 				return saves;
 			});

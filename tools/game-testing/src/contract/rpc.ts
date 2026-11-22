@@ -16,18 +16,21 @@ import {
 	NoFreePlace,
 	NoGameHere,
 	NoGraphicsCard,
+	ProvesNothing,
 	RunNotFound,
 	SaveUnreadable,
 	SessionNotFound,
+	StartNotTaken,
 	StateRefused,
 	UnknownName,
 	ValueNotFound,
 	ValueRefused,
+	ValueUnreadable,
 	VersionMismatch,
 	WaitTimedOut,
 	WriteUnsupported,
 } from "../errors.ts";
-import { Outcome, RunRecord, RunSummary } from "./record.ts";
+import { Outcome, RunRecord, RunSummary, ScriptSource } from "./record.ts";
 import { ModSource, ReadBack, StartState } from "./state.ts";
 import {
 	Buttons,
@@ -48,11 +51,13 @@ const CommandErrors = Schema.Union([
 	SessionNotFound,
 	UnknownName,
 	ValueNotFound,
+	ValueUnreadable,
 ]);
 
 const StartErrors = Schema.Union([
 	UnknownName,
 	StateRefused,
+	StartNotTaken,
 	NoFreePlace,
 	NoGraphicsCard,
 	ImageBuildFailed,
@@ -68,7 +73,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 3;
+export const contract = 5;
 
 /** Who answers a hand over in this session: a person at the machine, or nobody (CI refuses every hand over). */
 export const Person = Schema.Literals(["here", "nobody"]);
@@ -153,8 +158,13 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("Places", { success: Schema.Array(PlaceStatus) }),
 	Rpc.make("Open", {
 		payload: {
+			/** The caller names the run, so it knows the record however the start ends. A name already kept is refused. */
+			run: RunId,
 			state: StartState,
 			mod: Schema.optionalKey(ModSource),
+			script: Schema.optionalKey(ScriptSource),
+			/** The broken run this one repeats. */
+			attemptOf: Schema.optionalKey(RunId),
 			person: Person,
 			/** Who asks, for the places list: a script's path, `mcp`, or a CI job. */
 			owner: Schema.String,
@@ -205,10 +215,22 @@ export class GameRpcs extends RpcGroup.make(
 		},
 		error: Schema.Union([CommandErrors, WriteUnsupported, ValueRefused]),
 	}),
+	/**
+	 * Whether the value holds `expected`, judged against the start. `check` proves an effect: it holds when the value
+	 * holds `expected` now and did not at the start. `still` proves nothing changed: it holds when the value holds
+	 * `expected` now and did at the start. A start that settles the answer either way fails with `ProvesNothing`. A
+	 * value no save holds has no known start: `check` then holds when it holds `expected` now, and `still` is refused
+	 * with `ProvesNothing`.
+	 */
 	Rpc.make("Check", {
-		payload: { session: SessionId, value: Schema.String, expected: Value },
+		payload: {
+			session: SessionId,
+			form: Schema.Literals(["check", "still"]),
+			value: Schema.String,
+			expected: Value,
+		},
 		success: Schema.Struct({ actual: Value, held: Schema.Boolean }),
-		error: Schema.Union([CommandErrors, ValueRefused]),
+		error: Schema.Union([CommandErrors, ValueRefused, ProvesNothing]),
 	}),
 	Rpc.make("Screenshot", {
 		payload: { session: SessionId, label: Schema.optionalKey(Schema.String) },
@@ -261,7 +283,9 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("Search", {
 		payload: {
 			text: Schema.String,
-			kind: Schema.optionalKey(Schema.String),
+			kind: Schema.optionalKey(
+				Schema.Literals(["value", "item", "quest", "scene", "landing"])
+			),
 			limit: Schema.Int,
 		},
 		success: Schema.Array(NameMatch),

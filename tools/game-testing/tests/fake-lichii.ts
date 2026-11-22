@@ -41,6 +41,8 @@ export interface FakeLichii {
 	/** The next answer carries another request's id. */
 	readonly misnumber: Effect.Effect<void>;
 	readonly path: string;
+	/** Sets a value as the game would. */
+	readonly put: (name: string, value: Value) => Effect.Effect<void>;
 	/** Waits until a request for `method` has arrived. */
 	readonly received: (method: string) => Effect.Effect<void>;
 	readonly release: Effect.Effect<void>;
@@ -57,6 +59,8 @@ export interface FakeLichii {
 const programStart = 0x80_27_c0_00n;
 const programBytes = "010000005c70c4039070c403";
 const managerGlobal = 0x4c_7e_18_0n;
+/** `[[program + eventGlobal]] + 0x68` is the event the game plays, 0 when none. */
+const eventGlobal = 0x4c_7e_09_0n;
 
 /** Each type's table slot in the manager, its entry size, and where its value sits in an entry. */
 const tables = {
@@ -75,7 +79,11 @@ const stepKeys = ["buttons", "left_stick", "right_stick", "frames"];
 /** A search scans at most this much per call, so a long range comes back in pages. */
 const searchPage = 0x1_00_00_00n;
 
-const hash = (text: string) => Bun.hash.murmur32v3(text);
+/** A value's hash: its name's murmur3, or the hash itself for a name such as `0x578d41e1`. */
+const hash = (text: string) =>
+	Str.startsWith("0x")(text)
+		? Number.parseInt(text, 16)
+		: Bun.hash.murmur32v3(text);
 const hex = (address: bigint) => `0x${address.toString(16)}`;
 
 interface Region {
@@ -183,6 +191,17 @@ const layOut = (
 	new DataView(global.buffer).setBigUint64(0, memory.map(slot), true);
 	memory.map(global, programStart + managerGlobal);
 
+	const events = memory.map(new Uint8Array(0x70));
+	const eventSlot = new Uint8Array(8);
+	new DataView(eventSlot.buffer).setBigUint64(0, events, true);
+	const eventPointer = new Uint8Array(8);
+	new DataView(eventPointer.buffer).setBigUint64(
+		0,
+		memory.map(eventSlot),
+		true
+	);
+	memory.map(eventPointer, programStart + eventGlobal);
+
 	const addresses = new Map<string, { address: bigint; size: number }>();
 	for (const [type, table] of Rec.toEntries(tables)) {
 		const held = Arr.filter(
@@ -250,6 +269,13 @@ export const fakeLichii = (options?: {
 	readonly writes?: boolean;
 	/** The capacity every table's map claims, in place of its own. */
 	readonly mapCapacity?: number;
+	/**
+	 * Answers each input at once, after handing its steps to this, in place of holding the server while its frames
+	 * pass. The fake presents no frames, so an input that waits for them never answers.
+	 */
+	readonly onInput?: (
+		steps: readonly Readonly<Record<string, unknown>>[]
+	) => void;
 }) =>
 	Effect.gen(function* () {
 		listened += 1;
@@ -361,8 +387,17 @@ export const fakeLichii = (options?: {
 						error: `step ${index}: unknown key "${key}": want buttons, left_stick, right_stick, frames`,
 					};
 				}
-				state.busy = true;
+				if (options?.onInput === undefined) {
+					state.busy = true;
+					return;
+				}
+				options.onInput(steps);
+				return { result: { steps: steps.length } };
 			},
+			screenshot: () => ({
+				result: { png_base64: Buffer.from("fake png").toString("base64") },
+			}),
+			log_tail: () => ({ result: { lines: [] } }),
 		};
 
 		const send = (request: Incoming, reply: Reply) => {
@@ -474,6 +509,15 @@ export const fakeLichii = (options?: {
 			}),
 			drop: closeAll,
 			exit: closeAll.pipe(Effect.andThen(Effect.sync(() => server.stop(true)))),
+			put: (name, value) =>
+				Effect.sync(() => {
+					const { address, size, value: held } = stored(name);
+					const view = memory.view(address, size);
+					if (view === undefined) {
+						throw new Error(`the fake game holds no ${name}`);
+					}
+					writeValue(view, { ...held, value } as FakeValue);
+				}),
 			value: (name) =>
 				Effect.sync(() => {
 					const { address, size, value } = stored(name);

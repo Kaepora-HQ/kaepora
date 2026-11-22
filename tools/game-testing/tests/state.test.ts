@@ -390,10 +390,12 @@ const startStates = (
 			)
 		);
 		const caption = yield* fakeSave(game, 2);
+		const option = new Uint8Array([1, 2, 3]);
 		const base = `${home}/data/game-testing/bases/test-base`;
 		yield* fs.makeDirectory(base, { recursive: true });
 		yield* fs.writeFile(`${base}/progress.sav`, held);
 		yield* fs.writeFile(`${base}/caption.sav`, caption);
+		yield* fs.writeFile(`${base}/option.sav`, option);
 		const sha256 = (bytes: Uint8Array) =>
 			new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
 		const dump = yield* fakeDump(game);
@@ -419,6 +421,7 @@ const startStates = (
 							age: "child",
 							progress: sha256(held),
 							caption: sha256(caption),
+							option: sha256(option),
 							about: "the fake game's defaults",
 						},
 					],

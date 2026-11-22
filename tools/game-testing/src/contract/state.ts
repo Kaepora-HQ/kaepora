@@ -68,8 +68,14 @@ export class StartState extends Schema.Class<
 	set: Schema.optionalKey(Schema.Record(Schema.String, Value)),
 }) {}
 
-/** What the game holds after the start, read back from memory for every value the state wrote. */
-export const ReadBack = Schema.Record(Schema.String, Value);
+/**
+ * What the game held once Link could move, of every value the state wrote: each one read from its memory, and the ones
+ * it could not be read for, a per-actor key by `key <hash>`.
+ */
+export const ReadBack = Schema.Struct({
+	values: Schema.Record(Schema.String, Value),
+	notRead: Schema.Array(Schema.String),
+});
 
 /** A mod to install alone in the game's place: a folder the patcher wrote. */
 export const ModSource = Schema.Struct({ folder: Schema.String });

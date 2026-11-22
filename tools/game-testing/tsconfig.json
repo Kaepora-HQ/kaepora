@@ -51,7 +51,13 @@
 					// The cache folder of the game's tables, and the data folder of the base saves.
 					"effect/persistence/UserDirectories",
 					// The checks on the real game run kaepora-dump with Bun's own services.
-					"@effect/platform-bun/BunServices"
+					"@effect/platform-bun/BunServices",
+					// A session's id, which a far caller must not guess.
+					"effect/crypto/SecureRandom",
+					// The host's Unix socket for the scripts it starts.
+					"@effect/platform-node-shared/NodeSocketServer",
+					// The folder name of a mod a place takes.
+					"effect/Path"
 				],
 				"allowedExperimentalApis": [],
 				"diagnosticSeverity": {

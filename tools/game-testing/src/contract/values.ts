@@ -1,4 +1,11 @@
-import { Array as Arr, Schema } from "effect";
+import {
+	Array as Arr,
+	Clock,
+	Effect,
+	Random,
+	Schema,
+	String as Str,
+} from "effect";
 
 /** A saved value as the game data list types it: Bool, Int, UInt, Float, Enum (its choice's name) or String64. */
 export const Value = Schema.Union([
@@ -29,9 +36,35 @@ export type PlaceId = typeof PlaceId.Type;
 export const SessionId = Schema.String.pipe(Schema.brand("SessionId"));
 export type SessionId = typeof SessionId.Type;
 
-/** One run's record, named by its start time and a random suffix, such as `20261121-142233-k3f9`. */
-export const RunId = Schema.String.pipe(Schema.brand("RunId"));
+/**
+ * One run's record, named by its start time in UTC and a random suffix, such as `20261121-142233-k3f9`. The record's
+ * folder takes the name, so nothing else passes.
+ */
+export const RunId = Schema.String.check(
+	Schema.isPattern(/^\d{8}-\d{6}-[0-9a-z]{4}$/u)
+).pipe(Schema.brand("RunId"));
 export type RunId = typeof RunId.Type;
+
+const suffixLetters = "0123456789abcdefghijklmnopqrstuvwxyz";
+
+export const newRunId = Effect.gen(function* () {
+	const millis = yield* Clock.currentTimeMillis;
+	const now =
+		Temporal.Instant.fromEpochMilliseconds(millis).toZonedDateTimeISO("UTC");
+	const two = (n: number) => Str.padStart(2, "0")(String(n));
+	const suffix = yield* Effect.forEach(
+		Arr.range(1, 4),
+		() =>
+			Effect.map(
+				Random.nextIntBetween(0, suffixLetters.length, { halfOpen: true }),
+				(at) => suffixLetters[at] ?? ""
+			),
+		{ concurrency: 1 }
+	);
+	return RunId.make(
+		`${now.year}${two(now.month)}${two(now.day)}-${two(now.hour)}${two(now.minute)}${two(now.second)}-${Arr.join(suffix, "")}`
+	);
+});
 
 /** A button as the debug server names it. */
 export const Button = Schema.Literals([

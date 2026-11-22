@@ -283,6 +283,7 @@ export const fakeDump = Effect.fn("fakeDump")(function* (
 		})
 	);
 	return {
+		spawner,
 		layer: Layer.succeed(ChildProcessSpawner.ChildProcessSpawner, spawner),
 		subcommands: Effect.map(Ref.get(commands), (all) =>
 			Arr.map(all, (args) => args[0] ?? "")

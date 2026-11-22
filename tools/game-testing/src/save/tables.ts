@@ -36,6 +36,8 @@ export interface Base {
 	readonly caption: string;
 	readonly hour: "day" | "night";
 	readonly name: string;
+	/** The SHA-256 of its option.sav, empty for a base whose option.sav was not kept. */
+	readonly option: string;
 	/** The SHA-256 of its progress.sav. */
 	readonly progress: string;
 }
@@ -74,6 +76,7 @@ const BaseRow = Schema.Struct({
 	age: Age,
 	progress: Text,
 	caption: Text,
+	option: Text,
 	about: Text,
 });
 const ItemRow = Schema.Struct({ remake_item: Text, soh_item: Text });

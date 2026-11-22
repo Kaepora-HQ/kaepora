@@ -1,4 +1,4 @@
-import { Array as Arr, Duration, Schema } from "effect";
+import { Array as Arr, Cause, Duration, Predicate, Schema } from "effect";
 import { PlaceId, RunId, SessionId, Value } from "./contract/values.ts";
 
 /** A name no table of the game holds. `suggestions` are the nearest names of the same kind. */
@@ -198,6 +198,66 @@ export class ValueRefused extends Schema.TaggedError<
 	}
 }
 
+/** A saved value of a type the reader of the game's memory does not take yet: a String16, String32 or Vector3. */
+export class ValueUnreadable extends Schema.TaggedError<
+	ValueUnreadable,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/ValueUnreadable")("ValueUnreadable", {
+	value: Schema.String,
+	type: Schema.String,
+}) {
+	override get message() {
+		return `${this.value} is a ${this.type}, which the game's memory is not read for. Read a Bool, Int, UInt, Float, Enum or String64.`;
+	}
+}
+
+/**
+ * A check whose start already settles it, so it shows nothing about the script's steps. `check` asks for an effect:
+ * the value held `expected` at the start too. `still` asks that nothing changed: the value did not hold `expected` at
+ * the start, or no save holds it. `remedy` names the word of the start state that would change the start.
+ */
+export class ProvesNothing extends Schema.TaggedError<
+	ProvesNothing,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/ProvesNothing")("ProvesNothing", {
+	form: Schema.Literals(["check", "still"]),
+	value: Schema.String,
+	expected: Value,
+	/** Absent for a value no save holds. */
+	start: Schema.optionalKey(Value),
+	remedy: Schema.String,
+}) {
+	override get message() {
+		if (this.start === undefined) {
+			return `${this.value} has no known start, since no save holds it, so nothing shows it stayed ${String(this.expected)}. ${this.remedy}`;
+		}
+		return this.form === "check"
+			? `${this.value} already held ${String(this.expected)} at the start, so the check proves nothing. ${this.remedy}`
+			: `${this.value} held ${String(this.start)} at the start, not ${String(this.expected)}, so it cannot stay ${String(this.expected)}. ${this.remedy}`;
+	}
+}
+
+/** Once Link could move, the game held values other than the start state wrote, so the save did not load as built. */
+export class StartNotTaken extends Schema.TaggedError<
+	StartNotTaken,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/StartNotTaken")("StartNotTaken", {
+	differences: Schema.Array(
+		Schema.Struct({ value: Schema.String, written: Value, held: Value })
+	),
+}) {
+	override get message() {
+		return `The game does not hold the state as it was written: ${Arr.join(
+			Arr.map(
+				this.differences,
+				({ value, written, held }) =>
+					`${value} holds ${String(held)}, not ${String(written)}`
+			),
+			"; "
+		)}.`;
+	}
+}
+
 /** A wait's limit passed before the value matched. `last` is what it held at the end. */
 export class WaitTimedOut extends Schema.TaggedError<
 	WaitTimedOut,
@@ -353,12 +413,14 @@ export type CommandError =
 	| SessionNotFound
 	| UnknownName
 	| ValueNotFound
+	| ValueUnreadable
 	| RemoteUnavailable;
 
 /** What starting a game can fail with, on any transport. */
 export type StartError =
 	| UnknownName
 	| StateRefused
+	| StartNotTaken
 	| NoFreePlace
 	| NoGraphicsCard
 	| ImageBuildFailed
@@ -369,3 +431,11 @@ export type StartError =
 	| DumpFailed
 	| ValueRefused
 	| RemoteUnavailable;
+
+/** A failure as a record keeps it: the error's tag and message, or `Defect` and its text for anything else. */
+export const failureOf = (cause: Cause.Cause<unknown>) => {
+	const error = Cause.squash(cause);
+	return Predicate.hasProperty(error, "_tag") && error instanceof Error
+		? { tag: String(error._tag), message: error.message }
+		: { tag: "Defect", message: String(error) };
+};
