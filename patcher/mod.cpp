@@ -754,15 +754,28 @@ static constexpr std::tuple<std::string_view, byml::Type, std::string_view> star
     { "String64", byml::Type::String, "a name" },
 };
 
+// A whole number may also start an unsigned value of the list, if it is not below zero.
 static byml::Node& StartValueEntry(byml::Node& data, const std::string& name, const StartValue& value) {
     const auto& [kind, type, words] = startValueKinds[value.index()];
-    byml::Node* values = Find(data, kind);
-    byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
-    const byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
-    if (defaultValue == nullptr || defaultValue->type != type) {
-        throw std::runtime_error(std::format("start value \"{}\" is not {} in the list", name, words));
+    const auto entryIn = [&](std::string_view table, byml::Type expected) -> byml::Node* {
+        byml::Node* values = Find(data, table);
+        byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
+        const byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
+        return defaultValue == nullptr || defaultValue->type != expected ? nullptr : entry;
+    };
+    if (byml::Node* entry = entryIn(kind, type)) {
+        return *entry;
     }
-    return *entry;
+    if (const int32_t* whole = std::get_if<int32_t>(&value)) {
+        if (byml::Node* entry = entryIn("UInt", byml::Type::UInt)) {
+            if (*whole < 0) {
+                throw std::runtime_error(
+                    std::format("start value \"{}\" is a whole number of 0 or more in the list", name));
+            }
+            return *entry;
+        }
+    }
+    throw std::runtime_error(std::format("start value \"{}\" is not {} in the list", name, words));
 }
 
 static byml::Node StartedDefault(byml::Node& entry, const std::string& name, const StartValue& value) {

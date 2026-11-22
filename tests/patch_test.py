@@ -159,6 +159,8 @@ WATER_KEYS = "DungeonInfo.WaterTemple.SmallKeyTotalNum"
 IS_CHILD = "Sequence_IsChildhood"
 FOREST_EXIT_SHUT = "KokiriForest_Npc_Kokiri_007_Child_Blocker_00"
 TRIALS_LEFT = "InsideGanonCastle_Dungeon_Barrier_Count"
+# Biggoron's wait counts from this unsigned whole number, the game minute of the eye-drops scene.
+SWORD_ORDERED_AT = "GetSwordBigGoron_ElapsedTime"
 
 START_ITEMS = ["Weapon_Sword_Kokiri", "Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror",
                "Armor_Adult_HeavyBoot", "Armor_Adult_HoverBoot", "Armor_Adult_Goron", "Armor_Adult_Zora", "Item_Hammer",
@@ -1155,8 +1157,12 @@ def with_defaults(game, values):
             kind, default = "String64", value
         elif isinstance(value, float):
             kind, default = "Float", (FLOAT, struct.unpack("<I", struct.pack("<f", value))[0])
+        elif isinstance(value, bool):
+            kind, default = "Bool", (BOOL, int(value))
+        elif any(e["Hash"][1] == murmur3(name) for e in data["Data"]["Int"]):
+            kind, default = "Int", (INT, value)
         else:
-            kind, default = ("Bool", (BOOL, int(value))) if isinstance(value, bool) else ("Int", (INT, value))
+            kind, default = "UInt", (UINT, value)
         entry = next(e for e in data["Data"][kind] if e["Hash"][1] == murmur3(name))
         assert type(entry["DefaultValue"]) is type(default) and entry["DefaultValue"] != default, (name, entry)
         assert isinstance(default, str) or entry["DefaultValue"][0] == default[0], (name, entry)
@@ -1203,9 +1209,9 @@ def together(patch, game):
 
 
 def start_values(patch, game):
-    """A value set, a value cleared and a whole number changed. The list keeps its size, so it still fits its size
-    table entry."""
-    values = {FIRE_LOCK: True, FOREST_EXIT_SHUT: False, TRIALS_LEFT: 0}
+    """A value set, a value cleared and a whole number changed, signed and unsigned. The list keeps its size, so it
+    still fits its size table entry."""
+    values = {FIRE_LOCK: True, FOREST_EXIT_SHUT: False, TRIALS_LEFT: 0, SWORD_ORDERED_AT: 1}
     mod = patched(patch, game, plan([], values))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
@@ -2968,6 +2974,7 @@ def bad_input(patch, game):
         "value already true": (IS_CHILD, True, ["already true"]),
         "value already false": (FIRE_LOCK, False, ["already false"]),
         "number not in the list": (FIRE_LOCK, 1, ["not a whole number"]),
+        "unsigned number below zero": (SWORD_ORDERED_AT, -1, ["a whole number of 0 or more"]),
         "number already the default": (TRIALS_LEFT, 6, ["already 6"]),
         "value neither": (FOREST_EXIT_SHUT, "open", ["plan.json", "start_values", "true, false or a whole number"]),
         "number too large": (TRIALS_LEFT, 2**31, ["plan.json", "start_values", "true, false or a whole number"]),
