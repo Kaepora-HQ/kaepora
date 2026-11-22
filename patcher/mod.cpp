@@ -1250,7 +1250,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         addToRomfs(MidoSchedule, MidoScheduleWithoutCastleEntry(game));
     }
     addToRomfs(PedestalModule, OpenPedestal(game));
-    std::string table = ReadSizeTable(game);
+    std::string table = ReadSizeTable(game.Read(std::string(SizeTablePath)));
     bool tableChanged = false;
     for (const std::string& path : changed) {
         const std::string data = byml::Write(placements.at(path));

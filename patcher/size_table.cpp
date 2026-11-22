@@ -32,9 +32,9 @@ uint32_t Crc32(std::string_view data) {
 
 } // namespace
 
-std::string ReadSizeTable(GameFile& game) {
+std::string ReadSizeTable(std::string_view frame) {
     try {
-        std::string table = Decompress(game.Read(std::string(SizeTablePath)));
+        std::string table = Decompress(frame);
         if (!table.starts_with(SizeTableMagic) || ReadAt<uint32_t>(table, 0x06) != SizeTableVersion) {
             throw std::runtime_error(std::format("not a version {} size table", SizeTableVersion));
         }
@@ -42,6 +42,29 @@ std::string ReadSizeTable(GameFile& game) {
     } catch (const std::exception& e) {
         throw std::runtime_error(std::format("{}: {}", SizeTablePath, e.what()));
     }
+}
+
+SizeEntries::SizeEntries(std::string_view table) {
+    const size_t end = SizeTableHeaderSize + ReadAt<uint32_t>(table, 0x0E) * SizeTableEntrySize;
+    for (size_t entry = SizeTableHeaderSize; entry < end; entry += SizeTableEntrySize) {
+        byCrc.emplace(ReadAt<uint32_t>(table, entry), ReadAt<uint32_t>(table, entry + 4));
+    }
+    const size_t nameSize = ReadAt<uint32_t>(table, 0x0A);
+    for (size_t entry = end; entry < table.size(); entry += nameSize + 4) {
+        const std::string_view named = table.substr(entry, nameSize);
+        byName.emplace(named.substr(0, named.find('\0')), ReadAt<uint32_t>(table, entry + nameSize));
+    }
+}
+
+std::optional<uint32_t> SizeEntries::Find(std::string_view path) const {
+    const std::string_view name = path.ends_with(".zs") ? path.substr(0, path.size() - std::strlen(".zs")) : path;
+    if (const auto named = byName.find(name); named != byName.end()) {
+        return named->second;
+    }
+    if (const auto entry = byCrc.find(Crc32(name)); entry != byCrc.end()) {
+        return entry->second;
+    }
+    return std::nullopt;
 }
 
 bool RaiseSize(std::string& table, std::string_view path, size_t size, size_t overhead) {

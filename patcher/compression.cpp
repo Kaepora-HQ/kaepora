@@ -37,3 +37,11 @@ std::string Compress(std::string_view data, std::string_view dictionary) {
                                                dictionary.data(), dictionary.size(), Level)));
     return frame;
 }
+
+unsigned FrameDictionaryId(std::string_view frame) {
+    return ZSTD_getDictID_fromFrame(frame.data(), frame.size());
+}
+
+unsigned DictionaryId(std::string_view dictionary) {
+    return ZSTD_getDictID_fromDict(dictionary.data(), dictionary.size());
+}
