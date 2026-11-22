@@ -768,29 +768,34 @@ def tested_colossus_mod(patch, game, romfs):
         raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
-# The texts every plan carries that no mod the game ran has: the diving game's first win asks whether the domain is
-# the adult's after Morpha.
-UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293")}
+# The texts every plan carries that no played mod this test reads has.
+UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293"),
+                  ("Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42"),
+                  ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172")}
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
     """Every event flow a plan edits, as the patcher writes it, is the flow of a mod the game accepted: after Gohma
     the warp left the castle quest at Step04 and Zelda's scene played; after Ruto's letter Kaepora Gaebora left the
     Water quest at Step07 and King Zora stood aside; after a lost bet race adult Malon left Epona's quest at
-    ReadyForGetEponaSong and child Malon then taught her song. A flow with a text no played mod has is that flow with
-    the text, read apart from the patcher."""
+    ReadyForGetEponaSong and child Malon then taught her song. A flow with a text no played mod has is compared, read
+    apart from the patcher, with the played mod's flow, or the game's where no played mod has that flow, with the text
+    set."""
     texts = json.loads(pathlib.Path(plan_file).read_text())["event_texts"]
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
     mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts]))
-    # The list may name played mods for texts this plan does not carry.
-    assert set(mod) <= set(tested), sorted(set(mod) - set(tested))
+    # Zelda's flow grows past its size table entry, which gift-size-table covers.
+    mod.pop(SIZE_TABLE)
     unplayed = [t for t in texts if (t["flow"], t["event"]) in UNPLAYED_TEXTS]
     assert {(t["flow"], t["event"]) for t in unplayed} == UNPLAYED_TEXTS, unplayed
+    # The list may name played mods for texts this plan does not carry.
+    assert set(mod) - {t["flow"] for t in unplayed} <= set(tested), sorted(set(mod) - set(tested))
     for path, ours in mod.items():
-        if any(t["flow"] == path for t in unplayed):
-            expected = game.event_flow(tested[path])
-            for t in unplayed:
+        own = [t for t in unplayed if t["flow"] == path]
+        if own:
+            expected = game.event_flow(tested[path] if path in tested else game.read(path))
+            for t in own:
                 string_parameter(expected, t["event"], t["param"])[1] = t["text"]
             assert game.event_flow(ours) == expected, path
         else:

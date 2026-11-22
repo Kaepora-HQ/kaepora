@@ -750,6 +750,15 @@ static constexpr EventText eventTexts[] = {
     // tells Step04 from Step05.
     { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293", "GameDataName",
       "Sequence_IsAlternative_ZoraDomainAdult" },
+    // Impa teaches her song only from her talk while the Door of Time's quest is at Step01, and stands in the courtyard
+    // only until the quest is past Step01. Zelda's talk after her scene (Event42) and Saria's Song on the ocarina
+    // (Event172) set the quest to Srep2_1_1, so a Link who took the Ruby before he met Zelda can lose Impa's lesson to
+    // either. Both write only once the Fire quest is complete, so these texts make them complete the Fire quest, a
+    // write the game ignores on a completed quest.
+    { "Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42", "ChallengeName", "Get_StoneOfFire" },
+    { "Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42", "StepName", "Complete" },
+    { "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172", "ChallengeName", "Get_StoneOfFire" },
+    { "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172", "StepName", "Complete" },
     // After Link loses Ingo's bet race on a horse that is not Epona, adult Malon's talk sets Epona's quest to
     // GuideToLonLonRanchAdult in Event177 whenever Event179 finds the quest not past ReadyForGetEponaSong. A Link who
     // met child Malon at the ranch and has not learned her song is set back, and she then never teaches it. This text

@@ -1351,6 +1351,30 @@
       "text": "Sequence_IsAlternative_ZoraDomainAdult"
     },
     {
+      "flow": "Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs",
+      "event": "Event42",
+      "param": "ChallengeName",
+      "text": "Get_StoneOfFire"
+    },
+    {
+      "flow": "Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs",
+      "event": "Event42",
+      "param": "StepName",
+      "text": "Complete"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs",
+      "event": "Event172",
+      "param": "ChallengeName",
+      "text": "Get_StoneOfFire"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs",
+      "event": "Event172",
+      "param": "StepName",
+      "text": "Complete"
+    },
+    {
       "flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs",
       "event": "Event179",
       "param": "GameDataName",
