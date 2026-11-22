@@ -77,10 +77,11 @@ every mod changes (below). With shop goods shuffled no skulltula holds anything 
 among them: the fill places those before skulltulas join it.
 
 `loose_items.tsv` has a row for each item that lies loose in the remake and can be shuffled: the 14 heart pieces, the
-8 heart containers the bosses leave, the loose keys of the Bottom of the Well and the Shadow Temple, and the Fire
-Arrows the sun over Lake Hylia gives. Each is one placed pickup. Two loose items are left out: Ruto's Letter at the
-bottom of the lake has no saved record of its own, and the Gerudo Fortress double cell key stands under two hashes
-with its record in its own AI.
+8 heart containers the bosses leave, the loose keys of the Bottom of the Well and the Shadow Temple, the Fire Arrows
+the sun over Lake Hylia gives, and Ruto's Letter at the bottom of the lake. Each is one placed pickup. Five loose items
+are left out: the heart piece in Goron City's spinning pot, which gave two rupees and no other item when its pot named
+one (seen in the game), and the four Gerudo Fortress keys, which need a key that counts for the fortress wherever it
+is found.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `hash` and `files`: the pickup's actor hash, and every romfs scene file that places it, comma separated. Ten heart
@@ -93,6 +94,15 @@ A boss's heart container is a place in its dungeon, as in SoH, so it may hold th
 that a seed gives its own item keeps the game's pickup. Any other spot holds the game's own pickup for a heart piece or
 a heart container, and for any other item a copy of the game's Hylian Shield pickup that gives it, which Link takes by
 touch.
+
+A taken pickup stays taken by the key its spot has in the game data list. Ruto's Letter's spot has none: the lake's
+logic module makes the letter until the letter's quest flag is set, and only the game's own letter sets it. The two
+keys' spots have none either, and their rooms set a flag when the key is taken. So the patcher gives each planned
+loose spot with no key one. Seen in the game: a copy at the letter's spot was taken once, with the spot's key set, and
+the spot was empty afterwards; the game's own Piece of Heart and Heart Container there were each taken under water with
+its own get, setting the spot's key. With the spot shuffled, Ruto's Letter lies in a chest (`KeptInChests`): King Zora
+took a chest's letter and moved aside (seen), and whether he takes one that a gift, a shop, a Gold Skulltula or a copy
+gave is unseen. The game names the letter a Bottle, so a hint does too.
 
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.

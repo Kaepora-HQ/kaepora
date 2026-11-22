@@ -1420,13 +1420,24 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_loose_items_truly(self):
-        # Seed 5 hints at King Dodongo's heart container, the Zora's River heart piece near the domain and the Lon Lon
-        # Ranch heart piece by their sentences.
+        # Seed 5 hints at the heart piece under Zora's Fountain by its sentence.
         spoiler, plan = self.assert_hints_are_true("5", LOOSE_SHUFFLED)
         loose = {row["location"] for row in LOOSE_ITEMS}
         said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                 for location, item in placed_remake_items(spoiler, plan).items() if location in loose}
         self.assertTrue(said & set(spoiler["hints"].values()))
+
+    def test_rutos_letter_lies_only_in_chests(self):
+        # King Zora was seen to take the letter a chest gave. Whether he takes one that a gift, a shop, a skulltula or a
+        # loose spot gave is unseen.
+        settings = LOOSE_SHUFFLED | GIFTS_SHUFFLED | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | REWARDS_SHUFFLED
+        chests = {row["location"] for row in SHUFFLED}
+        for seed in range(830, 840):
+            spoiler, plan = self.generate(str(seed), settings)
+            letters = [location for location, item in placed_remake_items(spoiler, plan).items()
+                       if item == "Item_Bottle_Letter"]
+            self.assertEqual(len(letters), 1, (seed, letters))
+            self.assertIn(letters[0], chests, seed)
 
     def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the

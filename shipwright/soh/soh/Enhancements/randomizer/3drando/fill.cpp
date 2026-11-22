@@ -1140,6 +1140,10 @@ bool KeptInChestsAndCalls(RandomizerGet item) {
            item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_POCKET_EGG;
 }
 
+bool KeptInChests(RandomizerGet item) {
+    return item == RG_RUTOS_LETTER;
+}
+
 bool KeptFromShops(RandomizerGet item) {
     const ItemType type = Rando::StaticData::RetrieveItem(item).GetItemType();
     return type == ITEMTYPE_SMALLKEY || type == ITEMTYPE_BOSSKEY || type == ITEMTYPE_MAP || type == ITEMTYPE_COMPASS ||
@@ -1210,6 +1214,8 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
                                                }),
                         songPlaces, true);
         }
+
+        AssumedFill(FilterAndEraseFromPool(itemPool, KeptInChests), shuffledLocations, true);
 
         std::vector<RandomizerCheck> chestsAndCalls = shuffledLocations;
         for (const RemakeGift& gift : gifts) {

@@ -527,7 +527,7 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts) {
     std::set<std::string> holdable{ std::string(FillerName), std::string(TokenName) };
     for (const RemakeChest& chest : chests) {
-        if (chest.shuffled && !KeptFromShops(chest.sohItem)) {
+        if (chest.shuffled && !KeptFromShops(chest.sohItem) && !KeptInChests(chest.sohItem)) {
             holdable.insert(chest.item);
         }
     }

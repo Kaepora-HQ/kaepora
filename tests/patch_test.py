@@ -1921,7 +1921,7 @@ def loose_item_table(patch, game):
         rows = list(csv.DictReader(f, delimiter="\t"))
     pickups = {"Obj_Heart_Piece": {"Obj_Heart_Piece", "Obj_GerudoValley_Heart_Piece"},
                "Obj_Heart_Container": {"Obj_Heart_Container"}, "Item_Dungeon_SmallKey": {"Obj_Dungeon_SmallKey"},
-               "Item_Arrow_Fire": {FIRE_ARROWS_PICKUP}}
+               "Item_Arrow_Fire": {FIRE_ARROWS_PICKUP}, "Item_Bottle_Letter": {"Obj_Bottle_Letter"}}
     mod = patched(patch, game, plan([], loose_items=[(int(row["hash"]), row["files"].split(","), "Item_Boomerang")
                                                      for row in rows]))
     for row in rows:

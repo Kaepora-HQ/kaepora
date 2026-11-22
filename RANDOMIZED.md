@@ -66,7 +66,7 @@ With **Vanilla**, every song is where the game has it.
 
 ## Loose items
 
-Set **Loose items** to **Shuffled**, and the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**.
+Set **Loose items** to **Shuffled**, and the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, the bottle at the bottom of Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**. Ruto's Letter itself is always in a chest, and a hint calls it a Bottle, as the game does.
 
 The seed's item lies where the game's did, and you take it by walking into it. A heart piece, a heart container and an item the seed left in its own spot are the game's own, and you take them as the game has you. A boss still shows a heart container as it falls, and what lies there afterwards is the seed's item. A dungeon you untick under **Shuffled dungeons** keeps its own. With **Vanilla**, each spot holds what the game has.
 

@@ -11,6 +11,7 @@ Item_BombchuBundle_Large	Item_BombchuBundle_Large_Name	20 Bombchus
 Item_BombchuBundle_Small	Item_BombchuBundle_Small_Name	Five Bombchus	
 Item_Boomerang	Item_Boomerang_Name	Boomerang	the
 Item_Bottle	Item_Bottle_Name	Empty Bottle	an
+Item_Bottle_Letter	Item_Bottle_Letter_Name	Bottle	a
 Item_Bottle_Milk	Item_Bottle_Milk_Name	Lon Lon Milk	
 Item_BulletBag_Large	Item_BulletBag_Large_Name	Biggest Deku-Seed Bag	the
 Item_BulletBag_Medium	Item_BulletBag_Medium_Name	Bigger Deku-Seed Bag	a
