@@ -159,13 +159,16 @@ inline constexpr StartStep StartSteps[] = {
 };
 
 // A count's value is the number of goods it shuffles in each shop.
-enum class ShopCount { OnePerShop = 1, TwoPerShop, ThreePerShop, FourPerShop, FivePerShop, RandomPerShop };
+enum class ShopCount { OnePerShop = 1, TwoPerShop, ThreePerShop, FourPerShop, FivePerShop, SixPerShop, SevenPerShop,
+                       RandomPerShop };
 inline constexpr std::pair<ShopCount, std::string_view> ShopCountChoices[] = {
     { ShopCount::OnePerShop, "One per shop shuffled" },
     { ShopCount::TwoPerShop, "Two per shop shuffled" },
     { ShopCount::ThreePerShop, "Three per shop shuffled" },
     { ShopCount::FourPerShop, "Four per shop shuffled" },
     { ShopCount::FivePerShop, "Five per shop shuffled" },
+    { ShopCount::SixPerShop, "Six per shop shuffled" },
+    { ShopCount::SevenPerShop, "Seven per shop shuffled" },
     { ShopCount::RandomPerShop, "A random number per shop" },
 };
 // "Shop goods" at this leaves every shop's goods where the game has them.

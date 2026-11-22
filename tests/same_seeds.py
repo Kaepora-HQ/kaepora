@@ -56,7 +56,8 @@ SETTINGS = {
         "Small and boss keys": IN_OWN_CHESTS},
     "every-setting-changed": {
         "Shuffled dungeons": [name for name in EVERY_DUNGEON if name not in ("Water Temple", "Ice Cavern")],
-        "Small and boss keys": IN_OWN_CHESTS, "Maps and compasses": IN_OWN_CHESTS, "Lens of Truth": "Never needed"},
+        "Small and boss keys": IN_OWN_CHESTS, "Maps and compasses": IN_OWN_CHESTS, "Lens of Truth": "Never needed",
+        "Shop goods": "A random number per shop"},
 }
 
 

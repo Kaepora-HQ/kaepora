@@ -46,13 +46,13 @@ codes the game puts before a noun.
 - `item_names.tsv` names each remake item of `items.tsv`. `label` is in `ActorMsg/PouchContent.msbt`: the game names an
   item by its actor's `ActorNameRef`, which for some items is another actor. `article` is `a`, `an`, `the` or empty.
 
-`chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around
-the words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it
-is SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop
-slot that "Shop goods" can shuffle, items 3 and 5 to 8, has a row too, with SoH's one sentence for its shop. So does
-each gift, with SoH's sentence for it where that is true of the remake, each Gold Skulltula, each item of
-`loose_items.tsv`, and each song place, with SoH's sentence for it. No crate stands by the graveyard's heart piece in
-the remake, so its sentence is our own.
+`chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around the
+words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it is
+SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop slot
+that "Shop goods" can shuffle has a row too, with SoH's one sentence for its shop: items 1 and 3 to 8, and in the Kokiri
+Shop, which keeps its Deku Shield and its Deku Stick, items 2, 3 and 5 to 8. So does each gift, with SoH's sentence for
+it where that is true of the remake, each Gold Skulltula, each item of `loose_items.tsv`, and each song place, with
+SoH's sentence for it. No crate stands by the graveyard's heart piece in the remake, so its sentence is our own.
 
 `skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
 remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row

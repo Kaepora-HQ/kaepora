@@ -15,6 +15,7 @@
 #include <format>
 #include <iterator>
 #include <set>
+#include <span>
 #include <stdexcept>
 
 static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck location) {
@@ -99,12 +100,16 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
     }
 }
 
-// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2. Its sixth is the Kokiri Shop's Deku Shield,
-// and SoH's logic counts only a shield Link can buy, so a count stops at five.
-static constexpr int ShopsanityOrder[] = { 7, 5, 8, 6, 3 };
+// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, and a count stops at seven. The Kokiri Shop
+// keeps its items 1 and 4, the Deku Shield and the single Deku Stick, as SoH keeps both on sale at every count, so it
+// shuffles six at most. SoH's logic counts only a shield Link can buy, since a found one can burn, and the Deku Tree's
+// boss door asks for a nut sent back with it. No other shelf sells a stick from one per shop on, and a pot gives a child
+// who has never held one a Green Rupee in its place.
+static constexpr int ShopsanityOrder[] = { 7, 5, 8, 6, 3, 1, 4 };
+static constexpr int KokiriShopOrder[] = { 7, 5, 8, 6, 3, 2 };
 
-// The slots a count shuffles, in table order: the first items of each shop in SoH's order, as many as the count.
-// A random number per shop draws each shop's count, one to five, as the table reaches its item 1.
+// The slots a count shuffles, in table order: the first items of each shop in its order, as many as the count.
+// A random number per shop draws each shop's count, one to seven, as the table reaches its item 1.
 static std::vector<RemakeShopSlot> ShuffledSlots(const std::vector<RemakeShopSlot>& table, ShopCount count) {
     std::vector<RemakeShopSlot> shuffled;
     int shopCount = 0;
@@ -113,7 +118,10 @@ static std::vector<RemakeShopSlot> ShuffledSlots(const std::vector<RemakeShopSlo
             shopCount = count == ShopCount::RandomPerShop ? static_cast<int>(Random(1, std::size(ShopsanityOrder) + 1))
                                                           : static_cast<int>(count);
         }
-        if (std::ranges::find(ShopsanityOrder, slot.number) - std::begin(ShopsanityOrder) < shopCount) {
+        const bool kokiri = Rando::StaticData::GetLocation(slot.location)->GetScene() == SCENE_KOKIRI_SHOP;
+        const std::span<const int> order = kokiri ? std::span<const int>(KokiriShopOrder) : ShopsanityOrder;
+        const auto place = std::ranges::find(order, slot.number);
+        if (place != order.end() && place - order.begin() < shopCount) {
             shuffled.push_back(slot);
         }
     }
@@ -217,7 +225,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
     static const std::vector<RemakeSongPlace> songTable = LoadRemakeSongs();
     static const RemakeHintTables hintTables = LoadRemakeHintTables(Joined(table, looseItemTable),
-                                                                    ShuffledSlots(shopTable, ShopCount::FivePerShop),
+                                                                    ShuffledSlots(shopTable, ShopCount::SevenPerShop),
                                                                     Joined(everyGift, rewardTable), skulltulaTable,
                                                                     songTable);
 
