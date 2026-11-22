@@ -230,7 +230,7 @@ to sell a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For
 logic counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the ten
 places their bags, the 40-token reward its 20 Bombchus, and the scrubs the remake's goods and prices.
 
-Adult Anju gives the Pocket Egg in Kakariko. While "Biggoron Quest" shuffles her place, the egg is an item of the pool,
+Adult Anju gives the Pocket Egg in Kakariko. While "Anju's Egg" shuffles her place, the egg is an item of the pool,
 and her place holds whatever the seed puts there:
 
 - Her talk writes StartSubEvent of the trade quest, whatever she gives, and her offer asks nothing of the egg: she

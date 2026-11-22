@@ -243,7 +243,7 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "House of Skulltula", "", "House of Skulltula" },
     { "Story gifts", "", "Story gifts" },
     { "Malon's Egg", "", "Malon's Egg" },
-    { "Biggoron Quest", "", "Biggoron Quest" },
+    { "Anju's Egg", "", "Anju's Egg" },
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 

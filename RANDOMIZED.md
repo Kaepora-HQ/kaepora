@@ -41,7 +41,7 @@ Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**,
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
 - **Story gifts:** the scene after the carpenters' rescue, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
-- **Biggoron Quest:** what Anju hands you as an adult.
+- **Anju's Egg:** what Anju hands you as an adult.
 - **Deku Scrubs**, set to **One Time Rewards:** the Deku theater's two prizes, the two Deku Scrubs that sell a bigger bag, and the two that sell a Piece of Heart.
 
 Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot.
@@ -50,7 +50,7 @@ You still do what the game asks for each one. What you are handed is the seed's 
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
 
-With **Malon's Egg** or **Biggoron Quest** ticked, that egg is one of the shuffled items, and Malon at the castle or Anju as an adult hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, Malon's egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle. Anju's hatches at the next dawn.
+With **Malon's Egg** or **Anju's Egg** ticked, that egg is one of the shuffled items, and Malon at the castle or Anju as an adult hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, Malon's egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle. Anju's hatches at the next dawn.
 
 A Deku Scrub still asks its price: 40 rupees by the bridge in the Lost Woods and in the Lost Woods grotto, 100 in the Hyrule Field grotto and in Death Mountain Crater. The one in the Hyrule Field grotto sells only to young Link, and only once adult Link has read the password on the tree outside.
 

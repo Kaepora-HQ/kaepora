@@ -750,7 +750,7 @@ def vine_hatch(patch, game, seedgen):
     quest is at Step03, stands only for a Link whose save says he got the Weird Egg: read apart from the patcher, the
     castle grounds' placement is the game's with that presence on the area. With every other group shuffled the mod
     leaves the file as the game has it."""
-    others = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Biggoron Quest"]
+    others = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Anju's Egg"]
     for gifts in (["Malon's Egg"], others):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)

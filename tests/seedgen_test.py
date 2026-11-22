@@ -56,7 +56,7 @@ EVERY_SETTING_CHANGED = {
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
-    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
+    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Anju's Egg",
               "Deku Scrubs (One Time Rewards)"],
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
@@ -95,7 +95,7 @@ KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_Bombchu
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Anju's Egg",
                "Deku Scrubs (One Time Rewards)"]
 # Released seeds' "Shuffled" and the settings stored by their Kaepora name these, all the groups of their time.
 RELEASED_GIFT_GROUPS = GIFT_GROUPS[:4]
@@ -119,7 +119,7 @@ STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Tha
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # Each egg's giver's place, with the group that shuffles it and the egg it gives in the game.
-EGGS = {"HC Malon Egg": ("Malon's Egg", "Item_WeirdEgg"), "Kak Anju as Adult": ("Biggoron Quest", "Item_PocketEgg")}
+EGGS = {"HC Malon Egg": ("Malon's Egg", "Item_WeirdEgg"), "Kak Anju as Adult": ("Anju's Egg", "Item_PocketEgg")}
 SCRUB_FLOW = "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs"
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}

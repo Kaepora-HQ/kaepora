@@ -41,7 +41,7 @@ Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	O
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event381	ReveiveItem	Item_Quiver_Medium	Item_Quiver_Medium	Minigames
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event242	ReveiveItem	Item_Quiver_Large	Item_Quiver_Medium	Minigames
 Kak Anju as Child	Event/EventFlow/Minigame_CatchCucco.bfevfl.zs	Event181	ReveiveItem	Item_Bottle	Item_Bottle	Minigames
-Kak Anju as Adult	Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs	Event264	ReveiveItem	Item_PocketEgg	Item_PocketEgg	Biggoron Quest
+Kak Anju as Adult	Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs	Event264	ReveiveItem	Item_PocketEgg	Item_PocketEgg	Anju's Egg
 Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl.zs	Event628	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event58	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Large	Minigames
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event92	ReveiveItem	Item_BombBag_Large	Item_BombBag_Large	Minigames
