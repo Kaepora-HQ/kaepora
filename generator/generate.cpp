@@ -264,7 +264,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     }
     const std::vector<RemakeChest> locations = Joined(chests, looseItems);
 
-    SetOptions(settings, giftTable);
+    SetOptions(settings);
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
     // the seed and on what generation does, not on how the options are listed.
     Random_Init(SohUtils::Hash(seed));

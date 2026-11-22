@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         settings = ParseSeedSettings(nlohmann::json::parse(argv[1]));
         chests = LoadRemakeChests();
         gifts = LoadRemakeGifts(chests);
-        SetOptions(settings, gifts);
+        SetOptions(settings);
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());
         return 1;

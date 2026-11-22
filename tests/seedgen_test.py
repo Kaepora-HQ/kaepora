@@ -462,18 +462,6 @@ class SeedgenTest(unittest.TestCase):
         self.assertIn("Phantom Ganon", sphere)
         self.assertLess(sphere["Phantom Ganon"], sphere["Twinrova"])
 
-    def test_with_king_zoras_place_shuffled_morpha_waits_for_his_thanks(self):
-        # King Zora's ice stands only while the Water quest is not complete, so a Link who finishes the Water Temple
-        # first never gets what King Zora hands over. With his place as in the game the Zora shop then gives the tunic.
-        # With his place shuffled, every route that takes Morpha takes King Zora first, whatever he holds.
-        for settings in ({"Gifts": ["Story gifts"]}, {"Gifts": GIFT_GROUPS}):
-            for seed in map(str, range(1, 11)):
-                log, _ = self.generate(seed, settings)
-                sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
-                self.assertIn("ZD King Zora Thawed", sphere, (settings, seed))
-                self.assertLess(sphere["ZD King Zora Thawed"], sphere["Morpha"], (settings, seed))
-            self.assertEqual(self.route_out_of_reach(log), [])
-
     def test_a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree(self):
         # Closed Deku opens the way out of the forest.
         steps = playthrough_steps(self.generate("1", {"Kokiri Forest": "Closed Deku"})[0])

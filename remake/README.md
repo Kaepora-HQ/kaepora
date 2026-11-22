@@ -274,8 +274,7 @@ Fire, the thaw's scene not yet played, and the saved Bool `SageOfWater_KingZora_
 and no game file writes it (read). The decoded program holds neither its name nor its hash (measured). Seen in the game,
 in the game's own order: a King Zora thawed before the temple stands in no ice after it. The thawed domain's own ice key
 stays clear in that order, so the presence alone keeps the ice away (read from the saves). After the temple Link walks
-and climbs through Zora's Fountain to the Ice Cavern and fills a bottle with Blue Fire. While "Gifts" shuffles King
-Zora's place, Morpha waits for King Zora's thanks, and the route names King Zora before Morpha.
+and climbs through Zora's Fountain to the Ice Cavern and fills a bottle with Blue Fire.
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
 A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a

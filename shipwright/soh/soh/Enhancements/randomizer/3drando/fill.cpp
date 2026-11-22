@@ -27,15 +27,13 @@ static bool placementFailure = false;
 
 // The places whose scene sets what later steps wait for, whatever the place gives, and what each sets: the place after
 // each boss and the dungeon its blue warp clears, the scene after the last carpenter and the Gerudo letting Link pass,
-// Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows, and King Zora's thanks, which Morpha
-// waits for.
+// and Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows.
 static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
     { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
     { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
     { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
     { RC_BONGO_BONGO, LOGIC_SHADOW_TEMPLE_CLEAR }, { RC_TWINROVA, LOGIC_SPIRIT_TEMPLE_CLEAR },
     { RC_TH_FREED_CARPENTERS, LOGIC_GERUDOS_ACCEPT_LINK }, { RC_TOT_LIGHT_ARROWS_CUTSCENE, LOGIC_SHEIK_REVEALS_ZELDA },
-    { RC_ZD_KING_ZORA_THAWED, LOGIC_KING_ZORA_THANKS_LINK },
 };
 
 // Set while the spoiler log's route is made.
