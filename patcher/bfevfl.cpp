@@ -121,6 +121,21 @@ Flow Parse(std::string_view data) {
     return flow;
 }
 
+std::optional<Query> QueryOf(const Flow& flow, std::string_view event) {
+    const uint64_t flowchart = Flowchart(flow.data);
+    const uint64_t at = EventOffset(flow.data, flowchart, EventIndex(flow.data, flowchart, event));
+    if (EventType(ReadAt<uint8_t>(flow.data, at + 0x08)) != Switch) {
+        return std::nullopt;
+    }
+    // A switch holds the index of its actor at 0x0C and of its query among the actor's at 0x0E. The flowchart points to
+    // its actors at 0x28. An actor is 0x38 bytes, points to its name first, and at 0x20 to a pointer to each query's.
+    const uint64_t actor =
+        ReadAt<uint64_t>(flow.data, flowchart + 0x28) + 0x38 * ReadAt<uint16_t>(flow.data, at + 0x0C);
+    const uint64_t query = ReadAt<uint64_t>(flow.data, actor + 0x20) + 8 * ReadAt<uint16_t>(flow.data, at + 0x0E);
+    return Query{ .actor = std::string(Text(flow.data, ReadAt<uint64_t>(flow.data, actor))),
+                  .name = std::string(Text(flow.data, ReadAt<uint64_t>(flow.data, query))) };
+}
+
 bool SetString(Flow& flow, std::string_view event, std::string_view param, std::string_view value) {
     const uint64_t flowchart = Flowchart(flow.data);
     const uint64_t found =

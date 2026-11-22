@@ -2858,6 +2858,10 @@ def bad_input(patch, game):
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
     # Dm_LonLon_0030's Event40 gives 20 rupees, a number.
     rupees = {"flow": "Event/EventFlow/Dm_LonLon_0030.bfevfl.zs", "event": "Event40", "param": "Value"}
+    fire_quest = "Event/EventFlow/Get_StoneOfFire.bfevfl.zs"
+    expression_query = {"flow": fire_quest, "event": "Event39", "param": "GameDataName"}
+    value_query = {"flow": WINDMILL_MAN_FLOW, "event": "Event17", "param": "GameDataName"}
+    darunia_dance = "HavePlayedEvent.Dm_Goron_0030"
     texts = {
         "event text not this shape": (
             {key: valid_gift[key] for key in ("flow", "event", "param")}, ["plan.json", "event_texts[1]"]),
@@ -2874,6 +2878,12 @@ def bad_input(patch, game):
             dict(valid_gift, param="Actor"), ["Event171 Actor", SHOP_CHILD_FLOW, "no parameter"]),
         "parameter not a string": (
             dict(rupees, text="Item_Boomerang"), ["Event40 Value", rupees["flow"], "not a string"]),
+        "expression query given a Bool": (
+            dict(expression_query, text=darunia_dance),
+            ["Event39 GameDataName", fire_quest, darunia_dance, "asks for a true-or-false expression"]),
+        "value query given an expression": (
+            dict(value_query, text=PAST_SPIRIT_STEP02),
+            ["Event17 GameDataName", WINDMILL_MAN_FLOW, PAST_SPIRIT_STEP02, "asks for a true-or-false value"]),
     }
     for name, (entry, named) in texts.items():
         plans[name] = (good | {"event_texts": [valid_gift, entry]}, named)

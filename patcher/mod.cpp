@@ -1010,23 +1010,50 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
     }
 }
 
-// The hashes of the game data list's true-or-false values and expressions, the flags a presence can name.
-static std::set<uint32_t> PresenceFlags(GameFile& game, const std::string& dictionary) {
+// The game data list's table, Bool or BoolExp, of each flag a presence or a query can name, by the hash of its name.
+static std::map<uint32_t, std::string_view> Flags(GameFile& game, const std::string& dictionary,
+                                                  const std::vector<std::string>& claims) {
     byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
     byml::Node* data = Find(list.root, "Data");
-    std::set<uint32_t> flags;
-    for (const std::string_view kind : { "Bool", "BoolExp" }) {
-        byml::Node* values = data == nullptr ? nullptr : Find(*data, kind);
+    std::map<uint32_t, std::string_view> flags;
+    for (const std::string_view table : { "Bool", "BoolExp" }) {
+        byml::Node* values = data == nullptr ? nullptr : Find(*data, table);
         if (values == nullptr) {
-            throw std::runtime_error(std::format("{} has no {} values", GameDataListPath, kind));
+            throw std::runtime_error(std::format("{} has no {} values", GameDataListPath, table));
         }
         for (byml::Node& value : values->array) {
             if (const byml::Node* hash = Find(value, "Hash"); hash != nullptr) {
-                flags.insert(uint32_t(hash->scalar));
+                flags.emplace(uint32_t(hash->scalar), table);
             }
         }
     }
+    for (const std::string& claim : claims) {
+        flags.emplace(Murmur3(claim), "Bool");
+    }
     return flags;
+}
+
+// The game data actor's queries whose one string parameter names a flag, each with the table it looks the name up in.
+// Given a name the table lacks, the expression query gives no answer and its switch repeats the last one (read in the
+// program).
+static constexpr std::tuple<std::string_view, std::string_view, std::string_view> flagQueries[] = {
+    { "EventQueryIsGameDataBool", "Bool", "a true-or-false value" },
+    { "EventQueryIsGameDataBoolExp", "BoolExp", "a true-or-false expression" },
+};
+
+static void CheckFlagName(const bfevfl::Flow& flow, const PlannedEventText& text,
+                          const std::map<uint32_t, std::string_view>& flags) {
+    const std::optional<bfevfl::Query> query = bfevfl::QueryOf(flow, text.event);
+    if (!query || query->actor != "GameDataActor") {
+        return;
+    }
+    const auto flag = flags.find(Murmur3(text.text));
+    for (const auto& [name, table, words] : flagQueries) {
+        if (query->name == name && (flag == flags.end() || flag->second != table)) {
+            throw std::runtime_error(
+                std::format("{} asks for {}, and the game data list has none named \"{}\"", name, words, text.text));
+        }
+    }
 }
 
 // Link takes a bomb out of the bag only when the bomb's lift grade is at most his, as he lifts a rock. A bomb's grade
@@ -1394,38 +1421,35 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
 
     const std::string zsDictionary = Dictionary(game, "zs.zsdic");
-    if (!plan.presences.empty()) {
-        const std::set<uint32_t> flags = PresenceFlags(game, zsDictionary);
-        for (const PlannedPresence& presence : plan.presences) {
-            try {
-                if (!flags.contains(Murmur3(presence.flag))) {
-                    throw std::runtime_error(std::format(
-                        "\"{}\" is not a true-or-false value or expression in the game data list", presence.flag));
-                }
-                byml::Node& actor = Actor(placement(presence.actor.file), presence.actor.hash);
-                byml::Node* own = Find(actor, "Presence");
-                if (presence.replaces) {
-                    byml::Node* flag = own == nullptr ? nullptr : Find(*own, "FlagName");
-                    if (flag == nullptr || flag->string != *presence.replaces) {
-                        throw std::runtime_error(
-                            std::format("the actor has no presence on \"{}\"", *presence.replaces));
-                    }
-                    flag->string = presence.flag;
-                } else if (own != nullptr) {
-                    throw std::runtime_error("the actor already has a presence");
-                } else {
-                    // The game's presences that wait for a quest step take this shape.
-                    FindOrAdd(actor, "Presence", byml::Type::Dict).dict = {
-                        { .key = "FlagName", .value = { .type = byml::Type::String, .string = presence.flag } },
-                        { .key = "IsCheckLazy", .value = { .type = byml::Type::Bool } },
-                        { .key = "IsNegation", .value = { .type = byml::Type::Bool } },
-                    };
-                }
-                changed.insert(presence.actor.file);
-            } catch (const std::exception& e) {
-                throw std::runtime_error(
-                    std::format("presence {} in {}: {}", presence.actor.hash, presence.actor.file, e.what()));
+    const std::map<uint32_t, std::string_view> flags = Flags(game, zsDictionary, plan.claims);
+    for (const PlannedPresence& presence : plan.presences) {
+        try {
+            if (!flags.contains(Murmur3(presence.flag))) {
+                throw std::runtime_error(std::format(
+                    "\"{}\" is not a true-or-false value or expression in the game data list", presence.flag));
             }
+            byml::Node& actor = Actor(placement(presence.actor.file), presence.actor.hash);
+            byml::Node* own = Find(actor, "Presence");
+            if (presence.replaces) {
+                byml::Node* flag = own == nullptr ? nullptr : Find(*own, "FlagName");
+                if (flag == nullptr || flag->string != *presence.replaces) {
+                    throw std::runtime_error(std::format("the actor has no presence on \"{}\"", *presence.replaces));
+                }
+                flag->string = presence.flag;
+            } else if (own != nullptr) {
+                throw std::runtime_error("the actor already has a presence");
+            } else {
+                // The game's presences that wait for a quest step take this shape.
+                FindOrAdd(actor, "Presence", byml::Type::Dict).dict = {
+                    { .key = "FlagName", .value = { .type = byml::Type::String, .string = presence.flag } },
+                    { .key = "IsCheckLazy", .value = { .type = byml::Type::Bool } },
+                    { .key = "IsNegation", .value = { .type = byml::Type::Bool } },
+                };
+            }
+            changed.insert(presence.actor.file);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("presence {} in {}: {}", presence.actor.hash, presence.actor.file, e.what()));
         }
     }
     std::map<std::string, bfevfl::Flow> flows;
@@ -1442,6 +1466,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             if (bfevfl::SetString(flowAt(text.flow), text.event, text.param, text.text)) {
                 changedFlows.insert(text.flow);
             }
+            CheckFlagName(flowAt(text.flow), text, flags);
         } catch (const std::exception& e) {
             throw std::runtime_error(
                 std::format("event text {}: {}", Name(text.flow, text.event, text.param), e.what()));

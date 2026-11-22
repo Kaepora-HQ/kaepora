@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -14,7 +15,15 @@ struct Flow {
     std::vector<uint32_t> pointers; // the offset of every pointer field the relocation table lists, in order
 };
 
+struct Query {
+    std::string actor;
+    std::string name;
+};
+
 Flow Parse(std::string_view data);
+
+// The query the named event asks, or nothing when the event is no switch. Throws when the flow has no such event.
+std::optional<Query> QueryOf(const Flow& flow, std::string_view event);
 
 // Sets the string parameter of the named event to the value. Returns whether it changed. Throws, saying what is
 // missing, when the flow has no such event or parameter, or the parameter holds no string.
