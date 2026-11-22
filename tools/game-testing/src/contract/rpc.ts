@@ -35,6 +35,7 @@ import {
 	Picture,
 	PlaceId,
 	RunId,
+	Saved,
 	SessionId,
 	StickPosition,
 	Value,
@@ -58,13 +59,14 @@ const StartErrors = Schema.Union([
 	SaveUnreadable,
 	NoGameHere,
 	DumpFailed,
+	ValueRefused,
 ]);
 
 /**
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 1;
+export const contract = 2;
 
 /** Who answers a hand over in this session: a person at the machine, or nobody (CI refuses every hand over). */
 export const Person = Schema.Literals(["here", "nobody"]);
@@ -96,13 +98,38 @@ export const PlaceStatus = Schema.Struct({
 	),
 });
 
-/** One value a state writes: its name, the value, the word it came from, and what the base held. */
-export const PlannedEdit = Schema.Struct({
-	value: Schema.String,
-	to: Value,
-	from: Schema.String,
-	base: Schema.optionalKey(Value),
+/**
+ * One record a state writes, with what the base held and the word it came from: a saved value by name, in
+ * `progress.sav` or `caption.sav`, or a per-actor key by its placement hash in decimal.
+ */
+export const PlannedEdit = Schema.Union([
+	Schema.TaggedStruct("value", {
+		name: Schema.String,
+		file: Schema.Literals(["progress", "caption"]),
+		to: Saved,
+		base: Saved,
+		from: Schema.String,
+	}),
+	Schema.TaggedStruct("key", {
+		key: Schema.String,
+		to: Schema.Boolean,
+		base: Schema.Boolean,
+		from: Schema.String,
+	}),
+]);
+export type PlannedEdit = typeof PlannedEdit.Type;
+
+/**
+ * What a state writes, and the values a fresh place's files name that are not the place's own, which it leaves as the
+ * base holds them, so a test that needs one adds it with `set`.
+ */
+export const StatePlan = Schema.Struct({
+	edits: Schema.Array(PlannedEdit),
+	leftAlone: Schema.Array(
+		Schema.Struct({ name: Schema.String, from: Schema.String })
+	),
 });
+export type StatePlan = typeof StatePlan.Type;
 
 /** A name found by `Search`, with what kind of thing it names and a line on what it is. */
 export const NameMatch = Schema.Struct({
@@ -220,10 +247,11 @@ export class GameRpcs extends RpcGroup.make(
 	/** What a state would write, word by word, without starting a game. */
 	Rpc.make("Plan", {
 		payload: { state: StartState },
-		success: Schema.Array(PlannedEdit),
+		success: StatePlan,
 		error: Schema.Union([
 			UnknownName,
 			StateRefused,
+			ValueRefused,
 			NoGameHere,
 			DumpFailed,
 			SaveUnreadable,
