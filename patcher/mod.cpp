@@ -779,24 +779,6 @@ static void BringContainers(byml::Node& pouchActorInfo) {
 // A new game starts with the defaults this list gives every saved value.
 constexpr std::string_view GameDataListPath = "GameData/GameDataList.Product.110.byml.zs";
 
-// MurmurHash3 x86_32 with seed 0. The game data list keys each value by this hash of its name.
-static uint32_t Murmur3(std::string_view name) {
-    const auto mix = [](uint32_t k) { return std::rotl(k * 0xCC9E2D51, 15) * 0x1B873593; };
-    const size_t blocks = name.size() / 4 * 4;
-    uint32_t hash = 0;
-    for (size_t i = 0; i < blocks; i += 4) {
-        hash = std::rotl(hash ^ mix(ReadAt<uint32_t>(name, i)), 13) * 5 + 0xE6546B64;
-    }
-    uint32_t tail = 0;
-    for (size_t i = blocks; i < name.size(); ++i) {
-        tail |= uint32_t(uint8_t(name[i])) << 8 * (i - blocks);
-    }
-    hash ^= mix(tail) ^ uint32_t(name.size());
-    hash = (hash ^ hash >> 16) * 0x85EBCA6B;
-    hash = (hash ^ hash >> 13) * 0xC2B2AE35;
-    return hash ^ hash >> 16;
-}
-
 // The game data list's table and node type for each kind of start value, in the order of StartValue's types.
 static constexpr std::tuple<std::string_view, byml::Type, std::string_view> startValueKinds[] = {
     { "Bool", byml::Type::Bool, "a true-or-false value" },

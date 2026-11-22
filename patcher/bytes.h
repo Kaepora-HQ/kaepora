@@ -54,6 +54,24 @@ inline uint32_t NameHash(std::string_view name, uint32_t multiplier) {
     return hash;
 }
 
+// MurmurHash3 x86_32 with seed 0. The game data list keys each value by this hash of its name.
+inline uint32_t Murmur3(std::string_view name) {
+    const auto mix = [](uint32_t k) { return std::rotl(k * 0xCC9E2D51, 15) * 0x1B873593; };
+    const size_t blocks = name.size() / 4 * 4;
+    uint32_t hash = 0;
+    for (size_t i = 0; i < blocks; i += 4) {
+        hash = std::rotl(hash ^ mix(ReadAt<uint32_t>(name, i)), 13) * 5 + 0xE6546B64;
+    }
+    uint32_t tail = 0;
+    for (size_t i = blocks; i < name.size(); ++i) {
+        tail |= uint32_t(uint8_t(name[i])) << 8 * (i - blocks);
+    }
+    hash ^= mix(tail) ^ uint32_t(name.size());
+    hash = (hash ^ hash >> 16) * 0x85EBCA6B;
+    hash = (hash ^ hash >> 13) * 0xC2B2AE35;
+    return hash ^ hash >> 16;
+}
+
 // The zero-terminated string that starts at the offset.
 inline std::string_view StringAt(std::string_view data, size_t offset) {
     const size_t end = data.find('\0', offset);
