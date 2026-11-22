@@ -468,6 +468,11 @@ only the base package holds is not in them. `tests/quests.py` writes them, and `
 again and compares. After a change to that script or to the tests' readers, run
 `python3 -I -B tests/quests.py <game.nup> remake`.
 
+The tables do not hold every way a step changes. The game's program asks for a step itself at three places (read from
+the program): the trade timer's reset to `SubEvent_GetSwordBigGoron` `Step09_01`, and two moves to the next step in the
+routine that hatches an egg. The engine moves a quest on by itself when a `forced_by` step's flag or expression holds.
+And it refuses a write onto a quest at `NotReady` or `Complete`.
+
 A quest's step is the saved value `Step_<quest>`, and the game's quest table, `RSDB/Challenge`, gives its steps in the
 order every comparison of steps reads. `quest_steps.tsv` has a row for each step of each of the 45 quests, in that
 order, from `NotReady` to `Complete`.
@@ -477,3 +482,55 @@ order, from `NotReady` to `Complete`.
 - `forced_by`: the flag or expression the quest table names as the step's `ForceProgressGameData`.
 - `participants`: the schedules of the characters who take part in the step, each the member
   `Component/AIScheduleParam/<name>.game__component__AIScheduleParam.bgyml` of `Pack/AIScheduleParam.pack.zs`.
+
+`quest_writes.tsv` has a row for each place in the game's files that sets a quest's step, sorted by quest and step: each
+event of an event flow that sets one, and each node of a logic graph (AINB) of a kind that does.
+
+- `quest` and `step`: what the place sets. `quest` is empty where the place takes it from the event it carries out,
+  and `step` is empty where the place sets the next step or takes it from the event. The scene loader's
+  `SeqOneShotResetChallengeStepForTimerStop` names neither.
+- `file`: the romfs path. A file inside an actor pack is `<pack>:<file>`. The game's `.110` copies of a flow have rows
+  of their own.
+- `at`: the event of an event flow, or the index of a node of a logic graph.
+- `action`: the game's name for the event's action or the node, with where a node's quest comes from when the node
+  does not fix it: `(blackboard <name>)` for a parameter of the actor's blackboard, whose value is in a file of its
+  pack, or `(from <node>)` for the node that hands it on.
+- `entries`: the flow's entry points that reach the event. The walk follows every next event and every case of a switch.
+  It takes a fork's branches and its join as next events, so it shows what can be reached and not the order things play
+  in. It follows a call of another entry of the same flow, and steps over a call of an entry that is already open on the
+  way.
+- `tests`: each switch of the flow that reads the same quest and stands on a way from an entry to the event, with the
+  cases of it that lead on toward the event (`Event293:0`). For a node, each node that feeds it, directly or through
+  others, and reads the same quest, with the outputs of it that are read (`6:IsEqual`).
+- `untested_from`: each entry from which a way reaches the event past none of those switches. With no test, that is
+  every entry that reaches it.
+
+`tests` and `untested_from` say where the quest is asked on the way to a write, not what the answer is. They say nothing
+of which case the game takes, or of what a case means. In a switch on a yes-or-no question, case 0 is the true one: in
+963 of the 964 switches where the files show it, and wherever it has been seen in the game. A single switch's case is
+still a reading until that switch is seen. They see only the write's own flow or graph. A test in a flow that calls this
+one, in the actor that starts the event, or a played flag that lets a scene run once, is not among them, and in an
+actor's AI, neither is the selector that picks the node.
+
+`quest_reads.tsv` has a row for each place in the game's files that compares a quest's step, or names a quest beside its
+steps: in an event flow, a logic graph, an actor's AI, a placement, a schedule or a table, sorted as `quest_writes.tsv`
+is. A place compares a step through the saved value `Step_<quest>` itself, through a node that reads the step, or
+through a saved expression of the game data list: 329 expressions compare a step themselves, and 391 reach such a
+comparison through the expressions they name. Only BYML of version 7 is read; the game's other BYML files are effect
+sets and node definitions. No cutscene timeline names a step write, a step's saved value or such an expression, and
+`tests/quests.py` stops if one does. The step lists of the `FeverMaskParam` files are left out: they name no quest.
+
+- `quest` and `step`: the quest, and the step it is compared with or named beside. `quest` is empty where the file
+  takes it from elsewhere and no file of its pack gives it, and `step` is empty where the file does not fix it.
+- `test`: `IsAfter` (strictly after), `IsEqual` or `IsBefore` (strictly before), with `not` before it when the
+  expression negates that one comparison. `IsBefore` in an expression is read from the five that use it, each as the low
+  end of a range. For a node that compares, the name of its output another node reads. Empty where a place names a
+  step beside its quest, as a spawn point does, or reads a step and compares it with no fixed step.
+- `file` and `at`: where, as in `quest_writes.tsv`. In a BYML file, `at` is the path to the string or number, with a
+  placed actor by its hash.
+- `via`: what the file names: `Step_<quest>`; a saved expression, then each expression it names on the way to the
+  comparison, with `not` before one it negates; or the node that reads the step, with where its quest comes from as in
+  `action`, and the node that compares what it reads. `(default)` marks a name an input holds only as its default:
+  another node feeds that input, or it reads the actor's blackboard or an expression. `(hash)` marks an expression the
+  file holds by its hash, under a name that hashes to it where another file or the quest's own expression names give
+  one, and in hex where none does.

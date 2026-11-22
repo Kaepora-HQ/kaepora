@@ -353,8 +353,8 @@ LONG_STONE_MESSAGE = (RUMOUR_OPENING + b"They say that " + color(0) + b"Saria's 
 
 
 def byml(data):
-    """Parses BYML v7 in either byte order. Strings, arrays and dicts become Python values; other values become
-    (type, value)."""
+    """Parses BYML v7 in either byte order. Strings, arrays and dicts become Python values, a dict whose keys are hashes
+    with the hashes as its keys; other values become (type, value)."""
     order = {b"YB": "little", b"BY": "big"}[data[:2]]
     assert int.from_bytes(data[2:4], order) == 7, data[:4]
 
@@ -384,6 +384,9 @@ def byml(data):
         if kind == 0xC1:
             entries = [(u24(raw + 4 + 8 * i), data[raw + 7 + 8 * i], u32(raw + 8 + 8 * i)) for i in range(count)]
             return {keys[key]: value(entry_kind, v) for key, entry_kind, v in entries}
+        if kind == 0x20:  # each key's 32-bit hash and value, then each value's type
+            kinds = raw + 4 + 8 * count
+            return {u32(raw + 4 + 8 * i): value(data[kinds + i], u32(raw + 8 + 8 * i)) for i in range(count)}
         raise ValueError(f"node type {kind:#x}")
 
     return value(data[u32(12)], u32(12))
