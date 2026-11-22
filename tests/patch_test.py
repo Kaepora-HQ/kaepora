@@ -20,9 +20,9 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|copies-play-every-get|loose-item-heights|goods-and-copies|weapons-bring-containers| \
-           weapon-copies|event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
-           sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
+           loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|goods-and-copies| \
+           weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
+           opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
            river-arrival-writes-no-step <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
@@ -215,6 +215,8 @@ KAKARIKO_STATICS = [f"Banc/KakarikoVillage/KakarikoVillage_{part}_Static.bcett.b
 LON_LON_HEART_PIECE = (9814903750835309225, [HYRULE_FIELD_CHILD_STATIC])
 LAKE_HEART_PIECE = (13469300937852836203, [HYRULE_FIELD_ADULT_STATIC])
 IMPAS_HOUSE_HEART_PIECE = (17926402522258180222, KAKARIKO_STATICS)
+# Ruto's Letter's spot at the bottom of Lake Hylia, which the game data list has no key for.
+LETTER_SPOT = (474136620438465634, [HYRULE_FIELD_CHILD_STATIC])
 GOHMA_HEART_CONTAINER = (17948245526767051747, [DEKU_STATIC])
 RIVER_HEART_PIECE = (4189391771527808272, [f"Banc/ZoraRiver/ZoraRiver_{age}_Static.bcett.byml.zs"
                                            for age in ("Adult", "Child")])
@@ -1929,6 +1931,50 @@ def loose_item_table(patch, game):
             assert ours["Gyaml"] == "Obj_PickupShield_Item_Boomerang", (row["location"], path)
 
 
+# What the game data list holds but its save files keep no record of. Besides its records, a save file's table holds a
+# header for each of the 33 kinds of value and one record that points to the file's keys.
+NOT_RECORDS = {"Bool64bitKey", "Struct", "BoolExp"}
+SAVE_GROUPS = 34
+
+
+def save_layout(data):
+    """A parsed game data list's MetaData, with each save size less 8 bytes for each key the save holds, held against
+    the rule the game's two lists follow: each save file's table ends at 0x20 plus 8 bytes for each record the file
+    keeps and each of the 34 entries of SAVE_GROUPS, and every key adds 8 bytes past the table."""
+    meta = dict(data["MetaData"])
+    saves = range(len(meta["SaveDataSize"]))
+
+    def count(kinds):
+        return [sum(entry.get("SaveFileIndex") == (INT, save) for kind in kinds for entry in data["Data"][kind])
+                for save in saves]
+
+    records, keys = count(data["Data"].keys() - NOT_RECORDS), count(["Bool64bitKey"])
+    tables = [end for _, end in meta["SaveDataOffsetPos"]]
+    assert tables == [0x20 + 8 * (records[save] + SAVE_GROUPS) for save in saves], tables
+    meta["SaveDataSize"] = [(INT, size - 8 * keys[save]) for save, (_, size) in enumerate(meta["SaveDataSize"])]
+    meta["AllDataSaveSize"] = (INT, meta["AllDataSaveSize"][1] - 8 * sum(keys))
+    return meta
+
+
+def loose_spot_keys(patch, game):
+    """A loose spot the game data list has no key for, Ruto's Letter's, gets one as the heart pieces have theirs, so
+    an item taken there stays taken. Gohma's spot has its own and gains none. The list's save sizes grow by the key as
+    the game's own lists lay theirs out, and the list's size table entry grows with the list."""
+    mod = patched(patch, game, plan([], loose_items=[(*LETTER_SPOT, "Obj_Heart_Piece"),
+                                                     (*GOHMA_HEART_CONTAINER, "Obj_Heart_Piece")]))
+    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    ours = game.game_data_list(mod[GAME_DATA_LIST])
+    keys = theirs["Data"]["Bool64bitKey"]
+    gohma = next(key for key in keys if key["Hash"] == (UINT64, GOHMA_HEART_CONTAINER[0]))
+    letter = gohma | {"Hash": (UINT64, LETTER_SPOT[0])}
+    assert ours["Data"] == theirs["Data"] | {"Bool64bitKey": sorted([*keys, letter], key=lambda key: key["Hash"])}
+    assert save_layout(ours) == save_layout(theirs)
+    assert ours["MetaData"]["SaveDataSize"][0][1] == theirs["MetaData"]["SaveDataSize"][0][1] + 8
+    entries = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    size = len(zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary))
+    assert entries[size_key(GAME_DATA_LIST)] == load_size(size), (entries[size_key(GAME_DATA_LIST)], size)
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -2866,6 +2912,7 @@ def main():
         "loose-item-heights": loose_item_heights,
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
+        "loose-spot-keys": loose_spot_keys,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
         "presence": presence,

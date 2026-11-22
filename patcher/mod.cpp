@@ -18,6 +18,7 @@
 #include <format>
 #include <fstream>
 #include <limits>
+#include <optional>
 #include <ranges>
 #include <set>
 #include <stdexcept>
@@ -876,12 +877,61 @@ static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::st
     }
 }
 
+// The kinds of value a mod adds to the game data list.
+enum class Added { Key };
+
+// What a save keeps of each value it holds.
+constexpr uint64_t SavedValueSize = 8;
+
+static uint64_t HashOf(byml::Node& value) {
+    return Value(value, "Hash").scalar;
+}
+
+// Adds the value where the list keeps its kind, and grows the list's save sizes by what the save keeps of it. A
+// per-actor key is no record of its save's table: it lies past the table, among the keys in hash order, so it grows the
+// save's size and the size of all saves, and the table's end stays. That is the layout the game's own two lists keep
+// (measured on .100 and .110).
+static void Add(byml::Node& list, Added kind, byml::Node value) {
+    byml::Node& meta = Value(list, "MetaData");
+    const uint64_t save = Value(value, "SaveFileIndex").scalar;
+    const std::vector<byml::Node*> grown = { &Value(meta, "SaveDataSize").array.at(save),
+                                             &Value(meta, "AllDataSaveSize") };
+    switch (kind) {
+    case Added::Key: {
+        std::vector<byml::Node>& keys = Value(Value(list, "Data"), "Bool64bitKey").array;
+        keys.insert(std::ranges::lower_bound(keys, HashOf(value), {}, HashOf), std::move(value));
+        break;
+    }
+    }
+    for (byml::Node* size : grown) {
+        size->scalar += SavedValueSize;
+    }
+}
+
+// The reset type the game gives every loose spot's key.
+constexpr uint64_t LooseSpotResetType = 24;
+
+// The first of MetaData's save files, slot_NN/progress.sav, where the game keeps every per-actor key.
+constexpr uint64_t ProgressSave = 0;
+
+// A loose spot's key, as the game gives every loose spot's.
+static byml::Node LooseSpotKey(uint64_t hash) {
+    byml::Node key{ .type = byml::Type::Dict };
+    FindOrAdd(key, "Hash", byml::Type::UInt64).scalar = hash;
+    FindOrAdd(key, "ResetTypeValue", byml::Type::Int).scalar = LooseSpotResetType;
+    FindOrAdd(key, "SaveFileIndex", byml::Type::Int).scalar = ProgressSave;
+    return key;
+}
+
 // A new game starts with each start value as its default. Each count of a shop slot sold takes reset type 0 in place
 // of the game's 2, the type that the game's data has a day change reset. An entry's reset type and every default but a
 // String64's sit inside the entry. A String64's default is a name in the list's string table, which holds none of the
-// item names a start writes, so each such name grows the list.
-static std::string GameDataList(GameFile& game, const std::string& dictionary,
-                                const std::map<std::string, StartValue>& values, const std::set<std::string>& soldOnce) {
+// item names a start writes, so each such name grows the list. A taken pickup stays taken by the key its spot has in
+// the list, so each loose spot the list has no key for gets one. Gives nothing when the list stays the game's.
+static std::optional<std::string> GameDataList(GameFile& game, const std::string& dictionary,
+                                               const std::map<std::string, StartValue>& values,
+                                               const std::set<std::string>& soldOnce,
+                                               const std::vector<PlannedActorItem>& looseItems) {
     try {
         byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
@@ -906,6 +956,17 @@ static std::string GameDataList(GameFile& game, const std::string& dictionary,
                 throw std::runtime_error(std::format("\"{}\" is not a count with a reset type in the list", name));
             }
             reset->scalar = 0;
+        }
+        bool keyed = false;
+        std::vector<byml::Node>& keys = Value(*data, "Bool64bitKey").array;
+        for (const PlannedActorItem& loose : looseItems) {
+            if (!std::ranges::binary_search(keys, loose.hash, {}, HashOf)) {
+                Add(list.root, Added::Key, LooseSpotKey(loose.hash));
+                keyed = true;
+            }
+        }
+        if (values.empty() && soldOnce.empty() && !keyed) {
+            return std::nullopt;
         }
         return byml::Write(list);
     } catch (const std::exception& e) {
@@ -1483,10 +1544,11 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
         }
     }
-    if (!startValues.empty() || !soldOnce.empty()) {
-        const std::string data = GameDataList(game, zsDictionary, startValues, soldOnce);
-        tableChanged |= RaiseSize(table, GameDataListPath, data.size(), GameDataListOverhead);
-        addToRomfs(GameDataListPath, Compress(data, zsDictionary));
+    if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty()) {
+        if (const auto data = GameDataList(game, zsDictionary, startValues, soldOnce, plan.looseItems)) {
+            tableChanged |= RaiseSize(table, GameDataListPath, data->size(), GameDataListOverhead);
+            addToRomfs(GameDataListPath, Compress(*data, zsDictionary));
+        }
     }
     if (tableChanged) {
         addToRomfs(SizeTablePath, Compress(table));
