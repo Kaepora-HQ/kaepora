@@ -377,6 +377,23 @@ private:
         closeStartWith("OK");
     }
 
+    // SoH's default seed shuffles every gift group but Malon's Egg, the songs among the song places, the loose items
+    // and the dungeon rewards among the places that hand one over, and leaves the shops and the Gold Skulltulas.
+    void expectSohsDefaultShuffles() {
+        QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
+        QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
+        QCOMPARE(listButton("Gifts")->text(), QString("7 of 8 groups"));
+        listButton("Gifts")->click();
+        for (QCheckBox* box : openList("Gifts")->findChildren<QCheckBox*>()) {
+            QCOMPARE(box->isChecked(), box->text() != "Malon's Egg");
+        }
+        QCOMPARE(listRow("Gifts", "Deku Scrubs")->currentText(), QString("One Time Rewards"));
+        closeList("Gifts", "Cancel");
+        QCOMPARE(choice("Songs")->currentText(), QString("Shuffled among themselves"));
+        QCOMPARE(choice("Loose items")->currentText(), QString("Shuffled"));
+        QCOMPARE(choice("Dungeon rewards")->currentText(), QString("Shuffled among themselves"));
+    }
+
     void shuffleGifts(const QStringList& groups, const QString& dekuScrubs = "Vanilla") {
         listButton("Gifts")->click();
         for (QCheckBox* box : openList("Gifts")->findChildren<QCheckBox*>()) {
@@ -642,10 +659,10 @@ private slots:
                                 "Start with: None\n"
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
-                                "Gifts: Vanilla\n"
-                                "Songs: Vanilla\n"
-                                "Loose items: Vanilla\n"
-                                "Dungeon rewards: Vanilla\n"
+                                "Gifts: All but Malon's Egg\n"
+                                "Songs: Shuffled among themselves\n"
+                                "Loose items: Shuffled\n"
+                                "Dungeon rewards: Shuffled among themselves\n"
                                 "Lens of Truth: Never needed\n"
                                 "Gossip stones: Give hints\n"
                                 "Hints from characters: Give hints";
@@ -740,8 +757,8 @@ private slots:
         choice("Shop goods")->setCurrentText("Four per shop shuffled");
         choice("Gold Skulltulas")->setCurrentText("All");
         shuffleGifts({ "Characters" });
-        choice("Songs")->setCurrentText("Shuffled among themselves");
-        choice("Loose items")->setCurrentText("Shuffled");
+        choice("Songs")->setCurrentText("Vanilla");
+        choice("Loose items")->setCurrentText("Vanilla");
         choice("Dungeon rewards")->setCurrentText("Shuffled");
         choice("Opening")->setCurrentText("Played");
         choice("Cutscenes")->setCurrentText("Played");
@@ -759,10 +776,7 @@ private slots:
         QCOMPARE(choice("Cutscenes")->currentText(), QString("Skipped"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
-        QCOMPARE(listButton("Gifts")->text(), QString("Vanilla"));
-        QCOMPARE(choice("Songs")->currentText(), QString("Vanilla"));
-        QCOMPARE(choice("Loose items")->currentText(), QString("Vanilla"));
-        QCOMPARE(choice("Dungeon rewards")->currentText(), QString("Vanilla"));
+        expectSohsDefaultShuffles();
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Needed"));
         QCOMPARE(choice("Gossip stones")->currentText(), QString("Give hints"));
         QCOMPARE(choice("Hints from characters")->currentText(), QString("Give hints"));
@@ -777,6 +791,11 @@ private slots:
             offered << choice("Dungeon rewards")->itemText(index);
         }
         QCOMPARE(offered, (QStringList{ "Vanilla", "Shuffled among themselves", "Shuffled" }));
+    }
+
+    void theSettingsStartWithSohsDefaultShuffles() {
+        button("Settings…")->click();
+        expectSohsDefaultShuffles();
     }
 
     void shopGoodsOffersEachCountUpToSevenAndARandomNumber() {
@@ -1046,20 +1065,17 @@ private slots:
 
     void theGiftsListHasTheGroups() {
         button("Settings…")->click();
-        QCOMPARE(listButton("Gifts")->text(), QString("Vanilla"));
         listButton("Gifts")->click();
         QStringList names;
         for (QGroupBox* group : openList("Gifts")->findChildren<QGroupBox*>()) {
             names << group->title();
             for (QCheckBox* box : group->findChildren<QCheckBox*>()) {
-                QVERIFY(!box->isChecked());
                 names << box->text();
             }
         }
         QCOMPARE(names, (QStringList{ "Gifts", "Minigames", "Characters", "House of Skulltula", "Great Fairies",
                                       "Story gifts", "Malon's Egg", "Biggoron Quest" }));
         QComboBox* scrubs = listRow("Gifts", "Deku Scrubs");
-        QCOMPARE(scrubs->currentText(), QString("Vanilla"));
         QStringList choices;
         for (int index = 0; index < scrubs->count(); ++index) {
             choices << scrubs->itemText(index);
@@ -1164,11 +1180,10 @@ private slots:
         QTest::newRow("overworld skulltulas") << "Gold Skulltulas" << "In the overworld"
                                               << "Overworld Gold Skulltulas shuffled";
         QTest::newRow("skulltulas") << "Gold Skulltulas" << "All" << "Gold Skulltulas shuffled";
-        QTest::newRow("songs") << "Songs" << "Shuffled among themselves" << "Songs shuffled";
-        QTest::newRow("loose items") << "Loose items" << "Shuffled" << "Loose items shuffled";
+        QTest::newRow("songs") << "Songs" << "Vanilla" << "Songs not shuffled";
+        QTest::newRow("loose items") << "Loose items" << "Vanilla" << "Loose items not shuffled";
         QTest::newRow("dungeon rewards") << "Dungeon rewards" << "Shuffled" << "Dungeon rewards shuffled";
-        QTest::newRow("dungeon rewards among themselves")
-            << "Dungeon rewards" << "Shuffled among themselves" << "Dungeon rewards shuffled among themselves";
+        QTest::newRow("dungeon rewards vanilla") << "Dungeon rewards" << "Vanilla" << "Dungeon rewards not shuffled";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";
@@ -1201,8 +1216,9 @@ private slots:
         QCOMPARE(window->width(), width);
     }
 
-    void aSeedMadeBeforeHintsFromCharactersHasNone() {
-        // The settings of a seed made by Kaepora 0.1.0, whose log ends at the stones.
+    void aSeedMadeBeforeASettingHasNoneOfIt() {
+        // The settings of a seed made by Kaepora 0.1.0, whose log ends at the stones and has no gifts, songs, loose
+        // items, dungeon rewards or hints from characters.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
               R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
@@ -1213,8 +1229,14 @@ private slots:
               "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, no hints from characters" });
-        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Hints from characters: Vanilla"));
+        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, no gifts shuffled, songs not shuffled, "
+                                         "loose items not shuffled, dungeon rewards not shuffled, no hints from "
+                                         "characters" });
+        const QStringList details = entry("OWL")->toolTip(1).split('\n');
+        for (const QString line : { "Gifts: Vanilla", "Songs: Vanilla", "Loose items: Vanilla",
+                                    "Dungeon rewards: Vanilla", "Hints from characters: Vanilla" }) {
+            QVERIFY2(details.contains(line), qPrintable(line));
+        }
         QVERIFY(shows("Default settings"));
     }
 
@@ -1232,7 +1254,8 @@ private slots:
               "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played" });
+        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, no gifts shuffled, songs not shuffled, "
+                                         "loose items not shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Opening: Played"));
     }
 
@@ -1250,7 +1273,8 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Cutscenes played" });
+        QCOMPARE(listed(1), QStringList{ "Cutscenes played, no gifts shuffled, songs not shuffled, loose items not "
+                                         "shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Cutscenes: Played"));
     }
 
@@ -1268,7 +1292,8 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Cutscenes played, 4 of 8 gift groups shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Cutscenes played, 4 of 8 gift groups shuffled, songs not shuffled, "
+                                         "loose items not shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains(
             "Gifts: All but Great Fairies, Malon's Egg, Biggoron Quest and Deku Scrubs"));
     }

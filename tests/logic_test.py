@@ -48,6 +48,8 @@ FOREST_OPEN = {"Kokiri Forest": "Open"}
 CLOSED_DEKU = {"Kokiri Forest": "Closed Deku"}
 BRIDGE_OPEN = {"Rainbow Bridge": "Always open"}
 NO_TRIALS = {"Ganon's trials": "None"}
+# With the Biggoron Quest shuffled, SoH leaves the trade chain's places out of the logic.
+GIFTS_VANILLA = {"Gifts": []}
 
 
 class LogicTest(unittest.TestCase):
@@ -336,8 +338,9 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_with_bombs_without_bracelet))
 
     def test_biggorons_sword_needs_the_whole_trade_chain(self):
-        self.assertTrue(self.reachable("DMT Trade Claim Check"))
-        self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee")))
+        self.assertTrue(self.reachable("DMT Trade Claim Check", settings=GIFTS_VANILLA))
+        self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee"),
+                                        settings=GIFTS_VANILLA))
 
     def test_dampes_heart_piece_needs_a_hookshot(self):
         self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",

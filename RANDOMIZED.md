@@ -1,5 +1,7 @@
 # What is randomized
 
+With the default settings, a seed shuffles the chests, the gifts of every group but **Malon's Egg**, the loose items, the songs among themselves, and the stones and medallions among the bosses and Rauru. **Shop goods** and **Gold Skulltulas** start at **Vanilla**. Change any of it in **Settings…**.
+
 ## Chests
 
 A seed moves the items that chests hold, in the overworld and in every dungeon, including the chests only the remake has. Every seed can be finished.
@@ -34,7 +36,7 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 ## Gifts
 
-Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives.
+Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives. By default every group but **Malon's Egg** is ticked, and **Deku Scrubs** is at **One Time Rewards**.
 
 - **Minigames:** both fishing prizes, the Zora diving game, horseback archery's two prizes, Bombchu Bowling's two prizes, the frogs' two prizes, the ocarina memory game in the Lost Woods, both shooting galleries, the target in the Lost Woods, the rolling Goron in Goron City, Talon's cuccos, Anju's cuccos and Dampé's digging tour.
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer and the lakeside laboratory's dive.
@@ -63,7 +65,7 @@ A Great Fairy still asks for her offering, and each but the summit's for Din's F
 
 ## Songs
 
-Set **Songs** to **Shuffled among themselves**, and the twelve songs change places. Every place that teaches a song still teaches one, so Impa may teach the Minuet of the Forest and Malon may teach Saria's Song.
+With **Songs** at **Shuffled among themselves**, its default, the twelve songs change places. Every place that teaches a song still teaches one, so Impa may teach the Minuet of the Forest and Malon may teach Saria's Song.
 
 Two things change with it. If you learn the Requiem of Spirit early and warp to the Evil Desert Colossus, the Spirit Temple and the way into the Mirage Desert stay shut there until you have walked into the desert from Gerudo Fortress. Without that, the early visit could cost you the Gerudo Pass. Until then nobody walks out of the Colossus, so warp there only once you know another warp song. The same goes for the Bolero of Fire and the middle of Death Mountain Crater, which an adult leaves only with the Hookshot, the Hover Boots or a grown bean plant.
 
@@ -73,13 +75,13 @@ With **Vanilla**, every song is where the game has it.
 
 ## Loose items
 
-Set **Loose items** to **Shuffled**, and the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, the bottle at the bottom of Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**. Ruto's Letter itself is always in a chest, and a hint calls it a Bottle, as the game does.
+With **Loose items** at **Shuffled**, its default, the items that lie in the open join the shuffle: 14 heart pieces, the eight heart containers the bosses leave, the Fire Arrow at Lake Hylia, the bottle at the bottom of Lake Hylia, and the loose small keys in the Bottom of the Well and the Shadow Temple. The two keys stay where they are while **Small and boss keys** is **In their own chests**. Ruto's Letter itself is always in a chest, and a hint calls it a Bottle, as the game does.
 
 The seed's item lies where the game's did, and you take it by walking into it. A heart piece, a heart container and an item the seed left in its own spot are the game's own, and you take them as the game has you. A boss still shows a heart container as it falls, and what lies there afterwards is the seed's item. A dungeon you untick under **Shuffled dungeons** keeps its own. With **Vanilla**, each spot holds what the game has.
 
 ## Dungeon rewards
 
-Nine places hand over a Spiritual Stone or a medallion: the eight dungeon bosses and Rauru. Set **Dungeon rewards** to **Shuffled among themselves**, and those nine hand over the nine rewards in a new order, so Queen Gohma may leave you the Fire Medallion. Set it to **Shuffled**, and the nine places join the shuffle with everything else: a boss can then leave you the Hookshot, and a stone or a medallion can turn up somewhere else. A dungeon you untick under **Shuffled dungeons** keeps its boss's own. The scene still shows the dungeon's own stone or medallion.
+Nine places hand over a Spiritual Stone or a medallion: the eight dungeon bosses and Rauru. With **Dungeon rewards** at **Shuffled among themselves**, its default, those nine hand over the nine rewards in a new order, so Queen Gohma may leave you the Fire Medallion. Set it to **Shuffled**, and the nine places join the shuffle with everything else: a boss can then leave you the Hookshot, and a stone or a medallion can turn up somewhere else. A dungeon you untick under **Shuffled dungeons** keeps its boss's own. The scene still shows the dungeon's own stone or medallion.
 
 The stones and medallions open nothing by themselves: the doors and scenes the story ties to them wait for their bosses, as the game has it. With **Vanilla**, each boss gives what the game has.
 

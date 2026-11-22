@@ -184,7 +184,9 @@ enable_testing()
 add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
-                     spoiler_log_lists_the_shuffled_locations_and_the_route route_names_no_gold_skulltula_token
+                     spoiler_log_lists_the_shuffled_locations_and_the_route
+                     a_seed_with_no_settings_shuffles_what_sohs_default_seed_shuffles
+                     route_names_no_gold_skulltula_token
                      route_names_each_boss_before_the_steps_that_wait_for_it
                      a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree
                      route_takes_what_link_is_handed_over_what_he_buys route_steps_are_in_reach_in_their_sphere
@@ -284,11 +286,12 @@ if(Qt6Test_FOUND)
     # The window's tests that make no seed need no game file.
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesOfEachColumnLineUp whatJoinsTheShuffleHasItsOwnGroup
                      theHintsChoicesShareAGroup aChoiceShowsInTheSummary defaultsSetsEveryControlBack
+                     theSettingsStartWithSohsDefaultShuffles
                      theSummaryNamesUpToThreeDungeonsLeftOut dungeonRewardsOffersThreeChoices
                      shopGoodsOffersEachCountUpToSevenAndARandomNumber
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
-                     longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone
+                     longSettingsLeaveTheWindowWidth aSeedMadeBeforeASettingHasNoneOfIt
                      aSeedMadeBeforeTheOpeningSettingPlaysIt aSeedMadeBeforeTheCutscenesSettingPlaysThem
                      aSeedWhoseSpoilerLogCannotBeReadIsListed settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning

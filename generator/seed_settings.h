@@ -258,6 +258,15 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 
+// The groups a seed shuffles unless its settings say otherwise: SoH's default seed shuffles every group's places but
+// Malon's, whose "Shuffle Weird Egg" starts at Vanilla. It leaves its three one-time scrubs out of the game, which
+// Kaepora cannot do, and their group holds the Deku Theater's two prizes, which SoH shuffles, so the group is in.
+inline std::set<GiftGroup> DefaultGifts() {
+    std::set<GiftGroup> groups(std::begin(GiftGroups), std::end(GiftGroups));
+    std::erase_if(groups, [](const GiftGroup& group) { return group.name == "Malon's Egg"; });
+    return groups;
+}
+
 // "Shuffled among themselves" is SoH's "End of Dungeons": the rewards go only to the places that hand one over.
 enum class Rewards { Vanilla, ShuffledAmongThemselves, Shuffled };
 inline constexpr std::pair<Rewards, std::string_view> RewardsChoices[] = {
@@ -315,11 +324,11 @@ struct SeedSettings {
     Cutscenes cutscenes = Cutscenes::Skipped;
     std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
-    std::set<GiftGroup> gifts;          // at most one choice of each row
-    Rewards rewards = Rewards::Vanilla;
+    std::set<GiftGroup> gifts = DefaultGifts(); // at most one choice of each row
+    Rewards rewards = Rewards::ShuffledAmongThemselves;
     Skulltulas skulltulas = Skulltulas::Vanilla;
-    Songs songs = Songs::Vanilla;
-    LooseItems looseItems = LooseItems::Vanilla;
+    Songs songs = Songs::ShuffledAmongThemselves;
+    LooseItems looseItems = LooseItems::Shuffled;
     Lens lens = Lens::Needed;
     GossipStones gossipStones = GossipStones::GiveHints;
     HintsFromCharacters hintsFromCharacters = HintsFromCharacters::GiveHints;

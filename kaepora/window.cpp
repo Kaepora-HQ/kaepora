@@ -122,21 +122,23 @@ static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
 }
 
-// A seed's settings as its spoiler log holds them. A log that leaves out hints from characters is of a seed that has
-// none, and one that leaves out the opening or the cutscenes is of a seed whose mod plays them.
+// A seed's settings as its spoiler log holds them. A setting a log leaves out is one its release did not have, so the
+// seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
 static SeedSettings SettingsOf(const QString& folder) {
-    const nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
-    SeedSettings settings = ParseSeedSettings(logged);
-    if (!logged.contains(std::string(HintsFromCharactersSetting))) {
-        settings.hintsFromCharacters = HintsFromCharacters::Vanilla;
+    nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
+    const nlohmann::json asTheGameIs = {
+        { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
+        { OpeningSetting, Words(OpeningChoices, Opening::Played) },
+        { CutscenesSetting, Words(CutscenesChoices, Cutscenes::Played) },
+        { GiftsSetting, nlohmann::json::array() },
+        { SongsSetting, Words(SongsChoices, Songs::Vanilla) },
+        { LooseItemsSetting, Words(LooseItemsChoices, LooseItems::Vanilla) },
+        { RewardsSetting, Words(RewardsChoices, Rewards::Vanilla) },
+    };
+    for (const auto& [setting, value] : asTheGameIs.items()) {
+        logged.emplace(setting, value);
     }
-    if (!logged.contains(std::string(OpeningSetting))) {
-        settings.opening = Opening::Played;
-    }
-    if (!logged.contains(std::string(CutscenesSetting))) {
-        settings.cutscenes = Cutscenes::Played;
-    }
-    return settings;
+    return ParseSeedSettings(logged);
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.

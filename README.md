@@ -39,7 +39,7 @@ If the game runs slowly or stutters, see the [FAQ](FAQ.md).
 
 ## What a seed changes
 
-A seed moves the items that chests hold, and its settings decide what else joins the shuffle and how the game starts. Adult Link can put the Master Sword back at any time, to be a child again before the Forest Temple. [What is randomized](RANDOMIZED.md) has every part, and <https://kaepora.org/randomized> shows the same page with the current counts.
+A seed moves the items that chests hold. With the default settings, it also moves what characters and minigames hand you, the items that lie in the open, the songs, and the stones and medallions among the bosses and Rauru, as Ship of Harkinian's default settings do. Its settings decide what joins the shuffle and how the game starts. Adult Link can put the Master Sword back at any time, to be a child again before the Forest Temple. [What is randomized](RANDOMIZED.md) has every part, and <https://kaepora.org/randomized> shows the same page with the current counts.
 
 ## Build from source
 

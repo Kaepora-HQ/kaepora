@@ -132,19 +132,21 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.skulltulas == Skulltulas::All) {
         changed << "Gold Skulltulas shuffled";
     }
-    if (settings.gifts.size() == GiftRows()) {
+    if (settings.gifts.empty()) {
+        changed << "no gifts shuffled";
+    } else if (settings.gifts.size() == GiftRows()) {
         changed << "gifts shuffled";
-    } else if (!settings.gifts.empty()) {
+    } else if (settings.gifts != DefaultGifts()) {
         changed << QString("%1 of %2 gift groups shuffled").arg(settings.gifts.size()).arg(GiftRows());
     }
-    if (settings.songs == Songs::ShuffledAmongThemselves) {
-        changed << "songs shuffled";
+    if (settings.songs == Songs::Vanilla) {
+        changed << "songs not shuffled";
     }
-    if (settings.looseItems == LooseItems::Shuffled) {
-        changed << "loose items shuffled";
+    if (settings.looseItems == LooseItems::Vanilla) {
+        changed << "loose items not shuffled";
     }
-    if (settings.rewards == Rewards::ShuffledAmongThemselves) {
-        changed << "dungeon rewards shuffled among themselves";
+    if (settings.rewards == Rewards::Vanilla) {
+        changed << "dungeon rewards not shuffled";
     } else if (settings.rewards == Rewards::Shuffled) {
         changed << "dungeon rewards shuffled";
     }

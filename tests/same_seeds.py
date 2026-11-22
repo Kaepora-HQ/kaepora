@@ -46,6 +46,7 @@ EVERY_DUNGEON = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest T
 IN_OWN_CHESTS = "In their own chests"
 SETTINGS = {
     "default": {},
+    "chests-alone": {"Gifts": [], "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla"},
     "keys-in-their-own-chests": {"Small and boss keys": IN_OWN_CHESTS},
     "maps-and-compasses-in-their-own-chests": {"Maps and compasses": IN_OWN_CHESTS},
     "lens-never-needed": {"Lens of Truth": "Never needed"},
