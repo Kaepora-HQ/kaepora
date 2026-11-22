@@ -120,6 +120,13 @@ class RemakeTablesTest(unittest.TestCase):
             else:
                 self.assertEqual(measured, shop_goods.row(self.game, infos, row["item"]), row["item"])
 
+    def test_every_kept_good_is_the_game_s_goods_at_its_base_price(self):
+        pouch = {row["__RowId"]: row for row in patch_test.byml(patch_test.zstd.decompress(
+            self.game.read(patch_test.POUCH_ACTOR_INFO)))}
+        for row in read_tsv("kept_goods.tsv"):
+            self.assertIn(f"Pack/Actor/{row['goods']}.pack.zs", self.game.files, row["item"])
+            self.assertEqual(pouch[row["goods"]]["BuyingPrice"], (patch_test.INT, int(row["price"])), row["item"])
+
     def test_the_quest_tables_are_the_game_s(self):
         for name, rows in quest_tables(self.game).items():
             with open(ROOT / "remake" / name, newline="") as f:

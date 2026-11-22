@@ -69,13 +69,12 @@ struct GetAccessibleLocationsStruct {
 };
 
 void ClearProgress();
-std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
-                                           const std::vector<RemakeShopSlot>& shops,
+std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                                            const std::vector<RemakeGift>& gifts,
                                            const std::vector<RemakeSkulltula>& skulltulas,
                                            const std::vector<RemakeSongPlace>& songs);
-int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
-         const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
+         const std::vector<RemakeGift>& gifts,
          const std::vector<RemakeSkulltula>& skulltulas, const std::vector<RemakeSongPlace>& songs);
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop

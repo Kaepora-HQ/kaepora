@@ -158,10 +158,12 @@ inline constexpr StartStep StartSteps[] = {
     { "Ocarina", "Fairy Ocarina", "Fairy Ocarina", "Item_Ocarina_Fairy", "Item_Ocarina_Fairy" },
 };
 
-// A count's value is the number of goods it shuffles in each shop.
-enum class ShopCount { OnePerShop = 1, TwoPerShop, ThreePerShop, FourPerShop, FivePerShop, SixPerShop, SevenPerShop,
-                       RandomPerShop };
+// A count's value is the number of goods it shuffles in each shop. As in SoH's shopsanity, the fill puts the game's
+// goods SoH keeps on the slots a count leaves, so a count of none moves the shops' goods among the shops.
+enum class ShopCount { AmongTheShops, OnePerShop, TwoPerShop, ThreePerShop, FourPerShop, FivePerShop, SixPerShop,
+                       SevenPerShop, RandomPerShop };
 inline constexpr std::pair<ShopCount, std::string_view> ShopCountChoices[] = {
+    { ShopCount::AmongTheShops, "Goods shuffled among the shops" },
     { ShopCount::OnePerShop, "One per shop shuffled" },
     { ShopCount::TwoPerShop, "Two per shop shuffled" },
     { ShopCount::ThreePerShop, "Three per shop shuffled" },
@@ -218,10 +220,15 @@ inline const std::pair<ShopPrices, std::string_view>& ShopPricesChoice(const Sho
 
 struct ShuffledShops {
     ShopCount count;
-    ShopPrices prices = DefaultShopPrices;
+    ShopPrices prices = DefaultShopPrices; // the shuffled slots' prices, so none while the count shuffles no slot
 
     bool operator==(const ShuffledShops&) const = default;
 };
+
+// Whether any slot takes a price of "Shop prices": the game's goods sell at their own.
+inline bool ShopPricesApply(const std::optional<ShuffledShops>& shops) {
+    return shops && shops->count != ShopCount::AmongTheShops;
+}
 
 inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
     return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;

@@ -48,17 +48,19 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(json.loads(plan.read_text())["shops"]), 40)
+        # Every shop slot is in the plan: forty sell an item, and the other twenty-four sell goods.
+        slots = json.loads(plan.read_text())["shops"]
+        self.assertEqual(sorted(len([slot for slot in slots if key in slot]) for key in ("item", "goods")), [24, 40])
 
     def test_a_seed_with_gifts_and_shop_goods_shuffled_is_patched(self):
-        # Seed 3 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
+        # Seed 35 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
         settings = json.dumps({"Shop goods": "Four per shop shuffled", "Gifts": "Shuffled"})
-        result = subprocess.run([SEEDGEN, "3", spoiler, plan, settings], capture_output=True, text=True)
+        result = subprocess.run([SEEDGEN, "35", spoiler, plan, settings], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        sold = {entry["item"] for entry in json.loads(plan.read_text())["shops"]}
+        sold = {entry.get("item") for entry in json.loads(plan.read_text())["shops"]}
         for item in ("Item_Wallet_Large", "Item_Arrow_Light"):
             self.assertIn(item, sold)
             self.assertTrue((mod / f"romfs/Pack/Actor/Shop_{item}.pack.zs").is_file(), item)

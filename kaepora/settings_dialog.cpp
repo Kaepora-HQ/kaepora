@@ -205,7 +205,7 @@ QString Details(const SeedSettings& settings) {
                         Line(CutscenesSetting, QString::fromUtf8(Words(CutscenesChoices, settings.cutscenes))),
                         Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
-    if (settings.shops) {
+    if (ShopPricesApply(settings.shops)) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
     lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
@@ -475,9 +475,9 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     QPushButton* defaults = buttons->button(QDialogButtonBox::RestoreDefaults);
     defaults->setText("Defaults");
 
-    // Prices wait for shop goods to be shuffled, and a number shows only while its choice is picked.
+    // Prices wait for shop slots to be shuffled, and a number shows only while its choice is picked.
     const auto showPrices = [=] {
-        const bool shuffled = shops->currentIndex() != 0;
+        const bool shuffled = shops->currentIndex() != 0 && Selected<ShopCount>(shops) != ShopCount::AmongTheShops;
         const ShopPrices& prices = ShopPricesChoices[shopPrices->currentIndex()].first;
         shopPrices->setEnabled(shuffled);
         shopPrice->setVisible(shuffled && std::holds_alternative<OnePrice>(prices));
@@ -540,7 +540,11 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.cutscenes = Selected<Cutscenes>(cutscenes);
         shown.startWith = *startWith;
         if (shops->currentIndex() != 0) {
-            ShopPrices prices = ShopPricesChoices[shopPrices->currentIndex()].first;
+            shown.shops = ShuffledShops{ Selected<ShopCount>(shops) };
+        }
+        if (ShopPricesApply(shown.shops)) {
+            ShopPrices& prices = shown.shops->prices;
+            prices = ShopPricesChoices[shopPrices->currentIndex()].first;
             if (auto* one = std::get_if<OnePrice>(&prices)) {
                 one->price = RoundedPrice(shopPrice->value());
             }
@@ -550,7 +554,6 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
                     std::minmax({ RoundedPrice(lowestShopPrice->value()), RoundedPrice(highestShopPrice->value()) });
                 *between = { lowest, highest };
             }
-            shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
         }
         shown.skulltulas = Selected<Skulltulas>(skulltulas);
         shown.gifts = *gifts;

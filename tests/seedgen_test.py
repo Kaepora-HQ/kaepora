@@ -65,29 +65,50 @@ EVERY_SETTING_CHANGED = {
 DOORS_OPEN = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True}
 SHOP_SLOTS = read_tsv("shops.tsv")
-# SoH's shopsanity takes a shop's items in this order. The Kokiri Shop keeps its items 1 and 4, the Deku Shield and the
-# single Deku Stick, and takes its item 2 sixth.
+# SoH's shopsanity takes a shop's items in this order.
 SHOPSANITY_ORDER = [7, 5, 8, 6, 3, 1, 4]
-KOKIRI_SHOP_ORDER = [7, 5, 8, 6, 3, 2]
-SHOP_COUNTS = {"One per shop shuffled": 1, "Two per shop shuffled": 2, "Three per shop shuffled": 3,
-               "Four per shop shuffled": 4, "Five per shop shuffled": 5, "Six per shop shuffled": 6,
-               "Seven per shop shuffled": 7}
+SHOP_COUNTS = {"Goods shuffled among the shops": 0, "One per shop shuffled": 1, "Two per shop shuffled": 2,
+               "Three per shop shuffled": 3, "Four per shop shuffled": 4, "Five per shop shuffled": 5,
+               "Six per shop shuffled": 6, "Seven per shop shuffled": 7}
+# SoH's goods for the shelves a count leaves, the most needed first (`3drando/shops.cpp`, `GetMinVanillaShopItems`). A
+# count of N leaves 64 - 8N shelves, and the fill puts the first 64 - 8N goods on them.
+SOH_KEPT_GOODS = [
+    "Buy Deku Shield", "Buy Hylian Shield", "Buy Goron Tunic", "Buy Zora Tunic", "Buy Deku Nut (5)",
+    "Buy Bombs (20)", "Buy Bombchu (10)", "Buy Deku Stick (1)", "Buy Fairy's Spirit", "Buy Deku Seeds (30)",
+    "Buy Arrows (10)", "Buy Blue Fire", "Buy Red Potion [30]", "Buy Green Potion", "Buy Deku Nut (10)",
+    "Buy Bombchu (10)", "Buy Bombchu (10)", "Buy Bombchu (20)", "Buy Bombs (5) [25]", "Buy Bombs (5) [35]",
+    "Buy Bombs (10)", "Buy Deku Nut (5)", "Buy Arrows (30)", "Buy Arrows (50)", "Buy Arrows (10)",
+    "Buy Fairy's Spirit", "Buy Bottle Bug", "Buy Fish", "Buy Hylian Shield", "Buy Bottle Bug",
+    "Buy Deku Stick (1)", "Buy Deku Stick (1)", "Buy Blue Fire", "Buy Fish", "Buy Bombchu (10)",
+    "Buy Deku Nut (5)", "Buy Arrows (10)", "Buy Bombchu (20)", "Buy Bombs (5) [35]", "Buy Red Potion [30]",
+    "Buy Bombs (30)", "Buy Bombchu (20)", "Buy Deku Nut (5)", "Buy Arrows (10)", "Buy Deku Nut (5)",
+    "Buy Arrows (30)", "Buy Red Potion [40]", "Buy Fish", "Buy Bombchu (20)", "Buy Arrows (30)",
+    "Buy Red Potion [50]", "Buy Arrows (30)", "Buy Deku Nut (5)", "Buy Arrows (50)", "Buy Arrows (50)",
+    "Buy Green Potion", "Buy Poe", "Buy Poe", "Buy Heart", "Buy Heart", "Buy Heart", "Buy Heart", "Buy Heart",
+    "Buy Heart"
+]
 
 
-def shop_order(shop):
-    return KOKIRI_SHOP_ORDER if shop == "KF Shop" else SHOPSANITY_ORDER
+def goods_name(item):
+    """The spoiler log's name for one of SoH's goods: SoH's own, without the price SoH tells some goods apart by, as
+    "Buy Bombs (5) [25]"."""
+    return re.sub(r" \[\d+\]$", "", item)
+
+
+# By the spoiler log's names. Goods SoH tells apart by a price are the same goods at one price in the remake.
+KEPT_GOODS = {goods_name(row["item"]): row for row in read_tsv("kept_goods.tsv")}
 
 
 def shuffled_shop_slots(count):
-    return [row for row in SHOP_SLOTS if int(row["number"]) in shop_order(shop_of(row))[:count]]
+    return [row for row in SHOP_SLOTS if int(row["number"]) in SHOPSANITY_ORDER[:count]]
 
 
 SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 SEVEN_PER_SHOP = {"Shop goods": "Seven per shop shuffled"}
 # A seed whose hints name a slot that only five per shop shuffle, and one for six and seven.
-HINT_SEED_AT_FIVE = "2"
-HINT_SEED_AT_SEVEN = "11"
+HINT_SEED_AT_FIVE = "3"
+HINT_SEED_AT_SEVEN = "2"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
                                              "Item_BombchuBundle_Large", "Item_Bottle", "Item_Bottle_Milk",
@@ -326,11 +347,21 @@ def plain(text):
     return " ".join(re.sub(r"\{[^}]*\}|#", "", text).split())
 
 
-def shop_rows(plan):
-    """The shops.tsv row of each of the plan's shop slots, in the plan's order."""
+def sales(plan):
+    """The plan's shop slots that sell an item, once."""
+    return [entry for entry in plan["shops"] if "item" in entry]
+
+
+def kept_goods(plan):
+    """The plan's shop slots that sell the game's goods."""
+    return [entry for entry in plan["shops"] if "goods" in entry]
+
+
+def shop_rows(entries):
+    """The shops.tsv row of each of the plan's shop slots given, in their order."""
     rows = {json.dumps(shop_slot(row), sort_keys=True): row for row in SHOP_SLOTS}
     return [rows[json.dumps({key: entry[key] for key in ("shopkeepers", "slot", "shelves")}, sort_keys=True)]
-            for entry in plan["shops"]]
+            for entry in entries]
 
 
 def shop_of(row):
@@ -352,7 +383,7 @@ def placed_remake_items(spoiler, plan):
     loose = {entry["hash"]: entry["item"] for entry in plan["loose_items"]}
     placed |= {row["location"]: loose.get(row["hash"], row["item"]) for row in LOOSE_ITEMS
                if row["location"] in spoiler["locations"]}
-    placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+    placed |= {row["location"]: entry["item"] for row, entry in zip(shop_rows(sales(plan)), sales(plan))}
     lessons = {tuple(row["gift"].split(":")): row["location"] for row in SONG_PLACES}
     placed |= {lessons[text["flow"], text["event"]]: text["text"] for text in plan["event_texts"]
                if (text["flow"], text["event"]) in lessons}
@@ -686,7 +717,9 @@ class SeedgenTest(unittest.TestCase):
                               (SHOPS_SHUFFLED | {"Shop price": 135}, "Shop price"),
                               (SHOPS_SHUFFLED | {"Shop prices": "One price", "Shop price range": [20, 40]},
                                "Shop price range"),
-                              (SHOPS_SHUFFLED | {"Shop prices": "Between two prices", "Shop price": 100}, "Shop price")):
+                              (SHOPS_SHUFFLED | {"Shop prices": "Between two prices", "Shop price": 100}, "Shop price"),
+                              ({"Shop goods": "Goods shuffled among the shops", "Shop prices": "Cheap"},
+                               "Shop prices")):
             result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1, settings)
@@ -698,7 +731,8 @@ class SeedgenTest(unittest.TestCase):
                                  (SHOPS_SHUFFLED | {"Shop prices": "One price"},
                                   {"Shop prices": "One price", "Shop price": 100}),
                                  (SHOPS_SHUFFLED | {"Shop prices": "Between two prices"},
-                                  {"Shop prices": "Between two prices", "Shop price range": [20, 200]})):
+                                  {"Shop prices": "Between two prices", "Shop price range": [20, 200]}),
+                                 ({"Shop goods": "Goods shuffled among the shops"}, {})):
             spoiler, _ = self.generate("12", settings)
             self.assertEqual({key: value for key, value in spoiler["settings"].items() if key.startswith("Shop pric")},
                              prices)
@@ -821,22 +855,28 @@ class SeedgenTest(unittest.TestCase):
         self.assert_every_setting_changed_at_once(range(480, 500))
 
     def assert_shop_slots_sell_the_pool(self, spoiler, plan, slots):
-        """The plan's shop slots are the given rows, in table order, each with the spoiler log's item and a cheap price,
-        and the shuffled chests and slots hold the pool and a Red Rupee for each slot."""
-        self.assertEqual([{key: entry[key] for key in ("shopkeepers", "slot", "shelves")} for entry in plan["shops"]],
-                         [shop_slot(row) for row in slots])
-        for row, entry in zip(slots, plan["shops"]):
+        """The plan's shop slots that sell an item are the given rows, in table order, each with the spoiler log's item
+        and a cheap price, and the shuffled chests and slots hold the pool and a Red Rupee for each slot. Every other
+        slot sells one of SoH's goods at the game's price, the first of SoH's list."""
+        self.assertEqual(shop_rows(sales(plan)), slots)
+        for row, entry in zip(slots, sales(plan)):
             placed = spoiler["locations"][row["location"]]
             self.assertEqual(list(placed), ["item", "price"], row["location"])
             self.assertIn((entry["item"], placed["item"]), ITEM_PAIRS, row["location"])
             # SoH's cheap balanced prices.
             self.assertEqual(entry["price"], placed["price"])
             self.assertIn(entry["price"], range(0, 100, 5))
-        kept = {row["location"] for row in SHOP_SLOTS} - {row["location"] for row in slots}
-        self.assertFalse(kept & spoiler["locations"].keys())
+        kept = [row for row in SHOP_SLOTS if row not in slots]
+        self.assertEqual(shop_rows(kept_goods(plan)), kept)
+        held = [spoiler["locations"][row["location"]] for row in kept]
+        self.assertEqual(collections.Counter(placed["item"] for placed in held),
+                         collections.Counter(map(goods_name, SOH_KEPT_GOODS[:len(kept)])))
+        for row, entry, placed in zip(kept, kept_goods(plan), held):
+            goods = KEPT_GOODS[placed["item"]]
+            self.assertEqual((entry["goods"], placed["price"]), (goods["goods"], int(goods["price"])), row["location"])
         rows = {row["hash"]: row for row in SHUFFLED}
         chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
-        self.assertEqual(collections.Counter(chests.values()) + collections.Counter(e["item"] for e in plan["shops"]),
+        self.assertEqual(collections.Counter(chests.values()) + collections.Counter(e["item"] for e in sales(plan)),
                          POOL + collections.Counter({"TBox_Rupee_Red": len(slots)}))
 
     def test_each_count_shuffles_the_first_goods_of_every_shop_in_its_order(self):
@@ -851,41 +891,34 @@ class SeedgenTest(unittest.TestCase):
         for seed in range(520, 530):
             spoiler, plan = self.generate(str(seed), SHOPS_AT_RANDOM)
             self.assertEqual(spoiler["settings"]["Shop goods"], "A random number per shop")
-            rows = shop_rows(plan)
+            rows = shop_rows(sales(plan))
             numbers = collections.defaultdict(set)
             for row in rows:
                 numbers[shop_of(row)].add(int(row["number"]))
             self.assertEqual(set(numbers), {shop_of(row) for row in SHOP_SLOTS}, seed)
             for shop, taken in numbers.items():
                 self.assertIn(len(taken), range(1, 8), (seed, shop))
-                self.assertEqual(taken, set(shop_order(shop)[:len(taken)]), (seed, shop))
+                self.assertEqual(taken, set(SHOPSANITY_ORDER[:len(taken)]), (seed, shop))
                 counts[len(taken)] += 1
             self.assertEqual(rows, [row for row in SHOP_SLOTS if row in rows], seed)
             self.assert_shop_slots_sell_the_pool(spoiler, plan, rows)
         self.assertEqual(set(counts), set(range(1, 8)))
 
-    def test_the_kokiri_shop_keeps_its_deku_stick_for_sale_at_every_count(self):
-        # No other shelf sells a Deku Stick from one per shop on, and a pot gives a child who has never held one a
-        # Green Rupee in its place.
-        for settings, seeds in (({"Shop goods": "Six per shop shuffled"}, ["19"]), (SEVEN_PER_SHOP, ["19"]),
-                                (SHOPS_AT_RANDOM, [str(seed) for seed in range(520, 530)])):
-            for seed in seeds:
-                spoiler, plan = self.generate(seed, settings)
-                self.assertNotIn("KF Shop Item 4", spoiler["locations"], (settings, seed))
-                self.assertNotIn("KF Shop Item 4", [row["location"] for row in shop_rows(plan)], (settings, seed))
-
-    def test_seven_per_shop_keeps_the_deku_shield_for_sale_and_queen_gohma_in_reach(self):
-        # The way out of a closed forest waits for Queen Gohma, whose door asks for a nut sent back with a Deku Shield.
-        spoiler, _ = self.generate("19", SEVEN_PER_SHOP)
-        self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed")
-        self.assertNotIn("KF Shop Item 1", spoiler["locations"])
-        self.assertIn("KF Shop Item 2", spoiler["locations"])
-        self.assertTrue(reach.reachable("Queen Gohma", *spoiler["locations"].items(), settings=spoiler["settings"]))
+    def test_seven_per_shop_sells_a_deku_shield_a_child_in_a_closed_forest_reaches(self):
+        # The way out of a closed forest waits for Queen Gohma, whose door asks for a nut sent back with a Deku Shield,
+        # and the logic counts only a shield Link buys. The one shelf each shop keeps at seven sells it somewhere.
+        for seed in map(str, range(19, 24)):
+            spoiler, _ = self.generate(seed, SEVEN_PER_SHOP)
+            self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed")
+            self.assertEqual([spoiler_item(placed) for placed in spoiler["locations"].values()].count(
+                "Buy Deku Shield"), 1, seed)
+            self.assertTrue(reach.reachable("Queen Gohma", *spoiler["locations"].items(),
+                                            settings=spoiler["settings"]), seed)
 
     def shop_prices(self, seed, settings):
         spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | settings)
         self.assertEqual({key: spoiler["settings"][key] for key in settings}, settings)
-        prices = {row["location"]: entry["price"] for row, entry in zip(shop_rows(plan), plan["shops"])}
+        prices = {row["location"]: entry["price"] for row, entry in zip(shop_rows(sales(plan)), sales(plan))}
         self.assertEqual(prices, {location: spoiler["locations"][location]["price"] for location in prices})
         return prices
 
@@ -919,7 +952,7 @@ class SeedgenTest(unittest.TestCase):
         for seed in range(500, 520):
             spoiler, plan = self.generate(str(seed), SHOPS_SHUFFLED)
             self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
-            sold.update(entry["item"] for entry in plan["shops"])
+            sold.update(entry["item"] for entry in sales(plan))
         self.assertFalse(sold.keys() & (KEPT_FROM_SHOPS | KEYS | MAPS_AND_COMPASSES), sold)
 
     def test_gifts_shuffled(self):
@@ -1033,7 +1066,7 @@ class SeedgenTest(unittest.TestCase):
         sold, given = collections.Counter(), collections.Counter()
         for seed in range(520, 540):
             _, plan = self.generate(str(seed), SHOPS_SHUFFLED | GIFTS_SHUFFLED)
-            sold.update(entry["item"] for entry in plan["shops"])
+            sold.update(entry["item"] for entry in sales(plan))
             given.update(item for _, item in gift_sites(plan))
         self.assertFalse(sold.keys() & KEPT_FROM_SHOPS, sold)
         self.assertTrue(given.keys() & KEPT_FROM_SHOPS, given)
@@ -1098,7 +1131,7 @@ class SeedgenTest(unittest.TestCase):
         sold, landed = collections.Counter(), 0
         for seed in map(str, range(1410, 1420)):
             spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | GIFTS_SHUFFLED)
-            sold.update(entry["item"] for entry in plan["shops"])
+            sold.update(entry["item"] for entry in sales(plan))
             landed += sum(spoiler_item(placed) in BIGGER_BAGS for placed in spoiler["locations"].values())
         self.assertFalse(sold.keys() & set(BIGGER_BAGS.values()), sold)
         self.assertEqual(landed, 10 * len(BIGGER_BAGS))
@@ -1749,6 +1782,10 @@ class SeedgenTest(unittest.TestCase):
         self.assertIn("They say that the Kokiri Sword can be found at Kokiri Forest.", spoiler["hints"].values())
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
 
+    def test_a_place_whose_kept_shelf_the_route_needs_is_not_foolish(self):
+        # Seed 189's only Deku Shield is on the Kokiri Shop's kept shelf, which the route buys in its first sphere.
+        self.assert_hints_are_true("189", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
+
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.
         self.assert_hints_are_true("4", SHOPS_SHUFFLED)
@@ -1764,7 +1801,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
     def test_hints_name_the_goods_only_six_and_seven_per_shop_shuffle(self):
-        # Seed HINT_SEED_AT_SEVEN hints that a Goron shopkeeper sells the Ice Arrow, at the Goron Shop's item 1.
+        # A stone of seed HINT_SEED_AT_SEVEN says that the Hyrule Castle Town Potion Shop offers Three Deku Sticks,
+        # at its item 4.
         self.assert_hints_are_true(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
         spoiler, plan = self.generate(HINT_SEED_AT_SEVEN, SEVEN_PER_SHOP)
         held = placed_remake_items(spoiler, plan)

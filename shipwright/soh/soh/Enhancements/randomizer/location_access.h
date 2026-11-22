@@ -112,6 +112,7 @@ class LocationAccess {
 
 uint16_t GetCheckPrice(RandomizerCheck check = RC_UNKNOWN_CHECK);
 uint16_t GetWalletCapacity();
+bool CanBuyShopGoods();
 
 namespace Rando {
 class Entrance;

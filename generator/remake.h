@@ -91,6 +91,26 @@ inline constexpr std::string_view FillerName = "TBox_Rupee_Red";
 // out.
 std::vector<RemakeShopSlot> LoadRemakeShops();
 
+// One of the game's goods that SoH's shopsanity keeps on the shop slots a count leaves (remake/kept_goods.tsv): the
+// goods actor that sells it in the remake, and its price there.
+struct KeptGoods {
+    std::string goods;
+    int price;
+};
+// A row for every good of SoH's list, by its SoH item.
+std::map<RandomizerGet, KeptGoods> LoadKeptGoods();
+// The spoiler log's name for one of SoH's goods: SoH's own, without the price in brackets that tells apart goods the
+// remake sells as one at one price, as "Buy Bombs (5) [25]" and "Buy Bombs (5) [35]".
+std::string KeptGoodsName(RandomizerGet item);
+
+// A seed's shop slots, as SoH's shopsanity splits them: the slots its count shuffles, and the slots it leaves, which
+// sell SoH's list of the game's goods. "Shop goods" at "Vanilla" leaves every slot as the game has it, in neither list.
+struct RemakeShops {
+    std::vector<RemakeShopSlot> shuffled;
+    std::vector<RemakeShopSlot> kept;
+    std::map<RandomizerGet, KeptGoods> goods; // what a kept slot can sell
+};
+
 // A SoH location whose item a character hands over, and each string parameter of the remake's event flows that gives
 // it. Every site gives the location's one item.
 struct RemakeGift {
@@ -268,11 +288,12 @@ struct MessageText {
 // the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
 // on, the gossip stones' texts, the messages the seed rewrites or adds, with the event that shows each one added and the
 // event that brings each one the game says once on every talk, each shuffled shop slot with its item and price, each
-// shuffled skulltula with its item, each shuffled loose item that gives another item than its own, with that item, and
-// for each step the seed starts with the actors of the finds that bring a new game to it.
+// slot a count leaves with the game's goods it sells, each shuffled skulltula with its item, each shuffled loose item
+// that gives another item than its own, with that item, and for each step the seed starts with the actors of the finds
+// that bring a new game to it.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const std::vector<RemakeChest>& looseItems,
-                                  const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                                  const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
+                                  const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas,
                                   const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,

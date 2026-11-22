@@ -103,8 +103,8 @@ static void RefuseUnless(bool applies, std::string_view setting, std::string_vie
     }
 }
 
-// The shop settings as read, by name. Only the prices in effect are kept: none while no goods are shuffled, a price
-// only with one price and a range only between two prices. A left-out price takes its default.
+// The shop settings as read, by name. Only the prices in effect are kept: none while no slot is shuffled, a price only
+// with one price and a range only between two prices. A left-out price takes its default.
 static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, nlohmann::json>& read) {
     const auto goods = read.find(ShopsSetting);
     if (goods == read.end() || goods->second == nlohmann::json(VanillaShops)) {
@@ -114,6 +114,12 @@ static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, 
         return std::nullopt;
     }
     ShuffledShops shops{ .count = Parse(ShopCountChoices, std::string(ShopsSetting), goods->second) };
+    if (shops.count == ShopCount::AmongTheShops) {
+        for (const std::string_view setting : std::views::keys(read)) {
+            RefuseUnless(setting == ShopsSetting, setting, "while \"Shop goods\" shuffles slots");
+        }
+        return shops;
+    }
     if (const auto prices = read.find(ShopPricesSetting); prices != read.end()) {
         shops.prices = Parse(ShopPricesChoices, std::string(ShopPricesSetting), prices->second);
     }
@@ -170,7 +176,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
         json[std::string(StartWithSetting)].push_back(step.name);
     }
     json[std::string(ShopsSetting)] = ShopsWords(settings.shops);
-    if (settings.shops) {
+    if (ShopPricesApply(settings.shops)) {
         json[std::string(ShopPricesSetting)] = ShopPricesChoice(settings.shops->prices).second;
         if (const auto* one = std::get_if<OnePrice>(&settings.shops->prices)) {
             json[std::string(ShopPriceSetting)] = one->price;

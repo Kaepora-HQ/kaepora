@@ -241,14 +241,14 @@ void RegionTable_Init_Kakariko() {
 
     areaTable[RR_KAK_BAZAAR] = Region("Kak Bazaar", SCENE_BAZAAR, {}, {
         //Locations
-        LOCATION(RC_KAK_BAZAAR_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_BAZAAR_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_BAZAAR_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_KAKARIKO_VILLAGE, true),
@@ -265,15 +265,14 @@ void RegionTable_Init_Kakariko() {
 
     areaTable[RR_KAK_POTION_SHOP] = Region("Kak Potion Shop", SCENE_POTION_SHOP_KAKARIKO, {}, {
         //Locations
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_1, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        // The game sells Blue Fire only to Link who has had Blue Fire.
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_2, logic->IsAdult && logic->BlueFire() && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_3, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_4, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_5, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_6, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_7, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_KAK_POTION_SHOP_ITEM_8, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_1, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_2, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_3, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_4, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_5, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_6, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_7, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_KAK_POTION_SHOP_ITEM_8, logic->IsAdult && logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_KAKARIKO_VILLAGE,       true),

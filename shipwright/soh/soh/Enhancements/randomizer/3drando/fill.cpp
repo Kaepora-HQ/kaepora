@@ -836,7 +836,7 @@ static bool IsRewardPlace(RandomizerCheck location) {
     return Rando::StaticData::GetLocation(location)->GetRCType() == RCTYPE_DUNGEON_REWARD && location != RC_GANON;
 }
 
-static void CalculateBarren() {
+static void CalculateBarren(const std::vector<RemakeShopSlot>& kept) {
     auto ctx = Rando::Context::GetInstance();
     std::array<bool, RCAREA_INVALID + 1> NotBarren = {};
 
@@ -853,6 +853,16 @@ static void CalculateBarren() {
             IsScenePlace(loc) ||
             (shieldTunicGate && itemLoc->GetPlacedItem().IsShieldOrTunic())) {
             NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()] = true;
+        }
+    }
+    // A kept shelf is never a way of the hero place, since no hint names one. One whose goods the seed cannot be
+    // finished without keeps its area from being foolish too.
+    for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
+        for (const RandomizerCheck loc : sphere) {
+            const bool keptShelf = std::ranges::find(kept, loc, &RemakeShopSlot::location) != kept.end();
+            if (keptShelf && !IsBeatableWithout(loc, true)) {
+                NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()] = true;
+            }
         }
     }
 
@@ -983,7 +993,7 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
 }
 
 static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<RemakeChest>& chests,
-                                                            const std::vector<RemakeShopSlot>& shops,
+                                                            const RemakeShops& shops,
                                                             const std::vector<RemakeGift>& gifts,
                                                             const std::vector<RemakeSkulltula>& skulltulas,
                                                             const std::vector<RemakeSongPlace>& songs) {
@@ -993,9 +1003,11 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
         chestAt.emplace(chest.location, &chest);
     }
     std::map<RandomizerCheck, RandomizerGet> pooled;
-    for (const RemakeShopSlot& slot : shops) {
+    for (const RemakeShopSlot& slot : shops.shuffled) {
         pooled.emplace(slot.location, Filler);
     }
+    std::set<RandomizerCheck> kept;
+    std::ranges::transform(shops.kept, std::inserter(kept, kept.end()), &RemakeShopSlot::location);
     for (const RemakeGift& gift : gifts) {
         pooled.emplace(gift.location, gift.sohItem);
     }
@@ -1019,6 +1031,8 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
         auto chest = chestAt.find(loc);
         if (auto item = pooled.find(loc); item != pooled.end()) {
             itemPool.push_back(item->second);
+        } else if (kept.contains(loc)) {
+            // The fill puts SoH's goods here.
         } else if ((chest == chestAt.end() || !chest->second->shuffled) && ctx->GetItemLocation(loc)->IsExcluded()) {
             // A kept place that is excluded holds junk, as SoH's own fill gives one.
             ctx->GetItemLocation(loc)->SetPlacedItem(Filler);
@@ -1072,8 +1086,7 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
 // slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The shuffled chests', gifts' and
 // song places' items, a Red Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item
 // pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
-std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests,
-                                           const std::vector<RemakeShopSlot>& shops,
+std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                                            const std::vector<RemakeGift>& gifts,
                                            const std::vector<RemakeSkulltula>& skulltulas,
                                            const std::vector<RemakeSongPlace>& songs) {
@@ -1084,7 +1097,7 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
     std::vector<const RemakeChest*> shuffled = PlaceUnshuffledItems(chests, shops, gifts, skulltulas, songs);
     GenerateStartingInventory();
 
-    for (const RemakeShopSlot& slot : shops) {
+    for (const RemakeShopSlot& slot : shops.shuffled) {
         ctx->GetItemLocation(slot.location)
             ->SetCustomPrice(GetRandomPrice(Rando::StaticData::GetLocation(slot.location), shopsanityPrices));
     }
@@ -1157,8 +1170,8 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK || item == RG_ZORA_TUNIC;
 }
 
-int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
-         const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
+         const std::vector<RemakeGift>& gifts,
          const std::vector<RemakeSkulltula>& skulltulas, const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
     std::vector<RemakeChest> places = chests;
@@ -1193,6 +1206,18 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         std::erase_if(itemPool, [](const auto item) {
             return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_SHOP;
         });
+
+        // As SoH does, the slots a count leaves take its list of the game's goods first: the logic counts only a
+        // Deku Shield Link buys, and Queen Gohma's door asks for one. Each sells at the remake's price for it.
+        if (!shops.kept.empty()) {
+            std::vector<RandomizerCheck> kept;
+            std::ranges::transform(shops.kept, std::back_inserter(kept), &RemakeShopSlot::location);
+            AssumedFill(GetMinVanillaShopItems(static_cast<int>(shops.shuffled.size())), kept);
+            for (const RandomizerCheck loc : kept) {
+                Rando::ItemLocation* place = ctx->GetItemLocation(loc);
+                place->SetCustomPrice(shops.goods.at(place->GetPlacedRandomizerGet()).price);
+            }
+        }
 
         std::vector<RandomizerCheck> shuffledLocations;
         for (const RemakeChest* place : shuffled) {
@@ -1231,9 +1256,9 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
         for (const RemakeGift& gift : gifts) {
             shuffledLocations.push_back(gift.location);
         }
-        if (!shops.empty()) {
+        if (!shops.shuffled.empty()) {
             AssumedFill(FilterAndEraseFromPool(itemPool, KeptFromShops), shuffledLocations);
-            for (const RemakeShopSlot& slot : shops) {
+            for (const RemakeShopSlot& slot : shops.shuffled) {
                 shuffledLocations.push_back(slot.location);
             }
         }
@@ -1259,7 +1284,7 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
             PareDownPlaythrough(lateLocations);
             routeTakesScenes = false;
             CalculateWotH();
-            CalculateBarren();
+            CalculateBarren(shops.kept);
             SPDLOG_INFO("Calculating Playthrough Done");
 
             ctx->GetEntranceShuffler()->CreateEntranceOverrides();

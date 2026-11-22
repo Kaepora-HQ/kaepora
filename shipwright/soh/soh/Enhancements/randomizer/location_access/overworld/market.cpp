@@ -134,14 +134,14 @@ void RegionTable_Init_Market() {
 
     areaTable[RR_MARKET_BAZAAR] = Region("Market Bazaar", SCENE_BAZAAR, {}, {
         //Locations
-        LOCATION(RC_MARKET_BAZAAR_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BAZAAR_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BAZAAR_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_THE_MARKET, true),
@@ -186,15 +186,14 @@ void RegionTable_Init_Market() {
 
     areaTable[RR_MARKET_POTION_SHOP] = Region("Market Potion Shop", SCENE_POTION_SHOP_MARKET, {}, {
         //Locations
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        // The game sells Blue Fire only to Link who has had Blue Fire.
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_2, logic->BlueFire() && logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_POTION_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_POTION_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_THE_MARKET, true),
@@ -225,14 +224,14 @@ void RegionTable_Init_Market() {
 
     areaTable[RR_MARKET_BOMBCHU_SHOP] = Region("Market Bombchu Shop", SCENE_BOMBCHU_SHOP, {}, {
         //Locations
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
+        LOCATION(RC_MARKET_BOMBCHU_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_HYLIAN) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_MARKET_BACK_ALLEY, true),

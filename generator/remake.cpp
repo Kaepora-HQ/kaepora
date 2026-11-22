@@ -1,6 +1,7 @@
 #include "remake.h"
 
 #include "soh/Enhancements/randomizer/3drando/fill.hpp"
+#include "soh/Enhancements/randomizer/3drando/shops.hpp"
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/dungeon.h"
 #include "soh/Enhancements/randomizer/logic.h"
@@ -49,6 +50,9 @@ static constexpr unsigned char characterHintTable[] = {
 };
 static constexpr unsigned char shopTable[] = {
 #embed "../remake/shops.tsv"
+};
+static constexpr unsigned char keptGoodsTable[] = {
+#embed "../remake/kept_goods.tsv"
 };
 static constexpr unsigned char shopGoodsTable[] = {
 #embed "../remake/shop_goods.tsv"
@@ -537,6 +541,37 @@ std::vector<RemakeShopSlot> LoadRemakeShops() {
     return slots;
 }
 
+std::map<RandomizerGet, KeptGoods> LoadKeptGoods() {
+    std::map<RandomizerGet, KeptGoods> kept;
+    size_t line = 1;
+    for (const auto& row : ReadTable("remake/kept_goods.tsv", keptGoodsTable, "item\tgoods\tprice")) {
+        const std::string where = "remake/kept_goods.tsv line " + std::to_string(++line) + ": ";
+        const auto item = Rando::StaticData::itemNameToEnum.find(row[0]);
+        if (item == Rando::StaticData::itemNameToEnum.end() ||
+            Rando::StaticData::RetrieveItem(item->second).GetItemType() != ITEMTYPE_SHOP) {
+            Fail(where + "\"" + row[0] + "\" is no SoH item a shop sells");
+        }
+        int price = 0;
+        const auto [end, error] = std::from_chars(row[2].data(), row[2].data() + row[2].size(), price);
+        if (row[1].empty() || error != std::errc() || end != row[2].data() + row[2].size() ||
+            !kept.emplace(item->second, KeptGoods{ .goods = row[1], .price = price }).second) {
+            Fail(where + "no goods actor, a price that is no number, or a repeated item");
+        }
+    }
+    for (const RandomizerGet item : GetMinVanillaShopItems(0)) {
+        if (!kept.contains(item)) {
+            Fail("remake/kept_goods.tsv: no row for \"" + Rando::StaticData::RetrieveItem(item).GetName().GetEnglish() +
+                 "\", which SoH keeps on a shop's shelf");
+        }
+    }
+    return kept;
+}
+
+std::string KeptGoodsName(RandomizerGet item) {
+    const std::string name = Rando::StaticData::RetrieveItem(item).GetName().GetEnglish();
+    return name.substr(0, name.find(" ["));
+}
+
 void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<RemakeGift>& gifts) {
     std::set<std::string> holdable{ std::string(FillerName), std::string(TokenName) };
     for (const RemakeChest& chest : chests) {
@@ -1009,8 +1044,8 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
 }
 
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
-                                  const std::vector<RemakeChest>& looseItems,
-                                  const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                                  const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
+                                  const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas,
                                   const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
@@ -1124,8 +1159,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         planned["text"] = message.tagged;
     }
     plan["shops"] = nlohmann::ordered_json::array();
-    for (const RemakeShopSlot& slot : shops) {
-        const Rando::ItemLocation* location = Rando::Context::GetInstance()->GetItemLocation(slot.location);
+    const auto shopSlot = [](const RemakeShopSlot& slot) {
         nlohmann::ordered_json shopkeepers = nlohmann::ordered_json::array();
         for (const RemakeShopSlot::Shopkeeper& keeper : slot.shopkeepers) {
             shopkeepers.push_back({ { "actor", keeper.actor }, { "goods_list", keeper.goodsList } });
@@ -1134,11 +1168,16 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         for (const RemakeShopSlot::Shelf& shelf : slot.shelves) {
             shelves.push_back({ { "file", shelf.file }, { "hash", shelf.hash } });
         }
-        plan["shops"].push_back({ { "shopkeepers", shopkeepers },
-                                  { "slot", slot.slot },
-                                  { "shelves", shelves },
-                                  { "item", items.at(slot.location) },
-                                  { "price", location->GetPrice() } });
+        return nlohmann::ordered_json{ { "shopkeepers", shopkeepers }, { "slot", slot.slot }, { "shelves", shelves } };
+    };
+    for (const RemakeShopSlot& slot : shops.shuffled) {
+        nlohmann::ordered_json& planned = plan["shops"].emplace_back(shopSlot(slot));
+        planned["item"] = items.at(slot.location);
+        planned["price"] = Rando::Context::GetInstance()->GetItemLocation(slot.location)->GetPrice();
+    }
+    for (const RemakeShopSlot& slot : shops.kept) {
+        const Rando::ItemLocation* location = Rando::Context::GetInstance()->GetItemLocation(slot.location);
+        plan["shops"].emplace_back(shopSlot(slot))["goods"] = shops.goods.at(location->GetPlacedRandomizerGet()).goods;
     }
     // Only with the exit open and Mido still blocking can Link meet Zelda before Mido lets him by.
     plan["mido_castle_entry_removed"] = settings.forest == Forest::ClosedDeku;

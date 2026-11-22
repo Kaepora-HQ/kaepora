@@ -50,10 +50,11 @@ codes the game puts before a noun.
 `chest_hints.tsv` has the sentence a hint about one chest says, for each shuffled chest, in SoH's markup: `#` around the
 words in colour, and `[[1]]` where the item goes. Where SoH has the chest and its sentence is true of the remake, it is
 SoH's English sentence with the remake's place names. Every other sentence is written in the same style. Each shop slot
-that "Shop goods" can shuffle has a row too, with SoH's one sentence for its shop: items 1 and 3 to 8, and in the Kokiri
-Shop, which keeps its Deku Shield and its Deku Stick, items 2, 3 and 5 to 8. So does each gift, with SoH's sentence for
-it where that is true of the remake, each Gold Skulltula, each item of `loose_items.tsv`, and each song place, with
-SoH's sentence for it. No crate stands by the graveyard's heart piece in the remake, so its sentence is our own.
+that "Shop goods" can shuffle has a row too, with SoH's one sentence for its shop: items 1 and 3 to 8. So does each
+gift, with SoH's sentence for it where that is true of the remake, each Gold Skulltula, each item of
+`loose_items.tsv`, and each song place, with SoH's sentence for it. No crate stands by the graveyard's heart piece in
+the remake, so its sentence is our own. No hint names a slot that sells the game's goods, as in SoH. A stone calls no
+place foolish whose kept slot sells goods the seed cannot be finished without.
 
 `skulltulas.tsv` has a row for each of SoH's 100 Gold Skulltula locations of the vanilla dungeon layouts, each one
 remake skulltula. Each scene of the remake holds as many skulltulas as SoH has in the places the scene shows. Each row
@@ -73,7 +74,7 @@ leaves out. Each adds a token to the pool, and gives the item the seed places th
 gives it. One that holds a token drops the game's own. With shop goods as in the game, a skulltula may hold the Bomb
 Bag, the Fairy Bow and the Fairy Slingshot: a bag fills whenever it raises Link's limit, whoever gives it, and a
 skulltula's Bomb Bag gave 20 bombs to a Link whose limit was 0. The Bow and the Slingshot fill the same way, from rows
-every mod changes (below). With shop goods shuffled no skulltula holds anything `KeptFromShops` keeps, these three
+every mod changes (below). With shop slots shuffled no skulltula holds anything `KeptFromShops` keeps, these three
 among them: the fill places those before skulltulas join it.
 
 `loose_items.tsv` has a row for each item that lies loose in the remake and can be shuffled: the 14 heart pieces, the
@@ -145,7 +146,8 @@ line it replaces.
 `shops.tsv` has a row for each of SoH's 64 shop locations, by shop and then by item number. Each row is one slot of a
 remake shop. With "Shop goods" at "Four per shop shuffled", items 5 to 8 of each shop are shuffled, the four that SoH's
 shopsanity takes at that count. Each shuffled slot adds a Red Rupee to the pool and takes one of SoH's cheap balanced
-prices, 0 to 95 rupees. Every other slot keeps the game's goods and price.
+prices, 0 to 95 rupees. Every other slot sells goods from SoH's list in `kept_goods.tsv` (below), and at "Goods shuffled
+among the shops" every slot does.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `number`: the location's item number in its shop, 1 to 8, as SoH numbers them.
@@ -159,6 +161,11 @@ prices, 0 to 95 rupees. Every other slot keeps the game's goods and price.
 Seen in the game:
 
 - A slot sells another goods actor at its own price, once, and stays sold out after a reload.
+- A slot sells another shop's goods again and again: the Zora Shop sold a Deku Stick twice to a child who had never
+  held one, raising his limit from 0 to 10.
+- The Kokiri Shop sold the Goron Tunic at 600 rupees to a child and to an adult, once each.
+- The Goron Shop's kept slot sold a child the Deku Shield at 40 rupees, and refused him a second one while he held
+  it.
 - A Kokiri Shop slot sells from the start once the patcher lifts its gate on meeting the Deku Tree, from the shopkeeper
   who stands until then too.
 - A child can buy an adult's item: the Market Bazaar sold him the Silver Gauntlets.
@@ -170,8 +177,9 @@ Read from the game's data and not yet seen:
 
 - A day passing leaves a sold slot sold out, since its count's reset type is 0 where the game's is 2.
 - The Bombchu Shop's shopkeeper stands only once Link has the Goron Ruby.
-- The Goron Shop refuses a child a tunic by its name: the shop's flow compares the chosen goods with the two tunics,
-  then asks whether Link is a child. GC Shop Item 5 still asks for adult Link until that is seen.
+- The Goron Shop and the Zora Shop refuse a child a tunic by its name: each shop's flow compares the chosen goods
+  with the two tunics, then asks whether Link is a child. So the logic asks for adult Link wherever either shop sells
+  a tunic. The potion shops ask for Blue Fire by name the same way.
 - A quantity sign is an actor of its own that the shelf and the shopkeeper link to. The goods tell it to show while
   the slot is on sale and to hide once sold out. With no message it does nothing, so a sign nothing links to would
   show. So the patcher takes a sign out of the scene with every mention of it in the placement file: its links and its
@@ -213,6 +221,33 @@ Deku Shield would sink into the shelf or lie flat, where in `Pose_Common` they r
 items on shelves in the eight shops: each stands on its board at the size the rule gives it, so the game draws goods at
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
+
+`kept_goods.tsv` has a row for each of the game's goods in SoH's list of what a seed keeps on sale, which
+`GetMinVanillaShopItems` holds: 64 goods, some of them more than once. The count picks which goods stay on sale: the
+first 64 less one for each shuffled slot. The fill picks their slots, among those the count leaves, before it places
+the shuffled items, as SoH's does, so a slot may sell another shop's goods. SoH's list is not the game's own 64: ten
+kinds of the game's goods are on it nowhere (10 Deku Seeds, Five Deku Sticks, the Magic Jar, Half-Full Lon Lon Milk,
+and six Bombchu packs but 10 and 20), and some goods stand on it more often than in the game. The generator fails
+when it starts if one of SoH's goods has no row. The spoiler log names each kept slot's goods by SoH's name without the
+price in brackets that SoH tells some apart by, with the price the slot asks.
+
+The patcher writes each kept slot as it writes a shuffled one, but with the goods actor at offset 0 and no limit to its
+count, so it sells again and again, and it leaves the game data list as it is. So a kept slot:
+
+- asks the goods' base price. Three of the game's own slots ask less, which a kept slot does not: the Goron Shop's
+  Five Bombs at 25 and the Zora Shop's fish at 30, by their slots' offsets, and the Market Bazaar's Hylian Shield, 20
+  off once its gate opens.
+- loses the slot's gates, as a shuffled slot does: the Kokiri Shop's wait for meeting the Deku Tree, and the sold-out
+  gates of the Market Bazaar's item 2, which waits for the Goron Ruby, and of both potion shops' item 2, which wait for
+  Blue Fire. The shop's own checks by kind and by name still refuse bombs before the Goron Ruby and a first Blue Fire
+  in a potion shop, so such a shelf can show goods the shopkeeper does not sell yet.
+- shows how many a pack holds only where the game's shelf has a sign. 73 of the 120 shelves have none.
+
+- `item`: the SoH item, by SoH's English name for it.
+- `goods`: the remake's goods actor that sells it.
+- `price`: what the remake asks for those goods, their `BuyingPrice` in `PouchActorInfo`. A test checks that it is.
+  SoH's three Red Potions, at 30, 40 and 50 rupees, are all the remake's one Red Potion at 30, and its two 5 Bombs are
+  the remake's one at 35.
 
 `gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 44 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes

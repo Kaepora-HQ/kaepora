@@ -84,15 +84,14 @@ void RegionTable_Init_ZorasDomain() {
 
     areaTable[RR_ZD_SHOP] = Region("ZD Shop", SCENE_ZORA_SHOP, {}, {
         //Locations
-        // The game sells the Zora Tunic only to adult Link.
-        LOCATION(RC_ZD_SHOP_ITEM_1, logic->IsAdult && logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
-        LOCATION(RC_ZD_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_ZORA) && GetCheckPrice() <= GetWalletCapacity()),
+        LOCATION(RC_ZD_SHOP_ITEM_1, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_2, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_3, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_4, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_5, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_6, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_7, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
+        LOCATION(RC_ZD_SHOP_ITEM_8, logic->HasItem(RG_SPEAK_ZORA) && CanBuyShopGoods()),
     }, {
         //Exits
         ENTRANCE(RR_ZORAS_DOMAIN, true),

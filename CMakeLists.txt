@@ -206,11 +206,11 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      lens_never_needed_leaves_the_lens_off_the_route
                      each_count_shuffles_the_first_goods_of_every_shop_in_its_order
                      a_random_number_per_shop_shuffles_one_to_seven_of_its_first_goods
-                     seven_per_shop_keeps_the_deku_shield_for_sale_and_queen_gohma_in_reach
-                     the_kokiri_shop_keeps_its_deku_stick_for_sale_at_every_count
+                     seven_per_shop_sells_a_deku_shield_a_child_in_a_closed_forest_reaches
                      vanilla_prices_are_each_slots_own balanced_prices_go_past_cheap_ones one_price_for_every_slot
                      prices_between_two_prices shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
+                     a_place_whose_kept_shelf_the_route_needs_is_not_foolish
                      hints_name_the_goods_only_five_per_shop_shuffle
                      hints_name_the_goods_only_six_and_seven_per_shop_shuffle
                      gifts_shuffled shuffled_is_every_gift_group_of_its_release_and_vanilla_is_none

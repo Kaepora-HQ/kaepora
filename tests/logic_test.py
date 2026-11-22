@@ -158,6 +158,34 @@ class LogicTest(unittest.TestCase):
         # The price belongs to the shop slot, so it holds whatever is placed there.
         self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
 
+    def test_the_tunic_and_blue_fire_gates_follow_the_goods(self):
+        # The Goron and Zora shopkeepers refuse a child a tunic on any shelf of theirs, and the Kokiri shopkeeper sells
+        # him one (seen). The potion shops sell Blue Fire only to a Link who has had some, and another shop's shelf
+        # sells it to him as it sells other bottle contents.
+        tunic = {"item": "Buy Goron Tunic", "price": 10}
+        nuts = {"item": "Buy Deku Nut (5)", "price": 10}
+        blue_fire = {"item": "Buy Blue Fire", "price": 10}
+        bottle = ("KF Mido Top Left Chest", "Empty Bottle")
+        self.assertFalse(self.reachable("GC Shop Item 1", NEVER_ADULT, ("GC Shop Item 1", tunic)))
+        self.assertTrue(self.reachable("GC Shop Item 5", NEVER_ADULT, ("GC Shop Item 5", nuts)))
+        self.assertTrue(self.reachable("KF Shop Item 2", NEVER_ADULT, ("KF Shop Item 2", tunic)))
+        self.assertFalse(self.reachable("Market Potion Shop Item 4", NEVER_ADULT, bottle,
+                                        ("Market Potion Shop Item 4", blue_fire)))
+        self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, bottle,
+                                       ("Market Potion Shop Item 2", nuts)))
+        self.assertTrue(self.reachable("Market Bazaar Item 4", NEVER_ADULT, bottle,
+                                       ("Market Bazaar Item 4", blue_fire)))
+
+    def test_bombchus_on_a_shelf_wait_for_the_goron_ruby(self):
+        # The game sells its own bombchus only once the Goron Ruby is won. A shelf of another shop selling them before
+        # is unseen, so the logic waits for it there too.
+        # A child who never grows up and has no Goron's Bracelet never opens Dodongo's Cavern, though he holds a bag.
+        child = (("KF Mido Top Left Chest", "Progressive Bomb Bag"), NEVER_ADULT)
+        bombchus = ("KF Shop Item 2", {"item": "Buy Bombchu (10)", "price": 10})
+        no_bracelet = ("GC Darunias Joy", "Green Rupee")
+        self.assertTrue(self.reachable("KF Shop Item 2", bombchus, *child))
+        self.assertFalse(self.reachable("KF Shop Item 2", bombchus, *child, no_bracelet))
+
     def test_a_potion_shop_is_never_the_first_blue_fire(self):
         self.assertTrue(self.reachable("Market Potion Shop Item 2"))
         # Without the Ocarina of Time, Link never becomes adult, and only adult Link reaches other Blue Fire.

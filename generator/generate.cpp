@@ -24,7 +24,7 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
 }
 
 static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
-                              const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
+                              const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                               const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas,
                               const std::vector<RemakeSongPlace>& songs, const std::vector<StoneHint>& hints,
                               const std::vector<CharacterHintText>& characterHints) {
@@ -41,11 +41,17 @@ static std::string SpoilerLog(const std::string& seed, const SeedSettings& setti
         }
     }
     auto ctx = Rando::Context::GetInstance();
-    for (const RemakeShopSlot& slot : shops) {
-        const Rando::ItemLocation* location = ctx->GetItemLocation(slot.location);
+    // As SoH's spoiler log does, every slot a count shuffles or leaves, with what it sells and the price it asks.
+    const auto sale = [&](const RemakeShopSlot& slot, const std::string& sold) {
         log["locations"][Rando::StaticData::GetLocation(slot.location)->GetName()] = {
-            { "item", location->GetPlacedItemName().GetEnglish() }, { "price", location->GetPrice() }
+            { "item", sold }, { "price", ctx->GetItemLocation(slot.location)->GetPrice() }
         };
+    };
+    for (const RemakeShopSlot& slot : shops.shuffled) {
+        sale(slot, ctx->GetItemLocation(slot.location)->GetPlacedItemName().GetEnglish());
+    }
+    for (const RemakeShopSlot& slot : shops.kept) {
+        sale(slot, KeptGoodsName(ctx->GetItemLocation(slot.location)->GetPlacedRandomizerGet()));
     }
     for (const RemakeGift& gift : gifts) {
         AddPlacement(log["locations"], gift.location);
@@ -100,32 +106,26 @@ static bool KeptInPlace(const RemakeChest& chest, const SeedSettings& settings) 
     }
 }
 
-// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, and a count stops at seven. The Kokiri Shop
-// keeps its items 1 and 4, the Deku Shield and the single Deku Stick, as SoH keeps both on sale at every count, so it
-// shuffles six at most. SoH's logic counts only a shield Link can buy, since a found one can burn, and the Deku Tree's
-// boss door asks for a nut sent back with it. No other shelf sells a stick from one per shop on, and a pot gives a child
-// who has never held one a Green Rupee in its place.
+// SoH's shopsanity takes a shop's items in the order 7, 5, 8, 6, 3, 1, 4, 2, and a count stops at seven.
 static constexpr int ShopsanityOrder[] = { 7, 5, 8, 6, 3, 1, 4 };
-static constexpr int KokiriShopOrder[] = { 7, 5, 8, 6, 3, 2 };
 
-// The slots a count shuffles, in table order: the first items of each shop in its order, as many as the count.
-// A random number per shop draws each shop's count, one to seven, as the table reaches its item 1.
-static std::vector<RemakeShopSlot> ShuffledSlots(const std::vector<RemakeShopSlot>& table, ShopCount count) {
-    std::vector<RemakeShopSlot> shuffled;
+// The slots a count shuffles, and the slots it leaves for the game's goods, each in table order: the first items of
+// each shop in SoH's order, as many as the count. A random number per shop draws each shop's count, one to seven, as
+// the table reaches its item 1.
+static RemakeShops SplitShops(const std::vector<RemakeShopSlot>& table, const std::map<RandomizerGet, KeptGoods>& goods,
+                              ShopCount count) {
+    RemakeShops shops{ .goods = goods };
     int shopCount = 0;
     for (const RemakeShopSlot& slot : table) {
         if (slot.number == 1) {
             shopCount = count == ShopCount::RandomPerShop ? static_cast<int>(Random(1, std::size(ShopsanityOrder) + 1))
                                                           : static_cast<int>(count);
         }
-        const bool kokiri = Rando::StaticData::GetLocation(slot.location)->GetScene() == SCENE_KOKIRI_SHOP;
-        const std::span<const int> order = kokiri ? std::span<const int>(KokiriShopOrder) : ShopsanityOrder;
-        const auto place = std::ranges::find(order, slot.number);
-        if (place != order.end() && place - order.begin() < shopCount) {
-            shuffled.push_back(slot);
-        }
+        const auto place = std::ranges::find(ShopsanityOrder, slot.number);
+        const bool shuffled = place != std::end(ShopsanityOrder) && place - std::begin(ShopsanityOrder) < shopCount;
+        (shuffled ? shops.shuffled : shops.kept).push_back(slot);
     }
-    return shuffled;
+    return shops;
 }
 
 static bool Shuffled(const RemakeSkulltula& skulltula, const SeedSettings& settings) {
@@ -216,6 +216,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeChest> table = LoadRemakeChests();
     static const std::vector<RemakeChest> looseItemTable = LoadRemakeLooseItems();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
+    static const std::map<RandomizerGet, KeptGoods> keptGoods = LoadKeptGoods();
     static const std::vector<GroupedGift> giftTable = LoadRemakeGifts(table);
     static const std::vector<RemakeGift> everyGift = [] {
         std::vector<RemakeGift> gifts;
@@ -229,7 +230,8 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
     static const std::vector<RemakeSongPlace> songTable = LoadRemakeSongs();
     static const RemakeHintTables hintTables = LoadRemakeHintTables(Joined(table, looseItemTable),
-                                                                    ShuffledSlots(shopTable, ShopCount::SevenPerShop),
+                                                                    SplitShops(shopTable, keptGoods,
+                                                                               ShopCount::SevenPerShop).shuffled,
                                                                     Joined(everyGift, rewardTable), skulltulaTable,
                                                                     songTable);
 
@@ -279,8 +281,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
     // the seed and on what generation does, not on how the options are listed.
     Random_Init(SohUtils::Hash(seed));
-    const std::vector<RemakeShopSlot> shops =
-        settings.shops ? ShuffledSlots(shopTable, settings.shops->count) : std::vector<RemakeShopSlot>{};
+    const RemakeShops shops = settings.shops ? SplitShops(shopTable, keptGoods, settings.shops->count) : RemakeShops{};
     const std::vector<RemakeSongPlace> songs =
         settings.songs == Songs::ShuffledAmongThemselves ? songTable : std::vector<RemakeSongPlace>{};
     auto ctx = Rando::Context::GetInstance();
@@ -290,7 +291,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         throw std::runtime_error("generation failed");
     }
     const std::map<RandomizerCheck, std::string> items =
-        PlacedRemakeItems(locations, shops, gifts, skulltulas, songs);
+        PlacedRemakeItems(locations, shops.shuffled, gifts, skulltulas, songs);
     const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
                                                               ? CharacterHints(hintTables, items, settings)
                                                               : std::vector<CharacterHintText>{};

@@ -8,7 +8,7 @@ namespace Playthrough {
 
 int Playthrough_Init(std::set<RandomizerCheck> excludedLocations, std::set<RandomizerTrick> enabledTricks,
                      const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems,
-                     const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,
+                     const RemakeShops& shops, const std::vector<RemakeGift>& gifts,
                      const std::vector<RemakeSkulltula>& skulltulas, const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
     ctx->ItemReset();

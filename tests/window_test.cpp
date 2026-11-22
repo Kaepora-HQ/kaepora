@@ -776,7 +776,8 @@ private slots:
         for (int index = 0; index < choice("Shop goods")->count(); ++index) {
             offered << choice("Shop goods")->itemText(index);
         }
-        QCOMPARE(offered, (QStringList{ "Vanilla", "One per shop shuffled", "Two per shop shuffled",
+        QCOMPARE(offered, (QStringList{ "Vanilla", "Goods shuffled among the shops", "One per shop shuffled",
+                                        "Two per shop shuffled",
                                         "Three per shop shuffled", "Four per shop shuffled", "Five per shop shuffled",
                                         "Six per shop shuffled", "Seven per shop shuffled",
                                         "A random number per shop" }));
@@ -834,6 +835,9 @@ private slots:
         QCOMPARE(shown(), QStringList{});
         // With no number, the choice spans the row as every other row's does.
         QCOMPARE(right(choice("Shop prices")), right(choice("Shop goods")));
+        // Goods moved among the shops keep their own prices.
+        choice("Shop goods")->setCurrentText("Goods shuffled among the shops");
+        QVERIFY(!choice("Shop prices")->isEnabled());
         choice("Shop goods")->setCurrentText("Vanilla");
         QVERIFY(!choice("Shop prices")->isEnabled());
         QCOMPARE(right(choice("Shop prices")), right(choice("Shop goods")));

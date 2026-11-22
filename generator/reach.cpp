@@ -1,7 +1,7 @@
 // Answers one question about the logic: with the given items at the given locations, and every other location holding
 // what the unmodified game gives there or, where it gives a started step again, junk as in the seed, can Link ever
-// collect what is at the target location? A shop slot's item may
-// come as the spoiler log gives it, with the slot's price.
+// collect what is at the target location? A shop slot's item may come as the spoiler log gives it, with the slot's
+// price, and the game's goods by the spoiler log's name for them.
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/randomizer/3drando/fill.hpp"
@@ -26,12 +26,16 @@ static RandomizerCheck Location(const std::string& name) {
 }
 
 static RandomizerGet Item(const std::string& name) {
-    auto found = Rando::StaticData::itemNameToEnum.find(name);
-    if (found == Rando::StaticData::itemNameToEnum.end()) {
+    if (auto found = Rando::StaticData::itemNameToEnum.find(name); found != Rando::StaticData::itemNameToEnum.end()) {
+        return found->second;
+    }
+    static const std::map<RandomizerGet, KeptGoods> keptGoods = LoadKeptGoods();
+    const auto kept = std::ranges::find(keptGoods, name, [](const auto& goods) { return KeptGoodsName(goods.first); });
+    if (kept == keptGoods.end()) {
         std::fprintf(stderr, "unknown item \"%s\"\n", name.c_str());
         std::exit(2);
     }
-    return found->second;
+    return kept->first;
 }
 
 int main(int argc, char** argv) {
