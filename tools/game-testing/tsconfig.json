@@ -56,8 +56,16 @@
 					"effect/crypto/SecureRandom",
 					// The host's Unix socket for the scripts it starts.
 					"@effect/platform-node-shared/NodeSocketServer",
-					// The folder name of a mod a place takes.
-					"effect/Path"
+					// The folder name of a mod a place takes, and the paths of the scripts the command line runs.
+					"effect/Path",
+					// The command line and its entry point.
+					"effect/cli",
+					"@effect/platform-bun/BunRuntime",
+					// What a command prints, as the tests read it.
+					"effect/testing/TestConsole",
+					// Traces, when the standard OpenTelemetry keys are set.
+					"effect/observability",
+					"effect/http/FetchHttpClient"
 				],
 				"allowedExperimentalApis": [],
 				"diagnosticSeverity": {
@@ -229,6 +237,15 @@
 						}
 					},
 					{
+						// One test gives every child the PATH of a machine with Bun alone, which only this process's environment reaches.
+						"include": ["tests/run.test.ts"],
+						"options": {
+							"diagnosticSeverity": {
+								"processEnv": "off"
+							}
+						}
+					},
+					{
 						// The fake debug server and the fake kaepora-dump answer outside Effect, in JSON lines as the real programs do.
 						"include": ["tests/fake-lichii.ts", "tests/fake-game.ts"],
 						"options": {
@@ -243,5 +260,10 @@
 		"incremental": true,
 		"tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json"
 	},
-	"include": ["src/**/*.ts", "tests/**/*.ts", "generated/**/*.ts"]
+	"include": [
+		"src/**/*.ts",
+		"scripts/**/*.ts",
+		"tests/**/*.ts",
+		"generated/**/*.ts"
+	]
 }

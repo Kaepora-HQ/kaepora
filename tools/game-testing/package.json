@@ -6,6 +6,7 @@
 	"scripts": {
 		"check": "ultracite check",
 		"fix": "ultracite fix",
+		"game-testing": "bun src/main.ts",
 		"prepare": "effect-tsgo patch",
 		"test": "bun test ./tests",
 		"typecheck": "effect-tsgo tsc -p tsconfig.json --noEmit"

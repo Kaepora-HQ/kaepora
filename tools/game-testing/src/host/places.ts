@@ -31,7 +31,8 @@ import {
 	NoGameHere,
 	NoGraphicsCard,
 } from "../errors.ts";
-import type { Ran } from "./podman.ts";
+import type { Ran } from "../process.ts";
+import { lastLines } from "../process.ts";
 import { podman } from "./podman.ts";
 
 const lookAgain = Duration.seconds(2);
@@ -102,12 +103,6 @@ const heldIn = (containers: typeof Listed.Type, id: PlaceId) =>
 const nameInUse = /name "[^"]+" is (?:already )?in use/u;
 
 const taken = (ran: Ran) => nameInUse.test(ran.stderr);
-
-const lastLines = (text: string) =>
-	Arr.join(
-		Arr.takeRight(Arr.filter(Str.split(text, "\n"), Str.isNonEmpty), 10),
-		"\n"
-	);
 
 export class Places extends Context.Service<
 	Places,
@@ -214,7 +209,7 @@ export class Places extends Context.Service<
 				if (built.code !== 0) {
 					return yield* ImageBuildFailed.make({
 						image: tag,
-						detail: lastLines(built.stderr),
+						detail: Arr.join(lastLines(built.stderr, 10), "\n"),
 					});
 				}
 				return tag;

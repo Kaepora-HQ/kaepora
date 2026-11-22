@@ -28,7 +28,7 @@ export type ScriptError =
 export interface Script<A> {
 	/** One line on what it shows. */
 	readonly about: string;
-	/** The most the run may take, its start included, such as `10 minutes`; 5 minutes unless given. */
+	/** The most the body may take once Link can move, such as `10 minutes`; 5 minutes unless given. */
 	readonly limit?: string;
 	readonly mod?: typeof ModSource.Encoded;
 	/** `here` when it hands over to a person, which `run` skips. */
@@ -41,16 +41,21 @@ export interface Script<A> {
 /** Declares a script, so its body's types are checked against `RunningGame`. */
 export const script = <A>(definition: Script<A>) => definition;
 
-/** A script file's default export, as read before its game starts. */
-const Declared = Schema.Struct({
+/** What a script declares beside its body, which its child says before its game starts. */
+export const Declaration = Schema.Struct({
 	about: Schema.String,
 	limit: Schema.optionalKey(Limit),
 	mod: Schema.optionalKey(ModSource),
 	person: Schema.optionalKey(Schema.Literals(["here", "nobody"])),
+	state: StartState,
+});
+
+/** A script file's default export, as its child reads it. */
+const Declared = Schema.Struct({
+	...Declaration.fields,
 	run: Schema.declare((input: unknown): input is Script<unknown>["run"] =>
 		Predicate.isFunction(input)
 	),
-	state: StartState,
 });
 export type Declared = typeof Declared.Type;
 

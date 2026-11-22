@@ -1,30 +1,10 @@
-import { Effect, Stream } from "effect";
+import type { Effect } from "effect";
 import type { ChildProcessSpawner } from "effect/process";
 import { ChildProcess } from "effect/process";
-
-export interface Ran {
-	readonly code: number;
-	readonly stderr: string;
-	readonly stdout: string;
-}
-
-const text = <E>(stream: Stream.Stream<Uint8Array, E>) =>
-	Stream.mkString(Stream.decodeText(stream));
+import type { Ran } from "../process.ts";
+import { ran } from "../process.ts";
 
 export const podman = (
 	spawner: ChildProcessSpawner.ChildProcessSpawner["Service"],
 	args: readonly string[]
-): Effect.Effect<Ran> =>
-	Effect.scoped(
-		Effect.gen(function* () {
-			const handle = yield* spawner.spawn(ChildProcess.make("podman", args));
-			return yield* Effect.all(
-				{
-					code: handle.exitCode,
-					stdout: text(handle.stdout),
-					stderr: text(handle.stderr),
-				},
-				{ concurrency: "unbounded" }
-			);
-		})
-	).pipe(Effect.orDie);
+): Effect.Effect<Ran> => ran(spawner, ChildProcess.make("podman", args));

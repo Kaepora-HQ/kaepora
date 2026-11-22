@@ -1,5 +1,4 @@
 import {
-	Array as Arr,
 	Context,
 	Duration,
 	Effect,
@@ -16,6 +15,7 @@ import { LaunchFailed } from "../errors.ts";
 import type { Place } from "../host/places.ts";
 import { placeFiles } from "../host/places.ts";
 import { podman } from "../host/podman.ts";
+import { lastLines } from "../process.ts";
 import type { Emulator, WireLog } from "./emulator.ts";
 import { connect } from "./emulator.ts";
 
@@ -53,12 +53,7 @@ export class Launcher extends Context.Service<
 
 			const tail = (path: string) =>
 				fs.readFileString(path).pipe(
-					Effect.map((text) =>
-						Arr.takeRight(
-							Arr.filter(Str.split(text, "\n"), Str.isNonEmpty),
-							logLines
-						)
-					),
+					Effect.map((text) => lastLines(text, logLines)),
 					Effect.catchReason("PlatformError", "NotFound", () =>
 						Effect.succeed([])
 					),
