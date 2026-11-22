@@ -1,5 +1,5 @@
 // Every text pack in the game, and every message file in it, parsed and written back, gives the bytes it was read
-// from.
+// from, and every text, turned into tags and back, gives its own.
 #include "compression.h"
 #include "game_file.h"
 #include "msbt.h"
@@ -45,6 +45,12 @@ int main(int argc, char** argv) {
                 ++files;
                 const std::vector<msbt::Message> parsed = msbt::Parse(data);
                 messages += int(parsed.size());
+                for (const auto& [label, text] : parsed) {
+                    if (const std::string encoded = msbt::Encode(msbt::Decode(text)); encoded != text) {
+                        Report(path + ":" + name + ":" + label, encoded, text);
+                        ++failures;
+                    }
+                }
                 if (const std::string written = msbt::Write(parsed); written != data) {
                     Report(path + ":" + name, written, data);
                     ++failures;
