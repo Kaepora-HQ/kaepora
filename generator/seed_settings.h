@@ -227,12 +227,13 @@ inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
     return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;
 }
 
-enum class GiftGroup { Minigames, Characters, HouseOfSkulltula, StoryGifts, BiggoronQuest };
+enum class GiftGroup { Minigames, Characters, HouseOfSkulltula, StoryGifts, MalonsEgg, BiggoronQuest };
 inline constexpr std::pair<GiftGroup, std::string_view> GiftGroups[] = {
     { GiftGroup::Minigames, "Minigames" },
     { GiftGroup::Characters, "Characters" },
     { GiftGroup::HouseOfSkulltula, "House of Skulltula" },
     { GiftGroup::StoryGifts, "Story gifts" },
+    { GiftGroup::MalonsEgg, "Malon's Egg" },
     { GiftGroup::BiggoronQuest, "Biggoron Quest" },
 };
 

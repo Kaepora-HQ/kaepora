@@ -191,11 +191,11 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 33 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 34 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, three places where the story moves: the scene
 after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
-of Time, and adult Anju's Pocket Egg. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item
+of Time, and the two eggs. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item
 to the pool, and the plan writes the placed item at each of its places. A location of a group left out keeps what the
 game gives, and the plan names none of its places.
 
@@ -235,6 +235,32 @@ and her place holds whatever the seed puts there:
   a Gold Skulltula, and no shelf, has been seen to give one. A chest gave one (seen); a gift's call or a reward's place
   gives it through the same pouch add (read).
 
+Malon gives the Weird Egg at the castle. While "Malon's Egg" shuffles her place, the egg is an item of the pool, and
+her place holds whatever the seed puts there:
+
+- Her talk writes Step03 of the castle quest, whatever she gives. The egg's timer in the program runs only for a Link
+  whose save says he found the egg, at that step, and hatches it wherever he is (read from the program). Seen: a Weird
+  Egg from a chest set its record, and the timer hatched the Chicken on the walk to the castle, around the Market. Both
+  hatches seen fit a timer of about 90 seconds: it stood at 90.018 where it hatched the egg and at 78.648 where the area
+  did first (inferred from the two saves). Eight areas of the yard behind the gate, where Link sneaks past the guards,
+  hold the timer while he stands in one: `HyruleCastle_HatchTimerStopAreaPrefab_8c10` sets
+  `HyruleCastle_StopWeirdEggHatchTimer`, which the program asks before the hatch (read). The gate guard's way leads into
+  that yard and around the vine area, so a Link who pays him gets the Chicken from the timer once he has left the yard
+  (inferred).
+- At Step03 an area at the top of the vine climb, by the gossip stone, also hatches the Chicken when Link walks in
+  (`Area_73af`, which `HyruleCastle_Prefab_ee1b` watches), for any Link: seen with no egg held. So a mod that shuffles
+  her place gives that area a presence on `IsGet.Item_WeirdEgg`, and it stands only for a Link who found the egg. The
+  game gives an area of Hyrule Field a presence of that kind, on `IsGet.Item_Hookshot`. Seen: with the presence and no
+  egg, two climbs gave no Chicken; an egg from Malon's own hand, inside the grounds, hatched at the top of the climb at
+  once.
+- So Talon at the castle wakes for a Link who found the egg and talked to Malon, in either order. The gate guard, who
+  opens the gate for 10 rupees to a Link whose save says he got the egg, asks for the egg in the rules too.
+- The moat's two places, the Ocarina of Time and its song, wait for Zelda met, and the way to Zelda climbs past Talon,
+  so a seed that shuffles her place needs the egg early, as a child.
+- The egg goes only to a chest, a gift or a reward's place, as the Pocket Egg does. A chest gave one (seen).
+
+Each egg's caption still says who gave it ("Malon gave you this egg", "The cucco lady gave you this special egg").
+
 A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
 retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
 two copies saying different lines, Dampé said the `.110` copy's. After the 20-token reward the house opens the Stone of
@@ -257,14 +283,22 @@ Seen in the game:
 - The Lost Woods target's scrub gave a placed Boomerang. He held the seed bag's model while the Boomerang's own get
   scene played, and the Boomerang was kept after a reload. The rolling Goron gave a placed Boomerang, and his scene
   played out. The other six bag prizes hand over through the same entries as gifts seen above (read from the flows).
+- With the vine area as the game has it, Malon gave the Bomb Bag, and the Chicken hatched at the top of the climb with
+  no egg held and woke Talon. For a Link with no record of the egg no way to Talon passes that area, as the gate guard
+  opens his gate only for one with the record.
+- With the vine area's presence, Malon gave another item and two climbs with no egg gave no Chicken. A Weird Egg from
+  Mido's chest set its record, and the timer hatched the Chicken around the Market on the walk back, with the area's
+  event not played; Talon woke and the castle quest reached Step04. A Weird Egg from Malon's own hand hatched at the top
+  of the climb at once, the area's event played; Talon woke.
 - Adult Anju gave an Empty Bottle. With no record of the Pocket Egg, no Pocket Cucco came over a couple of days. With
   `IsGet.Item_PocketEgg` set by hand and no egg held, the egg hatched at dawn and the Pocket Cucco woke Talon.
 - A Pocket Egg from Kakariko's open grotto chest set its record and hatched into the Pocket Cucco, and Talon's talk
   moved the trade quest to Step01_01. Found before her talk, it was held when she offered as usual and gave her place's
   item, a Red Rupee, and one egg was held; it hatched as well.
 
-So every way the 29 and adult Anju hand over their item has given another item. Read from the game's files and not yet
-seen: a prize talk may still name the usual prize, and the map may keep a heart on these places until each is won.
+So every way the 29, Malon and adult Anju hand over their item has given another item. Read from the game's files and
+not yet seen: a prize talk may still name the usual prize, and the map may keep a heart on these places until each is
+won.
 
 The three story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage quest to Complete and the Ganon quest

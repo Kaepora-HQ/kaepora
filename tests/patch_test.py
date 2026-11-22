@@ -17,6 +17,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
+       python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|goods-and-copies|weapons-bring-containers| \
@@ -716,6 +717,11 @@ def tested_song_mod(patch, game, romfs):
         assert zstd.decompress(ours[path], zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
 
 
+# The castle grounds' placement, and the area at the top of the vine climb that hatches the Weird Egg's Chicken.
+HYRULE_CASTLE_STATIC = "Banc/HyruleCastle/HyruleCastle_Static.bcett.byml.zs"
+VINE_HATCH = {"file": HYRULE_CASTLE_STATIC, "hash": "4190489777303842820", "flag": "IsGet.Item_WeirdEgg"}
+
+
 def colossus_gates(flag=PAST_SPIRIT_STEP02):
     return [(path, h, flag) for path, h in COLOSSUS_GATES]
 
@@ -733,6 +739,27 @@ def with_presence(placement, planned):
     entries = sorted(entry.items())
     entry.clear()
     entry.update(entries)
+
+
+def vine_hatch(patch, game, seedgen):
+    """With Malon's place shuffled, the area at the top of the vine climb, which hatches the Chicken while the castle
+    quest is at Step03, stands only for a Link whose save says he got the Weird Egg: read apart from the patcher, the
+    castle grounds' placement is the game's with that presence on the area. With every other group shuffled the mod
+    leaves the file as the game has it."""
+    others = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Biggoron Quest"]
+    for gifts in (["Malon's Egg"], others):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            result = subprocess.run([seedgen, "9", tmp / "spoiler.json", tmp / "plan.json",
+                                     json.dumps({"Gifts": gifts})], capture_output=True, text=True)
+            assert result.returncode == 0, result.stderr
+            seed = json.loads((tmp / "plan.json").read_text())
+        mod = mod_files(patch, game, seed)
+        expected = game.placement(game.read(HYRULE_CASTLE_STATIC))
+        if gifts == ["Malon's Egg"]:
+            with_presence(expected, VINE_HATCH)
+        assert ordered(game.placement(mod.get(HYRULE_CASTLE_STATIC, game.read(HYRULE_CASTLE_STATIC)))) == ordered(
+            expected), gifts
 
 
 def presence(patch, game):
@@ -2745,6 +2772,7 @@ def main():
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
         "presence": presence,
+        "vine-hatch": vine_hatch,
         "tested-colossus-mod": tested_colossus_mod,
         "event-numbers": event_numbers,
     }

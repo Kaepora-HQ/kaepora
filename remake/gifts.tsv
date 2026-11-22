@@ -24,6 +24,7 @@ Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event378	Re
 Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Characters
 Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle	Item_Bottle	Characters
 Market ToT Light Arrow Cutscene	Event/EventFlow/Dm_TimeTemple_0130.bfevfl.zs	Event85	ActorName	Item_Arrow_Light	Item_Arrow_Light	Story gifts
+HC Malon Egg	Event/EventFlow/Goto_HyruleCastle.bfevfl.zs	Event35	ActorName	Item_WeirdEgg	Item_WeirdEgg	Malon's Egg
 Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium	Item_Wallet_Medium	House of Skulltula
 Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone	Item_AgonyStone	House of Skulltula
 Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large	House of Skulltula

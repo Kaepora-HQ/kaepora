@@ -816,6 +816,14 @@ static constexpr Presence kingZoraIce = { .file = "Banc/ZoraDomain/ZoraDomain_Ad
                                           .flag = "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
                                           .replaces = "SageOfWater_IsCompleted_Exp" };
 
+// The presence every seed that shuffles Malon's place carries. The area at the top of the vine climb in the castle
+// grounds hatches the Chicken for any Link while the castle quest is at Step03, the step her talk writes
+// (HyruleCastle_Prefab_ee1b). So it stands only for a Link whose save says he got the Weird Egg, as the egg's own timer
+// asks, and the game gives an area of Hyrule Field a presence of that kind on the Hookshot's record.
+static constexpr Presence weirdEggHatch = { .file = "Banc/HyruleCastle/HyruleCastle_Static.bcett.byml.zs",
+                                            .hash = "4190489777303842820",
+                                            .flag = "IsGet.Item_WeirdEgg" };
+
 static constexpr std::string_view smallKeyDoors[] = {
     "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
     "17124821462463640959", "530640766699404174",   "8886594954069367001",  "8924322743887267313",
@@ -916,6 +924,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         for (const Presence& gate : colossusGates) {
             plan["presences"].push_back({ { "file", gate.file }, { "hash", gate.hash }, { "flag", gate.flag } });
         }
+    }
+    if (std::ranges::find(gifts, RC_HC_MALON_EGG, &RemakeGift::location) != gifts.end()) {
+        plan["presences"].push_back(
+            { { "file", weirdEggHatch.file }, { "hash", weirdEggHatch.hash }, { "flag", weirdEggHatch.flag } });
     }
     const auto addText = [&](std::string_view flow, std::string_view event, std::string_view param,
                              std::string_view text) {

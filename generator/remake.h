@@ -226,7 +226,8 @@ struct MessageText {
 };
 
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there,
-// and with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest. Then the event flow
+// with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest, and with Malon's place
+// shuffled the vine climb's hatch that waits for the Weird Egg's record. Then the event flow
 // strings every seed changes, and each site of each shuffled gift with its item and the text that keeps the Stone of
 // Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the Bolero's lessons then
 // name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and

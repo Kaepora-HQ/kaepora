@@ -108,10 +108,10 @@ BIGGER_BAGS = dict(BAG_PRIZES.values())
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Biggoron Quest"]
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest"]
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # Each egg's giver's place, with the group that shuffles it and the egg it gives in the game.
-EGGS = {"Kak Anju as Adult": ("Biggoron Quest", "Item_PocketEgg")}
+EGGS = {"HC Malon Egg": ("Malon's Egg", "Item_WeirdEgg"), "Kak Anju as Adult": ("Biggoron Quest", "Item_PocketEgg")}
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -164,6 +164,10 @@ QUEST_TEXTS = [
      "text": "Get_Epona_IsAfter_Ready_Exp"}]
 # King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
 # in every seed.
+# The area at the top of the vine climb, which stands only for a Link whose save says he got the Weird Egg while Malon's
+# place is shuffled.
+VINE_HATCH = {"file": "Banc/HyruleCastle/HyruleCastle_Static.bcett.byml.zs", "hash": "4190489777303842820",
+              "flag": "IsGet.Item_WeirdEgg"}
 KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
                  "hash": "3341274640047764997", "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
                  "replaces": "SageOfWater_IsCompleted_Exp"}
@@ -547,9 +551,9 @@ class SeedgenTest(unittest.TestCase):
     def test_plan_keeps_king_zoras_ice_until_he_is_thawed(self):
         # The game's ice in the domain after the Water Temple never stands, so a Link who finished the temple first
         # would never get what King Zora hands over.
-        for settings in (None, {"Gifts": GIFT_GROUPS}):
+        for settings, presences in ((None, [KING_ZORA_ICE]), ({"Gifts": GIFT_GROUPS}, [KING_ZORA_ICE, VINE_HATCH])):
             _, plan = self.generate("12", settings)
-            self.assertEqual(plan["presences"], [KING_ZORA_ICE], settings)
+            self.assertEqual(plan["presences"], presences, settings)
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
@@ -981,8 +985,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes a Hookshot from child fishing and the Boomerang from Bombchu Bowling, among other
-        # gifts.
+        # Seed 10's route takes the Kokiri Sword from the Market gallery and the Lens of Truth from the ocarina memory
+        # game, among other gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -991,7 +995,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 23 hints at three gifts by their sentences: Dampé's tour's, child Anju's and Bombchu Bowling's.
+        # Seed 23 hints at five gifts by their sentences, adult Anju's and the frogs' in the rain among them.
         spoiler, plan = self.assert_hints_are_true("23", GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
@@ -1085,6 +1089,26 @@ class SeedgenTest(unittest.TestCase):
         for egg, found in kinds.items():
             self.assertLessEqual(found, {"chest", "gift", "reward place"}, egg)
 
+    def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):
+        # The area at the top of the vine climb hatches the Chicken for any Link while the castle quest is at Step03,
+        # the step Malon's talk writes. With her place shuffled, it stands only for a Link whose save says he got the
+        # egg.
+        for gifts in (["Malon's Egg"], [group for group in GIFT_GROUPS if group != "Malon's Egg"]):
+            _, plan = self.generate("21", {"Gifts": gifts})
+            self.assertEqual(VINE_HATCH in plan["presences"], "Malon's Egg" in gifts, gifts)
+
+    def test_a_route_with_the_weird_egg_elsewhere_still_meets_zelda(self):
+        # Talon at the castle wakes for the Chicken, and the way to Zelda's courtyard climbs past him. The moat's two
+        # places wait for Zelda met, so every route takes the Weird Egg's place and Malon's in a sphere before them.
+        for seed in map(str, range(40, 50)):
+            log, _ = self.generate(seed, {"Gifts": ["Malon's Egg"]})
+            sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+            egg = next(place for place, item in playthrough_steps(log).items() if item == "Weird Egg")
+            for earlier in (egg, "HC Malon Egg"):
+                for moat in ("HF Ocarina of Time Item", "Song from Ocarina of Time"):
+                    self.assertLess(sphere[earlier], sphere[moat], (seed, earlier, moat))
+            self.assertEqual(self.route_out_of_reach(log), [])
+
     def test_the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts(self):
         # Each of the three places writes the item placed there at its one event, and each item, wherever it lands,
         # goes by its one name. The pass goes only to a chest, a gift or a reward's place, as a stone does. A shop
@@ -1131,9 +1155,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
 
     def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
-        # Seed 2 puts the Gerudo Pass in the Gerudo Training Ground, the Zora Tunic in the Bottom of the Well and the
-        # Light Arrows in a chest in Hyrule Field, and its route takes the carpenters' rescue and Zelda's scene for what
-        # they open.
+        # Seed 2 puts the Gerudo Pass in Goron City's maze, the Zora Tunic in Hyrule Field's tower chest and the Light
+        # Arrows in the Death Mountain Trail's chest, and its route takes the carpenters' rescue and Zelda's scene for
+        # what they open.
         log, _ = self.generate("2", GIFTS_SHUFFLED)
         for location, item in STORY_GIFTS.items():
             self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
