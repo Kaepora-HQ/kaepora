@@ -242,6 +242,17 @@ class LogicTest(unittest.TestCase):
             self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
             self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, no_dins_fire), fairy)
 
+    def test_the_summit_owl_flies_a_child_down_only_once_he_holds_dins_fire(self):
+        # The summit owl offers the flight down only to a Link who holds Din's Fire (read from his flow). Seen in the
+        # game: he will not fly down a child with a meter and no Din's Fire. A child with no Kokiri Sword stays in the
+        # closed forest; with a bomb bag and a shield he climbs to the summit through Goron City, and only the flight
+        # takes him down to Kakariko. A meter alone does not.
+        stranded = (("KF Kokiri Sword Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Progressive Bomb Bag"),
+                    ("KF Mido Bottom Right Chest", "Buy Hylian Shield"))
+        self.assertFalse(self.reachable("Kak Anju as Child", *stranded,
+                                        ("KF Mido Top Right Chest", "Progressive Magic Meter")))
+        self.assertTrue(self.reachable("Kak Anju as Child", *stranded, ("KF Mido Top Right Chest", "Din's Fire")))
+
     def test_two_great_fairies_ask_more_than_a_childs_wallet_holds(self):
         # Outside Ganon's Castle she asks 500 rupees and at the Colossus 300 (read from the flows).
         for fairy in ("OGC Great Fairy Reward", "Colossus Great Fairy Reward"):
