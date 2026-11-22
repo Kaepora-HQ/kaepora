@@ -1,4 +1,5 @@
 #include "game_values.h"
+#include "game_watch.h"
 
 #include "bytes.h"
 
@@ -36,19 +37,12 @@ public:
         : values(std::move(values)) {
         server.moveToThread(&thread);
         thread.start();
-        onItsThread([&] {
-            QObject::connect(&server, &QTcpServer::newConnection, &server, [this] { take(); });
-            layOut(programs);
-            server.listen(QHostAddress::LocalHost);
-        });
-        port = server.serverPort();
+        onItsThread([&] { QObject::connect(&server, &QTcpServer::newConnection, &server, [this] { take(); }); });
+        start(programs);
     }
 
     ~FakeLichii() {
-        onItsThread([&] {
-            server.close();
-            qDeleteAll(server.findChildren<QTcpSocket*>());
-        });
+        quit();
         thread.quit();
         thread.wait();
     }
@@ -68,6 +62,21 @@ public:
         onItsThread([&] {
             qToLittleEndian(relocated ? slotAt : quint64(0x4e842a8), at(mainAt + 0x4C7E180, 8));
             qToLittleEndian(quint64(0), at(slotAt, 8));
+        });
+    }
+
+    void quit() {
+        onItsThread([&] {
+            server.close();
+            qDeleteAll(server.findChildren<QTcpSocket*>());
+        });
+    }
+
+    void start(const std::vector<quint64>& programs) {
+        onItsThread([&] {
+            layOut(programs);
+            server.listen(QHostAddress::LocalHost, port);
+            port = server.serverPort();
         });
     }
 
@@ -310,6 +319,54 @@ private slots:
         FakeLichii lichii({}, { ProgramAt, ElsewhereAt });
         QCOMPARE(Refusal(lichii.port),
                  "Kaepora finds the game twice in Lichii's memory and cannot tell which one runs.");
+    }
+
+    void aWatchReportsTheFirstReadAndEachChange() {
+        std::vector<std::vector<quint32>> changes;
+        QObject reports;
+        FakeLichii lichii({ { "Found", Bool, 0 }, { "Rupees", Int, 5 } });
+        GameWatch watch(lichii.port, { { "Found", Bool }, { "Rupees", Int } });
+        connect(&watch, &GameWatch::changed, &reports,
+                [&](const std::vector<quint32>& read) { changes.push_back(read); });
+        watch.start();
+        QTRY_COMPARE(changes, (std::vector<std::vector<quint32>>{ { 0, 5 } }));
+        QTest::qWait(4 * GameWatch::ReadPause);
+        QCOMPARE(changes.size(), 1);
+        lichii.set("Found", 1);
+        QTRY_COMPARE(changes, (std::vector<std::vector<quint32>>{ { 0, 5 }, { 1, 5 } }));
+    }
+
+    void aWatchSaysWhyBeforeItsFirstRead() {
+        QStringList reasons;
+        QObject reports;
+        QTcpServer closed;
+        QVERIFY(closed.listen(QHostAddress::LocalHost));
+        const quint16 port = closed.serverPort();
+        closed.close();
+        GameWatch watch(port, { { "Found", Bool } });
+        connect(&watch, &GameWatch::unreadable, &reports, [&](const QString& why) { reasons << why; });
+        watch.start();
+        QTRY_VERIFY(!reasons.isEmpty());
+        QCOMPARE(reasons.front(), "Kaepora cannot reach the game. Start it with Play.");
+    }
+
+    void aWatchSaysWhyItLostTheGameAndFindsItAgainAtAnotherAddress() {
+        std::vector<std::vector<quint32>> changes;
+        QStringList reasons;
+        QObject reports;
+        FakeLichii lichii({ { "Found", Bool, 1 } });
+        GameWatch watch(lichii.port, { { "Found", Bool } });
+        connect(&watch, &GameWatch::changed, &reports,
+                [&](const std::vector<quint32>& read) { changes.push_back(read); });
+        connect(&watch, &GameWatch::unreadable, &reports, [&](const QString& why) { reasons << why; });
+        watch.start();
+        QTRY_COMPARE(changes.size(), 1);
+        QVERIFY(reasons.isEmpty());
+        lichii.quit();
+        QTRY_VERIFY(!reasons.isEmpty());
+        QCOMPARE(reasons.front(), "The game stopped answering.");
+        lichii.start({ ElsewhereAt });
+        QTRY_COMPARE(changes, (std::vector<std::vector<quint32>>{ { 1 }, { 1 } }));
     }
 };
 
