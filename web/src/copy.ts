@@ -158,7 +158,7 @@ export const copy: Copy = {
       ['Gifts from characters', '38'],
       ['Songs', '12 of 12'],
       ['Gold Skulltula tokens', '100 of 100'],
-      ['Loose items', '25'],
+      ['Loose items', '26'],
       ['Dungeon rewards', '9 of 9'],
     ],
   },
