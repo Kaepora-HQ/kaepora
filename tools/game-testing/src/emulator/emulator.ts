@@ -149,7 +149,8 @@ interface Ended {
 }
 
 export const connect = Effect.fn("Emulator.connect")(function* (options: {
-	readonly port: number;
+	/** The Unix socket a place's relay passes the debug server through. */
+	readonly path: string;
 	readonly wire: WireLog;
 	/** The end of Lichii's log file, read when the connection ends, since the server may be gone. */
 	readonly logFileTail: Effect.Effect<readonly string[]>;
@@ -157,8 +158,7 @@ export const connect = Effect.fn("Emulator.connect")(function* (options: {
 	const scope = yield* Effect.scope;
 	const connection = yield* Scope.fork(scope);
 	const socket = yield* BunSocket.makeNet({
-		host: "127.0.0.1",
-		port: options.port,
+		path: options.path,
 		openTimeout: connectDeadline,
 	});
 	const pull = yield* Socket.readerString(socket).pipe(

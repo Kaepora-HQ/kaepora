@@ -17,6 +17,7 @@ import {
 import { UserDirectories } from "effect/persistence";
 import { TestClock } from "effect/testing";
 import { PlaceId, RunId, SessionId } from "../src/contract/values.ts";
+import { Launcher } from "../src/emulator/launcher.ts";
 import {
 	ImageBuildFailed,
 	LaunchFailed,
@@ -24,6 +25,7 @@ import {
 	NoGraphicsCard,
 } from "../src/errors.ts";
 import { Places } from "../src/host/places.ts";
+import { fakeLichii } from "./fake-lichii.ts";
 import type { Answer, FakeContainer, FakePodman } from "./fake-podman.ts";
 import { fakePodman } from "./fake-podman.ts";
 
@@ -57,7 +59,7 @@ const machine = (
 		const fs = yield* FileSystem.FileSystem;
 		const root = yield* fs.makeTempDirectoryScoped();
 		yield* fs.writeFileString(`${root}/oot.nup`, "");
-		return Places.layer.pipe(
+		return Layer.mergeAll(Places.layer, Launcher.layer).pipe(
 			Layer.provide([podman.layer, UserDirectories.layer]),
 			Layer.provide(
 				ConfigProvider.layer(
@@ -78,6 +80,12 @@ const take = Effect.gen(function* () {
 	return yield* places.take(holding);
 });
 
+const launched = Effect.gen(function* () {
+	const place = yield* take;
+	const launcher = yield* Launcher;
+	return yield* launcher.launch(place, { wire: { line: () => Effect.void } });
+});
+
 /**
  * Moves the test clock on a second at a time, letting real file reads and writes finish in between, so a wait that
  * starts after them still meets its limit.
@@ -87,6 +95,12 @@ const clockRuns = Effect.forever(
 		Effect.andThen(TestClock.withLive(Effect.sleep("5 millis")))
 	)
 );
+
+const placeFolder = (container: FakeContainer) =>
+	Str.replace(
+		":/place",
+		""
+	)(Option.getOrThrow(Arr.findFirst(container.args, Str.endsWith(":/place"))));
 
 const flagged = (container: FakeContainer, name: string) =>
 	Arr.flatMap(container.args, (arg, at) =>
@@ -391,6 +405,101 @@ describe("places", () => {
 					{ id: place.container, grace: 20 },
 				]);
 				expect((yield* podman.containers).size).toBe(0);
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+});
+
+describe("the launcher", () => {
+	it.effect(
+		"a launch gives the debug connection once a frame is presented, with the settings written before the start",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const written = yield* Deferred.make<string>();
+				const podman = yield* fakePodman({
+					devices: [gpu],
+					onStart: (container) =>
+						Effect.scoped(
+							Effect.gen(function* () {
+								const folder = placeFolder(container);
+								yield* Deferred.succeed(
+									written,
+									yield* fs.readFileString(
+										`${folder}/config/lichii/qt-config.ini`
+									)
+								);
+								yield* fakeLichii({
+									path: `${folder}/debug.sock`,
+									presents: 3,
+								});
+								yield* Deferred.await(container.exit);
+							})
+						).pipe(Effect.orDie),
+				});
+				const emulator = yield* launched.pipe(
+					Effect.raceFirst(clockRuns),
+					Effect.provide(yield* machine(podman, { places: 1 }))
+				);
+				expect((yield* emulator.status).presents).toBe(3);
+				expect(yield* Deferred.await(written)).toContain("output_engine=3");
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect(
+		"a container that exits before its debug server answers fails at debug-server with the end of its log",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const podman = yield* fakePodman({
+					devices: [gpu],
+					onStart: (container) =>
+						Effect.gen(function* () {
+							yield* fs.writeFileString(
+								`${placeFolder(container)}/place.log`,
+								"00:00:00.012 [ERROR] [wlr] [backend/backend.c:94] Found no backends\n"
+							);
+							yield* Deferred.succeed(container.exit, 1);
+						}).pipe(Effect.orDie),
+				});
+				const failed = yield* Effect.flip(
+					launched.pipe(Effect.provide(yield* machine(podman, { places: 1 })))
+				);
+				expect(failed).toEqual(
+					LaunchFailed.make({
+						place: PlaceId.make(1),
+						stage: "debug-server",
+						detail: "the container exited with status 1",
+						logTail: [
+							"00:00:00.012 [ERROR] [wlr] [backend/backend.c:94] Found no backends",
+						],
+					})
+				);
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect(
+		"a podman wait that fails is not taken for the container's exit",
+		() =>
+			Effect.gen(function* () {
+				const podman = yield* fakePodman({
+					devices: [gpu],
+					answer: answering("wait", {
+						code: 125,
+						stderr: "Error: no container with name or ID found\n",
+					}),
+				});
+				const failed = yield* Effect.flip(
+					launched.pipe(Effect.provide(yield* machine(podman, { places: 1 })))
+				);
+				expect(failed).toEqual(
+					LaunchFailed.make({
+						place: PlaceId.make(1),
+						stage: "debug-server",
+						detail:
+							"podman wait failed: Error: no container with name or ID found",
+						logTail: [],
+					})
+				);
 			}).pipe(Effect.provide(BunFileSystem.layer))
 	);
 });

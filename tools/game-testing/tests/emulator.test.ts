@@ -36,7 +36,7 @@ describe("the debug server client", () => {
 			Effect.gen(function* () {
 				const lichii = yield* fakeLichii();
 				const emulator = yield* connect({
-					port: lichii.port,
+					path: lichii.path,
 					wire: noWire,
 					logFileTail,
 				});
@@ -61,7 +61,7 @@ describe("the debug server client", () => {
 			Effect.gen(function* () {
 				const lichii = yield* fakeLichii();
 				const emulator = yield* connect({
-					port: lichii.port,
+					path: lichii.path,
 					wire: noWire,
 					logFileTail,
 				});
@@ -94,7 +94,7 @@ describe("the debug server client", () => {
 		Effect.gen(function* () {
 			const lichii = yield* fakeLichii();
 			const emulator = yield* connect({
-				port: lichii.port,
+				path: lichii.path,
 				wire: noWire,
 				logFileTail,
 			});
@@ -120,7 +120,7 @@ describe("the debug server client", () => {
 			Effect.gen(function* () {
 				const lichii = yield* fakeLichii();
 				const emulator = yield* connect({
-					port: lichii.port,
+					path: lichii.path,
 					wire: noWire,
 					logFileTail,
 				});
@@ -144,7 +144,7 @@ describe("the debug server client", () => {
 			const fs = yield* FileSystem.FileSystem;
 			const path = `${yield* fs.makeTempDirectoryScoped()}/wire.ndjson`;
 			const wire = yield* wireLog(path);
-			const emulator = yield* connect({ port: lichii.port, wire, logFileTail });
+			const emulator = yield* connect({ path: lichii.path, wire, logFileTail });
 			const status = yield* emulator.status;
 			const text = yield* fs.readFileString(path);
 			const lines = yield* Effect.forEach(
@@ -168,7 +168,7 @@ describe("the debug server client", () => {
 			Effect.gen(function* () {
 				const lichii = yield* fakeLichii();
 				const emulator = yield* connect({
-					port: lichii.port,
+					path: lichii.path,
 					wire: noWire,
 					logFileTail,
 				});
@@ -190,7 +190,7 @@ describe("the debug server client", () => {
 				const lichii = yield* fakeLichii();
 				const scope = yield* Scope.make();
 				const emulator = yield* connect({
-					port: lichii.port,
+					path: lichii.path,
 					wire: noWire,
 					logFileTail,
 				}).pipe(Scope.provide(scope));
@@ -213,7 +213,7 @@ describe("the debug server client", () => {
 		Effect.gen(function* () {
 			const lichii = yield* fakeLichii();
 			const emulator = yield* connect({
-				port: lichii.port,
+				path: lichii.path,
 				wire: noWire,
 				logFileTail,
 			});
@@ -233,7 +233,7 @@ describe("the debug server client", () => {
 		Effect.gen(function* () {
 			const lichii = yield* fakeLichii();
 			const emulator = yield* connect({
-				port: lichii.port,
+				path: lichii.path,
 				wire: noWire,
 				logFileTail,
 			});
@@ -252,7 +252,7 @@ describe("the debug server client", () => {
 		Effect.gen(function* () {
 			const lichii = yield* fakeLichii();
 			const emulator = yield* connect({
-				port: lichii.port,
+				path: lichii.path,
 				wire: noWire,
 				logFileTail,
 			});
@@ -271,21 +271,23 @@ describe("the debug server client", () => {
 		})
 	);
 
-	it.effect("a closed port fails the connection with EmulatorUnavailable", () =>
-		Effect.gen(function* () {
-			const lichii = yield* fakeLichii();
-			yield* lichii.exit;
-			expect(
-				yield* Effect.flip(
-					connect({ port: lichii.port, wire: noWire, logFileTail })
-				)
-			).toEqual(
-				EmulatorUnavailable.make({
-					method: "connect",
-					reason: "connect",
-					logTail: yield* logFileTail,
-				})
-			);
-		})
+	it.effect(
+		"a closed socket fails the connection with EmulatorUnavailable",
+		() =>
+			Effect.gen(function* () {
+				const lichii = yield* fakeLichii();
+				yield* lichii.exit;
+				expect(
+					yield* Effect.flip(
+						connect({ path: lichii.path, wire: noWire, logFileTail })
+					)
+				).toEqual(
+					EmulatorUnavailable.make({
+						method: "connect",
+						reason: "connect",
+						logTail: yield* logFileTail,
+					})
+				);
+			})
 	);
 });

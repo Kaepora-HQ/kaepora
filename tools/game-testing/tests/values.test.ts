@@ -45,7 +45,7 @@ const start = (options?: {
 	Effect.gen(function* () {
 		const lichii = yield* fakeLichii({ values: game, ...options });
 		const emulator = yield* connect({
-			port: lichii.port,
+			path: lichii.path,
 			wire: { line: () => Effect.void },
 			logFileTail: Effect.succeed([]),
 		});

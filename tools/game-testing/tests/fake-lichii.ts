@@ -1,7 +1,7 @@
 /**
- * A fake Lichii: a debug server on a real loopback socket that speaks the wire protocol, with a small game behind it.
- * Like the real server it answers one request at a time across every connection, and an input holds it while its
- * frames pass; this one presents none. The game's memory holds the program's first bytes, the game data manager and
+ * A fake Lichii: a debug server on a real Unix socket that speaks the wire protocol, with a small game behind it, as a
+ * place's relay passes the real one through. Like the real server it answers one request at a time across every
+ * connection, and an input holds it while its frames pass; this one presents no new frames. The game's memory holds the program's first bytes, the game data manager and
  * a table per type, laid out as the running game lays them out. The names are made up.
  */
 import {
@@ -40,7 +40,7 @@ export interface FakeLichii {
 	readonly hold: Effect.Effect<void>;
 	/** The next answer carries another request's id. */
 	readonly misnumber: Effect.Effect<void>;
-	readonly port: number;
+	readonly path: string;
 	/** Waits until a request for `method` has arrived. */
 	readonly received: (method: string) => Effect.Effect<void>;
 	readonly release: Effect.Effect<void>;
@@ -238,7 +238,13 @@ const hitsIn = (region: Region, pattern: Uint8Array) =>
 		(at) => region.start + BigInt(at)
 	);
 
+let listened = 0;
+
 export const fakeLichii = (options?: {
+	/** The socket file to listen on. By default an abstract socket, which leaves no file behind. */
+	readonly path?: string;
+	/** The frames `status` says were presented. */
+	readonly presents?: number;
 	readonly values?: Readonly<Record<string, FakeValue>>;
 	/** `false` for a build without `write_memory`, such as Lichii's release builds. */
 	readonly writes?: boolean;
@@ -246,6 +252,9 @@ export const fakeLichii = (options?: {
 	readonly mapCapacity?: number;
 }) =>
 	Effect.gen(function* () {
+		listened += 1;
+		const path =
+			options?.path ?? `\0game-testing-fake-lichii-${process.pid}-${listened}`;
 		const values = options?.values ?? {};
 		const { memory, addresses } = layOut(values, options?.mapCapacity);
 		const log: Request[] = [];
@@ -280,7 +289,7 @@ export const fakeLichii = (options?: {
 					build: "Lichii fake",
 					powered_on: true,
 					paused: false,
-					presents: 0,
+					presents: options?.presents ?? 0,
 					program_id: "0400486024DEC000",
 				},
 			}),
@@ -392,8 +401,7 @@ export const fakeLichii = (options?: {
 		const server = yield* Effect.acquireRelease(
 			Effect.sync(() =>
 				Bun.listen<Connection>({
-					hostname: "127.0.0.1",
-					port: 0,
+					unix: path,
 					socket: {
 						open: (socket) => {
 							socket.data = { text: "" };
@@ -437,7 +445,7 @@ export const fakeLichii = (options?: {
 		};
 
 		const fake: FakeLichii = {
-			port: server.port,
+			path,
 			requests: Effect.sync(() => [...log]),
 			received: (method) =>
 				Effect.gen(function* () {

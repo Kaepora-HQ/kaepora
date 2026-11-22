@@ -74,23 +74,6 @@ export class NoFreePlace extends Schema.TaggedError<
 }
 
 /**
- * A place's settings file named a folder outside the place. Starting would write into another Lichii's storage, so
- * the launcher refuses and starts nothing.
- */
-export class SettingsUnsafe extends Schema.TaggedError<
-	SettingsUnsafe,
-	{ readonly brand: unique symbol }
->("game-testing/errors/SettingsUnsafe")("SettingsUnsafe", {
-	place: PlaceId,
-	key: Schema.String,
-	folder: Schema.String,
-}) {
-	override get message() {
-		return `Place ${this.place}'s settings name ${this.folder} for ${this.key}, outside the place. Nothing was started.`;
-	}
-}
-
-/**
  * Podman lists no device `nvidia.com/gpu=all`, so no place can reach this machine's NVIDIA card, and nothing was
  * started.
  */
@@ -116,9 +99,9 @@ export class ImageBuildFailed extends Schema.TaggedError<
 }
 
 /**
- * The emulator did not reach a ready signal. `stage` names the first signal it missed, in order: `spawn`, `debug-port`,
- * `first-frame`, `title`, `loaded`, `control`, or `exited` when the process ended first. `logTail` is the end of its
- * log.
+ * The emulator did not reach a ready signal. `stage` names the first signal it missed, in order: `spawn`, `debug-server`,
+ * `first-frame`, `title`, `loaded`, `control`. `detail` says why: podman's error, the container's exit, the signal's
+ * limit, or the debug server's error. `logTail` is the end of its place's log.
  */
 export class LaunchFailed extends Schema.TaggedError<
 	LaunchFailed,
@@ -127,8 +110,7 @@ export class LaunchFailed extends Schema.TaggedError<
 	place: PlaceId,
 	stage: Schema.Literals([
 		"spawn",
-		"exited",
-		"debug-port",
+		"debug-server",
 		"first-frame",
 		"title",
 		"loaded",
@@ -380,7 +362,6 @@ export type StartError =
 	| NoFreePlace
 	| NoGraphicsCard
 	| ImageBuildFailed
-	| SettingsUnsafe
 	| LaunchFailed
 	| EmulatorUnavailable
 	| SaveUnreadable
