@@ -744,6 +744,13 @@ static constexpr EventText eventTexts[] = {
     // second copy of Event1.
     { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "ChallengeName", "Get_StoneOfForest" },
     { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event4", "StepName", "Complete" },
+    // The Forest Temple's exit completes the Forest Sage's quest in its Event199. Its Event208 then sets AllSage to
+    // Step01_00 even when the quest is further on. Once the Shadow and the Spirit sages have woken, AllSage stands at
+    // Step02, the one step at which Zelda's scene starts as Link walks into the Temple of Time, and nothing sets Step02
+    // again. These texts give Event208 the quest and step of Event199, and Event208 keeps its own flags. The game drops
+    // a write to a completed quest whatever its flags say.
+    { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208", "ChallengeName", "SageOfForest" },
+    { "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208", "StepName", "Complete" },
     // Kaepora Gaebora waits at the foot of Zora's River once the Dodongo's Cavern Bomb Bag Chest is open. His Event80
     // sets the Water quest to Step02 even when the quest is further on, and a Link who has shown King Zora Ruto's
     // letter is then barred from Zora's Fountain. Event80 runs only after Impa's talk, which comes only once the Fire

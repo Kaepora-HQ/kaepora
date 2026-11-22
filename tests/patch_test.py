@@ -798,7 +798,8 @@ def tested_colossus_mod(patch, game, romfs):
 # The texts every plan carries that no played mod this test reads has.
 UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293"),
                   ("Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42"),
-                  ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172")}
+                  ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172"),
+                  ("Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208")}
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
