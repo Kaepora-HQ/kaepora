@@ -133,6 +133,30 @@ add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
 target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
 target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 
+# The game's pictures. ARM's astc-encoder decodes them, at one version on every system: Arch has no package of it, and
+# Ubuntu 24.04's is 4.7. It builds its decoder alone, for the instructions every x86-64 processor has, or for Apple
+# silicon's. Its warnings are ARM's to fix, so they do not stop the build.
+set(ASTCENC_DECOMPRESSOR ON)
+set(ASTCENC_CLI OFF)
+set(ASTCENC_UNIVERSAL_BUILD OFF)
+set(ASTCENC_WERROR OFF)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64|ARM64)$")
+    set(ASTCENC_ISA_NEON ON)
+    set(ASTCENC_LIBRARY astcdec-neon-static)
+else()
+    set(ASTCENC_ISA_SSE2 ON)
+    set(ASTCENC_LIBRARY astcdec-sse2-static)
+endif()
+include(FetchContent)
+FetchContent_Declare(astcenc EXCLUDE_FROM_ALL SYSTEM
+    URL https://github.com/ARM-software/astc-encoder/archive/refs/tags/5.7.1.tar.gz
+    URL_HASH SHA256=37ff3928c4c156fb3ac0d1adb5df144ff9c5cdbc8a8e1ffeb20229cc7f35c767)
+FetchContent_MakeAvailable(astcenc)
+
+add_library(kaepora-pictures STATIC patcher/pictures.cpp)
+target_link_libraries(kaepora-pictures PUBLIC kaepora-patch-files PRIVATE ${ASTCENC_LIBRARY})
+target_compile_options(kaepora-pictures PRIVATE ${WARNINGS})
+
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
 find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
@@ -582,6 +606,18 @@ if(KAEPORA_GAME_NUP)
             COMMAND ${PATCH_TEST} tested-cutscenes-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_CUTSCENES_MOD}")
     endif()
+endif()
+
+add_executable(kaepora-pictures-test tests/pictures_test.cpp)
+target_link_libraries(kaepora-pictures-test PRIVATE kaepora-pictures)
+target_compile_options(kaepora-pictures-test PRIVATE ${WARNINGS})
+add_test(NAME pictures COMMAND kaepora-pictures-test)
+if(KAEPORA_GAME_NUP)
+    add_test(NAME pictures-from-the-game COMMAND kaepora-pictures-test "${KAEPORA_GAME_NUP}")
+endif()
+
+if(Qt6_FOUND)
+    install(FILES ${astcenc_SOURCE_DIR}/LICENSE.txt DESTINATION ${LICENSES}/astc-encoder)
 endif()
 
 # Windows finds a program's libraries beside it or on PATH, so the tests find Qt's on PATH.

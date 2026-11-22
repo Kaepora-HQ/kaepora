@@ -43,7 +43,7 @@ A seed moves the items that chests hold. With the default settings, it also move
 
 ## Build from source
 
-You need CMake 3.28 or later, Ninja, a C++20 compiler (GCC or Clang), Python 3, and the libraries nlohmann_json, spdlog and zstd. The window also needs Qt 6 with Widgets and Network. Without Qt, everything except the window still builds. On Windows and macOS the build downloads the three libraries itself.
+You need CMake 3.28 or later, Ninja, a C++20 compiler (GCC or Clang), Python 3, and the libraries nlohmann_json, spdlog and zstd. The window also needs Qt 6 with Widgets and Network. Without Qt, everything except the window still builds. On Windows and macOS the build downloads the three libraries itself. On every system it downloads ARM's astc-encoder, which decodes the game's pictures.
 
 ```sh
 cmake -S . -B build -G Ninja

@@ -625,18 +625,6 @@ constexpr uint32_t SizeTableVersion = 1;
 constexpr size_t SizeTableHeaderSize = 0x16;
 constexpr size_t SizeTableEntrySize = 8;
 
-// CRC-32 as zlib computes it.
-static uint32_t Crc32(std::string_view data) {
-    uint32_t crc = 0xFFFFFFFF;
-    for (const char byte : data) {
-        crc ^= uint8_t(byte);
-        for (int bit = 0; bit < 8; ++bit) {
-            crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320 : crc >> 1;
-        }
-    }
-    return ~crc;
-}
-
 static std::string ReadSizeTable(GameFile& game) {
     try {
         std::string table = Decompress(game.Read(std::string(SizeTablePath)));

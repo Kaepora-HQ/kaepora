@@ -72,6 +72,18 @@ inline uint32_t Murmur3(std::string_view name) {
     return hash ^ hash >> 16;
 }
 
+// CRC-32 as zlib computes it.
+inline uint32_t Crc32(std::string_view data) {
+    uint32_t crc = 0xFFFFFFFF;
+    for (const char byte : data) {
+        crc ^= uint8_t(byte);
+        for (int bit = 0; bit < 8; ++bit) {
+            crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320 : crc >> 1;
+        }
+    }
+    return ~crc;
+}
+
 // The zero-terminated string that starts at the offset.
 inline std::string_view StringAt(std::string_view data, size_t offset) {
     const size_t end = data.find('\0', offset);
