@@ -275,6 +275,14 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("claims: {} is listed twice", claim));
         }
     }
+    const auto expressions = json.at("expressions").get<std::vector<nlohmann::json>>();
+    for (size_t i = 0; i < expressions.size(); ++i) {
+        const PlannedExpression& expression = plan.expressions.emplace_back(
+            expressions[i].at("name").get<std::string>(), expressions[i].at("flag").get<std::string>());
+        if (std::ranges::count(plan.expressions, expression.name, &PlannedExpression::name) > 1) {
+            throw std::runtime_error(std::format("expressions[{}]: {} is listed twice", i, expression.name));
+        }
+    }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     plan.openingSkipped = json.at("opening_skipped").get<bool>();
     plan.cutscenesSkipped = json.at("cutscenes_skipped").get<bool>();
@@ -938,6 +946,21 @@ static byml::Node ClaimBool(uint32_t hash) {
     return entry;
 }
 
+// An expression of the mod's own that reads one saved Bool, in the shape of the game's own that do: unsaved, reset type
+// 0, and one operation, 0, that reads the Bool by its hash. HappyMaskShop_AppearMask_Keaton reads
+// Npc_Hylia_Soldier_003_GateOpen so.
+static byml::Node ReadingExpression(uint32_t hash, uint32_t flag) {
+    byml::Node entry{ .type = byml::Type::Dict };
+    FindOrAdd(entry, "Hash", byml::Type::UInt).scalar = hash;
+    FindOrAdd(entry, "ResetTypeValue", byml::Type::Int).scalar = 0;
+    FindOrAdd(entry, "SaveFileIndex", byml::Type::Int).scalar = uint32_t(-1);
+    const byml::Node read{ .type = byml::Type::Array,
+                           .array = { { .type = byml::Type::UInt64, .scalar = 0 },
+                                      { .type = byml::Type::UInt64, .scalar = flag } } };
+    FindOrAdd(entry, "Values", byml::Type::Array).array = { read };
+    return entry;
+}
+
 // A loose spot's key, as the game gives every loose spot's.
 static byml::Node LooseSpotKey(uint64_t hash) {
     byml::Node key{ .type = byml::Type::Dict };
@@ -957,7 +980,8 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
                                                const std::map<std::string, StartValue>& values,
                                                const std::set<std::string>& soldOnce,
                                                const std::vector<PlannedActorItem>& looseItems,
-                                               const std::vector<std::string>& claims) {
+                                               const std::vector<std::string>& claims,
+                                               const std::vector<PlannedExpression>& expressions) {
     try {
         byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
@@ -1001,7 +1025,23 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
             }
             Add(list.root, Added::Bool, ClaimBool(hash));
         }
-        if (values.empty() && soldOnce.empty() && !keyed && claims.empty()) {
+        // An expression is no value of a save, so the saves keep their layout.
+        for (const PlannedExpression& expression : expressions) {
+            const uint32_t hash = Murmur3(expression.name);
+            for (byml::Entry& table : data->dict) {
+                if (FindHash(table.value, hash) != nullptr) {
+                    throw std::runtime_error(
+                        std::format("expression \"{}\" has the hash of a value in {}", expression.name, table.key));
+                }
+            }
+            const uint32_t flag = Murmur3(expression.flag);
+            if (FindHash(Value(*data, "Bool"), flag) == nullptr) {
+                throw std::runtime_error(std::format("expression \"{}\" reads \"{}\", which is no true-or-false value",
+                                                     expression.name, expression.flag));
+            }
+            Value(*data, "BoolExp").array.push_back(ReadingExpression(hash, flag));
+        }
+        if (values.empty() && soldOnce.empty() && !keyed && claims.empty() && expressions.empty()) {
             return std::nullopt;
         }
         return byml::Write(list);
@@ -1012,7 +1052,8 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
 
 // The game data list's table, Bool or BoolExp, of each flag a presence or a query can name, by the hash of its name.
 static std::map<uint32_t, std::string_view> Flags(GameFile& game, const std::string& dictionary,
-                                                  const std::vector<std::string>& claims) {
+                                                  const std::vector<std::string>& claims,
+                                                  const std::vector<PlannedExpression>& expressions) {
     byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
     byml::Node* data = Find(list.root, "Data");
     std::map<uint32_t, std::string_view> flags;
@@ -1029,6 +1070,9 @@ static std::map<uint32_t, std::string_view> Flags(GameFile& game, const std::str
     }
     for (const std::string& claim : claims) {
         flags.emplace(Murmur3(claim), "Bool");
+    }
+    for (const PlannedExpression& expression : expressions) {
+        flags.emplace(Murmur3(expression.name), "BoolExp");
     }
     return flags;
 }
@@ -1421,7 +1465,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
 
     const std::string zsDictionary = Dictionary(game, "zs.zsdic");
-    const std::map<uint32_t, std::string_view> flags = Flags(game, zsDictionary, plan.claims);
+    const std::map<uint32_t, std::string_view> flags = Flags(game, zsDictionary, plan.claims, plan.expressions);
     for (const PlannedPresence& presence : plan.presences) {
         try {
             if (!flags.contains(Murmur3(presence.flag))) {
@@ -1605,8 +1649,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
         }
     }
-    if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty() || !plan.claims.empty()) {
-        if (const auto data = GameDataList(game, zsDictionary, startValues, soldOnce, plan.looseItems, plan.claims)) {
+    if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty() || !plan.claims.empty() ||
+        !plan.expressions.empty()) {
+        if (const auto data = GameDataList(game, zsDictionary, startValues, soldOnce, plan.looseItems, plan.claims,
+                                           plan.expressions)) {
             tableChanged |= RaiseSize(table, GameDataListPath, data->size(), GameDataListOverhead);
             addToRomfs(GameDataListPath, Compress(*data, zsDictionary));
         }

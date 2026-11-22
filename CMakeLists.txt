@@ -369,7 +369,8 @@ if(KAEPORA_GAME_NUP)
                  shelf-placement single-goods-sign bundle-goods-sign shop-scenes-whole gift-table reward-table
                  dive-depth skulltulas
                  skulltula-table loose-items copies-play-every-get loose-item-heights goods-and-copies
-                 loose-item-table loose-spot-keys claims weapons-bring-containers bigger-containers-bring-the-small-one
+                 loose-item-table loose-spot-keys claims expressions weapons-bring-containers
+                 bigger-containers-bring-the-small-one
                  weapon-copies event-numbers song-table river-arrival-writes-no-step
                  presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out sword-scene-kept
                  both-stones-before-zelda)

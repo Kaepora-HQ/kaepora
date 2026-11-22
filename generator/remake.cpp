@@ -1103,6 +1103,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             plan["claims"].push_back(gift.claim->name);
         }
     }
+    plan["expressions"] = nlohmann::ordered_json::array();
     plan["start_items"] = nlohmann::ordered_json::array();
     for (const StartStep& started : StartWithInOrder(settings)) {
         for (const StartStep& step : StepsTo(started)) {

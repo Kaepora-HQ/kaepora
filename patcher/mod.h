@@ -80,6 +80,13 @@ struct PlannedPresence {
     std::optional<std::string> replaces;
 };
 
+// An expression of the mod's own, true while one saved Bool is: one of the game data list or a claim of the plan.
+// An expression query can name it, and none can name a Bool.
+struct PlannedExpression {
+    std::string name;
+    std::string flag;
+};
+
 // A shop slot that sells the item at the price, once from each shopkeeper. Each shelf shows the slot in one scene.
 struct PlannedShopSlot {
     std::vector<Shopkeeper> shopkeepers;
@@ -123,6 +130,7 @@ struct Plan {
     std::vector<PlannedActorItem> looseItems;
     std::vector<std::string> startItems; // actors a new game holds, as after a find of each in turn
     std::vector<std::string> claims;     // saved Bools of the mod's own, false in a new game
+    std::vector<PlannedExpression> expressions;
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

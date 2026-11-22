@@ -104,6 +104,10 @@ COLOSSUS_CHILD_STATIC = "Banc/DesertColossus/DesertColossus_Child_Static.bcett.b
 COLOSSUS_GATES = [(COLOSSUS_ADULT_STATIC, 12141577802165947392), (COLOSSUS_ADULT_STATIC, 13187812046230253833),
                   (COLOSSUS_CHILD_STATIC, 18409754566529742762), (COLOSSUS_CHILD_STATIC, 15448624735210695325)]
 PAST_SPIRIT_STEP02 = "SageOfSpirit_IsAfter_Step02_Exp"
+# Darunia's question whether his dance has played asks an expression, and the dance's own played flag is a Bool.
+FIRE_QUEST_FLOW = "Event/EventFlow/Get_StoneOfFire.bfevfl.zs"
+DANCE_QUESTION = (FIRE_QUEST_FLOW, "Event39", "GameDataName")
+DARUNIA_DANCE = "HavePlayedEvent.Dm_Goron_0030"
 # The Colossus's gossip stone area, which the game shows only while the stone stands.
 COLOSSUS_STONE_AREA = 12757003145401657983
 # King Zora's ice in the domain an adult sees once the Water quest is complete. Its presence there, on the quest
@@ -572,7 +576,7 @@ def actor(placement, hash):
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
-         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=()):
+         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -589,7 +593,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
             "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
             "start_items": list(start_items),
-            "claims": list(claims)}
+            "claims": list(claims),
+            "expressions": [{"name": name, "flag": flag} for name, flag in expressions]}
 
 
 def shop_slot(slot, item, price):
@@ -1183,7 +1188,7 @@ def together(patch, game):
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
-                         "shops", "skulltulas", "loose_items", "start_items", "claims")}
+                         "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
               "cutscenes_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
@@ -1995,6 +2000,33 @@ def claims(patch, game):
     for key in ("AllDataSaveOffset", "AllDataSaveSize"):
         grown[key] = (INT, grown[key][1] + 16)
     assert save_layout(ours) == grown
+
+
+def expressions(patch, game):
+    """Each expression of the plan is one of the mod's own in the game data list, in the shape of the game's own that
+    read one saved Bool: unsaved, reset type 0, and one operation that reads the Bool by its hash. It may read a claim
+    of the plan as well as a Bool of the game. An expression query may name it, and the saves keep the game's layout
+    but for the claim."""
+    claim = "Kaepora_Once_1"
+    named = [("Kaepora_Test_Claim_Exp", claim), ("Kaepora_Test_Dance_Exp", DARUNIA_DANCE)]
+    mod = patched(patch, game, plan([], claims=[claim], expressions=named,
+                                    event_texts=[(*DANCE_QUESTION, "Kaepora_Test_Dance_Exp")]))
+    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    ours = game.game_data_list(mod[GAME_DATA_LIST])
+    # A save index of -1, no save, as the reader gives the raw 32 bits.
+    added = [{"Hash": (UINT, murmur3(name)), "ResetTypeValue": (INT, 0), "SaveFileIndex": (INT, 0xFFFFFFFF),
+              "Values": [[(UINT64, 0), (UINT64, murmur3(flag))]]} for name, flag in named]
+    assert ours["Data"]["BoolExp"] == theirs["Data"]["BoolExp"] + added
+    assert {table: values for table, values in ours["Data"].items() if table not in ("Bool", "BoolExp")} == {
+        table: values for table, values in theirs["Data"].items() if table not in ("Bool", "BoolExp")}
+    grown = save_layout(theirs)
+    for key in ("SaveDataOffsetPos", "SaveDataSize"):
+        grown[key] = [(INT, grown[key][0][1] + 8), *grown[key][1:]]
+    for key in ("AllDataSaveOffset", "AllDataSaveSize"):
+        grown[key] = (INT, grown[key][1] + 8)
+    assert save_layout(ours) == grown
+    flow = game.event_flow(mod[FIRE_QUEST_FLOW])
+    assert string_parameter(flow, DANCE_QUESTION[1], DANCE_QUESTION[2])[1] == "Kaepora_Test_Dance_Exp"
 
 
 def flow_reach(flow, blocked=()):
@@ -2858,10 +2890,10 @@ def bad_input(patch, game):
     timeline = "Event/EventFlow/Dm_Awake_Fire.bfevfl.zs"
     # Dm_LonLon_0030's Event40 gives 20 rupees, a number.
     rupees = {"flow": "Event/EventFlow/Dm_LonLon_0030.bfevfl.zs", "event": "Event40", "param": "Value"}
-    fire_quest = "Event/EventFlow/Get_StoneOfFire.bfevfl.zs"
-    expression_query = {"flow": fire_quest, "event": "Event39", "param": "GameDataName"}
+    fire_quest = FIRE_QUEST_FLOW
+    expression_query = dict(zip(("flow", "event", "param"), DANCE_QUESTION))
     value_query = {"flow": WINDMILL_MAN_FLOW, "event": "Event17", "param": "GameDataName"}
-    darunia_dance = "HavePlayedEvent.Dm_Goron_0030"
+    darunia_dance = DARUNIA_DANCE
     texts = {
         "event text not this shape": (
             {key: valid_gift[key] for key in ("flow", "event", "param")}, ["plan.json", "event_texts[1]"]),
@@ -2887,6 +2919,21 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in texts.items():
         plans[name] = (good | {"event_texts": [valid_gift, entry]}, named)
+    ours = "Kaepora_Test_Dance_Exp"
+    reads_dance = {"name": ours, "flag": DARUNIA_DANCE}
+    plans["value query given an expression of the plan's own"] = (
+        good | {"expressions": [reads_dance], "event_texts": [valid_gift, dict(value_query, text=ours)]},
+        ["Event17 GameDataName", WINDMILL_MAN_FLOW, ours, "asks for a true-or-false value"])
+    plans["expression reads no true-or-false value"] = (
+        good | {"expressions": [dict(reads_dance, flag=PAST_SPIRIT_STEP02)]},
+        [ours, PAST_SPIRIT_STEP02, "no true-or-false value"])
+    plans["expression named as a value of the list"] = (
+        good | {"expressions": [dict(reads_dance, name=PAST_SPIRIT_STEP02)]},
+        [PAST_SPIRIT_STEP02, "has the hash of a value in BoolExp"])
+    plans["expression listed twice"] = (
+        good | {"expressions": [reads_dance, reads_dance]}, ["plan.json", "expressions", ours, "twice"])
+    plans["no expressions"] = (
+        {key: value for key, value in good.items() if key != "expressions"}, ["plan.json", "expressions"])
     valid_melody = dict(zip(("flow", "event", "param"), IMPA_EXAMPLE), value=MINUET)
     numbers = {
         "event number not this shape": (
@@ -3013,6 +3060,7 @@ def main():
         "loose-item-table": loose_item_table,
         "loose-spot-keys": loose_spot_keys,
         "claims": claims,
+        "expressions": expressions,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
