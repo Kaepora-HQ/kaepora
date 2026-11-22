@@ -2,6 +2,9 @@ name: check
 
 on:
   pull_request:
+    # The game testing package has its own workflow, game-testing.yml.
+    paths-ignore:
+      - tools/game-testing/**
   push:
     branches: [main]
   workflow_call:
