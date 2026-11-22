@@ -240,6 +240,11 @@ class LogicTest(unittest.TestCase):
     def test_crater_great_fairy_needs_magic(self):
         self.assertFalse(self.reachable("DMC Great Fairy Reward", ("DMT Great Fairy Reward", "Green Rupee")))
 
+    def test_only_the_bean_lifts_link_to_the_volcano_heart_piece(self):
+        # The remake has no bomb or bombchu hover.
+        self.assertTrue(self.reachable("DMC Volcano Freestanding PoH"))
+        self.assertFalse(self.reachable("DMC Volcano Freestanding PoH", ("ZR Magic Bean Salesman", "Green Rupee")))
+
     def test_bombchu_shop_opens_after_dodongos_cavern(self):
         # Without Goron's Bracelet, child Link cannot open Dodongo's Cavern, so he never beats King Dodongo and never
         # becomes adult.
