@@ -1341,8 +1341,9 @@ bool Logic::CanBreakMudWalls() {
     return BlastOrSmash() || (ctx->GetTrickOption(RT_BLUE_FIRE_MUD_WALLS) && BlueFire());
 }
 
+// A Deku Baba killed with the Boomerang drops nuts and no stick (seen).
 bool Logic::CanGetDekuBabaSticks() {
-    return CanUseSword() || CanUse(RG_BOOMERANG);
+    return CanUseSword();
 }
 
 bool Logic::CanGetDekuBabaNuts() {

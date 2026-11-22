@@ -678,6 +678,18 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Dodongos Cavern Upper Lizalfos Chest", no_slingshot, boomerang, NEVER_ADULT))
         self.assertFalse(self.reachable("Dodongos Cavern Bomb Bag Chest", no_slingshot, boomerang, NEVER_ADULT))
 
+    def test_a_deku_baba_gives_a_stick_only_to_a_sword(self):
+        # Seen in the game: Deku Babas killed with the Boomerang, the Deku Tree lobby's and the withered ones in front of
+        # the tree, dropped nuts and no stick. A sword's kill gives one. Queen Gohma asks for a stick or a sword. This
+        # child has neither: the shops' sticks and the Deku Tree's are held back, and without Zelda's Letter and her
+        # Lullaby he never reaches the pots of Goron City and Zora's Domain.
+        stickless = (NEVER_ADULT, ("KF Kokiri Sword Chest", "Green Rupee"), ("KF Shop Item 4", "Green Rupee"),
+                     ("Market Bazaar Item 7", "Green Rupee"), ("Deku Tree Basement Chest", "Green Rupee"),
+                     ("HC Zeldas Letter", "Green Rupee"), ("Song from Impa", "Green Rupee"))
+        boomerang = ("KF Mido Top Left Chest", "Boomerang")
+        self.assertFalse(self.reachable("Queen Gohma", *stickless, boomerang, settings=FOREST_OPEN))
+        self.assertTrue(self.reachable("Queen Gohma", *stickless[:2], *stickless[3:], boomerang, settings=FOREST_OPEN))
+
     def test_the_longshot_opens_the_water_temple_eye_gates(self):
         # The Longshot hits the eye over the gate to the central bow target room, with the water at middle, and the eye
         # over the dragon room's gate from the river, and gets Link through each before it shuts. Past the dragon room's
