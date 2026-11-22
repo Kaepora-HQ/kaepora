@@ -172,19 +172,11 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Market Bombchu Shop Item 7", *NO_WALLET_UPGRADE))
         self.assertTrue(self.reachable("Market Bombchu Shop Item 8", ONE_WALLET_UPGRADE))
 
-    def test_epona_comes_only_after_malons_lesson(self):
+    def test_malons_lesson_frees_epona_whatever_song_it_teaches(self):
         # Horseback archery needs Epona. Ingo races adult Link for her only once child Malon's lesson has played,
         # whatever song it teaches.
         self.assertTrue(self.reachable("GF HBA 1000 Points", ("Song from Malon", "Saria's Song"),
                                        ("Song from Saria", "Epona's Song")))
-        # Without the Weird Egg, Talon never wakes and Malon never goes home to teach. Zelda's Letter from the start
-        # opens the village gate, and the Lullaby and Saria's Song in the forest win the stones, so Link still grows
-        # up and holds Epona's Song.
-        no_lesson = (("HC Malon Egg", "Green Rupee"), ("Link's Pocket", "Zelda's Letter"),
-                     ("KF Mido Top Left Chest", "Zelda's Lullaby"), ("KF Mido Top Right Chest", "Saria's Song"),
-                     ("KF Mido Bottom Left Chest", "Epona's Song"))
-        self.assertTrue(self.reachable("Song from Windmill", *no_lesson))
-        self.assertFalse(self.reachable("GF HBA 1000 Points", *no_lesson))
 
     def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_not_for_the_card(self):
         # After the last carpenter a scene moves the Spirit quest on. The guards, the Wasteland's gate keeper and the

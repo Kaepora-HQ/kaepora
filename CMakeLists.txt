@@ -247,8 +247,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
                      mido_names_where_the_kokiri_sword_lies a_place_a_character_names_is_not_named_again_by_a_stone
                      mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla
-                     with_songs_shuffled_both_stone_bosses_wait_for_zeldas_letter
-                     both_stone_bosses_wait_for_zeldas_letter
+                     the_moat_waits_for_zelda_and_the_stone_bosses_do_not
                      with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple
                      with_songs_shuffled_the_courtyard_scene_starts_played
                      a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played

@@ -18,8 +18,10 @@ void RegionTable_Init_HyruleField() {
         EVENT_ACCESS(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA, logic->IsChild && AnyAgeTime([]{return logic->BlastOrSmash();}) && logic->CanKillEnemy(RE_WALLTULA)),
     }, {
         //Locations
-        LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneBossesBeaten() && logic->HasItem(RG_BRONZE_SCALE)),
-        LOCATION(RC_SONG_FROM_OCARINA_OF_TIME,     logic->IsChild && logic->StoneBossesBeaten() && logic->HasItem(RG_BRONZE_SCALE)),
+        // The Door of Time's quest refuses the stones until Zelda is met, and takes them at Impa's send-off or as a
+        // stone's dungeon ends. Zelda flees past the moat once the quest has both.
+        LOCATION(RC_HF_OCARINA_OF_TIME_ITEM,       logic->IsChild && logic->StoneBossesBeaten() && logic->Get(LOGIC_MET_ZELDA) && logic->HasItem(RG_BRONZE_SCALE)),
+        LOCATION(RC_SONG_FROM_OCARINA_OF_TIME,     logic->IsChild && logic->StoneBossesBeaten() && logic->Get(LOGIC_MET_ZELDA) && logic->HasItem(RG_BRONZE_SCALE)),
         LOCATION(RC_HF_POND_STORMS_FAIRY,          logic->CanUse(RG_SONG_OF_STORMS)),
         // Only the adult field has the three chests with a Poe beside them. Reaching the south-west one may take the
         // refilled lake.
