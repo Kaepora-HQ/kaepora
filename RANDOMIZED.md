@@ -34,9 +34,16 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 ## Gifts
 
-Set **Gifts** to **Shuffled**, and 32 things that characters and minigames hand over join the shuffle. They are the House of Skulltula's five rewards, both fishing prizes, the lakeside laboratory's dive, the Zora diving game, horseback archery, Bombchu Bowling, the frogs' two prizes, the ocarina memory game in the Lost Woods, the Big Poe buyer, Dampé's digging tour, and the gifts of the Skull Kid, the man on the roof, Anju, Talon and the lost dog's owner. Eight more are the prizes that make a bag bigger: both shooting galleries, the target in the Lost Woods, horseback archery's second prize, Bombchu Bowling's bomb bag, the rolling Goron in Goron City, and the two prizes of the Deku theater in the Lost Woods. Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot. Three more come where the story moves on: the Gerudo Pass you get for freeing the carpenters, King Zora's tunic, and Zelda's Light Arrows in the Temple of Time.
+Under **Shuffle**, **Gifts** opens a list of groups. Tick a group, and what its characters and minigames hand over joins the shuffle. A group you leave unticked gives what the game gives.
 
-You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone. With **Vanilla**, each gives what the game has.
+- **Minigames:** both fishing prizes, the Zora diving game, horseback archery's two prizes, Bombchu Bowling's two prizes, the frogs' two prizes, the ocarina memory game in the Lost Woods, both shooting galleries, the target in the Lost Woods, the rolling Goron in Goron City, Talon's cuccos, Anju's cuccos and Dampé's digging tour.
+- **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer, the lakeside laboratory's dive and the Deku theater's two prizes.
+- **House of Skulltula:** the five rewards for Gold Skulltula tokens.
+- **Story gifts:** the scene after the carpenters' rescue, King Zora's thanks and Zelda's scene in the Temple of Time.
+
+Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot.
+
+You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone.
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
 
