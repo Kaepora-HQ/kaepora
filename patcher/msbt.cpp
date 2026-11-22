@@ -244,4 +244,34 @@ std::string Encode(std::string_view tagged) {
     return text;
 }
 
+std::string Decode(std::string_view text) {
+    std::string tagged;
+    for (size_t at = 0; at < text.size();) {
+        if (text[at] != CodeStart) {
+            tagged += text[at++];
+            continue;
+        }
+        const uint16_t group = ReadAt<uint16_t>(text, at + 1);
+        const uint16_t type = ReadAt<uint16_t>(text, at + 3);
+        const uint16_t size = ReadAt<uint16_t>(text, at + 5);
+        const std::string_view params = text.substr(at + CodeHeaderSize, size);
+        if (params.size() != size) {
+            throw std::runtime_error("a control code runs past the end of the text");
+        }
+        at += CodeHeaderSize + size;
+        if (group == Layout && type == Page && params.empty()) {
+            tagged += PageTag;
+        } else if (group == Layout && (type == Color || type == Size) && params.size() == 2) {
+            tagged += std::format("{{{}:{}}}", type == Color ? "color" : "size", ReadAt<uint16_t>(params, 0));
+        } else {
+            tagged += std::format("{{{}:{}:", group, type);
+            for (const char byte : params) {
+                tagged += std::format("{:02x}", uint8_t(byte));
+            }
+            tagged += '}';
+        }
+    }
+    return tagged;
+}
+
 } // namespace msbt

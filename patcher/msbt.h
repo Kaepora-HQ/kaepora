@@ -27,4 +27,7 @@ constexpr std::string_view PageTag = "{page}";
 // itself. Throws, naming the tag, on a tag it does not know, and on a zero or code byte outside a tag.
 std::string Encode(std::string_view tagged);
 
+// The tagged text Encode turns into this text, with the tag that names a control code where there is one.
+std::string Decode(std::string_view text);
+
 } // namespace msbt
