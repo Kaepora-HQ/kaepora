@@ -40,10 +40,26 @@ static QString Counted(size_t items) {
     return items == 0 ? "None" : items == 1 ? "1 item" : QString("%1 items").arg(items);
 }
 
+static QString CountedGroups(size_t groups) {
+    if (groups == 0) {
+        return "Vanilla";
+    }
+    return groups == std::size(GiftGroups) ? "All groups"
+                                           : QString("%1 of %2 groups").arg(groups).arg(std::size(GiftGroups));
+}
+
 static std::pair<QStringList, QStringList> ShuffledAndLeftOut(const SeedSettings& settings) {
     std::pair<QStringList, QStringList> names;
     for (const Dungeon& dungeon : Dungeons) {
         (settings.shuffledDungeons.contains(dungeon) ? names.first : names.second) << QString::fromUtf8(dungeon.name);
+    }
+    return names;
+}
+
+static std::pair<QStringList, QStringList> GiftGroupsShuffledAndLeftOut(const SeedSettings& settings) {
+    std::pair<QStringList, QStringList> names;
+    for (const auto& [group, name] : GiftGroups) {
+        (settings.gifts.contains(group) ? names.first : names.second) << QString::fromUtf8(name);
     }
     return names;
 }
@@ -98,8 +114,10 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.skulltulas == Skulltulas::All) {
         changed << "Gold Skulltulas shuffled";
     }
-    if (!settings.gifts.empty()) {
+    if (settings.gifts.size() == std::size(GiftGroups)) {
         changed << "gifts shuffled";
+    } else if (!settings.gifts.empty()) {
+        changed << QString("%1 of %2 gift groups shuffled").arg(settings.gifts.size()).arg(std::size(GiftGroups));
     }
     if (settings.songs == Songs::ShuffledAmongThemselves) {
         changed << "songs shuffled";
@@ -128,8 +146,8 @@ static QString Line(std::string_view setting, const QString& value) {
     return QString::fromUtf8(setting) + ": " + value;
 }
 
-static QString ShuffledDungeons(const SeedSettings& settings) {
-    const auto [shuffled, leftOut] = ShuffledAndLeftOut(settings);
+static QString Chosen(const std::pair<QStringList, QStringList>& shuffledAndLeftOut) {
+    const auto& [shuffled, leftOut] = shuffledAndLeftOut;
     if (leftOut.isEmpty()) {
         return "All";
     }
@@ -158,7 +176,7 @@ static QString ShopPricesDetail(const ShopPrices& prices) {
 }
 
 QString Details(const SeedSettings& settings) {
-    QStringList lines{ Line(ShuffledDungeonsSetting, ShuffledDungeons(settings)),
+    QStringList lines{ Line(ShuffledDungeonsSetting, Chosen(ShuffledAndLeftOut(settings))),
                         Line(KeysSetting, QString::fromUtf8(Words(KeysChoices, settings.keys))),
                         Line(MapsAndCompassesSetting,
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
@@ -173,7 +191,7 @@ QString Details(const SeedSettings& settings) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
     lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
-          << Line(GiftsSetting, settings.gifts.empty() ? "Vanilla" : "Shuffled")
+          << Line(GiftsSetting, settings.gifts.empty() ? "Vanilla" : Chosen(GiftGroupsShuffledAndLeftOut(settings)))
           << Line(SongsSetting, QString::fromUtf8(Words(SongsChoices, settings.songs)))
           << Line(LooseItemsSetting, QString::fromUtf8(Words(LooseItemsChoices, settings.looseItems)))
           << Line(RewardsSetting, QString::fromUtf8(Words(RewardsChoices, settings.rewards)))
@@ -254,11 +272,27 @@ static Value Selected(const QComboBox* box) {
     return static_cast<Value>(box->currentData().toInt());
 }
 
-static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& started,
-                            const std::function<void(const std::set<StartStep>&)>& chosen) {
+static void OpenList(QWidget* settingsDialog, std::string_view setting, const QString& title, QLayout* choices,
+                     const std::function<void()>& accepted) {
     auto* dialog = new QDialog(settingsDialog);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setWindowTitle(QString::fromUtf8(StartWithSetting));
+    dialog->setWindowTitle(QString::fromUtf8(setting));
+    auto* group = new QGroupBox(title);
+    group->setLayout(choices);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
+    auto* layout = new QVBoxLayout(dialog);
+    layout->addWidget(group);
+    layout->addWidget(buttons);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
+        accepted();
+        dialog->accept();
+    });
+    dialog->open();
+}
+
+static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& started,
+                            const std::function<void(const std::set<StartStep>&)>& chosen) {
     std::vector<std::pair<StartStep, QCheckBox*>> boxes;
     std::vector<QComboBox*> rows;
     std::string_view rowItem;
@@ -286,14 +320,7 @@ static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& 
     auto* columns = new QHBoxLayout;
     columns->addLayout(column);
     columns->addLayout(form);
-    auto* group = new QGroupBox("Items");
-    group->setLayout(columns);
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
-    auto* layout = new QVBoxLayout(dialog);
-    layout->addWidget(group);
-    layout->addWidget(buttons);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-    QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
+    OpenList(settingsDialog, StartWithSetting, "Items", columns, [=] {
         std::set<StartStep> steps;
         for (const auto& [step, box] : boxes) {
             if (box->isChecked()) {
@@ -306,9 +333,28 @@ static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& 
             }
         }
         chosen(steps);
-        dialog->accept();
     });
-    dialog->open();
+}
+
+static void ChooseGifts(QWidget* settingsDialog, const std::set<GiftGroup>& shuffled,
+                        const std::function<void(const std::set<GiftGroup>&)>& chosen) {
+    std::vector<std::pair<GiftGroup, QCheckBox*>> boxes;
+    auto* column = new QVBoxLayout;
+    for (const auto& [group, name] : GiftGroups) {
+        auto* box = new QCheckBox(QString::fromUtf8(name));
+        box->setChecked(shuffled.contains(group));
+        column->addWidget(box);
+        boxes.emplace_back(group, box);
+    }
+    OpenList(settingsDialog, GiftsSetting, "Gifts", column, [=] {
+        std::set<GiftGroup> groups;
+        for (const auto& [group, box] : boxes) {
+            if (box->isChecked()) {
+                groups.insert(group);
+            }
+        }
+        chosen(groups);
+    });
 }
 
 void ChooseSettings(QWidget* window, const SeedSettings& settings,
@@ -355,8 +401,13 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* shopPricesLabel = new QLabel(QString::fromUtf8(ShopPricesSetting));
     shopPricesLabel->setBuddy(shopPrices);
     QComboBox* skulltulas = Choice(SkulltulasChoices);
-    auto* gifts = new QComboBox;
-    gifts->addItems({ "Vanilla", "Shuffled" });
+    auto gifts = std::make_shared<std::set<GiftGroup>>();
+    auto* giftGroups = new QPushButton;
+    const auto showGifts = [=](const std::set<GiftGroup>& shown) {
+        *gifts = shown;
+        giftGroups->setText(CountedGroups(shown.size()));
+    };
+    QObject::connect(giftGroups, &QPushButton::clicked, dialog, [=] { ChooseGifts(dialog, *gifts, showGifts); });
     QComboBox* songs = Choice(SongsChoices);
     QComboBox* looseItems = Choice(LooseItemsChoices);
     QComboBox* rewards = Choice(RewardsChoices);
@@ -364,7 +415,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shuffleForm->addRow(QString::fromUtf8(ShopsSetting), shops);
     shuffleForm->addRow(shopPricesLabel, shopPricesRow);
     shuffleForm->addRow(QString::fromUtf8(SkulltulasSetting), skulltulas);
-    shuffleForm->addRow(QString::fromUtf8(GiftsSetting), gifts);
+    shuffleForm->addRow(QString::fromUtf8(GiftsSetting), giftGroups);
     shuffleForm->addRow(QString::fromUtf8(SongsSetting), songs);
     shuffleForm->addRow(QString::fromUtf8(LooseItemsSetting), looseItems);
     shuffleForm->addRow(QString::fromUtf8(RewardsSetting), rewards);
@@ -453,7 +504,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         highestShopPrice->setValue(range.highest);
         showPrices();
         Select(skulltulas, shown.skulltulas);
-        gifts->setCurrentIndex(shown.gifts.empty() ? 0 : 1);
+        showGifts(shown.gifts);
         Select(songs, shown.songs);
         Select(looseItems, shown.looseItems);
         Select(rewards, shown.rewards);
@@ -495,9 +546,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
             shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
         }
         shown.skulltulas = Selected<Skulltulas>(skulltulas);
-        if (gifts->currentIndex() == 1) {
-            shown.gifts = EveryGiftGroup();
-        }
+        shown.gifts = *gifts;
         shown.songs = Selected<Songs>(songs);
         shown.looseItems = Selected<LooseItems>(looseItems);
         shown.rewards = Selected<Rewards>(rewards);

@@ -280,7 +280,10 @@ if(Qt6Test_FOUND)
                      aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
                      theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
                      untickingStopsARequestInFlight theStartWithListHasTheItems
-                     oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith)
+                     oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith
+                     theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
+                     aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroup
+                     rememberedSettingsWithGiftsShuffledTickEveryGroup)
     if(APPLE)
         list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)
     endif()

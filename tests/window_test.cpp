@@ -303,34 +303,45 @@ private:
         return nullptr;
     }
 
-    // The button of the "Start" group's "Items" row.
-    QPushButton* itemsToStartWith() const {
+    QPushButton* listButton(const QString& label) const {
         for (QLabel* text : dialog()->findChildren<QLabel*>()) {
-            if (text->text() == "Items") {
+            if (text->text() == label) {
                 return qobject_cast<QPushButton*>(text->buddy());
             }
         }
         return nullptr;
     }
 
-    QDialog* startWithDialog() const {
+    QPushButton* itemsToStartWith() const {
+        return listButton("Items");
+    }
+
+    QDialog* openList(const QString& title) const {
         for (QDialog* dialog : window->findChildren<QDialog*>()) {
-            if (dialog->isVisible() && dialog->windowTitle() == "Start with") {
+            if (dialog->isVisible() && dialog->windowTitle() == title) {
                 return dialog;
             }
         }
         return nullptr;
     }
 
+    QDialog* startWithDialog() const {
+        return openList("Start with");
+    }
+
     // Qt deletes a closed list later. Deleting it now keeps its boxes out of the settings dialog's children.
-    void closeStartWith(const QString& text) {
-        for (QPushButton* button : startWithDialog()->findChildren<QPushButton*>()) {
+    void closeList(const QString& title, const QString& text) {
+        for (QPushButton* button : openList(title)->findChildren<QPushButton*>()) {
             if (button->text() == text) {
                 button->click();
                 break;
             }
         }
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    void closeStartWith(const QString& text) {
+        closeList("Start with", text);
     }
 
     QComboBox* stepsOf(const QString& item) const {
@@ -351,6 +362,14 @@ private:
             stepsOf(item)->setCurrentText(step);
         }
         closeStartWith("OK");
+    }
+
+    void shuffleGifts(const QStringList& groups) {
+        listButton("Gifts")->click();
+        for (QCheckBox* box : openList("Gifts")->findChildren<QCheckBox*>()) {
+            box->setChecked(groups.contains(box->text()));
+        }
+        closeList("Gifts", "OK");
     }
 
     // The labels of a group's rows, in order.
@@ -704,7 +723,7 @@ private slots:
         choice("Hints from characters")->setCurrentText("Vanilla");
         choice("Shop goods")->setCurrentText("Four per shop shuffled");
         choice("Gold Skulltulas")->setCurrentText("All");
-        choice("Gifts")->setCurrentText("Shuffled");
+        shuffleGifts({ "Characters" });
         choice("Songs")->setCurrentText("Shuffled among themselves");
         choice("Loose items")->setCurrentText("Shuffled");
         choice("Dungeon rewards")->setCurrentText("Shuffled");
@@ -724,7 +743,7 @@ private slots:
         QCOMPARE(choice("Cutscenes")->currentText(), QString("Skipped"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
-        QCOMPARE(choice("Gifts")->currentText(), QString("Vanilla"));
+        QCOMPARE(listButton("Gifts")->text(), QString("Vanilla"));
         QCOMPARE(choice("Songs")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Loose items")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Dungeon rewards")->currentText(), QString("Vanilla"));
@@ -995,6 +1014,57 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
+    void theGiftsListHasTheGroups() {
+        button("Settings…")->click();
+        QCOMPARE(listButton("Gifts")->text(), QString("Vanilla"));
+        listButton("Gifts")->click();
+        QStringList names;
+        for (QGroupBox* group : openList("Gifts")->findChildren<QGroupBox*>()) {
+            names << group->title();
+            for (QCheckBox* box : group->findChildren<QCheckBox*>()) {
+                QVERIFY(!box->isChecked());
+                names << box->text();
+            }
+        }
+        QCOMPARE(names, (QStringList{ "Gifts", "Minigames", "Characters", "House of Skulltula", "Story gifts" }));
+        QStringList buttons;
+        for (QPushButton* button : openList("Gifts")->findChildren<QPushButton*>()) {
+            buttons << button->text();
+        }
+        buttons.sort();
+        QCOMPARE(buttons, (QStringList{ "Cancel", "OK" }));
+        closeList("Gifts", "Cancel");
+    }
+
+    void giftGroupsGoIntoTheSeed() {
+        button("Settings…")->click();
+        shuffleGifts({ "House of Skulltula", "Minigames" });
+        QCOMPARE(listButton("Gifts")->text(), QString("2 of 4 groups"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("2 of 4 gift groups shuffled"));
+        QVERIFY(label("2 of 4 gift groups shuffled")
+                    ->toolTip()
+                    .split('\n')
+                    .contains("Gifts: All but Characters and Story gifts"));
+
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Gifts"].toArray(), (QJsonArray{ "Minigames", "House of Skulltula" }));
+    }
+
+    void everyGiftGroupShowsAsGiftsShuffled() {
+        button("Settings…")->click();
+        listButton("Gifts")->click();
+        for (QCheckBox* box : openList("Gifts")->findChildren<QCheckBox*>()) {
+            box->setChecked(true);
+        }
+        closeList("Gifts", "OK");
+        QCOMPARE(listButton("Gifts")->text(), QString("All groups"));
+        dialogButton("OK")->click();
+        QVERIFY(shows("Gifts shuffled"));
+        QVERIFY(label("Gifts shuffled")->toolTip().split('\n').contains("Gifts: All"));
+    }
+
     void theHintsChoicesShareAGroup() {
         button("Settings…")->click();
         QCOMPARE(rows("Hints"), (QStringList{ "Gossip stones", "Hints from characters" }));
@@ -1034,7 +1104,6 @@ private slots:
         QTest::newRow("overworld skulltulas") << "Gold Skulltulas" << "In the overworld"
                                               << "Overworld Gold Skulltulas shuffled";
         QTest::newRow("skulltulas") << "Gold Skulltulas" << "All" << "Gold Skulltulas shuffled";
-        QTest::newRow("gifts") << "Gifts" << "Shuffled" << "Gifts shuffled";
         QTest::newRow("songs") << "Songs" << "Shuffled among themselves" << "Songs shuffled";
         QTest::newRow("loose items") << "Loose items" << "Shuffled" << "Loose items shuffled";
         QTest::newRow("dungeon rewards") << "Dungeon rewards" << "Shuffled" << "Dungeon rewards shuffled";
@@ -1123,6 +1192,24 @@ private slots:
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Cutscenes: Played"));
     }
 
+    void aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroup() {
+        // The settings of a seed made by Kaepora 0.4.0 with gifts shuffled.
+        QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
+        Write(library + "/OWL/spoiler.json",
+              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
+              "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
+              "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
+              "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
+              "Opening": "Skipped", "Start with": [], "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
+              "Gifts": "Shuffled", "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla",
+              "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
+        window = std::make_unique<Window>();
+        window->show();
+        QCOMPARE(listed(1), QStringList{ "Cutscenes played, gifts shuffled" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Gifts: All"));
+    }
+
     void aSeedWhoseSpoilerLogCannotBeReadIsListed() {
         // What an editor leaves when a letter is typed in front of the log and saved.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
@@ -1144,6 +1231,21 @@ private slots:
         QCOMPARE(choice("Small and boss keys")->currentText(), QString("In their own chests"));
         QCOMPARE(choice("Maps and compasses")->currentText(), QString("Anywhere in their dungeon"));
         QCOMPARE(choice("Lens of Truth")->currentText(), QString("Never needed"));
+    }
+
+    void rememberedSettingsWithGiftsShuffledTickEveryGroup() {
+        QSettings().setValue("seedSettings", R"({"Gifts": "Shuffled"})");
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Gifts shuffled"));
+        button("Settings…")->click();
+        listButton("Gifts")->click();
+        const QList<QCheckBox*> boxes = openList("Gifts")->findChildren<QCheckBox*>();
+        QVERIFY(!boxes.isEmpty());
+        for (QCheckBox* box : boxes) {
+            QVERIFY(box->isChecked());
+        }
+        closeList("Gifts", "Cancel");
     }
 
     void unreadableRememberedSettingsStartAsTheDefaults() {
