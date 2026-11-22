@@ -1027,7 +1027,8 @@ private slots:
                 names << box->text();
             }
         }
-        QCOMPARE(names, (QStringList{ "Gifts", "Minigames", "Characters", "House of Skulltula", "Story gifts" }));
+        QCOMPARE(names, (QStringList{ "Gifts", "Minigames", "Characters", "House of Skulltula", "Story gifts",
+                                      "Biggoron Quest" }));
         QStringList buttons;
         for (QPushButton* button : openList("Gifts")->findChildren<QPushButton*>()) {
             buttons << button->text();
@@ -1039,18 +1040,18 @@ private slots:
 
     void giftGroupsGoIntoTheSeed() {
         button("Settings…")->click();
-        shuffleGifts({ "House of Skulltula", "Minigames" });
-        QCOMPARE(listButton("Gifts")->text(), QString("2 of 4 groups"));
+        shuffleGifts({ "House of Skulltula", "Minigames", "Biggoron Quest" });
+        QCOMPARE(listButton("Gifts")->text(), QString("3 of 5 groups"));
         dialogButton("OK")->click();
-        QVERIFY(shows("2 of 4 gift groups shuffled"));
-        QVERIFY(label("2 of 4 gift groups shuffled")
+        QVERIFY(shows("3 of 5 gift groups shuffled"));
+        QVERIFY(label("3 of 5 gift groups shuffled")
                     ->toolTip()
                     .split('\n')
                     .contains("Gifts: All but Characters and Story gifts"));
 
         QVERIFY(create("7"));
         const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
-        QCOMPARE(settings["Gifts"].toArray(), (QJsonArray{ "Minigames", "House of Skulltula" }));
+        QCOMPARE(settings["Gifts"].toArray(), (QJsonArray{ "Minigames", "House of Skulltula", "Biggoron Quest" }));
     }
 
     void everyGiftGroupShowsAsGiftsShuffled() {

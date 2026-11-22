@@ -191,13 +191,13 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 32 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 33 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
-that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, and three places where the story moves: the scene
+that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, three places where the story moves: the scene
 after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
-of Time. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item to the pool, and the plan
-writes the placed item at each of its places. A location of a group left out keeps what the game gives, and the plan
-names none of its places.
+of Time, and adult Anju's Pocket Egg. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item
+to the pool, and the plan writes the placed item at each of its places. A location of a group left out keeps what the
+game gives, and the plan names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -219,6 +219,21 @@ That is stricter than the game, where a bigger bomb bag brings the small one he 
 a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For a place whose group is left out, the logic
 counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the eight places
 their bags and the 40-token reward its 20 Bombchus.
+
+Adult Anju gives the Pocket Egg in Kakariko. While "Biggoron Quest" shuffles her place, the egg is an item of the pool,
+and her place holds whatever the seed puts there:
+
+- Her talk writes StartSubEvent of the trade quest, whatever she gives, and her offer asks nothing of the egg: she
+  offered as usual to a Link who held one and gave her place's item (seen).
+- The egg's timer in the program runs only for a Link whose save says he found the egg, at that step, and hatches it
+  at the next dawn (read from the program). Nothing else starts the hatch. So the Pocket Cucco waits for the egg found
+  and her talk, in either order, and adult Talon and her trade for Cojiro wait for the egg as SoH's rules have them.
+  Seen: a Pocket Egg from a chest set its record and hatched into the Pocket Cucco, taking the egg from the pouch,
+  found after her talk and found before it.
+- A child who finds the egg keeps it until the adult's talk (read).
+- The egg goes only to a chest, a gift or a reward's place, as the Gerudo's card does: no copy of it on the ground or on
+  a Gold Skulltula, and no shelf, has been seen to give one. A chest gave one (seen); a gift's call or a reward's place
+  gives it through the same pouch add (read).
 
 A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
 retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
@@ -242,9 +257,14 @@ Seen in the game:
 - The Lost Woods target's scrub gave a placed Boomerang. He held the seed bag's model while the Boomerang's own get
   scene played, and the Boomerang was kept after a reload. The rolling Goron gave a placed Boomerang, and his scene
   played out. The other six bag prizes hand over through the same entries as gifts seen above (read from the flows).
+- Adult Anju gave an Empty Bottle. With no record of the Pocket Egg, no Pocket Cucco came over a couple of days. With
+  `IsGet.Item_PocketEgg` set by hand and no egg held, the egg hatched at dawn and the Pocket Cucco woke Talon.
+- A Pocket Egg from Kakariko's open grotto chest set its record and hatched into the Pocket Cucco, and Talon's talk
+  moved the trade quest to Step01_01. Found before her talk, it was held when she offered as usual and gave her place's
+  item, a Red Rupee, and one egg was held; it hatched as well.
 
-So every way the 29 hand over their item has given another item. Read from the game's files and not yet seen: a prize
-talk may still name the usual prize, and the map may keep a heart on these places until each is won.
+So every way the 29 and adult Anju hand over their item has given another item. Read from the game's files and not yet
+seen: a prize talk may still name the usual prize, and the map may keep a heart on these places until each is won.
 
 The three story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage quest to Complete and the Ganon quest

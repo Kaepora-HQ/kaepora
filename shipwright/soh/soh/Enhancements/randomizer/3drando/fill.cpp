@@ -27,14 +27,20 @@ static bool placementFailure = false;
 
 // The places whose scene sets what later steps wait for, whatever the place gives, and what each sets: the place after
 // each boss and the dungeon its blue warp clears, the scene after the last carpenter and the Gerudo letting Link pass,
-// and Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows.
+// Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows, and adult Anju's talk, after which a
+// Pocket Egg found hatches.
 static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
     { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
     { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
     { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
     { RC_BONGO_BONGO, LOGIC_SHADOW_TEMPLE_CLEAR }, { RC_TWINROVA, LOGIC_SPIRIT_TEMPLE_CLEAR },
     { RC_TH_FREED_CARPENTERS, LOGIC_GERUDOS_ACCEPT_LINK }, { RC_TOT_LIGHT_ARROWS_CUTSCENE, LOGIC_SHEIK_REVEALS_ZELDA },
+    { RC_KAK_ANJU_AS_ADULT, LOGIC_MET_ADULT_ANJU },
 };
+
+// The events of scenePlaces that no region sets, so every search sets each where it takes or reaches its place, the
+// moment it would take an item there: a giver's talk, which an egg's hatch follows whatever the talk gives.
+static constexpr LogicVal talks[] = { LOGIC_MET_ADULT_ANJU };
 
 // Set while the spoiler log's route is made.
 static bool routeTakesScenes = false;
@@ -48,16 +54,22 @@ bool SetByItsScenePlace(LogicVal event) {
            std::ranges::any_of(scenePlaces, [event](const auto& scene) { return scene.second == event; });
 }
 
-void ApplyCheck(Rando::ItemLocation* location) {
-    location->ApplyPlacedItemEffect();
-    if (!routeTakesScenes) {
-        return;
-    }
+// Sets what the scene at location sets, where the search under way lets the place set it: every event while the
+// spoiler log's route is made, and a talk in every search. Returns whether it set one.
+static bool SetScenesAt(RandomizerCheck location) {
+    bool set = false;
     for (const auto& [place, event] : scenePlaces) {
-        if (place == location->GetRandomizerCheck()) {
+        if (place == location && (routeTakesScenes || std::ranges::find(talks, event) != std::end(talks))) {
             logic->Set(event, true);
+            set = true;
         }
     }
+    return set;
+}
+
+void ApplyCheck(Rando::ItemLocation* location) {
+    location->ApplyPlacedItemEffect();
+    SetScenesAt(location->GetRandomizerCheck());
 }
 
 PriceSettingsStruct shopsanityPrices = {
@@ -456,6 +468,11 @@ bool AddCheckToLogic(LocationAccess& locPair, GetAccessibleLocationsStruct& gals
 
         if (locItem == RG_NONE || logic->CalculatingAvailableChecks) {
             gals.accessibleLocations.push_back(loc); // Empty location, consider for placement
+        }
+        // A talk comes whatever the place will hold, so the fill sets it where it reaches the place still empty. The
+        // route's searches leave it to the place's taking, so that the route names the place where a step waits for it.
+        if (locItem == RG_NONE && !routeTakesScenes && SetScenesAt(loc)) {
+            gals.logicUpdated = true;
         }
         if (locItem != RG_NONE) {
             // If ignore has a value, we want to check if the item location should be considered or not
@@ -1111,7 +1128,7 @@ void ClearProgress() {
 
 bool KeptInChestsAndCalls(RandomizerGet item) {
     return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_DUNGEONREWARD ||
-           item == RG_GERUDO_MEMBERSHIP_CARD;
+           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_POCKET_EGG;
 }
 
 bool KeptFromShops(RandomizerGet item) {

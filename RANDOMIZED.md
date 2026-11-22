@@ -40,12 +40,15 @@ Under **Shuffle**, **Gifts** opens a list of groups. Tick a group, and what its 
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer, the lakeside laboratory's dive and the Deku theater's two prizes.
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
 - **Story gifts:** the scene after the carpenters' rescue, King Zora's thanks and Zelda's scene in the Temple of Time.
+- **Biggoron Quest:** what Anju hands you as an adult.
 
 Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is then an item of its own and can turn up elsewhere. A bigger quiver or Deku-seed bag is not a weapon: you still need the Fairy Bow or the Fairy Slingshot to shoot.
 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone.
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
+
+With **Biggoron Quest** ticked, the Pocket Egg is one of the shuffled items, and Anju as an adult hands you the seed's item. Wherever you find the egg, it hatches at the next dawn once you have talked to her.
 
 ## Songs
 

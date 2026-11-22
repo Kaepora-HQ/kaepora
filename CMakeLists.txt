@@ -224,6 +224,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
                      the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
+                     an_egg_goes_only_to_a_chest_a_gift_or_a_reward_place
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts
                      the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
                      a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon

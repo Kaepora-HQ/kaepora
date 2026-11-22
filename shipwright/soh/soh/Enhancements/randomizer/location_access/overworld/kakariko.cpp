@@ -17,7 +17,9 @@ void RegionTable_Init_Kakariko() {
         // Kakariko burns once the Forest, the Fire and the Water Temples' blue warps have completed their quests.
         LOCATION(RC_SHEIK_IN_KAKARIKO,                     logic->IsAdult && logic->Get(LOGIC_FOREST_TEMPLE_CLEAR) && logic->Get(LOGIC_FIRE_TEMPLE_CLEAR) && logic->Get(LOGIC_WATER_TEMPLE_CLEAR)),
         LOCATION(RC_KAK_ANJU_AS_ADULT,                     logic->IsAdult && logic->AtDay && logic->HasItem(RG_SPEAK_HYLIAN)),
-        LOCATION(RC_KAK_TRADE_POCKET_CUCCO,                logic->IsAdult && logic->AtDay && (logic->CanUse(RG_POCKET_EGG) && logic->Get(LOGIC_WAKE_UP_ADULT_TALON))),
+        // The Pocket Egg hatches at the dawn after adult Anju's talk, for a Link whose save says he found it, wherever he
+        // found it. Her place sets her talk, whatever it holds (fill.cpp, scenePlaces).
+        LOCATION(RC_KAK_TRADE_POCKET_CUCCO,                logic->IsAdult && logic->AtDay && logic->CanUse(RG_POCKET_EGG) && logic->Get(LOGIC_MET_ADULT_ANJU) && logic->Get(LOGIC_WAKE_UP_ADULT_TALON)),
         // The lookout stands only in the adult village, and the Longshot gets Link up to it.
         LOCATION(RC_KAK_LOOKOUT_CHEST,                     logic->IsAdult && logic->CanUse(RG_LONGSHOT) && logic->HasItem(RG_OPEN_CHEST)),
         //Can kill lower kak skulls with pots
@@ -176,7 +178,7 @@ void RegionTable_Init_Kakariko() {
 
     areaTable[RR_KAK_CARPENTER_BOSS_HOUSE] = Region("Kak Carpenter Boss House", SCENE_KAKARIKO_CENTER_GUEST_HOUSE, {
         //Events
-        EVENT_ACCESS(LOGIC_WAKE_UP_ADULT_TALON, logic->IsAdult && logic->CanUse(RG_POCKET_EGG)),
+        EVENT_ACCESS(LOGIC_WAKE_UP_ADULT_TALON, logic->IsAdult && logic->CanUse(RG_POCKET_EGG) && logic->Get(LOGIC_MET_ADULT_ANJU)),
     }, {}, {
         //Exits
         ENTRANCE(RR_KAKARIKO_VILLAGE, true),

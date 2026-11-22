@@ -6,15 +6,17 @@
 
 #include <vector>
 
-// Gives Link what location holds, in the search under way. While the spoiler log's route is made, a place whose scene
-// later steps wait for also sets what its scene sets (see SetByItsScenePlace).
+// Gives Link what location holds, in the search under way. A place whose scene later steps wait for also sets what its
+// scene sets: a giver's talk in every search, and the rest while the spoiler log's route is made (see
+// SetByItsScenePlace).
 void ApplyCheck(Rando::ItemLocation* location);
 
 // Whether event is one that, while the spoiler log's route is made, only its scene's place sets: a dungeon clear, which
-// the boss's blue warp sets, the Gerudo letting Link pass, which the scene after the last carpenter sets, or Zelda's
-// scene in the Temple of Time, which the bridge to Ganon's Castle follows. Later steps wait for those scenes, which
-// come with those places whatever they give, so the route names a place wherever a later step waits for its scene. The
-// fill's own searches set each as soon as its scene can play.
+// the boss's blue warp sets, the Gerudo letting Link pass, which the scene after the last carpenter sets, Zelda's scene
+// in the Temple of Time, which the bridge to Ganon's Castle follows, or a giver's talk, which an egg's hatch follows.
+// Later steps wait for those scenes, which come with those places whatever they give, so the route names a place
+// wherever a later step waits for its scene. The fill's own searches set a talk where they take or reach the giver's
+// place, and each of the others as soon as its scene can play.
 bool SetByItsScenePlace(LogicVal event);
 
 // RANDOTODO merge into Logic once Logic is a class passed to logic funtions
@@ -83,11 +85,11 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 // loose spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
-// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch. A chest gave the Kokiri
-// Emerald, the Forest Medallion and the Zora Sapphire, each with its model, Link's hold-up pose and its named window
-// (seen), and a gift raises an item the same way. No shop slot, Gold Skulltula or loose spot has been seen to give one,
-// so the fill places them before those join it: in a chest, at a gift or at one of the nine places that hand over a
-// stone or a medallion.
+// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, and the Pocket Egg. A
+// chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire, each with its model, Link's hold-up pose
+// and its named window (seen), and a gift raises an item the same way. No shop slot, Gold Skulltula or loose spot has
+// been seen to give one, so the fill places them before those join it: in a chest, at a gift or at one of the nine
+// places that hand over a stone or a medallion.
 bool KeptInChestsAndCalls(RandomizerGet item);
 
 std::vector<RandomizerCheck> GetEmptyLocations(std::vector<RandomizerCheck> allowedLocations);

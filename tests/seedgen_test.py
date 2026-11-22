@@ -108,8 +108,10 @@ BIGGER_BAGS = dict(BAG_PRIZES.values())
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Biggoron Quest"]
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
+# Each egg's giver's place, with the group that shuffles it and the egg it gives in the game.
+EGGS = {"Kak Anju as Adult": ("Biggoron Quest", "Item_PocketEgg")}
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -979,8 +981,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes the Kokiri Sword from child fishing and the Lens of Truth from the man on the roof, among
-        # other gifts.
+        # Seed 10's route takes a Hookshot from child fishing and the Boomerang from Bombchu Bowling, among other
+        # gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -989,7 +991,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 23 hints at a gift by its sentence: the adult fishing prize.
+        # Seed 23 hints at three gifts by their sentences: Dampé's tour's, child Anju's and Bombchu Bowling's.
         spoiler, plan = self.assert_hints_are_true("23", GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
@@ -1059,6 +1061,30 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("Item_Quiver_Medium", placed_remake_items(spoiler, plan).values())
         self.assertIn("Item_Quiver_Medium", placed_remake_items(*self.generate("1480", GIFTS_SHUFFLED)).values())
 
+    def test_an_egg_goes_only_to_a_chest_a_gift_or_a_reward_place(self):
+        # With its group ticked an egg is an item of the pool, and its giver's place holds whatever the seed puts
+        # there. No copy of an egg on the ground or on a Gold Skulltula, and no shelf, has been seen to give one, so an
+        # egg goes to a chest, a gift or a reward's place, as the Gerudo Pass does.
+        settings = ({"Gifts": [group for group, _ in EGGS.values()]} | REWARDS_SHUFFLED | SHOPS_SHUFFLED
+                    | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED)
+        chests = {row["location"] for row in SHUFFLED}
+        kinds, moved = collections.defaultdict(set), set()
+        for seed in map(str, range(660, 680)):
+            spoiler, plan = self.generate(seed, settings)
+            sites = dict(gift_sites(plan))
+            placed = placed_remake_items(spoiler, plan)
+            for place, (_, egg) in EGGS.items():
+                self.assertIn((sites[place], spoiler["locations"][place]), ITEM_PAIRS, (seed, place))
+                at = [location for location, item in placed.items() if item == egg]
+                self.assertEqual(len(at), 1, (seed, egg))
+                kinds[egg].add("chest" if at[0] in chests else "gift" if at[0] in GIFT_LOCATIONS.values()
+                               else "reward place" if at[0] in REWARD_AREAS else at[0])
+                if at[0] != place:
+                    moved.add(egg)
+        self.assertEqual(moved, {egg for _, egg in EGGS.values()})
+        for egg, found in kinds.items():
+            self.assertLessEqual(found, {"chest", "gift", "reward place"}, egg)
+
     def test_the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts(self):
         # Each of the three places writes the item placed there at its one event, and each item, wherever it lands,
         # goes by its one name. The pass goes only to a chest, a gift or a reward's place, as a stone does. A shop
@@ -1105,8 +1131,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
 
     def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
-        # Seed 2 puts the Gerudo Pass in Dodongo's Cavern, the Zora Tunic in Hyrule Field's Redead grotto and the Light
-        # Arrows in the Ice Cavern, and its route takes the carpenters' rescue and Zelda's scene for what they open.
+        # Seed 2 puts the Gerudo Pass in the Gerudo Training Ground, the Zora Tunic in the Bottom of the Well and the
+        # Light Arrows in a chest in Hyrule Field, and its route takes the carpenters' rescue and Zelda's scene for what
+        # they open.
         log, _ = self.generate("2", GIFTS_SHUFFLED)
         for location, item in STORY_GIFTS.items():
             self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
@@ -1340,9 +1367,9 @@ class SeedgenTest(unittest.TestCase):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the
         # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 7's
         # route takes a step there before the carpenters' rescue. Were an adult's Requiem to count once the rescue is
-        # done, seed 5's route, with gifts shuffled, would take one after the rescue with the Requiem as its only warp
+        # done, seed 9's route, with gifts shuffled, would take one after the rescue with the Requiem as its only warp
         # song and no Lens of Truth for the Wasteland.
-        for seed, settings in (("7", SONGS_SHUFFLED), ("5", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
+        for seed, settings in (("7", SONGS_SHUFFLED), ("9", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
             log, _ = self.generate(seed, settings)
             spheres = list(log["playthrough"].values())
             there = next(number for number, steps in enumerate(spheres)
