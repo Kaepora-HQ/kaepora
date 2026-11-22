@@ -247,6 +247,13 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
         std::ranges::copy_if(rewardTable, std::back_inserter(gifts),
                              [&](const RemakeGift& reward) { return !KeptInPlace(reward, settings); });
     }
+    // SoH's pool with adult trade off holds the Claim Check and no Pocket Egg, and SoH's own list gives adult Anju's
+    // place the Claim Check. Ours gives her place the Pocket Egg, as the game's Anju does, for the chain that adult
+    // trade on keeps in the logic. The group that shuffles her place turns adult trade off.
+    if (const auto anju = std::ranges::find(gifts, RC_KAK_ANJU_AS_ADULT, &RemakeGift::location); anju != gifts.end()) {
+        anju->item = "Item_ClaimCheck";
+        anju->sohItem = RG_CLAIM_CHECK;
+    }
     // SoH's pool puts junk in place of a started item.
     for (const std::string_view copy : StartedCopies(settings)) {
         const auto names = [&](const auto& place) { return place.item == copy; };

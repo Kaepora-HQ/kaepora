@@ -108,7 +108,8 @@ static constexpr std::pair<RandomizerSettingKey, uint8_t> unmodifiedGame[] = {
     { RSK_SHUFFLE_BEGGAR, RO_GENERIC_OFF },
     { RSK_SHUFFLE_FISHERMANS_HAT, RO_GENERIC_OFF },
     { RSK_SHUFFLE_FROG_SONG_RUPEES, RO_GENERIC_OFF },
-    // On keeps every trade in the logic, each holding what the unmodified game gives.
+    // On keeps every trade in the logic, each holding what the unmodified game gives. SetOptions turns it off when
+    // Biggoron's place is shuffled.
     { RSK_SHUFFLE_ADULT_TRADE, RO_GENERIC_ON },
     { RSK_SHUFFLE_CHEST_MINIGAME, RO_GENERIC_OFF },
     { RSK_SHUFFLE_100_GS_REWARD, RO_GENERIC_OFF },
@@ -323,6 +324,11 @@ void SetOptions(const SeedSettings& settings) {
     }
     if (settings.trials == Trials::None) {
         ctx->GetOption(RSK_GANONS_TRIALS).Set(RO_GANONS_TRIALS_SKIP);
+    }
+    // With Biggoron's place shuffled, SoH's own shuffle: its adult trade off leaves the chain's places out of the seed,
+    // so only the pool's Claim Check counts for his place.
+    if (std::ranges::find(settings.gifts, BiggoronQuest, &GiftGroup::name) != settings.gifts.end()) {
+        ctx->GetOption(RSK_SHUFFLE_ADULT_TRADE).Set(RO_GENERIC_OFF);
     }
     if (settings.shops) {
         auto& prices = ctx->GetOption(RSK_SHOPSANITY_PRICES);

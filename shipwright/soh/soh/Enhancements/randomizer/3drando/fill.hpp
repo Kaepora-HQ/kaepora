@@ -85,11 +85,11 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 // loose spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
-// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, and the two eggs. A
-// chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire, each with its model, Link's hold-up pose
-// and its named window (seen), and a gift raises an item the same way. No shop slot, Gold Skulltula or loose spot has
-// been seen to give one, so the fill places them before those join it: in a chest, at a gift or at one of the nine
-// places that hand over a stone or a medallion.
+// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, the two eggs, the Claim
+// Check and Biggoron's sword. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire, each with
+// its model, Link's hold-up pose and its named window (seen), and a gift raises an item the same way. No shop slot,
+// Gold Skulltula or loose spot has been seen to give one, and no shop row names the sword, so the fill places them
+// before those join it: in a chest, at a gift or at one of the nine places that hand over a stone or a medallion.
 bool KeptInChestsAndCalls(RandomizerGet item);
 
 // Ruto's Letter, and the Great Fairies' three spells and three blessings. King Zora took the letter a chest gave

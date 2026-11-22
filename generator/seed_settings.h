@@ -237,6 +237,10 @@ struct GiftGroup {
     auto operator<=>(const GiftGroup&) const = default;
 };
 
+// Adult Anju's place and Biggoron's, shuffled as SoH shuffles them with its adult trade off: the Claim Check and
+// Biggoron's sword join the pool, and no Pocket Egg does, so the trade chain does not start.
+inline constexpr std::string_view BiggoronQuest = "Biggoron Quest";
+
 inline constexpr GiftGroup GiftGroups[] = {
     { "Minigames", "", "Minigames" },
     { "Characters", "", "Characters" },
@@ -244,7 +248,7 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Great Fairies", "", "Great Fairies" },
     { "Story gifts", "", "Story gifts" },
     { "Malon's Egg", "", "Malon's Egg" },
-    { "Anju's Egg", "", "Anju's Egg" },
+    { BiggoronQuest, "", BiggoronQuest },
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 

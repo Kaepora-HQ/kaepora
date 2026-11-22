@@ -763,7 +763,7 @@ def vine_hatch(patch, game, seedgen):
     quest is at Step03, stands only for a Link whose save says he got the Weird Egg: read apart from the patcher, the
     castle grounds' placement is the game's with that presence on the area. With every other group shuffled the mod
     leaves the file as the game has it."""
-    others = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Anju's Egg"]
+    others = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Biggoron Quest"]
     for gifts in (["Malon's Egg"], others):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)
@@ -2100,6 +2100,61 @@ def fountain_claims(patch, game, seedgen):
     assert {(UINT, murmur3(row["claim"])) for row in rows} <= held
 
 
+def generated_plan(seedgen, seed, settings):
+    with tempfile.TemporaryDirectory() as tmp:
+        spoiler, planned = pathlib.Path(tmp) / "spoiler.json", pathlib.Path(tmp) / "plan.json"
+        result = subprocess.run([seedgen, seed, spoiler, planned, json.dumps(settings)], capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        return json.loads(planned.read_text())
+
+
+def biggoron_place(patch, game, seedgen):
+    """With Biggoron's place shuffled, he gives the seed's item once and never completes the trade quest, so adult
+    Anju's offer stays open whichever of the two comes first. In the mod's flow his hand-over goes on from its last
+    line to the write that his talk after the quest makes, which now records his claim, and no path reaches the
+    quest's Complete. His question at the hand-over whether the quest is complete asks an expression of the mod's own
+    that reads the claim; the same question in his plain talk comes only past Step10 and keeps the game's name. He
+    takes no knife with the receipt, the get flow's entry for his sword waits for no sword to be equipped, and the
+    record the wait counts from starts at 1. With the group left out, the mod leaves his flow and the get flow as the
+    game has them."""
+    planned = generated_plan(seedgen, "1", {"Gifts": ["Biggoron Quest"]})
+    mod = patched(patch, game, planned)
+    (expression,) = planned["expressions"]
+    claim = expression["flag"]
+    assert claim in planned["claims"], planned["claims"]
+    placed = next(text["text"] for text in planned["event_texts"]
+                  if (text["flow"], text["event"], text["param"]) == (BIGGORON_FLOW, "Event123", "ActorName"))
+    theirs, ours = game.event_flow(game.read(BIGGORON_FLOW)), game.event_flow(mod[BIGGORON_FLOW])
+    index = {named[0]: i for i, named in enumerate(theirs["events"])}
+    assert string_parameter(theirs, "Event89", "ChallengeName")[1] == "SubEvent_GetSwordBigGoron"
+    assert string_parameter(theirs, "Event89", "StepName")[1] == "Complete"
+    assert string_parameter(theirs, "Event21", "GameDataName")[1] == "Npc_Goron_Biggoron_Adult_Talk"
+    reached = flow_reach(ours)
+    assert index["Event89"] in flow_reach(theirs) and index["Event89"] not in reached
+    assert index["Event21"] in reached
+    assert string_parameter(ours, "Event21", "GameDataName")[1] == claim
+    for question in ("Event49", "Event238"):
+        assert string_parameter(theirs, question, "GameDataName")[1] == "SubEvent_GetSwordBigGoron_IsCompleted_Exp"
+    assert string_parameter(ours, "Event49", "GameDataName")[1] == expression["name"]
+    assert string_parameter(ours, "Event238", "GameDataName")[1] == "SubEvent_GetSwordBigGoron_IsCompleted_Exp"
+    assert string_parameter(ours, "Event123", "ActorName")[1] == placed
+    for take in ("Event96", "Event106"):
+        assert string_parameter(theirs, take, "Actor")[1] in ("Weapon_Sword_Giant", "Weapon_Sword_BrokenGiant")
+        assert index[take] in flow_reach(theirs) and index[take] not in reached, take
+    get_in = game.event_flow(mod[GET_IN_FLOW])
+    wait = {named[0]: i for i, named in enumerate(get_in["events"])}["Event636"]
+    assert get_in["events"][wait][-1] == "BigGoronSword_GetAndEquipCheck"
+    assert wait in flow_reach(game.event_flow(game.read(GET_IN_FLOW))) and wait not in flow_reach(get_in)
+    data = game.game_data_list(mod[GAME_DATA_LIST])["Data"]
+    assert any(entry["Hash"] == (UINT, murmur3(claim)) for entry in data["Bool"])
+    assert {"Hash": (UINT, murmur3(expression["name"])), "ResetTypeValue": (INT, 0), "SaveFileIndex": (INT, 0xFFFFFFFF),
+            "Values": [[(UINT64, 0), (UINT64, murmur3(claim))]]} in data["BoolExp"]
+    ordered = next(entry for entry in data["UInt"] if entry["Hash"] == (UINT, murmur3(SWORD_ORDERED_AT)))
+    assert ordered["DefaultValue"] == (UINT, 1), ordered
+    left = patched(patch, game, generated_plan(seedgen, "1", {"Gifts": ["Malon's Egg"]}))
+    assert not {BIGGORON_FLOW, GET_IN_FLOW} & left.keys(), sorted(left)
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -3119,6 +3174,7 @@ def main():
         "claims": claims,
         "expressions": expressions,
         "event-nexts": event_nexts,
+        "biggoron-place": biggoron_place,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

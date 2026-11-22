@@ -1044,7 +1044,7 @@ private slots:
             }
         }
         QCOMPARE(names, (QStringList{ "Gifts", "Minigames", "Characters", "House of Skulltula", "Great Fairies",
-                                      "Story gifts", "Malon's Egg", "Anju's Egg" }));
+                                      "Story gifts", "Malon's Egg", "Biggoron Quest" }));
         QComboBox* scrubs = listRow("Gifts", "Deku Scrubs");
         QCOMPARE(scrubs->currentText(), QString("Vanilla"));
         QStringList choices;
@@ -1063,7 +1063,7 @@ private slots:
 
     void giftGroupsGoIntoTheSeed() {
         button("Settings…")->click();
-        shuffleGifts({ "House of Skulltula", "Minigames", "Great Fairies", "Anju's Egg", "Malon's Egg" });
+        shuffleGifts({ "House of Skulltula", "Minigames", "Great Fairies", "Biggoron Quest", "Malon's Egg" });
         QCOMPARE(listButton("Gifts")->text(), QString("5 of 8 groups"));
         dialogButton("OK")->click();
         QVERIFY(shows("5 of 8 gift groups shuffled"));
@@ -1075,7 +1075,7 @@ private slots:
         QVERIFY(create("7"));
         const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
         QCOMPARE(settings["Gifts"].toArray(),
-                 (QJsonArray{ "Minigames", "House of Skulltula", "Great Fairies", "Malon's Egg", "Anju's Egg" }));
+                 (QJsonArray{ "Minigames", "House of Skulltula", "Great Fairies", "Malon's Egg", "Biggoron Quest" }));
     }
 
     void theDekuScrubsChoiceGoesIntoTheSeed() {
@@ -1255,7 +1255,7 @@ private slots:
         window->show();
         QCOMPARE(listed(1), QStringList{ "Cutscenes played, 4 of 8 gift groups shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains(
-            "Gifts: All but Great Fairies, Malon's Egg, Anju's Egg and Deku Scrubs"));
+            "Gifts: All but Great Fairies, Malon's Egg, Biggoron Quest and Deku Scrubs"));
     }
 
     void aSeedWhoseSpoilerLogCannotBeReadIsListed() {

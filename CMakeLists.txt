@@ -226,7 +226,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
                      the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
-                     an_egg_goes_only_to_a_chest_a_gift_or_a_reward_place
+                     the_eggs_the_receipt_and_the_sword_go_only_to_a_chest_a_gift_or_a_reward_place
+                     biggoron_quest_shuffles_its_places_as_soh_does_with_adult_trade_off
                      with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg
                      a_route_with_the_weird_egg_elsewhere_still_meets_zelda
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts
@@ -378,6 +379,8 @@ if(KAEPORA_GAME_NUP)
     endforeach()
     add_test(NAME patch-fountain-claims COMMAND ${PATCH_TEST} fountain-claims $<TARGET_FILE:kaepora-patch>
                                                 "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-biggoron-place COMMAND ${PATCH_TEST} biggoron-place $<TARGET_FILE:kaepora-patch>
+                                               "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME remake-tables
         COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-vine-hatch

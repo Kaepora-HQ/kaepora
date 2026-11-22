@@ -244,20 +244,47 @@ to sell a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For
 logic counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the ten
 places their bags, the 40-token reward its 20 Bombchus, and the scrubs the remake's goods and prices.
 
-Adult Anju gives the Pocket Egg in Kakariko. While "Anju's Egg" shuffles her place, the egg is an item of the pool,
-and her place holds whatever the seed puts there:
+Adult Anju gives the Pocket Egg in Kakariko, and Biggoron, on the summit, the Biggoron Sword for the Claim Check, the
+game's Biggoron Receipt. "Biggoron Quest" shuffles both places as SoH shuffles them with its adult trade off: the
+Claim Check and the sword are items of the pool and the Pocket Egg is not, as SoH's pool has them and its location list
+gives Anju's place the Claim Check. Each place holds whatever the seed puts there. The chain's places leave the seed, so
+only the pool's Claim Check counts for Biggoron's place, an adult with the receipt as SoH's rule asks. Only Anju's offer
+gives a Pocket Egg (read), so a seed with the group ticked has none, and the chain does not start.
 
-- Her talk writes StartSubEvent of the trade quest, whatever she gives, and her offer asks nothing of the egg: she
-  offered as usual to a Link who held one and gave her place's item (seen).
-- The egg's timer in the program runs only for a Link whose save says he found the egg, at that step, and hatches it
-  at the next dawn (read from the program). Nothing else starts the hatch. So the Pocket Cucco waits for the egg found
-  and her talk, in either order, and adult Talon and her trade for Cojiro wait for the egg as SoH's rules have them.
-  Seen: a Pocket Egg from a chest set its record and hatched into the Pocket Cucco, taking the egg from the pouch,
-  found after her talk and found before it.
-- A child who finds the egg keeps it until the adult's talk (read).
-- The egg goes only to a chest, a gift or a reward's place, as the Gerudo's card does: no copy of it on the ground or on
-  a Gold Skulltula, and no shelf, has been seen to give one. A chest gave one (seen); a gift's call or a reward's place
-  gives it through the same pouch add (read).
+- Anju's offer stands while the trade quest is at Ready: her schedule's first entry and her talk ask it (read). Her
+  offer asks nothing of the egg.
+- Biggoron takes a shown Claim Check at every step of the quest (read). His hand-over asks whether the quest is
+  complete, then takes a held Giant's Knife or broken knife, then asks whether 72 game hours have passed since the
+  eye-drops scene wrote `GetSwordBigGoron_ElapsedTime`, gives, and writes the quest complete. With the quest complete
+  Anju offers nothing, so a receipt shown before her talk would lose her place. A mod that shuffles his place writes no
+  step: his hand-over goes on from its last line to the write of his talk flag in his talk after the quest, which now
+  records a claim, `Kaepora_Once_14299450766367161284`, and his question at the hand-over whether the quest is complete
+  (`Event49`) asks `Kaepora_Once_14299450766367161284_Exp`, an expression of the mod's own that reads the claim. His
+  plain talk asks the same question (`Event238`) only past Step10, which no seed of the group reaches (read), so it
+  keeps the game's question. An expression query reads no Bool (read in the program, seen in look DA1). So he gives
+  once, in any order with Anju's talk (seen in both orders), as SoH's Biggoron gives once on a flag of its own while its
+  trade never completes.
+- His wait's question (`QueryGameDataCheckElapsedTime`) is false while the record is 0. Otherwise it subtracts the
+  record from the world clock and passes once the difference reaches 72 × 60 (read in the program). In the game only the
+  eye-drops scene writes the record, with the clock's value at that moment, so three days are the clock passing that
+  moment by 4,320. The clock counts game minutes (inferred) and is saved as the UInt `0x3f8d9d86`, and a game counts on
+  from the saved value (seen: 5000 became 5044). It is the world's clock, not the quest's, and it stood still while a
+  child stayed in Kokiri Forest (measured from saves). The mod starts the record at 1, so a receipt found before any
+  eye-drops scene gives once the clock reaches 4,321: three game days after a new game begins, SoH's forge time. Only a
+  new game takes a start value; a save made before the mod keeps the record at 0, and his wait never ends there (seen).
+  A new game under the mod took it: its first save held the record at 1 and the clock at 0 (seen).
+- His hand-over takes no knife with the receipt, and the get flow's entry for his sword, which only his hand-over calls,
+  no longer waits for the Biggoron Sword to be equipped, a wait that would never end with another item and no Master
+  Sword equipped (read).
+- Medigoron sells his knife only to a Link who holds no Biggoron Sword (`Npc_Goron_Medigoron_Adult` `Event19`), and the
+  mod keeps that refusal. His place is not shuffled, and the logic counts the knife as held by a Link with the sword.
+  Seen in a mod that sent his question on to the sale: a Link holding the sword paid 200 rupees for the Giant's Knife,
+  which became his equipped weapon but did nothing for him and did not replace the Biggoron Sword.
+- The Claim Check and the sword go only to a chest, a gift or a reward's place, as the eggs do. A chest's
+  `Item_Sword_Biggoron` gives `Weapon_Sword_Biggoron`, an adult's two-handed sword, through the equipment its pouch row
+  names, as a chest's `Item_Sword_Kokiri` gives the Kokiri Sword (read; seen: an adult equipped and swung it, and a
+  child holds it but cannot use it, as in the game). No shop row names the sword: the remake has no
+  `Shop_Sword_Biggoron`.
 
 Malon gives the Weird Egg at the castle. While "Malon's Egg" shuffles her place, the egg is an item of the pool, and
 her place holds whatever the seed puts there:
@@ -281,9 +308,9 @@ her place holds whatever the seed puts there:
   opens the gate for 10 rupees to a Link whose save says he got the egg, asks for the egg in the rules too.
 - The moat's two places, the Ocarina of Time and its song, wait for Zelda met, and the way to Zelda climbs past Talon,
   so a seed that shuffles her place needs the egg early, as a child.
-- The egg goes only to a chest, a gift or a reward's place, as the Pocket Egg does. A chest gave one (seen).
+- The egg goes only to a chest, a gift or a reward's place. A chest gave one (seen).
 
-Each egg's caption still says who gave it ("Malon gave you this egg", "The cucco lady gave you this special egg").
+The egg's caption still says who gave it ("Malon gave you this egg").
 
 A Business Scrub that sells once names its item in a call to the one-time sale of `Enemy_Scrub_Business_Common`. The
 sale charges the call's price, 40 rupees at the bridge and the grotto and 100 at the field and the crater, adds the item
@@ -326,9 +353,6 @@ Seen in the game:
   of the climb at once, the area's event played; Talon woke.
 - Adult Anju gave an Empty Bottle. With no record of the Pocket Egg, no Pocket Cucco came over a couple of days. With
   `IsGet.Item_PocketEgg` set by hand and no egg held, the egg hatched at dawn and the Pocket Cucco woke Talon.
-- A Pocket Egg from Kakariko's open grotto chest set its record and hatched into the Pocket Cucco, and Talon's talk
-  moved the trade quest to Step01_01. Found before her talk, it was held when she offered as usual and gave her place's
-  item, a Red Rupee, and one egg was held; it hatched as well.
 - The bridge's scrub sold a placed Piece of Heart for 40 rupees once, and no scrub stood on either side of the bridge
   afterwards, nor after a load. From the same save it sold a placed Zora's Sapphire, which showed in the menu, and the
   Water quest's step stayed at Ready. The crater's scrub offered a placed Boomerang for 100 rupees under the crater's
@@ -669,6 +693,19 @@ at the ranch and had not learned her song was set back a step, and she then star
 `Event179` asks `Get_Epona_IsAfter_Ready_Exp`, so the write moves only a quest still at Ready. Seen in the game: after a
 lost race the step stays and the child then learns the song, and an adult who learned it as a child still wins Epona and
 rides out.
+
+With "Biggoron Quest" ticked, a mod changes one more write. Biggoron's hand-over for the Claim Check,
+`Npc_Goron_Biggoron_Adult` `Event89`, sets `SubEvent_GetSwordBigGoron` to Complete after his gift, and his question
+`Event49` asks `SubEvent_GetSwordBigGoron_IsCompleted_Exp`, so he gives once. A receipt found elsewhere can come before
+adult Anju's talk, and she offers her gift only while the quest stands at Ready (her schedule's
+`SubEvent_GetSwordBigGoron_IsAfter_Ready_Exp` in `quest_reads.tsv`), so the write would lose her place (read). The event
+before the write, `Event112`, goes on to `Event21`, the write of his talk flag in his talk after the quest, which now
+records the claim `Kaepora_Once_14299450766367161284`, and `Event49` asks `Kaepora_Once_14299450766367161284_Exp`, an
+expression of the mod's own that reads it. So his hand-over writes no step of the quest: he gives once in either order
+with Anju's talk, and the quest never completes, as in SoH. Seen in the game in both orders: Biggoron first, he gave his
+place's item, his claim went to 1 and the quest stayed at Ready, and Anju then gave hers and moved it to StartSubEvent;
+Anju first, he then gave his, the claim went to 1 and the quest stayed at StartSubEvent. With both given, the receipt
+shown again got only his line about carrying it, and Anju gave nothing.
 
 King Zora's ice is the one presence among them, told with the story gifts above: `SageOfWater` at `Complete` on
 `Actors/3341274640047764997/Presence/FlagName` of `Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static` in

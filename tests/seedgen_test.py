@@ -56,7 +56,7 @@ EVERY_SETTING_CHANGED = {
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
-    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Anju's Egg",
+    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
               "Deku Scrubs (One Time Rewards)"],
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
@@ -94,9 +94,13 @@ KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_Bombchu
                                              "Obj_Armor_Zora"}
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
-GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
+# With adult trade off, SoH's pool holds the Claim Check and no Pocket Egg, and its own list gives adult Anju's place
+# the Claim Check.
+POOLED_AS_SOH = {"Kak Anju as Adult": "Item_ClaimCheck"}
+GIFT_POOL = collections.Counter(POOLED_AS_SOH.get(row["location"], row["item"])
+                                for row in {row["location"]: row for row in GIFT_SITES}.values())
 GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts", "Malon's Egg",
-               "Anju's Egg", "Deku Scrubs (One Time Rewards)"]
+               "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
 # Released seeds' "Shuffled" and the settings stored by their Kaepora name these, all the groups of their time.
 RELEASED_GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
 GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
@@ -127,8 +131,11 @@ FAIRY_ITEMS = {"Item_FairyBless_MP", "Item_DinFire", "Item_FairyBless_MPDouble",
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
-# Each egg's giver's place, with the group that shuffles it and the egg it gives in the game.
-EGGS = {"HC Malon Egg": ("Malon's Egg", "Item_WeirdEgg"), "Kak Anju as Adult": ("Anju's Egg", "Item_PocketEgg")}
+# What a shuffled group adds that only a chest, a gift's call or a reward's place gives: each item with its group and
+# the place that holds it in SoH's own list.
+KEPT_IN_CHESTS_AND_CALLS = {"Item_WeirdEgg": ("Malon's Egg", "HC Malon Egg"),
+                            "Item_ClaimCheck": ("Biggoron Quest", "Kak Anju as Adult"),
+                            "Item_Sword_Biggoron": ("Biggoron Quest", "DMT Trade Claim Check")}
 SCRUB_FLOW = "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs"
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
@@ -995,7 +1002,8 @@ class SeedgenTest(unittest.TestCase):
             rows = {row["hash"]: row for row in SHUFFLED}
             chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
             self.assertEqual(collections.Counter(chests.values()) + collections.Counter(dict(sites).values()),
-                             POOL + collections.Counter(vanilla[location] for location in places), group)
+                             POOL + collections.Counter(POOLED_AS_SOH.get(location, vanilla[location])
+                                                        for location in places), group)
         self.assertTrue(kept_on_route)
 
     def test_the_gift_places_of_an_item_that_comes_in_steps_share_a_group(self):
@@ -1047,8 +1055,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes the Kokiri Sword from the Market gallery and the Lens of Truth from the ocarina memory
-        # game, among other gifts.
+        # Seed 10's route takes the Kokiri Sword from the Market gallery, the Golden Gauntlets from the lost dog's owner
+        # and the Hover Boots from the 10-token reward, among other gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -1057,7 +1065,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 23 hints at five gifts by their sentences, adult Anju's and the frogs' in the rain among them.
+        # Seed 23 hints at three gifts by their sentences, the castle's Great Fairy's and the frogs' in the rain among
+        # them.
         spoiler, plan = self.assert_hints_are_true("23", GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
@@ -1098,7 +1107,7 @@ class SeedgenTest(unittest.TestCase):
         """Some seed puts one of the bags in reach before any copy of the item. With every copy held back, and every
         copy of the others that also reach the target, the target stays out of reach, and the item where that bag lies
         would reach it."""
-        for seed in map(str, range(1420, 1460)):
+        for seed in map(str, range(1420, 1560)):
             spoiler, _ = self.generate(seed, GIFTS_SHUFFLED)
             settings = spoiler["settings"]
             held = [(location, "Green Rupee" if placed in {item, *others} else placed)
@@ -1128,29 +1137,50 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("Item_Quiver_Medium", placed_remake_items(spoiler, plan).values())
         self.assertIn("Item_Quiver_Medium", placed_remake_items(*self.generate("1480", GIFTS_SHUFFLED)).values())
 
-    def test_an_egg_goes_only_to_a_chest_a_gift_or_a_reward_place(self):
-        # With its group ticked an egg is an item of the pool, and its giver's place holds whatever the seed puts
-        # there. No copy of an egg on the ground or on a Gold Skulltula, and no shelf, has been seen to give one, so an
-        # egg goes to a chest, a gift or a reward's place, as the Gerudo Pass does.
-        settings = ({"Gifts": [group for group, _ in EGGS.values()]} | REWARDS_SHUFFLED | SHOPS_SHUFFLED
-                    | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED)
+    def test_the_eggs_the_receipt_and_the_sword_go_only_to_a_chest_a_gift_or_a_reward_place(self):
+        # With its group ticked each is an item of the pool. No copy of one on the ground or on a Gold Skulltula, and
+        # no shelf, has been seen to give one, so each goes to a chest, a gift or a reward's place, as the Gerudo Pass
+        # does.
+        settings = ({"Gifts": sorted({group for group, _ in KEPT_IN_CHESTS_AND_CALLS.values()})} | REWARDS_SHUFFLED
+                    | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED)
         chests = {row["location"] for row in SHUFFLED}
         kinds, moved = collections.defaultdict(set), set()
         for seed in map(str, range(660, 680)):
             spoiler, plan = self.generate(seed, settings)
             sites = dict(gift_sites(plan))
             placed = placed_remake_items(spoiler, plan)
-            for place, (_, egg) in EGGS.items():
+            for item, (_, place) in KEPT_IN_CHESTS_AND_CALLS.items():
                 self.assertIn((sites[place], spoiler["locations"][place]), ITEM_PAIRS, (seed, place))
-                at = [location for location, item in placed.items() if item == egg]
-                self.assertEqual(len(at), 1, (seed, egg))
-                kinds[egg].add("chest" if at[0] in chests else "gift" if at[0] in GIFT_LOCATIONS.values()
-                               else "reward place" if at[0] in REWARD_AREAS else at[0])
+                at = [location for location, held in placed.items() if held == item]
+                self.assertEqual(len(at), 1, (seed, item))
+                kinds[item].add("chest" if at[0] in chests else "gift" if at[0] in GIFT_LOCATIONS.values()
+                                else "reward place" if at[0] in REWARD_AREAS else at[0])
                 if at[0] != place:
-                    moved.add(egg)
-        self.assertEqual(moved, {egg for _, egg in EGGS.values()})
-        for egg, found in kinds.items():
-            self.assertLessEqual(found, {"chest", "gift", "reward place"}, egg)
+                    moved.add(item)
+        self.assertEqual(moved, KEPT_IN_CHESTS_AND_CALLS.keys())
+        for item, found in kinds.items():
+            self.assertLessEqual(found, {"chest", "gift", "reward place"}, item)
+
+    def test_biggoron_quest_shuffles_its_places_as_soh_does_with_adult_trade_off(self):
+        # SoH's pool with adult trade off holds the Claim Check and Biggoron's sword and no Pocket Egg, and Biggoron's
+        # place asks for the receipt, so no route takes a step of the chain. With his place shuffled, the plan has him
+        # give once without completing the trade quest and starts the record his wait counts from.
+        on_route = 0
+        for seed in map(str, range(2000, 2020)):
+            spoiler, plan = self.generate(seed, {"Gifts": ["Biggoron Quest"]})
+            placed = list(placed_remake_items(spoiler, plan).values())
+            self.assertEqual([placed.count(item) for item in ("Item_ClaimCheck", "Item_Sword_Biggoron")], [1, 1])
+            self.assertNotIn("Item_PocketEgg", placed)
+            steps = playthrough_steps(spoiler)
+            self.assertFalse([step for step in steps if "Trade" in step and step != "DMT Trade Claim Check"], seed)
+            on_route += "DMT Trade Claim Check" in steps
+            self.assertTrue(plan["event_nexts"] and plan["expressions"], seed)
+            self.assertEqual(plan["start_values"]["GetSwordBigGoron_ElapsedTime"], 1)
+            self.assertEqual(self.route_out_of_reach(spoiler), [])
+        self.assertTrue(on_route)
+        _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"]})
+        self.assertEqual((plan["event_nexts"], plan["expressions"]), ([], []))
+        self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
     def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):
         # The area at the top of the vine climb hatches the Chicken for any Link while the castle quest is at Step03,
@@ -1218,9 +1248,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
 
     def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
-        # Seed 2 puts the Gerudo Pass in Goron City's maze, the Zora Tunic in Hyrule Field's tower chest and the Light
-        # Arrows in the Death Mountain Trail's chest, and its route takes the carpenters' rescue and Zelda's scene for
-        # what they open.
+        # Seed 2 puts the Gerudo Pass at the crater's Great Fairy, the Zora Tunic in the Forest Temple's boss key chest
+        # and the Light Arrows in the Shadow Temple's map chest, and its route takes the carpenters' rescue and Zelda's
+        # scene for what they open.
         log, _ = self.generate("2", GIFTS_SHUFFLED)
         for location, item in STORY_GIFTS.items():
             self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
@@ -1241,7 +1271,7 @@ class SeedgenTest(unittest.TestCase):
             for event in (row["paid"], row["question"]):
                 self.assertEqual(texts[row["flow"], event, "GameDataName"], row["claim"], (row["location"], event))
         _, plan = self.generate("31", {"Gifts": [group for group in GIFT_GROUPS if group != "Great Fairies"]})
-        self.assertEqual(plan["claims"], [])
+        self.assertFalse({row["claim"] for row in FOUNTAIN_CLAIMS} & set(plan["claims"]))
         self.assertFalse({row["flow"] for row in FOUNTAIN_CLAIMS} & {entry["flow"] for entry in plan["event_texts"]})
 
     def test_a_great_fairy_may_hold_an_item_another_place_gives(self):

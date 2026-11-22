@@ -15,6 +15,7 @@ Item_Bottle_Letter	Item_Bottle_Letter_Name	Bottle	a
 Item_Bottle_Milk	Item_Bottle_Milk_Name	Lon Lon Milk	
 Item_BulletBag_Large	Item_BulletBag_Large_Name	Biggest Deku-Seed Bag	the
 Item_BulletBag_Medium	Item_BulletBag_Medium_Name	Bigger Deku-Seed Bag	a
+Item_ClaimCheck	Item_ClaimCheck_Name	Biggoron Receipt	the
 Item_DekuStickBundle_Small	Item_DekuStickBundle_Small_Name	Three Deku Sticks	
 Item_DinFire	Item_DinFire_Name	Din's Fire	
 Item_Dungeon_BossKey	Item_Dungeon_BossKey_Name	Boss Key	a
@@ -68,6 +69,7 @@ Item_StickBag_Medium	Item_StickBag_Medium_Name	Bigger Deku-Stick Bag	a
 Item_Stone_Fire	Item_Stone_Fire_Name	Goron Ruby	the
 Item_Stone_Forest	Item_Stone_Forest_Name	Kokiri Emerald	the
 Item_Stone_Water	Item_Stone_Water_Name	Zora Sapphire	the
+Item_Sword_Biggoron	Weapon_Sword_Biggoron_Name	Biggoron Sword	the
 Item_Sword_Kokiri	Weapon_Sword_Kokiri_Name	Kokiri Sword	the
 Item_Token_Gerudo	Item_Token_Gerudo_Name	Gerudo Pass	the
 Item_Token_Gold	Item_Token_Gold_Name	Token	a

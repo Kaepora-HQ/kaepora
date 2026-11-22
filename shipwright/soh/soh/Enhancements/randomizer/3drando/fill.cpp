@@ -1137,7 +1137,8 @@ void ClearProgress() {
 
 bool KeptInChestsAndCalls(RandomizerGet item) {
     return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_DUNGEONREWARD ||
-           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_POCKET_EGG;
+           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_POCKET_EGG ||
+           item == RG_CLAIM_CHECK || item == RG_BIGGORON_SWORD;
 }
 
 bool KeptInChests(RandomizerGet item) {

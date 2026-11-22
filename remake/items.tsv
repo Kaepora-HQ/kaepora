@@ -15,6 +15,7 @@ Item_Bottle_Letter	Bottle with Ruto's Letter
 Item_Bottle_Milk	Bottle with Milk
 Item_BulletBag_Large	Biggest Deku Seed Bullet Bag
 Item_BulletBag_Medium	Big Deku Seed Bullet Bag
+Item_ClaimCheck	Claim Check
 Item_DekuStickBundle_Small	Deku Stick (1)
 Item_DinFire	Din's Fire
 Item_Dungeon_BossKey	Fire Temple Boss Key
@@ -98,6 +99,7 @@ Item_StickBag_Medium	Deku Stick Capacity (20)
 Item_Stone_Fire	Goron's Ruby
 Item_Stone_Forest	Kokiri's Emerald
 Item_Stone_Water	Zora's Sapphire
+Item_Sword_Biggoron	Biggoron's Sword
 Item_Sword_Kokiri	Kokiri Sword
 Item_Token_Gerudo	Gerudo Membership Card
 Item_Token_Gold	Gold Skulltula Token

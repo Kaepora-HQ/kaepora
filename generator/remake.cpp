@@ -891,6 +891,46 @@ static constexpr Presence weirdEggHatch = { .file = "Banc/HyruleCastle/HyruleCas
                                             .hash = "4190489777303842820",
                                             .flag = "IsGet.Item_WeirdEgg" };
 
+// Biggoron's place. His hand-over (Event123) writes the trade quest complete at its end (Event89), and with the quest
+// complete adult Anju offers nothing and the game drops every later step of the chain. So with his place shuffled he
+// gives once on a claim of the mod's own, as SoH's Biggoron gives once on a flag of its own, and the quest never
+// completes.
+static constexpr std::string_view biggoronFlow = "Event/EventFlow/Npc_Goron_Biggoron_Adult.bfevfl.zs";
+// Kaepora_Once_ and the hash of Biggoron's placement.
+static constexpr std::string_view biggoronClaim = "Kaepora_Once_14299450766367161284";
+// His question at the hand-over whether the quest is complete asks an expression, and an expression query reads no
+// Bool, so it asks this expression of the mod's own, which reads the claim. His plain talk asks the same question
+// (Event238) only past Step10, which no seed that shuffles his place reaches, so it keeps the game's question.
+static constexpr std::string_view biggoronGiven = "Kaepora_Once_14299450766367161284_Exp";
+static constexpr EventText biggoronTexts[] = {
+    // His talk after the quest (AfterCompleted) writes his talk flag here, and only the question at the hand-over
+    // calls that talk. The write records the claim instead.
+    { biggoronFlow, "Event21", "GameDataName", biggoronClaim },
+    { biggoronFlow, "Event49", "GameDataName", biggoronGiven },
+};
+
+struct EventNext {
+    std::string_view flow;
+    std::string_view event;
+    std::string_view next;
+};
+
+static constexpr EventNext biggoronNexts[] = {
+    // The hand-over's last line goes on to that write and his talk about the receipt, past the write of Complete.
+    { biggoronFlow, "Event112", "Event21" },
+    // Link hands over the Giant's Knife or the broken knife with the receipt if he holds one (Event53, Event54). The
+    // hand-over takes neither and goes on to the wait's question.
+    { biggoronFlow, "Event53", "Event71" },
+    // The get flow's entry for his sword waits after the give (Event636) until the Biggoron Sword is equipped, unless
+    // the Master Sword is, so with another item it can wait for ever. Only his hand-over calls that entry.
+    { "Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs", "Event334", "Event392" },
+};
+
+// Biggoron's wait asks for 72 game hours since the eye-drops scene wrote this record, and is false while it is 0 (read
+// in the program). Started at 1, a receipt found before that scene gives after three game days from a new game, SoH's
+// forge time.
+static constexpr std::string_view swordOrderedAt = "GetSwordBigGoron_ElapsedTime";
+
 static constexpr std::string_view smallKeyDoors[] = {
     "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
     "17124821462463640959", "530640766699404174",   "8886594954069367001",  "8924322743887267313",
@@ -992,6 +1032,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             plan["presences"].push_back({ { "file", gate.file }, { "hash", gate.hash }, { "flag", gate.flag } });
         }
     }
+    const bool biggoron = std::ranges::find(gifts, RC_DMT_TRADE_CLAIM_CHECK, &RemakeGift::location) != gifts.end();
     if (std::ranges::find(gifts, RC_HC_MALON_EGG, &RemakeGift::location) != gifts.end()) {
         plan["presences"].push_back(
             { { "file", weirdEggHatch.file }, { "hash", weirdEggHatch.hash }, { "flag", weirdEggHatch.flag } });
@@ -1023,6 +1064,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             addText(agonyGuideShut.flow, agonyGuideShut.event, agonyGuideShut.param, agonyGuideShut.text);
         }
     }
+    if (biggoron) {
+        for (const auto& [flow, event, param, text] : biggoronTexts) {
+            addText(flow, event, param, text);
+        }
+    }
     if (!songs.empty()) {
         for (const auto& [flow, event, param, text] : songFixes) {
             addText(flow, event, param, text);
@@ -1046,6 +1092,12 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     plan["event_nexts"] = nlohmann::ordered_json::array();
     plan["start_values"] = StartValues(settings);
+    if (biggoron) {
+        for (const auto& [flow, event, next] : biggoronNexts) {
+            plan["event_nexts"].push_back({ { "flow", flow }, { "event", event }, { "next", next } });
+        }
+        plan["start_values"][swordOrderedAt] = 1;
+    }
     plan["stone_texts"] = nlohmann::ordered_json::array();
     for (const StoneHint& hint : hints) {
         plan["stone_texts"].push_back({ { "label", hint.stone.label }, { "text", hint.tagged } });
@@ -1105,6 +1157,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["expressions"] = nlohmann::ordered_json::array();
+    if (biggoron) {
+        plan["claims"].push_back(biggoronClaim);
+        plan["expressions"].push_back({ { "name", biggoronGiven }, { "flag", biggoronClaim } });
+    }
     plan["start_items"] = nlohmann::ordered_json::array();
     for (const StartStep& started : StartWithInOrder(settings)) {
         for (const StartStep& step : StepsTo(started)) {
