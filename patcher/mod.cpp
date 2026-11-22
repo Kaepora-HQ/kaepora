@@ -1052,6 +1052,14 @@ constexpr std::string_view StoneMessage = "Event18";
 constexpr std::pair<std::string_view, std::string_view> StoneFlowNext[] = { { MaskHeldQuery, StoneTalkOpening },
                                                                             { StoneTalkOpening, StoneMessage } };
 
+// Zora's River's waterfall entrance runs this flow's Goto_ZoraDomain while the domain's intro has not played. After the
+// intro, Event48, the entry sets the Water quest to Step03 or Step03_Impa with no check of the step. Lake Hylia's
+// tunnel leads into the domain without the intro, so by the first walk in from the river the quest can be past Step03.
+// Event551 follows both writes. King Zora's first talk takes the quest on from Ready, Step01 or Step02.
+constexpr std::string_view ArrivalFlow = "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs";
+constexpr std::string_view ZoraDomainIntro = "Event48";
+constexpr std::string_view AfterWaterStep = "Event551";
+
 // A new game runs this flow. The loading entry point plays the narrated opening, then asks whether Kokiri Forest has
 // loaded. The introduction waits, plays Navi waking Link, and fades out before it shows him in his house. The Deku
 // Tree's quest and the forest's first tutorial wait for Navi's scene to count as played, which a scene left out never
@@ -1351,6 +1359,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             throw std::runtime_error(
                 std::format("event number {}: {}", Name(number.flow, number.event, number.param), e.what()));
         }
+    }
+    const std::string arrival(ArrivalFlow);
+    if (bfevfl::SetNext(flowAt(arrival), ZoraDomainIntro, AfterWaterStep)) {
+        changedFlows.insert(arrival);
     }
     if (!plan.stoneTexts.empty()) {
         const std::string path(StoneFlow);

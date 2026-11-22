@@ -22,7 +22,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|goods-and-copies|weapons-bring-containers| \
            weapon-copies|event-numbers|song-table|presence|lichii-built-ins|opening-skipped|cutscenes-skipped| \
-           sword-scene-left-out|sword-scene-kept|both-stones-before-zelda <kaepora-patch> <game.nup>
+           sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
+           river-arrival-writes-no-step <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -2290,6 +2291,32 @@ def event_numbers(patch, game):
     assert game.event_flow(mod[IMPA_LESSON_FLOW]) == expected
 
 
+ARRIVAL_FLOW = "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs"
+
+
+def river_arrival_writes_no_step(patch, game):
+    """In every mod the arrival flow is the game's but for one next event, so a first walk into Zora's Domain from
+    Zora's River plays the domain's intro and leaves the Water quest where it is. Entry point Goto_ZoraDomain goes on
+    from the intro, Event48, to Event551, past the Bool that picks Step03 or Step03_Impa and past both writes."""
+    mod = every_mod(patch, game)
+    assert ARRIVAL_FLOW in mod, sorted(mod)
+    expected = game.event_flow(game.read(ARRIVAL_FLOW))
+    events = expected["events"]
+    index = {event[0]: i for i, event in enumerate(events)}
+    intro = events[index["Event48"]]
+    now, then = index["Event46"], index["Event551"]
+    assert struct.unpack_from("<H", intro[1], 2)[0] == now, intro[1]
+    intro[1] = intro[1][:2] + struct.pack("<H", then) + intro[1][4:]
+    flow = game.event_flow(mod[ARRIVAL_FLOW])
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], events) if ours != theirs]
+    assert transitions(flow, "Goto_ZoraDomain") == ["Dm_Zora_0000"]
+    ours = zstd.decompress(mod[ARRIVAL_FLOW], zstd_dict=game.zs_dictionary)
+    theirs = zstd.decompress(game.read(ARRIVAL_FLOW), zstd_dict=game.zs_dictionary)
+    changed = [at for at, (a, b) in enumerate(zip(ours, theirs)) if a != b]
+    in_next = sum(a != b for a, b in zip(struct.pack("<H", now), struct.pack("<H", then)))
+    assert len(ours) == len(theirs) and len(changed) == in_next, changed
+
+
 def without_mask(flow):
     """A parsed GossipStone flow in which the mask question goes on to the stone's talk on both answers, and the talk
     straight on to the stone's message."""
@@ -2842,6 +2869,7 @@ def main():
         "vine-hatch": vine_hatch,
         "tested-colossus-mod": tested_colossus_mod,
         "event-numbers": event_numbers,
+        "river-arrival-writes-no-step": river_arrival_writes_no_step,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")
