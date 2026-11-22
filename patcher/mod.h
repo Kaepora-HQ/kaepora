@@ -42,6 +42,14 @@ struct PlannedEventNumber {
     int32_t value;
 };
 
+// An event of an event flow that goes on to another event of its flow: an action, a join or a sub-flow call by its next
+// event, a switch by each of its cases.
+struct PlannedEventNext {
+    std::string flow; // RomFS path of the event flow
+    std::string event;
+    std::string next;
+};
+
 // A gossip stone says the message whose label is its name.
 struct PlannedStoneText {
     std::string label;
@@ -119,6 +127,7 @@ struct Plan {
     std::vector<PlannedPresence> presences;
     std::vector<PlannedEventText> eventTexts;
     std::vector<PlannedEventNumber> eventNumbers;
+    std::vector<PlannedEventNext> eventNexts;
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedMessageText> messageTexts;

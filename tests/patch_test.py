@@ -578,13 +578,15 @@ def actor(placement, hash):
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
-         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=()):
+         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
             "event_numbers": [{"flow": flow, "event": event, "param": param, "value": value}
                               for flow, event, param, value in event_numbers],
+            "event_nexts": [{"flow": flow, "event": event, "next": next_event}
+                            for flow, event, next_event in event_nexts],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
@@ -1193,7 +1195,8 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
+             for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "stone_texts",
+                         "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
               "cutscenes_skipped": False}
@@ -2463,6 +2466,40 @@ def event_numbers(patch, game):
 
 
 ARRIVAL_FLOW = "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs"
+BIGGORON_FLOW = "Event/EventFlow/Npc_Goron_Biggoron_Adult.bfevfl.zs"
+GET_IN_FLOW = "Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs"
+
+
+def sent_on(flow, event, next_event):
+    """The parsed flow with the event going on to next_event: an action, a join or a sub-flow call by its next event,
+    a switch by each of its cases."""
+    events = flow["events"]
+    index = {named[0]: i for i, named in enumerate(events)}
+    sent, target = events[index[event]], struct.pack("<H", index[next_event])
+    if sent[1][0] in (1, 5):
+        cases = bytearray(sent[3])
+        for case in range(struct.unpack_from("<H", sent[1], 2)[0]):
+            cases[8 * case + 4:8 * case + 6] = target
+        sent[3] = bytes(cases)
+    else:
+        sent[1] = sent[1][:2] + target + sent[1][4:]
+    return flow
+
+
+def event_nexts(patch, game):
+    """Each event the plan sends on goes on to the event it names, and its flow is the game's otherwise: an action or a
+    sub-flow call by its next event, a switch by each of its cases. Here the three that Biggoron's place needs: his
+    hand-over's last line goes on to the write of his talk flag, his question whether Link holds the Giant's Knife to
+    the wait's question, and the get flow's entry for his sword past its wait."""
+    nexts = [(BIGGORON_FLOW, "Event112", "Event21"), (BIGGORON_FLOW, "Event53", "Event71"),
+             (GET_IN_FLOW, "Event334", "Event392")]
+    mod = patched(patch, game, plan([], event_nexts=nexts))
+    assert sorted(mod) == sorted([BIGGORON_FLOW, GET_IN_FLOW]), sorted(mod)
+    expected = {}
+    for flow, event, next_event in nexts:
+        expected[flow] = sent_on(expected.get(flow) or game.event_flow(game.read(flow)), event, next_event)
+    for flow, flowchart in expected.items():
+        assert game.event_flow(mod[flow]) == flowchart, flow
 
 
 def river_arrival_writes_no_step(patch, game):
@@ -2960,6 +2997,19 @@ def bad_input(patch, game):
             ["Event27 MessageId", IMPA_LESSON_FLOW, "not an integer"]),
         "event not in the lesson": (dict(valid_melody, event="Event9999"), ["Event9999 MelodyType", "no event"]),
     }
+    valid_next = {"flow": BIGGORON_FLOW, "event": "Event53", "next": "Event71"}
+    nexts = {
+        "event next not this shape": ({"flow": BIGGORON_FLOW, "event": "Event53"}, ["plan.json", "event_nexts[1]"]),
+        "event next to no event": (dict(valid_next, event="Event20", next="Event9999"), ["Event20", "Event9999"]),
+        "event next of a fork": (
+            {"flow": GET_IN_FLOW, "event": "Event392", "next": "Event334"}, ["Event392", GET_IN_FLOW, "fork"]),
+        "event next listed twice": (
+            dict(valid_next, next="Event54"), ["plan.json", "event_nexts[1]", "Event53", "twice"]),
+    }
+    for name, (entry, named) in nexts.items():
+        plans[name] = (good | {"event_nexts": [valid_next, entry]}, named)
+    plans["no event_nexts"] = (
+        {key: value for key, value in good.items() if key != "event_nexts"}, ["plan.json", "event_nexts"])
     for name, (entry, named) in numbers.items():
         if name == "event number also a text":
             plans[name] = (good | {"event_texts": [valid_gift], "event_numbers": [entry]}, named)
@@ -3068,6 +3118,7 @@ def main():
         "loose-spot-keys": loose_spot_keys,
         "claims": claims,
         "expressions": expressions,
+        "event-nexts": event_nexts,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

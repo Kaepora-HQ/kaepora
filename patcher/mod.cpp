@@ -283,6 +283,20 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("expressions[{}]: {} is listed twice", i, expression.name));
         }
     }
+    const auto nexts = json.at("event_nexts").get<std::vector<nlohmann::json>>();
+    std::set<std::pair<std::string, std::string>> sent;
+    for (size_t i = 0; i < nexts.size(); ++i) {
+        try {
+            const PlannedEventNext& next = plan.eventNexts.emplace_back(nexts[i].at("flow").get<std::string>(),
+                                                                        nexts[i].at("event").get<std::string>(),
+                                                                        nexts[i].at("next").get<std::string>());
+            if (!sent.emplace(next.flow, next.event).second) {
+                throw std::runtime_error(std::format("{} in {} is listed twice", next.event, next.flow));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("event_nexts[{}]: {}", i, e.what()));
+        }
+    }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     plan.openingSkipped = json.at("opening_skipped").get<bool>();
     plan.cutscenesSkipped = json.at("cutscenes_skipped").get<bool>();
@@ -1537,6 +1551,15 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         } catch (const std::exception& e) {
             throw std::runtime_error(
                 std::format("event number {}: {}", Name(number.flow, number.event, number.param), e.what()));
+        }
+    }
+    for (const PlannedEventNext& next : plan.eventNexts) {
+        try {
+            if (bfevfl::SetNext(flowAt(next.flow), next.event, next.next)) {
+                changedFlows.insert(next.flow);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("event next {} in {}: {}", next.event, next.flow, e.what()));
         }
     }
     const std::string arrival(ArrivalFlow);
