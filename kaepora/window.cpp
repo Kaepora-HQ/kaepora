@@ -1,5 +1,6 @@
 #include "window.h"
 
+#include "game_values.h"
 #include "mod.h"
 #include "new_version.h"
 #include "seed.h"
@@ -441,7 +442,14 @@ void Window::deleteSeed() {
 }
 
 void Window::play() {
-    if (!QProcess::startDetached(Program(emulator->text()), { "-g", gameFile->text() })) {
+    QProcess lichii;
+    lichii.setProgram(Program(emulator->text()));
+    lichii.setArguments({ "-g", gameFile->text() });
+    // The tracker reads the game through Lichii's debug server, which listens only when this names its port.
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    environment.insert("EDEN_NX2_DEBUG_SERVER", QString("127.0.0.1:%1").arg(DebugServerPort));
+    lichii.setProcessEnvironment(environment);
+    if (!lichii.startDetached()) {
         Tell(this, QMessageBox::Critical, "The emulator did not start.");
     }
 }

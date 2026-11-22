@@ -1,5 +1,6 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
+#include "kaepora/game_values.h"
 #include "kaepora/window.h"
 #include "version.h"
 
@@ -1545,29 +1546,34 @@ private slots:
     }
 
     // On macOS the emulator is an app, a folder, and Play starts the program its Info.plist names.
-    void playStartsTheProgramLichiisAppNames() {
+    void playStartsLichiiWithItsDebugServerOn() {
+#ifdef Q_OS_WIN
+        QSKIP("A shell script stands in for Lichii");
+#else
 #ifdef Q_OS_MACOS
-        const QString app = QDir::home().filePath("Applications/Lichii.app");
-        const QString program = app + "/Contents/MacOS/lichii-program";
-        const QString arguments = QDir::home().filePath("arguments");
-        Write(app + "/Contents/Info.plist", R"(<?xml version="1.0" encoding="UTF-8"?>
+        const QString emulator = QDir::home().filePath("Applications/Lichii.app");
+        const QString program = emulator + "/Contents/MacOS/lichii-program";
+        Write(emulator + "/Contents/Info.plist", R"(<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0"><dict><key>CFBundleExecutable</key><string>lichii-program</string>
 <key>CFBundlePackageType</key><string>APPL</string></dict></plist>
 )");
-        Write(program, "#!/bin/sh\nprintf '%s\\n' \"$@\" > '" + arguments.toUtf8() + "'\n");
+#else
+        const QString emulator = QDir::home().filePath("lichii");
+        const QString program = emulator;
+#endif
+        const QString given = QDir::home().filePath("given");
+        Write(program, "#!/bin/sh\nprintf '%s\\n' \"$EDEN_NX2_DEBUG_SERVER\" \"$@\" > '" + given.toUtf8() + "'\n");
         QVERIFY(QFile::setPermissions(program, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
         const QString game = QDir::home().filePath("game.nup");
         Write(game, {});
         Write(mods + "/Kaepora/seed.txt", "7");
-        QSettings().setValue("emulator", app);
+        QSettings().setValue("emulator", emulator);
         QSettings().setValue("gameFile", game);
         window = std::make_unique<Window>();
         window->show();
         QVERIFY(button("Play")->isEnabled());
         button("Play")->click();
-        QTRY_COMPARE(QString::fromUtf8(Read(arguments)), "-g\n" + game + "\n");
-#else
-        QSKIP("The emulator is an app only on macOS");
+        QTRY_COMPARE(QString::fromUtf8(Read(given)), QString("127.0.0.1:%1\n-g\n%2\n").arg(DebugServerPort).arg(game));
 #endif
     }
 };

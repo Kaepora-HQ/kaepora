@@ -305,8 +305,8 @@ if(Qt6Test_FOUND)
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
                      aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
                      rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime)
-    if(APPLE)
-        list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)
+    if(NOT WIN32)
+        list(APPEND WINDOW_TESTS playStartsLichiiWithItsDebugServerOn)
     endif()
     foreach(TEST IN LISTS WINDOW_TESTS)
         add_test(NAME window_${TEST} COMMAND kaepora-window-test ${TEST})
