@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.6.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.5.0...v0.6.0) (2026-11-22)
+
+
+### Features
+
+* choose the gift groups to shuffle in a list ([502803c](https://github.com/Kaepora-HQ/kaepora/commit/502803cb267a38ef7203e922777901ec3402eaa2))
+* let a prize line name a gift's item where the seed shuffles it ([9c6b3fc](https://github.com/Kaepora-HQ/kaepora/commit/9c6b3fcdd0c5224bd57fb60d319b68b3491a19e7))
+* **patch:** add a message as a copy of another under a new label ([e940e2a](https://github.com/Kaepora-HQ/kaepora/commit/e940e2a425c40ab4583ec730c520e364ab78cd43))
+* **patch:** add a saved Bool of the plan's own to the game data list ([bbe2db6](https://github.com/Kaepora-HQ/kaepora/commit/bbe2db640b55331d4244b728b898b6f6727980ba))
+* **patch:** give each loose spot the list has no key for its own ([bb78056](https://github.com/Kaepora-HQ/kaepora/commit/bb7805679a66a7d16f852ae3bc541be155eae11d))
+* **patch:** let a bigger bag bring the small one of its kind ([5b7df15](https://github.com/Kaepora-HQ/kaepora/commit/5b7df159fdfc47670aca71b4efd5720b3c5c897b))
+* **patch:** let a planned presence take the place of a named one ([5b39e75](https://github.com/Kaepora-HQ/kaepora/commit/5b39e75c36d2211c5909ca22c47a8f4beeefa281))
+* shuffle Ruto's Letter's spot, with the letter kept in chests ([f572f0c](https://github.com/Kaepora-HQ/kaepora/commit/f572f0c953570a6f54f6b6c6bb49f7106e39187c))
+* shuffle six and seven goods per shop ([#93](https://github.com/Kaepora-HQ/kaepora/issues/93)) ([4b58d8d](https://github.com/Kaepora-HQ/kaepora/commit/4b58d8df338dfa62913bee16dc0e81e1c5995018))
+* shuffle the eight prizes that make a bag bigger ([07e0ed4](https://github.com/Kaepora-HQ/kaepora/commit/07e0ed4695141824486a7822ccfaefad7baa7cec))
+* shuffle the Gerudo Pass, King Zora's tunic and the Light Arrows ([336683b](https://github.com/Kaepora-HQ/kaepora/commit/336683b9e257b390f52298084d379749bf82eb19))
+* shuffle the gifts of the groups a seed names ([7a97bc7](https://github.com/Kaepora-HQ/kaepora/commit/7a97bc71be8a0c675b91dd56d3aad985b7e0cec2))
+* shuffle the One Time Rewards of the Deku Scrubs ([2c6e620](https://github.com/Kaepora-HQ/kaepora/commit/2c6e6201bbb347c4c38f294747b993b321d203f9))
+* shuffle the Pocket Egg in a "Biggoron Quest" group ([9cf6fff](https://github.com/Kaepora-HQ/kaepora/commit/9cf6fff7e108dbb2ad43d835d012897a041d7fa8))
+* shuffle the six Great Fairies' gifts ([cd39d13](https://github.com/Kaepora-HQ/kaepora/commit/cd39d13146a011abe9d74be9d8a74617ed3e4a18))
+* shuffle the Weird Egg in a "Malon's Egg" group ([906338d](https://github.com/Kaepora-HQ/kaepora/commit/906338dc31a4eecc35e8d32aad864d8d183df907))
+* **web:** count Ruto's Letter's spot ([53cdcef](https://github.com/Kaepora-HQ/kaepora/commit/53cdcef50ffe3ec6bcbf7c34d5a01ecb843a533c))
+* **web:** count the 32 gifts ([f7fcd50](https://github.com/Kaepora-HQ/kaepora/commit/f7fcd50680e124d468e26fdf42a1959bf78f215c))
+* **web:** count the 38 gifts ([7096a50](https://github.com/Kaepora-HQ/kaepora/commit/7096a50e613f97b34f8a9f4bf7eddfbe406ab457))
+
+
+### Bug Fixes
+
+* drop the bomb and bombchu hover to the volcano heart piece ([#100](https://github.com/Kaepora-HQ/kaepora/issues/100)) ([3355a60](https://github.com/Kaepora-HQ/kaepora/commit/3355a604b4d78702bb7e10f12dfcfcb261f266df))
+* give the castle's Great Fairy a place of her own ([143c8dc](https://github.com/Kaepora-HQ/kaepora/commit/143c8dcfb48f1efe8d4081b264a01ba2601478ed))
+* keep a talk after the Ruby from sending Impa away early ([d1d9fdf](https://github.com/Kaepora-HQ/kaepora/commit/d1d9fdff7bb577aca3292ad2f4f96e5f8822c497))
+* keep King Zora aside when the diving game is won late ([62c833c](https://github.com/Kaepora-HQ/kaepora/commit/62c833c2f3954c440ad0abebdcbfe42e5c315c9c))
+* keep King Zora's ice after the Water Temple until he is thawed ([4aeacca](https://github.com/Kaepora-HQ/kaepora/commit/4aeaccaed3bdd2d2073b9284d4c3002e0335a3c1))
+* keep Zelda's scene when the Forest Temple comes after the sages ([b168a8c](https://github.com/Kaepora-HQ/kaepora/commit/b168a8c554d3a40a3451153b4738e9fc8e258189))
+* let a child finish both stone dungeons before meeting Zelda ([1a7144d](https://github.com/Kaepora-HQ/kaepora/commit/1a7144d9c78d8c0103ec70fc4b951ea9de59d0b4))
+* let a child win the Lost Woods target with the Boomerang ([ce22b1f](https://github.com/Kaepora-HQ/kaepora/commit/ce22b1f2e302ab9776b3744c0e09d83f1cc19bbd))
+* let a child without the Slingshot win the Market gallery's prize ([5f1322f](https://github.com/Kaepora-HQ/kaepora/commit/5f1322f20b6c33c80eefd8de8eb4e36b4fe74b03))
+* let a spell, the Lens or magic arrows bring the magic meter ([0026668](https://github.com/Kaepora-HQ/kaepora/commit/0026668c1bc05899ccc35e47726739f6bd9aec7d))
+* let four Great Fairies wait for Din's Fire and their offering ([fd854c8](https://github.com/Kaepora-HQ/kaepora/commit/fd854c8754c2a85b8a19e83f94cf5db4ab9ec947))
+* let Morpha stop waiting for King Zora's thanks ([65ea552](https://github.com/Kaepora-HQ/kaepora/commit/65ea5526930c54fa7baa6dd5da1e9943820d1903))
+* let Morpha wait for King Zora's thanks with the gifts shuffled ([66fcd31](https://github.com/Kaepora-HQ/kaepora/commit/66fcd313089df158a8016229d21f3000dfc4b42b))
+* let the bridge wait for Zelda's scene, not the Light Arrows ([678d6f3](https://github.com/Kaepora-HQ/kaepora/commit/678d6f3ff51b6989e982a059a25f771980284de1))
+* let the Gerudo let Link pass after the rescue, not for the card ([b44f1e7](https://github.com/Kaepora-HQ/kaepora/commit/b44f1e713204c50211e24d9b01b388b04bff0b75))
+* let the moat wait for Zelda in place of the stone bosses ([41b4e4a](https://github.com/Kaepora-HQ/kaepora/commit/41b4e4a513b493c9f576b0c71f7ec86f41d46efc))
+* let the summit owl fly a child down only once he holds Din's Fire ([3b1e1ed](https://github.com/Kaepora-HQ/kaepora/commit/3b1e1ed788eac341de2549fd3f555a04b2a9af6e))
+* let Twinrova stop waiting for the Forest Temple ([ce933f7](https://github.com/Kaepora-HQ/kaepora/commit/ce933f7d69100e35d9cf54bf6b41411a1fb14b62))
+* let Zora's Domain's first arrival from the river write no step ([64e2831](https://github.com/Kaepora-HQ/kaepora/commit/64e28319ea858bab123e783f3938b9b952f77890))
+* name the Pocket Egg's gift group "Anju's Egg" ([be0e839](https://github.com/Kaepora-HQ/kaepora/commit/be0e839e8983d8b8c23a36dc220d8cb7feac9d25))
+
 ## [0.5.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.4.0...v0.5.0) (2026-11-21)
 
 
