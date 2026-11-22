@@ -155,7 +155,7 @@ export const copy: Copy = {
     stones: 'Gossip stones that can give a hint',
     fixedRows: [
       ['Shop places a seed can shuffle', 'up to 5 of 8 in each shop'],
-      ['Gifts from characters', '38'],
+      ['Gifts from characters', '44'],
       ['Songs', '12 of 12'],
       ['Gold Skulltula tokens', '100 of 100'],
       ['Loose items', '26'],
