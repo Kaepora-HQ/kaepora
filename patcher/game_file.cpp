@@ -61,7 +61,8 @@ struct Toc {
                 const size_t file = files + (child - dirCount) * FileSize;
                 out[prefix + Name(file)] = { .offset = ReadAt<uint64_t>(data, file + 0x10),
                                              .size = ReadAt<uint64_t>(data, file + 0x08),
-                                             .codec = ReadAt<uint8_t>(data, file + 0x40) };
+                                             .codec = ReadAt<uint8_t>(data, file + 0x40),
+                                             .sha256 = ReadAt<GameFile::Sha256>(data, file + 0x20) };
             }
         }
     }
@@ -77,6 +78,7 @@ GameFile::GameFile(const std::filesystem::path& path) : nup(path, std::ios::bina
     if (!superblock.starts_with(NupMagic)) {
         throw std::runtime_error(path.string() + ": not a Lichii .nup container");
     }
+    tableOfContentsSha256 = ReadAt<Sha256>(superblock, 0x18);
     const std::string toc = ReadBytes(ReadAt<uint64_t>(superblock, 0x08), ReadAt<uint64_t>(superblock, 0x10));
     if (ReadAt<uint32_t>(toc, 0) != TocMagic) {
         throw std::runtime_error(path.string() + ": the container has no table of contents");
@@ -155,6 +157,14 @@ std::string GameFile::ReadBytes(uint64_t offset, uint64_t size) {
         throw std::runtime_error("the container ends early");
     }
     return data;
+}
+
+std::map<unsigned, std::string> Dictionaries(GameFile& game) {
+    std::map<unsigned, std::string> dictionaries;
+    for (auto& [name, dictionary] : sarc::Parse(Decompress(game.Read(std::string(DictionaryPack))))) {
+        dictionaries.emplace(DictionaryId(dictionary), std::move(dictionary));
+    }
+    return dictionaries;
 }
 
 std::string Dictionary(GameFile& game, std::string_view name) {

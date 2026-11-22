@@ -131,6 +131,7 @@ MIDO_TALK = "Talk_03"
 SIGN_MESSAGES = "EventFlowMsg/SignboardWood.msbt"
 MASK_SHOP_SIGN = "HrlCity_001"
 TEXT_PACK_OVERHEAD = 312
+BINARY = 0xA1
 BOOL = 0xD0
 INT = 0xD1
 FLOAT = 0xD2
@@ -357,6 +358,8 @@ def byml(data):
         return int.from_bytes(data[offset:offset + 4], order)
 
     def table(offset):
+        if offset == 0:  # a file with no keys or no strings has no table for them
+            return []
         starts = [offset + u32(offset + 4 + 4 * i) for i in range(u24(offset + 1))]
         return [data[start:data.index(b"\0", start)].decode() for start in starts]
 
@@ -369,6 +372,8 @@ def byml(data):
             return (kind, raw)
         if kind in (INT64, UINT64):
             return (kind, int.from_bytes(data[raw:raw + 8], order))
+        if kind == BINARY:
+            return (kind, data[raw + 4:raw + 4 + u32(raw)])
         count = u24(raw + 1)
         if kind == 0xC0:
             values = raw + 4 + (count + 3) // 4 * 4

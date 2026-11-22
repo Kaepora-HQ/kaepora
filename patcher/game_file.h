@@ -2,6 +2,7 @@
 // emulator boots from it.
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -11,10 +12,13 @@
 
 class GameFile {
 public:
+    using Sha256 = std::array<uint8_t, 32>;
+
     struct File {
         uint64_t offset;
         uint64_t size;
         uint8_t codec;
+        Sha256 sha256; // of the file's bytes, as the container records it
     };
 
     explicit GameFile(const std::filesystem::path& nup);
@@ -32,13 +36,23 @@ public:
         return programBuildId;
     }
 
+    // The SHA-256 of the container's table of contents, which names every file with its own SHA-256, as the
+    // container's header records it. The emulator refuses a container whose table has another.
+    const Sha256& TableOfContentsSha256() const {
+        return tableOfContentsSha256;
+    }
+
 private:
     std::string ReadBytes(uint64_t offset, uint64_t size);
 
     std::ifstream nup;
     std::map<std::string, File> files;
     std::string programBuildId;
+    Sha256 tableOfContentsSha256;
 };
 
 // A zstd dictionary in the game's dictionary pack, by its name there.
 std::string Dictionary(GameFile& game, std::string_view name);
+
+// Every zstd dictionary in the game's dictionary pack, by the ID a frame's header names it by.
+std::map<unsigned, std::string> Dictionaries(GameFile& game);

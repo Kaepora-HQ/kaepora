@@ -107,6 +107,10 @@ add_executable(kaepora-patch patcher/main.cpp)
 target_link_libraries(kaepora-patch PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch PRIVATE ${WARNINGS})
 
+add_executable(kaepora-dump patcher/dump.cpp)
+target_link_libraries(kaepora-dump PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-dump PRIVATE ${WARNINGS})
+
 add_executable(kaepora-patch-roundtrip tests/byml_roundtrip.cpp)
 target_link_libraries(kaepora-patch-roundtrip PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-roundtrip PRIVATE ${WARNINGS})
@@ -363,6 +367,24 @@ if(KAEPORA_GAME_NUP)
                  event-numbers song-table
                  presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out sword-scene-kept)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
+    endforeach()
+    foreach(TEST IN ITEMS the_tables_and_placements_print_as_their_trees
+                          a_message_file_in_a_text_pack_prints_as_its_labels_and_tagged_texts
+                          the_key_names_the_table_of_contents_the_program_and_the_format
+                          the_list_names_each_file_under_a_prefix
+                          the_list_names_the_members_of_a_pack_as_files_takes_them
+                          the_strings_of_a_file_are_its_runs_of_name_characters
+                          the_whole_games_strings_hold_those_of_each_format_that_names_saved_values
+                          a_mod_file_past_its_size_table_entry_is_named a_mod_with_no_romfs_folder_fits
+                          an_error_exits_apart_from_a_file_too_large
+                          a_mods_own_table_that_lowers_the_entry_of_a_file_it_lacks_names_that_file
+                          a_file_check_mod_cannot_measure_is_named_unchecked
+                          a_mods_own_size_table_is_the_one_its_files_must_fit
+                          a_mod_kaepora_patch_made_fits_its_size_table_and_outgrows_the_games)
+        add_test(NAME dump_${TEST}
+                 COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/dump_test.py
+                         $<TARGET_FILE:kaepora-dump> $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                         ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json DumpTest.test_${TEST})
     endforeach()
     add_test(NAME remake-tables
         COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
