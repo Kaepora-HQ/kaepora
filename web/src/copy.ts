@@ -46,7 +46,7 @@ export type Copy = {
 export const copy: Copy = {
   hero: {
     headline: "You've never played this Ocarina of Time",
-    lead: "Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It shuffles what's inside every chest in Hyrule, so the Hookshot could be anywhere. You know this game by heart. Now you get to guess.",
+    lead: "Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It shuffles what's in Hyrule's chests, what people hand you and the songs they teach, so the Hookshot could be anywhere. You know this game by heart. Now you get to guess.",
   },
   download: {
     forSystem: {
@@ -173,9 +173,9 @@ export const copy: Copy = {
     disclosure: 'An unofficial fan project, not affiliated with or endorsed by Nintendo. The Legend of Zelda and Ocarina of Time are trademarks of Nintendo.',
   },
   meta: {
-    description: "Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It shuffles what's inside every chest, so the game you know by heart is unknown again.",
+    description: "Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It shuffles what's in Hyrule's chests, what people hand you and the songs they teach, so the game you know by heart is unknown again.",
   },
   preview: {
-    line: 'Every chest in Hyrule has changed its mind',
+    line: "Hyrule's chests have changed their minds",
   },
 }
