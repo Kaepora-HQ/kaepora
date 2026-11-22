@@ -35,7 +35,13 @@
 				],
 				"allowedUnstableApis": [
 					// The game commands as one RPC group.
-					"effect/rpc"
+					"effect/rpc",
+					// The debug server's TCP connection.
+					"effect/socket",
+					"@effect/platform-node-shared/NodeSocket",
+					// The wire log file, and the files the tests read back.
+					"effect/FileSystem",
+					"@effect/platform-bun/BunFileSystem"
 				],
 				"allowedExperimentalApis": [],
 				"diagnosticSeverity": {
@@ -194,7 +200,28 @@
 					"unsafeEffectTypeAssertion": "error",
 					"unstableApiUsage": "error",
 					"yieldInCallArgument": "error"
-				}
+				},
+				"overrides": [
+					{
+						// A test asserts with expect(yield* effect), and it is the entry point that provides its own layers.
+						"include": ["tests/**/*.ts"],
+						"options": {
+							"diagnosticSeverity": {
+								"strictEffectProvide": "off",
+								"yieldInCallArgument": "off"
+							}
+						}
+					},
+					{
+						// The fake debug server answers in Bun's socket callbacks, outside Effect, and speaks JSON lines as Lichii does.
+						"include": ["tests/fake-lichii.ts"],
+						"options": {
+							"diagnosticSeverity": {
+								"globalJson": "off"
+							}
+						}
+					}
+				]
 			}
 		],
 		"incremental": true,
