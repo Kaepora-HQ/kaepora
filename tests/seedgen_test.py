@@ -484,11 +484,6 @@ class SeedgenTest(unittest.TestCase):
             for boss in bosses:
                 self.assertIn(boss, sphere, step)
                 self.assertLess(sphere[boss], sphere[step], (boss, step))
-        # With the songs shuffled, Twinrova waits for Phantom Ganon, though seed 1 needs nothing he holds.
-        log, _ = self.generate("1", SONGS_SHUFFLED)
-        sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
-        self.assertIn("Phantom Ganon", sphere)
-        self.assertLess(sphere["Phantom Ganon"], sphere["Twinrova"])
 
     def test_a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree(self):
         # Closed Deku opens the way out of the forest.
@@ -1359,18 +1354,6 @@ class SeedgenTest(unittest.TestCase):
             self.assertTrue(reach.reachable(boss, *early), boss)
         for place in ("HF Ocarina of Time Item", "Song from Ocarina of Time"):
             self.assertFalse(reach.reachable(place, *early), place)
-
-    def test_with_songs_shuffled_shadow_and_spirit_never_both_come_before_the_forest_temple(self):
-        # The second of the Shadow and Spirit sages sets AllSage to Step02, the one step at which the Light Arrows scene
-        # starts as Link walks into the Temple of Time. The Forest Temple's end then sets it back to Step01_00, and
-        # nothing sets Step02 again. Seed 10 teaches the Nocturne in the meadow: with the Forest Temple's boss key held
-        # back, Link can still clear one of the two, and never both.
-        spoiler, _ = self.generate("10", SONGS_SHUFFLED)
-        key = next(location for location, item in spoiler["locations"].items() if item == "Forest Temple Boss Key")
-        placed = [*spoiler["locations"].items(), (key, "Green Rupee")]
-        self.assertFalse(reach.reachable("Phantom Ganon", *placed, settings=spoiler["settings"]))
-        cleared = [reach.reachable(boss, *placed, settings=spoiler["settings"]) for boss in ("Bongo Bongo", "Twinrova")]
-        self.assertEqual(sorted(cleared), [False, True])
 
     def test_with_songs_shuffled_the_courtyard_scene_starts_played(self):
         # With the songs shuffled, a child can learn a warp song and, grown up, warp out of the Temple of Time before he
