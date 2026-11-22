@@ -144,6 +144,20 @@ class RemakeTablesTest(unittest.TestCase):
                                   if tested[site] != cells},
         }, {"writes missing": [], "reads missing": [], "tests that differ": {}})
 
+    def test_every_value_the_tracker_reads_is_in_the_game_data_list_with_its_type(self):
+        data = self.game.game_data_list(self.game.read(patch_test.GAME_DATA_LIST))["Data"]
+        read = [("0x578d41e1", "Enum", "Title"), ("0x578d41e1", "Enum", "None"),
+                ("Sequence_CurrentBanc", "String64", None)]
+        for row in read_tsv("tracker.tsv"):
+            read += [(row["value"], row["type"], row["when"]), (row["count"], row["count_type"], None)]
+        missing = []
+        for name, kind, choice in read:
+            named = int(name, 16) if name.startswith("0x") else patch_test.murmur3(name)
+            entry = next((e for e in data.get(kind, []) if e["Hash"][1] == named), None)
+            if name and (entry is None or kind == "Enum" and choice not in entry["RawValues"]):
+                missing.append((name, kind, choice))
+        self.assertEqual(missing, [])
+
 
 if __name__ == "__main__":
     GAME = sys.argv[1]

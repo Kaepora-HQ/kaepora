@@ -1,8 +1,8 @@
 # Remake tables
 
 The generator builds these into the program and checks them when it starts, all but the quest tables, which no program
-reads. The patcher builds in `stones.tsv` and `shop_goods.tsv` too. With the game file, `tests/remake_tables_test.py`
-checks the tables against the game's own files.
+reads, and `tracker.tsv`, which the window builds in. The patcher builds in `stones.tsv` and `shop_goods.tsv` too. With
+the game file, `tests/remake_tables_test.py` checks the tables against the game's own files.
 
 `chests.tsv` has a row for every chest of the remake, 212 in all, and for every SoH chest location of the vanilla
 dungeon layouts, so it is the list of which chests are shuffled and why the others are not. A SoH loose item that the
@@ -666,6 +666,54 @@ sets and node definitions. No cutscene timeline names a step write, a step's sav
   another node feeds that input, or it reads the actor's blackboard or an expression. `(hash)` marks an expression the
   file holds by its hash, under a name that hashes to it where another file or the quest's own expression names give
   one, and in hex where none does.
+
+`tracker.tsv` has the cells of the tracker window, a grid of item pictures that light up as the player finds items. The
+window reads the saved values of the running game, and each cell shows what this table makes of them. A row is one
+stage of a cell. A cell's rows come together, in the order of its stages, and only its first row fills the columns
+before `picture` and after `when`.
+
+- `block`, `row` and `column`: where the cell stands. A block is a group of cells drawn apart from the others: `items`,
+  `equipment`, `quest` and `songs`, six across, and `dungeons`, eight across. `row` and `column` count from 0 within
+  the block.
+- `name`: the cell's name in the player's words, the game's English name for its item where it has one.
+- `picture`: the stage's picture, by the name the game gives it.
+- `value` and `type`: the saved value that tells the stage, and its type in the game data list, `Bool`, `Int` or `Enum`.
+- `when`: the stage holds while an `Int` is at least this number, a `Bool` is `true`, or an `Enum` is this choice.
+- `count`, `count_type` and `per`: the number the cell shows, where it has one: the saved value, an `Int`, divided by
+  `per`, or by 1 where `per` is empty. `PlayerStatus.MaxLife` counts quarter hearts, so the hearts' `per` is 4.
+- `total`: where the cell shows its count out of a number, that number, as the `5` of `2/5`.
+- `tint`: the colour a song's white symbol is drawn in, as `#rrggbb`, for the six warp songs.
+- `label`: the name drawn above a dungeon's column.
+
+A cell shows the picture of its last stage that holds, lit, and its first picture unlit when none holds. While no game
+is in play, every cell shows its first picture unlit and no count. The game's menu state tells it, an Enum whose name is
+unknown, read by its hash `0x578d41e1`: `Title` from the title film on, `None` in play, `Loading` during a load or a
+new game's start and a choice for each screen of the pause menu. From the boot until the title film it reads `None`
+too, its default, while the saved values hold theirs, so the tracker also waits for a scene: `Sequence_CurrentBanc`,
+the scene's name, is empty until a game's first scene loads and never empty in play. `UI_Debug_IsOpenedTitle` cannot
+tell it, as a new game puts it back to false, and nor can the saved values: after a return to the title they keep the
+last game's values until the next load (measured in a running game).
+
+An item shows what Link holds, its `PouchData.<actor>.StockNum`, under the actor's name the game saves it by, as
+`Weapon_Range_Bow` for the Fairy Bow. Deku Sticks, Deku Nuts, Bombchus and Magic Beans light once found, by
+`IsGet.<actor>`, as Link can use them up. A higher tier keeps the tiers below it held, so the Hookshot, the ocarinas and
+the scales show the highest held. The sword's cell shows the Giant's Knife, the broken knife, or Biggoron's Sword over
+either: a knife that breaks moves its `StockNum` to `Weapon_Sword_BrokenGiant`, and Medigoron takes the broken knife
+when he sells a new one. The lift grade, the wallet's size and the magic meter's size give their level themselves. A
+bottle shows its contents, and a trade item the last item of its chain that Link holds. The count of Deku Sticks, Deku
+Nuts, bombs, arrows or seeds is the bag's size, the item a seed shuffles. A small key lights once one of its dungeon's
+keys is found, and counts the keys found, `DungeonInfo.<dungeon>.SmallKeyTotalNum`, out of the dungeon's total, the
+remake's own count of them. The pieces of heart show the pieces toward the next heart: the save keeps no count of all
+the pieces found. These readings were checked against 1,504 saves the game wrote, none with a broken knife, and the
+tables test checks each value against the game data list.
+
+Stones and medallions have flat pictures only on the save file screen, `DataFileImportantIcon_00` to `_08`. A song's
+picture is `OcarinaMelodyIcon_` and its `MelodyType`, plus one from the Minuet on, as `_06` is the Scarecrow's Song.
+`CollectHeartPiece_00` to `_02` hold one to three quarters of a heart. A heart container has no picture of its own, so
+the hearts show the screen's heart, `HeartW_00_ASTC4x4`.
+
+The maps and compasses tell little and are left out, as are the Gerudo Fortress's keys, which no seed shuffles, the
+Kokiri Tunic and the Kokiri Boots, which Link always owns, and the rupees.
 
 ## Quests
 

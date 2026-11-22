@@ -77,7 +77,8 @@ target_compile_definitions(kaepora-generator PUBLIC LOG_LEVEL_GAME_PRINTS=6)
 set_source_files_properties(shipwright/soh/src/code/z_inventory.c PROPERTIES COMPILE_OPTIONS
     $<IF:$<C_COMPILER_ID:Clang,AppleClang>,-Wno-incompatible-pointer-types-discards-qualifiers,-Wno-discarded-qualifiers>)
 # GCC and Clang take #embed in C++20 as an extension and warn at each use.
-set_source_files_properties(generator/remake.cpp patcher/mod.cpp shipwright/soh/soh/Enhancements/Lang/Lang.cpp
+set_source_files_properties(generator/remake.cpp patcher/mod.cpp kaepora/tracker.cpp
+                            shipwright/soh/soh/Enhancements/Lang/Lang.cpp
     PROPERTIES COMPILE_OPTIONS $<IF:$<CXX_COMPILER_ID:Clang,AppleClang>,-Wno-c23-extensions,-Wno-c++26-extensions>)
 target_link_libraries(kaepora-generator PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
@@ -135,7 +136,7 @@ target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
 find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
-    add_library(kaepora-game-values STATIC kaepora/game_values.cpp kaepora/game_watch.cpp)
+    add_library(kaepora-game-values STATIC kaepora/game_values.cpp kaepora/game_watch.cpp kaepora/tracker.cpp)
     set_target_properties(kaepora-game-values PROPERTIES AUTOMOC ON)
     target_include_directories(kaepora-game-values PUBLIC kaepora)
     target_link_libraries(kaepora-game-values PUBLIC Qt6::Network PRIVATE kaepora-patch-files)
@@ -337,6 +338,19 @@ if(Qt6Test_FOUND)
                           aWatchSaysWhyItLostTheGameAndFindsItAgainAtAnotherAddress)
         add_test(NAME game_values_${TEST} COMMAND kaepora-game-values-test ${TEST})
         set_tests_properties(game_values_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
+    endforeach()
+
+    add_executable(kaepora-tracker-test tests/tracker_test.cpp)
+    set_target_properties(kaepora-tracker-test PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-tracker-test PRIVATE kaepora-game-values kaepora-patch-files Qt6::Test)
+    target_compile_options(kaepora-tracker-test PRIVATE ${WARNINGS})
+    foreach(TEST IN ITEMS aTierShowsItsHighestStageHeld aChainShowsTheLastItemHeld aBottleShowsItsContents
+                          theFifthBottleShowsItsContents magicShowsTheMeterThenTheGiftOfDoubledMagic
+                          aCountShowsItsNumber aSmallKeyLightsFromTheFirstFoundAndCountsTheFoundOfItsDungeonsTotal
+                          aCellWithNothingHeldShowsItsFirstPictureUnlit nothingShowsFromTheTitleUntilPlay
+                          aNewGameShowsWhatLinkHolds nothingShowsWhileTheGameBootsBeforeTheTitle)
+        add_test(NAME tracker_${TEST} COMMAND kaepora-tracker-test ${TEST})
+        set_tests_properties(tracker_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 endif()
 

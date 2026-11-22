@@ -1,0 +1,172 @@
+block	row	column	name	picture	value	type	when	count	count_type	per	total	tint	label
+items	0	0	Deku Sticks	Item_DekuStick	IsGet.Item_DekuStick	Bool	true	PouchContentMaxNum.DekuStick	Int				
+items	0	1	Deku Nuts	Item_DekuNut	IsGet.Item_DekuNut	Bool	true	PouchContentMaxNum.DekuNut	Int				
+items	0	2	Bombs	Item_Bomb	PouchContentMaxNum.Bomb	Int	1	PouchContentMaxNum.Bomb	Int				
+items	0	3	Fairy Bow	Weapon_Range_Bow	PouchData.Weapon_Range_Bow.StockNum	Int	1	PouchContentMaxNum.Arrow	Int				
+items	0	4	Fire Arrow	Item_Arrow_Fire	PouchData.Item_Arrow_Fire.StockNum	Int	1						
+items	0	5	Din's Fire	Item_DinFire	PouchData.Item_DinFire.StockNum	Int	1						
+items	1	0	Fairy Slingshot	Weapon_Range_SlingShot	PouchData.Weapon_Range_SlingShot.StockNum	Int	1	PouchContentMaxNum.DekuSeed	Int				
+items	1	1	Ocarina	Item_Ocarina_Fairy	PouchData.Item_Ocarina_Fairy.StockNum	Int	1						
+				Item_Ocarina_Time	PouchData.Item_Ocarina_Time.StockNum	Int	1						
+items	1	2	Bombchus	Item_Bombchu	IsGet.Item_Bombchu	Bool	true	PouchData.Item_Bombchu.StockNum	Int				
+items	1	3	Hookshot	Item_Hookshot	PouchData.Item_Hookshot.StockNum	Int	1						
+				Item_Longshot	PouchData.Item_Longshot.StockNum	Int	1						
+items	1	4	Ice Arrow	Item_Arrow_Ice	PouchData.Item_Arrow_Ice.StockNum	Int	1						
+items	1	5	Farore's Wind	Item_FaroreWind	PouchData.Item_FaroreWind.StockNum	Int	1						
+items	2	0	Boomerang	Item_Boomerang	PouchData.Item_Boomerang.StockNum	Int	1						
+items	2	1	Lenses of Truth	Armor_GlassTruth	PouchData.Armor_GlassTruth.StockNum	Int	1						
+items	2	2	Magic Beans	Item_MagicBean	IsGet.Item_MagicBean	Bool	true	PouchData.Item_MagicBean.StockNum	Int				
+items	2	3	Megaton Hammer	Item_Hammer	PouchData.Item_Hammer.StockNum	Int	1						
+items	2	4	Light Arrow	Item_Arrow_Light	PouchData.Item_Arrow_Light.StockNum	Int	1						
+items	2	5	Nayru's Love	Item_NayruLove	PouchData.Item_NayruLove.StockNum	Int	1						
+items	3	0	Bottle 1	Item_Bottle	PouchData.BottleA.StockNum	Int	1						
+				Item_Bottle_RedPotion	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	RedPotion						
+				Item_Bottle_GreenPotion	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	GreenPotion						
+				Item_Bottle_BluePotion	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	BluePotion						
+				Item_Bottle_BlueFire	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	BlueFire						
+				Item_Bottle_Fish	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	Fish						
+				Item_Bottle_Letter	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	Letter						
+				Item_Bottle_BigPoe	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	BigPoe						
+				Item_Bottle_Poe	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	Poe						
+				Item_Bottle_Bug	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	Bug						
+				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	Fairy						
+				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	MaxMilk						
+				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleA.BottleItem	Enum	HalfMilk						
+items	3	1	Bottle 2	Item_Bottle	PouchData.BottleB.StockNum	Int	1						
+				Item_Bottle_RedPotion	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	RedPotion						
+				Item_Bottle_GreenPotion	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	GreenPotion						
+				Item_Bottle_BluePotion	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	BluePotion						
+				Item_Bottle_BlueFire	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	BlueFire						
+				Item_Bottle_Fish	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	Fish						
+				Item_Bottle_Letter	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	Letter						
+				Item_Bottle_BigPoe	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	BigPoe						
+				Item_Bottle_Poe	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	Poe						
+				Item_Bottle_Bug	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	Bug						
+				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	Fairy						
+				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	MaxMilk						
+				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleB.BottleItem	Enum	HalfMilk						
+items	3	2	Bottle 3	Item_Bottle	PouchData.BottleC.StockNum	Int	1						
+				Item_Bottle_RedPotion	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	RedPotion						
+				Item_Bottle_GreenPotion	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	GreenPotion						
+				Item_Bottle_BluePotion	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	BluePotion						
+				Item_Bottle_BlueFire	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	BlueFire						
+				Item_Bottle_Fish	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	Fish						
+				Item_Bottle_Letter	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	Letter						
+				Item_Bottle_BigPoe	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	BigPoe						
+				Item_Bottle_Poe	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	Poe						
+				Item_Bottle_Bug	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	Bug						
+				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	Fairy						
+				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	MaxMilk						
+				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleC.BottleItem	Enum	HalfMilk						
+items	3	3	Bottle 4	Item_Bottle	PouchData.BottleD.StockNum	Int	1						
+				Item_Bottle_RedPotion	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	RedPotion						
+				Item_Bottle_GreenPotion	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	GreenPotion						
+				Item_Bottle_BluePotion	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	BluePotion						
+				Item_Bottle_BlueFire	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	BlueFire						
+				Item_Bottle_Fish	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	Fish						
+				Item_Bottle_Letter	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	Letter						
+				Item_Bottle_BigPoe	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	BigPoe						
+				Item_Bottle_Poe	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	Poe						
+				Item_Bottle_Bug	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	Bug						
+				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	Fairy						
+				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	MaxMilk						
+				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleD.BottleItem	Enum	HalfMilk						
+items	3	4	Bottle 5	Item_Bottle	PouchData.BottleE.StockNum	Int	1						
+				Item_Bottle_RedPotion	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	RedPotion						
+				Item_Bottle_GreenPotion	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	GreenPotion						
+				Item_Bottle_BluePotion	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	BluePotion						
+				Item_Bottle_BlueFire	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	BlueFire						
+				Item_Bottle_Fish	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Fish						
+				Item_Bottle_Letter	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Letter						
+				Item_Bottle_BigPoe	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	BigPoe						
+				Item_Bottle_Poe	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Poe						
+				Item_Bottle_Bug	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Bug						
+				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Fairy						
+				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	MaxMilk						
+				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	HalfMilk						
+items	3	5	Child trade item	Item_WeirdEgg	PouchData.Item_WeirdEgg.StockNum	Int	1						
+				Item_AlarmCucco	PouchData.Item_AlarmCucco.StockNum	Int	1						
+				Item_ZeldaLetter	PouchData.Item_ZeldaLetter.StockNum	Int	1						
+				Armor_Child_Mask_Keaton	PouchData.Armor_Child_Mask_Keaton.StockNum	Int	1						
+				Armor_Child_Mask_Skull	PouchData.Armor_Child_Mask_Skull.StockNum	Int	1						
+				Armor_Child_Mask_Spooky	PouchData.Armor_Child_Mask_Spooky.StockNum	Int	1						
+				Armor_Child_Mask_Bunny	PouchData.Armor_Child_Mask_Bunny.StockNum	Int	1						
+				Armor_Child_Mask_Truth	PouchData.Armor_Child_Mask_Truth.StockNum	Int	1						
+				Armor_Child_Mask_Goron	PouchData.Armor_Child_Mask_Goron.StockNum	Int	1						
+				Armor_Child_Mask_Zora	PouchData.Armor_Child_Mask_Zora.StockNum	Int	1						
+				Armor_Child_Mask_Gerudo	PouchData.Armor_Child_Mask_Gerudo.StockNum	Int	1						
+equipment	0	0	Kokiri Sword	Weapon_Sword_Kokiri	PouchData.Weapon_Sword_Kokiri.StockNum	Int	1						
+equipment	0	1	Master Sword	Weapon_Sword_Master	PouchData.Weapon_Sword_Master.StockNum	Int	1						
+equipment	0	2	Biggoron's Sword	Weapon_Sword_Giant	PouchData.Weapon_Sword_Giant.StockNum	Int	1						
+				Weapon_Sword_BrokenGiant	PouchData.Weapon_Sword_BrokenGiant.StockNum	Int	1						
+				Weapon_Sword_Biggoron	PouchData.Weapon_Sword_Biggoron.StockNum	Int	1						
+equipment	0	3	Deku Shield	Weapon_Shield_Deku	PouchData.Weapon_Shield_Deku.StockNum	Int	1						
+equipment	0	4	Hylian Shield	Weapon_Shield_Hylian	PouchData.Weapon_Shield_Hylian.StockNum	Int	1						
+equipment	0	5	Mirror Shield	Weapon_Shield_Mirror	PouchData.Weapon_Shield_Mirror.StockNum	Int	1						
+equipment	1	0	Goron Tunic	Armor_Adult_Goron	PouchData.Armor_Adult_Goron.StockNum	Int	1						
+equipment	1	1	Zora Tunic	Armor_Adult_Zora	PouchData.Armor_Adult_Zora.StockNum	Int	1						
+equipment	1	2	Iron Boots	Armor_Adult_HeavyBoot	PouchData.Armor_Adult_HeavyBoot.StockNum	Int	1						
+equipment	1	3	Hover Boots	Armor_Adult_HoverBoot	PouchData.Armor_Adult_HoverBoot.StockNum	Int	1						
+equipment	1	4	Echo Gem	Item_AgonyStone	PouchData.Item_AgonyStone.StockNum	Int	1						
+equipment	1	5	Gerudo Pass	Item_Token_Gerudo	PouchData.Item_Token_Gerudo.StockNum	Int	1						
+equipment	2	0	Strength	Armor_Child_Gauntlet_Goron	PlayerStatus.LiftGrade	Enum	Low						
+				Armor_Adult_Gauntlet_Silver	PlayerStatus.LiftGrade	Enum	Middle						
+				Armor_Adult_Gauntlet_Gold	PlayerStatus.LiftGrade	Enum	High						
+equipment	2	1	Scale	Item_Scale_Silver	PouchData.Item_Scale_Silver.StockNum	Int	1						
+				Item_Scale_Gold	PouchData.Item_Scale_Gold.StockNum	Int	1						
+equipment	2	2	Wallet	Item_Wallet_Medium	PouchContentMaxNum.Rupee	Int	500						
+				Item_Wallet_Large	PouchContentMaxNum.Rupee	Int	1000						
+equipment	2	3	Magic	Item_FairyBless_MP	PlayerStatus.MPMax	Int	240						
+				Item_FairyBless_MPDouble	PlayerStatus.MPMax	Int	480						
+equipment	2	4	Gift of Halved Damage	Item_FairyBless_DefenseDouble	PouchData.Item_FairyBless_DefenseDouble.StockNum	Int	1						
+equipment	2	5	Adult trade item	Item_PocketEgg	PouchData.Item_PocketEgg.StockNum	Int	1						
+				Item_PocketCucco	PouchData.Item_PocketCucco.StockNum	Int	1						
+				Item_CojiroCucco	PouchData.Item_CojiroCucco.StockNum	Int	1						
+				Item_OddMushroom	PouchData.Item_OddMushroom.StockNum	Int	1						
+				Item_OddPowder	PouchData.Item_OddPowder.StockNum	Int	1						
+				Item_PoacherSaw	PouchData.Item_PoacherSaw.StockNum	Int	1						
+				Item_BrokenSword	PouchData.Item_BrokenSword.StockNum	Int	1						
+				Item_Prescription	PouchData.Item_Prescription.StockNum	Int	1						
+				Item_EyeballFrog	PouchData.Item_EyeballFrog.StockNum	Int	1						
+				Item_EyeDrop	PouchData.Item_EyeDrop.StockNum	Int	1						
+				Item_ClaimCheck	PouchData.Item_ClaimCheck.StockNum	Int	1						
+quest	0	0	Forest Medallion	DataFileImportantIcon_04	PouchData.Item_Medal_Forest.StockNum	Int	1						
+quest	0	1	Fire Medallion	DataFileImportantIcon_05	PouchData.Item_Medal_Fire.StockNum	Int	1						
+quest	0	2	Water Medallion	DataFileImportantIcon_06	PouchData.Item_Medal_Water.StockNum	Int	1						
+quest	0	3	Spirit Medallion	DataFileImportantIcon_07	PouchData.Item_Medal_Spirit.StockNum	Int	1						
+quest	0	4	Shadow Medallion	DataFileImportantIcon_08	PouchData.Item_Medal_Shadow.StockNum	Int	1						
+quest	0	5	Light Medallion	DataFileImportantIcon_03	PouchData.Item_Medal_Light.StockNum	Int	1						
+quest	1	0	Kokiri Emerald	DataFileImportantIcon_00	PouchData.Item_Stone_Forest.StockNum	Int	1						
+quest	1	1	Goron Ruby	DataFileImportantIcon_01	PouchData.Item_Stone_Fire.StockNum	Int	1						
+quest	1	2	Zora Sapphire	DataFileImportantIcon_02	PouchData.Item_Stone_Water.StockNum	Int	1						
+quest	1	3	Gold Skulltula Tokens	Item_Token_Gold	PouchData.Item_Token_Gold.StockNum	Int	1	PouchData.Item_Token_Gold.StockNum	Int				
+quest	1	4	Hearts	HeartW_00_ASTC4x4	PlayerStatus.MaxLife	Int	1	PlayerStatus.MaxLife	Int	4			
+quest	1	5	Pieces of Heart	CollectHeartPiece_00	PouchData.Obj_Heart_Piece.StockNum	Int	1	PouchData.Obj_Heart_Piece.StockNum	Int				
+				CollectHeartPiece_01	PouchData.Obj_Heart_Piece.StockNum	Int	2						
+				CollectHeartPiece_02	PouchData.Obj_Heart_Piece.StockNum	Int	3						
+songs	0	0	Zelda's Lullaby	OcarinaMelodyIcon_00	IsGet.Item_Melody_ZeldaLullaby	Bool	true						
+songs	0	1	Epona's Song	OcarinaMelodyIcon_01	IsGet.Item_Melody_EponaSong	Bool	true						
+songs	0	2	Saria's Song	OcarinaMelodyIcon_02	IsGet.Item_Melody_SariaSong	Bool	true						
+songs	0	3	Sun's Song	OcarinaMelodyIcon_03	IsGet.Item_Melody_SunSong	Bool	true						
+songs	0	4	Song of Time	OcarinaMelodyIcon_04	IsGet.Item_Melody_TimeSong	Bool	true						
+songs	0	5	Song of Storms	OcarinaMelodyIcon_05	IsGet.Item_Melody_StormSong	Bool	true						
+songs	1	0	Minuet of the Forest	OcarinaMelodyIcon_07	IsGet.Item_Melody_ForestMinuet	Bool	true					#6fd65c	
+songs	1	1	Bolero of Fire	OcarinaMelodyIcon_08	IsGet.Item_Melody_FireBolero	Bool	true					#ff6a4d	
+songs	1	2	Serenade of Water	OcarinaMelodyIcon_09	IsGet.Item_Melody_WaterSerenade	Bool	true					#58a8ff	
+songs	1	3	Requiem of Spirit	OcarinaMelodyIcon_10	IsGet.Item_Melody_SpiritRequiem	Bool	true					#ffa63d	
+songs	1	4	Nocturne of Shadow	OcarinaMelodyIcon_11	IsGet.Item_Melody_ShadowNocturne	Bool	true					#c08bff	
+songs	1	5	Prelude of Light	OcarinaMelodyIcon_12	IsGet.Item_Melody_LightPrelude	Bool	true					#ffe45c	
+dungeons	0	0	Forest Temple Small Keys	Item_Dungeon_SmallKey	DungeonInfo.ForestTemple.SmallKeyTotalNum	Int	1	DungeonInfo.ForestTemple.SmallKeyTotalNum	Int		5		Forest
+dungeons	0	1	Fire Temple Small Keys	Item_Dungeon_SmallKey	DungeonInfo.FireTemple.SmallKeyTotalNum	Int	1	DungeonInfo.FireTemple.SmallKeyTotalNum	Int		8		Fire
+dungeons	0	2	Water Temple Small Keys	Item_Dungeon_SmallKey	DungeonInfo.WaterTemple.SmallKeyTotalNum	Int	1	DungeonInfo.WaterTemple.SmallKeyTotalNum	Int		4		Water
+dungeons	0	3	Spirit Temple Small Keys	Item_Dungeon_SmallKey	DungeonInfo.SpiritTemple.SmallKeyTotalNum	Int	1	DungeonInfo.SpiritTemple.SmallKeyTotalNum	Int		5		Spirit
+dungeons	0	4	Shadow Temple Small Keys	Item_Dungeon_SmallKey	DungeonInfo.ShadowTemple.SmallKeyTotalNum	Int	1	DungeonInfo.ShadowTemple.SmallKeyTotalNum	Int		5		Shadow
+dungeons	0	5	Bottom of the Well Small Keys	Item_Dungeon_SmallKey	DungeonInfo.BottomOfTheWell.SmallKeyTotalNum	Int	1	DungeonInfo.BottomOfTheWell.SmallKeyTotalNum	Int		2		Well
+dungeons	0	6	Gerudo Proving Grounds Small Keys	Item_Dungeon_SmallKey	DungeonInfo.GerudoTrainingGround.SmallKeyTotalNum	Int	1	DungeonInfo.GerudoTrainingGround.SmallKeyTotalNum	Int		9		Gerudo
+dungeons	0	7	Ganondorf's Castle Small Keys	Item_Dungeon_SmallKey	DungeonInfo.InsideGanonCastle.SmallKeyTotalNum	Int	1	DungeonInfo.InsideGanonCastle.SmallKeyTotalNum	Int		1		Ganon
+dungeons	1	0	Forest Temple Boss Key	Item_Dungeon_BossKey	DungeonInfo.ForestTemple.IsGetBossKey	Bool	true						
+dungeons	1	1	Fire Temple Boss Key	Item_Dungeon_BossKey	DungeonInfo.FireTemple.IsGetBossKey	Bool	true						
+dungeons	1	2	Water Temple Boss Key	Item_Dungeon_BossKey	DungeonInfo.WaterTemple.IsGetBossKey	Bool	true						
+dungeons	1	3	Spirit Temple Boss Key	Item_Dungeon_BossKey	DungeonInfo.SpiritTemple.IsGetBossKey	Bool	true						
+dungeons	1	4	Shadow Temple Boss Key	Item_Dungeon_BossKey	DungeonInfo.ShadowTemple.IsGetBossKey	Bool	true						
+dungeons	1	7	Ganondorf's Castle Boss Key	Item_Dungeon_BossKey	DungeonInfo.InsideGanonCastle.IsGetBossKey	Bool	true						
