@@ -1,5 +1,7 @@
-// BYML version 7 in either byte order, with the node types the game's placement files and game data list use.
+// BYML version 7 in either byte order, with the node types the game's placement files, game data list and tables use.
 #pragma once
+
+#include <nlohmann/json_fwd.hpp>
 
 #include <bit>
 #include <compare>
@@ -13,6 +15,7 @@ namespace byml {
 
 enum class Type : uint8_t {
     String = 0xA0,
+    Binary = 0xA1,
     Array = 0xC0,
     Dict = 0xC1,
     Bool = 0xD0,
@@ -26,7 +29,7 @@ enum class Type : uint8_t {
 struct Entry;
 
 // The type decides which member holds the value. Bool, Int, Float, UInt, Int64 and UInt64 keep their raw bits in
-// scalar.
+// scalar, and Binary keeps its bytes in string.
 struct Node {
     Type type;
     uint64_t scalar = 0;
@@ -63,6 +66,11 @@ struct Document {
 };
 
 Document Parse(std::string_view data);
+
+// The tree as JSON: Bool as a boolean; Int, UInt and Float as numbers, a Float exactly; Int64 and UInt64 as decimal
+// text, since a JSON number holds an integer exactly only up to 2^53; Binary as {"binary": "<base64>"}. Throws on a NaN
+// or infinite Float, which JSON cannot hold.
+nlohmann::json Json(const Node& node);
 
 Node* Find(Node& dict, std::string_view key);
 

@@ -127,6 +127,10 @@ add_executable(kaepora-patch-value-test tests/byml_value_test.cpp)
 target_link_libraries(kaepora-patch-value-test PRIVATE kaepora-patch-files)
 target_compile_options(kaepora-patch-value-test PRIVATE ${WARNINGS})
 
+add_executable(kaepora-patch-json-test tests/byml_json_test.cpp)
+target_link_libraries(kaepora-patch-json-test PRIVATE kaepora-patch-files)
+target_compile_options(kaepora-patch-json-test PRIVATE ${WARNINGS})
+
 # Makes seed folders with the window's MakeSeed, for the tests.
 add_executable(kaepora-make-seed tests/make_seed.cpp kaepora/seed.cpp)
 target_link_libraries(kaepora-make-seed PRIVATE kaepora-generator kaepora-patch-files)
@@ -183,6 +187,7 @@ endif()
 enable_testing()
 add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
+add_test(NAME patch-byml-json COMMAND kaepora-patch-json-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route route_names_no_gold_skulltula_token
                      route_names_each_boss_before_the_steps_that_wait_for_it
