@@ -9,6 +9,7 @@
 #include "new_actor.h"
 #include "program_patch.h"
 #include "sarc.h"
+#include "table.h"
 
 #include <algorithm>
 #include <array>
@@ -145,28 +146,6 @@ static std::string Name(std::string_view flow, std::string_view event, std::stri
 // page break, as the game's own rumours do in every language.
 constexpr std::string_view RumourOpening = "{color:1}{size:80}{3:0:0f0000}";
 constexpr std::string_view RumourPageReset = "{size:80}{color:1}";
-
-// A table of remake/ built into the program: each row's fields, after the header given. Throws when the header is
-// another, the last line has no newline, or a row has another number of fields.
-static std::vector<std::vector<std::string_view>> ReadTable(std::string_view name, std::string_view table,
-                                                            std::string_view header) {
-    if (!table.starts_with(std::format("{}\n", header)) || !table.ends_with('\n')) {
-        throw std::runtime_error(
-            std::format("{}: the header is not \"{}\", or the last line has no newline", name, header));
-    }
-    const size_t fields = std::ranges::count(header, '\t') + 1;
-    std::vector<std::vector<std::string_view>> rows;
-    for (size_t start = header.size() + 1; start < table.size(); start = table.find('\n', start) + 1) {
-        std::vector<std::string_view>& row = rows.emplace_back();
-        for (const auto field : std::views::split(table.substr(start, table.find('\n', start) - start), '\t')) {
-            row.emplace_back(field.begin(), field.end());
-        }
-        if (row.size() != fields) {
-            throw std::runtime_error(std::format("{} line {}: wrong number of fields", name, rows.size() + 1));
-        }
-    }
-    return rows;
-}
 
 static constexpr char stoneTable[] = {
 #embed "../remake/stones.tsv"
