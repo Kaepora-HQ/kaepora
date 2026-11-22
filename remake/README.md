@@ -581,3 +581,113 @@ sets and node definitions. No cutscene timeline names a step write, a step's sav
   another node feeds that input, or it reads the actor's blackboard or an expression. `(hash)` marks an expression the
   file holds by its hash, under a name that hashes to it where another file or the quest's own expression names give
   one, and in hex where none does.
+
+## Quests
+
+A quest is one saved value, `Step_<quest>`, and the game moves it as Link acts. A write names the step it sets, and asks
+nothing of the step the quest stands at unless a switch stands on the way to it, which `tests` in `quest_writes.tsv`
+shows. The engine refuses only a write onto a quest at `NotReady` or `Complete`. In the game's own order of play the
+writes come in order. A seed lets a player take another order, and a write can then set a quest back to a step it had
+passed: what waited for the later step shuts again, and what Link handed over to pass it is gone.
+
+Every mod changes the places below, whatever the seed's settings. The tables are of the game's files, so a row named
+here shows the game's own write or question, and the change is what this section says of it. A change takes one of four
+shapes:
+
+- The write names another quest with the step `Complete`: a quest that is complete wherever the write can run, so the
+  engine drops it.
+- The switch before the write asks another flag or expression.
+- The event before the write goes on to a later event, past the write.
+- A placed actor's presence names another flag.
+
+The warp after Gohma, `Dm_SY_BancChange_EscapeDungeon` `Event4`, sets `Goto_HyruleCastle` to Step01 with no test. A Link
+who woke Talon before Gohma stood at Step04 and was set back: Talon was gone from the crates, and Zelda only asked
+whether something was the matter (seen in the game). `Event4` names `Get_StoneOfForest` and `Complete`, which `Event1`
+of the same entry has just written. Seen in the game: the step is kept, and Zelda's scene plays and gives the letter.
+From Gohma with the quest at Ready every scene on the road to Zelda plays too: Kaepora Gaebora's scene moves the quest
+from Ready to Step02, so nothing needs Step01.
+
+Kaepora Gaebora at the foot of Zora's River, `Get_StoneOfWater` `Event80`, sets `Get_StoneOfWater` to Step02 with no
+test. He waits there once the Dodongo's Cavern Bomb Bag Chest is open. A Link who had shown King Zora Ruto's Letter
+stood at Step07 and was set back, and King Zora sat in the passage to Zora's Fountain again (seen in the game). Only the
+letter's show, `Event65`, writes Step07, and the letter is gone by then. `Event80` runs only after Impa's talk, which
+comes only once the Fire quest is complete (read), so it names `Get_StoneOfFire` and `Complete`. Seen in the game in
+both orders: the owl's scene plays and the Water quest keeps its step.
+
+The diving game's first win, `Get_StoneOfWater` `Event45`, sets `Get_StoneOfWater` to Step05. The switches before it,
+`Event293` and `Event471`, ask only that the quest be past Step03 and past Step03_Impa. After the letter's show a first
+win set the quest back from Step07: King Zora could not be talked to, and after a load he sat in the passage again (seen
+in the game). `Event293` asks `Sequence_IsAlternative_ZoraDomainAdult`, the expression by which the game shows an adult
+the thawed domain once the Water Sage's quest is complete. It is false for every child, and only a child plays the
+diving game (read), so the win writes no step. Seen in the game: a win after the show keeps Step07, gives its prize and
+leaves the passage open. In the usual order the quest stays at Step04 through the win, until the lake's letter moves it
+on. No reader tells Step04 from Step05 (read).
+
+The first walk into Zora's Domain from the river, the entry `Goto_ZoraDomain` of `Dm_SY_BancChangeArrive`, plays the
+domain's intro and then sets `Get_StoneOfWater` to Step03 or Step03_Impa, in `Event44` or `Event45`, with no test. The
+tunnel from Lake Hylia has no such arrival. So a child with a scale can show the letter first and walk in from the river
+after it, and the arrival then sets the quest back from Step07 with the letter gone (read). The intro, `Event48`, goes
+on to `Event551`, the event that follows either write. The intro itself stays: its banner is the only writer of the
+domain's visited record, `IsVisitLocation.ZoraDomain`, and with the intro left out the domain was on no map (seen in the
+game). No write reaches Step03 or Step03_Impa in a mod. King Zora's first talk takes the quest on from Ready, and what
+read Step03 waits for that talk or for the letter's show: among them `Logic/ZoraRiver_Common_08f0`, which keeps seven
+invisible walls at the river's two boulders while the boulders are whole and the quest is below Step03. Seen in the
+game: a first walk in at Ready plays the intro and its banner, keeps Ready and puts the domain on the map. After a show
+through the tunnel the quest stands at Step07 before the walk in, after it and in Zora's Fountain.
+
+The stone check of the Door of Time, the entry `DoorOfTime_CheckStoneNum` of the flow `DoorOfTime`, runs at each stone
+dungeon's first completion, and `DoorOfTime` is `NotReady` until Link meets Zelda (`depends_on`). With both stones done
+before Zelda, the engine refuses the check's write of Step03 in `Event37`, and the next event, `Event77`, raises Hyrule
+Field's drawbridge all the same. Only Zelda's escape at Step03 lowers it, so the child cannot reach Zelda (the raised
+bridge seen in the game, the rest read). `Event37` goes on to `Event4`, past `Event77`. And the last event of Impa's
+send-off, `Event62`, goes on to `Event38`, the check's first event, so the send-off counts the stones done before Zelda.
+Seen in the game with both stones done: the bridge is down, Zelda's escape plays at the drawbridge right after Impa's
+scene, and the moat then holds the Ocarina of Time.
+
+Impa teaches her song only while `DoorOfTime` stands at Step01, and stands in the courtyard only until the quest is past
+it (`DoorOfTime_IsAfter_Step01_Exp` on her placement in `quest_reads.tsv`). With the Goron's Ruby got before Zelda,
+Zelda's talk after her scene, `Npc_Hylia_Zelda_Child` `Event42`, and Saria's Song on the ocarina,
+`Dm_SY_Ocarina_SariaSong` `Event172`, each set the quest to Srep2_1_1, and Impa was gone with what her lesson holds
+(seen in the game). Every way to either write passes the true case of `Get_StoneOfFire_IsCompleted_Exp` (measured), so
+both name `Get_StoneOfFire` and `Complete`. Seen in the game: Impa stays after the talk and after the song, and teaches.
+One order still loses her lesson: a warp song out of the courtyard before it, and then a stone dungeon, whose check
+writes Step2_1 or Step2_2 in `Event147` or `Event148`. A child holds a warp song before Zelda only with the songs
+shuffled.
+
+The Forest Temple's exit, `Dm_SY_BancChange_EscapeDungeon` `Event208`, sets `AllSage` to Step01_00 with no test, right
+after `Event199` completes `SageOfForest`. Zelda's scene in the Temple of Time starts as Link walks in while `AllSage`
+stands at Step02 exactly (`Logic/Market_Adult_Prefab_c668`), and only `AllSage` `Event20` writes Step02, once the Shadow
+and the Spirit sages have both woken. With those two woken before the Forest Temple, the exit set the quest back and the
+walk in played nothing. Only an arrival by the Prelude of Light still played the scene (seen in the game). `Event208`
+names `SageOfForest` and `Complete`, the quest and step of `Event199`. Seen in the game: in that order the quest stays
+at Step02 and the walk in plays Zelda's scene. In the usual order it stays at Step01 after the exit, and the adventure
+log keeps Step01's line until the Prelude's lesson or a later sage moves the quest on (read).
+
+Adult Malon, `Npc_Hylia_Malon_Adult` `Event177`, sets `Get_Epona` to GuideToLonLonRanchAdult after a lost bet race on
+another horse, whenever the switch `Event179` finds the quest not past ReadyForGetEponaSong. A Link who met child Malon
+at the ranch and had not learned her song was set back a step, and she then started no lesson (seen in the game).
+`Event179` asks `Get_Epona_IsAfter_Ready_Exp`, so the write moves only a quest still at Ready. Seen in the game: after a
+lost race the step stays and the child then learns the song, and an adult who learned it as a child still wins Epona and
+rides out.
+
+King Zora's ice is the one presence among them, told with the story gifts above: `SageOfWater` at `Complete` on
+`Actors/3341274640047764997/Presence/FlagName` of `Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static` in
+`quest_reads.tsv`.
+
+A mod also rests on a step in these places, where no write changes:
+
+- The pedestal's module, `Logic/Market_Adult_Prefab_89da`, takes the sword's interaction away while `SageOfForest` is
+  not complete. Every mod makes it ask `DoorOfTime_IsCompleted_Exp`, so every adult can put the Master Sword back.
+- Sheik's schedule sends him to `AnchorAction1` of `Banc/Market/Market_Adult_Static` until `SageOfForest` is complete.
+  Every mod moves that anchor from in front of the pedestal to behind it.
+- With "Kokiri Forest" at "Closed Deku", Mido's schedule loses its last entry, the one on
+  `Goto_HyruleCastle_IsCompleted_Exp`.
+- With the songs shuffled, the Colossus's gates stand on `SageOfSpirit_IsAfter_Step02_Exp` (above), and
+  `HavePlayedEvent.Dm_TimeTemple_0065` starts true: that scene at the Door of Time plays only while `AllSage` stands at
+  Step01, and the adult's world map waits for it.
+- With "Malon's Egg" ticked, the area at the top of the castle's vines stands only for a Link who got the Weird Egg. It
+  hatches the Chicken while `Goto_HyruleCastle` is at Step03, the step Malon's talk writes.
+- With "Ganon's trials" at "None", nothing writes `Defeat_Ganon` Step04, and the boss door's write of Step05 goes
+  forward (read).
+- With "Opening" at "Skipped", `HavePlayedEvent.Dm_Kokiri_0030` starts true. It is the flag that forces `Meet_DekuTree`
+  to Ready, Navi waking Link.
