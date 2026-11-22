@@ -741,6 +741,14 @@ static constexpr EventText eventTexts[] = {
     // quest is complete, so these texts make it complete the Fire quest, a write the game ignores on a completed quest.
     { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "ChallengeName", "Get_StoneOfFire" },
     { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event80", "StepName", "Complete" },
+    // The diving game's first win, from Event293 on, sets the Water quest to Step05 whenever the quest is past
+    // Step03_Impa. Once King Zora has taken Ruto's letter the quest is at Step07, so a first win then sets it back, and
+    // King Zora sits in the way to Zora's Fountain again with the letter gone. Asking whether the domain is the adult's
+    // after Morpha, which it never is for the child who plays the game, the win writes no step. In the usual order
+    // (arrive, talk, win, letter) the quest then stays at Step04 until the lake's letter writes Step05_01, and nothing
+    // tells Step04 from Step05.
+    { "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293", "GameDataName",
+      "Sequence_IsAlternative_ZoraDomainAdult" },
     // After Link loses Ingo's bet race on a horse that is not Epona, adult Malon's talk sets Epona's quest to
     // GuideToLonLonRanchAdult in Event177 whenever Event179 finds the quest not past ReadyForGetEponaSong. A Link who
     // met child Malon at the ranch and has not learned her song is set back, and she then never teaches it. This text

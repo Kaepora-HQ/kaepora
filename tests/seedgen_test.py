@@ -139,6 +139,8 @@ QUEST_TEXTS = [
     {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event80", "param": "ChallengeName",
      "text": "Get_StoneOfFire"},
     {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event80", "param": "StepName", "text": "Complete"},
+    {"flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "event": "Event293", "param": "GameDataName",
+     "text": "Sequence_IsAlternative_ZoraDomainAdult"},
     {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
      "text": "Get_Epona_IsAfter_Ready_Exp"}]
 # The Desert Colossus's way into the Wasteland and the Spirit Temple's front entrance, in both ages' files, stand only

@@ -754,19 +754,33 @@ def tested_colossus_mod(patch, game, romfs):
         raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
+# The texts every plan carries that no mod the game ran has: the diving game's first win asks whether the domain is
+# the adult's after Morpha.
+UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293")}
+
+
 def tested_event_text_mods(patch, game, plan_file, *romfs):
     """Every event flow a plan edits, as the patcher writes it, is the flow of a mod the game accepted: after Gohma
     the warp left the castle quest at Step04 and Zelda's scene played; after Ruto's letter Kaepora Gaebora left the
     Water quest at Step07 and King Zora stood aside; after a lost bet race adult Malon left Epona's quest at
-    ReadyForGetEponaSong and child Malon then taught her song."""
+    ReadyForGetEponaSong and child Malon then taught her song. A flow with a text no played mod has is that flow with
+    the text, read apart from the patcher."""
     texts = json.loads(pathlib.Path(plan_file).read_text())["event_texts"]
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
     mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts]))
     # The list may name played mods for texts this plan does not carry.
     assert set(mod) <= set(tested), sorted(set(mod) - set(tested))
+    unplayed = [t for t in texts if (t["flow"], t["event"]) in UNPLAYED_TEXTS]
+    assert {(t["flow"], t["event"]) for t in unplayed} == UNPLAYED_TEXTS, unplayed
     for path, ours in mod.items():
-        assert_same_file(game, path, ours, tested[path])
+        if any(t["flow"] == path for t in unplayed):
+            expected = game.event_flow(tested[path])
+            for t in unplayed:
+                string_parameter(expected, t["event"], t["param"])[1] = t["text"]
+            assert game.event_flow(ours) == expected, path
+        else:
+            assert_same_file(game, path, ours, tested[path])
 
 
 def tested_first_gifts_mod(patch, game, romfs):

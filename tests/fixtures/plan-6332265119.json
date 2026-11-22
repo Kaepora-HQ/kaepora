@@ -1338,6 +1338,12 @@
       "text": "Complete"
     },
     {
+      "flow": "Event/EventFlow/Get_StoneOfWater.bfevfl.zs",
+      "event": "Event293",
+      "param": "GameDataName",
+      "text": "Sequence_IsAlternative_ZoraDomainAdult"
+    },
+    {
       "flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs",
       "event": "Event179",
       "param": "GameDataName",
