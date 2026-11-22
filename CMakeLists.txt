@@ -288,8 +288,11 @@ if(Qt6Test_FOUND)
                      aSeedMadeBeforeTheOpeningSettingPlaysIt aSeedMadeBeforeTheCutscenesSettingPlaysThem
                      aSeedWhoseSpoilerLogCannotBeReadIsListed settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
-                     aNewerVersionShowsTheNotice quietOutcomesShowNothing theButtonsStayInAShortWindow
-                     theBoxTurnsTheCheckOff aDayPassesBetweenRequests aNewerVersionIsRememberedUntilItRuns
+                     aNewerVersionShowsTheNotice aNewerVersionAsksInAPopup thePopupsDownloadOpensTheReleasePage
+                     returnOrEscapeClosesThePopupWithoutDownloading
+                     laterLeavesTheNotice thePopupComesOncePerOpen aFailedRequestOffersTheNewerVersionSaved
+                     anUntickedBoxAsksNothingUntilTicked quietOutcomesShowNothing theButtonsStayInAShortWindow
+                     theBoxTurnsTheCheckOff everyOpenAsks aNewerVersionIsRememberedUntilItRuns
                      untickingStopsARequestInFlight theStartWithListHasTheItems
                      oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled

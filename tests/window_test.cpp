@@ -6,7 +6,6 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QDateTime>
 #include <QDesktopServices>
 #include <QDialog>
 #include <QDirListing>
@@ -242,6 +241,15 @@ private:
         return nullptr;
     }
 
+    QStringList buttonTexts(const QMessageBox* box) const {
+        QStringList texts;
+        for (const QAbstractButton* button : box->buttons()) {
+            texts << button->text();
+        }
+        texts.sort();
+        return texts;
+    }
+
     QMessageBox* box() const {
         for (QMessageBox* box : window->findChildren<QMessageBox*>()) {
             if (box->isVisible()) {
@@ -420,9 +428,10 @@ private:
         dialogButton("OK")->click();
     }
 
+    // Opens the window with "Check for new versions" as it is by default. True once its request has finished.
     bool openAndAsk(const QByteArray& answer) {
         github.answer = answer;
-        QSettings().remove("lastVersionCheck");
+        QSettings().remove("checkForNewVersions");
         window = std::make_unique<Window>();
         window->show();
         QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
@@ -438,7 +447,8 @@ private slots:
         settings.clear();
         settings.setValue("gameFile", game);
         settings.setValue("modsFolder", mods);
-        settings.setValue("lastVersionCheck", QDateTime::currentDateTimeUtc());
+        // The window asks GitHub on every open while this box is ticked. The tests of that tick it.
+        settings.setValue("checkForNewVersions", false);
         github.answer = NotFound;
         github.requests = 0;
         github.requested = nullptr;
@@ -1324,6 +1334,102 @@ private slots:
         QCOMPARE(github.requests, 1);
     }
 
+    void aNewerVersionAsksInAPopup() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QMessageBox* popup = box();
+        QVERIFY(popup != nullptr);
+        QCOMPARE(popup->parent(), window.get());
+        QCOMPARE(popup->text(), QString("Kaepora 99.0.0 is out. You have " KAEPORA_VERSION "."));
+        QCOMPARE(buttonTexts(popup), (QStringList{ "Download", "Later" }));
+    }
+
+    void thePopupsDownloadOpensTheReleasePage() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QVERIFY(box() != nullptr);
+        answer("Download");
+        QCOMPARE(opened, QList<QUrl>{ QUrl(ReleasePage) });
+        QVERIFY(box() == nullptr);
+    }
+
+    // The box comes unasked, so a key meant for the window closes it: "Later" is its default and its escape button.
+    void returnOrEscapeClosesThePopupWithoutDownloading_data() {
+        QTest::addColumn<int>("key");
+        QTest::newRow("Return") << int(Qt::Key_Return);
+        QTest::newRow("Escape") << int(Qt::Key_Escape);
+    }
+
+    void returnOrEscapeClosesThePopupWithoutDownloading() {
+        QFETCH(int, key);
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QMessageBox* popup = box();
+        QVERIFY(popup != nullptr);
+        QPushButton* later = popup->defaultButton();
+        QVERIFY(later != nullptr);
+        QCOMPARE(later->text(), QString("Later"));
+        QCOMPARE(popup->focusWidget(), later);
+        QTest::keyClick(popup, Qt::Key(key));
+        // On macOS Qt answers Escape with an animated click, which lets the button go 100 ms later.
+        QTRY_VERIFY(box() == nullptr);
+        QVERIFY(opened.isEmpty());
+    }
+
+    void laterLeavesTheNotice() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QVERIFY(box() != nullptr);
+        answer("Later");
+        QVERIFY(box() == nullptr);
+        QVERIFY(opened.isEmpty());
+        QVERIFY(shows("Kaepora 99.0.0 is out."));
+        button("Download")->click();
+        QCOMPARE(opened, QList<QUrl>{ QUrl(ReleasePage) });
+    }
+
+    void thePopupComesOncePerOpen() {
+        QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        QVERIFY(box() != nullptr);
+        answer("Later");
+        auto* check = window->findChild<QCheckBox*>();
+        check->click();
+        QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
+        check->click();
+        QVERIFY(replies.wait());
+        QCOMPARE(github.requests, 2);
+        QVERIFY(box() == nullptr);
+    }
+
+    void aFailedRequestOffersTheNewerVersionSaved_data() {
+        QTest::addColumn<QByteArray>("answer");
+        QTest::newRow("offline") << QByteArray();
+        QTest::newRow("no release yet") << NotFound;
+    }
+
+    void aFailedRequestOffersTheNewerVersionSaved() {
+        QFETCH(QByteArray, answer);
+        QSettings().setValue("latestRelease", QString::fromUtf8(Latest("99.0.0")));
+        QVERIFY(openAndAsk(answer));
+        QVERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("Kaepora 99.0.0 is out. You have " KAEPORA_VERSION "."));
+    }
+
+    void anUntickedBoxAsksNothingUntilTicked() {
+        QSettings settings;
+        settings.setValue("checkForNewVersions", false);
+        settings.setValue("latestRelease", QString::fromUtf8(Latest("99.0.0")));
+        github.answer = Ok(Latest("99.0.0"));
+        window = std::make_unique<Window>();
+        window->show();
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(github.requests, 0);
+        QVERIFY(box() == nullptr);
+        QVERIFY(button("Download") == nullptr);
+
+        QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
+        window->findChild<QCheckBox*>()->click();
+        QVERIFY(replies.wait());
+        QCOMPARE(github.requests, 1);
+        QVERIFY(box() != nullptr);
+    }
+
     void quietOutcomesShowNothing_data() {
         QTest::addColumn<QByteArray>("answer");
         QTest::newRow("offline") << QByteArray();
@@ -1337,6 +1443,7 @@ private slots:
         QTest::newRow("a path out of the releases")
             << Ok(Latest("99.0.0", "https://github.com/Kaepora-HQ/kaepora/releases/tag/../../../someone/kaepora"));
         QTest::newRow("the version running") << Ok(Latest(KAEPORA_VERSION));
+        QTest::newRow("an older version") << Ok(Latest("0.0.1"));
     }
 
     void quietOutcomesShowNothing() {
@@ -1357,7 +1464,6 @@ private slots:
         QVERIFY(!shows("Kaepora 99.0.0 is out."));
         QVERIFY(button("Download") == nullptr);
 
-        QSettings().remove("lastVersionCheck");
         window = std::make_unique<Window>();
         window->show();
         QVERIFY(!window->findChild<QCheckBox*>()->isChecked());
@@ -1366,27 +1472,18 @@ private slots:
         QCOMPARE(github.requests, 1);
     }
 
-    void aDayPassesBetweenRequests() {
-        const QDateTime now = QDateTime::currentDateTimeUtc();
-        QSettings().setValue("lastVersionCheck", now.addSecs(-23 * 60 * 60));
-        window = std::make_unique<Window>();
-        window->show();
-        QTest::qWait(NoRequestWait);
-        QCOMPARE(github.requests, 0);
-
-        QSettings().setValue("lastVersionCheck", now.addSecs(-25 * 60 * 60));
-        window = std::make_unique<Window>();
-        window->show();
-        QTRY_COMPARE(github.requests, 1);
+    void everyOpenAsks() {
+        QVERIFY(openAndAsk(NotFound));
+        QVERIFY(openAndAsk(NotFound));
+        QCOMPARE(github.requests, 2);
     }
 
     void aNewerVersionIsRememberedUntilItRuns() {
         QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
+        github.answer = NotFound;
         window = std::make_unique<Window>();
         window->show();
         QVERIFY(shows("Kaepora 99.0.0 is out."));
-        QTest::qWait(NoRequestWait);
-        QCOMPARE(github.requests, 1);
 
         QSettings().setValue("latestRelease", QString::fromUtf8(Latest(KAEPORA_VERSION)));
         window = std::make_unique<Window>();

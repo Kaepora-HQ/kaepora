@@ -430,8 +430,7 @@ jobs:
           Expand-Archive kaepora-windows-x86_64.zip -DestinationPath kaepora
           tools/check-windows-package.ps1 kaepora
 
-  # A runner of its own: the window asks GitHub for the latest version once a day per user, so a second start on the
-  # package's runner would ask nothing.
+  # A runner of its own, so the installer meets a machine where Kaepora has never run, as a new player's is.
   windows-installer:
     name: Windows installer on a fresh runner
     needs: windows

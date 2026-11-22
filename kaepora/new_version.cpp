@@ -3,12 +3,12 @@
 #include "version.h"
 
 #include <QCheckBox>
-#include <QDateTime>
 #include <QDesktopServices>
 #include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
+#include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPushButton>
@@ -22,12 +22,10 @@
 
 constexpr char LatestAddress[] = "https://github.com/Kaepora-HQ/kaepora/releases/latest/download/latest.json";
 constexpr char ReleasePagePattern[] = R"(https://github\.com/Kaepora-HQ/kaepora/releases/tag/[A-Za-z0-9._-]+)";
-constexpr std::chrono::hours AskEvery{ 24 };
 // Qt's transfer timeout: the request stops when no data comes for this long.
 constexpr std::chrono::seconds RequestTimeout{ 30 };
 
 constexpr char CheckKey[] = "checkForNewVersions";
-constexpr char LastCheckKey[] = "lastVersionCheck";
 constexpr char LatestKey[] = "latestRelease";
 
 namespace {
@@ -66,46 +64,61 @@ public:
         connect(check, &QCheckBox::toggled, this, [this](bool on) {
             QSettings().setValue(CheckKey, on);
             updateNotice();
-            askIfDue();
+            ask();
         });
         connect(download, &QPushButton::clicked, this, [this] { QDesktopServices::openUrl(latest->page); });
         updateNotice();
-        askIfDue();
+        ask();
     }
 
 private:
-    void updateNotice() {
+    bool newer() const {
         static const QVersionNumber running = QVersionNumber::fromString(KAEPORA_VERSION);
-        const bool shown = check->isChecked() && latest && latest->version > running;
-        if (shown) {
-            text->setText(QString("Kaepora %1 is out.").arg(latest->version.toString()));
-        }
-        notice->setVisible(shown);
+        return check->isChecked() && latest && latest->version > running;
     }
 
-    void askIfDue() {
-        QSettings settings;
-        const QDateTime now = QDateTime::currentDateTimeUtc();
-        const QDateTime last = settings.value(LastCheckKey).toDateTime();
-        if (!check->isChecked() || (last.isValid() && now < last.addDuration(AskEvery))) {
+    void updateNotice() {
+        if (newer()) {
+            text->setText(QString("Kaepora %1 is out.").arg(latest->version.toString()));
+        }
+        notice->setVisible(newer());
+    }
+
+    // Once per open, after a request: with the release it fetched, or with the one saved when it fetched none. The box
+    // comes unasked, maybe while a seed is typed, so a Return or an Escape meant for the window picks "Later".
+    void offerOnce() {
+        if (offered || !newer()) {
             return;
         }
-        settings.setValue(LastCheckKey, now);
+        offered = true;
+        auto* box = new QMessageBox(QMessageBox::Information, "New version",
+                                    QString("Kaepora %1 is out. You have %2.")
+                                        .arg(latest->version.toString(), KAEPORA_VERSION),
+                                    QMessageBox::NoButton, window());
+        box->setAttribute(Qt::WA_DeleteOnClose);
+        connect(box->addButton("Download", QMessageBox::AcceptRole), &QPushButton::clicked, this,
+                [page = latest->page] { QDesktopServices::openUrl(page); });
+        box->setDefaultButton(box->addButton("Later", QMessageBox::RejectRole));
+        box->open();
+    }
+
+    void ask() {
+        if (!check->isChecked()) {
+            return;
+        }
         QNetworkRequest request{ QUrl(LatestAddress) };
         request.setTransferTimeout(RequestTimeout);
         request.setAttribute(QNetworkRequest::AutoDeleteReplyOnFinishAttribute, true);
         QNetworkReply* reply = network->get(request);
         connect(check, &QCheckBox::toggled, reply, &QNetworkReply::abort);
         connect(reply, &QNetworkReply::finished, this, [this, reply] {
-            if (reply->error() != QNetworkReply::NoError) {
-                return;
-            }
-            const QByteArray json = reply->readAll();
+            const QByteArray json = reply->error() == QNetworkReply::NoError ? reply->readAll() : QByteArray();
             if (const std::optional<Release> release = ParseRelease(json)) {
                 QSettings().setValue(LatestKey, QString::fromUtf8(json));
                 latest = release;
                 updateNotice();
             }
+            offerOnce();
         });
     }
 
@@ -114,6 +127,7 @@ private:
     QLabel* text = new QLabel;
     QNetworkAccessManager* network = new QNetworkAccessManager(this);
     std::optional<Release> latest = ParseRelease(QSettings().value(LatestKey).toByteArray());
+    bool offered = false;
 };
 }
 
