@@ -3121,10 +3121,10 @@ bool Logic::DMCUpperToPad() {
            CanMegajump(true);
 }
 
+// The remake has no bomb or bombchu hover.
 bool Logic::DMCHoverToPoH() {
     return (ctx->GetTrickOption(RT_DMC_HOVER_BEAN_POH) && CanUse(RG_HOVER_BOOTS)) || CanMegajump() ||
-           (IsAdult &&
-            (CanMidairDamageBoost() || (CanUse(RG_BOMB_BAG) && CanUse(RG_BOMBCHU_5) && CanStandingShield())));
+           (IsAdult && CanMidairDamageBoost());
 }
 
 bool Logic::DMCPadToFarPlatform() {
