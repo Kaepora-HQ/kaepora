@@ -348,6 +348,8 @@ set(KAEPORA_TESTED_MIDO_MOD "" CACHE PATH
     "The folder of the mod tested in the game with Mido's castle entry taken out of his schedule")
 set(KAEPORA_TESTED_SHOP_GOODS_MOD "" CACHE PATH
     "The folder of the mod tested in the game with every item that can reach a shop's shelf on one")
+set(KAEPORA_TESTED_KEPT_GOODS_MODS "" CACHE STRING
+    "The folders of the mods tested in the game with the game's goods on other shops' shelves, as a list")
 set(KAEPORA_TESTED_PEDESTAL_MOD "" CACHE PATH
     "The folder of the mod tested in the game with the Master Sword pedestal open to every adult")
 set(KAEPORA_TESTED_SHEIK_MOD "" CACHE PATH
@@ -511,6 +513,11 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME patch-tested-shop-goods-mod
             COMMAND ${PATCH_TEST} tested-shop-goods-mod $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                     "${KAEPORA_TESTED_SHOP_GOODS_MOD}")
+    endif()
+    if(KAEPORA_TESTED_KEPT_GOODS_MODS)
+        add_test(NAME patch-tested-kept-goods-mods
+            COMMAND ${PATCH_TEST} tested-kept-goods-mods $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                    ${KAEPORA_TESTED_KEPT_GOODS_MODS})
     endif()
     if(KAEPORA_TESTED_PEDESTAL_MOD)
         add_test(NAME patch-tested-pedestal-mod

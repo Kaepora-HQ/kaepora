@@ -82,14 +82,31 @@ static PlannedEventNumber ParseEventNumber(const nlohmann::json& number) {
              .value = value.get<int32_t>() };
 }
 
-static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
+// A slot sells an item at a price, or the game's goods actor named by "goods".
+static std::variant<ItemSale, GoodsSale> ParseSale(const nlohmann::json& slot) {
+    if (slot.contains("goods")) {
+        if (slot.contains("item") || slot.contains("price")) {
+            throw std::runtime_error("a slot sells goods or an item, not both");
+        }
+        GoodsSale sale{ .goods = slot.at("goods").get<std::string>() };
+        if (sale.goods.empty()) {
+            throw std::runtime_error("goods must not be empty");
+        }
+        return sale;
+    }
     const nlohmann::json& price = slot.at("price");
     if (!price.is_number_unsigned() || price > std::numeric_limits<int32_t>::max()) {
         throw std::runtime_error("price must be a whole number of rupees");
     }
-    PlannedShopSlot planned{ .slot = slot.at("slot").get<uint32_t>(),
-                             .item = slot.at("item").get<std::string>(),
-                             .price = price.get<int32_t>() };
+    ItemSale sale{ .item = slot.at("item").get<std::string>(), .price = price.get<int32_t>() };
+    if (sale.item.empty()) {
+        throw std::runtime_error("item must not be empty");
+    }
+    return sale;
+}
+
+static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
+    PlannedShopSlot planned{ .slot = slot.at("slot").get<uint32_t>(), .sale = ParseSale(slot) };
     for (const nlohmann::json& keeper : slot.at("shopkeepers")) {
         planned.shopkeepers.push_back(
             { .actor = keeper.at("actor").get<std::string>(), .goodsList = keeper.at("goods_list").get<std::string>() });
@@ -97,8 +114,8 @@ static PlannedShopSlot ParseShopSlot(const nlohmann::json& slot) {
     for (const nlohmann::json& shelf : slot.at("shelves")) {
         planned.shelves.push_back({ .file = shelf.at("file").get<std::string>(), .hash = ParseHash(shelf.at("hash")) });
     }
-    if (planned.shopkeepers.empty() || planned.shelves.empty() || planned.item.empty()) {
-        throw std::runtime_error("shopkeepers, shelves and item must not be empty");
+    if (planned.shopkeepers.empty() || planned.shelves.empty()) {
+        throw std::runtime_error("shopkeepers and shelves must not be empty");
     }
     return planned;
 }
@@ -535,9 +552,12 @@ struct ShopPack {
     }
 };
 
-// A gate on the slot's release and a discount were for the game's own goods, so they take the forms of a slot with
+constexpr int32_t UnlimitedStock = -1;
+// A slot sells its goods stock times a day from each shopkeeper, or as often as Link likes at UnlimitedStock. A gate
+// on the slot's release and a discount were for the game's own goods there, so they take the forms of a slot with
 // neither.
-static void SetGoods(byml::Node& goodsList, uint32_t slot, const std::string& goodsActor, int32_t priceOffset) {
+static void SetGoods(byml::Node& goodsList, uint32_t slot, const std::string& goodsActor, int32_t priceOffset,
+                     int32_t stock) {
     byml::Node* list = Find(goodsList, "GoodsList");
     if (list == nullptr || slot >= list->array.size()) {
         throw std::runtime_error(std::format("the goods list has no slot {}", slot));
@@ -545,7 +565,7 @@ static void SetGoods(byml::Node& goodsList, uint32_t slot, const std::string& go
     byml::Node& goods = list->array[slot];
     FindOrAdd(goods, "Actor", byml::Type::String).string = WorkPath(goodsActor);
     FindOrAdd(goods, "PriceOffset", byml::Type::Int).scalar = uint32_t(priceOffset);
-    FindOrAdd(goods, "StockNum", byml::Type::Int).scalar = 1;
+    FindOrAdd(goods, "StockNum", byml::Type::Int).scalar = uint32_t(stock);
     if (byml::Node* release = Find(goods, "Release")) {
         *release = { .type = byml::Type::Dict,
                      .dict = { { .key = "IsCheckReleaseGameData", .value = { .type = byml::Type::Bool } },
@@ -1391,29 +1411,43 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     std::map<std::string, NewActor> pickupCopies;
     for (const PlannedShopSlot& slot : plan.shops) {
         try {
+            byml::Node& pouch = tables.find(PouchActorInfoPath)->second.root;
             std::string goodsActor;
-            int32_t priceOffset = slot.price;
-            const ShopGoods& goods = Goods(slot.item);
-            const GoodsModel* model = std::get_if<GoodsModel>(&goods);
-            if (model == nullptr) {
-                goodsActor = std::get<std::string>(goods);
-                priceOffset -= BasePrice(tables.find(PouchActorInfoPath)->second.root, goodsActor);
-            } else {
-                auto actor = goodsActors.find(slot.item);
-                if (actor == goodsActors.end()) {
-                    actor = goodsActors.emplace(slot.item, GoodsActor(game, packDictionary, tables, slot.item)).first;
+            int32_t priceOffset = 0;
+            int32_t stock = UnlimitedStock;
+            const GoodsModel* model = nullptr;
+            uint32_t quantity = 0;
+            if (const ItemSale* sale = std::get_if<ItemSale>(&slot.sale)) {
+                const ShopGoods& goods = Goods(sale->item);
+                model = std::get_if<GoodsModel>(&goods);
+                priceOffset = sale->price;
+                stock = 1;
+                quantity = Quantity(Row(pouch, sale->item));
+                if (model == nullptr) {
+                    goodsActor = std::get<std::string>(goods);
+                    priceOffset -= BasePrice(pouch, goodsActor);
+                } else {
+                    auto actor = goodsActors.find(sale->item);
+                    if (actor == goodsActors.end()) {
+                        actor =
+                            goodsActors.emplace(sale->item, GoodsActor(game, packDictionary, tables, sale->item)).first;
+                    }
+                    goodsActor = actor->second.name;
                 }
-                goodsActor = actor->second.name;
+            } else {
+                goodsActor = std::get<GoodsSale>(slot.sale).goods;
+                quantity = Quantity(Row(pouch, goodsActor));
             }
-            const uint32_t quantity = Quantity(Row(tables.find(PouchActorInfoPath)->second.root, slot.item));
             for (const Shopkeeper& keeper : slot.shopkeepers) {
                 const std::string path = std::format("Pack/Actor/{}.pack.zs", keeper.actor);
                 auto pack = packs.find(path);
                 if (pack == packs.end()) {
                     pack = packs.emplace(path, ShopPack{ sarc::Parse(Decompress(game.Read(path), packDictionary)) }).first;
                 }
-                SetGoods(pack->second.GoodsList(keeper.goodsList), slot.slot, goodsActor, priceOffset);
-                soldOnce.insert(std::format("Shop_SoldNum.{}.{}", keeper.actor, slot.slot));
+                SetGoods(pack->second.GoodsList(keeper.goodsList), slot.slot, goodsActor, priceOffset, stock);
+                if (stock != UnlimitedStock) {
+                    soldOnce.insert(std::format("Shop_SoldNum.{}.{}", keeper.actor, slot.slot));
+                }
             }
             for (const PlacedActor& shelf : slot.shelves) {
                 try {

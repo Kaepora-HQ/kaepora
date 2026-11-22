@@ -95,13 +95,24 @@ struct PlannedExpression {
     std::string flag;
 };
 
-// A shop slot that sells the item at the price, once from each shopkeeper. Each shelf shows the slot in one scene.
+// An item a shop slot sells at a price, once from each shopkeeper.
+struct ItemSale {
+    std::string item;
+    int32_t price;
+};
+
+// One of the game's goods actors, which a shop slot sells at its base price as often as Link likes, as the game's own
+// slots sell their goods.
+struct GoodsSale {
+    std::string goods;
+};
+
+// A shop slot and what it sells. Each shelf shows the slot in one scene.
 struct PlannedShopSlot {
     std::vector<Shopkeeper> shopkeepers;
     uint32_t slot; // the index in each shopkeeper's goods list
     std::vector<PlacedActor> shelves;
-    std::string item;
-    int32_t price;
+    std::variant<ItemSale, GoodsSale> sale;
 };
 
 // An item a placed actor gives: the actor's hash, every placement file that places it, and the item. A Gold Skulltula

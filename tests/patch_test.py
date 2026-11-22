@@ -13,6 +13,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py tested-new-actor-mod|tested-skulltula-mod|tested-pickup-mod| \
            tested-song-mod|tested-colossus-mod <kaepora-patch> <game.nup> <tested mod's romfs folder>
        python3 -I tests/patch_test.py tested-shop-goods-mod <kaepora-patch> <game.nup> <tested mod's folder>
+       python3 -I tests/patch_test.py tested-kept-goods-mods <kaepora-patch> <game.nup> <tested mod's folder>...
        python3 -I tests/patch_test.py dive-depth|gift-table <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py tested-pedestal-mod|tested-sheik-mod <kaepora-patch> <game.nup> \
            <a plan kaepora-seedgen wrote> <tested mod's folder>
@@ -579,7 +580,8 @@ def actor(placement, hash):
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
-         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=()):
+         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=(),
+         kept_goods=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -591,7 +593,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
-            "shops": [shop_slot(slot, item, price) for slot, item, price in shops],
+            "shops": [shop_slot(slot, item, price) for slot, item, price in shops] +
+                     [kept_slot(slot, goods) for slot, goods in kept_goods],
             "mido_castle_entry_removed": mido_castle_entry_removed,
             "opening_skipped": opening_skipped,
             "cutscenes_skipped": cutscenes_skipped,
@@ -607,6 +610,12 @@ def shop_slot(slot, item, price):
     return {"shopkeepers": [{"actor": actor, "goods_list": goods_list} for actor, goods_list in shopkeepers],
             "slot": index, "shelves": [{"file": path, "hash": str(h)} for path, h in shelves], "item": item,
             "price": price}
+
+
+def kept_slot(slot, goods):
+    shopkeepers, index, shelves = slot
+    return {"shopkeepers": [{"actor": actor, "goods_list": goods_list} for actor, goods_list in shopkeepers],
+            "slot": index, "shelves": [{"file": path, "hash": str(h)} for path, h in shelves], "goods": goods}
 
 
 def run(patch, game, plan, tmp):
@@ -1610,6 +1619,31 @@ def tested_shop_goods_mod(patch, game, mod):
     assert sorted(path for path in ours if path.startswith("Banc/")) == sorted(tested), sorted(ours)
     for path, data in tested.items():
         assert_same_file(game, path, ours[path], data)
+
+
+# The game's goods that the looks put on other shops' shelves, by SoH location, in each played mod.
+KEPT_GOODS_LOOKS = {
+    "Kaepora Spike - Zora Shop sells a stick, a shield, bombs and bombchus": {
+        "ZD Shop Item 3": "Shop_DekuStick", "ZD Shop Item 5": "Shop_Weapon_Shield_Deku",
+        "ZD Shop Item 2": "Shop_BombBundle_03", "ZD Shop Item 4": "Shop_BombchuBundle_01"},
+    "Kaepora Spike - Kokiri Shop sells the Goron Tunic": {"KF Shop Item 2": "Shop_Armor_Goron"},
+}
+
+
+def tested_kept_goods_mods(patch, game, *mods):
+    """The game's goods sold from other shops' shelves as the game showed them: a Deku Stick from the Zora Shop's
+    shelf, twice, and the Goron Tunic from the Kokiri Shop's, to a child and to an adult. For each look's plan the
+    patcher writes each pack and scene file the played mod holds, each the same to the game, and no game data list,
+    so each slot's daily sold count stays as the game has it."""
+    slots = table_slots()
+    for mod in map(pathlib.Path, mods):
+        tested = {path: data for path, data in files(mod / "romfs").items() if path.startswith(("Pack/", "Banc/"))}
+        ours = patched(patch, game, plan([], kept_goods=[(slots[location], goods)
+                                                         for location, goods in KEPT_GOODS_LOOKS[mod.name].items()]))
+        assert sorted(path for path in ours if path.startswith(("Pack/", "Banc/"))) == sorted(tested), sorted(ours)
+        assert GAME_DATA_LIST not in ours
+        for path, data in tested.items():
+            assert_same_file(game, path, ours[path], data)
 
 
 def shop_table(patch, game):
@@ -3250,6 +3284,7 @@ def main():
         "weapon-copies": weapon_copies,
         "tested-new-actor-mod": tested_new_actor_mod,
         "tested-shop-goods-mod": tested_shop_goods_mod,
+        "tested-kept-goods-mods": tested_kept_goods_mods,
         "dive-depth": dive_depth,
         "skulltulas": skulltulas,
         "skulltula-table": skulltula_table,
