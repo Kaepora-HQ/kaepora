@@ -1,0 +1,402 @@
+quest	step	depends_on	forced_by	participants
+AllSage	NotReady			
+AllSage	Ready			
+AllSage	Step01			
+AllSage	Step01_00			
+AllSage	Step01_00_01			
+AllSage	Step01_00_02			
+AllSage	Step01_00_03			
+AllSage	Step01_01			
+AllSage	Step01_02			
+AllSage	Step02			
+AllSage	Complete			
+Defeat_Ganon	NotReady			
+Defeat_Ganon	Ready			
+Defeat_Ganon	Step01			
+Defeat_Ganon	Step02			
+Defeat_Ganon	Step03			
+Defeat_Ganon	Step04			
+Defeat_Ganon	Step05			
+Defeat_Ganon	Step06			
+Defeat_Ganon	Step07			
+Defeat_Ganon	Step08			
+Defeat_Ganon	Step09			
+Defeat_Ganon	Complete			
+DoorOfTime	NotReady	Goto_HyruleCastle_IsCompleted_Exp		
+DoorOfTime	Ready			
+DoorOfTime	Step01			DoorOfTime_Step01_Npc_Hylia_Impa_Child
+DoorOfTime	Step02			
+DoorOfTime	Step2_1			
+DoorOfTime	Srep2_1_1			
+DoorOfTime	Step2_2			
+DoorOfTime	Step03			
+DoorOfTime	Step04			
+DoorOfTime	Step05			
+DoorOfTime	Step06			
+DoorOfTime	Complete			
+EscapeFromCrumblingGanonCastle	NotReady			
+EscapeFromCrumblingGanonCastle	Ready			
+EscapeFromCrumblingGanonCastle	Reset			EscapeFromCrumblingGanonCastle_Reset_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step01			EscapeFromCrumblingGanonCastle_Step01_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step02			EscapeFromCrumblingGanonCastle_Step02_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step03			EscapeFromCrumblingGanonCastle_Step03_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step04			EscapeFromCrumblingGanonCastle_Step04_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step05			EscapeFromCrumblingGanonCastle_Step05_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step06			EscapeFromCrumblingGanonCastle_Step06_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step07			EscapeFromCrumblingGanonCastle_Step07_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step08			EscapeFromCrumblingGanonCastle_Step08_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step09			EscapeFromCrumblingGanonCastle_Step09_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step10			EscapeFromCrumblingGanonCastle_Step10_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step11			EscapeFromCrumblingGanonCastle_Step11_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step12			EscapeFromCrumblingGanonCastle_Step12_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Step13			EscapeFromCrumblingGanonCastle_Step13_Npc_Hylia_Zelda_Adult
+EscapeFromCrumblingGanonCastle	Complete			
+GatheringTokenGold	NotReady			
+GatheringTokenGold	Ready			
+GatheringTokenGold	CollectToken		KakarikoVillage_GatheringTokenGold_Collect100Tokens	
+GatheringTokenGold	Finish			
+GatheringTokenGold	Complete			
+Get_Epona	NotReady			
+Get_Epona	Ready			
+Get_Epona	GuideToLonLonRanch			
+Get_Epona	GuideToLonLonRanchAdult			Get_Epona_GuideToLonLonRanchAdult_Npc_Hylia_Ingo_002_Adult
+Get_Epona	ReadyForGetEponaSong			
+Get_Epona	AfterGetEponaSong			
+Get_Epona	ReadyForGambleRace			Get_Epona_ReadyForGambleRace_Npc_Hylia_Ingo_002_Adult
+Get_Epona	AfterTalkMalon			Get_Epona_AfterTalkMalon_Npc_Hylia_Ingo_002_Adult
+Get_Epona	GambleRacePlaying			Get_Epona_GambleRacePlaying_Npc_Hylia_Malon_Adult
+Get_Epona	AfterWonGambleRace			Get_Epona_AfterWonGambleRace_Npc_Hylia_Ingo_002_Adult Get_Epona_AfterWonGambleRace_Npc_Hylia_Malon_Adult Get_Epona_AfterWonGambleRace_Animal_Epona_Adult
+Get_Epona	Complete			
+Get_StoneOfFire	NotReady			
+Get_StoneOfFire	Ready			
+Get_StoneOfFire	KakarikoVillageNpc			Get_StoneOfFire_KakarikoVillageNpc_Npc_Hylia_Soldier_003
+Get_StoneOfFire	KakarikoVillageLetter			Get_StoneOfFire_KakarikoVillageLetter_Npc_Hylia_Soldier_003
+Get_StoneOfFire	DeathMtTrailIn			
+Get_StoneOfFire	DeathMtTrailNpc			Get_StoneOfFire_DeathMtTrailNpc_Npc_Goron_007_Child
+Get_StoneOfFire	GoronCityIn			
+Get_StoneOfFire	GoronCityDarniaroomNpcTalk01			Get_StoneOfFire_GoronCityDarniaroomNpcTalk01_Npc_Goron_005_Child
+Get_StoneOfFire	GoronCityDarniaroomOpen			
+Get_StoneOfFire	GoronCityDarniaTalk			Get_StoneOfFire_GoronCityDarniaTalk_Npc_Goron_Darunia_Child
+Get_StoneOfFire	DarniaRoomKokiriTalk			Get_StoneOfFire_DarniaRoomKokiriTalk_Npc_Goron_005_Child Get_StoneOfFire_DarniaRoomKokiriTalk_Npc_Goron_Darunia_Child Get_StoneOfFire_DarniaRoomKokiriTalk_Npc_Goron_003_Child
+Get_StoneOfFire	KokiriForestNPCTalk			Get_StoneOfFire_KokiriForestNPCTalk_Npc_Goron_003_Child Get_StoneOfFire_KokiriForestNPCTalk_Npc_Goron_Darunia_Child Get_StoneOfFire_KokiriForestNPCTalk_Npc_Goron_005_Child
+Get_StoneOfFire	KokiriForestFire			Get_StoneOfFire_KokiriForestFire_Npc_Goron_Darunia_Child Get_StoneOfFire_KokiriForestFire_Npc_Goron_003_Child
+Get_StoneOfFire	KokiriForestIn			Get_StoneOfFire_KokiriForestIn_Npc_Goron_Darunia_Child Get_StoneOfFire_KokiriForestIn_Npc_Goron_003_Child
+Get_StoneOfFire	SariaMelodyGet			Get_StoneOfFire_SariaMelodyGet_Npc_Goron_Darunia_Child
+Get_StoneOfFire	SariaMelodyPlay			Get_StoneOfFire_SariaMelodyPlay_Npc_Goron_Darunia_Child
+Get_StoneOfFire	DodongoCavernOpne			Get_StoneOfFire_DodongoCavernOpne_Npc_Goron_Darunia_Child
+Get_StoneOfFire	DungeonStart			Get_StoneOfFire_DungeonStart_Npc_Goron_Darunia_Child
+Get_StoneOfFire	BossBattle			Get_StoneOfFire_BossBattle_Npc_Goron_Darunia_Child
+Get_StoneOfFire	EscapeDungeon			Get_StoneOfFire_EscapeDungeon_Npc_Goron_Darunia_Child
+Get_StoneOfFire	Complete			
+Get_StoneOfForest	NotReady			
+Get_StoneOfForest	Ready			
+Get_StoneOfForest	GoInside			
+Get_StoneOfForest	MeetBoss			
+Get_StoneOfForest	GoToBossRoom			
+Get_StoneOfForest	DefeatBoss			
+Get_StoneOfForest	GoToWarpPoint			
+Get_StoneOfForest	Complete			
+Get_StoneOfWater	NotReady			
+Get_StoneOfWater	Ready			Get_StoneOfWater_Ready_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step01			Get_StoneOfWater_Step01_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step02			Get_StoneOfWater_Step02_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step03			Get_StoneOfWater_Step03_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step03_Impa			Get_StoneOfWater_Step03_Impa_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step04			Get_StoneOfWater_Step04_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step05			Get_StoneOfWater_Step05_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step05_01			Get_StoneOfWater_Step05_01_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step06			Get_StoneOfWater_Step06_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step07			Get_StoneOfWater_Step07_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step08			Get_StoneOfWater_Step08_Npc_Zora_KingZora_child
+Get_StoneOfWater	Step09			Get_StoneOfWater_Step09_Npc_Zora_KingZora_child Get_StoneOfWater_Step09_Npc_Zora_Ruto_Child_001_Step1
+Get_StoneOfWater	Step10			Get_StoneOfWater_Step10_Npc_Zora_KingZora_child Get_StoneOfWater_Step10_Npc_Zora_Ruto_Child_001_Step1
+Get_StoneOfWater	Step11			Get_StoneOfWater_Step11_Npc_Zora_KingZora_child Get_StoneOfWater_Step11_Npc_Zora_Ruto_Child_001_Step1
+Get_StoneOfWater	Step12			Get_StoneOfWater_Step12_Npc_Zora_KingZora_child Get_StoneOfWater_Step12_Npc_Zora_Ruto_Child_001_Step1
+Get_StoneOfWater	Step13			Get_StoneOfWater_Step13_Npc_Zora_KingZora_child Get_StoneOfWater_Step13_Npc_Zora_Ruto_Child_001_Step2
+Get_StoneOfWater	Step13_01			
+Get_StoneOfWater	Step14			Get_StoneOfWater_Step14_Npc_Zora_KingZora_child Get_StoneOfWater_Step14_Npc_Zora_Ruto_Child_001
+Get_StoneOfWater	Complete			
+Goto_HyruleCastle	NotReady			
+Goto_HyruleCastle	Ready			
+Goto_HyruleCastle	Step01			
+Goto_HyruleCastle	Step02			
+Goto_HyruleCastle	Step02_01			
+Goto_HyruleCastle	Step03			
+Goto_HyruleCastle	Step03_01			Goto_HyruleCastle_Step03_01_Npc_Navi
+Goto_HyruleCastle	Step03_02			
+Goto_HyruleCastle	Step04			
+Goto_HyruleCastle	Complete			
+Market_Item_Bottle_TutorialEvent	NotReady			
+Market_Item_Bottle_TutorialEvent	Ready			
+Market_Item_Bottle_TutorialEvent	Playing			
+Market_Item_Bottle_TutorialEvent	Complete			
+Meet_DekuTree	NotReady			
+Meet_DekuTree	Ready		HavePlayedEvent.Dm_Kokiri_0030	
+Meet_DekuTree	Step01			
+Meet_DekuTree	Step02			
+Meet_DekuTree	Step03			
+Meet_DekuTree	Complete			
+Meet_GreatFairy	NotReady			
+Meet_GreatFairy	Ready			
+Meet_GreatFairy	GoToTopOfMountain			
+Meet_GreatFairy	GoToFountain			
+Meet_GreatFairy	GetFairyBreath			
+Meet_GreatFairy	GoToHyruleCastle			
+Meet_GreatFairy	Complete			
+MiniGame_BombchuBowling	NotReady			
+MiniGame_BombchuBowling	Ready			MiniGame_BombchuBowling_Ready_Npc_Hylia_067_Shop_Child
+MiniGame_BombchuBowling	Retry			MiniGame_BombchuBowling_Retry_Npc_Hylia_067_Shop_Child
+MiniGame_BombchuBowling	Playing			MiniGame_BombchuBowling_Playing_Npc_Hylia_067_Shop_Child
+MiniGame_BombchuBowling	Finish			MiniGame_BombchuBowling_Finish_Npc_Hylia_067_Shop_Child
+MiniGame_BombchuBowling	Complete			
+MiniGame_DampeRace	NotReady			
+MiniGame_DampeRace	Ready			MiniGame_DampeRace_Ready_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	Playing			MiniGame_DampeRace_Playing_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	PlayingSecond			MiniGame_DampeRace_PlayingSecond_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	Finish			MiniGame_DampeRace_Finish_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	FinishAfterTalk			MiniGame_DampeRace_FinishAfterTalk_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	Dropout			MiniGame_DampeRace_Dropout_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	Courseout			MiniGame_DampeRace_Courseout_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	RetryCheck			MiniGame_DampeRace_RetryCheck_Npc_Hylia_Dampe_002
+MiniGame_DampeRace	Complete			
+MiniGame_DiggingHole	NotReady			
+MiniGame_DiggingHole	Ready			
+MiniGame_DiggingHole	Wait			
+MiniGame_DiggingHole	PlayDiggingHole			
+MiniGame_DiggingHole	Complete			
+MiniGame_Diving	NotReady			
+MiniGame_Diving	Ready			MiniGame_Diving_Ready_Npc_Zora_001
+MiniGame_Diving	Step01			MiniGame_Diving_Step01_Npc_Zora_001
+MiniGame_Diving	Step02			MiniGame_Diving_Step02_Npc_Zora_001
+MiniGame_Diving	Step03			MiniGame_Diving_Step03_Npc_Zora_001
+MiniGame_Diving	Complete			
+MiniGame_Fishing	NotReady			
+MiniGame_Fishing	Ready			MiniGame_Fishing_Ready_Npc_Hylia_Fishman_001_Child MiniGame_Fishing_Ready_Npc_Hylia_Fishman_001_Adult
+MiniGame_Fishing	Step01			MiniGame_Fishing_Step01_Npc_Hylia_Fishman_001_Adult MiniGame_Fishing_Step01_Npc_Hylia_Fishman_001_Child
+MiniGame_Fishing	Complete			
+MiniGame_FrogTenors	NotReady			
+MiniGame_FrogTenors	Ready			
+MiniGame_FrogTenors	Playing			MiniGame_FrogTenors_Playing_Animal_Frog_Gray MiniGame_FrogTenors_Playing_Animal_Frog_Yellow MiniGame_FrogTenors_Playing_Animal_Frog_LightBlue MiniGame_FrogTenors_Playing_Animal_Frog_Blue MiniGame_FrogTenors_Playing_Animal_Frog_Red
+MiniGame_FrogTenors	Complete			
+MiniGame_GambleRace	NotReady			
+MiniGame_GambleRace	Ready			
+MiniGame_GambleRace	HorseRidingPlaying			
+MiniGame_GambleRace	GambleRacePlaying			
+MiniGame_GambleRace	Complete			
+MiniGame_HitTarget	NotReady			
+MiniGame_HitTarget	Ready			MiniGame_HitTarget_Ready_Npc_Hylia_019_Shop_Child
+MiniGame_HitTarget	Retry			MiniGame_HitTarget_Retry_Npc_Hylia_019_Shop_Child
+MiniGame_HitTarget	Playing			MiniGame_HitTarget_Playing_Npc_Hylia_019_Shop_Child
+MiniGame_HitTarget	Finish			MiniGame_HitTarget_Finish_Npc_Hylia_019_Shop_Child
+MiniGame_HitTarget	Complete			
+MiniGame_HorseRace	NotReady	Get_Epona_IsCompleted_Exp		
+MiniGame_HorseRace	Ready			MiniGame_HorseRace_Ready_Npc_Hylia_Malon_Adult
+MiniGame_HorseRace	Playing			MiniGame_HorseRace_Playing_Npc_Hylia_Malon_Adult MiniGame_HorseRace_Playing_Npc_Hylia_Ingo_001_Adult
+MiniGame_HorseRace	Complete			
+MiniGame_SequentialChoiceTreasure	NotReady			
+MiniGame_SequentialChoiceTreasure	Ready			MiniGame_SequentialChoiceTreasure_Ready_Npc_Hylia_022_Shop_Child
+MiniGame_SequentialChoiceTreasure	Playing			MiniGame_SequentialChoiceTreasure_Playing_Npc_Hylia_022_Shop_Child
+MiniGame_SequentialChoiceTreasure	Complete			
+Minigame_CatchCucco	NotReady			
+Minigame_CatchCucco	Ready			Minigame_CatchCucco_Ready_Npc_Hylia_049_Child Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_0 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_1 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_2 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_3 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_4 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_5 Minigame_CatchCucco_Ready_Animal_Cucco_CatchCucco_6
+Minigame_CatchCucco	Captured			Minigame_CatchCucco_Captured_Npc_Hylia_049_Child Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_0 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_1 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_2 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_3 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_4 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_5 Minigame_CatchCucco_Captured_Animal_Cucco_CatchCucco_6
+Minigame_CatchCucco	WaitingReset			
+Minigame_CatchCucco	Complete			
+Minigame_FindOutCucco	NotReady	Goto_HyruleCastle_IsAfter_Step03_02_Exp		
+Minigame_FindOutCucco	Ready			Minigame_FindOutCucco_Ready_Npc_Hylia_Talon_Child Minigame_FindOutCucco_Ready_Animal_SuperCucco_Animal_SuperCucco_01 Minigame_FindOutCucco_Ready_Animal_SuperCucco_Animal_SuperCucco_02 Minigame_FindOutCucco_Ready_Animal_SuperCucco_Animal_SuperCucco_03
+Minigame_FindOutCucco	Retry			Minigame_FindOutCucco_Retry_Npc_Hylia_Talon_Child Minigame_FindOutCucco_Retry_Animal_SuperCucco_Animal_SuperCucco_01 Minigame_FindOutCucco_Retry_Animal_SuperCucco_Animal_SuperCucco_02 Minigame_FindOutCucco_Retry_Animal_SuperCucco_Animal_SuperCucco_03
+Minigame_FindOutCucco	Playing			Minigame_FindOutCucco_Playing_Npc_Hylia_Talon_Child Minigame_FindOutCucco_Playing_Animal_SuperCucco_Animal_SuperCucco_01 Minigame_FindOutCucco_Playing_Animal_SuperCucco_Animal_SuperCucco_02 Minigame_FindOutCucco_Playing_Animal_SuperCucco_Animal_SuperCucco_03
+Minigame_FindOutCucco	GetReady			Minigame_FindOutCucco_GetReady_Npc_Hylia_Talon_Child
+Minigame_FindOutCucco	Finish			Minigame_FindOutCucco_Finish_Npc_Hylia_Talon_Child Minigame_FindOutCucco_Finish_Animal_SuperCucco_Animal_SuperCucco_01 Minigame_FindOutCucco_Finish_Animal_SuperCucco_Animal_SuperCucco_02 Minigame_FindOutCucco_Finish_Animal_SuperCucco_Animal_SuperCucco_03
+Minigame_FindOutCucco	Complete			
+Minigame_HorsebackArchery	NotReady			
+Minigame_HorsebackArchery	Ready			Minigame_HorsebackArchery_Ready_Npc_Gerudo_008
+Minigame_HorsebackArchery	Playing			Minigame_HorsebackArchery_Playing_Npc_Gerudo_008
+Minigame_HorsebackArchery	Finish			Minigame_HorsebackArchery_Finish_Npc_Gerudo_008
+Minigame_HorsebackArchery	Complete			
+Minigame_SkullKidSession	NotReady			
+Minigame_SkullKidSession	Ready			
+Minigame_SkullKidSession	Playing			
+Minigame_SkullKidSession	Complete			
+SageOfFire	NotReady			
+SageOfFire	Ready			SageOfFire_Ready_Npc_Goron_DaruniaJr_Adult SageOfFire_Ready_Npc_Goron_DaruniaJr_Adult_demo1 SageOfFire_Ready_Npc_Goron_DaruniaJr_Adult_demo2
+SageOfFire	StopDaruniaJr			SageOfFire_StopDaruniaJr_Npc_Goron_DaruniaJr_Adult
+SageOfFire	TalkDaruniaJr			SageOfFire_TalkDaruniaJr_Npc_Goron_DaruniaJr_Adult
+SageOfFire	MoveStatue			
+SageOfFire	EnterCrater			
+SageOfFire	MeetSheik			
+SageOfFire	EnterTemple			
+SageOfFire	MeetDarunia			
+SageOfFire	GetBossKey			
+SageOfFire	MeetBoss			
+SageOfFire	DefeatBoss			
+SageOfFire	GoToWarpPoint			
+SageOfFire	Complete			
+SageOfForest	NotReady			
+SageOfForest	Ready			
+SageOfForest	Step01			
+SageOfForest	Step02			
+SageOfForest	Step03		IsGet.Item_Hookshot	
+SageOfForest	Step04			
+SageOfForest	Step05			
+SageOfForest	Step06			
+SageOfForest	Step06_1_0			
+SageOfForest	Step06_1_1			
+SageOfForest	Step06_1_2			
+SageOfForest	Step06_2			
+SageOfForest	Step07			
+SageOfForest	Step08			
+SageOfForest	Step09			
+SageOfForest	Complete			
+SageOfLight	NotReady			
+SageOfLight	Ready			
+SageOfLight	Complete			
+SageOfShadow	NotReady			
+SageOfShadow	Ready			
+SageOfShadow	GoToDungeon			
+SageOfShadow	GotGlassTruth			
+SageOfShadow	GetGlassTruth			
+SageOfShadow	MeetBoss			
+SageOfShadow	BattleOnShip			
+SageOfShadow	BeforeBossRoom			
+SageOfShadow	DefeatBoss			
+SageOfShadow	GoToWarpPoint			
+SageOfShadow	Complete			
+SageOfSpirit	NotReady			
+SageOfSpirit	Ready			SageOfSpirit_Ready_Npc_Hylia_012_Adult
+SageOfSpirit	Step01			SageOfSpirit_Step01_Npc_Hylia_013_Adult_GerudoFortress SageOfSpirit_Step01_Npc_Hylia_014_Adult_GerudoFortress SageOfSpirit_Step01_Npc_Hylia_015_Adult_GerudoFortress SageOfSpirit_Step01_Npc_Hylia_016_Adult_GerudoFortress SageOfSpirit_Step01_Npc_Gerudo_001
+SageOfSpirit	Step02			SageOfSpirit_Step02_Npc_Gerudo_001 SageOfSpirit_Step02_Npc_Gerudo_001_FortressCleared
+SageOfSpirit	Step03			
+SageOfSpirit	Step04			
+SageOfSpirit	Step05			SageOfSpirit_Step05_Npc_Gerudo_Nabooru_Child
+SageOfSpirit	Step05_01			SageOfSpirit_Step05_01_Npc_Gerudo_Nabooru_Child
+SageOfSpirit	Step05_02			SageOfSpirit_Step05_02_Npc_Gerudo_Nabooru_Child
+SageOfSpirit	Step05_03			SageOfSpirit_Step05_03_Npc_Gerudo_Nabooru_Child
+SageOfSpirit	Step06			SageOfSpirit_Step06_Npc_Gerudo_Nabooru_Child
+SageOfSpirit	Step07			
+SageOfSpirit	Step07_pre00			
+SageOfSpirit	Step07_00			
+SageOfSpirit	Step08			
+SageOfSpirit	Step08_01			
+SageOfSpirit	Step09			
+SageOfSpirit	Step09_01			
+SageOfSpirit	Step10			
+SageOfSpirit	Complete			
+SageOfWater	NotReady			
+SageOfWater	Ready			SageOfWater_Ready_Npc_Zora_KingZora_adult
+SageOfWater	Step00			
+SageOfWater	Step01			SageOfWater_Step01_Npc_Zora_KingZora_adult
+SageOfWater	Step03			SageOfWater_Step03_Npc_Zora_KingZora_adult
+SageOfWater	Step04			SageOfWater_Step04_Npc_Zora_KingZora_adult SageOfWater_Step04_Npc_Zora_Ruto_Adult_001
+SageOfWater	Step05			SageOfWater_Step05_Npc_Zora_KingZora_adult SageOfWater_Step05_Npc_Zora_Ruto_Adult_001
+SageOfWater	Step06			SageOfWater_Step06_Npc_Zora_KingZora_adult SageOfWater_Step06_Npc_Zora_Ruto_Adult_001
+SageOfWater	Step07			SageOfWater_Step07_Npc_Zora_KingZora_adult
+SageOfWater	Step07_00			
+SageOfWater	Step07_1			SageOfWater_Step07_1_Npc_Zora_KingZora_adult
+SageOfWater	Step07_1_Safety			
+SageOfWater	Step07_2			SageOfWater_Step07_2_Npc_Zora_KingZora_adult
+SageOfWater	Step08			SageOfWater_Step08_Npc_Zora_KingZora_adult
+SageOfWater	Complete			
+SubEvent_AllBossBattle	NotReady			
+SubEvent_AllBossBattle	Ready			
+SubEvent_AllBossBattle	Retry			
+SubEvent_AllBossBattle	Playing			
+SubEvent_AllBossBattle	Finish			
+SubEvent_AllBossBattle	Complete			
+SubEvent_FindRichard	NotReady	Npc_Hylia_Soldier_003_GateOpen		
+SubEvent_FindRichard	Ready			SubEvent_FindRichard_Ready_Npc_Hylia_052_Child SubEvent_FindRichard_Ready_Animal_Dog_Richard_01
+SubEvent_FindRichard	Step01			SubEvent_FindRichard_Step01_Npc_Hylia_052_Child SubEvent_FindRichard_Step01_Animal_Dog_Richard_01
+SubEvent_FindRichard	Complete			
+SubEvent_GetFireArrow	NotReady	SageOfWater_IsAfter_Step08_Exp		
+SubEvent_GetFireArrow	Ready		SageOfWater_IsCompleted_Exp	
+SubEvent_GetFireArrow	Step01			
+SubEvent_GetFireArrow	Step02			
+SubEvent_GetFireArrow	Step03			
+SubEvent_GetFireArrow	Complete			
+SubEvent_GetGlassTruth	NotReady			
+SubEvent_GetGlassTruth	Ready			
+SubEvent_GetGlassTruth	Step01			
+SubEvent_GetGlassTruth	Step05			
+SubEvent_GetGlassTruth	Step06			
+SubEvent_GetGlassTruth	Step07			
+SubEvent_GetGlassTruth	Complete			
+SubEvent_GetIceArrow	NotReady			
+SubEvent_GetIceArrow	Ready			
+SubEvent_GetIceArrow	Step00			
+SubEvent_GetIceArrow	Step01			
+SubEvent_GetIceArrow	Complete			
+SubEvent_GetMelodySun	NotReady			
+SubEvent_GetMelodySun	Ready			
+SubEvent_GetMelodySun	GetMelodySun			
+SubEvent_GetMelodySun	Complete			
+SubEvent_GetScarecrow	NotReady			
+SubEvent_GetScarecrow	Ready			
+SubEvent_GetScarecrow	MeetPierre			
+SubEvent_GetScarecrow	MeetBonooru			
+SubEvent_GetScarecrow	IntoThePast			
+SubEvent_GetScarecrow	PlayScarecrowSong			
+SubEvent_GetScarecrow	IntoTheFuture			
+SubEvent_GetScarecrow	Complete			
+SubEvent_GetStormSong	NotReady			
+SubEvent_GetStormSong	Ready			
+SubEvent_GetStormSong	ReadyForGetStormSong			
+SubEvent_GetStormSong	step02			
+SubEvent_GetStormSong	step03			
+SubEvent_GetStormSong	BeforeBossRoom			
+SubEvent_GetStormSong	step04			
+SubEvent_GetStormSong	step05			
+SubEvent_GetStormSong	Complete			
+SubEvent_GetSwordBigGoron	NotReady			
+SubEvent_GetSwordBigGoron	Ready			
+SubEvent_GetSwordBigGoron	StartSubEvent			
+SubEvent_GetSwordBigGoron	WaitEggHatch			SubEvent_GetSwordBigGoron_WaitEggHatch_Npc_Navi
+SubEvent_GetSwordBigGoron	EggHatched			
+SubEvent_GetSwordBigGoron	Step01			
+SubEvent_GetSwordBigGoron	Step01_01			
+SubEvent_GetSwordBigGoron	Step02			
+SubEvent_GetSwordBigGoron	Step03			
+SubEvent_GetSwordBigGoron	Step03_01			
+SubEvent_GetSwordBigGoron	Step03_02			
+SubEvent_GetSwordBigGoron	Step03_03			
+SubEvent_GetSwordBigGoron	Step04			
+SubEvent_GetSwordBigGoron	Step05			
+SubEvent_GetSwordBigGoron	Step05_01			
+SubEvent_GetSwordBigGoron	Step06			
+SubEvent_GetSwordBigGoron	Step06_01			
+SubEvent_GetSwordBigGoron	Step06_02			
+SubEvent_GetSwordBigGoron	Step06_03			
+SubEvent_GetSwordBigGoron	Step07			
+SubEvent_GetSwordBigGoron	Step08			
+SubEvent_GetSwordBigGoron	Step08_01			
+SubEvent_GetSwordBigGoron	Step09			
+SubEvent_GetSwordBigGoron	Step09_01			
+SubEvent_GetSwordBigGoron	Step10			
+SubEvent_GetSwordBigGoron	Step11			
+SubEvent_GetSwordBigGoron	Complete			
+SubEvent_GhostShop	NotReady			
+SubEvent_GhostShop	Ready			
+SubEvent_GhostShop	Playing			
+SubEvent_GhostShop	Complete			
+SubEvent_MaskSalesman	NotReady			
+SubEvent_MaskSalesman	Ready			
+SubEvent_MaskSalesman	UntilRentMaskOfKeaton		HappyMaskSaleMan_UntilRentMaskOfKeaton	
+SubEvent_MaskSalesman	Step01_Hint			SubEvent_MaskSalesman_Step01_Hint_Npc_Hylia_Soldier_003
+SubEvent_MaskSalesman	Step01			SubEvent_MaskSalesman_Step01_Npc_Hylia_Soldier_003
+SubEvent_MaskSalesman	Step02			SubEvent_MaskSalesman_Step02_Npc_Hylia_Soldier_003
+SubEvent_MaskSalesman	UntilRentMaskOfSkull		HappyMaskSaleMan_UntilRentMaskOfSkull	
+SubEvent_MaskSalesman	Step03_Hint			SubEvent_MaskSalesman_Step03_Hint_Npc_SkullKid_Child
+SubEvent_MaskSalesman	Step03			SubEvent_MaskSalesman_Step03_Npc_SkullKid_Child
+SubEvent_MaskSalesman	Step04			SubEvent_MaskSalesman_Step04_Npc_SkullKid_Child
+SubEvent_MaskSalesman	UntilRentMaskOfSpooky		HappyMaskSaleMan_UntilRentMaskOfSpooky	
+SubEvent_MaskSalesman	Step05_Hint			
+SubEvent_MaskSalesman	Step05			
+SubEvent_MaskSalesman	Step06			
+SubEvent_MaskSalesman	UntilRentMaskOfBunny		HappyMaskSaleMan_UntilRentMaskOfBunny	
+SubEvent_MaskSalesman	Step07_Hint			SubEvent_MaskSalesman_Step07_Hint_Npc_Hylia_RunningMan_Child
+SubEvent_MaskSalesman	Step07			SubEvent_MaskSalesman_Step07_Npc_Hylia_RunningMan_Child
+SubEvent_MaskSalesman	Step08			SubEvent_MaskSalesman_Step08_Npc_Hylia_RunningMan_Child
+SubEvent_MaskSalesman	Complete			
+SubEvent_RunningRace	NotReady			
+SubEvent_RunningRace	Ready			
+SubEvent_RunningRace	Playing			
+SubEvent_RunningRace	Complete			

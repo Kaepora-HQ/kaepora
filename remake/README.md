@@ -1,7 +1,8 @@
 # Remake tables
 
-The generator builds these into the program and checks them when it starts. The patcher builds in `stones.tsv` and
-`shop_goods.tsv` too. With the game file, `tests/remake_tables_test.py` checks the tables against the game's own files.
+The generator builds these into the program and checks them when it starts, all but the quest tables, which no program
+reads. The patcher builds in `stones.tsv` and `shop_goods.tsv` too. With the game file, `tests/remake_tables_test.py`
+checks the tables against the game's own files.
 
 `chests.tsv` has a row for every chest of the remake, 212 in all, and for every SoH chest location of the vanilla
 dungeon layouts, so it is the list of which chests are shuffled and why the others are not. A SoH loose item that the
@@ -460,3 +461,19 @@ item with the same pose (`Dm_SY_GetInEvent`, read), so a reward at a gift is inf
 loose spot has been seen to give one, so the fill places the rewards before those join it (`KeptInChestsAndCalls`). A
 reward opens nothing in the remake, so it is no major item: no hint names one as an item to find, and none keeps its
 area from being called foolish. The place after a boss, or Rauru's, keeps its area from being foolish whatever it holds.
+
+The quest tables say what the game's files hold about its quests: names and places, with no reading of which way a
+scene goes. They are of the files of the game's update package, version 2.0.0, which is what the patcher reads; a file
+only the base package holds is not in them. `tests/quests.py` writes them, and `tests/remake_tables_test.py` makes them
+again and compares. After a change to that script or to the tests' readers, run
+`python3 -I -B tests/quests.py <game.nup> remake`.
+
+A quest's step is the saved value `Step_<quest>`, and the game's quest table, `RSDB/Challenge`, gives its steps in the
+order every comparison of steps reads. `quest_steps.tsv` has a row for each step of each of the 45 quests, in that
+order, from `NotReady` to `Complete`.
+
+- `quest` and `step`: the game's names.
+- `depends_on`: on a quest's `NotReady` row, the flag or expression the quest table names as its `DependFlagName`.
+- `forced_by`: the flag or expression the quest table names as the step's `ForceProgressGameData`.
+- `participants`: the schedules of the characters who take part in the step, each the member
+  `Component/AIScheduleParam/<name>.game__component__AIScheduleParam.bgyml` of `Pack/AIScheduleParam.pack.zs`.

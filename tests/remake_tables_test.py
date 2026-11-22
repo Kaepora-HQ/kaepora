@@ -11,6 +11,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import patch_test  # noqa: E402
+import quests  # noqa: E402
 import shop_goods  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -80,6 +81,12 @@ class RemakeTablesTest(unittest.TestCase):
                 self.assertEqual(measured, [""] * 5, row["item"])
             else:
                 self.assertEqual(measured, shop_goods.row(self.game, infos, row["item"]), row["item"])
+
+    def test_the_quest_tables_are_the_game_s(self):
+        for name, rows in quests.tables(self.game).items():
+            with open(ROOT / "remake" / name, newline="") as f:
+                self.assertEqual(list(csv.reader(f, delimiter="\t")), rows,
+                                 f"{name}: python3 -I -B tests/quests.py <game.nup> remake writes it again")
 
 
 if __name__ == "__main__":
