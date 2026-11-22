@@ -41,7 +41,11 @@
 					"@effect/platform-node-shared/NodeSocket",
 					// The wire log file, and the files the tests read back.
 					"effect/FileSystem",
-					"@effect/platform-bun/BunFileSystem"
+					"@effect/platform-bun/BunFileSystem",
+					// kaepora-dump, which reads the game file.
+					"effect/process",
+					// The cache folder for the game's tables.
+					"effect/persistence/UserDirectories"
 				],
 				"allowedExperimentalApis": [],
 				"diagnosticSeverity": {
@@ -213,8 +217,8 @@
 						}
 					},
 					{
-						// The fake debug server answers in Bun's socket callbacks, outside Effect, and speaks JSON lines as Lichii does.
-						"include": ["tests/fake-lichii.ts"],
+						// The fake debug server and the fake kaepora-dump answer outside Effect, in JSON lines as the real programs do.
+						"include": ["tests/fake-lichii.ts", "tests/fake-game.ts"],
 						"options": {
 							"diagnosticSeverity": {
 								"globalJson": "off"

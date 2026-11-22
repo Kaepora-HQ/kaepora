@@ -8,6 +8,17 @@ export const Value = Schema.Union([
 ]);
 export type Value = typeof Value.Type;
 
+/** A place in a scene's units, x, y and z. */
+export const Position = Schema.Tuple([
+	Schema.Finite,
+	Schema.Finite,
+	Schema.Finite,
+]);
+
+/** What a save record holds: a value, or a position such as where Link stands. */
+export const Saved = Schema.Union([Value, Position]);
+export type Saved = typeof Saved.Type;
+
 /** A place on this machine that can hold one game, numbered from 1. */
 export const PlaceId = Schema.Int.check(Schema.isGreaterThanOrEqualTo(1)).pipe(
 	Schema.brand("PlaceId")
