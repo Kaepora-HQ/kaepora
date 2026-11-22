@@ -213,14 +213,16 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
                      hints_name_the_goods_only_five_per_shop_shuffle
                      hints_name_the_goods_only_six_and_seven_per_shop_shuffle
-                     gifts_shuffled shuffled_is_every_gift_group_and_vanilla_is_none
-                     one_gift_group_shuffles_its_places_alone
+                     gifts_shuffled shuffled_is_every_gift_group_of_its_release_and_vanilla_is_none
+                     a_gift_group_named_twice_is_named_once
+                     with_characters_alone_no_place_gives_a_bigger_stick_or_nut_bag
+                     a_shuffled_scrub_offers_what_it_sells one_gift_group_shuffles_its_places_alone
                      the_gift_places_of_an_item_that_comes_in_steps_share_a_group
                      a_gift_given_at_two_sites_gives_one_item gifts_give_no_dungeon_item
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
                      a_gift_can_hold_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
-                     each_bag_prize_gives_its_placed_item_at_both_sites a_bigger_bag_has_one_name_wherever_it_lands
+                     each_bag_prize_gives_its_placed_item_at_every_site a_bigger_bag_has_one_name_wherever_it_lands
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
                      the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
@@ -287,8 +289,8 @@ if(Qt6Test_FOUND)
                      untickingStopsARequestInFlight theStartWithListHasTheItems
                      oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
-                     aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroup
-                     rememberedSettingsWithGiftsShuffledTickEveryGroup)
+                     aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroupOfItsTime
+                     rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime)
     if(APPLE)
         list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)
     endif()
@@ -377,6 +379,7 @@ if(KAEPORA_GAME_NUP)
     foreach(TEST IN ITEMS same_files_as_the_two_programs a_seed_with_shop_goods_shuffled_is_patched
                           a_seed_with_gifts_and_shop_goods_shuffled_is_patched
                           a_seed_with_one_gift_group_shuffled_is_patched
+                          a_seed_with_the_deku_scrubs_shuffled_is_patched
                           a_seed_with_gold_skulltulas_shuffled_is_patched
                           a_seed_with_loose_items_shuffled_is_patched a_seed_with_songs_shuffled_is_patched
                           a_seed_with_dungeon_rewards_shuffled_is_patched two_seeds_in_one_process

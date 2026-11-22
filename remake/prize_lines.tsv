@@ -1,2 +1,10 @@
-location	file	label	sentence	line_length	box_lines
-Market Treasure Chest Game Reward	EventFlowMsg/Npc_Hylia_022_Shop_Child.msbt	Talk_04	Win #five times in a row#, and I'll give you a one-time prize: #[[1]]#!^Guess wrong, though, and you're done. It's all down to your luck!	52	2
+location	file	label	copy_of	shown_at	sentence	line_length	box_lines
+Market Treasure Chest Game Reward	EventFlowMsg/Npc_Hylia_022_Shop_Child.msbt	Talk_04			Win #five times in a row#, and I'll give you a one-time prize: #[[1]]#!^Guess wrong, though, and you're done. It's all down to your luck!	52	2
+LW Deku Scrub Near Bridge	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_DekuStickPouch_01			How about #[[1]]#? It's #40 rupees#. Wanna buy it?	53	2
+LW Deku Scrub Near Bridge	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_DekuStickPouch_02			How about #[[1]]#? It's #40 rupees#. Wanna buy it?	53	2
+LW Deku Scrub Grotto Front	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_DekuNutsPouch_01			How about #[[1]]#? It's #40 rupees#. Wanna buy it?	53	2
+HF Deku Scrub Grotto	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_Heart_01			Ohhh, #[[1]]#. Shimmery glimmery! It's #100 rupees#. Wanna buy it?	53	2
+HF Deku Scrub Grotto	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_Secret_07			Or... take a look at what I don't got. I'm completely out of things to sell.^I had #[[1]]# that I just couldn't sell, but it got bought up recently by a little fairy.^That was the last thing I had to sell. Sorry to disappoint you.	53	2
+HF Deku Scrub Grotto	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_Secret_10			The thing I couldn't sell for ages, #[[1]]#, finally got bought up by a little fairy.^So I don't have anything else to sell you...	53	2
+HF Deku Scrub Grotto	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_Secret_11			Hey... I know your face. You're the customer from before.^You can bug me as much as you want, but it won't change a thing.^The thing that sat stagnant, #[[1]]#, finally got bought up by a fairy, so I don't have anything left for ya.	53	2
+DMC Deku Scrub	EventFlowMsg/Enemy_Event.msbt	Enemy_Scrub_Business_Heart_01_Crater	Enemy_Scrub_Business_Heart_01	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs:Event293:SellerMessageId	Ohhh, #[[1]]#. Shimmery glimmery! It's #100 rupees#. Wanna buy it?	53	2

@@ -51,10 +51,10 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(len(json.loads(plan.read_text())["shops"]), 40)
 
     def test_a_seed_with_gifts_and_shop_goods_shuffled_is_patched(self):
-        # Seed 2 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
+        # Seed 3 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
         settings = json.dumps({"Shop goods": "Four per shop shuffled", "Gifts": "Shuffled"})
-        result = subprocess.run([SEEDGEN, "2", spoiler, plan, settings], capture_output=True, text=True)
+        result = subprocess.run([SEEDGEN, "3", spoiler, plan, settings], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -75,6 +75,17 @@ class MakeSeedTest(unittest.TestCase):
         written = {row["flow"] for row in rows if (mod / "romfs" / row["flow"]).is_file()}
         self.assertTrue(written)
         self.assertEqual({row["group"] for row in rows if row["flow"] in written}, {"Minigames"})
+
+    def test_a_seed_with_the_deku_scrubs_shuffled_is_patched(self):
+        # The crater's scrub shows its offer from a copy of the field's under a label of its own.
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Gifts": ["Deku Scrubs (One Time Rewards)"]})
+        result = subprocess.run([SEEDGEN, "33", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue([entry for entry in json.loads(plan.read_text())["message_texts"] if "copy_of" in entry])
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((mod / "romfs" / "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs").is_file())
 
     def test_a_seed_with_gold_skulltulas_shuffled_is_patched(self):
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"

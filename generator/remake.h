@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -161,12 +162,22 @@ struct Fit {
     size_t boxLines;
 };
 
+// A message a seed adds under a label the game's files lack, as a copy of another, and the event parameter that shows
+// it in place of the message that place showed.
+struct MessageCopy {
+    std::string of; // the label of the copied message
+    std::string flow;
+    std::string event;
+    std::string param;
+};
+
 // A line in which a character names what a place gives. A seed that shuffles the place rewrites it to name what the
 // seed places there.
 struct PrizeLine {
     RandomizerCheck location;
     std::string file; // the message file in the text packs
     std::string label;
+    std::optional<MessageCopy> copy; // for a line under a label the file lacks
     Sentence sentence;
     Fit fit;
 };
@@ -222,6 +233,7 @@ struct StoneHint {
 struct MessageText {
     std::string file;
     std::string label;
+    std::optional<MessageCopy> copy;
     std::string tagged;
 };
 
@@ -232,9 +244,10 @@ struct MessageText {
 // Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the Bolero's lessons then
 // name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and
 // the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
-// on, the gossip stones' texts, the messages the seed rewrites, each shuffled shop slot with its item and price, each
-// shuffled skulltula with its item, each shuffled loose item that gives another item than its own, with that item, and
-// for each step the seed starts with the actors of the finds that bring a new game to it.
+// on, the gossip stones' texts, the messages the seed rewrites or adds, with the event that shows each one added, each
+// shuffled shop slot with its item and price, each shuffled skulltula with its item, each shuffled loose item that
+// gives another item than its own, with that item, and for each step the seed starts with the actors of the finds that
+// bring a new game to it.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,

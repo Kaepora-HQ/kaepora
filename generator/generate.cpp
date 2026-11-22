@@ -217,7 +217,11 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeChest> looseItemTable = LoadRemakeLooseItems();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
     static const std::vector<GroupedGift> giftTable = LoadRemakeGifts(table);
-    static const std::vector<RemakeGift> everyGift = GiftsIn(giftTable, EveryGiftGroup());
+    static const std::vector<RemakeGift> everyGift = [] {
+        std::vector<RemakeGift> gifts;
+        std::ranges::transform(giftTable, std::back_inserter(gifts), &GroupedGift::gift);
+        return gifts;
+    }();
     static const std::vector<RemakeGift> rewardTable = LoadRemakeRewards(table);
     // The fill puts no stone or medallion in a shop slot.
     [[maybe_unused]] static const bool shopGoodsChecked =

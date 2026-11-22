@@ -357,7 +357,7 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
 
     line = 1;
     for (const auto& row : ReadTable("remake/prize_lines.tsv", prizeLineTable,
-                                     "location\tfile\tlabel\tsentence\tline_length\tbox_lines")) {
+                                     "location\tfile\tlabel\tcopy_of\tshown_at\tsentence\tline_length\tbox_lines")) {
         const std::string where = std::format("remake/prize_lines.tsv line {}: ", ++line);
         const RandomizerCheck location = LocationNamed(where, row[0]);
         if (std::ranges::find(chests, location, &RemakeChest::location) == chests.end() &&
@@ -367,11 +367,20 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
         if (row[1].empty() || row[2].empty()) {
             Fail(where + "no file or label");
         }
+        std::optional<MessageCopy> copy;
+        if (!row[3].empty() || !row[4].empty()) {
+            const std::vector<std::string> shown = SohUtils::StringSplit(row[4], ":");
+            if (row[3].empty() || shown.size() != 3 || !row[1].ends_with(".msbt")) {
+                Fail(where + "a copy names the label it copies and flow:event:parameter that shows it");
+            }
+            copy = MessageCopy{ .of = row[3], .flow = shown[0], .event = shown[1], .param = shown[2] };
+        }
         tables.prizeLines.push_back({ .location = location,
                                       .file = row[1],
                                       .label = row[2],
-                                      .sentence = Split(where, row[3]),
-                                      .fit = ReadFit(where, row[4], row[5]) });
+                                      .copy = copy,
+                                      .sentence = Split(where, row[5]),
+                                      .fit = ReadFit(where, row[6], row[7]) });
     }
 
     line = 1;
@@ -589,15 +598,15 @@ std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests)
     size_t line = 1;
     for (const auto& row : rows) {
         const std::string where = std::format("{} line {}: ", file, ++line);
-        const auto group = std::ranges::find(GiftGroups, row[6], &std::pair<GiftGroup, std::string_view>::second);
+        const auto group = std::ranges::find(GiftGroups, row[6], &GiftGroup::name);
         if (group == std::end(GiftGroups) ||
-            groups.try_emplace(LocationNamed(where, row[0]), group->first).first->second != group->first) {
+            groups.try_emplace(LocationNamed(where, row[0]), *group).first->second != *group) {
             Fail(where + "\"" + row[6] + "\" is no group of \"Gifts\", or not the group of the location's other rows");
         }
     }
-    for (const auto& [group, name] : GiftGroups) {
+    for (const GiftGroup& group : GiftGroups) {
         if (std::ranges::count(std::views::values(groups), group) == 0) {
-            Fail(file + ": no row of the group \"" + std::string(name) + "\"");
+            Fail(file + ": no row of the group \"" + std::string(group.name) + "\"");
         }
     }
     std::vector<GroupedGift> gifts;
@@ -971,8 +980,16 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     plan["message_texts"] = nlohmann::ordered_json::array();
     for (const MessageText& message : messages) {
-        plan["message_texts"].push_back(
-            { { "file", message.file }, { "label", message.label }, { "text", message.tagged } });
+        nlohmann::ordered_json& planned = plan["message_texts"].emplace_back(
+            nlohmann::ordered_json{ { "file", message.file }, { "label", message.label } });
+        if (message.copy) {
+            planned["copy_of"] = message.copy->of;
+            // A flow names a message by its file without the extension and its label.
+            addText(message.copy->flow, message.copy->event, message.copy->param,
+                    message.file.substr(0, message.file.size() - std::string_view(".msbt").size()) + ":" +
+                        message.label);
+        }
+        planned["text"] = message.tagged;
     }
     plan["shops"] = nlohmann::ordered_json::array();
     for (const RemakeShopSlot& slot : shops) {

@@ -300,7 +300,10 @@ std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
             continue;
         }
         const std::string& item = tables.itemsByRemakeName.at(placed->second);
-        lines.push_back({ line.file, line.label, Layout(line.sentence.before + item + line.sentence.after, line.fit) });
+        lines.push_back({ .file = line.file,
+                          .label = line.label,
+                          .copy = line.copy,
+                          .tagged = Layout(line.sentence.before + item + line.sentence.after, line.fit) });
     }
     return lines;
 }
@@ -332,7 +335,7 @@ std::vector<CharacterHintText> CharacterHints(const RemakeHintTables& tables,
                                    hint.sentence.after;
         texts.push_back({ .hint = hint.hint,
                           .place = *place,
-                          .message = { hint.file, hint.label, Layout(markup, hint.fit) },
+                          .message = { .file = hint.file, .label = hint.label, .tagged = Layout(markup, hint.fit) },
                           .plain = Plain(Words(markup)) });
     }
     return texts;

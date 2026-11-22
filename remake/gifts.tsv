@@ -3,10 +3,15 @@ LW Skull Kid	Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs	Event71	ActorName	Obj_
 LW Ocarina Memory Game	Event/EventFlow/Npc_SkullKid_Child_02.bfevfl.zs	Event24	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event30	ActorName	Item_BulletBag_Medium	Item_BulletBag_Large	Minigames
 LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event17	ActorName	Item_BulletBag_Large	Item_BulletBag_Large	Minigames
-LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event29	ActorName	Item_StickBag_Medium	Item_StickBag_Medium	Characters
-LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event32	ActorName	Item_StickBag_Large	Item_StickBag_Medium	Characters
-LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event2	ActorName	Item_NutBag_Medium	Item_NutBag_Medium	Characters
-LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event31	ActorName	Item_NutBag_Large	Item_NutBag_Medium	Characters
+LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event29	ActorName	Item_StickBag_Medium	Item_StickBag_Medium	Deku Scrubs (One Time Rewards)
+LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event32	ActorName	Item_StickBag_Large	Item_StickBag_Medium	Deku Scrubs (One Time Rewards)
+LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event2	ActorName	Item_NutBag_Medium	Item_NutBag_Medium	Deku Scrubs (One Time Rewards)
+LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event31	ActorName	Item_NutBag_Large	Item_NutBag_Medium	Deku Scrubs (One Time Rewards)
+LW Deku Scrub Near Bridge	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event317	ActorName	Item_StickBag_Large	Item_StickBag_Large	Deku Scrubs (One Time Rewards)
+LW Deku Scrub Near Bridge	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event322	ActorName	Item_StickBag_Medium	Item_StickBag_Large	Deku Scrubs (One Time Rewards)
+LW Deku Scrub Near Bridge	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event555	ActorName	Item_StickBag_Medium	Item_StickBag_Large	Deku Scrubs (One Time Rewards)
+LW Deku Scrub Grotto Front	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event318	ActorName	Item_NutBag_Large	Item_NutBag_Large	Deku Scrubs (One Time Rewards)
+LW Deku Scrub Grotto Front	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event326	ActorName	Item_NutBag_Medium	Item_NutBag_Large	Deku Scrubs (One Time Rewards)
 LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event573	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event821	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event579	ReveiveItem	Item_Scale_Gold	Item_Scale_Gold	Minigames
@@ -16,6 +21,8 @@ GF HBA 1000 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event322	
 GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event320	ActorName	Item_Quiver_Medium	Item_Quiver_Large	Minigames
 GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event319	ActorName	Item_Quiver_Large	Item_Quiver_Large	Minigames
 GF Freed All Carpenters	Event/EventFlow/Dm_Gerudo_0025.bfevfl.zs	Event294	ActorName	Item_Token_Gerudo	Item_Token_Gerudo	Story gifts
+HF Deku Scrub Grotto	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event645	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)
+HF Deku Scrub Grotto	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event653	Value	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)
 Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event304	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Medium	Minigames
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event306	ReveiveItem	Item_BombBag_Large	Item_BombBag_Medium	Minigames
@@ -38,6 +45,8 @@ Kak Anju as Adult	Event/EventFlow/Npc_Hylia_049_Adult.bfevfl.zs	Event264	Reveive
 Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl.zs	Event628	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event58	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Large	Minigames
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event92	ReveiveItem	Item_BombBag_Large	Item_BombBag_Large	Minigames
+DMC Deku Scrub	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event293	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)
+DMC Deku Scrub	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event144	Value	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)
 ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event161	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
 ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event75	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames

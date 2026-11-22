@@ -272,6 +272,12 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Market Shooting Gallery", no_slingshot, settings=FOREST_OPEN))
         self.assertFalse(self.reachable("LW Target in Woods", no_slingshot, NO_BOOMERANG, settings=FOREST_OPEN))
 
+    def test_the_field_scrub_sells_to_a_child_once_an_adult_has_read_its_password(self):
+        # The password is on a Fairy Thought outside the grotto, which only the adult field holds, and the scrub sells
+        # only to child Link.
+        self.assertTrue(self.reachable("HF Deku Scrub Grotto"))
+        self.assertFalse(self.reachable("HF Deku Scrub Grotto", NEVER_ADULT))
+
     def test_a_child_wins_the_lost_woods_target_with_the_boomerang(self):
         # Seen in the game: the Boomerang wins the target as the Slingshot does. The target stands only in the child's
         # Lost Woods (measured). With the forest closed, a child leaves it only past Gohma, who takes the slingshot.

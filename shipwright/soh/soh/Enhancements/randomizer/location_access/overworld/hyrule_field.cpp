@@ -13,6 +13,8 @@ void RegionTable_Init_HyruleField() {
         EVENT_ACCESS(LOGIC_SOLD_BUNNY_HOOD,    logic->IsChild && logic->HasItem(RG_BUNNY_HOOD) && logic->HasItem(RG_CHILD_WALLET) && logic->HasItem(RG_SPEAK_HYLIAN)),
         // The Fairy Thought beside the heart piece chest stands only in the adult field.
         EVENT_ACCESS(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT, logic->IsAdult),
+        // So does the one that tells the password, on the tree beside the scrub's hole.
+        EVENT_ACCESS(LOGIC_READ_HF_SCRUB_FAIRY_THOUGHT, logic->IsAdult),
         // A Skullwalltula hangs on the wall of the child field's south grotto. A bomb or the hammer opens the grotto
         // for both ages.
         EVENT_ACCESS(LOGIC_KILLED_HF_SOUTH_GROTTO_WALLTULA, logic->IsChild && AnyAgeTime([]{return logic->BlastOrSmash();}) && logic->CanKillEnemy(RE_WALLTULA)),
@@ -35,6 +37,9 @@ void RegionTable_Init_HyruleField() {
         LOCATION(RC_HF_REDEAD_GROTTO_CHEST,        logic->CanOpenStormsGrotto() && logic->CanKillEnemy(RE_REDEAD, ED_CLOSE, true, 2) && logic->HasItem(RG_OPEN_CHEST)),
         // The chest opens only for child Link, once adult Link has read the Fairy Thought beside it.
         LOCATION(RC_HF_FAIRY_THOUGHT_CHEST,        logic->IsChild && logic->Get(LOGIC_READ_HF_CHEST_FAIRY_THOUGHT) && logic->HasItem(RG_OPEN_CHEST)),
+        // The scrub in the grotto under the hole north of the moat, which a bomb opens, sells only to child Link and asks
+        // for the password, which adult Link reads on the Fairy Thought outside.
+        LOCATION(RC_HF_DEKU_SCRUB_GROTTO,          logic->IsChild && logic->BlastOrSmash() && logic->Get(LOGIC_READ_HF_SCRUB_FAIRY_THOUGHT) && logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         // In the grottos under the east and the south hole, which a bomb or the hammer opens.
         LOCATION(RC_HF_EAST_GROTTO_GOSSIP_STONE,   logic->BlastOrSmash()),
         LOCATION(RC_HF_SOUTH_GROTTO_GOSSIP_STONE,  logic->BlastOrSmash()),
@@ -288,7 +293,6 @@ void RegionTable_Init_HyruleField() {
 
     areaTable[RR_HF_INSIDE_FENCE_GROTTO] = Region("HF Inside Fence Grotto", SCENE_GROTTOS, {}, {
         //Locations
-        LOCATION(RC_HF_DEKU_SCRUB_GROTTO,           logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_HF_INSIDE_FENCE_GROTTO_BEEHIVE, logic->CanBreakLowerBeehives()),
         LOCATION(RC_HF_FENCE_GROTTO_STORMS_FAIRY,   logic->CanUse(RG_SONG_OF_STORMS)),
     }, {

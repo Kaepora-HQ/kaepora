@@ -55,7 +55,9 @@ EVERY_SETTING_CHANGED = {
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
     "Start with": ["Hover Boots", "Megaton Hammer"],
-    "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All", "Gifts": "Shuffled",
+    "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
+    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
+              "Deku Scrubs (One Time Rewards)"],
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
 # The Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the Forest Temple's
@@ -93,9 +95,14 @@ KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_Bombchu
 GIFT_SITES = read_tsv("gifts.tsv")
 GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in GIFT_SITES}
 GIFT_POOL = collections.Counter({row["location"]: row["item"] for row in GIFT_SITES}.values())
-GIFTS_SHUFFLED = {"Gifts": "Shuffled"}
-# The eight places whose prize makes a bag bigger, and the bigger bag each adds to the shuffle, by SoH's name and the
-# remake's.
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
+               "Deku Scrubs (One Time Rewards)"]
+# Released seeds' "Shuffled" and the settings stored by their Kaepora name these, all the groups of their time.
+RELEASED_GIFT_GROUPS = GIFT_GROUPS[:4]
+GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
+DEKU_SCRUBS_SHUFFLED = {"Gifts": ["Deku Scrubs (One Time Rewards)"]}
+# The ten places whose prize or sale makes a bag bigger, and the bigger bag each adds to the shuffle, by SoH's name and
+# the remake's.
 BAG_PRIZES = {"Market Shooting Gallery": ("Big Deku Seed Bullet Bag", "Item_BulletBag_Medium"),
               "LW Target in Woods": ("Biggest Deku Seed Bullet Bag", "Item_BulletBag_Large"),
               "Kak Shooting Gallery Reward": ("Big Quiver", "Item_Quiver_Medium"),
@@ -103,15 +110,17 @@ BAG_PRIZES = {"Market Shooting Gallery": ("Big Deku Seed Bullet Bag", "Item_Bull
               "Market Bombchu Bowling First Prize": ("Big Bomb Bag", "Item_BombBag_Medium"),
               "GC Rolling Goron as Child": ("Biggest Bomb Bag", "Item_BombBag_Large"),
               "LW Deku Theater Skull Mask": ("Deku Stick Capacity (20)", "Item_StickBag_Medium"),
-              "LW Deku Theater Mask of Truth": ("Deku Nut Capacity (30)", "Item_NutBag_Medium")}
+              "LW Deku Theater Mask of Truth": ("Deku Nut Capacity (30)", "Item_NutBag_Medium"),
+              "LW Deku Scrub Near Bridge": ("Deku Stick Capacity (30)", "Item_StickBag_Large"),
+              "LW Deku Scrub Grotto Front": ("Deku Nut Capacity (40)", "Item_NutBag_Large")}
 BIGGER_BAGS = dict(BAG_PRIZES.values())
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest"]
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # Each egg's giver's place, with the group that shuffles it and the egg it gives in the game.
 EGGS = {"HC Malon Egg": ("Malon's Egg", "Item_WeirdEgg"), "Kak Anju as Adult": ("Biggoron Quest", "Item_PocketEgg")}
+SCRUB_FLOW = "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs"
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -210,11 +219,12 @@ START_STEPS = {
     "Fairy Ocarina": ["Item_Ocarina_Fairy"],
 }
 # The items that shuffled places name for those steps: chests, and with gifts shuffled the scales, the wallets and the
-# bigger bags.
+# bigger and biggest bags.
 STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Silver",
                "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large",
                "Item_BulletBag_Medium", "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large",
-               "Item_BombBag_Medium", "Item_BombBag_Large", "Item_StickBag_Medium", "Item_NutBag_Medium"]
+               "Item_BombBag_Medium", "Item_BombBag_Large", "Item_StickBag_Medium", "Item_StickBag_Large",
+               "Item_NutBag_Medium", "Item_NutBag_Large"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -909,10 +919,53 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(collections.Counter(chests.values()) + collections.Counter(dict(sites).values()),
                          POOL + GIFT_POOL)
 
-    def test_shuffled_is_every_gift_group_and_vanilla_is_none(self):
+    def test_shuffled_is_every_gift_group_of_its_release_and_vanilla_is_none(self):
+        # No release shuffled an egg or a Deku Scrub.
         for seed in ("21", "22"):
-            self.assertEqual(self.run_seedgen(seed, {"Gifts": GIFT_GROUPS}), self.run_seedgen(seed, GIFTS_SHUFFLED))
+            self.assertEqual(self.run_seedgen(seed, {"Gifts": RELEASED_GIFT_GROUPS}),
+                             self.run_seedgen(seed, {"Gifts": "Shuffled"}))
             self.assertEqual(self.run_seedgen(seed, {"Gifts": []}), self.run_seedgen(seed, {"Gifts": "Vanilla"}))
+
+    def test_a_gift_group_named_twice_is_named_once(self):
+        self.assertEqual(self.run_seedgen("21", {"Gifts": ["Minigames", "Minigames"]}),
+                         self.run_seedgen("21", {"Gifts": ["Minigames"]}))
+
+    def test_with_characters_alone_no_place_gives_a_bigger_stick_or_nut_bag(self):
+        # The Deku theater and the bag scrubs give a bag by what Link holds: the bigger to a Link without it, the
+        # biggest to a Link with it. With the theater's prizes shuffled and the scrubs kept, a Link who bought from a
+        # scrub first would get the bigger bag there and again from the theater's placed prize, and never the biggest.
+        # So the theater and the scrubs share a group, and Characters keeps the theater as the game has it.
+        bags = {"Item_StickBag_Medium", "Item_StickBag_Large", "Item_NutBag_Medium", "Item_NutBag_Large"}
+        for seed in map(str, range(1, 11)):
+            spoiler, plan = self.generate(seed, {"Gifts": ["Characters"]})
+            self.assertFalse(bags & set(placed_remake_items(spoiler, plan).values()), seed)
+
+    def test_a_shuffled_scrub_offers_what_it_sells(self):
+        # The crater's scrub and the field's show one offer, so the crater's sale shows a copy of it under a label of
+        # its own, at the event the table names.
+        lines = [row for row in PRIZE_LINES if GIFT_GROUP.get(row["location"]) == DEKU_SCRUBS_SHUFFLED["Gifts"][0]]
+        self.assertEqual({row["location"] for row in lines}, {"LW Deku Scrub Near Bridge", "LW Deku Scrub Grotto Front",
+                                                              "HF Deku Scrub Grotto", "DMC Deku Scrub"})
+        copies = [row for row in lines if row["copy_of"]]
+        self.assertEqual([row["location"] for row in copies], ["DMC Deku Scrub"])
+        for seed in ("33", "34"):
+            spoiler, plan = self.generate(seed, DEKU_SCRUBS_SHUFFLED)
+            held = placed_remake_items(spoiler, plan)
+            written = {(entry["file"], entry["label"]): entry for entry in plan["message_texts"]}
+            for row in lines:
+                entry = written[(row["file"], row["label"])]
+                self.assertEqual(entry.get("copy_of", ""), row["copy_of"], row["label"])
+                self.assertEqual(plain(entry["text"]),
+                                 plain(row["sentence"].replace("[[1]]", ITEM_NAMES[held[row["location"]]])), seed)
+            for row in copies:
+                flow, event, param = row["shown_at"].split(":")
+                self.assertIn({"flow": flow, "event": event, "param": param,
+                               "text": row["file"].removesuffix(".msbt") + ":" + row["label"]}, plan["event_texts"])
+            # With the scrubs as the game has them, their offers are the game's.
+            _, kept = self.generate(seed, {"Gifts": RELEASED_GIFT_GROUPS})
+            self.assertFalse({(row["file"], row["label"]) for row in lines}
+                             & {(entry["file"], entry["label"]) for entry in kept["message_texts"]})
+            self.assertFalse([entry for entry in kept["event_texts"] if entry["flow"] == SCRUB_FLOW])
 
     def test_one_gift_group_shuffles_its_places_alone(self):
         kept_on_route = 0
@@ -1001,13 +1054,14 @@ class SeedgenTest(unittest.TestCase):
                      for location, item in gift_sites(plan)}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
-    def test_each_bag_prize_gives_its_placed_item_at_both_sites(self):
+    def test_each_bag_prize_gives_its_placed_item_at_every_site(self):
         spoiler, plan = self.generate("31", GIFTS_SHUFFLED)
         sites = collections.defaultdict(list)
         for location, item in gift_sites(plan):
             sites[location].append(item)
         for location in BAG_PRIZES:
-            self.assertEqual(len(sites[location]), 2, location)
+            self.assertEqual(len(sites[location]), list(GIFT_LOCATIONS.values()).count(location), location)
+            self.assertGreater(len(sites[location]), 1, location)
             self.assertEqual(len(set(sites[location])), 1, location)
             self.assertIn((sites[location][0], spoiler["locations"][location]), ITEM_PAIRS, location)
 
@@ -1548,12 +1602,12 @@ class SeedgenTest(unittest.TestCase):
 
     def test_a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step(self):
         chosen = list(START_STEPS)
-        spoiler, plan = self.generate("32", {"Start with": chosen[::-1], "Gifts": "Shuffled"})
+        spoiler, plan = self.generate("32", {"Start with": chosen[::-1]} | GIFTS_SHUFFLED)
         self.assertEqual(spoiler["settings"]["Start with"], chosen)
         self.assertEqual(plan["start_items"], [actor for name in chosen for actor in START_STEPS[name]])
         placed = placed_remake_items(spoiler, plan)
         self.assertFalse(set(STEP_COPIES) & set(placed.values()))
-        unstarted = placed_remake_items(*self.generate("32", {"Gifts": "Shuffled"}))
+        unstarted = placed_remake_items(*self.generate("32", GIFTS_SHUFFLED))
         self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
                          list(unstarted.values()).count("TBox_Rupee_Red") + len(STEP_COPIES))
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
@@ -1563,7 +1617,7 @@ class SeedgenTest(unittest.TestCase):
         # With the gifts shuffled, King Zora's place adds a Zora Tunic to the pool. A seed that starts with one leaves
         # it out, with a Red Rupee in its stead.
         for seed in ("1", "2", "3"):
-            placed = placed_remake_items(*self.generate(seed, {"Gifts": "Shuffled", "Start with": ["Zora Tunic"]}))
+            placed = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED | {"Start with": ["Zora Tunic"]}))
             unstarted = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED))
             self.assertNotIn("Obj_Armor_Zora", placed.values(), seed)
             self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
@@ -1589,9 +1643,10 @@ class SeedgenTest(unittest.TestCase):
 
     def test_characters_give_no_hints_at_vanilla(self):
         # Seed 811 puts the Kokiri Sword in a chest of Mido's House, and with Mido silent a stone names it there.
-        prize_lines = [(row["file"], row["label"]) for row in PRIZE_LINES]
         spoiler, plan = self.generate("811", NO_CHARACTER_HINTS)
         given, given_plan = self.generate("811")
+        prize_lines = [(row["file"], row["label"]) for row in PRIZE_LINES if row["location"] in spoiler["locations"]]
+        self.assertTrue(prize_lines)
         self.assertEqual(spoiler["settings"]["Hints from characters"], "Vanilla")
         self.assertEqual(spoiler["hints from characters"], {})
         self.assertEqual([(entry["file"], entry["label"]) for entry in plan["message_texts"]], prize_lines)
@@ -1646,7 +1701,8 @@ class SeedgenTest(unittest.TestCase):
 
     def test_every_message_fits_its_box(self):
         sites = {(row["file"], row["label"]): row for row in PRIZE_LINES + CHARACTER_HINTS}
-        for seed, settings in [(str(seed), None) for seed in range(720, 730)] + [("730", SHOPS_SHUFFLED)]:
+        for seed, settings in [(str(seed), None) for seed in range(720, 730)] + [("730", SHOPS_SHUFFLED),
+                                                                                  ("731", GIFTS_SHUFFLED)]:
             _, plan = self.generate(seed, settings)
             self.assertTrue(plan["message_texts"])
             for entry in plan["message_texts"]:

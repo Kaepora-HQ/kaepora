@@ -24,6 +24,7 @@
 #include <memory>
 #include <ranges>
 #include <set>
+#include <span>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -40,12 +41,20 @@ static QString Counted(size_t items) {
     return items == 0 ? "None" : items == 1 ? "1 item" : QString("%1 items").arg(items);
 }
 
+// The rows of the "Gifts" list, each a group whole or by one of its choices.
+static size_t GiftRows() {
+    std::set<std::string_view> rows;
+    for (const GiftGroup& group : GiftGroups) {
+        rows.insert(group.row);
+    }
+    return rows.size();
+}
+
 static QString CountedGroups(size_t groups) {
     if (groups == 0) {
         return "Vanilla";
     }
-    return groups == std::size(GiftGroups) ? "All groups"
-                                           : QString("%1 of %2 groups").arg(groups).arg(std::size(GiftGroups));
+    return groups == GiftRows() ? "All groups" : QString("%1 of %2 groups").arg(groups).arg(GiftRows());
 }
 
 static std::pair<QStringList, QStringList> ShuffledAndLeftOut(const SeedSettings& settings) {
@@ -56,10 +65,19 @@ static std::pair<QStringList, QStringList> ShuffledAndLeftOut(const SeedSettings
     return names;
 }
 
+// The names of the groups shuffled, and the rows left out.
 static std::pair<QStringList, QStringList> GiftGroupsShuffledAndLeftOut(const SeedSettings& settings) {
+    std::set<std::string_view> rows;
+    for (const GiftGroup& group : settings.gifts) {
+        rows.insert(group.row);
+    }
     std::pair<QStringList, QStringList> names;
-    for (const auto& [group, name] : GiftGroups) {
-        (settings.gifts.contains(group) ? names.first : names.second) << QString::fromUtf8(name);
+    for (const GiftGroup& group : GiftGroups) {
+        if (settings.gifts.contains(group)) {
+            names.first << QString::fromUtf8(group.name);
+        } else if (rows.insert(group.row).second) {
+            names.second << QString::fromUtf8(group.row);
+        }
     }
     return names;
 }
@@ -114,10 +132,10 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.skulltulas == Skulltulas::All) {
         changed << "Gold Skulltulas shuffled";
     }
-    if (settings.gifts.size() == std::size(GiftGroups)) {
+    if (settings.gifts.size() == GiftRows()) {
         changed << "gifts shuffled";
     } else if (!settings.gifts.empty()) {
-        changed << QString("%1 of %2 gift groups shuffled").arg(settings.gifts.size()).arg(std::size(GiftGroups));
+        changed << QString("%1 of %2 gift groups shuffled").arg(settings.gifts.size()).arg(GiftRows());
     }
     if (settings.songs == Songs::ShuffledAmongThemselves) {
         changed << "songs shuffled";
@@ -291,69 +309,52 @@ static void OpenList(QWidget* settingsDialog, std::string_view setting, const QS
     dialog->open();
 }
 
-static void ChooseStartWith(QWidget* settingsDialog, const std::set<StartStep>& started,
-                            const std::function<void(const std::set<StartStep>&)>& chosen) {
-    std::vector<std::pair<StartStep, QCheckBox*>> boxes;
+// A list in a dialog: a box for each entry of a row of one choice, and for a row of several choices, a choice among
+// them that starts at the words for none.
+template <typename Entry>
+static void ChooseInList(QWidget* settingsDialog, std::string_view setting, const QString& title,
+                         std::span<const Entry> entries, std::string_view Entry::* row, const QString& none,
+                         const std::set<Entry>& chosen, const std::function<void(const std::set<Entry>&)>& done) {
+    std::vector<std::pair<Entry, QCheckBox*>> boxes;
     std::vector<QComboBox*> rows;
-    std::string_view rowItem;
+    std::string_view rowName;
     auto* column = new QVBoxLayout;
     auto* form = new QFormLayout;
-    for (const StartStep& step : StartSteps) {
-        if (step.choice.empty()) {
-            auto* box = new QCheckBox(QString::fromUtf8(step.name));
-            box->setChecked(started.contains(step));
+    for (const Entry& entry : entries) {
+        if (entry.choice.empty()) {
+            auto* box = new QCheckBox(QString::fromUtf8(entry.name));
+            box->setChecked(chosen.contains(entry));
             column->addWidget(box);
-            boxes.emplace_back(step, box);
+            boxes.emplace_back(entry, box);
             continue;
         }
-        if (step.item != rowItem) {
-            rowItem = step.item;
+        if (entry.*row != rowName) {
+            rowName = entry.*row;
             rows.push_back(new QComboBox);
-            rows.back()->addItem("None");
-            form->addRow(QString::fromUtf8(step.item), rows.back());
+            rows.back()->addItem(none);
+            form->addRow(QString::fromUtf8(rowName), rows.back());
         }
-        rows.back()->addItem(QString::fromUtf8(step.choice), int(&step - StartSteps));
-        if (started.contains(step)) {
+        rows.back()->addItem(QString::fromUtf8(entry.choice), int(&entry - entries.data()));
+        if (chosen.contains(entry)) {
             rows.back()->setCurrentIndex(rows.back()->count() - 1);
         }
     }
     auto* columns = new QHBoxLayout;
     columns->addLayout(column);
     columns->addLayout(form);
-    OpenList(settingsDialog, StartWithSetting, "Items", columns, [=] {
-        std::set<StartStep> steps;
-        for (const auto& [step, box] : boxes) {
+    OpenList(settingsDialog, setting, title, columns, [=] {
+        std::set<Entry> picked;
+        for (const auto& [entry, box] : boxes) {
             if (box->isChecked()) {
-                steps.insert(step);
+                picked.insert(entry);
             }
         }
-        for (const QComboBox* row : rows) {
-            if (row->currentIndex() > 0) {
-                steps.insert(StartSteps[row->currentData().toInt()]);
+        for (const QComboBox* box : rows) {
+            if (box->currentIndex() > 0) {
+                picked.insert(entries[box->currentData().toInt()]);
             }
         }
-        chosen(steps);
-    });
-}
-
-static void ChooseGifts(QWidget* settingsDialog, const std::set<GiftGroup>& shuffled,
-                        const std::function<void(const std::set<GiftGroup>&)>& chosen) {
-    std::vector<std::pair<GiftGroup, QCheckBox*>> boxes;
-    auto* column = new QVBoxLayout;
-    for (const auto& [group, name] : GiftGroups) {
-        auto* box = new QCheckBox(QString::fromUtf8(name));
-        box->setChecked(shuffled.contains(group));
-        column->addWidget(box);
-        boxes.emplace_back(group, box);
-    }
-    OpenList(settingsDialog, GiftsSetting, "Gifts", column, [=] {
-        std::set<GiftGroup> groups;
-        for (const auto& [group, box] : boxes) {
-            if (box->isChecked()) {
-                groups.insert(group);
-            }
-        }
-        chosen(groups);
+        done(picked);
     });
 }
 
@@ -407,7 +408,10 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         *gifts = shown;
         giftGroups->setText(CountedGroups(shown.size()));
     };
-    QObject::connect(giftGroups, &QPushButton::clicked, dialog, [=] { ChooseGifts(dialog, *gifts, showGifts); });
+    QObject::connect(giftGroups, &QPushButton::clicked, dialog, [=] {
+        ChooseInList<GiftGroup>(dialog, GiftsSetting, "Gifts", GiftGroups, &GiftGroup::row, "Vanilla", *gifts,
+                                showGifts);
+    });
     QComboBox* songs = Choice(SongsChoices);
     QComboBox* looseItems = Choice(LooseItemsChoices);
     QComboBox* rewards = Choice(RewardsChoices);
@@ -439,7 +443,10 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         *startWith = shown;
         items->setText(Counted(shown.size()));
     };
-    QObject::connect(items, &QPushButton::clicked, dialog, [=] { ChooseStartWith(dialog, *startWith, showStartWith); });
+    QObject::connect(items, &QPushButton::clicked, dialog, [=] {
+        ChooseInList<StartStep>(dialog, StartWithSetting, "Items", StartSteps, &StartStep::item, "None", *startWith,
+                                showStartWith);
+    });
     QComboBox* opening = Choice(OpeningChoices);
     QComboBox* cutscenes = Choice(CutscenesChoices);
     auto* startForm = new QFormLayout;

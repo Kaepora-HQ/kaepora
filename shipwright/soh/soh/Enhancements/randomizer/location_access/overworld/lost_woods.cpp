@@ -74,7 +74,8 @@ void RegionTable_Init_LostWoods() {
         EVENT_ACCESS(LOGIC_FAIRY_ACCESS,  logic->CallGossipFairyExceptSuns()),
     }, {
         //Locations
-        LOCATION(RC_LW_DEKU_SCRUB_NEAR_BRIDGE, logic->IsChild && logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
+        // Both ages buy there.
+        LOCATION(RC_LW_DEKU_SCRUB_NEAR_BRIDGE, logic->CanStunDeku() && logic->HasItem(RG_SPEAK_DEKU) && GetCheckPrice() <= GetWalletCapacity()),
         LOCATION(RC_LW_GOSSIP_STONE_FAIRY,     logic->CallGossipFairyExceptSuns()),
         LOCATION(RC_LW_GOSSIP_STONE_FAIRY_BIG, logic->CanUse(RG_SONG_OF_STORMS)),
         LOCATION(RC_LW_GOSSIP_STONE,           true),

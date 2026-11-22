@@ -227,17 +227,25 @@ inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
     return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;
 }
 
-enum class GiftGroup { Minigames, Characters, HouseOfSkulltula, StoryGifts, MalonsEgg, BiggoronQuest };
-inline constexpr std::pair<GiftGroup, std::string_view> GiftGroups[] = {
-    { GiftGroup::Minigames, "Minigames" },
-    { GiftGroup::Characters, "Characters" },
-    { GiftGroup::HouseOfSkulltula, "House of Skulltula" },
-    { GiftGroup::StoryGifts, "Story gifts" },
-    { GiftGroup::MalonsEgg, "Malon's Egg" },
-    { GiftGroup::BiggoronQuest, "Biggoron Quest" },
+// A group of gift places a seed can shuffle: a row of the "Gifts" list, whole or by one of its choices. Each place of
+// remake/gifts.tsv names its group.
+struct GiftGroup {
+    std::string_view row;
+    std::string_view choice; // the words of a choice among several; empty for a row of one
+    std::string_view name;   // in the settings and the spoiler log
+
+    auto operator<=>(const GiftGroup&) const = default;
 };
 
-std::set<GiftGroup> EveryGiftGroup();
+inline constexpr GiftGroup GiftGroups[] = {
+    { "Minigames", "", "Minigames" },
+    { "Characters", "", "Characters" },
+    { "House of Skulltula", "", "House of Skulltula" },
+    { "Story gifts", "", "Story gifts" },
+    { "Malon's Egg", "", "Malon's Egg" },
+    { "Biggoron Quest", "", "Biggoron Quest" },
+    { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
+};
 
 enum class Rewards { Vanilla, Shuffled };
 inline constexpr std::pair<Rewards, std::string_view> RewardsChoices[] = {
@@ -294,7 +302,7 @@ struct SeedSettings {
     Cutscenes cutscenes = Cutscenes::Skipped;
     std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
-    std::set<GiftGroup> gifts;
+    std::set<GiftGroup> gifts;          // at most one choice of each row
     Rewards rewards = Rewards::Vanilla;
     Skulltulas skulltulas = Skulltulas::Vanilla;
     Songs songs = Songs::Vanilla;

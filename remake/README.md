@@ -103,6 +103,10 @@ line names the unmodified game's item, which is true only where the seed keeps i
 - `location`: the SoH location, a chest of `chests.tsv` or a gift of `gifts.tsv`.
 - `file` and `label`: the message, in the English text packs. The patcher keeps the control codes the game's message
   opens with, the speaker's voice and face.
+- `copy_of` and `shown_at`: for a line under a label the file lacks, the message it is a copy of, and the
+  `flow:event:parameter` that shows it. Every language's pack gets the copy: the English ones with our words after the
+  copied message's control codes, the others with the copied message whole. The plan points the event at the copy. The
+  crater's scrub and the field's show one offer, so the crater's offer is a copy.
 - `line_length` and `box_lines`: how much the message's box holds, the widest line in characters and the lines in one
   box, read from the game's own messages at full size in the same file. A test checks that every rewritten line fits.
 
@@ -191,34 +195,39 @@ items on shelves in the eight shops: each stands on its board at the size the ru
 their shelf's `Scale`. The Lens of Truth shows, grown by 1.4. The Hammer leans in its `Pose_Common`, the end of its
 handle on the board and its head up in the niche.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 34 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 38 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
-that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, three places where the story moves: the scene
+that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, three places where the story moves (the scene
 after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
-of Time, and the two eggs. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item
-to the pool, and the plan writes the placed item at each of its places. A location of a group left out keeps what the
-game gives, and the plan names none of its places.
+of Time), the two eggs, and four Business Scrubs that sell once: the stick bag by the Lost Woods bridge, the nut bag in
+the Lost Woods grotto, and a Piece of Heart in a Hyrule Field grotto and in the crater. Each group ticked in "Gifts"
+puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its
+places. A location of a group left out keeps what the game gives, and the plan names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
-- `event`: the event whose call gives the item, by its name, which no other event of the flow has.
-- `param`: the call's string parameter that names the item.
+- `event`: the event whose call gives the item, by its name, which no other event of the flow has. A heart scrub's
+  sale also names its item in the string `Shop_SelectItemName`, which the program reads for the screen's recovery
+  preview, so that event has a row too.
+- `param`: the event's string parameter that names the item.
 - `gives`: what the call gives in the unmodified game, by its remake name.
 - `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
-- `group`: the group of "Gifts" that shuffles the location, by its name in the list. Every row of a location names the
-  same group.
+- `group`: the group of "Gifts" that shuffles the location, by its name in a seed's settings. Every row of a location
+  names the same group. Released seeds' "Shuffled" names the four groups of its time, so it keeps the eggs and the Deku
+  Scrubs.
 
-A bag prize gives the bigger of two sizes from one event and the biggest from another: the biggest only to a Link who
-already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko galleries, the
-bowling alley and the Deku theater add the bigger bag, and the Lost Woods target, horseback archery and the rolling
-Goron the biggest. No shuffled place adds the biggest stick or nut bag; a Business Scrub that is not shuffled sells each
-to a Link who holds the bigger one (read from its flow). No rule of SoH's logic reads what these eight items set: their
-logic values, and for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger quiver
-or bullet bag is no Bow or Slingshot to the logic, and the logic makes the rolling Goron wait for the Bomb Bag itself.
-That is stricter than the game, where a bigger bomb bag brings the small one he asks for. No shelf has been seen to sell
-a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For a place whose group is left out, the logic
-counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the eight places
-their bags and the 40-token reward its 20 Bombchus.
+A bag prize or sale gives the bigger of two sizes from one event and the biggest from another: the biggest only to a
+Link who already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko
+galleries, the bowling alley and the Deku theater add the bigger bag, and the Lost Woods target, horseback archery, the
+rolling Goron and the two bag scrubs the biggest. The places of one bag share a group: a kept place gives by what Link
+holds and a shuffled one gives one size, so with the theater shuffled and the scrubs kept, a Link who bought from a
+scrub first would get the bigger bag twice and never the biggest. No rule of SoH's logic reads what these ten items set:
+their logic values, and for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger
+quiver or bullet bag is no Bow or Slingshot to the logic, and the logic makes the rolling Goron wait for the Bomb Bag
+itself. That is stricter than the game, where a bigger bomb bag brings the small one he asks for. No shelf has been seen
+to sell a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For a place whose group is left out, the
+logic counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the ten
+places their bags, the 40-token reward its 20 Bombchus, and the scrubs the remake's goods and prices.
 
 Adult Anju gives the Pocket Egg in Kakariko. While "Biggoron Quest" shuffles her place, the egg is an item of the pool,
 and her place holds whatever the seed puts there:
@@ -261,12 +270,22 @@ her place holds whatever the seed puts there:
 
 Each egg's caption still says who gave it ("Malon gave you this egg", "The cucco lady gave you this special egg").
 
-A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
-retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
-two copies saying different lines, Dampé said the `.110` copy's. After the 20-token reward the house opens the Stone of
-Agony's guide whatever the reward gave, so the plan also points that question at the flag the guide sets once shown,
-and the guide does not open there. The flow asks that flag once more after the 100-token reward, and the guide opens
-then, as no earlier talk has set it (read from the flow).
+A Business Scrub that sells once names its item in a call to the one-time sale of `Enemy_Scrub_Business_Common`. The
+sale charges the call's price, 40 rupees at the bridge and the grotto and 100 at the field and the crater, adds the item
+through `Dm_SY_GetInEvent:GetInEvent_NotTurn_2DShop`, the add a gift's call reaches, and then sets the scrub's own saved
+flag, and the scrub is gone for good (seen). Its AI module creates it only while that flag is false. The flow asks
+nothing of the item before the sale, and the bridge scrub's two questions of what Link holds only pick which of its
+three calls gives (read from the flows and the modules). The field's scrub sells only to child Link, and only once Link
+has read the password on the Fairy Thought outside, which only the adult field holds; to an adult its talk says a fairy
+bought what it sold (read). An adult buys at the bridge, from the Lost Woods' copy of the scrub (seen). The sale is
+talk, which no cutscene setting skips.
+
+A location with two or three rows gives its item from that many events of one flow, such as the frogs' game on a first
+try and on a retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game
+reads: with the two copies saying different lines, Dampé said the `.110` copy's. After the 20-token reward the house
+opens the Stone of Agony's guide whatever the reward gave, so the plan also points that question at the flag the guide
+sets once shown, and the guide does not open there. The flow asks that flag once more after the 100-token reward, and
+the guide opens then, as no earlier talk has set it (read from the flow).
 
 Seen in the game:
 
@@ -295,8 +314,14 @@ Seen in the game:
 - A Pocket Egg from Kakariko's open grotto chest set its record and hatched into the Pocket Cucco, and Talon's talk
   moved the trade quest to Step01_01. Found before her talk, it was held when she offered as usual and gave her place's
   item, a Red Rupee, and one egg was held; it hatched as well.
+- The bridge's scrub sold a placed Piece of Heart for 40 rupees once, and no scrub stood on either side of the bridge
+  afterwards, nor after a load. From the same save it sold a placed Zora's Sapphire, which showed in the menu, and the
+  Water quest's step stayed at Ready. The crater's scrub offered a placed Boomerang for 100 rupees under the crater's
+  own label, with nothing of a heart in the screen's preview, sold it to a child once and was gone after a load. Each
+  sale took its price and set the item's record and the scrub's own flag.
 
-So every way the 29, Malon and adult Anju hand over their item has given another item. Read from the game's files and
+So every way the 29, Malon, adult Anju and the Business Scrubs that sell once hand over their item has given another
+item. Read from the game's files and
 not yet seen: a prize talk may still name the usual prize, and the map may keep a heart on these places until each is
 won.
 

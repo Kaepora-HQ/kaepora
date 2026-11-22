@@ -57,20 +57,42 @@ static std::set<StartStep> StartWith(const std::string& setting, const nlohmann:
     return steps;
 }
 
-// The settings of released seeds name no group "Vanilla" and every group "Shuffled".
+// The settings of released seeds name no group "Vanilla" and every group of their time "Shuffled". No release
+// shuffled a Deku Scrub.
+static constexpr std::string_view ReleasedGiftGroups[] = { "Minigames", "Characters", "House of Skulltula",
+                                                           "Story gifts" };
+
+static const GiftGroup& GiftGroupNamed(const std::string& setting, const nlohmann::json& name) {
+    const auto group = std::ranges::find(GiftGroups, name.get<std::string>(), &GiftGroup::name);
+    if (group == std::end(GiftGroups)) {
+        throw std::runtime_error(setting + ": unknown value " + name.dump());
+    }
+    return *group;
+}
+
 static std::set<GiftGroup> Gifts(const std::string& setting, const nlohmann::json& value) {
     if (value == nlohmann::json("Vanilla")) {
         return {};
     }
     if (value == nlohmann::json("Shuffled")) {
-        return EveryGiftGroup();
+        std::set<GiftGroup> groups;
+        for (const std::string_view name : ReleasedGiftGroups) {
+            groups.insert(GiftGroupNamed(setting, std::string(name)));
+        }
+        return groups;
     }
     if (!value.is_array()) {
         throw std::runtime_error(setting + ": unknown value " + value.dump());
     }
     std::set<GiftGroup> groups;
     for (const nlohmann::json& name : value) {
-        groups.insert(Parse(GiftGroups, setting, name));
+        const GiftGroup& group = GiftGroupNamed(setting, name);
+        if (const auto other = std::ranges::find(groups, group.row, &GiftGroup::row);
+            other != groups.end() && *other != group) {
+            throw std::runtime_error(
+                std::format("{}: {} and {} are choices of one group", setting, other->name, group.name));
+        }
+        groups.insert(group);
     }
     return groups;
 }
@@ -106,11 +128,6 @@ static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, 
         *between = ShopPriceRange(range->second);
     }
     return shops;
-}
-
-std::set<GiftGroup> EveryGiftGroup() {
-    const auto groups = std::views::keys(GiftGroups);
-    return std::set<GiftGroup>(groups.begin(), groups.end());
 }
 
 std::vector<StartStep> StartWithInOrder(const SeedSettings& settings) {
@@ -164,9 +181,9 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
     }
     json[std::string(SkulltulasSetting)] = Words(SkulltulasChoices, settings.skulltulas);
     json[std::string(GiftsSetting)] = nlohmann::ordered_json::array();
-    for (const auto& [group, name] : GiftGroups) {
+    for (const GiftGroup& group : GiftGroups) {
         if (settings.gifts.contains(group)) {
-            json[std::string(GiftsSetting)].push_back(name);
+            json[std::string(GiftsSetting)].push_back(group.name);
         }
     }
     json[std::string(SongsSetting)] = Words(SongsChoices, settings.songs);
