@@ -97,6 +97,18 @@ const std::vector<SavedValue>& Tracker::values() const {
     return saved;
 }
 
+std::vector<std::string> Tracker::pictures() const {
+    std::vector<std::string> names;
+    for (const Cell& cell : table) {
+        for (const Stage& stage : cell.stages) {
+            names.push_back(stage.picture);
+        }
+    }
+    std::ranges::sort(names);
+    names.erase(std::ranges::unique(names).begin(), names.end());
+    return names;
+}
+
 bool Tracker::take(std::span<const quint32> read) {
     assert(read.size() == saved.size());
     const std::vector<CellView> shown = cells();

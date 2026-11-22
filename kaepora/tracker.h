@@ -31,6 +31,8 @@ public:
     Tracker();
 
     const std::vector<SavedValue>& values() const;
+    // Every picture a cell can show, by its name, once each.
+    std::vector<std::string> pictures() const;
     // Takes one read of values(), in their order. Returns whether what cells() gives changed.
     bool take(std::span<const quint32> read);
     std::vector<CellView> cells() const;

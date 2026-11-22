@@ -1,7 +1,10 @@
 #include "tracker.h"
 
 #include "bytes.h"
+#include "game_file.h"
+#include "pictures.h"
 
+#include <QFileInfo>
 #include <QStringList>
 #include <QTest>
 
@@ -166,6 +169,13 @@ private slots:
         Tracker tracker;
         QVERIFY(!tracker.take(Read(tracker, "None", { { Scene.name, Murmur3("") }, { "PlayerStatus.MaxLife", 12 } })));
         QVERIFY(ShowsNothing(tracker));
+    }
+
+    void theGameHasEveryPictureTheTableNames() {
+        GameFile game(QFileInfo(qEnvironmentVariable("KAEPORA_GAME_NUP")).filesystemFilePath());
+        const std::vector<std::string> names = Tracker().pictures();
+        QVERIFY(std::ranges::find(names, "Item_Longshot") != names.end());
+        QCOMPARE(ReadPictures(game, names).size(), names.size());
     }
 };
 

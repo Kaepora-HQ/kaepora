@@ -370,7 +370,7 @@ if(Qt6Test_FOUND)
 
     add_executable(kaepora-tracker-test tests/tracker_test.cpp)
     set_target_properties(kaepora-tracker-test PROPERTIES AUTOMOC ON)
-    target_link_libraries(kaepora-tracker-test PRIVATE kaepora-game-values kaepora-patch-files Qt6::Test)
+    target_link_libraries(kaepora-tracker-test PRIVATE kaepora-game-values kaepora-pictures Qt6::Test)
     target_compile_options(kaepora-tracker-test PRIVATE ${WARNINGS})
     foreach(TEST IN ITEMS aTierShowsItsHighestStageHeld aChainShowsTheLastItemHeld aBottleShowsItsContents
                           theFifthBottleShowsItsContents magicShowsTheMeterThenTheGiftOfDoubledMagic
@@ -491,6 +491,10 @@ if(KAEPORA_GAME_NUP)
                      "${KAEPORA_GAME_NUP}" MakeSeedTest.test_${TEST})
     endforeach()
     if(Qt6Test_FOUND)
+        add_test(NAME tracker_theGameHasEveryPictureTheTableNames
+                 COMMAND kaepora-tracker-test theGameHasEveryPictureTheTableNames)
+        set_tests_properties(tracker_theGameHasEveryPictureTheTableNames PROPERTIES ENVIRONMENT
+                             "KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};QT_FORCE_STDERR_LOGGING=1")
         # Every case of the window, in parts that ctest runs side by side. Each part takes its cases from the program.
         set(WINDOW_PARTS 4)
         foreach(PART RANGE 1 ${WINDOW_PARTS})
