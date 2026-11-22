@@ -11,6 +11,7 @@ void RegionTable_Init_GoronCity() {
         EVENT_ACCESS(LOGIC_STICK_ACCESS,                           logic->IsChild && logic->CanBreakPots()),
         EVENT_ACCESS(LOGIC_BUG_ACCESS,                             (logic->BlastOrSmash() && logic->HasItem(RG_POWER_BRACELET)) || logic->CanUse(RG_SILVER_GAUNTLETS)),
         EVENT_ACCESS(LOGIC_GORON_CITY_CHILD_FIRE,                  logic->IsChild && logic->CanUse(RG_DINS_FIRE)),
+        // From the city, Din's Fire breaks the Lost Woods shortcut's rock (seen).
         EVENT_ACCESS(LOGIC_GORON_CITY_WOODS_WARP_OPEN,             logic->CanDetonateUprightBombFlower() || logic->CanUse(RG_MEGATON_HAMMER) ||
                                                                    (logic->IsChild && logic->Get(LOGIC_GORON_CITY_CHILD_FIRE) && logic->CanUse(RG_STICKS))),
         EVENT_ACCESS(LOGIC_GORON_CITY_DARUNIAS_DOOR_OPEN_CHILD,    logic->IsChild && logic->CanUse(RG_ZELDAS_LULLABY)),
@@ -120,7 +121,8 @@ void RegionTable_Init_GoronCity() {
 
     areaTable[RR_GC_WOODS_WARP] = Region("GC Woods Warp", SCENE_GORON_CITY, {
         //Events
-        EVENT_ACCESS(LOGIC_GORON_CITY_WOODS_WARP_OPEN, logic->BlastOrSmash() || logic->CanUse(RG_DINS_FIRE)),
+        // From the alcove, Din's Fire leaves the rock standing, even right at the wall (seen).
+        EVENT_ACCESS(LOGIC_GORON_CITY_WOODS_WARP_OPEN, logic->BlastOrSmash()),
     }, {}, {
         //Exits
         ENTRANCE(RR_GORON_CITY,     logic->Get(LOGIC_GORON_CITY_WOODS_WARP_OPEN)),

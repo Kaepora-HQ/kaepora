@@ -690,6 +690,14 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Queen Gohma", *stickless, boomerang, settings=FOREST_OPEN))
         self.assertTrue(self.reachable("Queen Gohma", *stickless[:2], *stickless[3:], boomerang, settings=FOREST_OPEN))
 
+    def test_dins_fire_does_not_open_the_lost_woods_shortcut_from_its_alcove(self):
+        # Seen in the game: from the alcove at the Goron City end of the Lost Woods' shortcut, Din's Fire leaves the rock
+        # standing, even right at the wall. Without the Kokiri Sword a child in the closed forest never leaves it but by
+        # the shortcut.
+        stuck = (NEVER_ADULT, ("KF Kokiri Sword Chest", "Green Rupee"))
+        self.assertFalse(self.reachable("GC Shop Item 1", *stuck, ("Link's Pocket", "Din's Fire")))
+        self.assertTrue(self.reachable("GC Shop Item 1", *stuck, ("Link's Pocket", "Progressive Bomb Bag")))
+
     def test_the_longshot_opens_the_water_temple_eye_gates(self):
         # The Longshot hits the eye over the gate to the central bow target room, with the water at middle, and the eye
         # over the dragon room's gate from the river, and gets Link through each before it shuts. Past the dragon room's
