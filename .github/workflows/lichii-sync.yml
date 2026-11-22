@@ -1,0 +1,156 @@
+name: lichii-sync
+
+# Keeps the Lichii fork's nx2 on upstream's latest release: the fork's own commits on top, then a generated commit that
+# points the update check at the fork. It lives here because the fork runs upstream's workflow files, and any of them
+# could read a key the fork held. To try a change to this file, start it by hand on its branch: a run by hand is a dry
+# run unless that is switched off.
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Rebase, and check the key and the lease without moving nx2
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  # The one place that names the fork.
+  FORK: Kaepora-HQ/Lichii
+  UPSTREAM: zortos293/Lichii
+  GENERATED: "ci: point the update check at this fork's releases"
+
+concurrency:
+  group: lichii-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Put the fork's commits on upstream's latest release
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+      GIT_COMMITTER_NAME: github-actions[bot]
+      GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+    steps:
+      # nx2 is current when it sits on the release's commit and its newest generated commit is the one this run would
+      # make, which names the release and the fork.
+      - name: Compare nx2 with upstream's latest release
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api "repos/$UPSTREAM/releases/latest" --jq .tag_name)
+          if ! [[ $tag =~ ^build-[0-9]+$ ]]; then
+            echo "::error::Upstream's latest release is tagged '$tag', not build-<number>"
+            exit 1
+          fi
+          RELEASE=$(gh api "repos/$UPSTREAM/commits/$tag" --jq .sha)
+          MESSAGE="$GENERATED
+
+          Based on $UPSTREAM $tag (https://github.com/$UPSTREAM/releases/tag/$tag).
+
+          The update check, its downloads, the news and the What's New
+          archive button ask $FORK for releases, and the update check
+          knows the Zen 4 and Zen 5 packages. Kaepora-HQ/kaepora's
+          lichii-sync drops this commit and makes it again on each upstream
+          release."
+          export RELEASE MESSAGE
+          printf '%s\n' "$MESSAGE" > "$RUNNER_TEMP/message"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          current=$(gh api "repos/$FORK/compare/$RELEASE...nx2" --jq '.behind_by == 0
+            and ([.commits[].commit.message | select(startswith(env.GENERATED + "\n"))] | last) == env.MESSAGE')
+          echo "$UPSTREAM's latest release is $tag, at $RELEASE."
+          if [ "$current" = true ]; then
+            echo "nx2 already sits on $tag."
+          fi
+          echo "stale=$([ "$current" = true ] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out nx2
+        if: &work steps.plan.outputs.stale == 'true' || inputs.dry_run
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.FORK }}
+          ref: nx2
+          fetch-depth: 0
+          ssh-key: ${{ secrets.LICHII_DEPLOY_KEY }}
+
+      # The fork's own commits are the ones on nx2 that no upstream release tag and not upstream's nx2 reach.
+      - name: Put the fork's commits on the release
+        id: rebase
+        if: *work
+        run: |
+          git fetch -q --no-tags "https://github.com/$UPSTREAM.git" \
+            '+refs/tags/build-*:refs/upstream/build-*' +refs/heads/nx2:refs/upstream/nx2
+          echo "old=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          own=$(git log --reverse --topo-order --format='%H%x09%s' HEAD --not --glob='refs/upstream/*')
+          echo "nx2's own commits, oldest first:"
+          awk -F '\t' -v generated="$GENERATED" \
+            '{ print ($2 == generated ? "  drop " : "  keep ") $1 " " $2 }' <<< "$own"
+          git switch -q --detach "$RELEASE"
+          for commit in $(awk -F '\t' -v generated="$GENERATED" '$2 != generated { print $1 }' <<< "$own"); do
+            before=$(git rev-parse HEAD)
+            git cherry-pick --ff --empty=drop "$commit"
+            if [ "$(git rev-parse HEAD)" = "$before" ]; then
+              echo "Dropped $commit: upstream has it already."
+            fi
+          done
+
+      - name: Point the update check at the fork
+        if: *work
+        run: |
+          declare -A expected=([CMakeModules/GenerateSCMRev.cmake]=3 [src/lichii/whats_new_dialog.cpp]=1)
+          for file in "${!expected[@]}"; do
+            found=$({ grep -oF "$UPSTREAM" "$file" || true; } | wc -l)
+            if [ "$found" != "${expected[$file]}" ]; then
+              echo "::error::$file names $UPSTREAM $found times, expected ${expected[$file]}"
+              exit 1
+            fi
+          done
+          # The updater test expects the update check's repository in every download URL.
+          sed -i "s#$UPSTREAM#$FORK#g" "${!expected[@]}" src/tests/common/update_checker.cpp
+
+          # The Zen packages are named and packaged as the other Linux x86-64 ones.
+          condition='    if (platform == "linux-x86_64" || platform == "linux-aarch64") {'
+          zen='    if (platform == "linux-x86_64" || platform == "linux-aarch64" ||\n'
+          zen+='        platform.starts_with("linux-x86_64-zen")) {'
+          if [ "$(grep -cxF "$condition" src/common/net/net.cpp)" != 1 ]; then
+            echo "::error::src/common/net/net.cpp does not hold the platform condition exactly once"
+            exit 1
+          fi
+          sed -i "s/^$condition\$/$zen/" src/common/net/net.cpp
+
+          # Upstream's repository by its name or its old name, Eglantine, in any case.
+          mention='zortos293/(lichii|eglantine)([^a-z0-9_-]|$)'
+          # The About window and its translations link to upstream's source, issues and credits, and so do the
+          # installer, the AppStream file and the Arch package. Android, which the fork does not release, names Java
+          # classes by upstream's package path.
+          kept=(':!src/lichii/aboutdialog.ui' ':!dist/languages/' ':!dist/installer.nsi' ':!dist/packaging/'
+            ':!dist/io.github.zortos293.lichii.metainfo.xml' ':!src/android/' ':!src/common/android/')
+          unknown=$(git grep -n -i -E "$mention" -- CMakeLists.txt CMakeModules src dist externals "${kept[@]}") ||
+            [ $? = 1 ]
+          if [ -n "$unknown" ]; then
+            echo "$unknown"
+            echo "::error::Those lines name $UPSTREAM in places this workflow does not know"
+            exit 1
+          fi
+
+          git commit -qaF "$RUNNER_TEMP/message"
+          git log --oneline "$RELEASE..HEAD"
+          git show HEAD
+
+      - name: Move nx2
+        if: *work
+        env:
+          # A scheduled run is never a dry run: inputs is empty then.
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+          OLD: ${{ steps.rebase.outputs.old }}
+        run: git push $DRY_RUN --force-with-lease="refs/heads/nx2:$OLD" origin HEAD:refs/heads/nx2
