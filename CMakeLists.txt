@@ -135,6 +135,11 @@ target_compile_options(kaepora-make-seed PRIVATE ${WARNINGS})
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
 find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
 if(Qt6_FOUND)
+    add_library(kaepora-game-values STATIC kaepora/game_values.cpp)
+    target_include_directories(kaepora-game-values PUBLIC kaepora)
+    target_link_libraries(kaepora-game-values PUBLIC Qt6::Network PRIVATE kaepora-patch-files)
+    target_compile_options(kaepora-game-values PRIVATE ${WARNINGS})
+
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
                            kaepora/window.cpp $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network)
@@ -318,6 +323,17 @@ if(Qt6Test_FOUND)
             # run of the test program shares one folder.
             set_tests_properties(window_${TEST} PROPERTIES RESOURCE_LOCK window-seeds-folder)
         endif()
+    endforeach()
+
+    add_executable(kaepora-game-values-test tests/game_values_test.cpp)
+    set_target_properties(kaepora-game-values-test PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-game-values-test PRIVATE kaepora-game-values kaepora-patch-files Qt6::Test)
+    target_compile_options(kaepora-game-values-test PRIVATE ${WARNINGS})
+    foreach(TEST IN ITEMS readsAValueOfEachTypeByName readsAValueTheGameNamesOnlyByItsHash
+                          saysTheGameIsStartingUntilItsDataIsThere refusesWhenNothingListens
+                          refusesWhenLichiiRunsAnotherProgram refusesWhenTheProgramIsFoundTwice)
+        add_test(NAME game_values_${TEST} COMMAND kaepora-game-values-test ${TEST})
+        set_tests_properties(game_values_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 endif()
 
