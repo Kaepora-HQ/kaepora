@@ -12,13 +12,16 @@ import {
 	Effect,
 	FileSystem,
 	Layer,
+	Order,
 	Record as Rec,
 	Schema,
 	String as Str,
 } from "effect";
+import type { NameMatch } from "../contract/rpc.ts";
 import { Age } from "../contract/state.ts";
+import type { NameKind } from "../contract/values.ts";
 import { stem } from "../data/dump.ts";
-import type { Point } from "../data/game-data.ts";
+import type { GameData, Point } from "../data/game-data.ts";
 
 export interface Spot {
 	/** Degrees: 0 faces the scene's +Z, 90 its +X. */
@@ -188,3 +191,51 @@ export class OwnTables extends Context.Service<
 		})
 	);
 }
+
+const byLength = Order.combine(
+	Order.mapInput(Order.Number, (match: NameMatch) => match.name.length),
+	Order.mapInput(Order.String, (match: NameMatch) => match.name)
+);
+
+/**
+ * Every name a state or a body takes whose name or line holds `text`, shortest first: the game's own, and the checks,
+ * spots and bases of Kaepora's tables.
+ */
+export const searchNames = Effect.fn("searchNames")(function* (
+	data: GameData["Service"],
+	own: OwnTables["Service"],
+	text: string,
+	options: { readonly kind?: NameKind | undefined; readonly limit: number }
+) {
+	const fromGame = yield* data.search(text, {
+		limit: options.limit,
+		...(options.kind === undefined ? {} : { kind: options.kind }),
+	});
+	const wanted = Str.toLowerCase(text);
+	const ours: readonly NameMatch[] = [
+		...Arr.map([...own.checks.keys()], (name) => ({
+			kind: "check",
+			name,
+			about: "a check by its spoiler log name",
+		})),
+		...Arr.map([...own.spots.values()], (spot) => ({
+			kind: "spot",
+			name: spot.name,
+			about: spot.scene,
+		})),
+		...Arr.map([...own.bases.values()], (base) => ({
+			kind: "base",
+			name: base.name,
+			about: base.about,
+		})),
+	];
+	const found = Arr.filter(
+		ours,
+		(match) =>
+			(options.kind === undefined || match.kind === options.kind) &&
+			Arr.some([match.name, match.about], (part) =>
+				Str.includes(wanted)(Str.toLowerCase(part))
+			)
+	);
+	return Arr.take(Arr.sort([...fromGame, ...found], byLength), options.limit);
+});

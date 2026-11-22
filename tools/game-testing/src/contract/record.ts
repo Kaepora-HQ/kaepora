@@ -31,8 +31,9 @@ export const Instant = Schema.String.pipe(
  * How a run ended. `passed`: it finished and every check held. `unchecked`: it finished with no check, so it proved
  * nothing. `failed`: a check did not hold, or the script failed on the game's answer, so the game said no. `broken`:
  * the run could not ask, because the emulator, the place, the connection or the script itself failed. Only `broken`
- * is worth a rerun to tell a flaky machine from a real fault. `running` while it lasts; `stopped` when its caller ended
- * it before the script finished; `skipped` when it needs a person and had none.
+ * is worth a rerun to tell a flaky machine from a real fault. `running` while it lasts; `stopped` when a game held by
+ * hand was ended, by `stop_game` or by no call naming it, and `reason` says which; `skipped` when it needs a person and
+ * had none.
  */
 export const Outcome = Schema.Union([
 	Schema.TaggedStruct("running", {}),
@@ -43,7 +44,7 @@ export const Outcome = Schema.Union([
 		reason: Schema.String,
 		error: Schema.String,
 	}),
-	Schema.TaggedStruct("stopped", {}),
+	Schema.TaggedStruct("stopped", { reason: Schema.String }),
 	Schema.TaggedStruct("skipped", { reason: Schema.String }),
 ]);
 export type Outcome = typeof Outcome.Type;

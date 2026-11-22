@@ -36,6 +36,7 @@ import {
 	Buttons,
 	Frames,
 	Limit,
+	NameKind,
 	Picture,
 	PlaceId,
 	RunId,
@@ -73,10 +74,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 5;
-
-/** Who answers a hand over in this session: a person at the machine, or nobody (CI refuses every hand over). */
-export const Person = Schema.Literals(["here", "nobody"]);
+export const contract = 7;
 
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([
@@ -143,6 +141,7 @@ export const NameMatch = Schema.Struct({
 	name: Schema.String,
 	about: Schema.String,
 });
+export type NameMatch = typeof NameMatch.Type;
 
 export class GameRpcs extends RpcGroup.make(
 	/** The first call on every connection. */
@@ -165,7 +164,6 @@ export class GameRpcs extends RpcGroup.make(
 			script: Schema.optionalKey(ScriptSource),
 			/** The broken run this one repeats. */
 			attemptOf: Schema.optionalKey(RunId),
-			person: Person,
 			/** Who asks, for the places list: a script's path, `mcp`, or a CI job. */
 			owner: Schema.String,
 			waitForPlace: Limit,
@@ -240,13 +238,10 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("HandOver", {
 		payload: {
 			session: SessionId,
-			/** What the person is to do, in a sentence or two. */
+			/** What the person is asked, in a sentence or two. */
 			say: Schema.String,
-			/** A question to answer when done; absent when the person only presses on. */
-			ask: Schema.optionalKey(Schema.String),
 			within: Limit,
 		},
-		success: Schema.Struct({ answer: Schema.optionalKey(Schema.String) }),
 		error: Schema.Union([CommandErrors, NobodyThere]),
 	}),
 	Rpc.make("Note", {
@@ -283,9 +278,7 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("Search", {
 		payload: {
 			text: Schema.String,
-			kind: Schema.optionalKey(
-				Schema.Literals(["value", "item", "quest", "scene", "landing"])
-			),
+			kind: Schema.optionalKey(NameKind),
 			limit: Schema.Int,
 		},
 		success: Schema.Array(NameMatch),

@@ -38,11 +38,14 @@ import { Declaration } from "../script.ts";
 export const workerCommand = "script-worker";
 export const declarationCommand = "script-declaration";
 
-/** The package's folder with no `..` in it: the type check finds a file by its path's text. */
+/** The package's folder with no `..` in it: the type check finds a script by its path's text. */
 export const packageRoot = Str.slice(
 	0,
 	-1
 )(Bun.fileURLToPath(new URL("../..", import.meta.url)));
+
+/** Where a script sent inline, by `run_script`, is written for its run. Git ignores the folder. */
+export const inlineFolder = `${packageRoot}/.cache/inline`;
 
 /** A script with no limit of its own is stopped after this long with Link in control. */
 const scriptLimit = Duration.minutes(5);
@@ -244,10 +247,16 @@ export const declarationOf = Effect.fn("Scripts.declarationOf")(function* (
 export class Scripts extends Context.Service<
 	Scripts,
 	{
-		/** Type-checks a script, then runs it to its end in a child. A script that hands over to a person is skipped. */
+		/**
+		 * Type-checks a script, then runs it to its end in a child, as the run `run`, a new one unless given. A script
+		 * that declares it hands over to a person is skipped.
+		 */
 		readonly run: (
 			script: string,
-			options?: { readonly attemptOf?: RunId | undefined }
+			options?: {
+				readonly attemptOf?: RunId | undefined;
+				readonly run?: RunId | undefined;
+			}
 		) => Effect.Effect<ScriptRun, ScriptFailed>;
 	}
 >()("game-testing/scripts/runner/Scripts") {
@@ -264,10 +273,13 @@ export class Scripts extends Context.Service<
 
 			const run = Effect.fn("Scripts.run")(function* (
 				script: string,
-				given?: { readonly attemptOf?: RunId | undefined }
+				given?: {
+					readonly attemptOf?: RunId | undefined;
+					readonly run?: RunId | undefined;
+				}
 			) {
 				yield* typecheck(spawner, fs, script);
-				const id = yield* newRunId;
+				const id = given?.run ?? (yield* newRunId);
 				const outcome = yield* Effect.scoped(
 					Effect.gen(function* () {
 						const child = yield* childOf(spawner, [

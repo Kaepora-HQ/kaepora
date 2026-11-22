@@ -14,16 +14,24 @@ import {
 	Schema,
 	String as Str,
 } from "effect";
+import { McpServer } from "effect/ai";
 import { Argument, CliError, Command, Flag } from "effect/cli";
 import type { Outcome } from "./contract/record.ts";
 import { StartState } from "./contract/state.ts";
-import { RunId } from "./contract/values.ts";
+import { NameKind, RunId } from "./contract/values.ts";
 import { writeNames } from "./data/declarations.ts";
 import { GameData } from "./data/game-data.ts";
 import { host, tables } from "./host/host.ts";
 import { Places } from "./host/places.ts";
 import { Runs } from "./host/runs.ts";
+import {
+	instructions,
+	protocols,
+	registrations,
+	serverName,
+} from "./mcp/server.ts";
 import { StartStates } from "./save/state.ts";
+import { OwnTables, searchNames } from "./save/tables.ts";
 import type { ScriptRun } from "./scripts/runner.ts";
 import {
 	declarationCommand,
@@ -32,6 +40,9 @@ import {
 	workerCommand,
 } from "./scripts/runner.ts";
 import { declare, work } from "./scripts/worker.ts";
+
+/** The package's version, which `mcp` and `serve` name to their clients. */
+export const version = "0.0.0";
 
 /** A handler's failure as the command line shows it: its message. */
 const shown = <A, E extends { readonly message: string }, R>(
@@ -48,6 +59,7 @@ const why = (outcome: Outcome) => {
 	switch (outcome._tag) {
 		case "failed":
 		case "skipped":
+		case "stopped":
 			return [outcome.reason];
 		case "broken":
 			return Arr.filter([outcome.reason, outcome.error], Str.isNonEmpty);
@@ -198,31 +210,25 @@ const search = Command.make(
 	"search",
 	{
 		text: Argument.String("text"),
-		kind: Flag.Literals("kind", [
-			"value",
-			"item",
-			"quest",
-			"scene",
-			"landing",
-		]).pipe(Flag.optional),
+		kind: Flag.Literals("kind", NameKind.literals).pipe(Flag.optional),
 		limit: Flag.Int("limit").pipe(Flag.withDefault(40)),
 	},
 	({ text, kind, limit }) =>
 		Effect.gen(function* () {
 			const data = yield* GameData;
-			const found = yield* data.search(text, {
+			const own = yield* OwnTables;
+			const found = yield* searchNames(data, own, text, {
 				limit,
-				...Option.match(kind, {
-					onNone: () => ({}),
-					onSome: (each) => ({ kind: each }),
-				}),
+				kind: Option.getOrUndefined(kind),
 			});
 			for (const match of found) {
 				yield* Console.log(`${match.kind}  ${match.name}  ${match.about}`);
 			}
 		})
 ).pipe(
-	Command.withDescription("Finds the game's names that contain the text."),
+	Command.withDescription(
+		"Finds every name a state or a script takes that contains the text: saved values, items, quests, scenes, landings, event settings, checks, spots and bases."
+	),
 	Command.provide(GameData.layer)
 );
 
@@ -295,6 +301,34 @@ const declaration = Command.make(
 	({ script }) => declare(script)
 ).pipe(Command.unlisted);
 
+/**
+ * A host's services for `mcp` and `serve`, with the generated names written first, so a body's misspelled name fails
+ * its type check on this machine.
+ */
+const hosting = Layer.effectDiscard(writeNames).pipe(
+	Layer.provideMerge(Scripts.layer.pipe(Layer.provideMerge(host)))
+);
+
+// The host is built inside the command, so a start that fails says why through the command line, on stderr: stdout
+// carries MCP's messages only.
+const mcp = Command.make("mcp", {}, () =>
+	shown(
+		Layer.launch(
+			McpServer.layerStdio({
+				name: serverName,
+				version,
+				protocols,
+				instructions,
+				registrations,
+			}).pipe(Layer.provide(hosting))
+		)
+	)
+).pipe(
+	Command.withDescription(
+		"Serves the game as MCP tools over stdio, for an agent on this machine. Its games run in this machine's places."
+	)
+);
+
 export const cli = Command.make("game-testing").pipe(
 	Command.withDescription(
 		"Puts Ocarina of Time in a state, drives it, reads the result and keeps a record."
@@ -306,6 +340,7 @@ export const cli = Command.make("game-testing").pipe(
 		search,
 		runs,
 		names,
+		mcp,
 		worker,
 		declaration,
 	])

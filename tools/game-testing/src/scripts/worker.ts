@@ -18,7 +18,7 @@ import { Game } from "../game.ts";
 import type { Declared } from "../script.ts";
 import { load } from "../script.ts";
 import type { ScriptEvent } from "./runner.ts";
-import { EventLine, packageRoot } from "./runner.ts";
+import { EventLine, inlineFolder, packageRoot } from "./runner.ts";
 
 const say = (event: ScriptEvent) =>
 	Effect.flatMap(Schema.encodeEffect(EventLine)(event), (line) =>
@@ -55,8 +55,10 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 			},
 		});
 	}
-	const source = yield* Effect.orDie(fs.readFile(options.script));
+	const source = yield* Effect.orDie(fs.readFileString(options.script));
+	const digest = new Bun.CryptoHasher("sha256").update(source).digest("hex");
 	const kept = path.relative(packageRoot, options.script);
+	const inline = path.dirname(path.resolve(options.script)) === inlineFolder;
 	const outcome = yield* Effect.scoped(
 		Effect.gen(function* () {
 			const client = yield* Layer.build(Game.layer(options.socket));
@@ -64,13 +66,10 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 			const running = yield* game.start({
 				run: options.run,
 				attemptOf: options.attemptOf,
-				owner: kept,
+				owner: inline ? "run_script" : kept,
 				state: declared.state,
 				mod: declared.mod,
-				script: {
-					path: kept,
-					digest: new Bun.CryptoHasher("sha256").update(source).digest("hex"),
-				},
+				script: inline ? { digest, source } : { path: kept, digest },
 			});
 			yield* say({ _tag: "started" });
 			const ended = yield* Effect.exit(declared.run(running));

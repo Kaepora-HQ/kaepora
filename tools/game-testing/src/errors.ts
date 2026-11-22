@@ -1,5 +1,13 @@
 import { Array as Arr, Cause, Duration, Predicate, Schema } from "effect";
-import { PlaceId, RunId, SessionId, Value } from "./contract/values.ts";
+import {
+	NameKind,
+	PlaceId,
+	RunId,
+	SessionId,
+	Value,
+} from "./contract/values.ts";
+
+const searchable: ReadonlySet<string> = new Set(NameKind.literals);
 
 /** A name no table of the game holds. `suggestions` are the nearest names of the same kind. */
 export class UnknownName extends Schema.TaggedError<
@@ -28,7 +36,10 @@ export class UnknownName extends Schema.TaggedError<
 			this.suggestions.length === 0
 				? ""
 				: ` Nearest: ${Arr.join(this.suggestions, ", ")}.`;
-		return `No ${this.kind} is named ${this.asked}.${near} Run game-testing search ${this.asked}.`;
+		const search = searchable.has(this.kind)
+			? ` search_names, or game-testing search, finds ${this.kind} names.`
+			: "";
+		return `No ${this.kind} is named ${this.asked}.${near}${search}`;
 	}
 }
 
@@ -281,22 +292,30 @@ export class SessionNotFound extends Schema.TaggedError<
 	session: SessionId,
 }) {
 	override get message() {
-		return `No game with session ${this.session} runs on this machine. It was stopped or its caller went away.`;
+		return `No game with session ${this.session} runs on this machine: it was stopped, its caller went away, or no call named it for 10 minutes. start_game starts another.`;
 	}
 }
 
-/** A hand over found nobody: the run has no person (CI), or nobody answered within its limit. */
+/**
+ * A hand over found nobody. `no-person`: the run has nobody to ask, as in CI, or its MCP client cannot ask its user.
+ * `declined`: the client or its user refused. `timed-out`: nobody answered within its limit.
+ */
 export class NobodyThere extends Schema.TaggedError<
 	NobodyThere,
 	{ readonly brand: unique symbol }
 >("game-testing/errors/NobodyThere")("NobodyThere", {
 	ask: Schema.String,
-	reason: Schema.Literals(["no-person", "timed-out"]),
+	reason: Schema.Literals(["no-person", "declined", "timed-out"]),
 }) {
 	override get message() {
-		return this.reason === "no-person"
-			? `This run has nobody to hand over to, and it asked: ${this.ask} Run it with game-testing sit.`
-			: `Nobody answered the hand over in time: ${this.ask}`;
+		switch (this.reason) {
+			case "no-person":
+				return `This run has nobody to hand over to, and it asked: ${this.ask} Write the step as game calls instead.`;
+			case "declined":
+				return `The hand over was declined: ${this.ask} Write the step as game calls instead, or ask again.`;
+			default:
+				return `Nobody answered the hand over in time: ${this.ask}`;
+		}
 	}
 }
 
@@ -353,7 +372,31 @@ export class ScriptFailed extends Schema.TaggedError<
 	run: Schema.optionalKey(RunId),
 }) {
 	override get message() {
-		return `The script failed (${this.reason}): ${this.detail}`;
+		const record =
+			this.run === undefined
+				? ""
+				: `\nIts record is run ${this.run}; get_run, or game-testing runs, shows how far it got.`;
+		return `${failedBy[this.reason]}:\n${this.detail}${record}`;
+	}
+}
+
+const failedBy = {
+	typecheck:
+		"The script failed its type check, so no game started. Fix these lines and run it again",
+	load: "The script did not load, so no game started",
+	limit: "The script was stopped at a limit",
+	exited: "The script did not finish",
+} as const;
+
+/** `keep` named a kept script that exists on the game's machine, so nothing ran and nothing was written. */
+export class KeptScriptExists extends Schema.TaggedError<
+	KeptScriptExists,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/KeptScriptExists")("KeptScriptExists", {
+	path: Schema.String,
+}) {
+	override get message() {
+		return `${this.path} already exists on the game's machine, so nothing ran. Keep the test under another name.`;
 	}
 }
 

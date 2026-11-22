@@ -20,7 +20,12 @@ import {
 import { UserDirectories } from "effect/persistence";
 import { ChildProcessSpawner } from "effect/process";
 import type { NameMatch } from "../contract/rpc.ts";
-import type { Position, Saved } from "../contract/values.ts";
+import type {
+	NameKind,
+	Position,
+	Saved,
+	TableKind,
+} from "../contract/values.ts";
 import type { DumpFailed } from "../errors.ts";
 import { NoGameHere, StateRefused, UnknownName } from "../errors.ts";
 import type { Dump } from "./build.ts";
@@ -111,8 +116,6 @@ export interface Unchecked {
 	readonly reason: string;
 }
 
-export type NameKind = "value" | "item" | "quest" | "scene" | "landing";
-
 export class GameData extends Context.Service<
 	GameData,
 	{
@@ -131,14 +134,14 @@ export class GameData extends Context.Service<
 			placements: readonly Placement[],
 			flows: readonly string[]
 		) => Effect.Effect<readonly string[]>;
-		readonly names: (kind: NameKind) => Effect.Effect<readonly string[]>;
+		readonly names: (kind: TableKind) => Effect.Effect<readonly string[]>;
 		readonly checkMod: (
 			folder: string
 		) => Effect.Effect<readonly Unchecked[], StateRefused | DumpFailed>;
 		readonly search: (
 			text: string,
 			options: { readonly kind?: NameKind; readonly limit: number }
-		) => Effect.Effect<readonly (typeof NameMatch.Type)[]>;
+		) => Effect.Effect<readonly NameMatch[]>;
 	}
 >()("game-testing/data/game-data/GameData") {
 	static readonly layer = Layer.effect(
@@ -277,9 +280,9 @@ const serve = Effect.fn("GameData.open")(function* (
 			},
 		])
 	);
-	const names = (kind: NameKind) =>
+	const names = (kind: TableKind) =>
 		texts("SELECT name AS text FROM name WHERE kind = ?", kind);
-	const unknown = (kind: NameKind, asked: string) =>
+	const unknown = (kind: TableKind, asked: string) =>
 		Effect.flatMap(names(kind), (known) =>
 			UnknownName.make({ kind, asked, suggestions: nearest(asked, known) })
 		);
@@ -429,7 +432,8 @@ const serve = Effect.fn("GameData.open")(function* (
 		search: (text, options) =>
 			rows(
 				NameRow,
-				"SELECT kind, name, about FROM name WHERE (?1 IS NULL OR kind = ?1) AND (name LIKE ?2 OR about LIKE ?2) ORDER BY length(name), name LIMIT ?3",
+				// An event setting is named by the saved value that says it was played, HavePlayedEvent.<setting>.
+				"SELECT kind, name, about FROM (SELECT kind, name, about FROM name WHERE (?1 IS NULL OR kind = ?1) AND (name LIKE ?2 OR about LIKE ?2) UNION ALL SELECT 'event' AS kind, substr(name, 17) AS name, about FROM name WHERE (?1 IS NULL OR ?1 = 'event') AND kind = 'value' AND name LIKE 'HavePlayedEvent.%' AND substr(name, 17) LIKE ?2) ORDER BY length(name), name LIMIT ?3",
 				options.kind ?? null,
 				`%${text}%`,
 				options.limit

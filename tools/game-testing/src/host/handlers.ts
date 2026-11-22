@@ -9,6 +9,7 @@ import { contract, GameRpcs } from "../contract/rpc.ts";
 import { GameData } from "../data/game-data.ts";
 import { VersionMismatch } from "../errors.ts";
 import { StartStates } from "../save/state.ts";
+import { OwnTables, searchNames } from "../save/tables.ts";
 import { Places } from "./places.ts";
 import { Runs } from "./runs.ts";
 import { Sessions } from "./sessions.ts";
@@ -22,6 +23,7 @@ export const handlers = GameRpcs.toLayer(
 		const places = yield* Places;
 		const runs = yield* Runs;
 		const data = yield* GameData;
+		const own = yield* OwnTables;
 		const states = yield* StartStates;
 		const machine = hostname();
 		const count = (yield* places.list).length;
@@ -76,8 +78,10 @@ export const handlers = GameRpcs.toLayer(
 				),
 			Screenshot: ({ session, label }) =>
 				Effect.flatMap(sessions.get(session), (game) => game.screenshot(label)),
-			HandOver: ({ session, say }) =>
-				Effect.flatMap(sessions.get(session), (game) => game.handOver(say)),
+			HandOver: ({ session, say, within }) =>
+				Effect.flatMap(sessions.get(session), (game) =>
+					game.handOver(say, within)
+				),
 			Note: ({ session, text }) =>
 				Effect.flatMap(sessions.get(session), (game) => game.note(text)),
 			Finish: ({ session, result, failure }) =>
@@ -93,7 +97,7 @@ export const handlers = GameRpcs.toLayer(
 					leftAlone,
 				})),
 			Search: ({ text, kind, limit }) =>
-				data.search(text, { limit, ...(kind === undefined ? {} : { kind }) }),
+				searchNames(data, own, text, { limit, kind }),
 			Runs: ({ script, limit }) => runs.list({ script, limit }),
 			Run: ({ run }) => runs.get(run),
 			RunPicture: ({ run, path }) => runs.picture(run, path),

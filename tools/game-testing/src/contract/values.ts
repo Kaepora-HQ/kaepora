@@ -15,6 +15,29 @@ export const Value = Schema.Union([
 ]);
 export type Value = typeof Value.Type;
 
+/** The kinds of name the game's tables give, which the cache of the game's tables keeps. */
+export const TableKind = Schema.Literals([
+	"value",
+	"item",
+	"quest",
+	"scene",
+	"landing",
+]);
+export type TableKind = typeof TableKind.Type;
+
+/**
+ * Every kind of name a state or a body takes: the tables' kinds, the event settings among the saved values, and the
+ * checks, spots and bases of Kaepora's own tables.
+ */
+export const NameKind = Schema.Literals([
+	...TableKind.literals,
+	"event",
+	"check",
+	"spot",
+	"base",
+]);
+export type NameKind = typeof NameKind.Type;
+
 /** A place in a scene's units, x, y and z. */
 export const Position = Schema.Tuple([
 	Schema.Finite,

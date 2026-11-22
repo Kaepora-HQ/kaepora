@@ -276,7 +276,18 @@ export const fakeMachine = (options?: {
 		const own = Layer.succeed(
 			OwnTables,
 			OwnTables.of({
-				spots: new Map(),
+				spots: new Map([
+					[
+						"Fake Spot Before The Chest",
+						{
+							name: "Fake Spot Before The Chest",
+							scene: "KokiriForest",
+							room: undefined,
+							position: [1, 2, 3],
+							facing: 0,
+						},
+					],
+				]),
 				bases: new Map([
 					[
 						"test-base",
@@ -292,7 +303,12 @@ export const fakeMachine = (options?: {
 					],
 				]),
 				tiers: [],
-				checks: new Map<string, Check>(),
+				checks: new Map<string, Check>([
+					[
+						"Fake Chest Check",
+						{ name: "Fake Chest Check", flows: [], placements: [], stock: [] },
+					],
+				]),
 			})
 		);
 		/** What the entry point gives every command, made of the fakes. */
@@ -304,14 +320,16 @@ export const fakeMachine = (options?: {
 			Layer.provideMerge(Layer.merge(BunServices.layer, podman.layer)),
 			Layer.provideMerge(config)
 		);
+		const hosting = host.pipe(Layer.provideMerge(platform));
 		const client = Layer.unwrap(
 			Effect.gen(function* () {
 				const socket = yield* HostSocket;
 				return Game.layer(socket.path);
 			})
-		).pipe(Layer.provideMerge(host), Layer.provideMerge(platform));
+		).pipe(Layer.provideMerge(hosting));
 		return {
 			layer: client,
+			host: hosting,
 			platform,
 			podman,
 			games: Ref.get(games),

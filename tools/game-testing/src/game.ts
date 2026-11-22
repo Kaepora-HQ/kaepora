@@ -47,13 +47,13 @@ import { failureOf, RemoteUnavailable } from "./errors.ts";
 import type { ValueName, ValueOf } from "./names.ts";
 
 /** A press lasts this many frames unless the script says otherwise: long enough for the game to see it. */
-const pressFrames = 4;
+export const pressFrames = 4;
 
 /** A wait without its own limit fails after this long. */
 const defaultWait = Duration.seconds(10);
 
 /** How long a start waits for a free place. */
-const defaultPlaceWait = Duration.minutes(10);
+export const defaultPlaceWait = Duration.minutes(10);
 
 /** A started game. Every method is a step in the run's record. */
 export interface RunningGame {
@@ -182,7 +182,6 @@ export class Game extends Context.Service<
 						.Open({
 							run,
 							state: options.state,
-							person: "nobody",
 							owner: options.owner,
 							waitForPlace: Duration.fromInputUnsafe(
 								options.waitForPlace ?? defaultPlaceWait

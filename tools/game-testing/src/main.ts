@@ -3,11 +3,9 @@ import { BunRuntime, BunServices } from "@effect/platform-bun";
 import { Effect, Layer, Logger } from "effect";
 import { Command } from "effect/cli";
 import { UserDirectories } from "effect/persistence";
-import { cli } from "./cli.ts";
+import { cli, version } from "./cli.ts";
 import { OwnTables } from "./save/tables.ts";
 import * as Telemetry from "./telemetry.ts";
-
-const version = "0.0.0";
 
 Command.run(cli, { version }).pipe(
 	Effect.provide(
