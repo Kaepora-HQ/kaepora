@@ -91,6 +91,10 @@
   @apply press rounded-full bg-moon font-bold text-midnight hover:bg-moon-bright;
 }
 
+@utility outline-button {
+  @apply press rounded-full border border-mist/40 font-bold hover:border-starlight;
+}
+
 @utility tap-target {
   position: relative;
 

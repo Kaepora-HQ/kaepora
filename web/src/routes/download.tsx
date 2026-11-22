@@ -2,7 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { PageHero, SiteFooter, SiteHeader } from '@/components/site-chrome'
 import { copy } from '@/copy'
-import { type System, downloads, mainDownloads, releases } from '@/release'
+import { type System, downloads, lichiiDownloads, lichiiUpstreamReleases, mainDownloads, releases } from '@/release'
 import changelog from 'virtual:changelog'
 
 export const Route = createFileRoute('/download')({
@@ -11,38 +11,63 @@ export const Route = createFileRoute('/download')({
 })
 
 type DownloadFile = { format: string; href: string }
+type Files = { main: DownloadFile; more: readonly DownloadFile[] }
 
 const platforms: readonly {
   system: System
   name: string
   requires: string
   Mark: (props: { className: string }) => ReactNode
-  format: string
-  more: readonly DownloadFile[]
+  kaepora: Files
+  lichii: Files & { amdBuilds: readonly DownloadFile[] }
 }[] = [
   {
     system: 'linux',
     name: 'Linux',
     requires: '64-bit',
     Mark: LinuxMark,
-    format: 'AppImage',
-    more: [{ format: 'tar.gz', href: downloads.linuxTarball }],
+    kaepora: {
+      main: { format: 'AppImage', href: mainDownloads.linux },
+      more: [{ format: 'tar.gz', href: downloads.linuxTarball }],
+    },
+    lichii: {
+      main: { format: 'AppImage', href: lichiiDownloads.linuxAppImage },
+      more: [{ format: 'tar.gz', href: lichiiDownloads.linuxTarball }],
+      amdBuilds: [
+        { format: 'Zen 4', href: lichiiDownloads.linuxZen4 },
+        { format: 'Zen 5', href: lichiiDownloads.linuxZen5 },
+      ],
+    },
   },
   {
     system: 'windows',
     name: 'Windows',
     requires: 'Windows 10 or later, 64-bit',
     Mark: WindowsMark,
-    format: 'installer',
-    more: [{ format: 'zip', href: downloads.windowsZip }],
+    kaepora: {
+      main: { format: 'installer', href: mainDownloads.windows },
+      more: [{ format: 'zip', href: downloads.windowsZip }],
+    },
+    lichii: {
+      main: { format: 'zip', href: lichiiDownloads.windowsZip },
+      more: [],
+      amdBuilds: [],
+    },
   },
   {
     system: 'macos',
     name: 'macOS',
     requires: 'macOS 15 or later, Apple silicon',
     Mark: MacMark,
-    format: 'zip',
-    more: [],
+    kaepora: {
+      main: { format: 'zip', href: mainDownloads.macos },
+      more: [],
+    },
+    lichii: {
+      main: { format: 'zip', href: lichiiDownloads.macosZip },
+      more: [],
+      amdBuilds: [],
+    },
   },
 ]
 
@@ -60,11 +85,11 @@ function Download() {
             <h2 id="files" className="sr-only">Files</h2>
             {/* A 20.25rem card holds the longest requirement line beside its mark on one line; three fit in max-w-page. */}
             <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20.25rem),1fr))] gap-5">
-              {platforms.map(({ system, name, requires, Mark, format, more }) => (
+              {platforms.map(({ system, name, requires, Mark, kaepora, lichii }) => (
                 <li
                   key={system}
                   id={system}
-                  className="surface row-span-2 grid scroll-mbs-6 grid-rows-subgrid gap-y-6 rounded-2xl p-7"
+                  className="surface row-span-3 grid scroll-mbs-6 grid-rows-subgrid gap-y-6 rounded-2xl p-7"
                 >
                   <div className="flex items-center gap-4">
                     <Mark className="size-10 flex-none" />
@@ -73,26 +98,27 @@ function Download() {
                       <p className="text-small text-mist">{requires}</p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap content-start items-center gap-3">
-                    <a href={mainDownloads[system]} className="moon-button px-6 py-2.5">
-                      Download {format}
-                      <span className="sr-only"> for {name}</span>
-                    </a>
-                    {more.map((file) => (
-                      <a
-                        key={file.format}
-                        href={file.href}
-                        className="press rounded-full border border-mist/40 px-5 py-2.5 font-bold hover:border-starlight"
-                      >
-                        {file.format}
-                      </a>
-                    ))}
-                  </div>
+                  <FileGroup heading={copy.downloadPage.kaepora} files={kaepora} button="moon-button" spoken={`for ${name}`} />
+                  <FileGroup heading={copy.downloadPage.lichii} files={lichii} button="outline-button" spoken={`of Lichii for ${name}`}>
+                    {lichii.amdBuilds.length > 0 ? (
+                      <p className="flex flex-wrap items-center gap-1 text-small text-mist">
+                        {copy.downloadPage.amdOnly}
+                        {lichii.amdBuilds.map((build) => (
+                          <a key={build.format} href={build.href} className="quiet-link font-bold">
+                            {build.format}
+                          </a>
+                        ))}
+                      </p>
+                    ) : null}
+                  </FileGroup>
                 </li>
               ))}
             </ul>
             <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
-              <FirstOpenGuide />
+              <div className="flex flex-col gap-3">
+                <FirstOpenGuide />
+                <AboutLichii />
+              </div>
               <p className="-me-3 ms-auto flex flex-wrap gap-2 text-small font-bold text-mist">
                 <a href={downloads.checksums} className="quiet-link">
                   Checksums
@@ -149,28 +175,87 @@ function WindowsMark({ className }: { className: string }) {
 
 const openGuideAtMacCard = `if (location.hash === '#macos') document.currentScript.previousElementSibling.open = true`
 
+function FileGroup({
+  heading,
+  files: { main, more },
+  button,
+  spoken,
+  children,
+}: {
+  heading: string
+  files: Files
+  button: 'moon-button' | 'outline-button'
+  spoken: string
+  children?: ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h4 className="text-small font-bold text-mist">{heading}</h4>
+      <div className="flex flex-wrap items-center gap-3">
+        <a href={main.href} className={`${button} px-5 py-2.5`}>
+          Download {main.format}
+          <span className="sr-only"> {spoken}</span>
+        </a>
+        {more.map((file) => (
+          <a key={file.format} href={file.href} className="outline-button px-4 py-2.5">
+            {file.format}
+            <span className="sr-only"> {spoken}</span>
+          </a>
+        ))}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function Disclosure({ heading, children }: { heading: string; children: ReactNode }) {
+  return (
+    <details suppressHydrationWarning>
+      <summary className="quiet-link -ms-3 w-fit cursor-pointer text-small font-bold text-mist marker:text-moon">{heading}</summary>
+      <div className="flex max-w-xl flex-col gap-3 pbs-3">{children}</div>
+    </details>
+  )
+}
+
 function FirstOpenGuide() {
   const words = copy.downloadPage.macosFirstOpen
   return (
     <>
-      <details suppressHydrationWarning>
-        <summary className="quiet-link -ms-3 w-fit cursor-pointer text-small font-bold text-mist marker:text-moon">{words.heading}</summary>
-        <div className="flex max-w-xl flex-col gap-3 pbs-3">
-          <p>{words.why}</p>
-          <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
-            {words.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-          <p>{words.after}</p>
-          <p>{words.terminal}</p>
-          <pre className="surface w-fit rounded-lg px-4 py-2 font-mono text-sm whitespace-pre-wrap">
-            <code className="select-all">{words.command}</code>
-          </pre>
-        </div>
-      </details>
+      <Disclosure heading={words.heading}>
+        <p>{words.why}</p>
+        <ol className="flex list-decimal flex-col gap-1.5 ps-5 marker:text-moon">
+          {words.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <p>
+          {words.after} {words.lichii}
+        </p>
+        <p>{words.terminal}</p>
+        <pre className="surface w-fit rounded-lg px-4 py-2 font-mono text-sm whitespace-pre-wrap">
+          <code className="select-all">{words.command}</code>
+        </pre>
+      </Disclosure>
       <script dangerouslySetInnerHTML={{ __html: openGuideAtMacCard }} />
     </>
+  )
+}
+
+function AboutLichii() {
+  const words = copy.downloadPage.aboutLichii
+  return (
+    <Disclosure heading={words.heading}>
+      <p>
+        {words.builds.before}{' '}
+        <a href={lichiiUpstreamReleases} className="underline decoration-mist/40 underline-offset-4 hover:decoration-starlight">
+          {words.builds.link}
+        </a>{' '}
+        {words.builds.after}
+      </p>
+      <p>{words.linux}</p>
+      <p>{words.zen}</p>
+      <p>{words.windows}</p>
+    </Disclosure>
   )
 }
 

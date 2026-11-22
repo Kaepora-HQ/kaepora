@@ -20,3 +20,16 @@ export const mainDownloads: Record<System, string> = {
   macos: downloads.macosZip,
   linux: downloads.linuxAppImage,
 }
+
+const lichiiLatest = 'https://github.com/Kaepora-HQ/Lichii/releases/latest/download'
+
+export const lichiiDownloads = {
+  linuxAppImage: `${lichiiLatest}/lichii-linux-x86_64-pgo.AppImage`,
+  linuxTarball: `${lichiiLatest}/lichii-linux-x86_64-pgo.tar.gz`,
+  linuxZen4: `${lichiiLatest}/lichii-linux-x86_64-zen4-pgo.AppImage`,
+  linuxZen5: `${lichiiLatest}/lichii-linux-x86_64-zen5-pgo.AppImage`,
+  windowsZip: `${lichiiLatest}/lichii-windows-x86_64-pgo.zip`,
+  macosZip: `${lichiiLatest}/lichii-macos-arm64.zip`,
+}
+
+export const lichiiUpstreamReleases = 'https://github.com/zortos293/Lichii/releases'
