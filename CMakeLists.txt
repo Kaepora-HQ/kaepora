@@ -166,6 +166,11 @@ if(Qt6_FOUND)
     target_link_libraries(kaepora-game-values PUBLIC Qt6::Network PRIVATE kaepora-patch-files)
     target_compile_options(kaepora-game-values PRIVATE ${WARNINGS})
 
+    add_library(kaepora-tracker-page STATIC kaepora/tracker_page.cpp)
+    target_include_directories(kaepora-tracker-page PUBLIC kaepora)
+    target_link_libraries(kaepora-tracker-page PUBLIC Qt6::Gui Qt6::Network)
+    target_compile_options(kaepora-tracker-page PRIVATE ${WARNINGS})
+
     add_library(kaepora-tracker-window STATIC kaepora/tracker_painter.cpp kaepora/tracker_window.cpp)
     set_target_properties(kaepora-tracker-window PROPERTIES AUTOMOC ON)
     target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values Qt6::Widgets)
@@ -397,6 +402,20 @@ if(Qt6Test_FOUND)
         add_test(NAME tracker_window_${TEST} COMMAND kaepora-tracker-window-test ${TEST})
         set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT
                              "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
+    endforeach()
+
+    add_executable(kaepora-tracker-page-test tests/tracker_page_test.cpp)
+    set_target_properties(kaepora-tracker-page-test PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-tracker-page-test PRIVATE kaepora-tracker-page Qt6::Test)
+    target_compile_options(kaepora-tracker-page-test PRIVATE ${WARNINGS})
+    foreach(TEST IN ITEMS thePageNamesThePictureAndTheChangesByAddressesItAnswers
+                          thePictureIsThePngLastShownWithItsSeeThroughPixels aPictureIsAnsweredOnlyUnderItsOwnName
+                          aListenerIsToldThePictureAtOnceAndAgainEachTimeAnotherIsShown
+                          otherComputersReachThePageOnlyOnceTheNetworkIsAllowed aProxyLeavesThePageListeningToTheNetwork
+                          junkLeavesThePageAnswering manyConnectionsLeaveThePageAnsweringAndItsListenersTold
+                          aSecondPageOnTheSamePortCannotListen)
+        add_test(NAME tracker_page_${TEST} COMMAND kaepora-tracker-page-test ${TEST})
+        set_tests_properties(tracker_page_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 endif()
 
