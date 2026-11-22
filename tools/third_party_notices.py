@@ -8,7 +8,8 @@ On macOS: python3 -I tools/third_party_notices.py --macos <Kaepora.app> <Qt>
 On Linux it runs on Ubuntu, after linuxdeploy has filled the folder. Each Qt file in the folder is looked up in Qt's
 SBOMs, which also name the code from other projects built into it; each other library is looked up with dpkg; the
 runtime's parts come from the notice the runtime carries. A library or a runtime part that none of these accounts for
-stops the script.
+stops the script. The code from other projects built into usr/bin/kaepora has its licence in usr/share/licenses/, where
+the install rules put it.
 
 On Windows it runs in the Visual Studio environment the build used, after the install rules and windeployqt have filled
 the folder. Qt is looked up as on Linux, and every other library must be a Visual C++ runtime library of that
@@ -245,11 +246,11 @@ def visual_cpp(folder, qt_files):
     ]
 
 
-def built_in(folder, program):
+def built_in(folder, licenses, program):
     lines = [f"Built into {program}", "", f"Code from these projects is built into {program}. Each one's licence:"]
-    for project in sorted((folder / "licenses").iterdir()):
-        if project.name not in ("kaepora", "qt", "spdx"):
-            lines += [f"  {project.name}: licenses/{project.name}/{file.name}" for file in sorted(project.iterdir())]
+    for project in sorted((folder / licenses).iterdir()):
+        if project.name not in ("kaepora", "qt", "icu", "spdx"):
+            lines += [f"  {project.name}: {licenses}/{project.name}/{file.name}" for file in sorted(project.iterdir())]
     return lines
 
 
@@ -279,7 +280,8 @@ def linux(folder, qt_root, runtime_path):
     texts = set()
     qt_lines, extracted = qt(folder, qt_root, texts, shipped, licenses,
                              "its libraries are in usr/lib and its plugins in usr/plugins")
-    sections = [qt_lines, icu(folder, qt_root), ubuntu(folder, qt_root), runtime(runtime_path, texts)]
+    sections = [qt_lines, icu(folder, qt_root), ubuntu(folder, qt_root), built_in(folder, licenses, "usr/bin/kaepora"),
+                runtime(runtime_path, texts)]
     write(folder, licenses, sections, texts, extracted, "THIRD_PARTY_NOTICES")
 
 
@@ -294,7 +296,7 @@ def windows(folder, qt_root):
         elif path.name.startswith("Qt6"):
             shipped[f"bin/{stem(name)}"] = name
     texts = set()
-    sections = [built_in(folder, "kaepora.exe")]
+    sections = [built_in(folder, "licenses", "kaepora.exe")]
     qt_lines, extracted = qt(folder, qt_root, texts, shipped, "licenses",
                              "its libraries and its plugin folders are beside kaepora.exe")
     sections = [qt_lines, visual_cpp(folder, shipped), *sections]
@@ -319,7 +321,7 @@ def macos(app, qt_root):
     texts = set()
     qt_lines, extracted = qt(resources, qt_root, texts, shipped, "licenses",
                              "its frameworks are in ../Frameworks and its plugins in ../PlugIns")
-    sections = [qt_lines, built_in(resources, "../MacOS/Kaepora")]
+    sections = [qt_lines, built_in(resources, "licenses", "../MacOS/Kaepora")]
     write(resources, "licenses", sections, texts, extracted, "THIRD_PARTY_NOTICES.txt")
 
 
