@@ -2,7 +2,10 @@
 
 #include "bytes.h"
 
+#include <nlohmann/json.hpp>
+
 #include <algorithm>
+#include <cmath>
 #include <format>
 #include <map>
 #include <stdexcept>
@@ -18,6 +21,24 @@ constexpr size_t HeaderSize = 0x10;
 
 std::string_view Magic(std::endian order) {
     return order == std::endian::little ? "YB" : "BY";
+}
+
+// RFC 4648 base64, padded.
+std::string Base64(std::string_view bytes) {
+    constexpr std::string_view Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string text;
+    for (size_t at = 0; at < bytes.size(); at += 3) {
+        uint32_t group = 0;
+        for (size_t i = 0; i < 3; ++i) {
+            group = group << 8 | (at + i < bytes.size() ? uint8_t(bytes[at + i]) : 0);
+        }
+        // n bytes give n + 1 characters, and = pads the group to four.
+        const size_t characters = std::min<size_t>(bytes.size() - at, 3) + 1;
+        for (size_t i = 0; i < 4; ++i) {
+            text += i < characters ? Alphabet[group >> (18 - 6 * i) & 0x3F] : '=';
+        }
+    }
+    return text;
 }
 
 struct Reader {
@@ -59,6 +80,13 @@ struct Reader {
         switch (type) {
             case Type::String:
                 return { .type = type, .string = std::string(strings.at(value)) };
+            case Type::Binary: {
+                const uint32_t size = Read<uint32_t>(value);
+                if (data.size() - value - 4 < size) {
+                    throw std::runtime_error("a BYML binary node runs past the end of the file");
+                }
+                return { .type = type, .string = std::string(data.substr(value + 4, size)) };
+            }
             case Type::Bool:
             case Type::Int:
             case Type::Float:
@@ -207,6 +235,10 @@ private:
             case Type::Array:
             case Type::Dict:
                 return Container(node);
+            // Where the game's files put a binary node's bytes is not known, so a file with one cannot be laid out as
+            // the game's are.
+            case Type::Binary:
+                throw std::runtime_error("cannot write a BYML binary node");
             default:
                 return uint32_t(node.scalar);
         }
@@ -302,6 +334,45 @@ void SetRootUInt(std::string& data, std::string_view key, uint32_t from, uint32_
 
 std::string Write(const Document& document) {
     return Writer(document.order).Write(document.root);
+}
+
+nlohmann::json Json(const Node& node) {
+    switch (node.type) {
+        case Type::String:
+            return node.string;
+        case Type::Binary:
+            return nlohmann::json::object({ { "binary", Base64(node.string) } });
+        case Type::Array: {
+            nlohmann::json array = nlohmann::json::array();
+            for (const Node& item : node.array) {
+                array.push_back(Json(item));
+            }
+            return array;
+        }
+        case Type::Dict: {
+            nlohmann::json dict = nlohmann::json::object();
+            for (const auto& [key, value] : node.dict) {
+                dict[key] = Json(value);
+            }
+            return dict;
+        }
+        case Type::Bool:
+            return node.scalar != 0;
+        case Type::Int:
+            return int32_t(uint32_t(node.scalar));
+        case Type::UInt:
+            return uint32_t(node.scalar);
+        case Type::Float:
+            if (!std::isfinite(FloatOf(node))) {
+                throw std::runtime_error("a Float is NaN or infinite, which JSON cannot hold");
+            }
+            return double(FloatOf(node));
+        case Type::Int64:
+            return std::to_string(int64_t(node.scalar));
+        case Type::UInt64:
+            return std::to_string(node.scalar);
+    }
+    throw std::runtime_error(std::format("unsupported BYML node type {:#x}", uint8_t(node.type)));
 }
 
 } // namespace byml
