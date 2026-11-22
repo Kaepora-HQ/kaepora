@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -68,9 +69,12 @@ struct PlacedActor {
 
 // A placed actor that stands only while a saved true-or-false value or expression of the game data list holds, as the
 // game's own placements gate actors on quest steps. The Desert Colossus's ways out wait for the Spirit quest this way.
+// A presence that names the flag it replaces points the actor's own presence on that flag at this one instead, and
+// keeps its negation.
 struct PlannedPresence {
     PlacedActor actor;
     std::string flag;
+    std::optional<std::string> replaces;
 };
 
 // A shop slot that sells the item at the price, once from each shopkeeper. Each shelf shows the slot in one scene.

@@ -52,6 +52,9 @@ static PlannedPresence ParsePresence(const nlohmann::json& presence) {
     if (planned.actor.file.empty() || planned.flag.empty()) {
         throw std::runtime_error("file and flag must not be empty");
     }
+    if (presence.contains("replaces")) {
+        planned.replaces = presence.at("replaces").get<std::string>();
+    }
     return planned;
 }
 
@@ -1258,15 +1261,24 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                         "\"{}\" is not a true-or-false value or expression in the game data list", presence.flag));
                 }
                 byml::Node& actor = Actor(placement(presence.actor.file), presence.actor.hash);
-                if (Find(actor, "Presence") != nullptr) {
+                byml::Node* own = Find(actor, "Presence");
+                if (presence.replaces) {
+                    byml::Node* flag = own == nullptr ? nullptr : Find(*own, "FlagName");
+                    if (flag == nullptr || flag->string != *presence.replaces) {
+                        throw std::runtime_error(
+                            std::format("the actor has no presence on \"{}\"", *presence.replaces));
+                    }
+                    flag->string = presence.flag;
+                } else if (own != nullptr) {
                     throw std::runtime_error("the actor already has a presence");
+                } else {
+                    // The game's presences that wait for a quest step take this shape.
+                    FindOrAdd(actor, "Presence", byml::Type::Dict).dict = {
+                        { .key = "FlagName", .value = { .type = byml::Type::String, .string = presence.flag } },
+                        { .key = "IsCheckLazy", .value = { .type = byml::Type::Bool } },
+                        { .key = "IsNegation", .value = { .type = byml::Type::Bool } },
+                    };
                 }
-                // The game's presences that wait for a quest step take this shape.
-                FindOrAdd(actor, "Presence", byml::Type::Dict).dict = {
-                    { .key = "FlagName", .value = { .type = byml::Type::String, .string = presence.flag } },
-                    { .key = "IsCheckLazy", .value = { .type = byml::Type::Bool } },
-                    { .key = "IsNegation", .value = { .type = byml::Type::Bool } },
-                };
                 changed.insert(presence.actor.file);
             } catch (const std::exception& e) {
                 throw std::runtime_error(

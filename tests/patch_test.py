@@ -103,6 +103,11 @@ COLOSSUS_GATES = [(COLOSSUS_ADULT_STATIC, 12141577802165947392), (COLOSSUS_ADULT
 PAST_SPIRIT_STEP02 = "SageOfSpirit_IsAfter_Step02_Exp"
 # The Colossus's gossip stone area, which the game shows only while the stone stands.
 COLOSSUS_STONE_AREA = 12757003145401657983
+# King Zora's ice in the domain an adult sees once the Water quest is complete. Its presence there, on the quest
+# complete and negated, never lets it stand; on his thaw's played flag it stands until he is thawed.
+KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
+                 "hash": "3341274640047764997", "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
+                 "replaces": "SageOfWater_IsCompleted_Exp"}
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
@@ -714,28 +719,36 @@ def colossus_gates(flag=PAST_SPIRIT_STEP02):
     return [(path, h, flag) for path, h in COLOSSUS_GATES]
 
 
-def with_presence(placement, h, flag):
-    """The placement with a presence on the actor, taking its place in the actor's key order as the game's dicts do."""
-    entry = actor(placement, h)
-    assert "Presence" not in entry, h
-    entry["Presence"] = {"FlagName": flag, "IsCheckLazy": (BOOL, 0), "IsNegation": (BOOL, 0)}
+def with_presence(placement, planned):
+    """The placement with the planned presence on its actor. An added presence takes its place in the actor's key
+    order, as the game's dicts do."""
+    entry = actor(placement, int(planned["hash"]))
+    if "replaces" in planned:
+        assert entry["Presence"]["FlagName"] == planned["replaces"], planned
+        entry["Presence"]["FlagName"] = planned["flag"]
+        return
+    assert "Presence" not in entry, planned
+    entry["Presence"] = {"FlagName": planned["flag"], "IsCheckLazy": (BOOL, 0), "IsNegation": (BOOL, 0)}
     entries = sorted(entry.items())
     entry.clear()
     entry.update(entries)
 
 
 def presence(patch, game):
-    """The Colossus's ways into the Wasteland and the Spirit Temple stand only past Step02: read apart from the patcher,
-    each of the two files is the game's with a presence on those actors, and fits its size table entry."""
-    mod = patched(patch, game, plan([], presences=colossus_gates()))
-    paths = [COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC]
+    """The Colossus's ways into the Wasteland and the Spirit Temple stand only past Step02, and King Zora's ice after
+    the Water Temple until his thaw: read apart from the patcher, each of the three files is the game's with a presence
+    added on those gates and the ice's presence on the thaw's flag, and fits its size table entry."""
+    planned = plan([], presences=colossus_gates())
+    planned["presences"].append(KING_ZORA_ICE)
+    mod = patched(patch, game, planned)
+    paths = [COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC, KING_ZORA_ICE["file"]]
     assert sorted(mod) == sorted(paths + [SIZE_TABLE]), sorted(mod)
     sizes = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
     for path in paths:
         expected = game.placement(game.read(path))
-        for gate_path, h, flag in colossus_gates():
-            if gate_path == path:
-                with_presence(expected, h, flag)
+        for entry in planned["presences"]:
+            if entry["file"] == path:
+                with_presence(expected, entry)
         assert ordered(game.placement(mod[path])) == ordered(expected), path
         assert load_size(len(zstd.decompress(mod[path], zstd_dict=game.dictionary))) <= sizes[size_key(path)], path
 
@@ -2341,7 +2354,7 @@ def seed_plan(patch, game, plan_file):
     for planned in seed["presences"]:
         if planned["file"] not in expected:
             expected[planned["file"]] = game.placement(game.read(planned["file"]))
-        with_presence(expected[planned["file"]], int(planned["hash"]), planned["flag"])
+        with_presence(expected[planned["file"]], planned)
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
     edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"]}
@@ -2456,6 +2469,9 @@ def bad_input(patch, game):
             [str(KOKIRI_SWORD_CHEST), COLOSSUS_ADULT_STATIC, "no actor"]),
         "presence on an actor that has one": (
             stone_area, [str(COLOSSUS_STONE_AREA), COLOSSUS_ADULT_STATIC, "already has a presence"]),
+        "presence replacing a flag the actor's presence is not on": (
+            dict(KING_ZORA_ICE, replaces=PAST_SPIRIT_STEP02),
+            [KING_ZORA_ICE["hash"], KING_ZORA_ICE["file"], "no presence on", PAST_SPIRIT_STEP02]),
         "presence on a flag not in the list": (
             dict(valid_presence, file=COLOSSUS_CHILD_STATIC, hash=str(COLOSSUS_GATES[2][1]), flag=unknown_flag),
             [unknown_flag, "game data list"]),
