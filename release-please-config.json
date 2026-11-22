@@ -9,7 +9,7 @@
       "draft": true,
       "force-tag-creation": true,
       "extra-files": ["CMakeLists.txt"],
-      "exclude-paths": ["web"],
+      "exclude-paths": ["web", "tools/game-testing"],
       "pull-request-header": "The next Kaepora release. RELEASING.md lists what to check before you merge it.",
       "pull-request-footer": "Merging this pull request tags the release and starts its build."
     }
