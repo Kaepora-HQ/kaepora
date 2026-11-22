@@ -161,11 +161,11 @@ struct Fit {
     size_t boxLines;
 };
 
-// A line in which a character names what a place gives. Every seed rewrites it to name what the seed places there.
+// A line in which a character names what a place gives. A seed that shuffles the place rewrites it to name what the
+// seed places there.
 struct PrizeLine {
     RandomizerCheck location;
-    std::string ownItem; // what the place gives in the unmodified game, by its remake name
-    std::string file;    // the message file in the text packs
+    std::string file; // the message file in the text packs
     std::string label;
     Sentence sentence;
     Fit fit;
@@ -195,8 +195,8 @@ struct RemakeHintTables {
 // The hint tables, read from the copies built into the program. Throws when a table names an unknown location, area or
 // item, repeats one, or leaves out a shuffled chest of the chest table, its area or its item, a shop slot that can be
 // shuffled or its area, a gift, its area or its item, a skulltula or its area, or a song place or its area, or when a
-// prize line names a place that is no chest of the chest table, or one whose own item has no name, or a character's
-// hint names an unknown hint location or item.
+// prize line names a place that is no chest of the chest table and no gift, or a character's hint names an unknown hint
+// location or item.
 RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, const std::vector<RemakeShopSlot>& shops,
                                       const std::vector<RemakeGift>& gifts,
                                       const std::vector<RemakeSkulltula>& skulltulas,

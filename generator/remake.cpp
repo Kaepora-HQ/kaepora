@@ -360,15 +360,14 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
                                      "location\tfile\tlabel\tsentence\tline_length\tbox_lines")) {
         const std::string where = std::format("remake/prize_lines.tsv line {}: ", ++line);
         const RandomizerCheck location = LocationNamed(where, row[0]);
-        const auto chest = std::ranges::find(chests, location, &RemakeChest::location);
-        if (chest == chests.end() || !tables.itemsByRemakeName.contains(chest->item)) {
-            Fail(where + "\"" + row[0] + "\" is no chest of remake/chests.tsv, or its item has no name");
+        if (std::ranges::find(chests, location, &RemakeChest::location) == chests.end() &&
+            std::ranges::find(gifts, location, &RemakeGift::location) == gifts.end()) {
+            Fail(where + "\"" + row[0] + "\" is no chest of remake/chests.tsv and no gift");
         }
         if (row[1].empty() || row[2].empty()) {
             Fail(where + "no file or label");
         }
         tables.prizeLines.push_back({ .location = location,
-                                      .ownItem = chest->item,
                                       .file = row[1],
                                       .label = row[2],
                                       .sentence = Split(where, row[3]),

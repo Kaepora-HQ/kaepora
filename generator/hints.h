@@ -31,6 +31,6 @@ std::vector<CharacterHintText> CharacterHints(const RemakeHintTables& tables,
 // new line, ^ a new box, and @ is the player's name.
 std::string Layout(std::string_view markup, const Fit& fit);
 
-// Each prize line naming the item the seed places at its location, or where the location keeps its item, that item.
+// Each prize line of a place the seed shuffles, naming the item the seed places there.
 std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
                                     const std::map<RandomizerCheck, std::string>& items);

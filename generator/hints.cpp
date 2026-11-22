@@ -296,7 +296,10 @@ std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
     std::vector<MessageText> lines;
     for (const PrizeLine& line : tables.prizeLines) {
         const auto placed = items.find(line.location);
-        const std::string& item = tables.itemsByRemakeName.at(placed == items.end() ? line.ownItem : placed->second);
+        if (placed == items.end()) {
+            continue;
+        }
+        const std::string& item = tables.itemsByRemakeName.at(placed->second);
         lines.push_back({ line.file, line.label, Layout(line.sentence.before + item + line.sentence.after, line.fit) });
     }
     return lines;

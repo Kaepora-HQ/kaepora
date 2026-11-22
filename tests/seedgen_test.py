@@ -1628,18 +1628,21 @@ class SeedgenTest(unittest.TestCase):
         self.assert_stone_texts_fit_their_boxes(plan)
 
     def test_the_chest_game_owner_names_the_prize(self):
-        # Without the Lens the prize stays the game's own, a Piece of Heart.
         row = next(row for row in PRIZE_LINES if row["location"] == CHEST_GAME_PRIZE)
         named = set()
-        for seed, settings in [(str(seed), None) for seed in range(700, 710)] + [("710", LENS_NEVER_NEEDED)]:
-            spoiler, plan = self.generate(seed, settings)
-            item = placed_remake_items(spoiler, plan).get(CHEST_GAME_PRIZE, "Obj_Heart_Piece")
-            self.assertEqual(settings is None, CHEST_GAME_PRIZE in placed_remake_items(spoiler, plan), seed)
+        for seed in map(str, range(700, 710)):
+            spoiler, plan = self.generate(seed)
+            item = placed_remake_items(spoiler, plan)[CHEST_GAME_PRIZE]
             [entry] = [entry for entry in plan["message_texts"] if (entry["file"], entry["label"])
                        == (row["file"], row["label"])]
             self.assertEqual(plain(entry["text"]), plain(row["sentence"].replace("[[1]]", ITEM_NAMES[item])), seed)
             named.add(item)
         self.assertGreater(len(named), 2, named)
+        # Without the Lens the prize stays the game's own, a Piece of Heart, which the game's own line names.
+        spoiler, plan = self.generate("710", LENS_NEVER_NEEDED)
+        self.assertNotIn(CHEST_GAME_PRIZE, placed_remake_items(spoiler, plan))
+        self.assertNotIn((row["file"], row["label"]),
+                         [(entry["file"], entry["label"]) for entry in plan["message_texts"]])
 
     def test_every_message_fits_its_box(self):
         sites = {(row["file"], row["label"]): row for row in PRIZE_LINES + CHARACTER_HINTS}
