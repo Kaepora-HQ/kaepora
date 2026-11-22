@@ -29,10 +29,9 @@ import { Outcome } from "../contract/record.ts";
 import type { RunId } from "../contract/values.ts";
 import { newRunId } from "../contract/values.ts";
 import { ScriptFailed } from "../errors.ts";
-import { HostSocket } from "../host/host.ts";
-import { Runs } from "../host/runs.ts";
 import { lastLines, ran, text } from "../process.ts";
 import { Declaration } from "../script.ts";
+import { ScriptHost } from "./host.ts";
 
 /** The hidden commands a child runs as: a script's run, and only its declaration. */
 export const workerCommand = "script-worker";
@@ -92,14 +91,15 @@ interface Child {
 
 const childOf = Effect.fnUntraced(function* (
 	spawner: ChildProcessSpawner.ChildProcessSpawner["Service"],
-	args: readonly string[]
+	args: readonly string[],
+	env: Readonly<Record<string, string>> = {}
 ): Effect.fn.Return<Child, never, Scope.Scope> {
 	const handle = yield* Effect.orDie(
 		spawner.spawn(
 			ChildProcess.make(
 				process.execPath,
 				[`${packageRoot}/src/main.ts`, ...args],
-				options
+				{ ...options, env }
 			)
 		)
 	);
@@ -260,16 +260,14 @@ export class Scripts extends Context.Service<
 		) => Effect.Effect<ScriptRun, ScriptFailed>;
 	}
 >()("game-testing/scripts/runner/Scripts") {
-	static readonly layer = Layer.effect(
+	/** Scripts whose children drive the host `ScriptHost` names. */
+	static readonly layerNoDeps = Layer.effect(
 		Scripts,
 		Effect.gen(function* () {
-			const socket = yield* HostSocket;
-			const runs = yield* Runs;
+			const host = yield* ScriptHost;
 			const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 			const fs = yield* FileSystem.FileSystem;
-			/** Whether the host kept a record of the run, so `run` names only runs that `runs` can read. */
-			const kept = (id: RunId) =>
-				Effect.map(Effect.option(runs.get(id)), Option.isSome);
+			const kept = host.recorded;
 
 			const run = Effect.fn("Scripts.run")(function* (
 				script: string,
@@ -282,17 +280,20 @@ export class Scripts extends Context.Service<
 				const id = given?.run ?? (yield* newRunId);
 				const outcome = yield* Effect.scoped(
 					Effect.gen(function* () {
-						const child = yield* childOf(spawner, [
-							workerCommand,
-							"--socket",
-							socket.path,
-							"--run",
-							id,
-							...(given?.attemptOf === undefined
-								? []
-								: ["--attempt-of", given.attemptOf]),
-							script,
-						]);
+						const child = yield* childOf(
+							spawner,
+							[
+								workerCommand,
+								...host.flags,
+								"--run",
+								id,
+								...(given?.attemptOf === undefined
+									? []
+									: ["--attempt-of", given.attemptOf]),
+								script,
+							],
+							host.env
+						);
 						const declaration = yield* declared(child);
 						// Nothing here limits the start: the wait for a place, the image build and the boot have their own.
 						const next = yield* nextOf(child);
@@ -333,4 +334,13 @@ export class Scripts extends Context.Service<
 			return Scripts.of({ run });
 		})
 	);
+
+	/** Scripts on this machine's host. */
+	static readonly layer = Scripts.layerNoDeps.pipe(
+		Layer.provide(ScriptHost.layer)
+	);
+
+	/** Scripts on the far machine whose `serve` `url` reaches. */
+	static readonly layerRemote = (url: string) =>
+		Scripts.layerNoDeps.pipe(Layer.provide(ScriptHost.layerRemote(url)));
 }

@@ -4,6 +4,7 @@
  * Each of those is one line of its output, for the runner.
  */
 import {
+	Config,
 	Console,
 	Context,
 	Effect,
@@ -11,6 +12,7 @@ import {
 	Layer,
 	Path,
 	Schema,
+	String as Str,
 } from "effect";
 import type { Outcome } from "../contract/record.ts";
 import type { RunId } from "../contract/values.ts";
@@ -37,7 +39,8 @@ export const declare = Effect.fn("Scripts.declare")(function* (script: string) {
 });
 
 export const work = Effect.fn("Scripts.work")(function* (options: {
-	readonly socket: string;
+	/** Its host: the socket's path of one on this machine, or the URL of a far machine's `serve`, whose token the environment holds. */
+	readonly host: string;
 	readonly script: string;
 	readonly run: RunId;
 	readonly attemptOf: RunId | undefined;
@@ -61,7 +64,12 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 	const inline = path.dirname(path.resolve(options.script)) === inlineFolder;
 	const outcome = yield* Effect.scoped(
 		Effect.gen(function* () {
-			const client = yield* Layer.build(Game.layer(options.socket));
+			const token = yield* Config.option(Config.Redacted("GAME_TESTING_TOKEN"));
+			const client = yield* Layer.build(
+				Str.startsWith("/")(options.host)
+					? Game.layer(options.host)
+					: Game.layerRemote(options.host, token)
+			);
 			const game = Context.get(client, Game);
 			const running = yield* game.start({
 				run: options.run,

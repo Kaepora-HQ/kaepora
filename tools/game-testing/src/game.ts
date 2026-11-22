@@ -3,7 +3,7 @@
  * code that drives the emulator lives only in the host.
  */
 import { BunSocket } from "@effect/platform-bun";
-import type { Scope } from "effect";
+import type { Redacted, Scope } from "effect";
 import {
 	Array as Arr,
 	Cause,
@@ -44,6 +44,7 @@ import type {
 	WriteUnsupported,
 } from "./errors.ts";
 import { failureOf, RemoteUnavailable } from "./errors.ts";
+import { connection } from "./far.ts";
 import type { ValueName, ValueOf } from "./names.ts";
 
 /** A press lasts this many frames unless the script says otherwise: long enough for the game to see it. */
@@ -151,14 +152,28 @@ export class Game extends Context.Service<
 		) => Effect.Effect<Outcome, CommandError>;
 	}
 >()("game-testing/game") {
-	/** `Game` over the Unix socket of the host at `path`, after a `Hello` that checks both ends speak one contract. */
+	/** `Game` over the Unix socket of the host at `path`, which a script's child is given. */
 	static readonly layer = (path: string) =>
+		Game.on(path).pipe(
+			Layer.provide(RpcClient.layerProtocolSocket()),
+			Layer.provide(BunSocket.layerNet({ path })),
+			Layer.provide(RpcSerialization.layerNdjson)
+		);
+
+	/** `Game` over a far machine's `serve` at `url`, with the token it was started with. */
+	static readonly layerRemote = (
+		url: string,
+		token: Option.Option<Redacted.Redacted>
+	) => Game.on(url).pipe(Layer.provide(connection(url, token)));
+
+	/** `Game` on a connection to its host at `where`, after a `Hello` that checks both ends speak one contract. */
+	private static readonly on = (where: string) =>
 		Layer.effect(
 			Game,
 			Effect.gen(function* () {
 				const client = yield* RpcClient.make(GameRpcs);
 				const lost = () =>
-					Effect.fail(RemoteUnavailable.make({ url: path, reason: "closed" }));
+					Effect.fail(RemoteUnavailable.make({ url: where, reason: "closed" }));
 				const remote = <A, E, R>(
 					call: Effect.Effect<A, E | RpcClientError.RpcClientError, R>
 				) => Effect.catchTag(call, "RpcClientError", lost);
@@ -208,7 +223,7 @@ export class Game extends Context.Service<
 									Exit.isFailure(exit)
 										? exit.cause
 										: Cause.fail(
-												RemoteUnavailable.make({ url: path, reason: "closed" })
+												RemoteUnavailable.make({ url: where, reason: "closed" })
 											)
 								)
 							),
@@ -314,9 +329,5 @@ export class Game extends Context.Service<
 
 				return Game.of({ start, finish });
 			})
-		).pipe(
-			Layer.provide(RpcClient.layerProtocolSocket()),
-			Layer.provide(BunSocket.layerNet({ path })),
-			Layer.provide(RpcSerialization.layerNdjson)
 		);
 }

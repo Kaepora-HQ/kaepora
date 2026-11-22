@@ -136,6 +136,8 @@ export const fakeMachine = (options?: {
 	readonly rewrites?: Readonly<Record<string, Value>>;
 	/** The place's container exits before its debug server answers. */
 	readonly crashes?: boolean;
+	/** Config keys besides the machine's own, such as a far machine's URL and token. */
+	readonly env?: Readonly<Record<string, string>>;
 }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
@@ -271,6 +273,7 @@ export const fakeMachine = (options?: {
 				GAME_TESTING_CARD: "nvidia",
 				GAME_TESTING_LICHII: `${home}/lichii`,
 				GAME_TESTING_DATA: `${home}/data`,
+				...options?.env,
 			})
 		);
 		const own = Layer.succeed(

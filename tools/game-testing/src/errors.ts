@@ -418,7 +418,7 @@ export class TokenRequired extends Schema.TaggedError<
 	key: Schema.String,
 }) {
 	override get message() {
-		return `${this.key} is not set, so serve does not start. Set it to a long random string.`;
+		return `${this.key} is not set, so serve does not start. Set it to a long random string, such as one openssl rand -hex 32 prints; whoever holds it can run code on this machine.`;
 	}
 }
 
@@ -431,7 +431,33 @@ export class RemoteUnavailable extends Schema.TaggedError<
 	reason: Schema.Literals(["connect", "token", "closed"]),
 }) {
 	override get message() {
-		return `The game machine at ${this.url} is unavailable (${this.reason}).`;
+		return `The game machine at ${this.url} is unavailable (${this.reason}): ${remoteNext[this.reason]}`;
+	}
+}
+
+const remoteNext = {
+	connect:
+		"check GAME_TESTING_URL, that serve runs there, and that the tunnel is up.",
+	token:
+		"GAME_TESTING_TOKEN here is not the token serve was started with there.",
+	closed:
+		"the connection closed: serve stopped there, or the tunnel dropped. Its game ended with it.",
+} as const;
+
+/**
+ * `GAME_TESTING_URL` is refused. `not-http`: it is not an http or https URL. `secret`: it holds a name or a password,
+ * which would reach a command line or an error.
+ */
+export class UrlRefused extends Schema.TaggedError<
+	UrlRefused,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/UrlRefused")("UrlRefused", {
+	reason: Schema.Literals(["not-http", "secret"]),
+}) {
+	override get message() {
+		return this.reason === "secret"
+			? "GAME_TESTING_URL holds a name or a password, which would reach a command line or an error, so it is refused. Put the token in GAME_TESTING_TOKEN, and leave the URL without one."
+			: "GAME_TESTING_URL is not an http or https URL, such as http://127.0.0.1:7481.";
 	}
 }
 

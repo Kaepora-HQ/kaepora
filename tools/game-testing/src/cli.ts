@@ -5,7 +5,9 @@
  */
 import {
 	Array as Arr,
+	Config,
 	Console,
+	Context,
 	Duration,
 	Effect,
 	FileSystem,
@@ -21,6 +23,8 @@ import { StartState } from "./contract/state.ts";
 import { NameKind, RunId } from "./contract/values.ts";
 import { writeNames } from "./data/declarations.ts";
 import { GameData } from "./data/game-data.ts";
+import { RemoteUnavailable, TokenRequired } from "./errors.ts";
+import { Far, farUrl, token } from "./far.ts";
 import { host, tables } from "./host/host.ts";
 import { Places } from "./host/places.ts";
 import { Runs } from "./host/runs.ts";
@@ -40,6 +44,7 @@ import {
 	workerCommand,
 } from "./scripts/runner.ts";
 import { declare, work } from "./scripts/worker.ts";
+import { serve as serveOn } from "./serve/server.ts";
 
 /** The package's version, which `mcp` and `serve` name to their clients. */
 export const version = "0.0.0";
@@ -51,6 +56,24 @@ const shown = <A, E extends { readonly message: string }, R>(
 	Effect.mapError(effect, (error) =>
 		CliError.UserError.make({ cause: error, userMessage: error.message })
 	);
+
+const scriptsHere = Scripts.layer.pipe(Layer.provideMerge(host));
+
+/** The scripts `run` runs: against this machine's game, or with `GAME_TESTING_URL` against the far machine's. */
+const scriptsLayer = Layer.unwrap(
+	Effect.map(
+		farUrl,
+		(
+			url
+		): Layer.Layer<
+			Scripts,
+			| Layer.Error<typeof scriptsHere>
+			| Layer.Error<ReturnType<typeof Scripts.layerRemote>>,
+			| Layer.Services<typeof scriptsHere>
+			| Layer.Services<ReturnType<typeof Scripts.layerRemote>>
+		> => (Option.isSome(url) ? Scripts.layerRemote(url.value) : scriptsHere)
+	)
+);
 
 const ended = (outcome: Outcome) =>
 	outcome._tag === "passed" || outcome._tag === "skipped";
@@ -104,7 +127,9 @@ const run = Command.make(
 	},
 	({ scripts, parallel, rerunBroken }) =>
 		Effect.gen(function* () {
-			const runner = yield* Scripts;
+			// Built here, so a far machine that cannot be reached says why on stderr.
+			const built = yield* shown(Layer.build(scriptsLayer));
+			const runner = Context.get(built, Scripts);
 			const attempt = (script: string, attemptOf?: RunId) =>
 				runner.run(script, { attemptOf }).pipe(
 					Effect.catch(
@@ -139,12 +164,11 @@ const run = Command.make(
 					userMessage: `${missed} of ${last.length} scripts neither passed nor were skipped.`,
 				});
 			}
-		})
+		}).pipe(Effect.scoped)
 ).pipe(
 	Command.withDescription(
-		"Runs scripts against this machine's game, each in a place of its own, and keeps a record of each run."
-	),
-	Command.provide(Scripts.layer.pipe(Layer.provideMerge(host)))
+		"Runs scripts against this machine's game, each in a place of its own, and keeps a record of each run. With GAME_TESTING_URL and GAME_TESTING_TOKEN set, the scripts run here against the game of the machine whose serve the URL reaches, which keeps the records."
+	)
 );
 
 /** A script's declared state, or a state written as JSON. */
@@ -241,10 +265,31 @@ const runs = Command.make(
 	({ script, limit }) =>
 		Effect.gen(function* () {
 			const records = yield* Runs;
-			for (const summary of yield* records.list({
-				script: Option.getOrUndefined(script),
-				limit,
-			})) {
+			const far = yield* shown(farUrl);
+			const filter = Option.match(script, {
+				onNone: () => ({ limit }),
+				onSome: (path) => ({ script: path, limit }),
+			});
+			const found = yield* Option.match(far, {
+				onNone: () => records.list(filter),
+				onSome: (url) =>
+					shown(
+						Effect.gen(function* () {
+							const built = yield* Layer.build(Far.layer(url));
+							const { client } = Context.get(built, Far);
+							return yield* client
+								.Runs(filter)
+								.pipe(
+									Effect.catchTag("RpcClientError", () =>
+										Effect.fail(
+											RemoteUnavailable.make({ url, reason: "closed" })
+										)
+									)
+								);
+						}).pipe(Effect.scoped)
+					),
+			});
+			for (const summary of found) {
 				yield* Console.log(
 					Arr.join(
 						Arr.filter(
@@ -264,7 +309,9 @@ const runs = Command.make(
 			}
 		})
 ).pipe(
-	Command.withDescription("Lists past runs on this machine, newest first."),
+	Command.withDescription(
+		"Lists past runs on this machine, newest first; with GAME_TESTING_URL, the far machine's runs."
+	),
 	Command.provide(Runs.layer)
 );
 
@@ -278,7 +325,7 @@ const names = Command.make("names", {}, () => writeNames).pipe(
 const worker = Command.make(
 	workerCommand,
 	{
-		socket: Flag.String("socket"),
+		host: Flag.String("host"),
 		run: Flag.String("run").pipe(Flag.withSchema(RunId)),
 		attemptOf: Flag.String("attempt-of").pipe(
 			Flag.withSchema(RunId),
@@ -286,9 +333,9 @@ const worker = Command.make(
 		),
 		script: Argument.File("script", { mustExist: true }),
 	},
-	({ socket, script, run: id, attemptOf }) =>
+	({ host: where, script, run: id, attemptOf }) =>
 		work({
-			socket,
+			host: where,
 			script,
 			run: id,
 			attemptOf: Option.getOrUndefined(attemptOf),
@@ -307,6 +354,28 @@ const declaration = Command.make(
  */
 const hosting = Layer.effectDiscard(writeNames).pipe(
 	Layer.provideMerge(Scripts.layer.pipe(Layer.provideMerge(host)))
+);
+
+const serve = Command.make("serve", {}, () =>
+	shown(
+		Effect.gen(function* () {
+			const required = yield* Effect.flatMap(token, (set) =>
+				Effect.mapError(Effect.fromOption(set), () =>
+					TokenRequired.make({ key: "GAME_TESTING_TOKEN" })
+				)
+			);
+			const port = yield* Config.Port("GAME_TESTING_PORT").pipe(
+				Config.withDefault(7480)
+			);
+			return yield* Layer.launch(
+				serveOn({ port, token: required, version }).pipe(Layer.provide(hosting))
+			);
+		})
+	)
+).pipe(
+	Command.withDescription(
+		"Serves this machine's games to callers on other machines, on 127.0.0.1 only: the commands over a WebSocket at /rpc, which game-testing run uses with GAME_TESTING_URL, and the MCP tools over HTTP at /mcp. It needs GAME_TESTING_TOKEN, and every request must carry it as Authorization: Bearer <token>. The token is as strong as a shell on this machine: whoever holds it can send a script, and the script runs here as you. A tunnel you run gives it reach, such as ssh -L or tailscale serve. GAME_TESTING_PORT sets the port, 7480 unless set."
+	)
 );
 
 // The host is built inside the command, so a start that fails says why through the command line, on stderr: stdout
@@ -341,6 +410,7 @@ export const cli = Command.make("game-testing").pipe(
 		runs,
 		names,
 		mcp,
+		serve,
 		worker,
 		declaration,
 	])

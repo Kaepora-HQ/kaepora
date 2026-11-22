@@ -67,9 +67,17 @@
 					"effect/observability",
 					"effect/http/FetchHttpClient",
 					// The MCP tools and their server.
-					"effect/ai"
+					"effect/ai",
+					// serve, and a far machine's WebSocket.
+					"effect/http",
+					"effect/crypto/Mac",
+					"@effect/platform-bun/BunHttpServer",
+					"@effect/platform-bun/BunSocket#layerWebSocket",
+					// The address serve listens on, as its test reads it.
+					"effect/net/NetAddress"
 				],
-				"allowedExperimentalApis": [],
+				// A real MCP client over HTTP, in serve's test.
+				"allowedExperimentalApis": ["effect/ai/McpClient"],
 				"diagnosticSeverity": {
 					"abortControllerInEffect": "error",
 					"acquireReleaseDisposable": "error",
