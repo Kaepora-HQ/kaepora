@@ -166,6 +166,10 @@ if(Qt6_FOUND)
     target_link_libraries(kaepora-game-values PUBLIC Qt6::Network PRIVATE kaepora-patch-files)
     target_compile_options(kaepora-game-values PRIVATE ${WARNINGS})
 
+    add_library(kaepora-tracker-window STATIC kaepora/tracker_painter.cpp)
+    target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values Qt6::Gui)
+    target_compile_options(kaepora-tracker-window PRIVATE ${WARNINGS})
+
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
                            kaepora/window.cpp $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network)
@@ -375,6 +379,19 @@ if(Qt6Test_FOUND)
                           aNewGameShowsWhatLinkHolds nothingShowsWhileTheGameBootsBeforeTheTitle)
         add_test(NAME tracker_${TEST} COMMAND kaepora-tracker-test ${TEST})
         set_tests_properties(tracker_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
+    endforeach()
+
+    add_executable(kaepora-tracker-window-test tests/tracker_window_test.cpp)
+    set_target_properties(kaepora-tracker-window-test PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-tracker-window-test PRIVATE kaepora-tracker-window Qt6::Test)
+    target_compile_options(kaepora-tracker-window-test PRIVATE ${WARNINGS})
+    foreach(TEST IN ITEMS aLitCellShowsItsPicture anUnlitCellShowsItsPictureInAFaintGrey aTintedCellShowsItsTint
+                          aCountIsDrawnAtTheCellsLowerRight aCountOfAllIsDrawnInAColourOfItsOwn aHiddenBlockTakesNoRoom
+                          aPictureFillsACellOfTheLooksSide theBackgroundFillsTheGrid
+                          aSeeThroughBackgroundLeavesSeeThroughPixels)
+        add_test(NAME tracker_window_${TEST} COMMAND kaepora-tracker-window-test ${TEST})
+        set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT
+                             "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
     endforeach()
 endif()
 
