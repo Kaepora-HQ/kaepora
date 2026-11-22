@@ -1,0 +1,20 @@
+# Lichii's build, the game file and the place's folder are shared in when the place is made, so the image holds nothing
+# of the game's and no Lichii build.
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
+
+# Lichii's release package links these besides sway and Mesa, and takes its fonts from the system. socat is the relay
+# `start` runs.
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+		sway mesa-vulkan-drivers libvulkan1 libegl1 libgles2 libgbm1 \
+		libgl1 libglx0 libopengl0 libasound2t64 libusb-1.0-0 fonts-dejavu-core socat \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Lichii's settings, storage, save, mods, shader cache and log all fall under the place's folder.
+ENV XDG_CONFIG_HOME=/place/config XDG_DATA_HOME=/place/data XDG_CACHE_HOME=/place/cache XDG_RUNTIME_DIR=/tmp/run
+# NVIDIA's Container Toolkit mounts the card's GBM backend where the host keeps it, /usr/lib/gbm on Arch. Without it
+# sway has no buffers for its output, and Lichii stalls after its first few frames.
+ENV GBM_BACKENDS_PATH=/usr/lib/x86_64-linux-gnu/gbm:/usr/lib/gbm
+
+COPY start /usr/local/bin/start
+ENTRYPOINT ["/usr/local/bin/start"]

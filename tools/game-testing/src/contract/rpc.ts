@@ -10,10 +10,12 @@ import {
 	DumpFailed,
 	EmulatorRefused,
 	EmulatorUnavailable,
+	ImageBuildFailed,
 	LaunchFailed,
 	NobodyThere,
 	NoFreePlace,
 	NoGameHere,
+	NoGraphicsCard,
 	RunNotFound,
 	SaveUnreadable,
 	SessionNotFound,
@@ -53,6 +55,8 @@ const StartErrors = Schema.Union([
 	UnknownName,
 	StateRefused,
 	NoFreePlace,
+	NoGraphicsCard,
+	ImageBuildFailed,
 	SettingsUnsafe,
 	LaunchFailed,
 	EmulatorUnavailable,
@@ -66,7 +70,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 2;
+export const contract = 3;
 
 /** Who answers a hand over in this session: a person at the machine, or nobody (CI refuses every hand over). */
 export const Person = Schema.Literals(["here", "nobody"]);
@@ -87,7 +91,6 @@ export type SessionEvent = typeof SessionEvent.Type;
 /** A place and who holds it. */
 export const PlaceStatus = Schema.Struct({
 	place: PlaceId,
-	debugPort: Schema.Int,
 	holder: Schema.optionalKey(
 		Schema.Struct({
 			session: SessionId,

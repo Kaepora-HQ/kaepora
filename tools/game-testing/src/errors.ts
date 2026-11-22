@@ -91,6 +91,31 @@ export class SettingsUnsafe extends Schema.TaggedError<
 }
 
 /**
+ * Podman lists no device `nvidia.com/gpu=all`, so no place can reach this machine's NVIDIA card, and nothing was
+ * started.
+ */
+export class NoGraphicsCard extends Schema.TaggedError<
+	NoGraphicsCard,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/NoGraphicsCard")("NoGraphicsCard", {}) {
+	override readonly message =
+		"Podman lists no device nvidia.com/gpu=all, so no place here can reach the NVIDIA card, and nothing was started. Install NVIDIA's Container Toolkit (the nvidia-container-toolkit package), or write its device list again with sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml.";
+}
+
+/** The place image did not build, so nothing was started. The next take builds it again. */
+export class ImageBuildFailed extends Schema.TaggedError<
+	ImageBuildFailed,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/ImageBuildFailed")("ImageBuildFailed", {
+	image: Schema.String,
+	detail: Schema.String,
+}) {
+	override get message() {
+		return `podman build of ${this.image} failed, and nothing was started: ${this.detail}`;
+	}
+}
+
+/**
  * The emulator did not reach a ready signal. `stage` names the first signal it missed, in order: `spawn`, `debug-port`,
  * `first-frame`, `title`, `loaded`, `control`, or `exited` when the process ended first. `logTail` is the end of its
  * log.
@@ -353,6 +378,8 @@ export type StartError =
 	| UnknownName
 	| StateRefused
 	| NoFreePlace
+	| NoGraphicsCard
+	| ImageBuildFailed
 	| SettingsUnsafe
 	| LaunchFailed
 	| EmulatorUnavailable

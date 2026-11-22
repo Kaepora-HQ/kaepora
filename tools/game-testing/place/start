@@ -1,0 +1,45 @@
+#!/bin/sh
+# A stop's SIGTERM reaches only the container's first process, this script, so the trap comes before anything a
+# signal could cut short. Until Lichii runs there is nothing to stop cleanly. Lichii's own handler runs once, and a
+# second SIGTERM ends it without its clean-up, so it gets one however many stops arrive.
+stop() {
+	[ -z "$stopping" ] || return 0
+	stopping=1
+	[ -n "$lichii" ] || exit 143
+	kill -TERM "$lichii"
+}
+trap stop TERM
+exec > /place/place.log 2>&1
+# The holder listens on this socket while it lives. When the connection ends, or cannot be made, the holder is gone.
+(socat -u UNIX-CONNECT:/place/holder.sock /dev/null; kill -TERM $$) &
+mkdir -p -m 700 "$XDG_RUNTIME_DIR"
+# Without xwayland disabled, sway logs an error for the Xwayland the image lacks.
+printf 'xwayland disable\noutput HEADLESS-1 resolution 1920x1080\n' > "$XDG_RUNTIME_DIR/sway.conf"
+WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 sway --unsupported-gpu --config "$XDG_RUNTIME_DIR/sway.conf" &
+sway=$!
+until [ -S "$XDG_RUNTIME_DIR/wayland-1" ]; do
+	kill -0 "$sway" || exit 1
+	sleep 0.1
+done
+# The working folder never holds a user folder, which would switch Lichii to portable mode.
+cd /place/work
+# The debug server takes only a loopback address, and a place's loopback is its own.
+EDEN_NX2_DEBUG_SERVER=127.0.0.1:6560 WAYLAND_DISPLAY=wayland-1 QT_QPA_PLATFORM=wayland /opt/lichii/lichii -g /game/oot.nup &
+lichii=$!
+# Once the server listens (port 6560 is 19A0 in /proc/net/tcp), the relay passes it through a socket file the holder
+# can reach, one connection to the server for each connection to the file.
+(
+	until grep -q ':19A0 00000000:0000 0A' /proc/net/tcp; do
+		kill -0 "$lichii" 2> /dev/null || exit
+		sleep 0.2
+	done
+	exec socat UNIX-LISTEN:/place/debug.sock,fork,unlink-early,mode=600 TCP:127.0.0.1:6560
+) &
+# A trapped signal ends a wait early, so wait until Lichii is gone.
+while kill -0 "$lichii" 2> /dev/null; do
+	wait "$lichii"
+	status=$?
+done
+kill -TERM "$sway"
+wait "$sway"
+exit "$status"

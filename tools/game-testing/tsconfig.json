@@ -39,6 +39,10 @@
 					// The debug server's TCP connection.
 					"effect/socket",
 					"@effect/platform-node-shared/NodeSocket",
+					// The podman commands a place runs.
+					"effect/process",
+					// The XDG data folder the places live under.
+					"effect/persistence/UserDirectories",
 					// The wire log file, and the files the tests read back.
 					"effect/FileSystem",
 					"@effect/platform-bun/BunFileSystem",
