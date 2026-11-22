@@ -262,11 +262,20 @@ has given another item (seen); their own scenes have not. Zelda's scene still sh
 pick the fanfare and the sparkle by the arrows' name, and three more bind the arrows' model, set its detail and turn it
 (read). Its window names the seed's item.
 
-King Zora's ice stands only while the Water quest is not complete, and his thanks come only after the thaw (read from
-the placement files and his talk). So a Link who finishes the Water Temple first never gets what King Zora would hand
-over: his talk then sends a Link with no Zora Tunic to the Zora shop's keeper, who gives one, whatever King Zora's place
-holds. While "Gifts" shuffles King Zora's place, Morpha waits for King Zora's thanks, and the route names King Zora
-before Morpha.
+In the game King Zora's ice stands only while the Water Sage's quest is not complete, and his thanks come only after the
+thaw (read from the placement files and his talk). A Link who finished the Water Temple first would never get what King
+Zora hands over: his talk then sends a Link with no Zora Tunic to the Zora shop's keeper, who gives one, whatever King
+Zora's place holds. Once that quest is complete an adult sees a domain of its own, `ZoraDomain_Adult_Alternative`, whose
+ice has a presence on the quest complete, negated, so it never stands there. Every plan points that presence at the
+thaw's played flag, `HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice`, still negated. Seen in the game: after the
+temple, a King Zora never thawed stands in the ice, and Blue Fire thaws him. His scene gives the seed's item, and after
+a save and a load the ice is gone and his talk gives nothing. The thaw's request has three inputs: the ice hit by Blue
+Fire, the thaw's scene not yet played, and the saved Bool `SageOfWater_KingZora_RedIce` false. That Bool starts false,
+and no game file writes it (read). The decoded program holds neither its name nor its hash (measured). Seen in the game,
+in the game's own order: a King Zora thawed before the temple stands in no ice after it. The thawed domain's own ice key
+stays clear in that order, so the presence alone keeps the ice away (read from the saves). After the temple Link walks
+and climbs through Zora's Fountain to the Ice Cavern and fills a bottle with Blue Fire. While "Gifts" shuffles King
+Zora's place, Morpha waits for King Zora's thanks, and the route names King Zora before Morpha.
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
 A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a

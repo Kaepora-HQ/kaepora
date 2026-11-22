@@ -152,6 +152,11 @@ QUEST_TEXTS = [
      "text": "Sequence_IsAlternative_ZoraDomainAdult"},
     {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
      "text": "Get_Epona_IsAfter_Ready_Exp"}]
+# King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
+# in every seed.
+KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
+                 "hash": "3341274640047764997", "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
+                 "replaces": "SageOfWater_IsCompleted_Exp"}
 # The Desert Colossus's way into the Wasteland and the Spirit Temple's front entrance, in both ages' files, stand only
 # once the Spirit quest is past Step02 in every seed that shuffles the songs.
 COLOSSUS_GATES = [{"file": f"Banc/DesertColossus/DesertColossus_{age}_Static.bcett.byml.zs", "hash": hash,
@@ -540,7 +545,13 @@ class SeedgenTest(unittest.TestCase):
         _, plan = self.generate("12")
         self.assertEqual(plan["event_texts"], QUEST_TEXTS)
         self.assertEqual(plan["event_numbers"], [])
-        self.assertEqual(plan["presences"], [])
+
+    def test_plan_keeps_king_zoras_ice_until_he_is_thawed(self):
+        # The game's ice in the domain after the Water Temple never stands, so a Link who finished the temple first
+        # would never get what King Zora hands over.
+        for settings in (None, {"Gifts": GIFT_GROUPS}):
+            _, plan = self.generate("12", settings)
+            self.assertEqual(plan["presences"], [KING_ZORA_ICE], settings)
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
@@ -1224,7 +1235,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["event_texts"], QUEST_TEXTS + SONG_FIXES + texts)
         self.assertEqual(plan["event_numbers"], numbers)
         self.assertEqual(len(numbers), 26)
-        self.assertEqual(plan["presences"], COLOSSUS_GATES)
+        self.assertEqual(plan["presences"], [KING_ZORA_ICE] + COLOSSUS_GATES)
 
     def test_a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere(self):
         # Seed 22's route learns songs at places that teach others in the game.

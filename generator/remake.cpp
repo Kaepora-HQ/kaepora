@@ -12,6 +12,7 @@
 #include <format>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <set>
 #include <span>
@@ -781,6 +782,7 @@ struct Presence {
     std::string_view file;
     std::string_view hash;
     std::string_view flag;
+    std::optional<std::string_view> replaces;
 };
 
 // Presences every seed that shuffles the songs carries. With the Requiem learned elsewhere, Link can warp to the Desert
@@ -797,6 +799,13 @@ static constexpr Presence colossusGates[] = {
     { colossusChild, "18409754566529742762", pastSpiritStep02 },
     { colossusChild, "15448624735210695325", pastSpiritStep02 },
 };
+
+// In the domain an adult sees once the Water Sage's quest is complete, King Zora's ice stands only while that quest is
+// not complete, so it never stands. Only that ice starts his thaw, which gives what his place holds.
+static constexpr Presence kingZoraIce = { .file = "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
+                                          .hash = "3341274640047764997",
+                                          .flag = "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
+                                          .replaces = "SageOfWater_IsCompleted_Exp" };
 
 static constexpr std::string_view smallKeyDoors[] = {
     "1163369963105284964",  "2293725469462648563",  "3225055400115517869",  "5481916789431949409",
@@ -890,9 +899,13 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["presences"] = nlohmann::ordered_json::array();
+    plan["presences"].push_back({ { "file", kingZoraIce.file },
+                                  { "hash", kingZoraIce.hash },
+                                  { "flag", kingZoraIce.flag },
+                                  { "replaces", *kingZoraIce.replaces } });
     if (!songs.empty()) {
-        for (const auto& [file, hash, flag] : colossusGates) {
-            plan["presences"].push_back({ { "file", file }, { "hash", hash }, { "flag", flag } });
+        for (const Presence& gate : colossusGates) {
+            plan["presences"].push_back({ { "file", gate.file }, { "hash", gate.hash }, { "flag", gate.flag } });
         }
     }
     const auto addText = [&](std::string_view flow, std::string_view event, std::string_view param,

@@ -192,6 +192,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere
                      a_route_warps_a_child_to_the_colossus_only_after_a_song_that_takes_him_out
                      plan_opens_the_doors_the_rules_count_open plan_keeps_quests_from_going_back
+                     plan_keeps_king_zoras_ice_until_he_is_thawed
                      same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      loose_items_the_remake_keeps_in_chests_are_shuffled

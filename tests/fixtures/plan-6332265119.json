@@ -1311,7 +1311,14 @@
       "drop_actor": "TBox_Rupee_Red"
     }
   ],
-  "presences": [],
+  "presences": [
+    {
+      "file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
+      "hash": "3341274640047764997",
+      "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
+      "replaces": "SageOfWater_IsCompleted_Exp"
+    }
+  ],
   "event_texts": [
     {
       "flow": "Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs",

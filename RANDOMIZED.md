@@ -47,8 +47,6 @@ You still do what the game asks for each one. What you are handed is the seed's 
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
 
-Thaw King Zora before you finish the Water Temple. Once the temple is done his ice is gone, and so is what he would have handed you. The seed's route always thaws him first.
-
 ## Songs
 
 Set **Songs** to **Shuffled among themselves**, and the twelve songs change places. Every place that teaches a song still teaches one, so Impa may teach the Minuet of the Forest and Malon may teach Saria's Song.
