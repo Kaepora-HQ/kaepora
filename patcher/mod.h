@@ -122,6 +122,7 @@ struct Plan {
     std::vector<PlannedActorItem> skulltulas;
     std::vector<PlannedActorItem> looseItems;
     std::vector<std::string> startItems; // actors a new game holds, as after a find of each in turn
+    std::vector<std::string> claims;     // saved Bools of the mod's own, false in a new game
 };
 
 // Throws, naming the part, when the plan is not the shape the generator writes.

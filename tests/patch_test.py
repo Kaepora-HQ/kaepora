@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
-           loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|goods-and-copies| \
+           loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
            river-arrival-writes-no-step <kaepora-patch> <game.nup>
@@ -571,7 +571,7 @@ def actor(placement, hash):
 
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
-         loose_items=(), event_numbers=(), presences=(), start_items=()):
+         loose_items=(), event_numbers=(), presences=(), start_items=(), claims=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -587,7 +587,8 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "cutscenes_skipped": cutscenes_skipped,
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
             "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
-            "start_items": list(start_items)}
+            "start_items": list(start_items),
+            "claims": list(claims)}
 
 
 def shop_slot(slot, item, price):
@@ -1181,7 +1182,7 @@ def together(patch, game):
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "stone_texts", "message_texts",
-                         "shops", "skulltulas", "loose_items", "start_items")}
+                         "shops", "skulltulas", "loose_items", "start_items", "claims")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
               "cutscenes_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
@@ -1975,6 +1976,26 @@ def loose_spot_keys(patch, game):
     assert entries[size_key(GAME_DATA_LIST)] == load_size(size), (entries[size_key(GAME_DATA_LIST)], size)
 
 
+def claims(patch, game):
+    """Each claim of the plan is a Bool of the mod's own in the game data list, false in a new game, reset type 8 and
+    kept in the progress save, as the game keeps its own once-only flags. A Bool is a record of its save's table: the
+    list's save sizes hold to the rule the game's lists follow, and each claim moves the table's end, the save's size and
+    the offset and size of all saves by 8 bytes."""
+    names = ["Kaepora_Once_1", "Kaepora_Once_2"]
+    mod = patched(patch, game, plan([], claims=names))
+    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    ours = game.game_data_list(mod[GAME_DATA_LIST])
+    added = [{"DefaultValue": (BOOL, 0), "Hash": (UINT, murmur3(name)), "ResetTypeValue": (INT, 8),
+              "SaveFileIndex": (INT, 0)} for name in names]
+    assert ours["Data"] == theirs["Data"] | {"Bool": theirs["Data"]["Bool"] + added}
+    grown = save_layout(theirs)
+    for key in ("SaveDataOffsetPos", "SaveDataSize"):
+        grown[key] = [(INT, grown[key][0][1] + 16), *grown[key][1:]]
+    for key in ("AllDataSaveOffset", "AllDataSaveSize"):
+        grown[key] = (INT, grown[key][1] + 16)
+    assert save_layout(ours) == grown
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -2740,6 +2761,11 @@ def bad_input(patch, game):
         {key: value for key, value in good.items() if key != "start_items"}, ["plan.json", "start_items"])
     plans["start item listed twice"] = (good | {"start_items": ["Item_Hammer", "Item_Hammer"]},
                                         ["plan.json", "start_items", "Item_Hammer", "twice"])
+    plans["no claims"] = ({key: value for key, value in good.items() if key != "claims"}, ["plan.json", "claims"])
+    plans["claim listed twice"] = (good | {"claims": ["Kaepora_Once_1", "Kaepora_Once_1"]},
+                                   ["plan.json", "claims", "Kaepora_Once_1", "twice"])
+    plans["claim of a value the list has"] = (good | {"claims": ["IsGet.Item_Hammer"]},
+                                              ["IsGet.Item_Hammer", "hash of a value in Bool"])
     # A find of each of these writes more than a start does: a bottle its slot and Din's Fire the magic meter. A
     # bombchu goes into a bomb bag, which the start does not hold.
     for item, reason in (("Item_Bottle", "Bottle"), ("Item_DinFire", "MPMaxUP"), ("Item_Bombchu", "bag")):
@@ -2913,6 +2939,7 @@ def main():
         "tested-skulltula-mod": tested_skulltula_mod,
         "loose-item-table": loose_item_table,
         "loose-spot-keys": loose_spot_keys,
+        "claims": claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
         "presence": presence,

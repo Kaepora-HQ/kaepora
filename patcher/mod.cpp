@@ -269,6 +269,12 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("start_items: {} is listed twice", item));
         }
     }
+    plan.claims = json.at("claims").get<std::vector<std::string>>();
+    for (const std::string& claim : plan.claims) {
+        if (std::ranges::count(plan.claims, claim) > 1) {
+            throw std::runtime_error(std::format("claims: {} is listed twice", claim));
+        }
+    }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
     plan.openingSkipped = json.at("opening_skipped").get<bool>();
     plan.cutscenesSkipped = json.at("cutscenes_skipped").get<bool>();
@@ -878,7 +884,7 @@ static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::st
 }
 
 // The kinds of value a mod adds to the game data list.
-enum class Added { Key };
+enum class Added { Key, Bool };
 
 // What a save keeps of each value it holds.
 constexpr uint64_t SavedValueSize = 8;
@@ -889,19 +895,24 @@ static uint64_t HashOf(byml::Node& value) {
 
 // Adds the value where the list keeps its kind, and grows the list's save sizes by what the save keeps of it. A
 // per-actor key is no record of its save's table: it lies past the table, among the keys in hash order, so it grows the
-// save's size and the size of all saves, and the table's end stays. That is the layout the game's own two lists keep
-// (measured on .100 and .110).
+// save's size and the size of all saves, and the table's end stays. A Bool is a record of its save's table, after the
+// list's Bools, so it also moves the end of the save's table and the offset of all saves. That is the layout the game's
+// own two lists keep (measured on .100 and .110).
 static void Add(byml::Node& list, Added kind, byml::Node value) {
     byml::Node& meta = Value(list, "MetaData");
     const uint64_t save = Value(value, "SaveFileIndex").scalar;
-    const std::vector<byml::Node*> grown = { &Value(meta, "SaveDataSize").array.at(save),
-                                             &Value(meta, "AllDataSaveSize") };
+    std::vector<byml::Node*> grown = { &Value(meta, "SaveDataSize").array.at(save), &Value(meta, "AllDataSaveSize") };
     switch (kind) {
     case Added::Key: {
         std::vector<byml::Node>& keys = Value(Value(list, "Data"), "Bool64bitKey").array;
         keys.insert(std::ranges::lower_bound(keys, HashOf(value), {}, HashOf), std::move(value));
         break;
     }
+    case Added::Bool:
+        Value(Value(list, "Data"), "Bool").array.push_back(std::move(value));
+        grown.push_back(&Value(meta, "SaveDataOffsetPos").array.at(save));
+        grown.push_back(&Value(meta, "AllDataSaveOffset"));
+        break;
     }
     for (byml::Node* size : grown) {
         size->scalar += SavedValueSize;
@@ -913,6 +924,19 @@ constexpr uint64_t LooseSpotResetType = 24;
 
 // The first of MetaData's save files, slot_NN/progress.sav, where the game keeps every per-actor key.
 constexpr uint64_t ProgressSave = 0;
+
+// The reset type the game gives its own once-only flags, which a Bool of the mod's own takes too.
+constexpr uint64_t OnceOnlyResetType = 8;
+
+// A Bool of the mod's own, as the game keeps its own once-only flags: false in a new game, kept in the progress save.
+static byml::Node ClaimBool(uint32_t hash) {
+    byml::Node entry{ .type = byml::Type::Dict };
+    FindOrAdd(entry, "DefaultValue", byml::Type::Bool).scalar = 0;
+    FindOrAdd(entry, "Hash", byml::Type::UInt).scalar = hash;
+    FindOrAdd(entry, "ResetTypeValue", byml::Type::Int).scalar = OnceOnlyResetType;
+    FindOrAdd(entry, "SaveFileIndex", byml::Type::Int).scalar = ProgressSave;
+    return entry;
+}
 
 // A loose spot's key, as the game gives every loose spot's.
 static byml::Node LooseSpotKey(uint64_t hash) {
@@ -927,11 +951,13 @@ static byml::Node LooseSpotKey(uint64_t hash) {
 // of the game's 2, the type that the game's data has a day change reset. An entry's reset type and every default but a
 // String64's sit inside the entry. A String64's default is a name in the list's string table, which holds none of the
 // item names a start writes, so each such name grows the list. A taken pickup stays taken by the key its spot has in
-// the list, so each loose spot the list has no key for gets one. Gives nothing when the list stays the game's.
+// the list, so each loose spot the list has no key for gets one. Each claim is a Bool of the mod's own, under a name no
+// value of the list has. Gives nothing when the list stays the game's.
 static std::optional<std::string> GameDataList(GameFile& game, const std::string& dictionary,
                                                const std::map<std::string, StartValue>& values,
                                                const std::set<std::string>& soldOnce,
-                                               const std::vector<PlannedActorItem>& looseItems) {
+                                               const std::vector<PlannedActorItem>& looseItems,
+                                               const std::vector<std::string>& claims) {
     try {
         byml::Document list = byml::Parse(Decompress(game.Read(std::string(GameDataListPath)), dictionary));
         byml::Node* data = Find(list.root, "Data");
@@ -965,7 +991,17 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
                 keyed = true;
             }
         }
-        if (values.empty() && soldOnce.empty() && !keyed) {
+        for (const std::string& claim : claims) {
+            const uint32_t hash = Murmur3(claim);
+            for (byml::Entry& table : data->dict) {
+                if (FindHash(table.value, hash) != nullptr) {
+                    throw std::runtime_error(
+                        std::format("claim \"{}\" has the hash of a value in {}", claim, table.key));
+                }
+            }
+            Add(list.root, Added::Bool, ClaimBool(hash));
+        }
+        if (values.empty() && soldOnce.empty() && !keyed && claims.empty()) {
             return std::nullopt;
         }
         return byml::Write(list);
@@ -1544,8 +1580,8 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
         }
     }
-    if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty()) {
-        if (const auto data = GameDataList(game, zsDictionary, startValues, soldOnce, plan.looseItems)) {
+    if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty() || !plan.claims.empty()) {
+        if (const auto data = GameDataList(game, zsDictionary, startValues, soldOnce, plan.looseItems, plan.claims)) {
             tableChanged |= RaiseSize(table, GameDataListPath, data->size(), GameDataListOverhead);
             addToRomfs(GameDataListPath, Compress(*data, zsDictionary));
         }
