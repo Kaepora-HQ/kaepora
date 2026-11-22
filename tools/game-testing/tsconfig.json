@@ -44,8 +44,10 @@
 					"@effect/platform-bun/BunFileSystem",
 					// kaepora-dump, which reads the game file.
 					"effect/process",
-					// The cache folder for the game's tables.
-					"effect/persistence/UserDirectories"
+					// The cache folder of the game's tables, and the data folder of the base saves.
+					"effect/persistence/UserDirectories",
+					// The checks on the real game run kaepora-dump with Bun's own services.
+					"@effect/platform-bun/BunServices"
 				],
 				"allowedExperimentalApis": [],
 				"diagnosticSeverity": {
