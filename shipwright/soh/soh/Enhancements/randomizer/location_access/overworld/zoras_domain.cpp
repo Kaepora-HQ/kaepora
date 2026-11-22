@@ -9,7 +9,7 @@ void RegionTable_Init_ZorasDomain() {
         //Events
         EVENT_ACCESS(LOGIC_FAIRY_ACCESS,         logic->CallGossipFairyExceptSuns()),
         EVENT_ACCESS(LOGIC_NUT_ACCESS,           logic->CanBreakPots()),
-        EVENT_ACCESS(LOGIC_STICK_ACCESS,         logic->IsChild && logic->CanBreakPots()),
+        // The remake's stick pot gives a child who has never held a Deku Stick a Green Rupee instead, and stays broken.
         EVENT_ACCESS(LOGIC_FISH_ACCESS,          logic->IsChild),
         EVENT_ACCESS(LOGIC_KING_ZORA_THAWED,     logic->IsAdult && logic->BlueFire()),
         EVENT_ACCESS(LOGIC_DELIVER_RUTOS_LETTER, logic->CanUse(RG_RUTOS_LETTER) && logic->IsChild && ctx->GetOption(RSK_ZORAS_FOUNTAIN).IsNot(RO_ZF_OPEN)),

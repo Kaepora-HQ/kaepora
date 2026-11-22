@@ -8,7 +8,8 @@ void RegionTable_Init_GoronCity() {
     areaTable[RR_GORON_CITY] = Region("Goron City", SCENE_GORON_CITY, {
         //Events
         EVENT_ACCESS(LOGIC_FAIRY_ACCESS,                           logic->CallGossipFairyExceptSuns()),
-        EVENT_ACCESS(LOGIC_STICK_ACCESS,                           logic->IsChild && logic->CanBreakPots()),
+        // The hidden stick in a pot here, a Goron child's, gives once. The stick pot in Darunia's chamber takes Zora's
+        // Domain's table, which gives no first stick.
         EVENT_ACCESS(LOGIC_BUG_ACCESS,                             (logic->BlastOrSmash() && logic->HasItem(RG_POWER_BRACELET)) || logic->CanUse(RG_SILVER_GAUNTLETS)),
         EVENT_ACCESS(LOGIC_GORON_CITY_CHILD_FIRE,                  logic->IsChild && logic->CanUse(RG_DINS_FIRE)),
         // From the city, Din's Fire breaks the Lost Woods shortcut's rock (seen).

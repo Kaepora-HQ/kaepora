@@ -26,7 +26,8 @@ void RegionTable_Init_BottomOfTheWell() {
 
     areaTable[RR_BOTW_PERIMETER] = Region("Bottom of the Well Perimeter", SCENE_BOTTOM_OF_THE_WELL, {
         //Events
-        EVENT_ACCESS(LOGIC_STICK_ACCESS,       logic->CanBreakPots()),
+        // No pot in the remake's well gives a first Deku Stick. One may drop a stick by chance to a Link low on them,
+        // which is no source a route rests on.
         EVENT_ACCESS(LOGIC_NUT_ACCESS,         logic->CanBreakPots()),
         EVENT_ACCESS(LOGIC_BOTW_LOWERED_WATER, logic->CanUse(RG_ZELDAS_LULLABY)),
     }, {

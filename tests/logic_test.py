@@ -509,6 +509,17 @@ class LogicTest(unittest.TestCase):
         no_hylian_shield = ("Market Bazaar Item 1", "Green Rupee")
         self.assertFalse(self.reachable("Deku Tree Map Chest", no_deku_shield, no_hylian_shield, settings=CLOSED_DEKU))
 
+    def test_no_pot_gives_a_deku_stick(self):
+        # Zora's Domain's chest asks a child for a stick to light its torches. A child who never grows up, with no
+        # sword and no Boomerang, kills no Deku Baba, so his stick comes from a shop's shelf. The Bomb Bag and the
+        # Song of Storms take him to the pots of Goron City, Zora's Domain and the well, and none gives him one.
+        no_stick_shelf = ("KF Shop Item 4", "Green Rupee")
+        world = (("KF Kokiri Sword Chest", "Green Rupee"), NO_BOOMERANG, NEVER_ADULT,
+                 ("Market Bazaar Item 7", "Green Rupee"), ("KF Mido Top Left Chest", "Progressive Bomb Bag"),
+                 ("Link's Pocket", "Song of Storms"))
+        self.assertTrue(self.reachable("ZD Chest", *world, settings=FOREST_OPEN))
+        self.assertFalse(self.reachable("ZD Chest", no_stick_shelf, *world, settings=FOREST_OPEN))
+
     def test_an_open_bridge_needs_no_light_arrows(self):
         # Zelda gives the Light Arrows after the Spirit and the Shadow sages wake, and the bridge appears after her.
         no_light_arrows = ("Market ToT Light Arrow Cutscene", "Green Rupee")
