@@ -79,7 +79,7 @@ The seed's item lies where the game's did, and you take it by walking into it. A
 
 ## Dungeon rewards
 
-Set **Dungeon rewards** to **Shuffled**, and the nine places where the game hands over a Spiritual Stone or a medallion join the shuffle: the eight dungeon bosses and Rauru. A boss can then leave you the Hookshot, and a stone or a medallion can turn up somewhere else. A dungeon you untick under **Shuffled dungeons** keeps its boss's own.
+Nine places hand over a Spiritual Stone or a medallion: the eight dungeon bosses and Rauru. Set **Dungeon rewards** to **Shuffled among themselves**, and those nine hand over the nine rewards in a new order, so Queen Gohma may leave you the Fire Medallion. Set it to **Shuffled**, and the nine places join the shuffle with everything else: a boss can then leave you the Hookshot, and a stone or a medallion can turn up somewhere else. A dungeon you untick under **Shuffled dungeons** keeps its boss's own. The scene still shows the dungeon's own stone or medallion.
 
 The stones and medallions open nothing by themselves: the doors and scenes the story ties to them wait for their bosses, as the game has it. With **Vanilla**, each boss gives what the game has.
 

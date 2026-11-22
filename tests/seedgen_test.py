@@ -164,6 +164,7 @@ REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
 REWARDS_SHUFFLED = {"Dungeon rewards": "Shuffled"}
+REWARDS_AMONG_THEMSELVES = {"Dungeon rewards": "Shuffled among themselves"}
 # The SoH area a hint names each reward place by. Their names have no area in front.
 REWARD_AREAS = {"Queen Gohma": "Deku Tree", "King Dodongo": "Dodongos Cavern", "Barinade": "Jabu Jabus Belly",
                 "Phantom Ganon": "Forest Temple", "Volvagia": "Fire Temple", "Morpha": "Water Temple",
@@ -1398,14 +1399,29 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual({kind for _, kind in held}, {"chest", "gift", "reward place"}, held)
         self.assertTrue(held[True, "chest"] and held[False, "chest"], held)
 
+    def test_dungeon_rewards_shuffled_among_themselves(self):
+        # As SoH's "End of Dungeons": the nine rewards go to the nine places that hand one over, and nowhere else.
+        moved = 0
+        for seed in map(str, range(860, 870)):
+            spoiler, plan = self.generate(seed, REWARDS_AMONG_THEMSELVES)
+            self.assertEqual(spoiler["settings"]["Dungeon rewards"], "Shuffled among themselves")
+            sites = dict(reward_sites(plan))
+            self.assertEqual(sorted(sites), sorted(REWARD_LOCATIONS.values()), seed)
+            self.assertEqual(sorted(sites.values()), sorted(REWARDS), seed)
+            self.assertEqual({location for location, item in placed_remake_items(spoiler, plan).items()
+                              if item in REWARDS}, set(sites), seed)
+            moved += sum(sites[row["location"]] != row["item"] for row in REWARD_SITES)
+        self.assertTrue(moved)
+
     def test_a_dungeon_left_out_keeps_its_boss_reward(self):
-        settings = REWARDS_SHUFFLED | GIFTS_SHUFFLED | {"Shuffled dungeons": [name for name in DUNGEONS
-                                                                               if name != "Water Temple"]}
-        spoiler, plan = self.generate("1", settings)
-        self.assertNotIn("Morpha", spoiler["locations"])
-        self.assertNotIn("Morpha", dict(reward_sites(plan)))
-        self.assertNotIn("Item_Medal_Water", placed_remake_items(spoiler, plan).values())
-        self.assertIn("Twinrova", spoiler["locations"])
+        for rewards in (REWARDS_SHUFFLED, REWARDS_AMONG_THEMSELVES):
+            settings = rewards | GIFTS_SHUFFLED | {"Shuffled dungeons": [name for name in DUNGEONS
+                                                                         if name != "Water Temple"]}
+            spoiler, plan = self.generate("1", settings)
+            self.assertNotIn("Morpha", spoiler["locations"])
+            self.assertNotIn("Morpha", dict(reward_sites(plan)))
+            self.assertNotIn("Item_Medal_Water", placed_remake_items(spoiler, plan).values())
+            self.assertIn("Twinrova", spoiler["locations"])
 
     def test_hints_name_no_stone_or_medallion_as_an_item_to_find(self):
         # They open nothing in the remake. A hint about a place may still say what it holds.

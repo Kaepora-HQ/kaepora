@@ -237,7 +237,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_great_fairy_may_hold_an_item_another_place_gives
                      hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle
                      the_summit_passes_her_meter_scene_with_an_item_that_brings_none
-                     dungeon_rewards_shuffled stones_and_medallions_go_to_chests_gifts_and_the_nine_places
+                     dungeon_rewards_shuffled dungeon_rewards_shuffled_among_themselves
+                     stones_and_medallions_go_to_chests_gifts_and_the_nine_places
                      a_dungeon_left_out_keeps_its_boss_reward
                      hints_name_no_stone_or_medallion_as_an_item_to_find hints_name_dungeon_rewards_truly
                      gold_skulltulas_shuffled skulltulas_hold_the_bomb_bag_the_bow_and_the_slingshot
@@ -283,7 +284,8 @@ if(Qt6Test_FOUND)
     # The window's tests that make no seed need no game file.
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesOfEachColumnLineUp whatJoinsTheShuffleHasItsOwnGroup
                      theHintsChoicesShareAGroup aChoiceShowsInTheSummary defaultsSetsEveryControlBack
-                     theSummaryNamesUpToThreeDungeonsLeftOut shopGoodsOffersEachCountUpToSevenAndARandomNumber
+                     theSummaryNamesUpToThreeDungeonsLeftOut dungeonRewardsOffersThreeChoices
+                     shopGoodsOffersEachCountUpToSevenAndARandomNumber
                      shopPricesWaitForShopGoodsAndShowOnlyTheNumbersOfTheirChoice shopPricesAreRememberedAndShowInTheDetails
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
                      longSettingsLeaveTheWindowWidth aSeedMadeBeforeHintsFromCharactersHasNone

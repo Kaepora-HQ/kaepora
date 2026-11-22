@@ -330,6 +330,9 @@ void SetOptions(const SeedSettings& settings) {
     if (std::ranges::find(settings.gifts, BiggoronQuest, &GiftGroup::name) != settings.gifts.end()) {
         ctx->GetOption(RSK_SHUFFLE_ADULT_TRADE).Set(RO_GENERIC_OFF);
     }
+    if (settings.rewards == Rewards::ShuffledAmongThemselves) {
+        ctx->GetOption(RSK_SHUFFLE_DUNGEON_REWARDS).Set(RO_DUNGEON_REWARDS_END_OF_DUNGEON);
+    }
     if (settings.shops) {
         auto& prices = ctx->GetOption(RSK_SHOPSANITY_PRICES);
         // SoH's options hold one price and the ends of a range in steps.

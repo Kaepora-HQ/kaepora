@@ -143,7 +143,9 @@ QString Summary(const SeedSettings& settings) {
     if (settings.looseItems == LooseItems::Shuffled) {
         changed << "loose items shuffled";
     }
-    if (settings.rewards == Rewards::Shuffled) {
+    if (settings.rewards == Rewards::ShuffledAmongThemselves) {
+        changed << "dungeon rewards shuffled among themselves";
+    } else if (settings.rewards == Rewards::Shuffled) {
         changed << "dungeon rewards shuffled";
     }
     if (settings.lens == Lens::NeverNeeded) {

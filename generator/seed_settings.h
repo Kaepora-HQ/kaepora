@@ -258,9 +258,11 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 
-enum class Rewards { Vanilla, Shuffled };
+// "Shuffled among themselves" is SoH's "End of Dungeons": the rewards go only to the places that hand one over.
+enum class Rewards { Vanilla, ShuffledAmongThemselves, Shuffled };
 inline constexpr std::pair<Rewards, std::string_view> RewardsChoices[] = {
     { Rewards::Vanilla, "Vanilla" },
+    { Rewards::ShuffledAmongThemselves, "Shuffled among themselves" },
     { Rewards::Shuffled, "Shuffled" },
 };
 

@@ -770,6 +770,15 @@ private slots:
         QVERIFY(shows("Default settings"));
     }
 
+    void dungeonRewardsOffersThreeChoices() {
+        button("Settings…")->click();
+        QStringList offered;
+        for (int index = 0; index < choice("Dungeon rewards")->count(); ++index) {
+            offered << choice("Dungeon rewards")->itemText(index);
+        }
+        QCOMPARE(offered, (QStringList{ "Vanilla", "Shuffled among themselves", "Shuffled" }));
+    }
+
     void shopGoodsOffersEachCountUpToSevenAndARandomNumber() {
         button("Settings…")->click();
         QStringList offered;
@@ -1158,6 +1167,8 @@ private slots:
         QTest::newRow("songs") << "Songs" << "Shuffled among themselves" << "Songs shuffled";
         QTest::newRow("loose items") << "Loose items" << "Shuffled" << "Loose items shuffled";
         QTest::newRow("dungeon rewards") << "Dungeon rewards" << "Shuffled" << "Dungeon rewards shuffled";
+        QTest::newRow("dungeon rewards among themselves")
+            << "Dungeon rewards" << "Shuffled among themselves" << "Dungeon rewards shuffled among themselves";
         QTest::newRow("maps") << "Maps and compasses" << "Given at the start"
                               << "Maps and compasses given at the start";
         QTest::newRow("stones") << "Gossip stones" << "Vanilla" << "No gossip stone hints";

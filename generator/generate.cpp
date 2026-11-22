@@ -245,7 +245,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     // The places that hand over a stone or a medallion give through an event flow's call, which the patcher writes as
     // it writes a gift's.
     std::vector<RemakeGift> gifts = GiftsIn(giftTable, settings.gifts);
-    if (settings.rewards == Rewards::Shuffled) {
+    if (settings.rewards != Rewards::Vanilla) {
         std::ranges::copy_if(rewardTable, std::back_inserter(gifts),
                              [&](const RemakeGift& reward) { return !KeptInPlace(reward, settings); });
     }

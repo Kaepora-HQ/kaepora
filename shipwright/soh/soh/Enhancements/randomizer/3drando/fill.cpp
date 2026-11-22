@@ -1265,6 +1265,23 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
                         songPlaces, true);
         }
 
+        // As SoH places the rewards at "End of Dungeons": among the places that hand one over, which the generator
+        // gives the fill as gifts.
+        if (ctx->GetOption(RSK_SHUFFLE_DUNGEON_REWARDS).Is(RO_DUNGEON_REWARDS_END_OF_DUNGEON)) {
+            std::vector<RandomizerCheck> rewardPlaces;
+            for (const RemakeGift& gift : gifts) {
+                if (IsRewardPlace(gift.location)) {
+                    rewardPlaces.push_back(gift.location);
+                }
+            }
+            AssumedFill(FilterAndEraseFromPool(itemPool,
+                                               [](RandomizerGet item) {
+                                                   return Rando::StaticData::RetrieveItem(item).GetItemType() ==
+                                                          ITEMTYPE_DUNGEONREWARD;
+                                               }),
+                        rewardPlaces);
+        }
+
         AssumedFill(FilterAndEraseFromPool(itemPool, KeptInChests), shuffledLocations, true);
 
         std::vector<RandomizerCheck> chestsAndCalls = shuffledLocations;
