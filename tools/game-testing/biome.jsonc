@@ -1,0 +1,47 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": [
+		"ultracite/biome/core",
+		"ultracite/biome/vitest",
+		"ultracite/biome/type-aware"
+	],
+	"files": {
+		// The scanner indexes node_modules so type-aware rules resolve packages.
+		"includes": ["!**/node_modules", "!generated", "!.cache"]
+	},
+	"formatter": {
+		"indentStyle": "tab"
+	},
+	"json": {
+		"formatter": {
+			"indentStyle": "tab"
+		}
+	},
+	"javascript": {
+		"globals": ["Bun"]
+	},
+	"linter": {
+		"rules": {
+			"correctness": {
+				// Relative imports name their .ts file, as the tsconfig allows; ultracite turns this rule off.
+				"useImportExtensions": "error"
+			},
+			"nursery": {
+				"noFloatingPromises": "error"
+			}
+		}
+	},
+	"overrides": [
+		{
+			// Every error is a schema class, and they are read as one list with their messages.
+			"includes": ["src/errors.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noExcessiveClassesPerFile": "off"
+					}
+				}
+			}
+		}
+	]
+}

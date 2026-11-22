@@ -1,0 +1,4 @@
+node_modules/
+.cache/
+# Names read from the game files, which stay out of git.
+generated/

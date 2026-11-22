@@ -1,0 +1,26 @@
+{
+	"name": "game-testing",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "ultracite check",
+		"fix": "ultracite fix",
+		"prepare": "effect-tsgo patch",
+		"test": "bun test ./tests",
+		"typecheck": "effect-tsgo tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@effect/platform-bun": "4.1.5",
+		"effect": "4.1.5"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.6.8",
+		"@effect/tsgo": "0.73.2",
+		"@types/bun": "1.4.5",
+		"@voila.dev/effect-bun-test": "4.0.4",
+		"typescript": "7.0.2",
+		"ultracite": "8.3.1"
+	},
+	"packageManager": "bun@1.4.5"
+}
