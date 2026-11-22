@@ -2379,6 +2379,62 @@ def message_texts(patch, game):
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
 
 
+SCRUB_MESSAGES = "EventFlowMsg/Enemy_Event.msbt"
+FIELD_SCRUB_OFFER = "Enemy_Scrub_Business_Heart_01"
+COPIED_OFFER = "Enemy_Scrub_Business_Heart_01_Copy"
+COPIED_TEXT = "Ohhh, the {color:0}Hookshot{color:65535}. Shimmery glimmery!"
+
+
+def label_slots(labels):
+    """Each label of an MSBT label section, and the slot of the hash table it is stored in."""
+    slots = {}
+    for slot in range(struct.unpack_from("<I", labels)[0]):
+        count, at = struct.unpack_from("<II", labels, 4 + 8 * slot)
+        for _ in range(count):
+            size = labels[at]
+            slots[labels[at + 1:at + 1 + size].decode()] = slot
+            at += 5 + size
+    return slots
+
+
+def label_hash_slot(label, slots):
+    """The slot the game looks a label up in."""
+    value = 0
+    for byte in label.encode():
+        value = (value * 0x492 + byte) & 0xFFFFFFFF
+    return value % slots
+
+
+def message_copies(patch, game):
+    """A message added under a new label as a copy of another, in every language's text pack, as the flow that shows it
+    is one file for every language. Read apart from the patcher, each pack's file holds the game's messages as they
+    were, then the copy. In the two English packs the copy is the control codes the copied message opens with, the
+    scrub's voice and face, and the planned text; in every other language it is that pack's own copied message whole.
+    Each label sits in the slot the game looks it up in, and each pack fits its size table entry."""
+    copying = plan([])
+    copying["message_texts"] = [
+        {"file": SCRUB_MESSAGES, "label": COPIED_OFFER, "copy_of": FIELD_SCRUB_OFFER, "text": COPIED_TEXT}]
+    mod = patched(patch, game, copying)
+    languages = sorted(path for path in game.files if re.fullmatch(r"Mals/\w+\.Product\.110\.sarc\.zs", path))
+    assert len(languages) == 16 and set(ENGLISH_PACKS) <= set(languages), languages
+    assert sorted(mod) == sorted(languages + [SIZE_TABLE]), sorted(mod)
+    sizes = dict(read_size_table(zstd.decompress(mod[SIZE_TABLE]))[1])
+    for path in languages:
+        ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
+        assert {name for name in ours if ours[name] != theirs[name]} == {SCRUB_MESSAGES}, path
+        labels, texts = msbt(ours[SCRUB_MESSAGES])
+        game_texts = msbt(theirs[SCRUB_MESSAGES])[1]
+        copied = game_texts[FIELD_SCRUB_OFFER]
+        if path in ENGLISH_PACKS:
+            assert opening(copied).count(b"\x0e") == 1, path
+            copied = opening(copied) + message_bytes(COPIED_TEXT)
+        assert list(texts.items()) == list(game_texts.items()) + [(COPIED_OFFER, copied)], path
+        slots = struct.unpack_from("<I", labels)[0]
+        assert all(slot == label_hash_slot(label, slots) for label, slot in label_slots(labels).items()), path
+        size = len(zstd.decompress(mod[path], zstd_dict=game.zs_dictionary))
+        assert sizes[size_key(path)] >= load_size(size, TEXT_PACK_OVERHEAD), path
+
+
 def message_bytes(text, page=RUMOUR_PAGE):
     data = b""
     for part in re.split(r"(\{color:\d+\}|\{page\})", text):
@@ -2578,6 +2634,15 @@ def bad_input(patch, game):
             {"file": nowhere_messages, "label": MASK_SHOP_SIGN, "text": "Masks."}, [nowhere_messages]),
         "label not in the message file": (
             {"file": SIGN_MESSAGES, "label": "Nowhere_001", "text": "Masks."}, [SIGN_MESSAGES, "Nowhere_001"]),
+        "copy of a label not in the message file": (
+            {"file": SIGN_MESSAGES, "label": "Kaepora_001", "copy_of": "Nowhere_001", "text": "Masks."},
+            [SIGN_MESSAGES, "Nowhere_001"]),
+        "copy under a label the message file has": (
+            {"file": SIGN_MESSAGES, "label": MASK_SHOP_SIGN, "copy_of": MASK_SHOP_SIGN, "text": "Masks."},
+            [SIGN_MESSAGES, MASK_SHOP_SIGN, "already"]),
+        "copy of no label": (
+            {"file": SIGN_MESSAGES, "label": "Kaepora_001", "copy_of": "", "text": "Masks."},
+            ["plan.json", "message_texts[1]"]),
     }
     for name, (entry, named) in messages.items():
         plans[name] = (good | {"message_texts": [valid_message, entry]}, named)
@@ -2745,6 +2810,7 @@ def main():
         "gift-size-table": gift_size_table,
         "stone-texts": stone_texts,
         "message-texts": message_texts,
+        "message-copies": message_copies,
         "shop": shop,
         "shop-table": shop_table,
         "shelf-placement": shelf_placement,

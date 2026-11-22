@@ -176,8 +176,11 @@ static PlannedMessageText ParseMessageText(const nlohmann::json& message) {
     PlannedMessageText planned{ .file = message.at("file").get<std::string>(),
                                 .label = message.at("label").get<std::string>(),
                                 .text = message.at("text").get<std::string>() };
-    if (planned.file.empty() || planned.label.empty() || planned.text.empty()) {
-        throw std::runtime_error("file, label and text must not be empty");
+    if (message.contains("copy_of")) {
+        planned.copyOf = message.at("copy_of").get<std::string>();
+    }
+    if (planned.file.empty() || planned.label.empty() || planned.copyOf == "" || planned.text.empty()) {
+        throw std::runtime_error("file, label, copy_of and text must not be empty");
     }
     planned.text = msbt::Encode(planned.text);
     return planned;
@@ -1032,8 +1035,11 @@ static void MoveSheikWaitBehindSword(byml::Node& placement) {
 }
 
 // The game reads the update's text pack of the console's language. A planned text is in English, and on a console in
-// another language the game's own text stays.
-constexpr std::string_view TextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
+// another language the game's own text stays. A copied message goes into every language's pack, as the flow that shows
+// it is one file for every language.
+constexpr std::string_view EnglishTextPacks[] = { "Mals/USen.Product.110.sarc.zs", "Mals/EUen.Product.110.sarc.zs" };
+constexpr std::string_view TextPackFolder = "Mals/";
+constexpr std::string_view TextPackSuffix = ".Product.110.sarc.zs";
 constexpr std::string_view StoneMessages = "EventFlowMsg/GossipStone.msbt";
 
 // Every stone's talk runs this flow. Without the Mask of Truth held and worn, Navi talks in the stone's place. With it,
@@ -1082,8 +1088,9 @@ constexpr std::pair<std::string_view, std::string_view> DoorOfTimeNext[] = { { S
                                                                              { BothStonesStep, StoneCount } };
 
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
-// message opens with.
-static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan) {
+// message opens with. Another language's pack keeps the game's words, and a copy there says its copied message whole.
+static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan,
+                            bool english) {
     try {
         sarc::Files pack = sarc::Parse(Decompress(game.Read(path), dictionary));
         std::map<std::string, std::vector<msbt::Message>> files;
@@ -1102,12 +1109,27 @@ static std::string TextPack(GameFile& game, const std::string& path, const std::
             }
             return *found;
         };
-        for (const PlannedStoneText& stone : plan.stoneTexts) {
-            message(std::string(StoneMessages), stone.label).text = stone.text;
+        if (english) {
+            for (const PlannedStoneText& stone : plan.stoneTexts) {
+                message(std::string(StoneMessages), stone.label).text = stone.text;
+            }
         }
         for (const PlannedMessageText& planned : plan.messageTexts) {
-            msbt::Message& text = message(planned.file, planned.label);
-            text.text = std::string(msbt::Opening(text.text)) + planned.text;
+            if (!planned.copyOf) {
+                if (english) {
+                    msbt::Message& text = message(planned.file, planned.label);
+                    text.text = std::string(msbt::Opening(text.text)) + planned.text;
+                }
+                continue;
+            }
+            const std::string& source = message(planned.file, *planned.copyOf).text;
+            const std::string copied = english ? std::string(msbt::Opening(source)) + planned.text : source;
+            std::vector<msbt::Message>& messages = files.at(planned.file);
+            if (std::ranges::find(messages, planned.label, &msbt::Message::label) != messages.end()) {
+                throw std::runtime_error(
+                    std::format("{} already has a message with the label {}", planned.file, planned.label));
+            }
+            messages.push_back({ .label = planned.label, .text = copied });
         }
         for (const auto& [file, messages] : files) {
             pack[file] = msbt::Write(messages);
@@ -1386,12 +1408,17 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), EventFlowOverhead);
         addToRomfs(path, Compress(data, zsDictionary));
     }
-    if (!plan.stoneTexts.empty() || !plan.messageTexts.empty()) {
-        for (const std::string_view path : TextPacks) {
-            const std::string data = TextPack(game, std::string(path), zsDictionary, plan);
-            tableChanged |= RaiseSize(table, path, data.size(), TextPackOverhead);
-            addToRomfs(path, Compress(data, zsDictionary));
+    const bool copies = std::ranges::any_of(
+        plan.messageTexts, [](const PlannedMessageText& planned) { return planned.copyOf.has_value(); });
+    for (const std::string& path : std::views::keys(game.Files())) {
+        const bool english = std::ranges::find(EnglishTextPacks, path) != std::end(EnglishTextPacks);
+        const bool written = english ? !plan.stoneTexts.empty() || !plan.messageTexts.empty() : copies;
+        if (!path.starts_with(TextPackFolder) || !path.ends_with(TextPackSuffix) || !written) {
+            continue;
         }
+        const std::string data = TextPack(game, path, zsDictionary, plan, english);
+        tableChanged |= RaiseSize(table, path, data.size(), TextPackOverhead);
+        addToRomfs(path, Compress(data, zsDictionary));
     }
     for (auto& [path, pack] : packs) {
         for (const auto& [name, list] : pack.goodsLists) {

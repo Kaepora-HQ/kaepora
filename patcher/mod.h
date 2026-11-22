@@ -48,11 +48,14 @@ struct PlannedStoneText {
     std::string text; // the message as a text pack stores it
 };
 
-// A message of a text pack, and the text it says after the control codes the game's message opens with.
+// A message of a text pack, and the text it says after the control codes the game's message opens with. A copy is a
+// new message under a label the file lacks, opening with the codes the copied message opens with, in every language's
+// pack; outside English it says the copied message whole.
 struct PlannedMessageText {
     std::string file; // the message file in the text pack, e.g. EventFlowMsg/SignboardWood.msbt
     std::string label;
-    std::string text; // as a text pack stores it
+    std::optional<std::string> copyOf; // the label of the copied message
+    std::string text;                  // as a text pack stores it
 };
 
 // A shopkeeper actor, and the goods list in its pack that it sells from.
