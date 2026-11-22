@@ -20,7 +20,7 @@ struct GeneratedSeed {
 GeneratedSeed Generate(const std::string& text, const SeedSettings& settings);
 
 // The kept places that name a step the settings start with or a step under it: the table's chests that the table or the
-// settings keep in place, and the gifts while gifts are vanilla. Each gives that step again, which adds nothing, where
+// settings keep in place, and the gifts of the groups left out. Each gives that step again, which adds nothing, where
 // SoH's logic would count the next step. As SoH's excluded locations they hold junk.
 std::set<RandomizerCheck> GivenAgain(const SeedSettings& settings, const std::vector<RemakeChest>& table,
-                                     const std::vector<RemakeGift>& gifts);
+                                     const std::vector<GroupedGift>& gifts);

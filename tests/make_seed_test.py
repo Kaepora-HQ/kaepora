@@ -63,6 +63,19 @@ class MakeSeedTest(unittest.TestCase):
             self.assertIn(item, sold)
             self.assertTrue((mod / f"romfs/Pack/Actor/Shop_{item}.pack.zs").is_file(), item)
 
+    def test_a_seed_with_one_gift_group_shuffled_is_patched(self):
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Gifts": ["Minigames"]})
+        result = subprocess.run([SEEDGEN, "21", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "gifts.tsv", newline="") as f:
+            rows = list(csv.DictReader(f, delimiter="\t"))
+        written = {row["flow"] for row in rows if (mod / "romfs" / row["flow"]).is_file()}
+        self.assertTrue(written)
+        self.assertEqual({row["group"] for row in rows if row["flow"] in written}, {"Minigames"})
+
     def test_a_seed_with_gold_skulltulas_shuffled_is_patched(self):
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
         settings = json.dumps({"Gold Skulltulas": "All"})

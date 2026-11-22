@@ -195,8 +195,9 @@ handle on the board and its head up in the niche.
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, and three places where the story moves: the scene
 after the last carpenter in the Gerudo Fortress, King Zora's thanks once he is thawed, and Zelda's scene in the Temple
-of Time. With "Gifts" at "Shuffled" the 32 join the shuffle. Each adds its item to the pool, and the plan writes the
-placed item at each of its places.
+of Time. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item to the pool, and the plan
+writes the placed item at each of its places. A location of a group left out keeps what the game gives, and the plan
+names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -204,6 +205,8 @@ placed item at each of its places.
 - `param`: the call's string parameter that names the item.
 - `gives`: what the call gives in the unmodified game, by its remake name.
 - `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
+- `group`: the group of "Gifts" that shuffles the location, by its name in the list. Every row of a location names the
+  same group.
 
 A bag prize gives the bigger of two sizes from one event and the biggest from another: the biggest only to a Link who
 already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko galleries, the
@@ -213,9 +216,9 @@ to a Link who holds the bigger one (read from its flow). No rule of SoH's logic 
 logic values, and for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger quiver
 or bullet bag is no Bow or Slingshot to the logic, and the logic makes the rolling Goron wait for the Bomb Bag itself.
 That is stricter than the game, where a bigger bomb bag brings the small one he asks for. No shelf has been seen to sell
-a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. With "Gifts" at "Vanilla", the logic counts what
-SoH's location list says each place gives, so a row's item must be that, and the list gives the eight places their bags
-and the 40-token reward its 20 Bombchus.
+a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For a place whose group is left out, the logic
+counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the eight places
+their bags and the 40-token reward its 20 Bombchus.
 
 A location with two rows gives its item from two events of one flow, such as the frogs' game on a first try and on a
 retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game reads: with the
@@ -262,7 +265,8 @@ pick the fanfare and the sparkle by the arrows' name, and three more bind the ar
 King Zora's ice stands only while the Water quest is not complete, and his thanks come only after the thaw (read from
 the placement files and his talk). So a Link who finishes the Water Temple first never gets what King Zora would hand
 over: his talk then sends a Link with no Zora Tunic to the Zora shop's keeper, who gives one, whatever King Zora's place
-holds. With "Gifts" at "Shuffled", Morpha waits for King Zora's thanks, and the route names King Zora before Morpha.
+holds. While "Gifts" shuffles King Zora's place, Morpha waits for King Zora's thanks, and the route names King Zora
+before Morpha.
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
 A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a
@@ -356,9 +360,9 @@ Temple of Time.
 
 `rewards.tsv` has a row for each place in the game's event flows that hands over a Spiritual Stone or a medallion: the
 scenes after the eight bosses, and Rauru's in the Chamber of Sages, SoH's "Gift from Rauru". Its columns are those of
-`gifts.tsv`. The five sages' scenes are written in their `.110` copies, as Dampé's tour is. Each scene's call gives
-the item and moves no quest: the blue warp's chain completes the boss's quest by an event of its own, before or after
-the scene, and the scene shows the usual stone or medallion as a model of its own (read from the game's flows).
+`gifts.tsv` but `group`. The five sages' scenes are written in their `.110` copies, as Dampé's tour is. Each scene's
+call gives the item and moves no quest: the blue warp's chain completes the boss's quest by an event of its own, before
+or after the scene, and the scene shows the usual stone or medallion as a model of its own (read from the game's flows).
 
 With "Dungeon rewards" at "Shuffled" the nine join the shuffle, each written as a gift is, and the nine rewards join the
 pool. A dungeon left out of "Shuffled dungeons" keeps its boss's reward. Seen in the game by an agent: a chest gave the

@@ -12,6 +12,7 @@
 #include <format>
 #include <iterator>
 #include <map>
+#include <ranges>
 #include <set>
 #include <span>
 #include <stdexcept>
@@ -542,12 +543,14 @@ void CheckShopGoods(const std::vector<RemakeChest>& chests, const std::vector<Re
     }
 }
 
-static std::vector<RemakeGift> LoadGives(const std::string& file, std::span<const unsigned char> table,
+static constexpr std::string_view GivesHeader = "location\tflow\tevent\tparam\tgives\titem";
+
+static std::vector<RemakeGift> LoadGives(const std::string& file, const std::vector<std::vector<std::string>>& rows,
                                          const std::vector<RemakeChest>& chests) {
     const std::map<std::string, std::vector<RandomizerGet>> items = LoadItems();
     std::vector<RemakeGift> gifts;
     size_t line = 1;
-    for (const auto& row : ReadTable(file, table, "location\tflow\tevent\tparam\tgives\titem")) {
+    for (const auto& row : rows) {
         const std::string where = std::format("{} line {}: ", file, ++line);
         const std::string& name = row[0];
         const std::string& flow = row[1];
@@ -579,12 +582,34 @@ static std::vector<RemakeGift> LoadGives(const std::string& file, std::span<cons
     return gifts;
 }
 
-std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
-    return LoadGives("remake/gifts.tsv", giftTable, chests);
+std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests) {
+    const std::string file = "remake/gifts.tsv";
+    const auto rows = ReadTable(file, giftTable, std::string(GivesHeader) + "\tgroup");
+    std::map<RandomizerCheck, GiftGroup> groups;
+    size_t line = 1;
+    for (const auto& row : rows) {
+        const std::string where = std::format("{} line {}: ", file, ++line);
+        const auto group = std::ranges::find(GiftGroups, row[6], &std::pair<GiftGroup, std::string_view>::second);
+        if (group == std::end(GiftGroups) ||
+            groups.try_emplace(LocationNamed(where, row[0]), group->first).first->second != group->first) {
+            Fail(where + "\"" + row[6] + "\" is no group of \"Gifts\", or not the group of the location's other rows");
+        }
+    }
+    for (const auto& [group, name] : GiftGroups) {
+        if (std::ranges::count(std::views::values(groups), group) == 0) {
+            Fail(file + ": no row of the group \"" + std::string(name) + "\"");
+        }
+    }
+    std::vector<GroupedGift> gifts;
+    for (RemakeGift& gift : LoadGives(file, rows, chests)) {
+        gifts.push_back({ groups.at(gift.location), std::move(gift) });
+    }
+    return gifts;
 }
 
 std::vector<RemakeGift> LoadRemakeRewards(const std::vector<RemakeChest>& chests) {
-    return LoadGives("remake/rewards.tsv", rewardTable, chests);
+    const std::string file = "remake/rewards.tsv";
+    return LoadGives(file, ReadTable(file, rewardTable, std::string(GivesHeader)), chests);
 }
 
 std::vector<RemakeSkulltula> LoadRemakeSkulltulas() {

@@ -45,7 +45,7 @@ DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywh
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Opening": "Skipped",
                     "Cutscenes": "Skipped", "Start with": [],
-                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla", "Songs": "Vanilla",
+                    "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": [], "Songs": "Vanilla",
                     "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
                     "Gossip stones": "Give hints", "Hints from characters": "Give hints"}
 NO_HINTS = {"Gossip stones": "Vanilla"}
@@ -99,6 +99,8 @@ BIGGER_BAGS = dict(BAG_PRIZES.values())
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
+GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 REWARD_SITES = read_tsv("rewards.tsv")
 REWARD_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for row in REWARD_SITES}
 REWARDS = {row["item"] for row in REWARD_SITES}
@@ -444,16 +446,17 @@ class SeedgenTest(unittest.TestCase):
         self.assertIn("Phantom Ganon", sphere)
         self.assertLess(sphere["Phantom Ganon"], sphere["Twinrova"])
 
-    def test_with_gifts_shuffled_morpha_waits_for_king_zoras_thanks(self):
+    def test_with_king_zoras_place_shuffled_morpha_waits_for_his_thanks(self):
         # King Zora's ice stands only while the Water quest is not complete, so a Link who finishes the Water Temple
-        # first never gets what King Zora hands over. With the gifts as in the game the Zora shop then gives the tunic.
-        # With the gifts shuffled, every route that takes Morpha takes King Zora first, whatever he holds.
-        for seed in map(str, range(1, 11)):
-            log, _ = self.generate(seed, GIFTS_SHUFFLED)
-            sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
-            self.assertIn("ZD King Zora Thawed", sphere, seed)
-            self.assertLess(sphere["ZD King Zora Thawed"], sphere["Morpha"], seed)
-        self.assertEqual(self.route_out_of_reach(log), [])
+        # first never gets what King Zora hands over. With his place as in the game the Zora shop then gives the tunic.
+        # With his place shuffled, every route that takes Morpha takes King Zora first, whatever he holds.
+        for settings in ({"Gifts": ["Story gifts"]}, {"Gifts": GIFT_GROUPS}):
+            for seed in map(str, range(1, 11)):
+                log, _ = self.generate(seed, settings)
+                sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+                self.assertIn("ZD King Zora Thawed", sphere, (settings, seed))
+                self.assertLess(sphere["ZD King Zora Thawed"], sphere["Morpha"], (settings, seed))
+            self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree(self):
         # Closed Deku opens the way out of the forest.
@@ -602,7 +605,8 @@ class SeedgenTest(unittest.TestCase):
                                   ({"Shuffled dungeons": ["Deku Tree", "Hyrule Castle"]}, "Hyrule Castle"),
                                   ({"Forest": "Open"}, "Forest"),
                                   ({"Start with": ["Kokiri Sword", "Master Sword"]}, "Master Sword"),
-                                  ({"Start with": ["Hookshot", "Longshot"]}, "Hookshot and Longshot")):
+                                  ({"Start with": ["Hookshot", "Longshot"]}, "Hookshot and Longshot"),
+                                  ({"Gifts": ["Minigames", "Fishing"]}, "Fishing")):
             result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
@@ -853,7 +857,7 @@ class SeedgenTest(unittest.TestCase):
 
     def test_gifts_shuffled(self):
         spoiler, plan = self.generate("21", GIFTS_SHUFFLED)
-        self.assertEqual(spoiler["settings"]["Gifts"], "Shuffled")
+        self.assertEqual(spoiler["settings"]["Gifts"], GIFT_GROUPS)
         sites = gift_sites(plan)
         self.assertIn(AGONY_GUIDE_SHUT, plan["event_texts"])
         self.assertEqual([location for location, _ in sites], list(GIFT_LOCATIONS.values()))
@@ -863,6 +867,40 @@ class SeedgenTest(unittest.TestCase):
         chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
         self.assertEqual(collections.Counter(chests.values()) + collections.Counter(dict(sites).values()),
                          POOL + GIFT_POOL)
+
+    def test_shuffled_is_every_gift_group_and_vanilla_is_none(self):
+        for seed in ("21", "22"):
+            self.assertEqual(self.run_seedgen(seed, {"Gifts": GIFT_GROUPS}), self.run_seedgen(seed, GIFTS_SHUFFLED))
+            self.assertEqual(self.run_seedgen(seed, {"Gifts": []}), self.run_seedgen(seed, {"Gifts": "Vanilla"}))
+
+    def test_one_gift_group_shuffles_its_places_alone(self):
+        kept_on_route = 0
+        for group in GIFT_GROUPS:
+            spoiler, plan = self.generate("21", {"Gifts": [group]})
+            self.assertEqual(spoiler["settings"]["Gifts"], [group])
+            places = [location for location in dict.fromkeys(GIFT_LOCATIONS.values()) if GIFT_GROUP[location] == group]
+            sites = gift_sites(plan)
+            self.assertEqual(list(dict.fromkeys(location for location, _ in sites)), places, group)
+            self.assertEqual(AGONY_GUIDE_SHUT in plan["event_texts"], group == "House of Skulltula")
+            kept = GIFT_GROUP.keys() - set(places)
+            self.assertFalse(kept & spoiler["locations"].keys(), group)
+            vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
+            for location, item in playthrough_steps(spoiler).items():
+                if location in kept:
+                    kept_on_route += 1
+                    self.assertIn((vanilla[location], item), ITEM_PAIRS, location)
+            rows = {row["hash"]: row for row in SHUFFLED}
+            chests = {rows[entry["hash"]]["location"]: entry["drop_actor"] for entry in plan["chests"]}
+            self.assertEqual(collections.Counter(chests.values()) + collections.Counter(dict(sites).values()),
+                             POOL + collections.Counter(vanilla[location] for location in places), group)
+        self.assertTrue(kept_on_route)
+
+    def test_the_gift_places_of_an_item_that_comes_in_steps_share_a_group(self):
+        # A kept place gives the next step by what Link holds, and a shuffled one gives one step, so an item whose steps
+        # sat in two groups could leave its last step out of a player's reach.
+        for item, steps in START_STEPS.items():
+            groups = {row["group"] for row in GIFT_SITES if {row["gives"], row["item"]} & set(steps)}
+            self.assertLessEqual(len(groups), 1, (item, groups))
 
     def test_a_gift_given_at_two_sites_gives_one_item(self):
         given = collections.defaultdict(set)

@@ -174,8 +174,18 @@ static std::vector<std::string_view> StartedCopies(const SeedSettings& settings)
     return copies;
 }
 
+static std::vector<RemakeGift> GiftsIn(const std::vector<GroupedGift>& table, const std::set<GiftGroup>& groups) {
+    std::vector<RemakeGift> gifts;
+    for (const auto& [group, gift] : table) {
+        if (groups.contains(group)) {
+            gifts.push_back(gift);
+        }
+    }
+    return gifts;
+}
+
 std::set<RandomizerCheck> GivenAgain(const SeedSettings& settings, const std::vector<RemakeChest>& table,
-                                     const std::vector<RemakeGift>& gifts) {
+                                     const std::vector<GroupedGift>& gifts) {
     std::set<RandomizerCheck> places;
     for (const std::string_view copy : StartedCopies(settings)) {
         for (const RemakeChest& chest : table) {
@@ -183,8 +193,8 @@ std::set<RandomizerCheck> GivenAgain(const SeedSettings& settings, const std::ve
                 places.insert(chest.location);
             }
         }
-        for (const RemakeGift& gift : gifts) {
-            if (settings.gifts == Gifts::Vanilla && gift.item == copy) {
+        for (const auto& [group, gift] : gifts) {
+            if (!settings.gifts.contains(group) && gift.item == copy) {
                 places.insert(gift.location);
             }
         }
@@ -198,16 +208,17 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     static const std::vector<RemakeChest> table = LoadRemakeChests();
     static const std::vector<RemakeChest> looseItemTable = LoadRemakeLooseItems();
     static const std::vector<RemakeShopSlot> shopTable = LoadRemakeShops();
-    static const std::vector<RemakeGift> giftTable = LoadRemakeGifts(table);
+    static const std::vector<GroupedGift> giftTable = LoadRemakeGifts(table);
+    static const std::vector<RemakeGift> everyGift = GiftsIn(giftTable, EveryGiftGroup());
     static const std::vector<RemakeGift> rewardTable = LoadRemakeRewards(table);
     // The fill puts no stone or medallion in a shop slot.
     [[maybe_unused]] static const bool shopGoodsChecked =
-        (CheckShopGoods(Joined(table, looseItemTable), giftTable), true);
+        (CheckShopGoods(Joined(table, looseItemTable), everyGift), true);
     static const std::vector<RemakeSkulltula> skulltulaTable = LoadRemakeSkulltulas();
     static const std::vector<RemakeSongPlace> songTable = LoadRemakeSongs();
     static const RemakeHintTables hintTables = LoadRemakeHintTables(Joined(table, looseItemTable),
                                                                     ShuffledSlots(shopTable, ShopCount::FivePerShop),
-                                                                    Joined(giftTable, rewardTable), skulltulaTable,
+                                                                    Joined(everyGift, rewardTable), skulltulaTable,
                                                                     songTable);
 
     std::string seed = text;
@@ -219,7 +230,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     }
     // The places that hand over a stone or a medallion give through an event flow's call, which the patcher writes as
     // it writes a gift's.
-    std::vector<RemakeGift> gifts = settings.gifts == Gifts::Shuffled ? giftTable : std::vector<RemakeGift>{};
+    std::vector<RemakeGift> gifts = GiftsIn(giftTable, settings.gifts);
     if (settings.rewards == Rewards::Shuffled) {
         std::ranges::copy_if(rewardTable, std::back_inserter(gifts),
                              [&](const RemakeGift& reward) { return !KeptInPlace(reward, settings); });
@@ -245,7 +256,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     }
     const std::vector<RemakeChest> locations = Joined(chests, looseItems);
 
-    SetOptions(settings);
+    SetOptions(settings, giftTable);
     // The seed alone starts the random numbers. Settings that resolve at random draw first, so placements depend on
     // the seed and on what generation does, not on how the options are listed.
     Random_Init(SohUtils::Hash(seed));

@@ -224,11 +224,15 @@ inline std::string_view ShopsWords(const std::optional<ShuffledShops>& shops) {
     return shops ? Words(ShopCountChoices, shops->count) : VanillaShops;
 }
 
-enum class Gifts { Vanilla, Shuffled };
-inline constexpr std::pair<Gifts, std::string_view> GiftsChoices[] = {
-    { Gifts::Vanilla, "Vanilla" },
-    { Gifts::Shuffled, "Shuffled" },
+enum class GiftGroup { Minigames, Characters, HouseOfSkulltula, StoryGifts };
+inline constexpr std::pair<GiftGroup, std::string_view> GiftGroups[] = {
+    { GiftGroup::Minigames, "Minigames" },
+    { GiftGroup::Characters, "Characters" },
+    { GiftGroup::HouseOfSkulltula, "House of Skulltula" },
+    { GiftGroup::StoryGifts, "Story gifts" },
 };
+
+std::set<GiftGroup> EveryGiftGroup();
 
 enum class Rewards { Vanilla, Shuffled };
 inline constexpr std::pair<Rewards, std::string_view> RewardsChoices[] = {
@@ -285,7 +289,7 @@ struct SeedSettings {
     Cutscenes cutscenes = Cutscenes::Skipped;
     std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
-    Gifts gifts = Gifts::Vanilla;
+    std::set<GiftGroup> gifts;
     Rewards rewards = Rewards::Vanilla;
     Skulltulas skulltulas = Skulltulas::Vanilla;
     Songs songs = Songs::Vanilla;

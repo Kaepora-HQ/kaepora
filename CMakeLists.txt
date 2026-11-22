@@ -186,7 +186,7 @@ add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route route_names_no_gold_skulltula_token
                      route_names_each_boss_before_the_steps_that_wait_for_it
-                     with_gifts_shuffled_morpha_waits_for_king_zoras_thanks
+                     with_king_zoras_place_shuffled_morpha_waits_for_his_thanks
                      a_route_with_the_forest_exit_open_may_never_enter_the_deku_tree
                      route_takes_what_link_is_handed_over_what_he_buys route_steps_are_in_reach_in_their_sphere
                      a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere
@@ -210,7 +210,10 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      prices_between_two_prices shops_sell_no_dungeon_item_and_nothing_a_shop_may_refuse
                      a_route_that_buys_from_shops_is_in_reach_in_its_sphere hints_name_shop_goods_truly
                      hints_name_the_goods_only_five_per_shop_shuffle
-                     gifts_shuffled a_gift_given_at_two_sites_gives_one_item gifts_give_no_dungeon_item
+                     gifts_shuffled shuffled_is_every_gift_group_and_vanilla_is_none
+                     one_gift_group_shuffles_its_places_alone
+                     the_gift_places_of_an_item_that_comes_in_steps_share_a_group
+                     a_gift_given_at_two_sites_gives_one_item gifts_give_no_dungeon_item
                      what_a_shop_may_refuse_goes_to_any_other_shuffled_place
                      a_gift_can_hold_the_bow_and_the_slingshot
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
@@ -360,6 +363,7 @@ if(KAEPORA_GAME_NUP)
                 ${PROJECT_SOURCE_DIR}/tests/fixtures/plan-6332265119.json)
     foreach(TEST IN ITEMS same_files_as_the_two_programs a_seed_with_shop_goods_shuffled_is_patched
                           a_seed_with_gifts_and_shop_goods_shuffled_is_patched
+                          a_seed_with_one_gift_group_shuffled_is_patched
                           a_seed_with_gold_skulltulas_shuffled_is_patched
                           a_seed_with_loose_items_shuffled_is_patched a_seed_with_songs_shuffled_is_patched
                           a_seed_with_dungeon_rewards_shuffled_is_patched two_seeds_in_one_process

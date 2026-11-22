@@ -57,6 +57,24 @@ static std::set<StartStep> StartWith(const std::string& setting, const nlohmann:
     return steps;
 }
 
+// The settings of released seeds name no group "Vanilla" and every group "Shuffled".
+static std::set<GiftGroup> Gifts(const std::string& setting, const nlohmann::json& value) {
+    if (value == nlohmann::json("Vanilla")) {
+        return {};
+    }
+    if (value == nlohmann::json("Shuffled")) {
+        return EveryGiftGroup();
+    }
+    if (!value.is_array()) {
+        throw std::runtime_error(setting + ": unknown value " + value.dump());
+    }
+    std::set<GiftGroup> groups;
+    for (const nlohmann::json& name : value) {
+        groups.insert(Parse(GiftGroups, setting, name));
+    }
+    return groups;
+}
+
 static void RefuseUnless(bool applies, std::string_view setting, std::string_view when) {
     if (!applies) {
         throw std::runtime_error(std::string(setting) + ": applies only " + std::string(when));
@@ -88,6 +106,11 @@ static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, 
         *between = ShopPriceRange(range->second);
     }
     return shops;
+}
+
+std::set<GiftGroup> EveryGiftGroup() {
+    const auto groups = std::views::keys(GiftGroups);
+    return std::set<GiftGroup>(groups.begin(), groups.end());
 }
 
 std::vector<StartStep> StartWithInOrder(const SeedSettings& settings) {
@@ -140,7 +163,12 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
         }
     }
     json[std::string(SkulltulasSetting)] = Words(SkulltulasChoices, settings.skulltulas);
-    json[std::string(GiftsSetting)] = Words(GiftsChoices, settings.gifts);
+    json[std::string(GiftsSetting)] = nlohmann::ordered_json::array();
+    for (const auto& [group, name] : GiftGroups) {
+        if (settings.gifts.contains(group)) {
+            json[std::string(GiftsSetting)].push_back(name);
+        }
+    }
     json[std::string(SongsSetting)] = Words(SongsChoices, settings.songs);
     json[std::string(LooseItemsSetting)] = Words(LooseItemsChoices, settings.looseItems);
     json[std::string(RewardsSetting)] = Words(RewardsChoices, settings.rewards);
@@ -184,7 +212,7 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
         } else if (const auto shop = std::ranges::find(ShopSettings, setting); shop != std::end(ShopSettings)) {
             shops.emplace(*shop, value);
         } else if (setting == GiftsSetting) {
-            settings.gifts = Parse(GiftsChoices, setting, value);
+            settings.gifts = Gifts(setting, value);
         } else if (setting == RewardsSetting) {
             settings.rewards = Parse(RewardsChoices, setting, value);
         } else if (setting == SkulltulasSetting) {

@@ -44,12 +44,12 @@ int main(int argc, char** argv) {
     InitializeRandomizer();
     SeedSettings settings;
     std::vector<RemakeChest> chests;
-    std::vector<RemakeGift> gifts;
+    std::vector<GroupedGift> gifts;
     try {
         settings = ParseSeedSettings(nlohmann::json::parse(argv[1]));
-        SetOptions(settings);
         chests = LoadRemakeChests();
         gifts = LoadRemakeGifts(chests);
+        SetOptions(settings, gifts);
     } catch (const std::exception& e) {
         std::fprintf(stderr, "%s\n", e.what());
         return 1;

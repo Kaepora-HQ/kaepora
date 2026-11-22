@@ -106,11 +106,16 @@ struct RemakeGift {
     RandomizerGet sohItem;
 };
 
+struct GroupedGift {
+    GiftGroup group;
+    RemakeGift gift;
+};
+
 // The gifts of remake/gifts.tsv, read from the copy built into the program, one per location, in table order. Throws
-// when a row names an unknown location, a location of the chest table, a flow that is not an event flow under
-// Event/EventFlow/, or an item that is not one SoH item of remake/items.tsv, or when the rows of a location name
-// different items.
-std::vector<RemakeGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
+// when a row names an unknown location or group, a location of the chest table, a flow that is not an event flow under
+// Event/EventFlow/, or an item that is not one SoH item of remake/items.tsv, when the rows of a location name
+// different items or groups, or when a group of "Gifts" has no row.
+std::vector<GroupedGift> LoadRemakeGifts(const std::vector<RemakeChest>& chests);
 
 // The places of remake/rewards.tsv that hand over a Spiritual Stone or a medallion, read and checked as the gifts are.
 // The fill treats them as gifts.

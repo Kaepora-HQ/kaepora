@@ -1,44 +1,44 @@
-location	flow	event	param	gives	item
-LW Skull Kid	Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs	Event71	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-LW Ocarina Memory Game	Event/EventFlow/Npc_SkullKid_Child_02.bfevfl.zs	Event24	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event30	ActorName	Item_BulletBag_Medium	Item_BulletBag_Large
-LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event17	ActorName	Item_BulletBag_Large	Item_BulletBag_Large
-LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event29	ActorName	Item_StickBag_Medium	Item_StickBag_Medium
-LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event32	ActorName	Item_StickBag_Large	Item_StickBag_Medium
-LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event2	ActorName	Item_NutBag_Medium	Item_NutBag_Medium
-LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event31	ActorName	Item_NutBag_Large	Item_NutBag_Medium
-LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event573	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
-LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event821	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event579	ReveiveItem	Item_Scale_Gold	Item_Scale_Gold
-LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event822	ActorName	Item_Scale_Gold	Item_Scale_Gold
-LH Lab Dive	Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs	Event113	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
-GF HBA 1000 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event322	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event320	ActorName	Item_Quiver_Medium	Item_Quiver_Large
-GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event319	ActorName	Item_Quiver_Large	Item_Quiver_Large
-GF Freed All Carpenters	Event/EventFlow/Dm_Gerudo_0025.bfevfl.zs	Event294	ActorName	Item_Token_Gerudo	Item_Token_Gerudo
-Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
-Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event304	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Medium
-Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event306	ReveiveItem	Item_BombBag_Large	Item_BombBag_Medium
-Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event241	ReveiveItem	Item_BulletBag_Medium	Item_BulletBag_Medium
-Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event378	ReveiveItem	Item_BulletBag_Large	Item_BulletBag_Medium
-Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece
-Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle	Item_Bottle
-Market ToT Light Arrow Cutscene	Event/EventFlow/Dm_TimeTemple_0130.bfevfl.zs	Event85	ActorName	Item_Arrow_Light	Item_Arrow_Light
-Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium	Item_Wallet_Medium
-Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone	Item_AgonyStone
-Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large
-Kak 40 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event200	TakenRewardActor	Item_BombchuBundle_Large	Item_BombchuBundle_Large
-Kak 50 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event219	TakenRewardActor	Obj_Heart_Piece	Obj_Heart_Piece
-Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event381	ReveiveItem	Item_Quiver_Medium	Item_Quiver_Medium
-Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event242	ReveiveItem	Item_Quiver_Large	Item_Quiver_Medium
-Kak Anju as Child	Event/EventFlow/Minigame_CatchCucco.bfevfl.zs	Event181	ReveiveItem	Item_Bottle	Item_Bottle
-Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl.zs	Event628	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event58	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Large
-GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event92	ReveiveItem	Item_BombBag_Large	Item_BombBag_Large
-ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event161	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event75	ActorName	Obj_Heart_Piece	Obj_Heart_Piece
-ZD Diving Minigame	Event/EventFlow/MiniGame_Diving.bfevfl.zs	Event21	ActorName	Item_Scale_Silver	Item_Scale_Silver
-ZD King Zora Thawed	Event/EventFlow/SageOfWater.bfevfl.zs	Event242	ActorName	Obj_Armor_Zora	Obj_Armor_Zora
-LLR Talons Chickens	Event/EventFlow/Minigame_FindOutCucco.bfevfl.zs	Event23	ReveiveItem	Item_Bottle_Milk	Item_Bottle_Milk
+location	flow	event	param	gives	item	group
+LW Skull Kid	Event/EventFlow/Npc_SkullKid_Child.bfevfl.zs	Event71	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Characters
+LW Ocarina Memory Game	Event/EventFlow/Npc_SkullKid_Child_02.bfevfl.zs	Event24	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event30	ActorName	Item_BulletBag_Medium	Item_BulletBag_Large	Minigames
+LW Target in Woods	Event/EventFlow/Dm_LostWood_0040.bfevfl.zs	Event17	ActorName	Item_BulletBag_Large	Item_BulletBag_Large	Minigames
+LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event29	ActorName	Item_StickBag_Medium	Item_StickBag_Medium	Characters
+LW Deku Theater Skull Mask	Event/EventFlow/LostWood_ScrubForestStageElder_SkullMaskFirst.bfevfl.zs	Event32	ActorName	Item_StickBag_Large	Item_StickBag_Medium	Characters
+LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event2	ActorName	Item_NutBag_Medium	Item_NutBag_Medium	Characters
+LW Deku Theater Mask of Truth	Event/EventFlow/LostWood_ScrubForestStageElder_TrueMaskFirst.bfevfl.zs	Event31	ActorName	Item_NutBag_Large	Item_NutBag_Medium	Characters
+LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event573	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+LH Child Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event821	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event579	ReveiveItem	Item_Scale_Gold	Item_Scale_Gold	Minigames
+LH Adult Fishing	Event/EventFlow/MiniGame_Fishing.bfevfl.zs	Event822	ActorName	Item_Scale_Gold	Item_Scale_Gold	Minigames
+LH Lab Dive	Event/EventFlow/Npc_Hylia_045_Child.bfevfl.zs	Event113	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Characters
+GF HBA 1000 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event322	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event320	ActorName	Item_Quiver_Medium	Item_Quiver_Large	Minigames
+GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event319	ActorName	Item_Quiver_Large	Item_Quiver_Large	Minigames
+GF Freed All Carpenters	Event/EventFlow/Dm_Gerudo_0025.bfevfl.zs	Event294	ActorName	Item_Token_Gerudo	Item_Token_Gerudo	Story gifts
+Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event304	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Medium	Minigames
+Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event306	ReveiveItem	Item_BombBag_Large	Item_BombBag_Medium	Minigames
+Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event241	ReveiveItem	Item_BulletBag_Medium	Item_BulletBag_Medium	Minigames
+Market Shooting Gallery	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event378	ReveiveItem	Item_BulletBag_Large	Item_BulletBag_Medium	Minigames
+Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Characters
+Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle	Item_Bottle	Characters
+Market ToT Light Arrow Cutscene	Event/EventFlow/Dm_TimeTemple_0130.bfevfl.zs	Event85	ActorName	Item_Arrow_Light	Item_Arrow_Light	Story gifts
+Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium	Item_Wallet_Medium	House of Skulltula
+Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone	Item_AgonyStone	House of Skulltula
+Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large	House of Skulltula
+Kak 40 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event200	TakenRewardActor	Item_BombchuBundle_Large	Item_BombchuBundle_Large	House of Skulltula
+Kak 50 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event219	TakenRewardActor	Obj_Heart_Piece	Obj_Heart_Piece	House of Skulltula
+Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Characters
+Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event381	ReveiveItem	Item_Quiver_Medium	Item_Quiver_Medium	Minigames
+Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event242	ReveiveItem	Item_Quiver_Large	Item_Quiver_Medium	Minigames
+Kak Anju as Child	Event/EventFlow/Minigame_CatchCucco.bfevfl.zs	Event181	ReveiveItem	Item_Bottle	Item_Bottle	Minigames
+Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl.zs	Event628	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event58	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Large	Minigames
+GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event92	ReveiveItem	Item_BombBag_Large	Item_BombBag_Large	Minigames
+ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event161	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+ZR Frogs Ocarina Game	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event75	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames
+ZD Diving Minigame	Event/EventFlow/MiniGame_Diving.bfevfl.zs	Event21	ActorName	Item_Scale_Silver	Item_Scale_Silver	Minigames
+ZD King Zora Thawed	Event/EventFlow/SageOfWater.bfevfl.zs	Event242	ActorName	Obj_Armor_Zora	Obj_Armor_Zora	Story gifts
+LLR Talons Chickens	Event/EventFlow/Minigame_FindOutCucco.bfevfl.zs	Event23	ReveiveItem	Item_Bottle_Milk	Item_Bottle_Milk	Minigames

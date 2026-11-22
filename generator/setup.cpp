@@ -302,7 +302,7 @@ struct Overloaded : Calls... {
     using Calls::operator()...;
 };
 
-void SetOptions(const SeedSettings& settings) {
+void SetOptions(const SeedSettings& settings, const std::vector<GroupedGift>& gifts) {
     Rando::Settings::GetInstance()->SetAllToContext();
     auto ctx = Rando::Context::GetInstance();
     for (auto [key, value] : unmodifiedGame) {
@@ -349,5 +349,7 @@ void SetOptions(const SeedSettings& settings) {
     }
     ctx->GetLogic()->LensNeeded = settings.lens == Lens::Needed;
     ctx->GetLogic()->SongsShuffled = settings.songs == Songs::ShuffledAmongThemselves;
-    ctx->GetLogic()->GiftsShuffled = settings.gifts == Gifts::Shuffled;
+    ctx->GetLogic()->KingZoraShuffled = std::ranges::any_of(gifts, [&](const GroupedGift& gift) {
+        return gift.gift.location == RC_ZD_KING_ZORA_THAWED && settings.gifts.contains(gift.group);
+    });
 }

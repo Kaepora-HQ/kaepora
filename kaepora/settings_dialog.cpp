@@ -98,7 +98,7 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.skulltulas == Skulltulas::All) {
         changed << "Gold Skulltulas shuffled";
     }
-    if (settings.gifts == Gifts::Shuffled) {
+    if (!settings.gifts.empty()) {
         changed << "gifts shuffled";
     }
     if (settings.songs == Songs::ShuffledAmongThemselves) {
@@ -173,7 +173,7 @@ QString Details(const SeedSettings& settings) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
     lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
-          << Line(GiftsSetting, QString::fromUtf8(Words(GiftsChoices, settings.gifts)))
+          << Line(GiftsSetting, settings.gifts.empty() ? "Vanilla" : "Shuffled")
           << Line(SongsSetting, QString::fromUtf8(Words(SongsChoices, settings.songs)))
           << Line(LooseItemsSetting, QString::fromUtf8(Words(LooseItemsChoices, settings.looseItems)))
           << Line(RewardsSetting, QString::fromUtf8(Words(RewardsChoices, settings.rewards)))
@@ -355,7 +355,8 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     auto* shopPricesLabel = new QLabel(QString::fromUtf8(ShopPricesSetting));
     shopPricesLabel->setBuddy(shopPrices);
     QComboBox* skulltulas = Choice(SkulltulasChoices);
-    QComboBox* gifts = Choice(GiftsChoices);
+    auto* gifts = new QComboBox;
+    gifts->addItems({ "Vanilla", "Shuffled" });
     QComboBox* songs = Choice(SongsChoices);
     QComboBox* looseItems = Choice(LooseItemsChoices);
     QComboBox* rewards = Choice(RewardsChoices);
@@ -452,7 +453,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         highestShopPrice->setValue(range.highest);
         showPrices();
         Select(skulltulas, shown.skulltulas);
-        Select(gifts, shown.gifts);
+        gifts->setCurrentIndex(shown.gifts.empty() ? 0 : 1);
         Select(songs, shown.songs);
         Select(looseItems, shown.looseItems);
         Select(rewards, shown.rewards);
@@ -494,7 +495,9 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
             shown.shops = ShuffledShops{ Selected<ShopCount>(shops), prices };
         }
         shown.skulltulas = Selected<Skulltulas>(skulltulas);
-        shown.gifts = Selected<Gifts>(gifts);
+        if (gifts->currentIndex() == 1) {
+            shown.gifts = EveryGiftGroup();
+        }
         shown.songs = Selected<Songs>(songs);
         shown.looseItems = Selected<LooseItems>(looseItems);
         shown.rewards = Selected<Rewards>(rewards);
