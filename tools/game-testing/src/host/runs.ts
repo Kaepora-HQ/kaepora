@@ -53,6 +53,10 @@ export type RunHeader = Omit<
 
 /** Writes one run's record as it goes. */
 export interface Recorder {
+	/**
+	 * Ends the run with `outcome`, unless an end came first. The record takes it last, as the run's scope closes once its
+	 * game has stopped, its last saves are kept and its place is given back.
+	 */
 	readonly end: (outcome: Outcome, result?: unknown) => Effect.Effect<void>;
 	readonly id: RunId;
 	/** Keeps a picture in the run's folder, named by its place in the run. */
@@ -116,8 +120,8 @@ export class Runs extends Context.Service<
 	Runs,
 	{
 		/**
-		 * Opens a run's record. When the scope closes, a record with no outcome yet is written `broken`, with what the
-		 * scope closed on.
+		 * Opens a run's record. When the scope closes, the record takes the outcome its end gave it, or `broken` with what
+		 * the scope closed on, and changes no more.
 		 */
 		readonly begin: (
 			header: RunHeader
@@ -153,12 +157,13 @@ export class Runs extends Context.Service<
 			const folderOf = (run: RunId) => `${root}/${run}`;
 
 			/** Written beside and renamed over the last one, so a reader only ever sees a whole record. */
-			const write = Effect.fnUntraced(function* (record: RunRecord) {
+			const writeRecord = Effect.fnUntraced(function* (record: RunRecord) {
 				const text = yield* Schema.encodeEffect(RecordJson)(record);
 				const folder = folderOf(record.id);
 				yield* fs.writeFileString(`${folder}/record.json.new`, text);
 				yield* fs.rename(`${folder}/record.json.new`, `${folder}/record.json`);
-			}, Effect.orDie);
+			});
+			const write = (record: RunRecord) => Effect.orDie(writeRecord(record));
 
 			const get = Effect.fn("Runs.get")(function* (run: RunId) {
 				const text = yield* fs
@@ -181,30 +186,43 @@ export class Runs extends Context.Service<
 					})
 				);
 				const permit = yield* Semaphore.make(1);
+				// A record with an outcome is final.
 				const update = (change: (record: RunRecord) => RunRecord) =>
 					permit.withPermit(
-						Effect.flatMap(Ref.updateAndGet(record, change), write)
+						Effect.flatMap(
+							Ref.updateAndGet(record, (current) =>
+								current.outcome._tag === "running" ? change(current) : current
+							),
+							write
+						)
 					);
 				const pictures = yield* Ref.make(0);
 				const saves = yield* Ref.make(0);
-				const end = Effect.fnUntraced(function* (
-					outcome: Outcome,
-					result?: unknown
-				) {
-					const ended = yield* Clock.currentTimeMillis;
-					yield* update((current) =>
-						current.outcome._tag === "running"
-							? RunRecord.make({
-									...current,
-									outcome,
-									...(result === undefined ? {} : { result }),
-									endedAt: Temporal.Instant.fromEpochMilliseconds(ended),
-								})
-							: current
-					);
-				});
+				/** How the run ended, as its end gave it; the record takes it as the scope closes. */
+				interface Ending {
+					readonly outcome: Outcome;
+					readonly result?: unknown;
+				}
+				const ending = yield* Ref.make(Option.none<Ending>());
 				yield* update((current) => current);
-				yield* Effect.addFinalizer((exit) => exit.pipe(brokenBy, end));
+				yield* Effect.addFinalizer((exit) =>
+					Effect.gen(function* () {
+						const given = yield* Ref.get(ending);
+						const { outcome, result } = Option.getOrElse(
+							given,
+							(): Ending => ({ outcome: brokenBy(exit) })
+						);
+						const ended = yield* Clock.currentTimeMillis;
+						yield* update((current) =>
+							RunRecord.make({
+								...current,
+								outcome,
+								...(result === undefined ? {} : { result }),
+								endedAt: Temporal.Instant.fromEpochMilliseconds(ended),
+							})
+						);
+					})
+				);
 				const recorder: Recorder = {
 					id: header.id,
 					wire: yield* wireLog(`${folder}/wire.jsonl`).pipe(
@@ -282,7 +300,14 @@ export class Runs extends Context.Service<
 							...(label === undefined ? {} : { label }),
 						});
 					}),
-					end,
+					end: (outcome, result) =>
+						Ref.update(ending, (first) =>
+							Option.isSome(first)
+								? first
+								: Option.some(
+										result === undefined ? { outcome } : { outcome, result }
+									)
+						),
 				};
 				return recorder;
 			});
@@ -371,14 +396,21 @@ export class Runs extends Context.Service<
 						reason: `the game machine named a file ${refused.value.path}, which is no picture's or save's name`,
 					});
 				}
+				const unwritten = (error: { readonly message: string }) =>
+					CopyFailed.make({
+						run: record.id,
+						reason: `this machine could not write it: ${error.message}`,
+					});
 				const folder = folderOf(record.id);
-				yield* Effect.orDie(fs.makeDirectory(folder, { recursive: true }));
+				yield* fs
+					.makeDirectory(folder, { recursive: true })
+					.pipe(Effect.mapError(unwritten));
 				for (const kept of files) {
-					yield* Effect.orDie(
-						fs.writeFile(`${folder}/${kept.path}`, kept.bytes)
-					);
+					yield* fs
+						.writeFile(`${folder}/${kept.path}`, kept.bytes)
+						.pipe(Effect.mapError(unwritten));
 				}
-				yield* write(record);
+				yield* writeRecord(record).pipe(Effect.mapError(unwritten));
 			});
 
 			return Runs.of({ begin, list, get, file, folder: folderOf, copy });

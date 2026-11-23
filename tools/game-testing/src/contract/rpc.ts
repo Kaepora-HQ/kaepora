@@ -256,7 +256,16 @@ export class GameRpcs extends RpcGroup.make(
 		payload: { session: SessionId, text: Schema.String },
 		error: SessionNotFound,
 	}),
-	/** The script's end, sent before its `Open` stream closes, so the host can write the outcome. */
+	/**
+	 * Ends a game started by hand: its run ends `stopped` for `reason`, unless an end came first, and its `Open` stream
+	 * closes. As at every end, the game stops, its last saves are kept, its place is given back, and the record takes the
+	 * outcome last.
+	 */
+	Rpc.make("Stop", {
+		payload: { session: SessionId, reason: Schema.String },
+		error: SessionNotFound,
+	}),
+	/** The script's end, sent before its `Open` stream closes, so the host has the outcome to write. */
 	Rpc.make("Finish", {
 		payload: {
 			session: SessionId,

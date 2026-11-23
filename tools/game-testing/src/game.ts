@@ -65,8 +65,11 @@ export const dialogEvery = 30;
 /** A wait without its own limit fails after this long. */
 const defaultWait = Duration.seconds(10);
 
-/** How long a start waits for a free place. */
-export const defaultPlaceWait = Duration.minutes(10);
+/**
+ * How long a start waits for a free place: longer than a game started by hand and then left alone, which holds its place
+ * for its ten-minute lease, and one look after it, together.
+ */
+export const defaultPlaceWait = Duration.minutes(20);
 
 /** A started game. Every method is a step in the run's record. */
 export interface RunningGame {
@@ -177,6 +180,70 @@ const kept = (value: unknown): unknown => {
 		: value;
 };
 
+/** The commands of a host, on one connection. */
+export type Client = RpcClient.FromGroup<
+	typeof GameRpcs,
+	RpcClientError.RpcClientError
+>;
+
+/** What a game is started with: the `Open` command's payload. */
+export type Opening = Parameters<Client["Open"]>[0];
+
+/** A game started on a host, which lives while the scope it was opened in lasts. */
+export interface Opened {
+	/** Done once its `Open` stream has closed: its run finished, or the connection to its host was lost. */
+	readonly ended: Effect.Effect<void>;
+	readonly place: PlaceId;
+	readonly readBack: typeof ReadBack.Type;
+	readonly run: RunId;
+	readonly session: SessionId;
+}
+
+/**
+ * Starts a game on the host at `where` and answers once Link can move. Its `Open` stream stays open while the scope
+ * lasts, and the host stops the game when the stream closes.
+ */
+export const open = Effect.fnUntraced(function* (
+	client: Client,
+	where: string,
+	opening: Opening
+) {
+	const started = yield* Deferred.make<
+		{
+			readonly session: SessionId;
+			readonly run: RunId;
+			readonly place: PlaceId;
+			readonly readBack: typeof ReadBack.Type;
+		},
+		StartError
+	>();
+	const stream = yield* client.Open(opening).pipe(
+		Stream.runForEach((event) =>
+			event._tag === "started" ? Deferred.succeed(started, event) : Effect.void
+		),
+		(call) => reached(where, call),
+		Effect.exit,
+		Effect.flatMap((exit) =>
+			Deferred.failCause(
+				started,
+				Exit.isFailure(exit)
+					? exit.cause
+					: Cause.fail(RemoteUnavailable.make({ url: where, reason: "closed" }))
+			)
+		),
+		Effect.forkScoped
+	);
+	const { session, run, place, readBack } = yield* Deferred.await(started);
+	const opened: Opened = {
+		session,
+		run,
+		place,
+		readBack,
+		ended: Effect.asVoid(Fiber.await(stream)),
+	};
+	return opened;
+});
+
 export class Game extends Context.Service<
 	Game,
 	{
@@ -218,8 +285,8 @@ export class Game extends Context.Service<
 				) => reached(where, call);
 				yield* remote(client.Hello({ contract }));
 
-				/** Each started session's `Open` stream, by the effect that waits for its end. */
-				const streams = new Map<SessionId, Effect.Effect<unknown>>();
+				/** Each started session's end: its `Open` stream closing. */
+				const streams = new Map<SessionId, Effect.Effect<void>>();
 				const start = Effect.fn("Game.start")(function* (
 					options: StartOptions
 				) {
@@ -228,16 +295,10 @@ export class Game extends Context.Service<
 						options.mod === undefined || options.mod === "none"
 							? options.mod
 							: yield* readMod(fs, path, options.mod.folder);
-					const started = yield* Deferred.make<
+					const { session, place, readBack, ended } = yield* open(
+						client,
+						where,
 						{
-							readonly session: SessionId;
-							readonly place: PlaceId;
-							readonly readBack: typeof ReadBack.Type;
-						},
-						StartError
-					>();
-					const open = yield* client
-						.Open({
 							run,
 							state: options.state,
 							owner: options.owner,
@@ -254,29 +315,9 @@ export class Game extends Context.Service<
 							...(options.attemptOf === undefined
 								? {}
 								: { attemptOf: options.attemptOf }),
-						})
-						.pipe(
-							Stream.runForEach((event) =>
-								event._tag === "started"
-									? Deferred.succeed(started, event)
-									: Effect.void
-							),
-							remote,
-							Effect.exit,
-							Effect.flatMap((exit) =>
-								Deferred.failCause(
-									started,
-									Exit.isFailure(exit)
-										? exit.cause
-										: Cause.fail(
-												RemoteUnavailable.make({ url: where, reason: "closed" })
-											)
-								)
-							),
-							Effect.forkScoped
-						);
-					const { session, place, readBack } = yield* Deferred.await(started);
-					streams.set(session, Fiber.await(open));
+						}
+					);
+					streams.set(session, ended);
 					const call = remote;
 					/** The host read the value by the type the game data list gives it, which the generated names give too. */
 					const typed = <Name extends ValueName>(_name: Name, value: Value) =>

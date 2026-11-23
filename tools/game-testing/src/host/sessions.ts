@@ -1,9 +1,9 @@
 /**
- * The games a host runs, by session. A game lives in the scope of whoever holds it, so it stops and gives its place back
- * however that scope ends: an `Open` stream's handler, or, for a caller with no connection to hold it, this host on an
- * idle lease. Every command a game takes is a step in its run's record.
+ * The games a host runs, by session. A game lives in the scope of whoever holds it, an `Open` stream's handler, so it
+ * stops and gives its place back however that scope ends. Every command a game takes is a step in its run's record.
  */
 import { hostname } from "node:os";
+import type { Scope } from "effect";
 import {
 	Array as Arr,
 	Clock,
@@ -13,17 +13,14 @@ import {
 	Duration,
 	Effect,
 	Equal,
-	Exit,
 	FileSystem,
 	Formatter,
 	Layer,
 	Option,
 	Path,
-	RcMap,
 	Record as Rec,
 	Schedule,
 	Schema,
-	Scope,
 } from "effect";
 import { SecureRandom } from "effect/crypto";
 import { UserDirectories } from "effect/persistence";
@@ -95,16 +92,6 @@ export type Person = (
 const nobody: Person = (say) =>
 	Effect.fail(NobodyThere.make({ ask: say, reason: "no-person" }));
 
-/** A kept game stops when no call names its session for this long. */
-const leaseIdle = Duration.minutes(10);
-const leaseEnded = "no call named its session for 10 minutes";
-
-/** A kept game, and the scope it lives in, which only its lease's end closes. */
-interface Lease {
-	readonly game: HostGame;
-	readonly scope: Scope.Closeable;
-}
-
 /** How often a wait reads its value. */
 const waitSpacing = Duration.millis(100);
 const screenshotHeight = 720;
@@ -173,7 +160,10 @@ export interface HostGame {
 		{ readonly presses: number; readonly pictures: readonly string[] },
 		EmulatorError | WaitTimedOut
 	>;
-	/** Ends the run with `outcome`, unless it has one already. */
+	/**
+	 * Ends the run with `outcome`, unless an end came first, and its `Open` stream with it: the game stops, its last saves
+	 * are kept, its place is given back, and the record takes the outcome last.
+	 */
 	readonly end: (outcome: Outcome) => Effect.Effect<void>;
 	/** The run's end: its outcome, from the failure the script ended on or from its checks. */
 	readonly finish: (end: {
@@ -268,19 +258,9 @@ export class Sessions extends Context.Service<
 		readonly hold: (
 			start: Start
 		) => Effect.Effect<HostGame, StartError, Scope.Scope>;
-		/**
-		 * Starts a game that lives in this host on an idle lease, for a caller with no connection to hold it: it stops
-		 * when no call names its session for 10 minutes, at `stop`, or when the host stops.
-		 */
-		readonly keep: (start: Start) => Effect.Effect<HostGame, StartError>;
-		/** A session's game. A call that names a kept game's session renews its lease. */
+		/** A session's game. */
 		readonly get: (
 			session: SessionId
-		) => Effect.Effect<HostGame, SessionNotFound>;
-		/** Stops a kept game, gives its place back, and ends its run `stopped` for `reason`. */
-		readonly stop: (
-			session: SessionId,
-			reason: string
 		) => Effect.Effect<HostGame, SessionNotFound>;
 		/** Sends the hand overs of the run `run` to `person` while the scope lasts. Without one, a run has nobody. */
 		readonly handOversTo: (
@@ -318,31 +298,6 @@ export class Sessions extends Context.Service<
 			}, Effect.orDie);
 			const games = new Map<SessionId, HostGame>();
 			const people = new Map<RunId, Person>();
-			const host = yield* Effect.scope;
-			/**
-			 * The kept games' leases. A lease ends alone, after `leaseIdle` with no call on the clock the host was built
-			 * with, or when `stop` takes it away; either way its game's scope closes.
-			 */
-			const kept = new Map<SessionId, Lease>();
-			const leases = yield* RcMap.make({
-				lookup: (session: SessionId) =>
-					Effect.flatMap(
-						Effect.sync(() => kept.get(session)),
-						(lease) =>
-							lease === undefined
-								? Effect.die(new Error(`no kept game ${session} to lease`))
-								: Effect.addFinalizer(() =>
-										lease.game
-											.end({ _tag: "stopped", reason: leaseEnded })
-											.pipe(
-												Effect.andThen(Scope.close(lease.scope, Exit.void)),
-												Effect.ensuring(Effect.sync(() => kept.delete(session)))
-											)
-									)
-					),
-				idleTimeToLive: leaseIdle,
-			});
-
 			/** The item whose records hold `value`, for the word that takes it away. */
 			const itemOf = (value: string) =>
 				Arr.findFirst(data.items, (item) =>
@@ -797,14 +752,13 @@ export class Sessions extends Context.Service<
 						),
 					note: (text) => record("note", { text }, Effect.void),
 					end: (outcome) =>
-						keepSaves().pipe(
-							Effect.andThen(recorder.end(outcome)),
-							Effect.andThen(Deferred.succeed(finished, undefined))
+						Effect.andThen(
+							recorder.end(outcome),
+							Deferred.succeed(finished, undefined)
 						),
 					finished: Deferred.await(finished),
 					finish: Effect.fnUntraced(function* ({ result, failure }) {
 						const outcome = outcomeOf(steps, failure);
-						yield* keepSaves();
 						yield* recorder.end(outcome, result);
 						yield* Deferred.succeed(finished, undefined);
 						return outcome;
@@ -822,40 +776,7 @@ export class Sessions extends Context.Service<
 				if (game === undefined) {
 					return yield* SessionNotFound.make({ session });
 				}
-				if (kept.has(session)) {
-					yield* RcMap.touch(leases, session);
-				}
 				return game;
-			});
-
-			const keep = Effect.fn("Sessions.keep")(function* (start: Start) {
-				const scope = yield* Scope.fork(host);
-				const game = yield* hold(start).pipe(
-					Scope.provide(scope),
-					Effect.onError((cause) => Scope.close(scope, Exit.failCause(cause)))
-				);
-				const lease: Lease = { game, scope };
-				// From here the game's scope belongs to its lease.
-				yield* Effect.uninterruptible(
-					Effect.andThen(
-						Effect.sync(() => kept.set(game.session, lease)),
-						Effect.scoped(RcMap.get(leases, game.session))
-					)
-				);
-				return game;
-			});
-
-			const stop = Effect.fn("Sessions.stop")(function* (
-				session: SessionId,
-				reason: string
-			) {
-				const lease = kept.get(session);
-				if (lease === undefined) {
-					return yield* SessionNotFound.make({ session });
-				}
-				yield* lease.game.end({ _tag: "stopped", reason });
-				yield* RcMap.invalidate(leases, session);
-				return lease.game;
 			});
 
 			const handOversTo = (run: RunId, person: Person) =>
@@ -864,13 +785,7 @@ export class Sessions extends Context.Service<
 					() => Effect.sync(() => people.delete(run))
 				);
 
-			return Sessions.of({
-				hold,
-				keep,
-				get,
-				stop,
-				handOversTo,
-			});
+			return Sessions.of({ hold, get, handOversTo });
 		})
 	);
 }

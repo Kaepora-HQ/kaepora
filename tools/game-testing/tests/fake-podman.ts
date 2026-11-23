@@ -3,6 +3,7 @@
  * containers are records in memory, and nothing runs. A name is held until its container is removed, and of several
  * creates of one name only one wins, as measured with eight at once. A test can answer any command its own way.
  */
+import type { Duration } from "effect";
 import {
 	Array as Arr,
 	Deferred,
@@ -97,6 +98,8 @@ export const fakePodman = (options: {
 	readonly onStart?: (container: FakeContainer) => Effect.Effect<void>;
 	/** Runs every command that is not podman's. */
 	readonly otherwise?: ChildProcessSpawner.ChildProcessSpawner["Service"];
+	/** How long `rm` takes to stop a container, as a real one takes seconds. */
+	readonly stopTakes?: Duration.Input;
 }) =>
 	Effect.gen(function* () {
 		const containers = yield* Ref.make(new Map<string, FakeContainer>());
@@ -182,6 +185,9 @@ export const fakePodman = (options: {
 					const held = [...(yield* Ref.get(containers)).values()];
 					const container = Arr.findFirst(held, (each) => each.id === last);
 					if (Option.isSome(container)) {
+						if (options.stopTakes !== undefined) {
+							yield* Effect.sleep(options.stopTakes);
+						}
 						yield* Ref.update(removed, (gone) => [
 							...gone,
 							{ id: last, grace: Number(value(args, "--time")) },

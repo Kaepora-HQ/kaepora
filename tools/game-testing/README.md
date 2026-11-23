@@ -20,7 +20,7 @@ gt spots             # every chest, and the spot a look starts on before it
 gt runs              # past runs on the game machine
 ```
 
-The game machine runs one game at a time. A start waits up to 10 minutes for the game before it, then about 25
+The game machine runs one game at a time. A start waits up to 20 minutes for the game before it, then about 25
 seconds until Link can move. A whole look takes 35 to 90 seconds once it starts.
 
 ## The smallest script

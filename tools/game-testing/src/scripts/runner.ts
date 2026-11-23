@@ -30,9 +30,9 @@ import type { RunId } from "../contract/values.ts";
 import { newRunId } from "../contract/values.ts";
 import { ScriptFailed } from "../errors.ts";
 import { Runs } from "../host/runs.ts";
+import { Machine } from "../machine.ts";
 import { lastLines, ran, text } from "../process.ts";
 import { Declaration } from "../script.ts";
-import { ScriptHost } from "./host.ts";
 
 /** The hidden commands a child runs as: a script's run, and only its declaration. */
 export const workerCommand = "script-worker";
@@ -258,8 +258,8 @@ export class Scripts extends Context.Service<
 	Scripts,
 	{
 		/**
-		 * Type-checks a script, then runs it to its end in a child, as the run `run`, a new one unless given. A script
-		 * that declares it hands over to a person is skipped.
+		 * Type-checks a script against the machine's names, then runs it to its end in a child, as the run `run`, a new
+		 * one unless given. A script that declares it hands over to a person is skipped.
 		 */
 		readonly run: (
 			script: string,
@@ -267,17 +267,35 @@ export class Scripts extends Context.Service<
 				readonly attemptOf?: RunId | undefined;
 				readonly run?: RunId | undefined;
 			}
-		) => Effect.Effect<ScriptRun, ScriptFailed>;
+		) => Effect.Effect<
+			ScriptRun,
+			ScriptFailed | Effect.Error<Machine["Service"]["names"]>
+		>;
 	}
 >()("game-testing/scripts/runner/Scripts") {
-	/** Scripts whose children drive the host `ScriptHost` names. */
+	/** Scripts whose children drive the game of the machine `Machine` names. */
 	static readonly layerNoDeps = Layer.effect(
 		Scripts,
 		Effect.gen(function* () {
-			const host = yield* ScriptHost;
+			const host = yield* Machine;
 			const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 			const fs = yield* FileSystem.FileSystem;
-			const kept = host.recorded;
+			/**
+			 * The run's name once its host has written its outcome, and for a far run why its files are not here; nothing
+			 * when its host kept no record of it, so a caller names only runs that can be read.
+			 */
+			const kept = (id: RunId) =>
+				host.landed(id).pipe(
+					Effect.map(
+						(landed): Pick<ScriptRun, "run" | "notCopied"> =>
+							"folder" in landed
+								? { run: id }
+								: { run: id, notCopied: landed.notCopied.message }
+					),
+					Effect.catchTag("RunNotFound", () =>
+						Effect.succeed<Pick<ScriptRun, "run" | "notCopied">>({})
+					)
+				);
 
 			const run = Effect.fn("Scripts.run")(function* (
 				script: string,
@@ -286,7 +304,8 @@ export class Scripts extends Context.Service<
 					readonly run?: RunId | undefined;
 				}
 			) {
-				yield* typecheck(spawner, fs, script, host.names);
+				const names = yield* host.names;
+				yield* typecheck(spawner, fs, script, names);
 				const id = given?.run ?? (yield* newRunId);
 				const outcome = yield* Effect.scoped(
 					Effect.gen(function* () {
@@ -323,50 +342,37 @@ export class Scripts extends Context.Service<
 					})
 				).pipe(
 					Effect.catchTag("ScriptFailed", (failed) =>
-						Effect.flatMap(
-							Effect.catchTag(kept(id), "CopyFailed", () =>
-								Effect.succeed(true)
-							),
-							(recorded) =>
-								Effect.fail(
-									recorded
-										? ScriptFailed.make({
-												reason: failed.reason,
-												detail: failed.detail,
-												run: id,
-											})
-										: failed
-								)
+						Effect.flatMap(kept(id), (found) =>
+							Effect.fail(
+								found.run === undefined
+									? failed
+									: ScriptFailed.make({
+											reason: failed.reason,
+											detail: failed.detail,
+											run: id,
+										})
+							)
 						)
 					)
 				);
-				return yield* kept(id).pipe(
-					Effect.map(
-						(named): ScriptRun => (named ? { run: id, outcome } : { outcome })
-					),
-					Effect.catchTag("CopyFailed", (failed) =>
-						Effect.succeed<ScriptRun>({
-							run: id,
-							outcome,
-							notCopied: failed.message,
-						})
-					)
-				);
+				const recorded = yield* kept(id);
+				const ended: ScriptRun = { outcome, ...recorded };
+				return ended;
 			});
 
 			return Scripts.of({ run });
 		})
 	);
 
-	/** Scripts on this machine's host. */
+	/** Scripts on this machine's host, and the host as a machine. */
 	static readonly layer = Scripts.layerNoDeps.pipe(
-		Layer.provide(ScriptHost.layer)
+		Layer.provideMerge(Machine.layer)
 	);
 
-	/** Scripts on the far machine whose `serve` `url` reaches; their records are copied to this machine's. */
+	/** Scripts on the far machine whose `serve` `url` reaches, and that machine; their records are copied to this machine's. */
 	static readonly layerRemote = (url: string) =>
 		Scripts.layerNoDeps.pipe(
-			Layer.provide(ScriptHost.layerRemote(url)),
-			Layer.provide(Runs.layer)
+			Layer.provideMerge(Machine.layerRemote(url)),
+			Layer.provideMerge(Runs.layer)
 		);
 }

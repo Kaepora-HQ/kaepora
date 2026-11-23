@@ -6,6 +6,7 @@
  * the type check, runs for real.
  */
 import { BunServices } from "@effect/platform-bun";
+import type { Duration } from "effect";
 import {
 	Array as Arr,
 	ConfigProvider,
@@ -183,6 +184,8 @@ export const fakeMachine = (options?: {
 	readonly noSkips?: boolean;
 	/** Every mod changes the bytes Lichii's instant text add-on patches, so Lichii leaves the add-on out. */
 	readonly textBytesTaken?: boolean;
+	/** How long a place's container takes to stop. */
+	readonly stopTakes?: Duration.Input;
 }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
@@ -370,6 +373,9 @@ export const fakeMachine = (options?: {
 		const dump = yield* fakeDump(game);
 		const podman = yield* fakePodman({
 			devices: ["nvidia.com/gpu=all"],
+			...(options?.stopTakes === undefined
+				? {}
+				: { stopTakes: options.stopTakes }),
 			onStart: (container) =>
 				options?.crashes === true
 					? Deferred.succeed(container.exit, 1).pipe(Effect.asVoid)

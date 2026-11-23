@@ -35,10 +35,11 @@ import type { DebugServer } from "./emulator/emulator.ts";
 import type { Keep } from "./emulator/recorder.ts";
 import { recordHere, watchChests } from "./emulator/recorder.ts";
 import { TokenRequired } from "./errors.ts";
-import { Far, farUrl, reached, token, writeFarNames } from "./far.ts";
+import { farUrl, token, tokenFile } from "./far.ts";
 import { host, tables } from "./host/host.ts";
 import { Places } from "./host/places.ts";
 import { Runs } from "./host/runs.ts";
+import { Machine } from "./machine.ts";
 import {
 	instructions,
 	protocols,
@@ -67,23 +68,26 @@ import {
 import { declare, work } from "./scripts/worker.ts";
 import { serve as serveOn } from "./serve/server.ts";
 
+const farMachine = (url: string) =>
+	Machine.layerRemote(url).pipe(Layer.provide(Runs.layer));
+
 /**
  * Runs `here` on this machine, or, with `GAME_TESTING_URL` set, `far` against that machine's `serve`, whose
  * connection closes when it ends.
  */
 const hereOrFar = <A, E, R, B, E2, R2>(
 	here: Effect.Effect<A, E, R>,
-	far: (machine: Far["Service"]) => Effect.Effect<B, E2, R2>
+	far: (machine: Machine["Service"]) => Effect.Effect<B, E2, R2>
 ) =>
 	Effect.flatMap(
 		farUrl,
 		Option.match({
 			onNone: (): Effect.Effect<
 				A | B,
-				E | E2 | Layer.Error<ReturnType<typeof Far.layer>>,
-				R | Exclude<R2, Far>
+				E | E2 | Layer.Error<ReturnType<typeof farMachine>>,
+				R | Exclude<R2, Machine> | Layer.Services<ReturnType<typeof farMachine>>
 			> => here,
-			onSome: (url) => Far.use(far).pipe(Effect.provide(Far.layer(url))),
+			onSome: (url) => Machine.use(far).pipe(Effect.provide(farMachine(url))),
 		})
 	);
 
@@ -98,23 +102,25 @@ const shown = <A, E extends { readonly message: string }, R>(
 		CliError.UserError.make({ cause: error, userMessage: error.message })
 	);
 
-const scriptsHere = Scripts.layer.pipe(Layer.provideMerge(host));
+/**
+ * Scripts, their machine and this machine's runs: `here`, or with `GAME_TESTING_URL` the far machine's, whose
+ * connection is made at the first call.
+ */
+const scriptsOn = <E, R>(here: Layer.Layer<Scripts | Machine | Runs, E, R>) =>
+	Layer.unwrap(
+		Effect.map(
+			farUrl,
+			(
+				url
+			): Layer.Layer<
+				Scripts | Machine | Runs,
+				E | Layer.Error<ReturnType<typeof Scripts.layerRemote>>,
+				R | Layer.Services<ReturnType<typeof Scripts.layerRemote>>
+			> => (Option.isSome(url) ? Scripts.layerRemote(url.value) : here)
+		)
+	);
 
-/** The scripts `run` runs: against this machine's game, or with `GAME_TESTING_URL` against the far machine's. */
-const scriptsLayer = Layer.unwrap(
-	Effect.map(
-		farUrl,
-		(
-			url
-		): Layer.Layer<
-			Scripts,
-			| Layer.Error<typeof scriptsHere>
-			| Layer.Error<ReturnType<typeof Scripts.layerRemote>>,
-			| Layer.Services<typeof scriptsHere>
-			| Layer.Services<ReturnType<typeof Scripts.layerRemote>>
-		> => (Option.isSome(url) ? Scripts.layerRemote(url.value) : scriptsHere)
-	)
-);
+const scriptsHere = Scripts.layer.pipe(Layer.provideMerge(host));
 
 const ended = (outcome: Outcome) =>
 	outcome._tag === "passed" || outcome._tag === "skipped";
@@ -168,14 +174,24 @@ const attemptRun = (
 	runner.run(script, { attemptOf }).pipe(
 		Effect.catch(
 			(failed): Effect.Effect<ScriptRun> =>
-				Effect.succeed({
-					outcome: {
-						_tag: "broken",
-						reason: `the script failed (${failed.reason})`,
-						error: failed.detail,
-					},
-					...(failed.run === undefined ? {} : { run: failed.run }),
-				})
+				Effect.succeed(
+					failed._tag === "ScriptFailed"
+						? {
+								outcome: {
+									_tag: "broken",
+									reason: `the script failed (${failed.reason})`,
+									error: failed.detail,
+								},
+								...(failed.run === undefined ? {} : { run: failed.run }),
+							}
+						: {
+								outcome: {
+									_tag: "broken",
+									reason: "the game machine could not be asked",
+									error: failed.message,
+								},
+							}
+				)
 		),
 		Effect.tap((ran) => report(label, ran, records.folder))
 	);
@@ -201,8 +217,9 @@ const run = Command.make(
 	},
 	({ scripts, parallel, rerunBroken }) =>
 		Effect.gen(function* () {
-			// Built here, so a far machine that cannot be reached says why on stderr.
-			const built = yield* shown(Layer.build(scriptsLayer));
+			const built = yield* shown(Layer.build(scriptsOn(scriptsHere)));
+			// Asked here first, so a machine that cannot be reached says why on stderr.
+			yield* shown(Effect.scoped(Context.get(built, Machine).connection));
 			const runner = Context.get(built, Scripts);
 			const records = yield* Runs;
 			const attempt = (script: string, attemptOf?: RunId) =>
@@ -347,12 +364,11 @@ const plan = Command.make(
 						};
 						return planned;
 					}).pipe(Effect.provide(tables)),
-					Effect.fnUntraced(function* (far) {
-						const names = yield* writeFarNames(far);
+					Effect.fnUntraced(function* (machine) {
+						const names = yield* machine.names;
 						const { state, mod } = yield* declaredIn(file, names);
-						return yield* reached(
-							far.url,
-							far.client.Plan({ state, ...(mod === undefined ? {} : { mod }) })
+						return yield* machine.call((client) =>
+							client.Plan({ state, ...(mod === undefined ? {} : { mod }) })
 						);
 					})
 				),
@@ -372,7 +388,7 @@ const places = Command.make("places", {}, () =>
 				Effect.flatMap(Places, (machine) => machine.list).pipe(
 					Effect.provide(Places.layer)
 				),
-				(far) => reached(far.url, far.client.Places())
+				(machine) => machine.call((client) => client.Places())
 			),
 			(listed) =>
 				Effect.forEach(
@@ -413,10 +429,9 @@ const search = Command.make(
 							kind: Option.getOrUndefined(kind),
 						});
 					}).pipe(Effect.provide([GameData.layer, Spots.layer])),
-					(far) =>
-						reached(
-							far.url,
-							far.client.Search({
+					(machine) =>
+						machine.call((client) =>
+							client.Search({
 								text,
 								limit,
 								...Option.match(kind, {
@@ -483,7 +498,7 @@ const listing = hereOrFar(
 		const kept = yield* Spots;
 		return yield* chestSpots(data, own, kept);
 	}).pipe(Effect.provide([GameData.layer, Spots.layer])),
-	(far) => reached(far.url, far.client.Spots())
+	(machine) => machine.call((client) => client.Spots())
 );
 
 const spots = Command.make("spots", {}, () =>
@@ -537,8 +552,8 @@ const debugServer = (address: string) => {
 };
 
 /**
- * Runs `use` with the keeper of the machine that plans looks: this one, or with GAME_TESTING_URL the far one, reached
- * afresh for each spot, so a server restarted between two spots takes the second.
+ * Runs `use` with the keeper of the machine that plans looks: this one, or with GAME_TESTING_URL the far one, whose
+ * connection is made again after a loss, so a server restarted between two spots takes the second.
  */
 const keeping = <A, E, R>(
 	use: (keep: Keep<KeepFailure>) => Effect.Effect<A, E, R>
@@ -553,11 +568,11 @@ const keeping = <A, E, R>(
 				return yield* use((played) => keepPlayed(data, own, kept, played));
 			}).pipe(Effect.provide([GameData.layer, Spots.layer]));
 		}
-		return yield* use((played) =>
-			Far.use((far) =>
-				reached(far.url, far.client.RecordSpot({ spot: played }))
-			).pipe(Effect.provide(Far.layer(url.value)))
-		);
+		return yield* Machine.use((machine) =>
+			use((played) =>
+				machine.call((client) => client.RecordSpot({ spot: played }))
+			)
+		).pipe(Effect.provide(farMachine(url.value)));
 	});
 
 /** Why a spot was not kept: a refusal, or a machine that did not answer, which `RemoteUnavailable` names. */
@@ -630,7 +645,7 @@ const moveSpots = Command.make("move-spots", {}, () =>
 			const fs = yield* FileSystem.FileSystem;
 			const recorded = yield* hereOrFar(
 				Spots.use((kept) => kept.recorded).pipe(Effect.provide(Spots.layer)),
-				(far) => reached(far.url, far.client.Recorded())
+				(machine) => machine.call((client) => client.Recorded())
 			);
 			if (recorded.spots.length + recorded.marks.length === 0) {
 				return yield* Console.log(
@@ -649,7 +664,8 @@ const moveSpots = Command.make("move-spots", {}, () =>
 				Spots.use((kept) => kept.forget(recorded)).pipe(
 					Effect.provide(Spots.layer)
 				),
-				(far) => reached(far.url, far.client.Forget({ recordings: recorded }))
+				(machine) =>
+					machine.call((client) => client.Forget({ recordings: recorded }))
 			);
 			for (const spot of recorded.spots) {
 				yield* Console.log(`moved the spot ${spot.name}  ${spot.scene}`);
@@ -680,7 +696,7 @@ const marking = (id: RunId) =>
 			const ran = yield* Runs.use((records) => records.get(id));
 			return yield* markSpot(data, own, kept, ran);
 		}).pipe(Effect.provide([GameData.layer, Spots.layer, Runs.layer])),
-		(far) => reached(far.url, far.client.MarkSpot({ run: id }))
+		(machine) => machine.call((client) => client.MarkSpot({ run: id }))
 	);
 
 const prove = Command.make(
@@ -696,7 +712,9 @@ const prove = Command.make(
 	},
 	({ checks, base }) =>
 		Effect.gen(function* () {
-			const built = yield* shown(Layer.build(scriptsLayer));
+			const built = yield* shown(Layer.build(scriptsOn(scriptsHere)));
+			// Asked here first, so a machine that cannot be reached says why on stderr.
+			yield* shown(Effect.scoped(Context.get(built, Machine).connection));
 			const runner = Context.get(built, Scripts);
 			const records = yield* Runs;
 			const own = yield* OwnTables;
@@ -780,7 +798,7 @@ const runs = Command.make(
 					Effect.flatMap(Runs, (records) => records.list(filter)).pipe(
 						Effect.provide(Runs.layer)
 					),
-					(far) => reached(far.url, far.client.Runs(filter))
+					(machine) => machine.call((client) => client.Runs(filter))
 				)
 			);
 			for (const summary of found.runs) {
@@ -815,7 +833,10 @@ const runs = Command.make(
 
 const names = Command.make("names", {}, () =>
 	shown(
-		hereOrFar(writeNames.pipe(Effect.provide(GameData.layer)), writeFarNames)
+		hereOrFar(
+			writeNames.pipe(Effect.provide(GameData.layer)),
+			(machine) => machine.names
+		)
 	)
 ).pipe(
 	Command.withDescription(
@@ -860,11 +881,11 @@ const hosting = Layer.effectDiscard(writeNames).pipe(
 const serve = Command.make("serve", {}, () =>
 	shown(
 		Effect.gen(function* () {
-			const required = yield* Effect.flatMap(token, (set) =>
-				Effect.mapError(Effect.fromOption(set), () =>
-					TokenRequired.make({ key: "GAME_TESTING_TOKEN" })
-				)
-			);
+			const set = yield* token;
+			if (Option.isNone(set)) {
+				return yield* TokenRequired.make({ file: yield* tokenFile });
+			}
+			const required = set.value;
 			const port = yield* Config.Port("GAME_TESTING_PORT").pipe(
 				Config.withDefault(7480)
 			);
@@ -880,7 +901,8 @@ const serve = Command.make("serve", {}, () =>
 );
 
 // The host is built inside the command, so a start that fails says why through the command line, on stderr: stdout
-// carries MCP's messages only.
+// carries MCP's messages only. A far machine is first asked by the first tool that needs it, which answers why it
+// cannot be reached.
 const mcp = Command.make("mcp", {}, () =>
 	shown(
 		Layer.launch(
@@ -890,12 +912,12 @@ const mcp = Command.make("mcp", {}, () =>
 				protocols,
 				instructions,
 				registrations,
-			}).pipe(Layer.provide(hosting))
+			}).pipe(Layer.provide(scriptsOn(hosting)))
 		)
 	)
 ).pipe(
 	Command.withDescription(
-		"Serves the game as MCP tools over stdio, for an agent on this machine. Its games run in this machine's places."
+		"Serves the game as MCP tools over stdio, for an agent on this machine. Its games run in this machine's places. With GAME_TESTING_URL set, they run on the machine whose serve the URL reaches, with the token from GAME_TESTING_TOKEN or else game-testing/token in the config folder ($XDG_CONFIG_HOME, else ~/.config; on macOS ~/Library/Application Support); each run's record, pictures and saves are copied here once it ends."
 	)
 );
 

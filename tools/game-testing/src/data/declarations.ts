@@ -104,13 +104,13 @@ export const namesText = Effect.gen(function* () {
  * Writes a declaration file of `names`' body to `file`, for the names module at `module`. It is written beside and
  * renamed over the last, so a type check never reads half of one.
  */
-export const writeDeclarations = Effect.fnUntraced(function* (
+const writeDeclarations = Effect.fnUntraced(function* (
+	fs: FileSystem.FileSystem,
+	path: Path.Path,
 	file: string,
 	names: string,
 	module: string
 ) {
-	const fs = yield* FileSystem.FileSystem;
-	const path = yield* Path.Path;
 	yield* fs.makeDirectory(path.dirname(file), { recursive: true });
 	yield* fs.writeFileString(
 		`${file}.new`,
@@ -133,16 +133,25 @@ export const writeDeclarations = Effect.fnUntraced(function* (
 	yield* Effect.logInfo(`Wrote the game's names to ${file}.`);
 }, Effect.orDie);
 
-export const writeNames = Effect.flatMap(namesText, (names) =>
-	writeDeclarations(namesFile, names, "../src/names.ts")
+export const writeNames = Effect.gen(function* () {
+	const fs = yield* FileSystem.FileSystem;
+	const path = yield* Path.Path;
+	const names = yield* namesText;
+	yield* writeDeclarations(fs, path, namesFile, names, "../src/names.ts");
+});
+
+/** Where a caller of a far machine writes that machine's names: this machine's cache. */
+export const farNamesFile = Effect.map(
+	Effect.flatMap(UserDirectories.UserDirectories, (directories) =>
+		Effect.orDie(directories.cache("game-testing"))
+	),
+	(folder) => `${folder}/names.d.ts`
 );
 
-/** Writes a far machine's names to this machine's cache, for a type check of a script that runs against it. */
-export const writeFarDeclarations = Effect.fnUntraced(function* (
+/** Writes a far machine's names to `file`, for a type check of a script that runs against it, and gives the file. */
+export const writeFarDeclarations = (
+	fs: FileSystem.FileSystem,
+	path: Path.Path,
+	file: string,
 	names: string
-) {
-	const directories = yield* UserDirectories.UserDirectories;
-	const file = `${yield* Effect.orDie(directories.cache("game-testing"))}/names.d.ts`;
-	yield* writeDeclarations(file, names, namesModule);
-	return file;
-});
+) => Effect.as(writeDeclarations(fs, path, file, names, namesModule), file);

@@ -102,6 +102,10 @@ export const handlers = GameRpcs.toLayer(
 				),
 			Note: ({ session, text }) =>
 				Effect.flatMap(sessions.get(session), (game) => game.note(text)),
+			Stop: ({ session, reason }) =>
+				Effect.flatMap(sessions.get(session), (game) =>
+					game.end({ _tag: "stopped", reason })
+				),
 			Finish: ({ session, result, failure }) =>
 				Effect.flatMap(sessions.get(session), (game) =>
 					game.finish({

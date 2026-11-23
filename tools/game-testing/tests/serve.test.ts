@@ -344,7 +344,7 @@ describe("serve", () => {
 			expect(Exit.isFailure(exit)).toBe(true);
 			const errors = Arr.map(yield* TestConsole.errorLines, String);
 			expect(Arr.join(errors, "\n")).toContain(
-				"GAME_TESTING_TOKEN is not set, so serve does not start."
+				`GAME_TESTING_TOKEN is not set and ${machine.home}/.config/game-testing/token holds no token, so serve does not start.`
 			);
 		}).pipe(
 			Effect.scoped,

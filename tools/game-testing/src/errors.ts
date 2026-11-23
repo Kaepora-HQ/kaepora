@@ -374,7 +374,19 @@ export class SessionNotFound extends Schema.TaggedError<
 	session: SessionId,
 }) {
 	override get message() {
-		return `No game with session ${this.session} runs on this machine: it was stopped, its caller went away, or no call named it for 10 minutes. start_game starts another.`;
+		return `No game with session ${this.session} runs on the game machine: it was stopped, its caller went away, or no call named it for 10 minutes. start_game starts another.`;
+	}
+}
+
+/** The game with this session runs, but another caller started it, and the by-hand tools take only their server's own. */
+export class SessionNotStartedHere extends Schema.TaggedError<
+	SessionNotStartedHere,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/SessionNotStartedHere")("SessionNotStartedHere", {
+	session: SessionId,
+}) {
+	override get message() {
+		return `The game with session ${this.session} runs on the game machine, but this server did not start it: the by-hand tools take only the games this server's start_game started. start_game starts one of your own.`;
 	}
 }
 
@@ -470,7 +482,7 @@ const failedBy = {
 	exited: "The script did not finish",
 } as const;
 
-/** `keep` named a kept script that exists on the game's machine, so nothing ran and nothing was written. */
+/** `keep` named a kept script that exists in the package this server runs from, so nothing ran and nothing was written. */
 export class KeptScriptExists extends Schema.TaggedError<
 	KeptScriptExists,
 	{ readonly brand: unique symbol }
@@ -478,7 +490,7 @@ export class KeptScriptExists extends Schema.TaggedError<
 	path: Schema.String,
 }) {
 	override get message() {
-		return `${this.path} already exists on the game's machine, so nothing ran. Keep the test under another name.`;
+		return `${this.path} already exists in the package this server runs from, on your machine, so nothing ran. Keep the test under another name.`;
 	}
 }
 
@@ -488,7 +500,7 @@ export class RunNotFound extends Schema.TaggedError<
 	{ readonly brand: unique symbol }
 >("game-testing/errors/RunNotFound")("RunNotFound", { run: RunId }) {
 	override get message() {
-		return `No run ${this.run} is kept on this machine.`;
+		return `No run ${this.run} is kept on the game machine.`;
 	}
 }
 
@@ -519,10 +531,11 @@ export class TokenRequired extends Schema.TaggedError<
 	TokenRequired,
 	{ readonly brand: unique symbol }
 >("game-testing/errors/TokenRequired")("TokenRequired", {
-	key: Schema.String,
+	/** The token file it read after `GAME_TESTING_TOKEN`. */
+	file: Schema.String,
 }) {
 	override get message() {
-		return `${this.key} is not set, so serve does not start. Set it to a long random string, such as one openssl rand -hex 32 prints; whoever holds it can run code on this machine.`;
+		return `GAME_TESTING_TOKEN is not set and ${this.file} holds no token, so serve does not start. Put a long random string in either, such as one openssl rand -hex 32 prints; whoever holds it can run code on this machine.`;
 	}
 }
 
@@ -543,7 +556,7 @@ const remoteNext = {
 	connect:
 		"check GAME_TESTING_URL, that serve runs there, and that the tunnel is up.",
 	token:
-		"GAME_TESTING_TOKEN here is not the token serve was started with there.",
+		"the token here, from GAME_TESTING_TOKEN or else game-testing/token in the config folder ($XDG_CONFIG_HOME, else ~/.config; on macOS ~/Library/Application Support), is not the token serve was started with there.",
 	closed:
 		"the connection closed: serve stopped there, or the tunnel dropped. Its game ended with it.",
 } as const;

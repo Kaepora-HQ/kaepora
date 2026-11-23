@@ -1,12 +1,15 @@
 /**
- * The MCP server: the tools' handlers, how their answers reach a model, and the instructions every session gets. A
- * picture answers as an MCP image block, the rest as JSON text of at most `answerLimit` bytes: an answer that would be
- * longer is cut at whole entries and says how to read the rest. A run's record on disk is its answer, so the server
- * holds nothing for a caller that is gone. The same registrations serve stdio (`mcp`) and HTTP (`serve`).
+ * The MCP server: the tools' handlers, how their answers reach a model, and the instructions every session gets. The
+ * handlers ask `Machine`, so one set serves a game on this machine and a game on a far one. A picture answers as an MCP
+ * image block, the rest as JSON text of at most `answerLimit` bytes: an answer that would be longer is cut at whole
+ * entries and says how to read the rest. A run's record is its answer, so the server holds nothing for a caller that is
+ * gone, but a game started by hand: its `Open` stream, held here on an idle lease. The same registrations serve stdio
+ * (`mcp`) and HTTP (`serve`).
  */
 import {
 	Array as Arr,
 	Cause,
+	Deferred,
 	Duration,
 	Effect,
 	Fiber,
@@ -16,6 +19,7 @@ import {
 	Option,
 	Path,
 	Predicate,
+	Queue,
 	Record as Rec,
 	Schedule,
 	Schema,
@@ -25,10 +29,17 @@ import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import type { Outcome } from "../contract/record.ts";
 import { RunRecord } from "../contract/record.ts";
 import { StartState } from "../contract/state.ts";
-import type { RunId } from "../contract/values.ts";
+import type { RunId, SessionId } from "../contract/values.ts";
 import { newRunId, Picture } from "../contract/values.ts";
-import { GameData } from "../data/game-data.ts";
-import { KeptScriptExists, NobodyThere, ScriptFailed } from "../errors.ts";
+import type { RunNotFound, StartError } from "../errors.ts";
+import {
+	KeptScriptExists,
+	NobodyThere,
+	ScriptFailed,
+	SessionNotFound,
+	SessionNotStartedHere,
+} from "../errors.ts";
+import type { Opened, Opening } from "../game.ts";
 import {
 	defaultPlaceWait,
 	dialogEvery,
@@ -37,15 +48,11 @@ import {
 	pressUntilEvery,
 	pressUntilTimes,
 } from "../game.ts";
-import { Places } from "../host/places.ts";
-import { Runs } from "../host/runs.ts";
 import type { Person } from "../host/sessions.ts";
-import { Sessions } from "../host/sessions.ts";
+import type { Landed, Unreachable } from "../machine.ts";
+import { Machine } from "../machine.ts";
 import { readMod } from "../mod.ts";
 import { ran } from "../process.ts";
-import { Spots } from "../save/spots.ts";
-import { StartStates } from "../save/state.ts";
-import { OwnTables, searchNames } from "../save/tables.ts";
 import { inlineFolder, packageRoot, Scripts } from "../scripts/runner.ts";
 import type { Ran } from "./tools.ts";
 import { tools } from "./tools.ts";
@@ -76,11 +83,16 @@ const picturesPerAnswer = 4;
 /** The longest one `wait_run` call waits, inside the time a client waits for a tool. */
 const waitLimit = Duration.seconds(45);
 
-/** How often `wait_run` and a detached `run_script` read a run's record. */
-const recordSpacing = Duration.millis(200);
+/** How often `wait_run` and a detached `run_script` read a run's record, which may cross to a far machine. */
+const recordSpacing = Duration.seconds(1);
 
 const running: Outcome = { _tag: "running" };
+
+/** A game started by hand stops when no call names its session for this long. */
+const leaseIdle = Duration.minutes(10);
+const leaseEnded = "no call named its session for 10 minutes";
 const stoppedByCaller = "stop_game ended it";
+const serverEnded = "the MCP server that started it stopped";
 
 const searchLimit = 40;
 const runsLimit = 20;
@@ -219,16 +231,28 @@ export const personOf =
 		);
 	};
 
+/** How a game started by hand ended: its run's outcome, and where its files are on this machine or why they are not. */
+interface Stopped {
+	readonly folder?: string;
+	readonly notCopied?: string;
+	readonly outcome: Outcome;
+	readonly run: RunId;
+}
+
+/** A game started by hand, while it lasts. */
+interface Held {
+	/** Renews its lease. */
+	readonly called: Effect.Effect<void>;
+	/** Ends it for `reason`, unless an end came first. It ends whether or not the caller then waits for `stopped`. */
+	readonly end: (reason: string) => Effect.Effect<void>;
+	readonly opened: Opened;
+	readonly stopped: Effect.Effect<Stopped, RunNotFound>;
+}
+
 const handlers = tools.toLayer(
 	Effect.gen(function* () {
-		const sessions = yield* Sessions;
+		const machine = yield* Machine;
 		const scripts = yield* Scripts;
-		const runs = yield* Runs;
-		const places = yield* Places;
-		const data = yield* GameData;
-		const own = yield* OwnTables;
-		const spots = yield* Spots;
-		const states = yield* StartStates;
 		const fs = yield* FileSystem.FileSystem;
 		const path = yield* Path.Path;
 		const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
@@ -246,18 +270,32 @@ const handlers = tools.toLayer(
 			Effect.forEach(
 				names,
 				(name) =>
-					Effect.map(runs.file(run, name), (png) =>
+					Effect.map(machine.file(run, name), (png) =>
 						Picture.make({ path: name, png })
 					),
 				{ concurrency: 1 }
 			);
 
-		/** A run as run_script and wait_run answer it, from its record: the pictures are the ones its result names. */
-		const ranOf = Effect.fnUntraced(function* (record: RunRecord) {
-			const named = Arr.intersection(
-				Arr.flatMap(record.steps, (step) => step.pictures ?? []),
-				textsIn(record.result)
-			);
+		/** Where a landed run's files are: its folder here, or why they are not here. */
+		const placeOf = (landed: Landed) =>
+			"folder" in landed
+				? { folder: landed.folder }
+				: { notCopied: landed.notCopied.message };
+
+		/**
+		 * A run as run_script and wait_run answer it, from its record. With `pictured`, the pictures its result names come
+		 * too: those of a run whose files are here.
+		 */
+		const ranOf = Effect.fnUntraced(function* (
+			record: RunRecord,
+			pictured: boolean
+		) {
+			const named = pictured
+				? Arr.intersection(
+						Arr.flatMap(record.steps, (step) => step.pictures ?? []),
+						textsIn(record.result)
+					)
+				: [];
 			const shown = Arr.take(named, picturesPerAnswer);
 			const answer: typeof Ran.Type = {
 				run: record.id,
@@ -269,6 +307,28 @@ const handlers = tools.toLayer(
 						}
 					: {}),
 				pictures: yield* picturesOf(record.id, shown),
+			};
+			return answer;
+		});
+
+		/**
+		 * An ended run's answer, once its files have landed here: from its record, or with `outcome` and why its files
+		 * are not here when the game machine's record could not be read either.
+		 */
+		const endedOf = Effect.fnUntraced(function* (run: RunId, outcome: Outcome) {
+			const landed = yield* machine.landed(run);
+			if (landed.record === undefined) {
+				const answer: typeof Ran.Type = {
+					run,
+					outcome,
+					...placeOf(landed),
+					pictures: [],
+				};
+				return answer;
+			}
+			const answer: typeof Ran.Type = {
+				...(yield* ranOf(landed.record, "folder" in landed)),
+				...placeOf(landed),
 			};
 			return answer;
 		});
@@ -367,7 +427,7 @@ const handlers = tools.toLayer(
 			);
 			if (written._tag === "Failure") {
 				return {
-					notKept: `${file} appeared on the game's machine during the run, so the test was not kept`,
+					notKept: `${file} appeared in the package this server runs from, on your machine, during the run, so the test was not kept`,
 				};
 			}
 			yield* ran(
@@ -380,6 +440,105 @@ const handlers = tools.toLayer(
 			);
 			return { kept: file };
 		});
+
+		/** The games started by hand, by session, while each lasts. */
+		const games = new Map<SessionId, Held>();
+
+		/**
+		 * A game started by hand, from its start to its end, in a fiber of this server's own. It ends one way: its scope
+		 * closes, and the one finalizer sends `Stop` with the first reason given, by stop_game, by its lease, or by this
+		 * server's stop, then waits for its `Open` stream to end. A game whose stream ended by itself has nothing to stop.
+		 */
+		const hold = (
+			opening: Opening,
+			started: Deferred.Deferred<Opened, StartError | Unreachable>,
+			stopped: Deferred.Deferred<Stopped, RunNotFound>
+		) =>
+			Effect.gen(function* () {
+				const opened = yield* machine.open(opening);
+				const { session } = opened;
+				const ending = yield* Deferred.make<Option.Option<string>>();
+				yield* Effect.addFinalizer(() =>
+					Deferred.succeed(ending, Option.some(serverEnded)).pipe(
+						Effect.andThen(Deferred.await(ending)),
+						Effect.flatMap(
+							Option.match({
+								onNone: () => Effect.void,
+								onSome: (reason) =>
+									Effect.andThen(
+										Effect.ignoreCause(
+											machine.call((client) => client.Stop({ session, reason }))
+										),
+										opened.ended
+									),
+							})
+						)
+					)
+				);
+				yield* Effect.forkScoped(
+					Effect.andThen(opened.ended, Deferred.succeed(ending, Option.none()))
+				);
+				const calls = yield* Queue.sliding<void>(1);
+				// The lease: it ends when no call comes for `leaseIdle`.
+				yield* Effect.forkScoped(
+					Queue.take(calls).pipe(
+						Effect.timeoutOption(leaseIdle),
+						Effect.repeat({ while: (call) => Option.isSome(call) }),
+						Effect.andThen(Deferred.succeed(ending, Option.some(leaseEnded)))
+					)
+				);
+				yield* Effect.acquireRelease(
+					Effect.sync(() =>
+						games.set(session, {
+							opened,
+							called: Queue.offer(calls, undefined),
+							end: (reason) => Deferred.succeed(ending, Option.some(reason)),
+							stopped: Deferred.await(stopped),
+						})
+					),
+					() => Effect.sync(() => games.delete(session))
+				);
+				yield* Deferred.succeed(started, opened);
+				yield* Deferred.await(ending);
+				return opened.run;
+			}).pipe(
+				Effect.scoped,
+				Effect.onError((cause) => Deferred.failCause(started, cause)),
+				Effect.flatMap((run) =>
+					Effect.map(
+						machine.landed(run),
+						(landed): Stopped => ({
+							run,
+							outcome: landed.record?.outcome ?? running,
+							...placeOf(landed),
+						})
+					).pipe(
+						Effect.exit,
+						Effect.flatMap((exit) => Deferred.done(stopped, exit))
+					)
+				),
+				// A start that failed has said so through `started`.
+				Effect.ignore
+			);
+
+		/** The game this server started by hand with this session. */
+		const heldBy = Effect.fnUntraced(function* (session: SessionId) {
+			const held = games.get(session);
+			if (held !== undefined) {
+				return held;
+			}
+			const listed = yield* machine.call((client) => client.Places());
+			return yield* Arr.some(
+				listed,
+				(place) => place.holder?.session === session
+			)
+				? SessionNotStartedHere.make({ session })
+				: SessionNotFound.make({ session });
+		});
+
+		/** The game this server started by hand with this session, whose lease the call renews. */
+		const leaseOf = (session: SessionId) =>
+			Effect.tap(heldBy(session), (held) => held.called);
 
 		return tools.of({
 			run_script: Effect.fnUntraced(function* ({
@@ -425,13 +584,13 @@ const handlers = tools.toLayer(
 						Effect.andThen(
 							Option.match(person, {
 								onNone: () => Effect.void,
-								onSome: (client) => sessions.handOversTo(run, personOf(client)),
+								onSome: (client) => machine.handOversTo(run, personOf(client)),
 							}),
 							scripts.run(file, { run })
 						)
 					).pipe(
 						Effect.mapError((failed) =>
-							failed.reason === "typecheck"
+							failed._tag === "ScriptFailed" && failed.reason === "typecheck"
 								? ScriptFailed.make({
 										reason: failed.reason,
 										detail: inBody(failed.detail, inline.bodyStarts),
@@ -447,7 +606,7 @@ const handlers = tools.toLayer(
 						};
 						return answer;
 					}
-					const answer = yield* ranOf(yield* runs.get(ended.run));
+					const answer = yield* endedOf(ended.run, ended.outcome);
 					if (keeping === undefined) {
 						return answer;
 					}
@@ -466,7 +625,7 @@ const handlers = tools.toLayer(
 					return yield* going;
 				}
 				const fiber = yield* Effect.forkIn(going, host);
-				const recorded = runs.get(run).pipe(
+				const recorded = machine.record(run).pipe(
 					Effect.retry({
 						schedule: Schedule.spaced(recordSpacing),
 						while: (error) => error._tag === "RunNotFound",
@@ -476,7 +635,7 @@ const handlers = tools.toLayer(
 				return yield* Effect.raceFirst(recorded, Fiber.join(fiber));
 			}),
 			wait_run: Effect.fnUntraced(function* ({ run }) {
-				const ended = runs.get(run).pipe(
+				const ended = machine.record(run).pipe(
 					Effect.repeat({
 						schedule: Schedule.spaced(recordSpacing),
 						until: (record) => record.outcome._tag !== "running",
@@ -485,17 +644,21 @@ const handlers = tools.toLayer(
 				const latest = yield* ended.pipe(
 					Effect.timeoutOrElse({
 						duration: waitLimit,
-						orElse: () => runs.get(run),
+						orElse: () => machine.record(run),
 					})
 				);
-				return yield* ranOf(latest);
+				return latest.outcome._tag === "running"
+					? yield* ranOf(latest, false)
+					: yield* endedOf(run, latest.outcome);
 			}),
 			search_names: Effect.fnUntraced(function* ({ text: words, kind, limit }) {
-				const kept = yield* spots.all;
-				const names = yield* searchNames(data, own, kept, words, {
-					limit: limit ?? searchLimit,
-					kind,
-				});
+				const names = yield* machine.call((client) =>
+					client.Search({
+						text: words,
+						limit: limit ?? searchLimit,
+						...(kind === undefined ? {} : { kind }),
+					})
+				);
 				const count = fitting(names, bytes({ names: [] }) + moreRoom);
 				return count === names.length
 					? { names }
@@ -505,18 +668,20 @@ const handlers = tools.toLayer(
 						};
 			}),
 			plan_state: Effect.fnUntraced(function* ({ state, mod }) {
-				const planned = yield* states.plan(
-					state,
+				const taken =
 					mod === undefined || mod === "none"
 						? mod
-						: yield* readMod(fs, path, mod.folder)
+						: yield* readMod(fs, path, mod.folder);
+				const { base, edits, leftAlone, location } = yield* machine.call(
+					(client) =>
+						client.Plan({
+							state,
+							...(taken === undefined ? {} : { mod: taken }),
+						})
 				);
-				const { edits, leftAlone } = planned;
 				const head = {
-					base: { name: planned.base.name, about: planned.base.about },
-					...(planned.location === undefined
-						? {}
-						: { location: planned.location }),
+					base: { name: base.name, about: base.about },
+					...(location === undefined ? {} : { location }),
 				};
 				const count = fitting(
 					edits,
@@ -537,32 +702,45 @@ const handlers = tools.toLayer(
 					mod === undefined || mod === "none"
 						? mod
 						: yield* readMod(fs, path, mod.folder);
-				const game = yield* sessions.keep({
-					run,
-					state,
-					mod: taken,
-					textSpeed,
-					owner: "start_game",
-					waitForPlace: defaultPlaceWait,
-				});
-				const read = Rec.toEntries(game.readBack.values);
-				const started = {
-					session: game.session,
-					run: game.run,
-					place: game.place,
-				};
+				const started = yield* Deferred.make<
+					Opened,
+					StartError | Unreachable
+				>();
+				const stopped = yield* Deferred.make<Stopped, RunNotFound>();
+				const game = yield* Effect.forkIn(
+					hold(
+						{
+							run,
+							state,
+							owner: "start_game",
+							waitForPlace: defaultPlaceWait,
+							...(taken === undefined ? {} : { mod: taken }),
+							...(textSpeed === undefined ? {} : { textSpeed }),
+						},
+						started,
+						stopped
+					),
+					host
+				);
+				// A start its caller gives up on starts nothing.
+				const opened = yield* Deferred.await(started).pipe(
+					Effect.onInterrupt(() => Fiber.interrupt(game))
+				);
+				const { session } = opened;
+				const read = Rec.toEntries(opened.readBack.values);
+				const answered = { session, run: opened.run, place: opened.place };
 				const count = fitting(
 					read,
 					bytes({
-						...started,
-						readBack: { values: {}, notRead: game.readBack.notRead },
+						...answered,
+						readBack: { values: {}, notRead: opened.readBack.notRead },
 					}) + moreRoom
 				);
 				return {
-					...started,
+					...answered,
 					readBack: {
 						values: Rec.fromEntries(Arr.take(read, count)),
-						notRead: game.readBack.notRead,
+						notRead: opened.readBack.notRead,
 					},
 					...(count === read.length
 						? {}
@@ -572,22 +750,29 @@ const handlers = tools.toLayer(
 				};
 			}),
 			stop_game: Effect.fnUntraced(function* ({ session }) {
-				const game = yield* sessions.stop(session, stoppedByCaller);
-				const record = yield* Effect.orDie(runs.get(game.run));
-				return { run: record.id, outcome: record.outcome };
+				const held = yield* heldBy(session);
+				yield* held.end(stoppedByCaller);
+				return yield* held.stopped;
 			}),
 			press: ({ session, buttons, frames }) =>
-				Effect.flatMap(sessions.get(session), (game) =>
-					game.press(buttons, frames ?? pressFrames)
+				Effect.andThen(
+					leaseOf(session),
+					machine.call((client) =>
+						client.Press({ session, buttons, frames: frames ?? pressFrames })
+					)
 				),
 			press_until: ({ session, buttons, value, expected, times, every }) =>
-				Effect.flatMap(sessions.get(session), (game) =>
-					game.pressUntil(
-						buttons,
-						value,
-						expected,
-						times ?? pressUntilTimes,
-						every ?? pressUntilEvery
+				Effect.andThen(
+					leaseOf(session),
+					machine.call((client) =>
+						client.PressUntil({
+							session,
+							buttons,
+							value,
+							expected,
+							times: times ?? pressUntilTimes,
+							every: every ?? pressUntilEvery,
+						})
 					)
 				),
 			complete_dialog: Effect.fnUntraced(function* ({
@@ -596,33 +781,39 @@ const handlers = tools.toLayer(
 				times,
 				every,
 			}) {
-				const game = yield* sessions.get(session);
-				const talk = yield* game.completeDialog(
-					button ?? "A",
-					times ?? dialogTimes,
-					every ?? dialogEvery
+				const { run } = (yield* leaseOf(session)).opened;
+				const talk = yield* machine.call((client) =>
+					client.CompleteDialog({
+						session,
+						button: button ?? "A",
+						times: times ?? dialogTimes,
+						every: every ?? dialogEvery,
+					})
 				);
 				return {
 					presses: talk.presses,
 					pictures: talk.pictures,
 					...(talk.pictures.length > picturesPerAnswer
 						? {
-								more: `the pictures past the fourth are in run ${game.run}: get_run with pictures shows them`,
+								more: `the pictures past the fourth are in run ${run}: get_run with pictures shows them`,
 							}
 						: {}),
 					shown: yield* picturesOf(
-						game.run,
+						run,
 						Arr.take(talk.pictures, picturesPerAnswer)
 					),
 				};
 			}),
 			stick: ({ session, position, frames }) =>
-				Effect.flatMap(sessions.get(session), (game) =>
-					game.stick(position, frames)
+				Effect.andThen(
+					leaseOf(session),
+					machine.call((client) => client.Stick({ session, position, frames }))
 				),
 			read_values: Effect.fnUntraced(function* ({ session, values }) {
-				const game = yield* sessions.get(session);
-				const read = Rec.toEntries(yield* game.read(values));
+				yield* leaseOf(session);
+				const read = Rec.toEntries(
+					yield* machine.call((client) => client.Read({ session, values }))
+				);
 				const count = fitting(read, bytes({ values: {} }) + moreRoom);
 				return {
 					values: Rec.fromEntries(Arr.take(read, count)),
@@ -634,15 +825,28 @@ const handlers = tools.toLayer(
 				};
 			}),
 			set_values: ({ session, values }) =>
-				Effect.flatMap(sessions.get(session), (game) => game.set(values)),
+				Effect.andThen(
+					leaseOf(session),
+					machine.call((client) => client.Set({ session, values }))
+				),
 			screenshot: ({ session, label }) =>
-				Effect.flatMap(sessions.get(session), (game) => game.screenshot(label)),
-			places: () => places.list,
+				Effect.andThen(
+					leaseOf(session),
+					machine.call((client) =>
+						client.Screenshot({
+							session,
+							...(label === undefined ? {} : { label }),
+						})
+					)
+				),
+			places: () => machine.call((client) => client.Places()),
 			list_runs: Effect.fnUntraced(function* ({ script, limit }) {
-				const { runs: found, unreadable } = yield* runs.list({
-					script,
-					limit: limit ?? runsLimit,
-				});
+				const { runs: found, unreadable } = yield* machine.call((client) =>
+					client.Runs({
+						limit: limit ?? runsLimit,
+						...(script === undefined ? {} : { script }),
+					})
+				);
 				const count = fitting(
 					found,
 					bytes({ runs: [], unreadable }) + moreRoom
@@ -656,7 +860,7 @@ const handlers = tools.toLayer(
 						};
 			}),
 			get_run: Effect.fnUntraced(function* ({ run, from, pictures, plan }) {
-				const record = yield* runs.get(run);
+				const record = yield* machine.record(run);
 				return yield* partOf(
 					record,
 					from ?? 0,

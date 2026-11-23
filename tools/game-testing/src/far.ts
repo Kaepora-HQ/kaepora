@@ -1,13 +1,13 @@
 /**
- * A far machine's `serve`, as `GAME_TESTING_URL` and `GAME_TESTING_TOKEN` name it. The URL is read so that no secret
+ * A far machine's `serve`, as `GAME_TESTING_URL` names it and the token reaches it. The URL is read so that no secret
  * in it can reach a command line or an error; a far machine is asked first whether it answers and takes the token, so
  * a refusal names its cause; and the commands then travel over its WebSocket.
  */
 import { BunSocket } from "@effect/platform-bun";
 import {
 	Config,
-	Context,
 	Effect,
+	FileSystem,
 	Layer,
 	Option,
 	Redacted,
@@ -15,10 +15,9 @@ import {
 	String as Str,
 } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
+import { UserDirectories } from "effect/persistence";
 import type { RpcClientError } from "effect/rpc";
 import { RpcClient, RpcSerialization } from "effect/rpc";
-import { contract, GameRpcs } from "./contract/rpc.ts";
-import { writeFarDeclarations } from "./data/declarations.ts";
 import { RemoteUnavailable, UrlRefused } from "./errors.ts";
 
 /** `GAME_TESTING_URL`, as an http or https URL with no name or password, and no `/` at its end. */
@@ -43,11 +42,32 @@ export const farUrl = Effect.gen(function* () {
 
 const trailingSlash = /\/$/u;
 
-/** `GAME_TESTING_TOKEN`; an empty one is no token. */
-export const token = Effect.map(
-	Config.option(Config.Redacted("GAME_TESTING_TOKEN")),
-	Option.filter((secret) => Redacted.value(secret) !== "")
+/** The file `serve`'s operator keeps the token in, on both machines, under the config folder. */
+export const tokenFile = Effect.map(
+	Effect.orDie(
+		Effect.flatMap(UserDirectories.UserDirectories, (directories) =>
+			directories.config("game-testing")
+		)
+	),
+	(folder) => `${folder}/token`
 );
+
+const filled = (secret: Redacted.Redacted) => Redacted.value(secret) !== "";
+
+/** `GAME_TESTING_TOKEN`, or else the token file; an empty one is no token. */
+export const token = Effect.gen(function* () {
+	const given = yield* Config.option(Config.Redacted("GAME_TESTING_TOKEN"));
+	if (Option.exists(given, filled)) {
+		return given;
+	}
+	const fs = yield* FileSystem.FileSystem;
+	const file = yield* tokenFile;
+	const kept = yield* Effect.option(fs.readFileString(file));
+	return Option.filter(
+		Option.map(kept, (text) => Redacted.make(Str.trim(text))),
+		filled
+	);
+});
 
 const bearer = (secret: Option.Option<Redacted.Redacted>) =>
 	Option.match(secret, {
@@ -97,33 +117,6 @@ export const connection = (
 		)
 	);
 
-/** A far machine's commands, after a `Hello` that checks both ends speak one contract. */
-export class Far extends Context.Service<
-	Far,
-	{
-		readonly url: string;
-		readonly token: Option.Option<Redacted.Redacted>;
-		readonly client: RpcClient.FromGroup<
-			typeof GameRpcs,
-			RpcClientError.RpcClientError
-		>;
-	}
->()("game-testing/far") {
-	static readonly layer = (url: string) =>
-		Layer.unwrap(
-			Effect.map(token, (secret) =>
-				Layer.effect(
-					Far,
-					Effect.gen(function* () {
-						const client = yield* RpcClient.make(GameRpcs);
-						yield* reached(url, client.Hello({ contract }));
-						return Far.of({ url, token: secret, client });
-					})
-				).pipe(Layer.provide(connection(url, secret)))
-			)
-		);
-}
-
 /** A call to the far machine, whose lost connection fails as the far machine being unavailable. */
 export const reached = <A, E, R>(
 	url: string,
@@ -132,7 +125,3 @@ export const reached = <A, E, R>(
 	Effect.catchTag(call, "RpcClientError", () =>
 		Effect.fail(RemoteUnavailable.make({ url, reason: "closed" }))
 	);
-
-/** Writes the far machine's names where a type check against it reads them, and gives that file. */
-export const writeFarNames = (far: Far["Service"]) =>
-	Effect.flatMap(reached(far.url, far.client.Names()), writeFarDeclarations);

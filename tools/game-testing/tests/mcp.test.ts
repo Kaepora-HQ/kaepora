@@ -241,6 +241,7 @@ describe("the MCP tools", () => {
 				expect(yield* Schema.decodeEffect(Json)(stopped.text)).toEqual({
 					run,
 					outcome: { _tag: "stopped", reason: "stop_game ended it" },
+					folder: `${machine.home}/state/game-testing/runs/${run}`,
 				});
 				expect(yield* freed(machine)).toBe(true);
 				const record = yield* recordOf(machine, run);
@@ -379,53 +380,48 @@ describe("the MCP tools", () => {
 		"a game no call names for 10 minutes stops, and each call holds it 10 minutes more",
 		() =>
 			Effect.gen(function* () {
-				// The fakes and the tools run on the live clock; the host's lease counts on the test clock.
+				// The fakes, the host and its connection run on the live clock; the tools' lease counts on the test clock.
 				const machine = yield* TestClock.withLive(
 					fakeMachine({ autosaveLate: { "IsTreasureBoxOpen.5005": true } })
 				);
-				return yield* Effect.gen(function* () {
-					const client = yield* TestClock.withLive(
-						McpTest.makeClient(registrations, {
-							protocols: [McpProtocol.v2025_11_25],
-						})
-					);
-					const started = yield* TestClock.withLive(
-						call(client, "start_game", { state: { base: "test-base" } })
-					);
-					const { session, run } = yield* Schema.decodeEffect(
-						Schema.fromJsonString(Started)
-					)(started.text);
-					yield* TestClock.adjust("9 minutes");
-					const read = yield* TestClock.withLive(
-						call(client, "read_values", {
-							session,
-							values: ["PlayerStatus.CurrentRupee"],
-						})
-					);
-					expect(read.error).toBe(false);
-					// The game autosaves 100 ms after the press, so only the lease's end can keep it.
-					yield* TestClock.withLive(
-						Effect.andThen(
-							call(client, "press", { session, buttons: ["A"] }),
-							Effect.sleep("300 millis")
-						)
-					);
-					yield* TestClock.adjust("9 minutes");
-					expect((yield* machine.podman.containers).size).toBe(1);
-					yield* TestClock.adjust("2 minutes");
-					expect(yield* TestClock.withLive(freed(machine))).toBe(true);
-					const record = yield* recordOf(machine, run);
-					expect(record.outcome).toEqual({
-						_tag: "stopped",
-						reason: "no call named its session for 10 minutes",
-					});
-					expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
-						"built",
-						"autosave",
-					]);
-				}).pipe(
-					Effect.provide(Scripts.layer.pipe(Layer.provideMerge(machine.host)))
+				const host = yield* TestClock.withLive(hostOn(machine));
+				const client = yield* McpTest.makeClient(registrations, {
+					protocols: [McpProtocol.v2025_11_25],
+				}).pipe(Effect.provideContext(host));
+				const started = yield* TestClock.withLive(
+					call(client, "start_game", { state: { base: "test-base" } })
 				);
+				const { session, run } = yield* Schema.decodeEffect(
+					Schema.fromJsonString(Started)
+				)(started.text);
+				yield* TestClock.adjust("9 minutes");
+				const read = yield* TestClock.withLive(
+					call(client, "read_values", {
+						session,
+						values: ["PlayerStatus.CurrentRupee"],
+					})
+				);
+				expect(read.error).toBe(false);
+				// The game autosaves 100 ms after the press, so only the lease's end can keep it.
+				yield* TestClock.withLive(
+					Effect.andThen(
+						call(client, "press", { session, buttons: ["A"] }),
+						Effect.sleep("300 millis")
+					)
+				);
+				yield* TestClock.adjust("9 minutes");
+				expect((yield* machine.podman.containers).size).toBe(1);
+				yield* TestClock.adjust("2 minutes");
+				expect(yield* TestClock.withLive(freed(machine))).toBe(true);
+				const record = yield* recordOf(machine, run);
+				expect(record.outcome).toEqual({
+					_tag: "stopped",
+					reason: "no call named its session for 10 minutes",
+				});
+				expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
+					"built",
+					"autosave",
+				]);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);
@@ -596,7 +592,7 @@ describe("the MCP tools", () => {
 				});
 				expect(error).toBe(true);
 				expect(text).toBe(
-					"No game with session gone runs on this machine: it was stopped, its caller went away, or no call named it for 10 minutes. start_game starts another."
+					"No game with session gone runs on the game machine: it was stopped, its caller went away, or no call named it for 10 minutes. start_game starts another."
 				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
