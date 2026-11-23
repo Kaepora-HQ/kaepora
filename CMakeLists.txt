@@ -310,7 +310,9 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      mido_gives_no_hint_with_the_forest_open characters_give_no_hints_at_vanilla
                      the_moat_waits_for_zelda_and_the_stone_bosses_do_not
                      with_songs_shuffled_the_courtyard_scene_starts_played
-                     a_seed_starts_with_what_is_chosen the_opening_is_skipped_unless_played
+                     a_seed_starts_with_what_is_chosen
+                     a_seed_that_starts_with_the_kokiri_sword_starts_the_forest_visited
+                     the_opening_is_skipped_unless_played
                      cutscenes_are_skipped_unless_played
                      a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step
                      a_started_strength_step_leaves_darunias_bracelet_out a_started_tunic_leaves_the_gifts

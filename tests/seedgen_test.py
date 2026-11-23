@@ -1869,6 +1869,13 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("KF Mido Hint", spoiler["hints from characters"])
         self.assertEqual(self.route_out_of_reach(spoiler), [])
 
+    def test_a_seed_that_starts_with_the_kokiri_sword_starts_the_forest_visited(self):
+        visited = {"IsVisitLocation.KokiriForest": True, "HavePlayedEvent.Dm_Kokiri_0050": True}
+        _, sword = self.generate("38", {"Start with": ["Kokiri Sword"]})
+        _, shield = self.generate("38", {"Start with": ["Deku Shield"]})
+        self.assertLessEqual(visited.items(), sword["start_values"].items())
+        self.assertFalse(visited.keys() & shield["start_values"].keys())
+
     def test_a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step(self):
         chosen = list(START_STEPS)
         spoiler, plan = self.generate("32", {"Start with": chosen[::-1]} | GIFTS_SHUFFLED)

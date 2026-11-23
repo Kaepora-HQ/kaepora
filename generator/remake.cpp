@@ -1086,6 +1086,14 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         // The Kokiri at the exit no longer blocks the way out, and the invisible wall beside him is gone.
         values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
     }
+    if (std::ranges::any_of(settings.startWith,
+                            [](const StartStep& step) { return step.actor == "Weapon_Sword_Kokiri"; })) {
+        // Link's house swaps in the plain door for a Link who holds the sword, so the forest's first scene never plays,
+        // and its name banner is the only thing that marks the forest visited. The forest's banner area and the close
+        // of its first guide wait for Saria's run-up, which follows that scene. Her talk still waits for Link.
+        values["IsVisitLocation.KokiriForest"] = true;
+        values["HavePlayedEvent.Dm_Kokiri_0050"] = true;
+    }
     if (settings.songs == Songs::ShuffledAmongThemselves) {
         // A child can learn a warp song and, grown up, warp out of the Temple of Time before he walks through its door.
         // The scene at the door plays only while AllSage stands at Step01, and the adult's world map waits for it.
