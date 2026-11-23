@@ -4,8 +4,9 @@
  */
 import { Option, Schema } from "effect";
 import { Tool, Toolkit } from "effect/ai";
+import { StatePlan } from "../contract/plan.ts";
 import { Outcome, RunSummary } from "../contract/record.ts";
-import { NameMatch, PlaceStatus, StatePlan } from "../contract/rpc.ts";
+import { NameMatch, PlaceStatus } from "../contract/rpc.ts";
 import {
 	ModFolder,
 	ReadBack,
@@ -77,7 +78,7 @@ const ToolFailure = Schema.Union([
 
 const state = StartState.annotate({
 	description:
-		"The start state: a base save, and words in the game's own names that change it. Only base is needed. base: a base save, such as new-game-autosave, a new game's first autosave with a child in Kokiri Forest by day; a base it does not know is refused with the ones it knows. location: where Link stands: a check by its spoiler log name such as KF Mido Top Left Chest, which stands him before it; a spot; a landing such as KokiriForest/Mido_House_Front; or { scene, room, position: [x, y, z], facing } in the game's own coordinates, with facing in degrees. age: child or adult; the sword and shield swap with it. withItems: items Link holds as well as what the base holds, such as Item_Range_Bow, or { item, count } such as { item: \"Item_Bomb\", count: 20 }, the count he holds; an item's bag, tier and limit come with it. withoutItems: items taken from what the base holds. equipped: items worn or on a button. reset: places put back as on a first visit: a check such as GV Chest, a scene such as ForestTemple, or a scene and room such as ForestTemple/17. story: { quests: { <quest>: <step> }, events: [<event setting>] }. set: saved values by name, written last, such as { \"PlayerStatus.CurrentRupee\": 50 }. search_names finds every name these take.",
+		"The start state: a base save, and words in the game's own names that change it. Only base is needed. base: a base save, such as new-game-autosave, a new game's first autosave with a child in Kokiri Forest by day; a base it does not know is refused with the ones it knows. location: where Link stands: a check by its spoiler log name such as KF Mido Top Left Chest, which stands him before it; a spot; a landing such as KokiriForest/Mido_House_Front; or { scene, room, position: [x, y, z], facing } in the game's own coordinates, with facing in degrees. age: child or adult; the sword and shield swap with it. withItems: items Link holds as well as what the base holds, such as Item_Range_Bow, or { item, count } such as { item: \"Item_Bomb\", count: 20 }, the count he holds; an item's bag, tier and limit come with it. withoutItems: items taken from what the base holds. equipped: items worn or on a button. reset: places put back as on a first visit: a check such as GV Chest, a scene such as ForestTemple, or a scene and room such as ForestTemple/17. story: { quests: { <quest>: <step> }, events: [<event setting>] }. set: saved values by name, written last, such as { \"PlayerStatus.CurrentRupee\": 50 }. startValues: mod unless given, so the save starts each value the mod's new game starts with, where the base still holds the game's own; base keeps the base's own, for a save older than its mod. search_names finds every name these take.",
 });
 
 const session = SessionId.annotate({
@@ -90,7 +91,7 @@ const run = RunId.annotate({
 
 const mod = Schema.Union([ModFolder, Schema.Literal("none")]).annotate({
 	description:
-		"The mod the game's place gets alone: { folder } with the absolute path of a folder the patcher wrote, such as one for a seed, on the machine this server runs on; or \"none\" for the game as it ships. Unless given, the place gets the game machine's own mod: what every Kaepora seed carries, with nothing shuffled. It skips the scenes a player can skip and the scene at each new area. It also brings a weapon's container with it, such as the quiver with the Fairy Bow, lets bombs be lifted without the Goron's Bracelet, patches lifting, diving and dungeon items as a seed does, changes the Door of Time and the Master Sword's pedestal, and moves no quest on at the first arrival in Zora's Domain or the Market. A look on a base save does not get a seed's tutorial or Saria's greeting skips: those are a new game's starting values, and the base holds its own. Build a look's own mod with the current patcher: an older one loses the skips and may lose instant text.",
+		"The mod the game's place gets alone: { folder } with the absolute path of a folder the patcher wrote, such as one for a seed, on the machine this server runs on; or \"none\" for the game as it ships. Unless given, the place gets the game machine's own mod: what every Kaepora seed carries, with nothing shuffled. It skips the scenes a player can skip and the scene at each new area. It also brings a weapon's container with it, such as the quiver with the Fairy Bow, lets bombs be lifted without the Goron's Bracelet, patches lifting, diving and dungeon items as a seed does, changes the Door of Time and the Master Sword's pedestal, and moves no quest on at the first arrival in Zora's Domain or the Market. It skips the game's tutorial messages and Saria's greeting. A look's save starts as a new game of its mod starts: each value the mod starts a new game with is written where the base still holds the game's own start, and plan_state lists them, each from mod <name>. Build a look's own mod with the current patcher: an older one loses the skips and may lose instant text.",
 });
 
 const textSpeed = TextSpeed.annotate({
@@ -208,8 +209,8 @@ export const searchNames = Tool.make("search_names", {
 
 export const planState = Tool.make("plan_state", {
 	description:
-		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from; and the values named by the files of a place it resets that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
-	parameters: Schema.Struct({ state }),
+		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from, or mod <name> for a value the mod's new game starts with; and the values named by the files of a place it resets that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
+	parameters: Schema.Struct({ state, mod: Schema.optionalKey(mod) }),
 	success: Schema.Struct({ ...StatePlan.fields, more }),
 	failure: ToolFailure,
 })
@@ -351,7 +352,7 @@ export const listRuns = Tool.make("list_runs", {
 
 export const getRun = Tool.make("get_run", {
 	description:
-		"Answers one run's record a part at a time, each within 20,000 bytes. First come the run's id, its outcome and what the body returned; then the state it asked for, each value as the game held it at the start, and the rest of the record; then as many whole steps as fit, each with its input, result, time and check. part says which steps are here: from, count, and of in all. When steps remain, next names the from to ask for, and get_run with that from gives the next part. With pictures, the screenshots of this part's steps come back too, as images, and a part ends early to hold four at most.",
+		"Answers one run's record a part at a time, each within 20,000 bytes. First come the run's id, its outcome and what the body returned; then the state it asked for, how many values its plan wrote, each value as the game held it at the start, and the rest of the record; then as many whole steps as fit, each with its input, result, time and check. part says which steps are here: from, count, and of in all. When steps remain, next names the from to ask for, and get_run with that from gives the next part. With pictures, the screenshots of this part's steps come back too, as images, and a part ends early to hold four at most. With plan, the parts hold the start's plan in place of the steps: each value it wrote, what the base held and where it came from (a word of the state, the mod, or a rule of the tool's own), and what it left alone.",
 	parameters: Schema.Struct({
 		run,
 		from: Schema.optionalKey(
@@ -360,6 +361,7 @@ export const getRun = Tool.make("get_run", {
 			})
 		),
 		pictures: Schema.optionalKey(Schema.Boolean),
+		plan: Schema.optionalKey(Schema.Boolean),
 	}),
 	success: Schema.Struct({
 		record: Schema.Unknown,

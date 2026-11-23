@@ -74,6 +74,7 @@ state: {
 	reset: ["GV Chest"],                  // back as on a first visit: a check, a scene, or a scene and room
 	story: { quests: { GatheringTokenGold: "CollectToken" }, events: ["Dm_Kakariko_0000"] },
 	set: { "PlayerStatus.CurrentRupee": 50 }, // saved values by name, written last
+	startValues: "base",                  // the base's own values, not the mod's start values
 }
 ```
 
@@ -131,17 +132,22 @@ By default a look plays the game as a Kaepora player has it, with nothing shuffl
   - lifting, diving and a dungeon's items work as in a seed;
   - the Door of Time, the Master Sword's pedestal and Sheik's place there work as in a seed;
   - a child who stored no sword gets none when he becomes a child again;
-  - the first arrival in Zora's Domain or the Market moves no quest on.
-- A look does not get a seed's tutorial skips or Saria's greeting skip: those are a new game's starting values, and
-  a base save holds its own.
+  - the first arrival in Zora's Domain or the Market moves no quest on;
+  - the game's tutorial messages and Saria's greeting are skipped.
+- The mod's start values reach the save. Each value the mod changes from the game's own new game is written where the
+  base still holds the game's own start, as a seed's new game has it, so a look meets no tutorial its player skips. A
+  value play moved in the base keeps the base's. `gt plan` lists them under `From the mod <name>, as its new game
+  starts:`, and a word of the state wins over them. A place `reset` puts back takes the mod's start too.
+- `startValues: "base"` keeps the base's own values in place of the mod's: for a save older than its mod on purpose, or
+  when the game rewrites a start value on load and refuses the start.
 
 `mod: "none"` plays the game as it ships, with instant text still on unless you also give `textSpeed: "game"`.
 
 Give your look's own mod as `mod: { folder: "<the folder the patcher wrote>" }`, absolute or from the script's own
-folder. Its files travel with the run. A mod over 63 MiB as sent is refused before anything is sent, and a file too
-large for the game's size table is refused before the game starts. Build the mod with the current patcher. An older
-mod skips no scenes, and many older mods change the bytes Lichii's instant text patches, so Lichii leaves instant
-text out.
+folder. Its files travel with the run, and its start values reach the save as the default mod's do. A mod over 63 MiB
+as sent is refused before anything is sent, and a file too large for the game's size table is refused before the game
+starts. Build the mod with the current patcher. An older mod skips no scenes, and many older mods change the bytes
+Lichii's instant text patches, so Lichii leaves instant text out.
 
 ## Where the pictures are
 

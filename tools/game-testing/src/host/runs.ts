@@ -37,6 +37,7 @@ export type RunHeader = Omit<
 	| "startedAt"
 	| "endedAt"
 	| "readBack"
+	| "plan"
 	| "result"
 	| "place"
 	| "mod"
@@ -51,6 +52,10 @@ export interface Recorder {
 		png: Uint8Array,
 		label: string | undefined
 	) => Effect.Effect<Picture>;
+	/** The start's plan: each value it writes, with where it came from, and what it leaves alone. */
+	readonly planned: (
+		plan: NonNullable<RunRecord["plan"]>
+	) => Effect.Effect<void>;
 	/** Link can move: the emulator's build, how the game writes its text, and the values the state wrote as it holds them. */
 	readonly started: (details: {
 		readonly build: string;
@@ -192,6 +197,8 @@ export class Runs extends Context.Service<
 								textSpeed,
 							})
 						),
+					planned: (plan) =>
+						update((current) => RunRecord.make({ ...current, plan })),
 					step: (step) =>
 						update((current) =>
 							RunRecord.make({ ...current, steps: [...current.steps, step] })

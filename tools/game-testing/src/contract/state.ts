@@ -54,6 +54,12 @@ export class StartState extends Schema.Class<
 >("game-testing/contract/state/StartState")({
 	/** A row of `tables/bases.tsv`, such as `new-game`; the base's hour is the run's hour. */
 	base: Schema.String,
+	startValues: Schema.optionalKey(
+		Schema.Literals(["mod", "base"]).annotate({
+			description:
+				"Where the values a new game starts with come from. mod, unless given: each value the mod starts a new game with is written where the base still holds the game's own start, as a seed's new game has it, so a look meets no tutorial a player of the seed skips; a value play moved in the base keeps the base's. base keeps the base's own values: to look at a save older than its mod on purpose, or when the game rewrites a start value on load and the start is refused.",
+		})
+	),
 	location: Schema.optionalKey(Location),
 	age: Schema.optionalKey(Age),
 	/**

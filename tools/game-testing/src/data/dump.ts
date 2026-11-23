@@ -8,6 +8,8 @@
  *   as `<pack path>/<member>`.
  * - `files <game.nup> <path>...`: `{"path", "root", "sha256"}` per path. BYML prints as its tree, a 64-bit value as
  *   decimal text, a message file as `[{"label", "text"}]`.
+ * - `open <game.nup> <file>...`: `{"path", "root"}` per file on disk, such as a mod's, as `files` prints one of the
+ *   game's.
  * - `check-mod <game.nup> <mod-dir>`: per mod file in path order, `{"entry", "needs", "path"}` for a file the game
  *   would drop, or `{"path", "unchecked"}` with the reason it could not be measured. It exits 3 when a file is too
  *   large, 0 otherwise, and 1 on an error.

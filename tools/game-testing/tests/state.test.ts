@@ -7,21 +7,28 @@ import {
 	FileSystem,
 	Layer,
 	Option,
+	Path,
 	Record as Rec,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
-import type { PlannedEdit } from "../src/contract/rpc.ts";
+import type { PlannedEdit } from "../src/contract/plan.ts";
+import type { Mod } from "../src/contract/state.ts";
 import { StartState } from "../src/contract/state.ts";
 import type { Saved } from "../src/contract/values.ts";
 import { GameData, valueHash } from "../src/data/game-data.ts";
-import { StateRefused, UnknownName, ValueRefused } from "../src/errors.ts";
+import {
+	ModUnreadable,
+	StateRefused,
+	UnknownName,
+	ValueRefused,
+} from "../src/errors.ts";
 import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
 import { StartStates } from "../src/save/state.ts";
 import type { Check, Spot } from "../src/save/tables.ts";
 import { OwnTables } from "../src/save/tables.ts";
 import type { FakeGame, FakeValue } from "./fake-game.ts";
-import { fakeDump, fakeSave } from "./fake-game.ts";
+import { fakeDump, fakeSave, modList, startList } from "./fake-game.ts";
 
 const actor = (name: string) =>
 	`Work/Actor/${name}.engine__actor__ActorParam.gyml`;
@@ -432,7 +439,7 @@ const startStates = (
 		);
 		return StartStates.layer.pipe(
 			Layer.provide([GameData.layer, own]),
-			Layer.provide([dump.layer, UserDirectories.layer, config])
+			Layer.provide([dump.layer, UserDirectories.layer, config, Path.layer])
 		);
 	}).pipe(Effect.provide(BunFileSystem.layer));
 
@@ -441,7 +448,8 @@ type Words = Omit<ConstructorParameters<typeof StartState>[0], "base">;
 const plan = (
 	words: Words,
 	holding?: Readonly<Record<string, Scalar>>,
-	keys?: readonly string[]
+	keys?: readonly string[],
+	mod: Mod | "none" = "none"
 ) =>
 	Effect.gen(function* () {
 		const layer = yield* startStates(holding, keys);
@@ -449,7 +457,8 @@ const plan = (
 			Effect.gen(function* () {
 				const states = yield* StartStates;
 				return yield* states.plan(
-					StartState.make({ base: "test-base", ...words })
+					StartState.make({ base: "test-base", ...words }),
+					mod
 				);
 			}),
 			[layer, BunFileSystem.layer]
@@ -460,7 +469,7 @@ const plan = (
 const writes = (edits: readonly PlannedEdit[]) =>
 	Rec.fromEntries(
 		Arr.map(
-			Arr.filter(edits, (edit) => edit.from !== "base"),
+			Arr.filter(edits, (edit) => edit.from._tag !== "rule"),
 			(edit): [string, Saved] =>
 				edit._tag === "value"
 					? [edit.name, edit.to]
@@ -711,7 +720,6 @@ describe("the start state", () => {
 				});
 				expect(Arr.map(planned.leftAlone, (left) => left.name)).toEqual([
 					"Fake_Lake_Gate",
-					"Sequence_IsChildhood",
 					"Step_GatheringTokenGold",
 				]);
 			})
@@ -924,6 +932,126 @@ describe("the start state", () => {
 	);
 
 	it.effect(
+		"a mod's start value is written where the base holds the game's own, left alone where play moved it, and a word wins",
+		() =>
+			Effect.gen(function* () {
+				const mod: Mod = {
+					name: "test-mod",
+					files: [
+						{
+							path: startList,
+							bytes: modList(game, {
+								"HavePlayedEvent.Fake_Event_0010": true,
+								Fake_Child_Flag: 1,
+								"PlayerStatus.CurrentRupee": 99,
+							}),
+						},
+					],
+				};
+				const planned = yield* plan(
+					{ set: { "PlayerStatus.CurrentRupee": 7 } },
+					{ Fake_Child_Flag: 5 },
+					undefined,
+					mod
+				);
+				expect(
+					Arr.map(
+						Arr.filter(planned.edits, (edit) => edit.from._tag !== "rule"),
+						(edit) => [
+							edit.from,
+							edit._tag === "value" ? edit.name : "",
+							edit.to,
+						]
+					)
+				).toEqual([
+					[
+						{ _tag: "mod", mod: "test-mod" },
+						"HavePlayedEvent.Fake_Event_0010",
+						true,
+					],
+					[
+						{ _tag: "word", word: "set", named: "PlayerStatus.CurrentRupee" },
+						"PlayerStatus.CurrentRupee",
+						7,
+					],
+				]);
+				expect(planned.leftAlone).toEqual([
+					{ name: "Fake_Child_Flag", from: { _tag: "mod", mod: "test-mod" } },
+				]);
+			})
+	);
+
+	it.effect(
+		"a value the mod left alone that a word then writes is written, not left alone",
+		() =>
+			Effect.gen(function* () {
+				const mod: Mod = {
+					name: "test-mod",
+					files: [
+						{ path: startList, bytes: modList(game, { Fake_Child_Flag: 1 }) },
+					],
+				};
+				const planned = yield* plan(
+					{ set: { Fake_Child_Flag: 3 } },
+					{ Fake_Child_Flag: 5 },
+					undefined,
+					mod
+				);
+				expect(writes(planned.edits)).toEqual({ Fake_Child_Flag: 3 });
+				expect(planned.leftAlone).toEqual([]);
+			})
+	);
+
+	it.effect(
+		"a mod whose game data list cannot be read is refused with a sentence that names the mod",
+		() =>
+			Effect.gen(function* () {
+				const refused = (bytes: Uint8Array) =>
+					Effect.flip(
+						plan({}, undefined, undefined, {
+							name: "test-mod",
+							files: [{ path: startList, bytes }],
+						})
+					);
+				const notAList = yield* refused(
+					new TextEncoder().encode('{ "Data": 3 }')
+				);
+				expect(notAList).toBeInstanceOf(ModUnreadable);
+				expect(notAList.message).toContain(`test-mod/${startList}`);
+				const unknownValue = yield* refused(
+					modList(
+						{ ...game, values: { ...game.values, Fake_Not_In_Game: flag } },
+						{ Fake_Not_In_Game: true }
+					)
+				);
+				expect(unknownValue).toBeInstanceOf(ModUnreadable);
+				expect(unknownValue.message).toContain(`test-mod/${startList}`);
+				const notAFile = yield* refused(new TextEncoder().encode("not zstd"));
+				expect(notAFile).toBeInstanceOf(ModUnreadable);
+				expect(notAFile.message).toContain(`test-mod/${startList}`);
+			})
+	);
+
+	it.effect("reset puts a place back to its mod's start values", () =>
+		Effect.gen(function* () {
+			const mod: Mod = {
+				name: "test-mod",
+				files: [
+					{ path: startList, bytes: modList(game, { Fake_Child_Flag: 1 }) },
+				],
+			};
+			const planned = yield* plan(
+				{ reset: ["ForestTemple/17"] },
+				{ Fake_Child_Flag: 5 },
+				undefined,
+				mod
+			);
+			expect(writes(planned.edits)).toMatchObject({ Fake_Child_Flag: 1 });
+			expect(planned.leftAlone).toEqual([]);
+		})
+	);
+
+	it.effect(
 		"build writes the plan into the base's saves, and the save is not an autosave",
 		() =>
 			Effect.gen(function* () {
@@ -937,7 +1065,8 @@ describe("the start state", () => {
 								location: "ForestTemple",
 								reset: ["ForestTemple/17"],
 								set: { "PlayerStatus.CurrentRupee": 99 },
-							})
+							}),
+							"none"
 						);
 						return yield* states.build(planned);
 					}),

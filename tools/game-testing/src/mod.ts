@@ -4,6 +4,7 @@
  */
 import type { FileSystem, Path } from "effect";
 import { Array as Arr, Effect, Option, Order, Schema } from "effect";
+import type { ModFolder } from "./contract/state.ts";
 import { Mod, modLimit } from "./contract/state.ts";
 import { ModTooLarge, ModUnreadable } from "./errors.ts";
 
@@ -51,6 +52,16 @@ export const readMod = Effect.fn("readMod")(function* (
 		Effect.mapError(() => ModUnreadable.make({ folder, reason: "unnamed" }))
 	);
 });
+
+/** A script's declared mod, its folder read from the script's own folder as its imports are. */
+export const scriptMod = (
+	path: Path.Path,
+	script: string,
+	mod: ModFolder | "none" | undefined
+) =>
+	mod === undefined || mod === "none"
+		? mod
+		: { folder: path.resolve(path.dirname(script), mod.folder) };
 
 /** SHA-256 over a mod's files, each path then its bytes, in path order. */
 export const digestOf = (mod: Mod) => {

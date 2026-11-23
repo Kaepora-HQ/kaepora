@@ -85,7 +85,7 @@ const typeNames = [
 	"Vector3",
 ] as const;
 
-const gameDataList = (game: FakeGame) => {
+export const gameDataList = (game: FakeGame) => {
 	const values = Rec.toEntries(game.values);
 	const group = (type: FakeValue["type"]) =>
 		Arr.flatMapNullishOr(values, ([name, value]) => {
@@ -256,16 +256,21 @@ export const fakeDump = Effect.fn("fakeDump")(function* (
 		Effect.suspend(() => {
 			const args =
 				command._tag === "StandardCommand" ? Arr.map(command.args, String) : [];
-			const { stdout, code } =
+			const answered: Effect.Effect<{
+				readonly stdout: string;
+				readonly code: number;
+				readonly stderr?: string;
+			}> =
 				options?.fail === undefined
-					? answer(game, args)
-					: { stdout: "", code: 1 };
+					? opened(args)
+					: Effect.succeed({ stdout: "", code: 1, stderr: options.fail });
 			const bytes = (text: string) =>
 				text.length === 0
 					? Stream.empty
 					: Stream.make(new TextEncoder().encode(`${text}\n`));
 			return Ref.update(commands, (all) => [...all, args]).pipe(
-				Effect.as(
+				Effect.andThen(answered),
+				Effect.map(({ stdout, code, stderr }) =>
 					ChildProcessSpawner.makeHandle({
 						pid: ChildProcessSpawner.ProcessId(1),
 						exitCode: Effect.succeed(ChildProcessSpawner.ExitCode(code)),
@@ -273,7 +278,7 @@ export const fakeDump = Effect.fn("fakeDump")(function* (
 						kill: () => Effect.void,
 						stdin: Sink.drain,
 						stdout: bytes(stdout),
-						stderr: bytes(options?.fail ?? ""),
+						stderr: bytes(stderr ?? ""),
 						all: bytes(stdout),
 						getInputFd: () => Sink.drain,
 						getOutputFd: () => Stream.empty,
@@ -283,6 +288,33 @@ export const fakeDump = Effect.fn("fakeDump")(function* (
 			);
 		})
 	);
+	/** `open` reads files on disk, which a fake mod holds as the JSON of their trees; the rest is the game's. */
+	const opened = (args: readonly string[]) => {
+		const [command, , ...rest] = args;
+		if (command !== "open") {
+			return Effect.succeed(answer(game, args));
+		}
+		// A file that is not a tree's JSON is refused as the dump refuses a file it cannot open.
+		return Effect.forEach(
+			rest,
+			(path) =>
+				Effect.map(
+					Effect.tryPromise({
+						try: () => Bun.file(path).json(),
+						catch: () => path,
+					}),
+					(root: unknown) => line({ path, root })
+				),
+			{ concurrency: 1 }
+		).pipe(
+			Effect.map((lines) => ({ stdout: Arr.join(lines, "\n"), code: 0 })),
+			Effect.orElseSucceed(() => ({
+				stdout: "",
+				code: 1,
+				stderr: `${rest[0]}: neither a BYML file nor a message file`,
+			}))
+		);
+	};
 	return {
 		spawner,
 		layer: Layer.succeed(ChildProcessSpawner.ChildProcessSpawner, spawner),
@@ -341,3 +373,25 @@ export const fakeSave = (
 		encode
 	);
 };
+
+/**
+ * A mod's game data list as the fake `open` reads it: the game's, with each start value as its default. The file's path
+ * in a mod's folder is `startList`.
+ */
+export const startList = "romfs/GameData/GameDataList.Product.110.byml.zs";
+export const modList = (
+	game: FakeGame,
+	starts: Readonly<Record<string, FakeValue["value"]>>
+) =>
+	new TextEncoder().encode(
+		JSON.stringify(
+			gameDataList({
+				...game,
+				values: Rec.map(game.values, (value, name) =>
+					name in starts
+						? ({ ...value, value: starts[name] } as FakeValue)
+						: value
+				),
+			})
+		)
+	);

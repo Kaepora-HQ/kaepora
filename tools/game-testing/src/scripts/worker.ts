@@ -20,6 +20,7 @@ import {
 import type { Outcome } from "../contract/record.ts";
 import type { RunId } from "../contract/values.ts";
 import { Game } from "../game.ts";
+import { scriptMod } from "../mod.ts";
 import type { Declared } from "../script.ts";
 import { load } from "../script.ts";
 import type { ScriptEvent } from "./runner.ts";
@@ -84,16 +85,7 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 				attemptOf: options.attemptOf,
 				owner: inline ? "run_script" : kept,
 				state: declared.state,
-				// A relative folder is read from the script's own folder, as its imports are.
-				mod:
-					declared.mod === undefined || declared.mod === "none"
-						? declared.mod
-						: {
-								folder: path.resolve(
-									path.dirname(options.script),
-									declared.mod.folder
-								),
-							},
+				mod: scriptMod(path, options.script, declared.mod),
 				textSpeed: declared.textSpeed,
 				script: inline ? { digest, source } : { path: kept, digest },
 			});

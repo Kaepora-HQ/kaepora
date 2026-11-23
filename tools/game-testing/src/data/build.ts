@@ -207,7 +207,8 @@ interface Listed {
 	readonly type: ValueType;
 }
 
-const listed = (list: GameDataList): readonly Listed[] =>
+/** Each value of a game data list with its default, as the cache keeps it. */
+export const listed = (list: GameDataList): readonly Listed[] =>
 	Arr.flatMap(scalarGroups, (type) =>
 		Arr.map(list.Data[type], (entry): Listed => {
 			const file = saveFiles[entry.SaveFileIndex] ?? "none";

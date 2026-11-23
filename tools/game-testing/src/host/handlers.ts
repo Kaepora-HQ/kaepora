@@ -98,8 +98,8 @@ export const handlers = GameRpcs.toLayer(
 						...(failure === undefined ? {} : { failure }),
 					})
 				),
-			Plan: ({ state }) =>
-				Effect.map(states.plan(state), ({ base, edits, leftAlone }) => ({
+			Plan: ({ state, mod }) =>
+				Effect.map(states.plan(state, mod), ({ base, edits, leftAlone }) => ({
 					base,
 					edits,
 					leftAlone,

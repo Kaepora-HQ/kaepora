@@ -1,4 +1,11 @@
-import { Array as Arr, Cause, Duration, Predicate, Schema } from "effect";
+import {
+	Array as Arr,
+	Cause,
+	Duration,
+	Predicate,
+	Schema,
+	String as Str,
+} from "effect";
 import {
 	NameKind,
 	PlaceId,
@@ -81,11 +88,16 @@ export class ModUnreadable extends Schema.TaggedError<
 	ModUnreadable,
 	{ readonly brand: unique symbol }
 >("game-testing/errors/ModUnreadable")("ModUnreadable", {
+	/** The mod's folder; for `list`, the mod's name and the list's path inside it. */
 	folder: Schema.String,
-	reason: Schema.Literals(["missing", "empty", "unnamed", "no-skips"]),
+	reason: Schema.Literals(["missing", "empty", "unnamed", "no-skips", "list"]),
+	/** For `list`, why it does not read. */
+	detail: Schema.optionalKey(Schema.String),
 }) {
 	override get message() {
 		switch (this.reason) {
+			case "list":
+				return `The mod's game data list ${this.folder} does not read as the game's: ${this.detail ?? ""}. Nothing was started. Build the mod with the current patcher.`;
 			case "missing":
 				return `There is no mod folder at ${this.folder}, so nothing was started. Give the folder the patcher wrote, as an absolute path or one from the script's own folder.`;
 			case "empty":
@@ -524,12 +536,13 @@ export class VersionMismatch extends Schema.TaggedError<
 >("game-testing/errors/VersionMismatch")("VersionMismatch", {
 	/** The machine that refused, and the contract it speaks. */
 	machine: Schema.String,
-	machineSpeaks: Schema.Int,
-	/** The contract the caller asked for. */
-	callerSpeaks: Schema.Int,
+	machineSpeaks: Schema.String,
+	/** The contract the caller speaks. */
+	callerSpeaks: Schema.String,
 }) {
 	override get message() {
-		return `${this.machine} speaks contract ${this.machineSpeaks} and this copy speaks ${this.callerSpeaks}. Update the older one to the same Kaepora commit.`;
+		const short = Str.slice(0, 12);
+		return `${this.machine} speaks contract ${short(this.machineSpeaks)} and this copy speaks ${short(this.callerSpeaks)}. Run both from the same Kaepora commit.`;
 	}
 }
 

@@ -24,9 +24,16 @@ import { newRunId, SessionId } from "../src/contract/values.ts";
 import { connection } from "../src/far.ts";
 import { Runs } from "../src/host/runs.ts";
 import { packageRoot } from "../src/scripts/runner.ts";
+import { modList, startList } from "./fake-game.ts";
 import type { FakeLichii } from "./fake-lichii.ts";
 import type { Machine } from "./fake-machine.ts";
-import { fakeCaller, fakeMachine, served, token } from "./fake-machine.ts";
+import {
+	fakeCaller,
+	game as fakeGame,
+	fakeMachine,
+	served,
+	token,
+} from "./fake-machine.ts";
 
 const rupeesPlanned = /^PlayerStatus\.CurrentRupee = 50 {4}was 0/u;
 const baseFound = /^base {2}test-base {2}/u;
@@ -40,12 +47,13 @@ const lasting = { timeout: 60_000 };
 const look = (options: {
 	readonly declares?: string;
 	readonly read?: string;
+	readonly state?: string;
 }) =>
 	`import { Effect, script } from "${packageRoot}/src/script.ts";
 
 export default script({
 	about: "The chest Link stands before opens to A.",
-	state: { base: "test-base" },
+	state: ${options.state ?? '{ base: "test-base" }'},
 	${options.declares ?? ""}
 	run: (game) =>
 		Effect.gen(function* () {
@@ -522,6 +530,66 @@ describe("a place's game", () => {
 				);
 				expect(game?.mods).toEqual({});
 				expect(game?.settings).not.toContain("Text Speed");
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
+		"a look starts with every value its mod's new game starts with, unless its state keeps the base's, and plan shows them apart",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const { far, caller, scratch, command } = yield* farAndCaller({
+					onA: openChest,
+				});
+				const skips = `${far.home}/data/game-testing/skips`;
+				yield* fs.makeDirectory(`${skips}/romfs/GameData`, { recursive: true });
+				yield* fs.writeFile(
+					`${skips}/${startList}`,
+					modList(fakeGame, { "IsTreasureBoxOpen.6006": true })
+				);
+				yield* fs.writeFileString(`${scratch}/mod.ts`, look({}));
+				yield* fs.writeFileString(
+					`${scratch}/base.ts`,
+					look({ state: '{ base: "test-base", startValues: "base" }' })
+				);
+				const ran = yield* command([
+					"run",
+					`${scratch}/mod.ts`,
+					`${scratch}/base.ts`,
+				]);
+				const records = yield* Effect.forEach(
+					Arr.filter(ran.lines, Str.startsWith("passed  ")),
+					(line) =>
+						Effect.flatMap(
+							fs.readFileString(
+								`${caller.home}/state/game-testing/runs/${Arr.lastNonEmpty(Str.split(line, "  "))}/record.json`
+							),
+							Schema.decodeEffect(Schema.fromJsonString(RunRecord))
+						),
+					{ concurrency: 1 }
+				);
+				const started = Arr.map(
+					records,
+					(record) => record.readBack?.values["IsTreasureBoxOpen.6006"]
+				);
+				expect(started).toEqual([true, undefined]);
+				expect(records[0]?.plan?.edits).toContainEqual(
+					expect.objectContaining({
+						name: "IsTreasureBoxOpen.6006",
+						to: true,
+						from: { _tag: "mod", mod: "skips" },
+					})
+				);
+				expect(records[1]?.plan?.edits).not.toContainEqual(
+					expect.objectContaining({ name: "IsTreasureBoxOpen.6006" })
+				);
+
+				const planned = yield* command(["plan", `${scratch}/mod.ts`]);
+				expect(planned.lines.slice(-2)).toEqual([
+					"From the mod skips, as its new game starts:",
+					"IsTreasureBoxOpen.6006 = true    was false",
+				]);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);

@@ -214,6 +214,18 @@ int Files(Game& game, std::span<const std::string> paths) {
     return 0;
 }
 
+// Each file on disk, such as one of a mod, as files prints one of the game's: opened as the game opens its own.
+int Open(Game& game, std::span<const std::string> paths) {
+    for (const std::string& path : paths) {
+        try {
+            Print(nlohmann::json({ { "path", path }, { "root", Tree(game.Opened(path, ReadFile(path))) } }).dump());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("{}: {}", path, e.what()));
+        }
+    }
+    return 0;
+}
+
 std::set<std::string> GameNames(Game& game) {
     std::set<std::string> names;
     for (const std::string& path : game.file.Files() | std::views::keys) {
@@ -350,6 +362,7 @@ constexpr std::array Commands = {
     Command{ "key", "", 0, 0, Key },
     Command{ "list", " [prefix]", 0, 1, List },
     Command{ "files", " <path>...", 1, Any, Files },
+    Command{ "open", " <file>...", 1, Any, Open },
     Command{ "strings", " [path...]", 0, Any, Strings },
     Command{ "check-mod", " <mod-dir>", 1, 1, CheckMod },
 };

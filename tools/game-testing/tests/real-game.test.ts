@@ -45,7 +45,8 @@ describe("on the real game", () => {
 			Effect.gen(function* () {
 				const states = yield* StartStates;
 				const { edits } = yield* states.plan(
-					StartState.make({ base, withoutItems: ["Item_Range_Bow"] })
+					StartState.make({ base, withoutItems: ["Item_Range_Bow"] }),
+					"none"
 				);
 				const quivers = ["Small", "Medium", "Large"];
 				const owned = (saved: string): [string, Saved][] => [
@@ -56,7 +57,7 @@ describe("on the real game", () => {
 				expect(
 					Rec.fromEntries(
 						Arr.flatMapNullishOr(edits, (edit) =>
-							edit._tag === "value" && edit.from !== "base"
+							edit._tag === "value" && edit.from._tag !== "rule"
 								? ([edit.name, edit.to] as const)
 								: undefined
 						)

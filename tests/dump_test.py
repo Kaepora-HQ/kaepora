@@ -266,6 +266,35 @@ class DumpTest(unittest.TestCase):
             self.assertEqual([line for line in lines if "unchecked" in line], new)
             self.assertTrue(raised)
 
+    def test_a_mods_file_opens_as_the_games_own_with_the_mods_start_values(self):
+        seed = json.loads(pathlib.Path(PLAN).read_text())
+        starts = seed["start_values"]
+        self.assertTrue(starts)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            patched = subprocess.run([PATCH, GAME.nup, PLAN, tmp / "mod"], capture_output=True, text=True)
+            self.assertEqual(patched.returncode, 0, patched.stderr)
+            [opened] = dump("open", tmp / "mod" / "romfs" / GAME_DATA_LIST)
+        [games] = dump("files", GAME_DATA_LIST)
+
+        def defaults(tree):
+            return {entry["Hash"]: entry["DefaultValue"] for entry in tree["root"]["Data"]["Bool"]}
+
+        mods, own = defaults(opened), defaults(games)
+        self.assertEqual({name: mods[patch_test.murmur3(name)] for name in starts}, starts)
+        self.assertEqual({name: own[patch_test.murmur3(name)] for name in starts}, {name: False for name in starts})
+
+    def test_a_file_cut_short_is_refused_with_its_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            whole = pathlib.Path(tmp) / "GameDataList.Product.110.byml.zs"
+            whole.write_bytes(GAME.read(GAME_DATA_LIST))
+            cut = pathlib.Path(tmp) / "cut" / whole.name
+            cut.parent.mkdir()
+            cut.write_bytes(whole.read_bytes()[: whole.stat().st_size // 2])
+            result = run("open", cut)
+        self.assertEqual((result.returncode, result.stdout), (1, ""))
+        self.assertTrue(result.stderr.startswith(f"{cut}: "), result.stderr)
+
 
 if __name__ == "__main__":
     DUMP, PATCH = sys.argv[1:3]

@@ -380,7 +380,9 @@ if(KAEPORA_GAME_NUP)
                           a_mods_own_table_that_lowers_the_entry_of_a_file_it_lacks_names_that_file
                           a_file_check_mod_cannot_measure_is_named_unchecked
                           a_mods_own_size_table_is_the_one_its_files_must_fit
-                          a_mod_kaepora_patch_made_fits_its_size_table_and_outgrows_the_games)
+                          a_mod_kaepora_patch_made_fits_its_size_table_and_outgrows_the_games
+                          a_mods_file_opens_as_the_games_own_with_the_mods_start_values
+                          a_file_cut_short_is_refused_with_its_path)
         add_test(NAME dump_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/dump_test.py
                          $<TARGET_FILE:kaepora-dump> $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"

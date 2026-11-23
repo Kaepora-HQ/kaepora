@@ -13,13 +13,15 @@ import {
 	FileSystem,
 	Layer,
 	Option,
+	Path,
 	Schema,
 	String as Str,
 } from "effect";
 import { McpServer } from "effect/ai";
 import { Argument, CliError, Command, Flag } from "effect/cli";
+import type { Origin, PlannedEdit, StatePlan } from "./contract/plan.ts";
+import { originText } from "./contract/plan.ts";
 import type { Outcome } from "./contract/record.ts";
-import type { StatePlan } from "./contract/rpc.ts";
 import { StartState } from "./contract/state.ts";
 import { NameKind, RunId } from "./contract/values.ts";
 import { namesHere, writeNames } from "./data/declarations.ts";
@@ -35,6 +37,7 @@ import {
 	registrations,
 	serverName,
 } from "./mcp/server.ts";
+import { readMod, scriptMod } from "./mod.ts";
 import { StartStates } from "./save/state.ts";
 import { OwnTables, searchNames } from "./save/tables.ts";
 import type { ScriptRun } from "./scripts/runner.ts";
@@ -203,32 +206,73 @@ const run = Command.make(
 	)
 );
 
-/** A script's declared state, after its type check against the game's names, `gameNames`, or a state written as JSON. */
-const stateIn = Effect.fnUntraced(function* (file: string, gameNames: string) {
-	if (!Str.endsWith(".json")(file)) {
-		const declaration = yield* declarationOf(file, gameNames);
-		return declaration.state;
-	}
+/**
+ * A script's declared state and mod, after its type check against the game's names, `gameNames`, or a state written as
+ * JSON, which names no mod.
+ */
+const declaredIn = Effect.fnUntraced(function* (
+	file: string,
+	gameNames: string
+) {
 	const fs = yield* FileSystem.FileSystem;
-	const text = yield* Effect.orDie(fs.readFileString(file));
-	return yield* Effect.orDie(
-		Schema.decodeEffect(Schema.fromJsonString(StartState))(text)
-	);
+	const path = yield* Path.Path;
+	if (Str.endsWith(".json")(file)) {
+		const text = yield* Effect.orDie(fs.readFileString(file));
+		const state = yield* Effect.orDie(
+			Schema.decodeEffect(Schema.fromJsonString(StartState))(text)
+		);
+		return { state, mod: undefined };
+	}
+	const declaration = yield* declarationOf(file, gameNames);
+	const folder = scriptMod(path, file, declaration.mod);
+	const mod =
+		folder === undefined || folder === "none"
+			? folder
+			: yield* readMod(fs, path, folder.folder);
+	return { state: declaration.state, mod };
 });
 
-/** A plan as `plan` prints it: the base, then each value it writes, then each it leaves alone. */
+const fromMod = (from: Origin) => from._tag === "mod";
+
+const nameOf = (edit: PlannedEdit) =>
+	edit._tag === "value" ? edit.name : `key ${edit.key}`;
+
+/**
+ * A plan as `plan` prints it: the base, each value the words write, each a place it resets leaves alone, and then under a
+ * heading of its own what the mod's new game starts with.
+ */
 const printPlan = (planned: StatePlan) =>
 	Effect.gen(function* () {
+		const words = Arr.filter(planned.edits, (edit) => !fromMod(edit.from));
+		const started = Arr.filter(planned.edits, (edit) => fromMod(edit.from));
+		const left = Arr.filter(planned.leftAlone, (each) => !fromMod(each.from));
+		const moved = Arr.filter(planned.leftAlone, (each) => fromMod(each.from));
 		yield* Console.log(`From ${planned.base.name}: ${planned.base.about}`);
-		for (const edit of planned.edits) {
-			const name = edit._tag === "value" ? edit.name : `key ${edit.key}`;
+		for (const edit of words) {
 			yield* Console.log(
-				`${name} = ${String(edit.to)}    was ${String(edit.base)}, from ${edit.from}`
+				`${nameOf(edit)} = ${String(edit.to)}    was ${String(edit.base)}, from ${originText(edit.from)}`
 			);
 		}
-		for (const left of planned.leftAlone) {
+		for (const each of left) {
 			yield* Console.log(
-				`${left.name} left alone: ${left.from} names it, and it is not the place's own`
+				`${each.name} left alone: ${originText(each.from)} names it, and it is not the place's own`
+			);
+		}
+		const mod = Arr.head([...started, ...moved]);
+		if (Option.isNone(mod)) {
+			return;
+		}
+		yield* Console.log(
+			`From ${originText(mod.value.from)}, as its new game starts:`
+		);
+		for (const edit of started) {
+			yield* Console.log(
+				`${nameOf(edit)} = ${String(edit.to)}    was ${String(edit.base)}`
+			);
+		}
+		for (const each of moved) {
+			yield* Console.log(
+				`${each.name} left alone: the mod's new game starts it otherwise, and play moved it in the base`
 			);
 		}
 	});
@@ -242,15 +286,18 @@ const plan = Command.make(
 				hereOrFar(
 					Effect.gen(function* () {
 						const states = yield* StartStates;
-						const state = yield* stateIn(file, namesHere);
-						const { base, edits, leftAlone } = yield* states.plan(state);
+						const { state, mod } = yield* declaredIn(file, namesHere);
+						const { base, edits, leftAlone } = yield* states.plan(state, mod);
 						const planned: StatePlan = { base, edits, leftAlone };
 						return planned;
 					}).pipe(Effect.provide(tables)),
 					Effect.fnUntraced(function* (far) {
 						const names = yield* writeFarNames(far);
-						const state = yield* stateIn(file, names);
-						return yield* reached(far.url, far.client.Plan({ state }));
+						const { state, mod } = yield* declaredIn(file, names);
+						return yield* reached(
+							far.url,
+							far.client.Plan({ state, ...(mod === undefined ? {} : { mod }) })
+						);
 					})
 				),
 				printPlan

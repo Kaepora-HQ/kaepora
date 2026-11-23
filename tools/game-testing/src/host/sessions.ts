@@ -27,6 +27,7 @@ import {
 } from "effect";
 import { SecureRandom } from "effect/crypto";
 import { UserDirectories } from "effect/persistence";
+import { originText } from "../contract/plan.ts";
 import type { Outcome, ScriptSource, Step } from "../contract/record.ts";
 import type {
 	Mod,
@@ -51,6 +52,7 @@ import type {
 	EmulatorUnavailable,
 	ImageBuildFailed,
 	LaunchFailed,
+	ModUnreadable,
 	NoFreePlace,
 	NoGameHere,
 	NoGraphicsCard,
@@ -65,13 +67,12 @@ import type {
 } from "../errors.ts";
 import {
 	failureOf,
-	ModUnreadable,
 	NobodyThere,
 	ProvesNothing,
 	SessionNotFound,
 	WaitTimedOut,
 } from "../errors.ts";
-import { digestOf, readMod } from "../mod.ts";
+import { digestOf } from "../mod.ts";
 import { decode, read } from "../save/codec.ts";
 import type { Plan } from "../save/state.ts";
 import { StartStates } from "../save/state.ts";
@@ -267,23 +268,7 @@ export class Sessions extends Context.Service<
 			const directories = yield* UserDirectories.UserDirectories;
 			const random = yield* SecureRandom.SecureRandom;
 			const machine = hostname();
-			const skips = `${yield* Effect.orDie(directories.data("game-testing"))}/skips`;
 			const staging = `${yield* Effect.orDie(directories.cache("game-testing"))}/mods`;
-
-			/** The mod a start names: the caller's, none, or the machine's own that skips. */
-			const modOf = (mod: Start["mod"]) => {
-				if (mod === "none") {
-					return Effect.succeedNone;
-				}
-				return mod === undefined
-					? readMod(fs, path, skips).pipe(
-							Effect.mapError(() =>
-								ModUnreadable.make({ folder: skips, reason: "no-skips" })
-							),
-							Effect.asSome
-						)
-					: Effect.succeedSome(mod);
-			};
 
 			/** Writes a mod's files into a folder of its own for as long as the scope lasts, and gives the folder. */
 			const staged = Effect.fnUntraced(function* (mod: Mod) {
@@ -347,7 +332,7 @@ export class Sessions extends Context.Service<
 					(edit) => edit._tag === "value" && edit.name === value.name
 				);
 				if (Option.isSome(written)) {
-					return `The state's word ${written.value.from} writes it.`;
+					return `${originText(written.value.from)} writes it.`;
 				}
 				if (Option.isNone(wanted)) {
 					return `Give it another value with set: { "${value.name}": ... }.`;
@@ -380,8 +365,12 @@ export class Sessions extends Context.Service<
 						: { attemptOf: start.attemptOf }),
 					...(Option.isSome(span) ? { traceId: span.value.traceId } : {}),
 				});
-				const plan = yield* states.plan(start.state);
-				const mod = yield* modOf(start.mod);
+				const plan = yield* states.plan(start.state, start.mod);
+				yield* recorder.planned({
+					edits: plan.edits,
+					leftAlone: plan.leftAlone,
+				});
+				const { mod } = plan;
 				const folder = Option.isSome(mod)
 					? yield* Effect.asSome(staged(mod.value))
 					: Option.none();

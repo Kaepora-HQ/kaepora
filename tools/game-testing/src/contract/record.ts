@@ -1,4 +1,5 @@
 import { Effect, Schema, SchemaGetter, SchemaIssue } from "effect";
+import { StatePlan } from "./plan.ts";
 import { ReadBack, StartState, TextSpeed } from "./state.ts";
 import { PlaceId, RunId, SessionId, Value } from "./values.ts";
 
@@ -137,6 +138,16 @@ export class RunRecord extends Schema.Class<
 	textSpeed: Schema.optionalKey(TextSpeed),
 	script: Schema.optionalKey(ScriptSource),
 	state: StartState,
+	/**
+	 * What the start wrote into its base, each value with where it came from, and what it left alone; absent until the
+	 * state is planned.
+	 */
+	plan: Schema.optionalKey(
+		Schema.Struct({
+			edits: StatePlan.fields.edits,
+			leftAlone: StatePlan.fields.leftAlone,
+		})
+	),
 	/** Every value the state wrote, as the running game held it once Link could move; absent until then. */
 	readBack: Schema.optionalKey(ReadBack),
 	steps: Schema.Array(Step),

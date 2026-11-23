@@ -7,12 +7,14 @@ import {
 	Layer,
 	Option,
 	Order,
+	Path,
 	Record as Rec,
 	String as Str,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
-import type { PlannedEdit, StatePlan } from "../contract/rpc.ts";
-import type { Age, StartState } from "../contract/state.ts";
+import type { Origin, PlannedEdit, StatePlan } from "../contract/plan.ts";
+import { originText } from "../contract/plan.ts";
+import type { Age, Mod, StartState } from "../contract/state.ts";
 import type { Saved, Value } from "../contract/values.ts";
 import type {
 	GameValue,
@@ -20,15 +22,19 @@ import type {
 	Placement,
 	Point,
 	Scene,
+	StartValue,
 } from "../data/game-data.ts";
 import { GameData, nearest, valueHash } from "../data/game-data.ts";
 import { encodeValue } from "../emulator/values.ts";
+import type { DumpFailed } from "../errors.ts";
 import {
+	ModUnreadable,
 	SaveUnreadable,
 	StateRefused,
 	UnknownName,
 	ValueRefused,
 } from "../errors.ts";
+import { readMod } from "../mod.ts";
 import type { SaveFile } from "./codec.ts";
 import { decode, encode, read, write } from "./codec.ts";
 import type { Weight, Writer } from "./pouch.ts";
@@ -38,9 +44,11 @@ import { OwnTables } from "./tables.ts";
 
 export interface Plan extends StatePlan {
 	readonly base: Base;
+	/** The mod the place gets alone, if any. */
+	readonly mod: Option.Option<Mod>;
 }
 
-/** What the state's words write, before the base is named beside them. */
+/** What the state's words write, before the base and the mod are named beside them. */
 type Written = Omit<StatePlan, "base">;
 
 /** A place's save: the state written into the base's `progress.sav` and `caption.sav`, and the base's `option.sav`. */
@@ -91,9 +99,10 @@ const across = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 
 const sceneRoom = /^(?<scene>.+)\/(?<room>\d+)$/u;
 const weights: Readonly<Record<Weight, number>> = {
-	reset: 0,
-	derived: 1,
-	written: 2,
+	mod: 0,
+	reset: 1,
+	derived: 2,
+	written: 3,
 };
 
 const degrees = (angle: number) => (angle * 180) / Math.PI;
@@ -118,11 +127,18 @@ const carries = (name: string, place: readonly string[]) =>
 export class StartStates extends Context.Service<
 	StartStates,
 	{
+		/** `mod` is the mod the place gets alone, `none` for none; absent, the machine's own mod that skips. */
 		readonly plan: (
-			state: StartState
+			state: StartState,
+			mod: Mod | "none" | undefined
 		) => Effect.Effect<
 			Plan,
-			UnknownName | StateRefused | ValueRefused | SaveUnreadable
+			| UnknownName
+			| StateRefused
+			| ValueRefused
+			| SaveUnreadable
+			| ModUnreadable
+			| DumpFailed
 		>;
 		readonly build: (plan: Plan) => Effect.Effect<Saves, SaveUnreadable>;
 	}
@@ -133,8 +149,10 @@ export class StartStates extends Context.Service<
 			const data = yield* GameData;
 			const own = yield* OwnTables;
 			const fs = yield* FileSystem.FileSystem;
+			const paths = yield* Path.Path;
 			const directories = yield* UserDirectories.UserDirectories;
 			const home = yield* directories.data("game-testing").pipe(Effect.orDie);
+			const skips = `${home}/skips`;
 			const items = new Map(Arr.map(data.items, (item) => [item.name, item]));
 			const questNames = yield* data.names("quest");
 			const quests = new Set(questNames);
@@ -174,7 +192,25 @@ export class StartStates extends Context.Service<
 				return yield* decode(`${home}/bases/${base.name}/${file}.sav`, bytes);
 			});
 
-			const plan = Effect.fn("StartStates.plan")(function* (state: StartState) {
+			/** The mod a start names: the caller's, none, or the machine's own that skips. */
+			const modOf = (mod: Mod | "none" | undefined) => {
+				if (mod === "none") {
+					return Effect.succeedNone;
+				}
+				return mod === undefined
+					? readMod(fs, paths, skips).pipe(
+							Effect.mapError(() =>
+								ModUnreadable.make({ folder: skips, reason: "no-skips" })
+							),
+							Effect.asSome
+						)
+					: Effect.succeedSome(mod);
+			};
+
+			const plan = Effect.fn("StartStates.plan")(function* (
+				state: StartState,
+				asked: Mod | "none" | undefined
+			) {
 				const base = own.bases.get(state.base);
 				if (base === undefined) {
 					return yield* UnknownName.make({
@@ -187,8 +223,16 @@ export class StartStates extends Context.Service<
 					progress: yield* load(base, "progress"),
 					caption: yield* load(base, "caption"),
 				};
-				const words = makeWords({ data, own, items, quests, saves });
+				const mod = yield* modOf(asked);
+				const starts =
+					Option.isNone(mod) || state.startValues === "base"
+						? []
+						: yield* data.startValues(mod.value);
+				const words = makeWords({ data, own, items, quests, saves, starts });
 				yield* words.notAutosave();
+				if (Option.isSome(mod)) {
+					yield* words.startValues(mod.value.name, starts);
+				}
 				yield* words.age(state.age);
 				yield* words.items(state.withItems ?? [], state.withoutItems ?? []);
 				yield* words.equipped(
@@ -206,7 +250,7 @@ export class StartStates extends Context.Service<
 				}
 				yield* words.set(state.set ?? {});
 				yield* words.counts(state.withItems ?? []);
-				const planned: Plan = { base, ...words.result() };
+				const planned: Plan = { base, mod, ...words.result() };
 				return planned;
 			});
 
@@ -252,17 +296,19 @@ interface Inputs {
 	readonly own: OwnTables["Service"];
 	readonly quests: ReadonlySet<string>;
 	readonly saves: { readonly progress: SaveFile; readonly caption: SaveFile };
+	/** What the mod's new game starts with, where the game's own starts otherwise. */
+	readonly starts: readonly StartValue[];
 }
 
 /** The words of one state, writing into one plan. */
-const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
+const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 	const planned = new Map<
 		string,
 		{ readonly edit: PlannedEdit; readonly weight: Weight }
 	>();
 	const leftAlone = new Map<
 		string,
-		{ readonly name: string; readonly from: string }
+		{ readonly name: string; readonly from: Origin }
 	>();
 
 	/** A record keeps its strongest edit; two words that write it two ways are refused. */
@@ -283,7 +329,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			const name = edit._tag === "value" ? edit.name : `key ${edit.key}`;
 			return yield* StateRefused.make({
 				reason: "contradiction",
-				detail: `${old.edit.from} writes ${name} as ${String(old.edit.to)}, and ${edit.from} as ${String(edit.to)}.`,
+				detail: `${originText(old.edit.from)} writes ${name} as ${String(old.edit.to)}, and ${originText(edit.from)} as ${String(edit.to)}.`,
 			});
 		}
 		planned.delete(id);
@@ -316,6 +362,12 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		const edit = planned.get(`value ${value.hash}`)?.edit;
 		return edit === undefined ? held(value) : edit.to;
 	};
+	const started = new Map(
+		Arr.map(starts, (start) => [start.value.hash, start.to])
+	);
+	/** What a new game holds: what the mod starts it with, or else the game's own default. */
+	const newGame = (value: GameValue) =>
+		started.get(value.hash) ?? value.default;
 	const keyHeld = (key: bigint) => {
 		const edit = planned.get(`key ${key}`)?.edit;
 		return edit === undefined
@@ -325,7 +377,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 
 	/** Writes a value a start state's files keep; a name that names none writes nothing. */
 	const put = Effect.fn("StartStates.put")(function* (
-		from: string,
+		from: Origin,
 		name: string,
 		to: (value: GameValue) => Saved,
 		weight: Weight
@@ -351,7 +403,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			weight
 		);
 	});
-	const putKey = Effect.fnUntraced(function* (from: string, key: bigint) {
+	const putKey = Effect.fnUntraced(function* (from: Origin, key: bigint) {
 		if (yield* data.isKey(key)) {
 			yield* place(
 				`key ${key}`,
@@ -367,10 +419,10 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		}
 	});
 	/** A chest's or door's record, only where the game's files name it so for this placement. */
-	const putRecord = Effect.fnUntraced(function* (from: string, name: string) {
+	const putRecord = Effect.fnUntraced(function* (from: Origin, name: string) {
 		const found = yield* data.find(name);
 		if (Option.exists(found, (value) => value.named)) {
-			yield* put(from, name, (value) => value.default, "reset");
+			yield* put(from, name, newGame, "reset");
 		}
 	});
 
@@ -406,7 +458,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		quests.has(Str.slice("Step_".length)(name));
 
 	const resetPlace = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		placements: readonly Placement[],
 		named: readonly string[],
 		isOwn: (name: string) => boolean,
@@ -422,7 +474,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		}
 		for (const name of named) {
 			if (isOwn(name) && !isStep(name)) {
-				yield* put(from, name, (value) => value.default, "reset");
+				yield* put(from, name, newGame, "reset");
 			} else {
 				leftAlone.set(name, { name, from });
 			}
@@ -431,7 +483,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			yield* put(
 				from,
 				`Shop_SoldNum.${each.keeper}.${each.slot}`,
-				(value) => value.default,
+				newGame,
 				"reset"
 			);
 		}
@@ -445,7 +497,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		);
 	};
 
-	const resetCheck = Effect.fnUntraced(function* (from: string, check: Check) {
+	const resetCheck = Effect.fnUntraced(function* (from: Origin, check: Check) {
 		const each = yield* Effect.forEach(
 			check.placements,
 			(hash) => data.placements({ hash }),
@@ -528,12 +580,11 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		});
 
 	/** The names a reset place put back, which are not left alone. */
-	const putBack = () =>
+	/** The values the plan writes, which it never says it left alone. */
+	const written = () =>
 		new Set(
 			Arr.flatMapNullishOr([...planned.values()], (each) =>
-				each.weight === "reset" && each.edit._tag === "value"
-					? each.edit.name
-					: undefined
+				each.edit._tag === "value" ? each.edit.name : undefined
 			)
 		);
 
@@ -543,7 +594,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			leftAlone: Arr.sort(
 				Arr.filter(
 					[...leftAlone.values()],
-					(left) => !putBack().has(left.name)
+					(left) => !written().has(left.name)
 				),
 				Order.mapInput(
 					Order.String,
@@ -554,13 +605,40 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 
 		/** The game writes over an autosave, so the built save is not one. */
 		notAutosave: () =>
-			put("base", "CaptionData.IsAutoSave", () => false, "derived"),
+			put(
+				{ _tag: "rule", rule: "the game writes over an autosave" },
+				"CaptionData.IsAutoSave",
+				() => false,
+				"derived"
+			),
+
+		/**
+		 * Each value the mod's new game starts with, where the base holds the game's own start; one that play moved in
+		 * the base is left alone.
+		 */
+		startValues: Effect.fn("StartStates.startValues")(function* (
+			mod: string,
+			values: readonly StartValue[]
+		) {
+			const from: Origin = { _tag: "mod", mod };
+			for (const { value, to } of values) {
+				if (value.file !== "progress" && value.file !== "caption") {
+					continue;
+				}
+				const base = held(value);
+				if (Equal.equals(base, value.default)) {
+					yield* put(from, value.name, () => to, "mod");
+				} else if (!Equal.equals(base, to)) {
+					leftAlone.set(value.name, { name: value.name, from });
+				}
+			}
+		}),
 
 		age: Effect.fn("StartStates.age")(function* (age: Age | undefined) {
 			if (age === undefined) {
 				return;
 			}
-			const from = `age ${age}`;
+			const from: Origin = { _tag: "word", word: "age", named: age };
 			yield* put(
 				from,
 				"Sequence_IsChildhood",
@@ -600,7 +678,11 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			}
 			for (const name of withoutItems) {
 				const item = yield* data.item(name);
-				yield* pouch.withoutItem(item, `withoutItems ${name}`);
+				yield* pouch.withoutItem(item, {
+					_tag: "word",
+					word: "withoutItems",
+					named: name,
+				});
 			}
 			for (const holding of withItems) {
 				const name = typeof holding === "string" ? holding : holding.item;
@@ -610,7 +692,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 					item,
 					count,
 					asked,
-					`withItems ${name}`,
+					{ _tag: "word", word: "withItems", named: name },
 					"written"
 				);
 			}
@@ -645,12 +727,17 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 						detail: `${name} goes in no slot and on no button.`,
 					});
 				}
-				yield* put(`equipped ${name}`, slot.value, () => slot.holds, "written");
+				yield* put(
+					{ _tag: "word", word: "equipped", named: name },
+					slot.value,
+					() => slot.holds,
+					"written"
+				);
 			}
 		}),
 
 		reset: Effect.fn("StartStates.reset")(function* (subject: string) {
-			const from = `reset ${subject}`;
+			const from: Origin = { _tag: "word", word: "reset", named: subject };
 			const check = own.checks.get(subject);
 			const inRoom = sceneRoom.exec(subject)?.groups;
 			const scene = Option.getOrUndefined(data.scene(subject));
@@ -741,7 +828,12 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 						suggestions: nearest(step, found.value.choices),
 					});
 				}
-				yield* put(`story ${quest}`, `Step_${quest}`, () => step, "written");
+				yield* put(
+					{ _tag: "word", word: "story", named: quest },
+					`Step_${quest}`,
+					() => step,
+					"written"
+				);
 			}
 			for (const event of story?.events ?? []) {
 				const name = `HavePlayedEvent.${event}`;
@@ -761,7 +853,12 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 						),
 					});
 				}
-				yield* put(`story ${event}`, name, () => true, "written");
+				yield* put(
+					{ _tag: "word", word: "story", named: event },
+					name,
+					() => true,
+					"written"
+				);
 			}
 		}),
 
@@ -782,7 +879,11 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				});
 			}
 			yield* shut(spot, scene);
-			const from = `location ${typeof location === "string" ? location : spot.scene}`;
+			const from: Origin = {
+				_tag: "word",
+				word: "location",
+				named: typeof location === "string" ? location : spot.scene,
+			};
 			const facing = direction(spot.facing);
 			const writes: readonly (readonly [string, Saved])[] = [
 				["Sequence_CurrentBanc", scene.name],
@@ -820,7 +921,12 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 					});
 				}
 				yield* fits(entry, value);
-				yield* put(`set ${name}`, name, () => value, "written");
+				yield* put(
+					{ _tag: "word", word: "set", named: name },
+					name,
+					() => value,
+					"written"
+				);
 			}
 		}),
 

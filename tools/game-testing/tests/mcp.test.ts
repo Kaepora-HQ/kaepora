@@ -24,8 +24,9 @@ import { Sessions } from "../src/host/sessions.ts";
 import { personOf, registrations } from "../src/mcp/server.ts";
 import { ran } from "../src/process.ts";
 import { packageRoot, Scripts } from "../src/scripts/runner.ts";
+import { modList, startList } from "./fake-game.ts";
 import type { FakeLichii } from "./fake-lichii.ts";
-import { fakeMachine } from "./fake-machine.ts";
+import { game as fakeGame, fakeMachine } from "./fake-machine.ts";
 
 /** `IsTreasureBoxOpen.5005` of the fake game, by its hash. */
 const chest = "0x1d2a8fff";
@@ -242,6 +243,42 @@ describe("the MCP tools", () => {
 				expect(Arr.map(record.steps, (step) => step.command)).toEqual([
 					"screenshot",
 				]);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
+		"plan_state plans a state with the mod it names, each value the mod starts from the mod",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const machine = yield* fakeMachine();
+				const client = yield* toolsOn(machine);
+				const folder = `${machine.home}/mods/Test Mod`;
+				yield* fs.makeDirectory(`${folder}/romfs/GameData`, {
+					recursive: true,
+				});
+				yield* fs.writeFile(
+					`${folder}/${startList}`,
+					modList(fakeGame, { "IsTreasureBoxOpen.6006": true })
+				);
+				const planned = yield* call(client, "plan_state", {
+					state: { base: "test-base" },
+					mod: { folder },
+				});
+				expect(planned.error).toBe(false);
+				const { edits } = yield* Schema.decodeEffect(
+					Schema.fromJsonString(
+						Schema.Struct({ edits: Schema.Array(Schema.Unknown) })
+					)
+				)(planned.text);
+				expect(edits).toContainEqual(
+					expect.objectContaining({
+						name: "IsTreasureBoxOpen.6006",
+						to: true,
+						from: { _tag: "mod", mod: "Test Mod" },
+					})
+				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);

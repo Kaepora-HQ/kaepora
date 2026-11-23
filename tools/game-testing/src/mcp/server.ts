@@ -268,26 +268,46 @@ const handlers = tools.toLayer(
 		const partOf = Effect.fnUntraced(function* (
 			record: RunRecord,
 			from: number,
-			withPictures: boolean
+			withPictures: boolean,
+			ofPlan: boolean
 		) {
-			const { id, outcome, result, steps, ...rest } = yield* Effect.orDie(
+			const { id, outcome, result, steps, plan, ...rest } = yield* Effect.orDie(
 				Schema.encodeEffect(RunRecord)(record)
 			);
-			const head = { id, outcome, ...resultOf(result), ...rest };
-			const later = Arr.drop(steps, from);
-			const next = `steps ${from} to ${steps.length - 1} of ${steps.length} are here; get_run with from: ${steps.length} gives the next ones`;
+			// The plan can outgrow an answer, so the steps' parts carry its size, and its own parts carry its edits.
+			const planned = Option.match(Option.fromNullishOr(plan), {
+				onNone: () => ({}),
+				onSome: (each) =>
+					ofPlan
+						? { leftAlone: each.leftAlone }
+						: {
+								plan: {
+									edits: each.edits.length,
+									leftAlone: each.leftAlone.length,
+									more: "get_run with plan: true reads each edit and where it came from, a part at a time",
+								},
+							},
+			});
+			const head = { id, outcome, ...resultOf(result), ...rest, ...planned };
+			const entries: readonly unknown[] = ofPlan ? (plan?.edits ?? []) : steps;
+			const kind = ofPlan ? "edits" : "steps";
+			const asking = (at: number) =>
+				`get_run with from: ${at}${ofPlan ? ", plan: true" : ""}`;
+			const later = Arr.drop(entries, from);
+			const next = `${kind} ${from} to ${entries.length - 1} of ${entries.length} are here; ${asking(entries.length)} gives the next ones`;
 			const fit = fitting(
 				later,
-				bytes({ ...head, part: { from, count: 0, of: 0 }, steps: [], next })
+				bytes({ ...head, part: { from, count: 0, of: 0 }, [kind]: [], next })
 			);
 			// Each part holds one step at least, so asking again always goes on.
 			let count = Math.max(
 				Math.min(fit, later.length),
 				Math.min(1, later.length)
 			);
-			if (withPictures) {
+			const pictured = withPictures && !ofPlan;
+			if (pictured) {
 				let held = 0;
-				const within = Arr.findFirstIndex(later, (step) => {
+				const within = Arr.findFirstIndex(Arr.drop(steps, from), (step) => {
 					held += step.pictures?.length ?? 0;
 					return held > picturesPerAnswer;
 				});
@@ -296,24 +316,26 @@ const handlers = tools.toLayer(
 					onSome: (index) => Math.min(count, Math.max(index, 1)),
 				});
 			}
-			const shown = Arr.take(later, count);
 			const end = from + count;
 			return {
 				record: {
 					...head,
-					part: { from, count, of: steps.length },
-					steps: shown,
-					...(end < steps.length
+					part: { from, count, of: entries.length },
+					[kind]: Arr.take(later, count),
+					...(end < entries.length
 						? {
-								next: `steps ${from} to ${end - 1} of ${steps.length} are here; get_run with from: ${end} gives the next ones`,
+								next: `${kind} ${from} to ${end - 1} of ${entries.length} are here; ${asking(end)} gives the next ones`,
 							}
 						: {}),
 				},
-				pictures: withPictures
+				pictures: pictured
 					? yield* picturesOf(
 							record.id,
 							Arr.take(
-								Arr.flatMap(shown, (step) => step.pictures ?? []),
+								Arr.flatMap(
+									Arr.take(Arr.drop(steps, from), count),
+									(step) => step.pictures ?? []
+								),
 								picturesPerAnswer
 							)
 						)
@@ -472,8 +494,13 @@ const handlers = tools.toLayer(
 							more: `${count} of the ${names.length} found are here; ask with more words, or a kind, to see the rest`,
 						};
 			}),
-			plan_state: Effect.fnUntraced(function* ({ state }) {
-				const planned = yield* states.plan(state);
+			plan_state: Effect.fnUntraced(function* ({ state, mod }) {
+				const planned = yield* states.plan(
+					state,
+					mod === undefined || mod === "none"
+						? mod
+						: yield* readMod(fs, path, mod.folder)
+				);
 				const { edits, leftAlone } = planned;
 				const base = { name: planned.base.name, about: planned.base.about };
 				const count = fitting(
@@ -577,9 +604,14 @@ const handlers = tools.toLayer(
 							more: `${count} of the ${found.length} runs are here; ask for one script's runs to see the rest`,
 						};
 			}),
-			get_run: Effect.fnUntraced(function* ({ run, from, pictures }) {
+			get_run: Effect.fnUntraced(function* ({ run, from, pictures, plan }) {
 				const record = yield* runs.get(run);
-				return yield* partOf(record, from ?? 0, pictures === true);
+				return yield* partOf(
+					record,
+					from ?? 0,
+					pictures === true,
+					plan === true
+				);
 			}),
 		});
 	})

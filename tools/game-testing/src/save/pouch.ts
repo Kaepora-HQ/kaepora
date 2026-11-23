@@ -1,4 +1,5 @@
 import { Array as Arr, Effect, Option, Order, String as Str } from "effect";
+import type { Origin } from "../contract/plan.ts";
 import type { Age } from "../contract/state.ts";
 import type { Saved } from "../contract/values.ts";
 import type { PouchRow } from "../data/dump.ts";
@@ -7,9 +8,9 @@ import { StateRefused } from "../errors.ts";
 
 /**
  * How strongly an edit holds: the record a person's word names outweighs what the library derives from it, which
- * outweighs what `reset` puts back.
+ * outweighs what `reset` puts back, which outweighs what the mod's new game starts with.
  */
-export type Weight = "reset" | "derived" | "written";
+export type Weight = "mod" | "reset" | "derived" | "written";
 
 export interface Writer {
 	/** What the plan writes so far, else what the base holds. */
@@ -17,7 +18,7 @@ export interface Writer {
 	/** What the base holds. */
 	readonly held: (value: GameValue) => Saved;
 	readonly put: (
-		from: string,
+		from: Origin,
 		name: string,
 		to: (value: GameValue) => Saved,
 		weight: Weight
@@ -238,7 +239,7 @@ export const makePouch = (
 	/** An owned item's records: got, its get played, one of it. */
 	const ownedRecords: readonly Saved[] = [true, true, 1];
 
-	const own = (from: string, saved: string, owned: boolean, weight: Weight) =>
+	const own = (from: Origin, saved: string, owned: boolean, weight: Weight) =>
 		Effect.forEach(
 			records(saved),
 			(name, i) =>
@@ -253,7 +254,7 @@ export const makePouch = (
 
 	/** An ability's grade falls to the best tier kept, or rises to the best tier held. */
 	const grade = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow,
 		family: Family,
@@ -280,7 +281,7 @@ export const makePouch = (
 
 	/** A slot or button that holds the item is emptied; a button holding another item is listed as it stands. */
 	const unhold = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow
 	) {
@@ -313,7 +314,7 @@ export const makePouch = (
 	});
 
 	const withoutContainer = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow,
 		family: Family
@@ -352,7 +353,7 @@ export const makePouch = (
 
 	/** A weapon that holds its ammunition takes it, every container of it, and its limit. */
 	const withoutAmmunition = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow
 	) {
@@ -377,7 +378,7 @@ export const makePouch = (
 
 	/** A weapon that holds its ammunition comes with its smallest container, unless the plan or base holds one. */
 	const hasAmmunition = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow,
 		asked: readonly string[]
@@ -404,7 +405,7 @@ export const makePouch = (
 
 	const withoutItem = Effect.fn("StartStates.withoutItem")(function* (
 		item: Item,
-		from: string
+		from: Origin
 	) {
 		const row = rowOf(items, item);
 		yield* own(from, item.savedActor, false, "written");
@@ -427,7 +428,7 @@ export const makePouch = (
 	});
 
 	const hasContainer = Effect.fnUntraced(function* (
-		from: string,
+		from: Origin,
 		item: Item,
 		row: PouchRow,
 		family: Family
@@ -473,14 +474,14 @@ export const makePouch = (
 		item: Item,
 		count: number | undefined,
 		asked: readonly string[],
-		from: string,
+		from: Origin,
 		weight: Weight
 	) => Effect.Effect<void, StateRefused> = Effect.fn("StartStates.withItem")(
 		function* (
 			item: Item,
 			count: number | undefined,
 			asked: readonly string[],
-			from: string,
+			from: Origin,
 			weight: Weight
 		) {
 			const row = rowOf(items, item);

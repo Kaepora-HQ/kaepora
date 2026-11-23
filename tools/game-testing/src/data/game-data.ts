@@ -20,6 +20,7 @@ import {
 import { UserDirectories } from "effect/persistence";
 import { ChildProcessSpawner } from "effect/process";
 import type { NameMatch } from "../contract/rpc.ts";
+import type { Mod } from "../contract/state.ts";
 import type {
 	NameKind,
 	Position,
@@ -27,11 +28,17 @@ import type {
 	TableKind,
 } from "../contract/values.ts";
 import type { DumpFailed } from "../errors.ts";
-import { NoGameHere, StateRefused, UnknownName } from "../errors.ts";
+import {
+	ModUnreadable,
+	NoGameHere,
+	StateRefused,
+	UnknownName,
+} from "../errors.ts";
 import type { Dump } from "./build.ts";
 import {
 	ChoicesJson,
 	fill,
+	listed,
 	makeDump,
 	PouchRowJson,
 	readGame,
@@ -40,7 +47,7 @@ import {
 	scalarGroups,
 } from "./build.ts";
 import type { PouchRow } from "./dump.ts";
-import { Key, ModLine, modTooLarge } from "./dump.ts";
+import { FileLine, GameDataList, Key, ModLine, modTooLarge } from "./dump.ts";
 
 /** The layout of the cache file; a change to its tables raises it, which gives every game file a new cache. */
 const cacheLayout = 2;
@@ -68,6 +75,12 @@ export interface GameValue {
 	/** Whether the game's files give the value this name, so a record built from a placement is that record. */
 	readonly named: boolean;
 	readonly type: ValueType;
+}
+
+/** A value a mod's new game starts with in place of the game's own start, `value.default`. */
+export interface StartValue {
+	readonly to: Saved;
+	readonly value: GameValue;
 }
 
 export interface Item {
@@ -138,6 +151,10 @@ export class GameData extends Context.Service<
 		readonly checkMod: (
 			folder: string
 		) => Effect.Effect<readonly Unchecked[], StateRefused | DumpFailed>;
+		/** Each value the mod's game data list starts a new game with that the game's own list starts otherwise. */
+		readonly startValues: (
+			mod: Mod
+		) => Effect.Effect<readonly StartValue[], ModUnreadable>;
 		readonly search: (
 			text: string,
 			options: { readonly kind?: NameKind; readonly limit: number }
@@ -185,7 +202,7 @@ export class GameData extends Context.Service<
 				Effect.sync(() => new Database(path, { readonly: true })),
 				(open) => Effect.sync(() => open.close())
 			);
-			return yield* serve(db, name, dump);
+			return yield* serve(db, name, dump, fs);
 		})
 	);
 }
@@ -235,10 +252,16 @@ const NameRow = Schema.Struct({
 	about: Schema.String,
 });
 
+/** Where a mod carries its game data list, whose defaults are what its new game starts with. */
+const startList = "romfs/GameData/GameDataList.Product.110.byml.zs";
+
+const DefaultRow = Schema.Struct({ hash: Schema.Int, text: Schema.String });
+
 const serve = Effect.fn("GameData.open")(function* (
 	db: Database,
 	key: string,
-	dump: Dump
+	dump: Dump,
+	fs: FileSystem.FileSystem
 ) {
 	const rows = <S extends Schema.Top & { readonly DecodingServices: never }>(
 		row: S,
@@ -306,13 +329,29 @@ const serve = Effect.fn("GameData.open")(function* (
 		);
 	const json = (values: readonly string[]) => Formatter.formatJson(values);
 
-	const find = Effect.fn("GameData.find")(function* (name: string) {
-		const hash = valueHash(name);
-		const [row] = yield* rows(
+	const gameValue = (
+		name: string,
+		hash: number,
+		found: typeof ValueRow.Type
+	): GameValue => ({
+		name,
+		named: found.name === name,
+		hash,
+		type: found.type,
+		default: found.default,
+		file: found.file,
+		choices: found.choices,
+	});
+	const valueRows = (hash: number) =>
+		rows(
 			ValueRow,
 			'SELECT name, type, default_value AS "default", file, choices FROM value WHERE hash = ?',
 			hash
 		);
+
+	const find = Effect.fn("GameData.find")(function* (name: string) {
+		const hash = valueHash(name);
+		const [row] = yield* valueRows(hash);
 		const raw = Str.startsWith("0x")(name);
 		// A name whose hash the game's files give to another name is a chance match, not this value.
 		return Option.map(
@@ -320,15 +359,70 @@ const serve = Effect.fn("GameData.open")(function* (
 				Option.fromNullishOr(row),
 				(found) => raw || found.name === null || found.name === name
 			),
-			(found): GameValue => ({
-				name,
-				named: found.name === name,
-				hash,
-				type: found.type,
-				default: found.default,
-				file: found.file,
-				choices: found.choices,
+			(found) => gameValue(name, hash, found)
+		);
+	});
+
+	/** The game's own start of every value, as the cache writes it, so two starts compare as text. */
+	const ownStarts = yield* Effect.cached(
+		Effect.map(
+			rows(DefaultRow, "SELECT hash, default_value AS text FROM value"),
+			(all) => new Map(Arr.map(all, (row) => [row.hash, row.text]))
+		)
+	);
+	const startValues = Effect.fn("GameData.startValues")(function* (mod: Mod) {
+		const carried = Arr.findFirst(mod.files, (file) => file.path === startList);
+		if (Option.isNone(carried)) {
+			return [];
+		}
+		const where = `${mod.name}/${startList}`;
+		const unreadable = (detail: string) =>
+			ModUnreadable.make({ folder: where, reason: "list", detail });
+		const printed = yield* Effect.scoped(
+			Effect.gen(function* () {
+				const folder = yield* Effect.orDie(fs.makeTempDirectoryScoped());
+				// The dump opens a file by its name's ending, as the game does.
+				const file = `${folder}/${Arr.lastNonEmpty(Str.split(startList, "/"))}`;
+				yield* Effect.orDie(fs.writeFile(file, carried.value.bytes));
+				return yield* dump
+					.run("open", file)
+					.pipe(
+						Effect.catchTag("DumpFailed", (failed) =>
+							unreadable(Str.trim(Str.replaceAll(file, where)(failed.stderr)))
+						)
+					);
 			})
+		);
+		const { root } = yield* dump.decode(FileLine, printed);
+		const list = yield* Schema.decodeUnknownEffect(GameDataList)(root).pipe(
+			Effect.mapError((issue) => unreadable(issue.message))
+		);
+		const own = yield* ownStarts;
+		const changed = yield* Effect.filter(
+			listed(list),
+			(entry) =>
+				Effect.map(
+					Effect.orDie(Schema.encodeEffect(SavedJson)(entry.default)),
+					(text) => own.get(entry.hash) !== text
+				),
+			{ concurrency: 1 }
+		);
+		return yield* Effect.forEach(
+			changed,
+			Effect.fnUntraced(function* (entry): Effect.fn.Return<
+				StartValue,
+				ModUnreadable
+			> {
+				const [found] = yield* valueRows(entry.hash);
+				if (found === undefined) {
+					return yield* unreadable(
+						`it starts 0x${entry.hash.toString(16)}, a value the game's own list does not hold`
+					);
+				}
+				const name = found.name ?? `0x${entry.hash.toString(16)}`;
+				return { value: gameValue(name, entry.hash, found), to: entry.default };
+			}),
+			{ concurrency: 1 }
 		);
 	});
 
@@ -429,6 +523,7 @@ const serve = Effect.fn("GameData.open")(function* (
 					: undefined
 			);
 		}),
+		startValues,
 		search: (text, options) =>
 			rows(
 				NameRow,

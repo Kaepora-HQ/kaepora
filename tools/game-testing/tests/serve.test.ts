@@ -18,7 +18,7 @@ import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { RpcClient } from "effect/rpc";
 import { TestConsole } from "effect/testing";
 import { cli } from "../src/cli.ts";
-import { contract, GameRpcs } from "../src/contract/rpc.ts";
+import { contract, contractOf, GameRpcs } from "../src/contract/rpc.ts";
 import { StartState } from "../src/contract/state.ts";
 import { newRunId } from "../src/contract/values.ts";
 import { connection } from "../src/far.ts";
@@ -197,7 +197,7 @@ describe("serve", () => {
 	);
 
 	it.live(
-		"Hello over the WebSocket refuses a caller built from another contract",
+		"Hello over the WebSocket refuses a caller whose commands differ in one, with nothing raised by hand",
 		() =>
 			Effect.gen(function* () {
 				const machine = yield* fakeMachine();
@@ -206,12 +206,11 @@ describe("serve", () => {
 				const client = yield* RpcClient.make(GameRpcs).pipe(
 					Effect.provideContext(far)
 				);
-				const refused = yield* Effect.flip(
-					client.Hello({ contract: contract + 1 })
-				);
+				const older = contractOf(GameRpcs.omit("Places"));
+				const refused = yield* Effect.flip(client.Hello({ contract: older }));
 				expect(refused._tag).toBe("VersionMismatch");
 				expect(refused.message).toContain(
-					`speaks contract ${contract} and this copy speaks ${contract + 1}`
+					`speaks contract ${Str.slice(0, 12)(contract)} and this copy speaks ${Str.slice(0, 12)(older)}`
 				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting

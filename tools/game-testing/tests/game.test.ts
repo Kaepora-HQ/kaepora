@@ -352,6 +352,19 @@ describe("a game on the host", () => {
 	);
 
 	it.live(
+		"a start whose map facing the game recomputed from Link's counts as taken",
+		() =>
+			Effect.gen(function* () {
+				// Seen on the game, Mido's chest with the default mod: written 24.91800541306725, held 24.917978286743164.
+				const turned = yield* played(() => Effect.void, {
+					words: { set: { Player_Rot_For_Map: 24.918_005_413_067_25 } },
+					rewrites: { Player_Rot_For_Map: 24.917_978_286_743_164 },
+				});
+				expect(turned.startFailure).toBeUndefined();
+			})
+	);
+
+	it.live(
 		"a record states the mod and the text speed the game had, which is the game's own when a mod took the add-on's bytes",
 		() =>
 			Effect.gen(function* () {

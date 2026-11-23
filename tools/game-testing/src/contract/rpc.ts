@@ -4,7 +4,7 @@
  * connection drops (the server interrupts a closed connection's requests). The other commands name the session the
  * stream announced.
  */
-import { Schema } from "effect";
+import { Array as Arr, Formatter, Schema, SchemaRepresentation } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
 import {
 	DumpFailed,
@@ -31,6 +31,7 @@ import {
 	WaitTimedOut,
 	WriteUnsupported,
 } from "../errors.ts";
+import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
 import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
@@ -41,7 +42,6 @@ import {
 	Picture,
 	PlaceId,
 	RunId,
-	Saved,
 	SessionId,
 	StickPosition,
 	Value,
@@ -72,12 +72,6 @@ const StartErrors = Schema.Union([
 	ValueRefused,
 ]);
 
-/**
- * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
- * another one, since the CI runner and the game machine can run different commits.
- */
-export const contract = 12;
-
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([
 	Schema.TaggedStruct("started", {
@@ -104,40 +98,6 @@ export const PlaceStatus = Schema.Struct({
 	),
 });
 
-/**
- * One record a state writes, with what the base held and the word it came from: a saved value by name, in
- * `progress.sav` or `caption.sav`, or a per-actor key by its placement hash in decimal.
- */
-export const PlannedEdit = Schema.Union([
-	Schema.TaggedStruct("value", {
-		name: Schema.String,
-		file: Schema.Literals(["progress", "caption"]),
-		to: Saved,
-		base: Saved,
-		from: Schema.String,
-	}),
-	Schema.TaggedStruct("key", {
-		key: Schema.String,
-		to: Schema.Boolean,
-		base: Schema.Boolean,
-		from: Schema.String,
-	}),
-]);
-export type PlannedEdit = typeof PlannedEdit.Type;
-
-/**
- * What a state writes into its base, and the values named by the files of a place it resets that are not the place's
- * own, which it leaves as the base holds them, so a test that needs one adds it with `set`.
- */
-export const StatePlan = Schema.Struct({
-	base: Schema.Struct({ name: Schema.String, about: Schema.String }),
-	edits: Schema.Array(PlannedEdit),
-	leftAlone: Schema.Array(
-		Schema.Struct({ name: Schema.String, from: Schema.String })
-	),
-});
-export type StatePlan = typeof StatePlan.Type;
-
 /** A name found by `Search`, with what kind of thing it names and a line on what it is. */
 export const NameMatch = Schema.Struct({
 	kind: Schema.String,
@@ -149,7 +109,7 @@ export type NameMatch = typeof NameMatch.Type;
 export class GameRpcs extends RpcGroup.make(
 	/** The first call on every connection. */
 	Rpc.make("Hello", {
-		payload: { contract: Schema.Int },
+		payload: { contract: Schema.String },
 		success: Schema.Struct({
 			machine: Schema.String,
 			places: Schema.Int,
@@ -270,9 +230,14 @@ export class GameRpcs extends RpcGroup.make(
 	}),
 	/** What a state would write, word by word, without starting a game. */
 	Rpc.make("Plan", {
-		payload: { state: StartState },
+		payload: {
+			state: StartState,
+			/** The mod the place would get, as `Open` takes it, whose new game's start values the plan takes. */
+			mod: Schema.optionalKey(Schema.Union([Mod, Schema.Literal("none")])),
+		},
 		success: StatePlan,
 		error: Schema.Union([
+			ModUnreadable,
 			UnknownName,
 			StateRefused,
 			ValueRefused,
@@ -310,3 +275,34 @@ export class GameRpcs extends RpcGroup.make(
 		error: RunNotFound,
 	})
 ) {}
+
+/**
+ * A contract's digest: SHA-256 over each command's name and the JSON Schema of what it sends, answers and fails with,
+ * as the wire carries them. Any change to a command, schema or error changes it, with nothing to raise by hand.
+ */
+export const contractOf = <R extends Rpc.AnyWithProps>(
+	group: RpcGroup.RpcGroup<R>
+) => {
+	const rpcs = [...group.requests.values()];
+	const schemas = Arr.flatMap(rpcs, (rpc) => [
+		rpc.payloadSchema.ast,
+		rpc.successSchema.ast,
+		rpc.errorSchema.ast,
+	]);
+	const wire = Arr.isReadonlyArrayNonEmpty(schemas)
+		? SchemaRepresentation.toJsonSchemaMultiDocument(
+				SchemaRepresentation.toRepresentations(schemas)
+			)
+		: {};
+	return new Bun.CryptoHasher("sha256")
+		.update(
+			Formatter.formatJson({ commands: Arr.map(rpcs, (rpc) => rpc._tag), wire })
+		)
+		.digest("hex");
+};
+
+/**
+ * The contract this build speaks. `Hello` refuses a caller that speaks another, since the CI runner and the game
+ * machine can run different commits.
+ */
+export const contract = contractOf(GameRpcs);
