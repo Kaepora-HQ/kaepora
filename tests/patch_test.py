@@ -19,8 +19,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
-       python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk <kaepora-patch> <game.nup> \
-           <kaepora-seedgen>
+       python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk|darunias-dance <kaepora-patch> \
+           <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -831,7 +831,8 @@ def tested_colossus_mod(patch, game, romfs):
 UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293"),
                   ("Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42"),
                   ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172"),
-                  ("Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208")}
+                  ("Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208"),
+                  (FIRE_QUEST_FLOW, "Event39")}
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
@@ -841,12 +842,16 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
     ReadyForGetEponaSong and child Malon then taught her song. A flow with a text no played mod has is compared, read
     apart from the patcher, with the played mod's flow, or the game's where no played mod has that flow, with the text
     set."""
-    texts = json.loads(pathlib.Path(plan_file).read_text())["event_texts"]
+    planned = json.loads(pathlib.Path(plan_file).read_text())
+    texts = planned["event_texts"]
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
-    mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts]))
-    # Zelda's flow grows past its size table entry, which gift-size-table covers.
+    mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts],
+                                    expressions=[(e["name"], e["flag"]) for e in planned["expressions"]]))
+    # Zelda's flow grows past its size table entry, which gift-size-table covers, and the dance's question asks an
+    # expression of the list, which expressions covers.
     mod.pop(SIZE_TABLE)
+    mod.pop(GAME_DATA_LIST)
     unplayed = [t for t in texts if (t["flow"], t["event"]) in UNPLAYED_TEXTS]
     assert {(t["flow"], t["event"]) for t in unplayed} == UNPLAYED_TEXTS, unplayed
     # The list may name played mods for texts this plan does not carry.
@@ -2267,9 +2272,8 @@ def biggoron_place(patch, game, seedgen):
     game has them."""
     planned = generated_plan(seedgen, "1", {"Gifts": ["Biggoron Quest"]})
     mod = patched(patch, game, planned)
-    (expression,) = planned["expressions"]
+    (expression,) = [entry for entry in planned["expressions"] if entry["flag"] in planned["claims"]]
     claim = expression["flag"]
-    assert claim in planned["claims"], planned["claims"]
     placed = next(text["text"] for text in planned["event_texts"]
                   if (text["flow"], text["event"], text["param"]) == (BIGGORON_FLOW, "Event123", "ActorName"))
     theirs, ours = game.event_flow(game.read(BIGGORON_FLOW)), game.event_flow(mod[BIGGORON_FLOW])
@@ -2301,6 +2305,23 @@ def biggoron_place(patch, game, seedgen):
     assert ordered["DefaultValue"] == (UINT, 1), ordered
     left = patched(patch, game, generated_plan(seedgen, "1", {"Gifts": ["Malon's Egg"]}))
     assert not {BIGGORON_FLOW, GET_IN_FLOW} & left.keys(), sorted(left)
+
+
+def darunias_dance(patch, game, seedgen):
+    """In every seed Darunia's switch after his dance, which in the game asks whether the Fire quest is past
+    SariaMelodyPlay, asks an expression of the mod's own that reads the played flag of his gift's scene. So he gives at
+    the first Saria's Song whatever the quest's step, and never again. The flow is the game's but for that name."""
+    for seed, settings in (("1", {}), ("2", {"Gifts": "Shuffled"})):
+        mod = patched(patch, game, generated_plan(seedgen, seed, settings))
+        expected = game.event_flow(game.read(FIRE_QUEST_FLOW))
+        asked = string_parameter(expected, *DANCE_QUESTION[1:])
+        assert asked[1] == "Get_StoneOfFire_IsAfter_SariaMelodyPlay_Exp", asked
+        ours = game.event_flow(mod[FIRE_QUEST_FLOW])
+        asked[1] = string_parameter(ours, *DANCE_QUESTION[1:])[1]
+        assert ours == expected, settings
+        data = game.game_data_list(mod[GAME_DATA_LIST])["Data"]
+        assert {"Hash": (UINT, murmur3(asked[1])), "ResetTypeValue": (INT, 0), "SaveFileIndex": (INT, 0xFFFFFFFF),
+                "Values": [[(UINT64, 0), (UINT64, murmur3(DARUNIA_DANCE))]]} in data["BoolExp"], settings
 
 
 def assert_pickup_copy(game, mod, item, copy):
@@ -3349,6 +3370,7 @@ def main():
         "event-nexts": event_nexts,
         "biggoron-place": biggoron_place,
         "mido-hint-every-talk": mido_hint_every_talk,
+        "darunias-dance": darunias_dance,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

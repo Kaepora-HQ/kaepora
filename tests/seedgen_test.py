@@ -212,7 +212,11 @@ QUEST_TEXTS = [
     {"flow": "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "event": "Event172", "param": "StepName",
      "text": "Complete"},
     {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
-     "text": "Get_Epona_IsAfter_Ready_Exp"}]
+     "text": "Get_Epona_IsAfter_Ready_Exp"},
+    {"flow": "Event/EventFlow/Get_StoneOfFire.bfevfl.zs", "event": "Event39", "param": "GameDataName",
+     "text": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp"}]
+# The expression of every plan's own that Darunia's switch after his dance asks: his gift's scene played.
+DANCE_EXPRESSION = {"name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp", "flag": "HavePlayedEvent.Dm_Goron_0030"}
 # King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
 # in every seed.
 # The area at the top of the vine climb, which stands only for a Link whose save says he got the Weird Egg while Malon's
@@ -1217,7 +1221,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(on_route)
         _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"],
                                          **NO_CHARACTER_HINTS})
-        self.assertEqual((plan["event_nexts"], plan["expressions"]), ([], []))
+        self.assertEqual((plan["event_nexts"], plan["expressions"]), ([], [DANCE_EXPRESSION]))
         self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
     def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):

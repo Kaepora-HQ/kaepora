@@ -1391,6 +1391,12 @@
       "event": "Event179",
       "param": "GameDataName",
       "text": "Get_Epona_IsAfter_Ready_Exp"
+    },
+    {
+      "flow": "Event/EventFlow/Get_StoneOfFire.bfevfl.zs",
+      "event": "Event39",
+      "param": "GameDataName",
+      "text": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp"
     }
   ],
   "event_numbers": [],
@@ -1606,6 +1612,11 @@
   "skulltulas": [],
   "loose_items": [],
   "claims": [],
-  "expressions": [],
+  "expressions": [
+    {
+      "name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp",
+      "flag": "HavePlayedEvent.Dm_Goron_0030"
+    }
+  ],
   "start_items": []
 }

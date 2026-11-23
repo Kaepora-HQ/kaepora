@@ -821,6 +821,13 @@ struct EventText {
     std::string_view text;
 };
 
+// Darunia dances at each Saria's Song from his first meeting on, and his switch after the dance (Event39 of the Fire
+// quest's flow) starts his gift's scene while the quest is not past SariaMelodyPlay. Opening Dodongo's Cavern first
+// takes the quest past it, and five writes after the dance take it back and give again. So the switch asks this
+// expression of the mod's own, true once the gift's scene has played. An expression query reads no Bool.
+static constexpr std::string_view danceGiven = "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp";
+static constexpr std::string_view danceGiftPlayed = "HavePlayedEvent.Dm_Goron_0030";
+
 static constexpr EventText eventTexts[] = {
     // The warp after Gohma completes the Forest quest in its Event1. Its Event4 sets the castle quest to Step01 even when
     // the quest is further on, and a Link who woke Talon before Gohma can then not meet Zelda. These texts make Event4 a
@@ -862,6 +869,7 @@ static constexpr EventText eventTexts[] = {
     // met child Malon at the ranch and has not learned her song is set back, and she then never teaches it. This text
     // makes Event179 ask whether the quest is past Ready, so the write moves only a quest still at Ready.
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
+    { "Event/EventFlow/Get_StoneOfFire.bfevfl.zs", "Event39", "GameDataName", danceGiven },
 };
 
 // The summit's Great Fairy gives through her own entry of the shared get flow. For a Link who had no meter, which her
@@ -1213,6 +1221,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["expressions"] = nlohmann::ordered_json::array();
+    plan["expressions"].push_back({ { "name", danceGiven }, { "flag", danceGiftPlayed } });
     if (biggoron) {
         plan["claims"].push_back(biggoronClaim);
         plan["expressions"].push_back({ { "name", biggoronGiven }, { "flag", biggoronClaim } });

@@ -738,6 +738,22 @@ at the ranch and had not learned her song was set back a step, and she then star
 lost race the step stays and the child then learns the song, and an adult who learned it as a child still wins Epona and
 rides out.
 
+Darunia dances at each Saria's Song from his first meeting on, at every step of `Get_StoneOfFire` (`Event35` and
+`Event185`), and the switch after the dance, `Event39`, starts his gift's scene, `Dm_Goron_0030`, while the quest is not
+past SariaMelodyPlay. The scene gives in `Event127` and sets the quest to DodongoCavernOpne in `Event121`. The cavern's
+mouth sets DungeonStart (`Logic/DeathMountainTrail_Child_Prefab_ffa7`) and King Dodongo's warp Complete, so a Link who
+opened the cavern first lost the gift. Five writes that each run once set the quest back to SariaMelodyPlay or below:
+his first meeting, Impa's send-off, Zelda's Letter shown at Kakariko's gate, the first walk up the trail and Saria's
+lesson. After the dance each lets the next song give again (read). Seen in the game: the trail's first walk set the
+quest back from DungeonStart. `Event39` asks `Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp`, an expression of the mod's own
+that reads the scene's played flag, `HavePlayedEvent.Dm_Goron_0030`, which the game sets as the scene plays (seen). So
+he gives at the first song after his meeting, at any step, and at no later one. His first meeting plays as a child walks
+into his room at any step (`Logic/GoronCity_Child_Prefab_5b76`), so a child who meets him after an adult has cleared the
+cavern gets the gift as well. The scene's write sets the quest back to DodongoCavernOpne from DungeonStart, and is
+refused on a completed quest (read). Seen in the game: with the cavern opened first, the first song gave, and a second
+song and one after the trail's first walk gave nothing; with the quest complete and Darunia never met, his meeting
+played, the first song gave, and the second gave nothing.
+
 Darunia's son gives his tunic only as a participant of `SageOfFire`, at Ready, StopDaruniaJr and TalkDaruniaJr. His
 talk at TalkDaruniaJr, `1396283892_1460050088_2425371882_C1_T`, gives it in `SageOfFire` `Event18`, and the door scene
 after it sets `SageOfFire_Step02_DoorOpen` and the quest to MoveStatue. The crater's arrival from Goron City
