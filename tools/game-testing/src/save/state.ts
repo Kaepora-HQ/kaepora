@@ -35,6 +35,7 @@ import {
 	ValueRefused,
 } from "../errors.ts";
 import { readMod } from "../mod.ts";
+import { sha256 } from "../sha256.ts";
 import type { SaveFile } from "./codec.ts";
 import { decode, encode, read, write } from "./codec.ts";
 import type { Weight, Writer } from "./pouch.ts";
@@ -114,9 +115,6 @@ const savedFacing = (facing: number) => {
 	const turned = ((facing % 360) + 360) % 360;
 	return radians(turned > 180 ? turned - 360 : turned);
 };
-
-const sha256 = (bytes: Uint8Array) =>
-	new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
 
 /** Whether a name carries a place's name, as the game spells it in either case. */
 const carries = (name: string, place: readonly string[]) =>

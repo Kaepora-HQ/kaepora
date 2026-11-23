@@ -97,6 +97,31 @@ export const Step = Schema.Struct({
 });
 export type Step = typeof Step.Type;
 
+/** One file of a kept save, by its name in the run's folder and its SHA-256. */
+const KeptFile = Schema.Struct({ path: Schema.String, sha256: Schema.String });
+
+/**
+ * A save kept with its run, its two files in the run's folder as the game holds them. A run's saves are in the order
+ * they were written: the one built for the start first, then each the game wrote.
+ */
+export const KeptSave = Schema.Struct({
+	/** `built` for the start's own; for one the game wrote, its caption's word, an autosave or a save from the menu. */
+	kind: Schema.Literals(["built", "autosave", "menu"]),
+	/** The game's slot it was found in, such as `slot_01`. */
+	slot: Schema.String,
+	/** How many steps had run when it was found: 0 before the first. */
+	afterSteps: Schema.Int,
+	/**
+	 * For one found inside the next step, which presses until something holds: the presses of that step made by then,
+	 * so it follows the step's press of that number.
+	 */
+	afterPress: Schema.optionalKey(Schema.Int),
+	found: Instant,
+	progress: KeptFile,
+	caption: KeptFile,
+});
+export type KeptSave = typeof KeptSave.Type;
+
 /** What identifies the script a run came from, so runs of one script can be put side by side. */
 export const ScriptSource = Schema.Struct({
 	/** The kept script's path under `tools/game-testing/scripts/`, absent for one written inline. */
@@ -153,6 +178,8 @@ export class RunRecord extends Schema.Class<
 	/** Every value the state wrote, as the running game held it once Link could move; absent until then. */
 	readBack: Schema.optionalKey(ReadBack),
 	steps: Schema.Array(Step),
+	/** Every save of the run, in order; absent until the start's own is built. */
+	saves: Schema.optionalKey(Schema.Array(KeptSave)),
 	/** What the script returned, encoded. */
 	result: Schema.optionalKey(Schema.Unknown),
 	outcome: Outcome,

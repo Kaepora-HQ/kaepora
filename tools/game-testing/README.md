@@ -159,9 +159,16 @@ as sent is refused before anything is sent, and a file too large for the game's 
 starts. Build the mod with the current patcher. An older mod skips no scenes, and many older mods change the bytes
 Lichii's instant text patches, so Lichii leaves instant text out.
 
-## Where the pictures are
+## Where the pictures and saves are
 
 `run` prints each run's outcome and, under it, `record and pictures: <folder>`. The folder is on your machine and
 holds `record.json` and `picture-1.png` and on. The record keeps every step and the result, the mod the game had, and
 `textSpeed`, the text speed the game had. When the copy to your machine fails, the line under the outcome says why,
 and `gt runs` still lists the run on the game machine.
+
+The folder also keeps every save of the run, whole, in the order they were written: `save-0-progress.sav` and
+`save-0-caption.sav` are the save built for the start, and `save-1` on are each autosave and menu save the game wrote,
+also when the run fails, breaks or stops. The record lists each under `saves`: its kind, its slot, how many steps had
+run when it appeared, the press of `pressUntil` it followed when it appeared inside one, and the SHA-256 of each file.
+A save is about 160 KB. The record also keeps the start's plan: each value it wrote, with where it came from. A start
+that fails before Link can move keeps only the built save.

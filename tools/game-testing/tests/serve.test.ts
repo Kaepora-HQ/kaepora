@@ -5,6 +5,7 @@ import {
 	Context,
 	Effect,
 	Exit,
+	FileSystem,
 	Layer,
 	Option,
 	Redacted,
@@ -212,6 +213,41 @@ describe("serve", () => {
 				expect(refused.message).toContain(
 					`speaks contract ${Str.slice(0, 12)(contract)} and this copy speaks ${Str.slice(0, 12)(older)}`
 				);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
+		"RunFile serves a run's pictures and saves by name and refuses any other name",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const machine = yield* fakeMachine();
+				const url = yield* served(machine);
+				const far = yield* Layer.build(connection(url, secret));
+				const client = yield* RpcClient.make(GameRpcs).pipe(
+					Effect.provideContext(far)
+				);
+				const run = yield* newRunId;
+				const folder = `${machine.home}/state/game-testing/runs/${run}`;
+				yield* fs.makeDirectory(folder, { recursive: true });
+				for (const name of [
+					"record.json",
+					"picture-1.png",
+					"save-0-caption.sav",
+				]) {
+					yield* fs.writeFile(`${folder}/${name}`, new Uint8Array([1]));
+				}
+				expect(yield* client.RunFile({ run, path: "picture-1.png" })).toEqual(
+					new Uint8Array([1])
+				);
+				expect(
+					yield* client.RunFile({ run, path: "save-0-caption.sav" })
+				).toEqual(new Uint8Array([1]));
+				for (const path of ["record.json", "../record.json", "save-0.sav"]) {
+					const refused = yield* Effect.flip(client.RunFile({ run, path }));
+					expect(refused._tag).toBe("RunNotFound");
+				}
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);

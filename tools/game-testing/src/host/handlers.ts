@@ -117,7 +117,7 @@ export const handlers = GameRpcs.toLayer(
 				searchNames(data, own, text, { limit, kind }),
 			Runs: ({ script, limit }) => runs.list({ script, limit }),
 			Run: ({ run }) => runs.get(run),
-			RunPicture: ({ run, path }) => runs.picture(run, path),
+			RunFile: ({ run, path }) => runs.file(run, path),
 		});
 	})
 );

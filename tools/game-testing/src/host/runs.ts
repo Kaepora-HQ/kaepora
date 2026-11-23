@@ -1,7 +1,7 @@
 /**
  * The records of the runs on this machine: one folder per run under `~/.local/state/game-testing/runs/`, with
- * `record.json`, the debug wire as `wire.jsonl`, and the run's pictures. A record is written whole after every step,
- * so a run that dies leaves what it reached.
+ * `record.json`, the debug wire as `wire.jsonl`, the run's pictures and its saves. A record is written whole after
+ * every step, so a run that dies leaves what it reached.
  */
 import type { Scope } from "effect";
 import {
@@ -20,7 +20,13 @@ import {
 	Semaphore,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
-import type { Outcome, RunList, RunSummary, Step } from "../contract/record.ts";
+import type {
+	KeptSave,
+	Outcome,
+	RunList,
+	RunSummary,
+	Step,
+} from "../contract/record.ts";
 import { RunRecord } from "../contract/record.ts";
 import type { ReadBack, TextSpeed } from "../contract/state.ts";
 import type { PlaceId } from "../contract/values.ts";
@@ -28,6 +34,7 @@ import { Picture, RunId } from "../contract/values.ts";
 import type { WireLog } from "../emulator/emulator.ts";
 import { wireLog } from "../emulator/emulator.ts";
 import { CopyFailed, RunNotFound } from "../errors.ts";
+import { sha256 } from "../sha256.ts";
 
 /** What a run's record holds before its state is planned. */
 export type RunHeader = Omit<
@@ -56,6 +63,17 @@ export interface Recorder {
 	readonly planned: (
 		plan: NonNullable<RunRecord["plan"]>
 	) => Effect.Effect<void>;
+	/**
+	 * Keeps a save in the run's folder, numbered by its place in the run's order, and lists it in the record after the
+	 * steps that have run.
+	 */
+	readonly save: (save: {
+		readonly kind: KeptSave["kind"];
+		readonly slot: string;
+		readonly progress: Uint8Array;
+		readonly caption: Uint8Array;
+		readonly afterPress?: number;
+	}) => Effect.Effect<void>;
 	/** Link can move: the emulator's build, how the game writes its text, and the values the state wrote as it holds them. */
 	readonly started: (details: {
 		readonly build: string;
@@ -72,7 +90,8 @@ export interface Recorder {
 }
 
 const RecordJson = Schema.fromJsonString(RunRecord);
-const pictureName = /^picture-\d+\.png$/u;
+/** The files a run's folder keeps beside its record: its pictures and its saves. */
+const keptName = /^(?:picture-\d+\.png|save-\d+-(?:progress|caption)\.sav)$/u;
 
 /** Why a run that ended without its outcome is broken: what it failed on, or its caller going away. */
 const brokenBy = (exit: Exit.Exit<unknown, unknown>): Outcome => {
@@ -107,16 +126,17 @@ export class Runs extends Context.Service<
 			readonly limit: number;
 		}) => Effect.Effect<RunList>;
 		readonly get: (run: RunId) => Effect.Effect<RunRecord, RunNotFound>;
-		readonly picture: (
+		/** A picture or a kept save's file of a run, by its name in the run's folder. */
+		readonly file: (
 			run: RunId,
 			path: string
 		) => Effect.Effect<Uint8Array, RunNotFound>;
-		/** The folder that holds a run's record and pictures. */
+		/** The folder that holds a run's record, pictures and saves. */
 		readonly folder: (run: RunId) => string;
-		/** Keeps a run another machine recorded, with its pictures by path, as its own folder holds it there. */
+		/** Keeps a run another machine recorded, with its pictures and saves by name, as its own folder holds them there. */
 		readonly copy: (
 			record: RunRecord,
-			pictures: readonly { readonly path: string; readonly png: Uint8Array }[]
+			files: readonly { readonly path: string; readonly bytes: Uint8Array }[]
 		) => Effect.Effect<void, CopyFailed>;
 	}
 >()("game-testing/host/runs") {
@@ -164,6 +184,7 @@ export class Runs extends Context.Service<
 						Effect.flatMap(Ref.updateAndGet(record, change), write)
 					);
 				const pictures = yield* Ref.make(0);
+				const saves = yield* Ref.make(0);
 				const end = Effect.fnUntraced(function* (
 					outcome: Outcome,
 					result?: unknown
@@ -203,6 +224,43 @@ export class Runs extends Context.Service<
 						update((current) =>
 							RunRecord.make({ ...current, steps: [...current.steps, step] })
 						),
+					save: Effect.fnUntraced(function* ({
+						kind,
+						slot,
+						progress,
+						caption,
+						afterPress,
+					}) {
+						const order = yield* Ref.getAndUpdate(saves, (n) => n + 1);
+						const kept = (part: "progress" | "caption", bytes: Uint8Array) =>
+							Effect.as(
+								Effect.orDie(
+									fs.writeFile(`${folder}/save-${order}-${part}.sav`, bytes)
+								),
+								{ path: `save-${order}-${part}.sav`, sha256: sha256(bytes) }
+							);
+						const files = {
+							progress: yield* kept("progress", progress),
+							caption: yield* kept("caption", caption),
+						};
+						const found = yield* Clock.currentTimeMillis;
+						yield* update((current) =>
+							RunRecord.make({
+								...current,
+								saves: [
+									...(current.saves ?? []),
+									{
+										kind,
+										slot,
+										afterSteps: current.steps.length,
+										...(afterPress === undefined ? {} : { afterPress }),
+										found: Temporal.Instant.fromEpochMilliseconds(found),
+										...files,
+									},
+								],
+							})
+						);
+					}),
 					taken: ({ place, mod }) =>
 						update((current) => RunRecord.make({ ...current, place, mod })),
 					picture: Effect.fnUntraced(function* (png, label) {
@@ -280,11 +338,8 @@ export class Runs extends Context.Service<
 				return listed;
 			});
 
-			const picture = Effect.fn("Runs.picture")(function* (
-				run: RunId,
-				path: string
-			) {
-				if (!pictureName.test(path)) {
+			const file = Effect.fn("Runs.file")(function* (run: RunId, path: string) {
+				if (!keptName.test(path)) {
 					return yield* RunNotFound.make({ run });
 				}
 				return yield* fs
@@ -294,28 +349,30 @@ export class Runs extends Context.Service<
 
 			const copy = Effect.fnUntraced(function* (
 				record: RunRecord,
-				pictures: readonly { readonly path: string; readonly png: Uint8Array }[]
+				files: readonly { readonly path: string; readonly bytes: Uint8Array }[]
 			) {
-				// A picture is written only by a picture's own name, so nothing lands outside the run's folder.
+				// A file is written only by a picture's or a save's own name, so nothing lands outside the run's folder.
 				const refused = Arr.findFirst(
-					pictures,
-					({ path }) => !pictureName.test(path)
+					files,
+					({ path }) => !keptName.test(path)
 				);
 				if (Option.isSome(refused)) {
 					return yield* CopyFailed.make({
 						run: record.id,
-						reason: `the game machine named a picture ${refused.value.path}, which is no picture's name`,
+						reason: `the game machine named a file ${refused.value.path}, which is no picture's or save's name`,
 					});
 				}
 				const folder = folderOf(record.id);
 				yield* Effect.orDie(fs.makeDirectory(folder, { recursive: true }));
-				for (const kept of pictures) {
-					yield* Effect.orDie(fs.writeFile(`${folder}/${kept.path}`, kept.png));
+				for (const kept of files) {
+					yield* Effect.orDie(
+						fs.writeFile(`${folder}/${kept.path}`, kept.bytes)
+					);
 				}
 				yield* write(record);
 			});
 
-			return Runs.of({ begin, list, get, picture, folder: folderOf, copy });
+			return Runs.of({ begin, list, get, file, folder: folderOf, copy });
 		})
 	);
 }

@@ -137,6 +137,22 @@ describe("the save file", () => {
 			})
 	);
 
+	it.effect(
+		"a save cut short is refused, also one with no key list to end it, as a caption has none",
+		() =>
+			Effect.gen(function* () {
+				const bytes = encode({ ...save, keys: undefined });
+				const whole = yield* decode("caption.sav", bytes);
+				expect(whole.records).toHaveLength(save.records.length);
+				for (const cut of [bytes.length - 1, bytes.length - 4]) {
+					const refused = yield* Effect.flip(
+						decode("caption.sav", bytes.subarray(0, cut))
+					);
+					expect(refused).toBeInstanceOf(SaveUnreadable);
+				}
+			})
+	);
+
 	it.effect("a file that is not a save is refused as unreadable", () =>
 		Effect.gen(function* () {
 			const refused = yield* Effect.flip(

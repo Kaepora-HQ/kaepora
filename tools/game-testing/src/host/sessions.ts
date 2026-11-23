@@ -77,9 +77,10 @@ import { digestOf } from "../mod.ts";
 import { decode, read } from "../save/codec.ts";
 import type { Plan } from "../save/state.ts";
 import { StartStates } from "../save/state.ts";
-import { Boot, isControl } from "./boot.ts";
+import { Boot, builtSlot, isControl, savesOf } from "./boot.ts";
 import { Places } from "./places.ts";
 import { Runs } from "./runs.ts";
+import { watchSaves } from "./saves.ts";
 
 /**
  * Who answers a run's hand overs: asks a person to do what `say` says in the game, and succeeds once they are done.
@@ -412,6 +413,12 @@ export class Sessions extends Context.Service<
 					yield* data.checkMod(folder.value);
 				}
 				const saves = yield* states.build(plan);
+				yield* recorder.save({
+					kind: "built",
+					slot: builtSlot,
+					progress: saves.progress,
+					caption: saves.caption,
+				});
 				const place = yield* places.take({
 					session,
 					run: start.run,
@@ -437,6 +444,15 @@ export class Sessions extends Context.Service<
 					readBack: booted.readBack,
 					textSpeed: booted.textSpeed,
 				});
+				const keepSaves = watchSaves(
+					fs,
+					savesOf(place.folder),
+					saves,
+					recorder.save
+				);
+				// What the game wrote in the last step, or as the run went wrong, is kept before the game stops.
+				yield* Effect.addFinalizer(() => keepSaves());
+				yield* keepSaves();
 				const { emulator, values } = booted;
 				const built = {
 					progress: yield* Effect.orDie(decode("progress.sav", saves.progress)),
@@ -540,6 +556,7 @@ export class Sessions extends Context.Service<
 						};
 						steps.push(step);
 						yield* recorder.step(step);
+						yield* keepSaves();
 						return yield* exit;
 					});
 
@@ -600,6 +617,7 @@ export class Sessions extends Context.Service<
 									yield* send({ frames: every });
 									last = yield* values.read(entry);
 									held.push(last);
+									yield* keepSaves(held.length);
 								}
 								return { presses: held.length, held };
 							}),
@@ -776,13 +794,14 @@ export class Sessions extends Context.Service<
 						),
 					note: (text) => record("note", { text }, Effect.void),
 					end: (outcome) =>
-						Effect.andThen(
-							recorder.end(outcome),
-							Deferred.succeed(finished, undefined)
+						keepSaves().pipe(
+							Effect.andThen(recorder.end(outcome)),
+							Effect.andThen(Deferred.succeed(finished, undefined))
 						),
 					finished: Deferred.await(finished),
 					finish: Effect.fnUntraced(function* ({ result, failure }) {
 						const outcome = outcomeOf(steps, failure);
+						yield* keepSaves();
 						yield* recorder.end(outcome, result);
 						yield* Deferred.succeed(finished, undefined);
 						return outcome;

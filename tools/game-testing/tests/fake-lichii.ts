@@ -274,12 +274,13 @@ export const fakeLichii = (options?: {
 	/** Main holds Lichii's instant text add-on, its branch and its scale, as when it applied it. */
 	readonly instantText?: boolean;
 	/**
-	 * Answers each input at once, after handing its steps to this, in place of holding the server while its frames
-	 * pass. The fake presents no frames, so an input that waits for them never answers.
+	 * Answers each input once this has taken its steps, in place of holding the server while its frames pass: at once,
+	 * or when the promise it gives settles, as the game answers once what the input did is done. The fake presents no
+	 * frames, so an input that waits for them never answers.
 	 */
 	readonly onInput?: (
 		steps: readonly Readonly<Record<string, unknown>>[]
-	) => void;
+	) => Promise<void> | undefined;
 }) =>
 	Effect.gen(function* () {
 		listened += 1;
@@ -329,7 +330,7 @@ export const fakeLichii = (options?: {
 		/** What each method answers, or `undefined` for an input, which waits. */
 		const methods: Record<
 			string,
-			(params: Request["params"]) => Reply | undefined
+			(params: Request["params"]) => Reply | Promise<Reply> | undefined
 		> = {
 			status: () => ({
 				result: {
@@ -412,8 +413,9 @@ export const fakeLichii = (options?: {
 					state.busy = true;
 					return;
 				}
-				options.onInput(steps);
-				return { result: { steps: steps.length } };
+				const done = options.onInput(steps);
+				const answer: Reply = { result: { steps: steps.length } };
+				return done === undefined ? answer : done.then(() => answer);
 			},
 			screenshot: () => ({
 				result: { png_base64: Buffer.from("fake png").toString("base64") },
@@ -438,6 +440,15 @@ export const fakeLichii = (options?: {
 				method === undefined
 					? { error: `unknown method "${next.method}"` }
 					: method(next.params);
+			if (reply instanceof Promise) {
+				state.busy = true;
+				reply.then((answer) => {
+					state.busy = false;
+					send(next, answer);
+					answerNext();
+				});
+				return;
+			}
 			if (reply !== undefined) {
 				send(next, reply);
 			}

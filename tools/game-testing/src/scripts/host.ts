@@ -1,7 +1,7 @@
 /**
  * Where a script's child finds its game. On a machine with the game, that is this machine's host. With
  * `GAME_TESTING_URL`, it is a far machine's `serve`: the script runs here, and only its commands and results cross.
- * Either way the run's record and pictures end up in a folder on this machine.
+ * Either way the run's record, pictures and saves end up in a folder on this machine.
  */
 import {
 	Array as Arr,
@@ -59,7 +59,7 @@ export class ScriptHost extends Context.Service<
 	/**
 	 * The far machine's `serve` at `url`, with the token from `GAME_TESTING_TOKEN`. The scripts run here; only their
 	 * commands and results cross. Its names are written here first, so a script's type check reads the far game's.
-	 * That machine keeps the records, and each run's record and pictures are copied here.
+	 * That machine keeps the records, and each run's record, pictures and saves are copied here.
 	 */
 	static readonly layerRemote = (url: string) =>
 		Layer.effect(
@@ -90,18 +90,24 @@ export class ScriptHost extends Context.Service<
 					);
 				const copied = Effect.fnUntraced(function* (run: RunId) {
 					const record = yield* final(run);
-					const pictures = yield* Effect.forEach(
-						Arr.flatMap(record.steps, (step) => step.pictures ?? []),
+					const files = yield* Effect.forEach(
+						[
+							...Arr.flatMap(record.steps, (step) => step.pictures ?? []),
+							...Arr.flatMap(record.saves ?? [], (save) => [
+								save.progress.path,
+								save.caption.path,
+							]),
+						],
 						(path) =>
-							far.client.RunPicture({ run, path }).pipe(
-								Effect.map((png) => ({ path, png })),
+							far.client.RunFile({ run, path }).pipe(
+								Effect.map((bytes) => ({ path, bytes })),
 								Effect.catchTag("RunNotFound", () =>
-									failed(run, `the game machine has no picture ${path}`)
+									failed(run, `the game machine has no file ${path}`)
 								)
 							),
 						{ concurrency: 1 }
 					);
-					yield* runs.copy(record, pictures);
+					yield* runs.copy(record, files);
 				});
 				return ScriptHost.of({
 					flags: ["--host", far.url],

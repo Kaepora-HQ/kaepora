@@ -219,7 +219,9 @@ describe("the MCP tools", () => {
 		"start_game holds a game for its session: screenshot answers an image, and stop_game ends the run stopped and frees the place",
 		() =>
 			Effect.gen(function* () {
-				const machine = yield* fakeMachine();
+				const machine = yield* fakeMachine({
+					autosaveLate: { "IsTreasureBoxOpen.5005": true },
+				});
 				const client = yield* toolsOn(machine);
 				const started = yield* call(client, "start_game", {
 					state: { base: "test-base" },
@@ -228,10 +230,13 @@ describe("the MCP tools", () => {
 				const { session, run } = yield* Schema.decodeEffect(
 					Schema.fromJsonString(Started)
 				)(started.text);
+				yield* call(client, "press", { session, buttons: ["A"] });
 				const shot = yield* call(client, "screenshot", { session });
 				expect(shot.images).toEqual([
 					expect.objectContaining({ type: "image", data: fakePng }),
 				]);
+				// The game autosaves 100 ms after the press, so only the stop's own look can keep it.
+				yield* Effect.sleep("300 millis");
 				const stopped = yield* call(client, "stop_game", { session });
 				expect(yield* Schema.decodeEffect(Json)(stopped.text)).toEqual({
 					run,
@@ -244,7 +249,12 @@ describe("the MCP tools", () => {
 					reason: "stop_game ended it",
 				});
 				expect(Arr.map(record.steps, (step) => step.command)).toEqual([
+					"press",
 					"screenshot",
+				]);
+				expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
+					"built",
+					"autosave",
 				]);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
@@ -370,7 +380,9 @@ describe("the MCP tools", () => {
 		() =>
 			Effect.gen(function* () {
 				// The fakes and the tools run on the live clock; the host's lease counts on the test clock.
-				const machine = yield* TestClock.withLive(fakeMachine());
+				const machine = yield* TestClock.withLive(
+					fakeMachine({ autosaveLate: { "IsTreasureBoxOpen.5005": true } })
+				);
 				return yield* Effect.gen(function* () {
 					const client = yield* TestClock.withLive(
 						McpTest.makeClient(registrations, {
@@ -391,6 +403,13 @@ describe("the MCP tools", () => {
 						})
 					);
 					expect(read.error).toBe(false);
+					// The game autosaves 100 ms after the press, so only the lease's end can keep it.
+					yield* TestClock.withLive(
+						Effect.andThen(
+							call(client, "press", { session, buttons: ["A"] }),
+							Effect.sleep("300 millis")
+						)
+					);
 					yield* TestClock.adjust("9 minutes");
 					expect((yield* machine.podman.containers).size).toBe(1);
 					yield* TestClock.adjust("2 minutes");
@@ -400,6 +419,10 @@ describe("the MCP tools", () => {
 						_tag: "stopped",
 						reason: "no call named its session for 10 minutes",
 					});
+					expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
+						"built",
+						"autosave",
+					]);
 				}).pipe(
 					Effect.provide(Scripts.layer.pipe(Layer.provideMerge(machine.host)))
 				);

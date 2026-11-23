@@ -101,6 +101,13 @@ const userFolder = () => {
 	return `${word(8)}${word(0)}`;
 };
 
+/** Where a place's game keeps its saves, one folder for each slot. */
+export const savesOf = (place: string) =>
+	`${place}/data/lichii/nand/user/save/0000000000000000/${userFolder()}/${programId}`;
+
+/** The slot that holds the save built for the run, the only one the game's list of saves shows at the title. */
+export const builtSlot = "slot_00";
+
 /** A booted game, with Link in control. */
 export interface Booted {
 	readonly build: string;
@@ -156,15 +163,18 @@ export class Boot extends Context.Service<
 			) {
 				const nand = `${folder}/data/lichii/nand`;
 				const profile = `${nand}/system/save/8000000000000010/su/avators`;
-				const game = `${nand}/user/save/0000000000000000/${userFolder()}/${programId}`;
+				const game = savesOf(folder);
 				const mods = `${folder}/data/lichii/load/${programId}`;
 				yield* fs.makeDirectory(profile, { recursive: true });
 				yield* fs.writeFile(`${profile}/profiles.dat`, profiles());
 				// The game writes autosaves into other slots; the place keeps only the one built for this run.
 				yield* fs.remove(game, { recursive: true, force: true });
-				yield* fs.makeDirectory(`${game}/slot_00`, { recursive: true });
-				yield* fs.writeFile(`${game}/slot_00/progress.sav`, saves.progress);
-				yield* fs.writeFile(`${game}/slot_00/caption.sav`, saves.caption);
+				yield* fs.makeDirectory(`${game}/${builtSlot}`, { recursive: true });
+				yield* fs.writeFile(
+					`${game}/${builtSlot}/progress.sav`,
+					saves.progress
+				);
+				yield* fs.writeFile(`${game}/${builtSlot}/caption.sav`, saves.caption);
 				yield* fs.writeFile(`${game}/option.sav`, saves.option);
 				yield* fs.remove(mods, { recursive: true, force: true });
 				yield* fs.makeDirectory(mods, { recursive: true });

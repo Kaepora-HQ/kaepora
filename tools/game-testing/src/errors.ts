@@ -126,7 +126,7 @@ export class ModTooLarge extends Schema.TaggedError<
 	}
 }
 
-/** A far run's record and pictures were not copied to this machine. The game's machine keeps them. */
+/** A far run's record, pictures and saves were not copied to this machine. The game's machine keeps them. */
 export class CopyFailed extends Schema.TaggedError<
 	CopyFailed,
 	{ readonly brand: unique symbol }
@@ -135,7 +135,7 @@ export class CopyFailed extends Schema.TaggedError<
 	reason: Schema.String,
 }) {
 	override get message() {
-		return `The record and pictures were not copied here: ${this.reason}. The game machine keeps them as run ${this.run}, which game-testing runs lists there.`;
+		return `The record, pictures and saves were not copied here: ${this.reason}. The game machine keeps them as run ${this.run}, which game-testing runs lists there.`;
 	}
 }
 

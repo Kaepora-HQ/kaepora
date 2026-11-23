@@ -6,6 +6,7 @@ import {
 	Cause,
 	Effect,
 	Exit,
+	FileSystem,
 	Formatter,
 	Option,
 	Schedule,
@@ -22,6 +23,7 @@ import type { RunningGame } from "../src/game.ts";
 import { Game } from "../src/game.ts";
 import { Runs } from "../src/host/runs.ts";
 import type { Scalar } from "../src/save/codec.ts";
+import { decode, read } from "../src/save/codec.ts";
 import type { ScriptError } from "../src/script.ts";
 import type { FakeLichii } from "./fake-lichii.ts";
 import { fakeMachine } from "./fake-machine.ts";
@@ -58,6 +60,8 @@ const played = (
 		readonly during?: (games: readonly FakeLichii[]) => Effect.Effect<void>;
 		readonly finish?: boolean;
 		readonly onA?: (lichii: FakeLichii) => void;
+		readonly autosaveOnA?: Readonly<Record<string, Scalar>>;
+		readonly autosaveLate?: Readonly<Record<string, Scalar>>;
 		readonly rewrites?: Readonly<Record<string, Value>>;
 		readonly unsaved?: Readonly<Record<string, Value>>;
 		readonly words?: Words;
@@ -106,6 +110,7 @@ const played = (
 				Effect.timeout("5 seconds")
 			);
 			return {
+				folder: runs.folder(run),
 				outcome: Exit.isSuccess(ended) ? ended.value : undefined,
 				startFailure: Exit.isFailure(ended)
 					? Cause.squash(ended.cause)
@@ -261,15 +266,24 @@ describe("a game on the host", () => {
 		"a caller that goes away without finishing breaks its run, and its place is given back",
 		() =>
 			Effect.gen(function* () {
-				const { record, freed } = yield* played((game) => game.press("A"), {
-					finish: false,
-				});
+				const { record, freed } = yield* played(
+					(game) => Effect.andThen(game.press("A"), Effect.sleep("300 millis")),
+					{
+						finish: false,
+						// The game autosaves after the press is answered, so only the look as the run ends can keep it.
+						autosaveLate: { "IsTreasureBoxOpen.5005": true },
+					}
+				);
 				expect(record.outcome).toEqual({
 					_tag: "broken",
 					reason: "its caller went away before the script finished",
 					error: "",
 				});
 				expect(freed).toBe(true);
+				expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
+					"built",
+					"autosave",
+				]);
 			})
 	);
 	it.live("a run that ends with no check is unchecked", () =>
@@ -518,6 +532,95 @@ describe("a game on the host", () => {
 					rewrites: { Player_Rot_For_Map: 24.917_978_286_743_164 },
 				});
 				expect(turned.startFailure).toBeUndefined();
+			})
+	);
+
+	it.live(
+		"every save of a run is kept with it in order: the one built for the start, then each the game wrote, after its step",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const { record, folder } = yield* played(
+					(game) =>
+						Effect.gen(function* () {
+							yield* game.press("A");
+							return yield* game.check(chest, true);
+						}),
+					{ onA: openChest, autosaveOnA: { "IsTreasureBoxOpen.5005": true } }
+				);
+				const kept = record.saves ?? [];
+				expect(
+					Arr.map(kept, ({ kind, slot, afterSteps }) => [
+						kind,
+						slot,
+						afterSteps,
+					])
+				).toEqual([
+					["built", "slot_00", 0],
+					["autosave", "slot_01", 1],
+				]);
+				for (const save of kept) {
+					for (const file of [save.progress, save.caption]) {
+						const bytes = yield* fs.readFile(`${folder}/${file.path}`);
+						expect(
+							new Bun.CryptoHasher("sha256").update(bytes).digest("hex")
+						).toBe(file.sha256);
+					}
+				}
+				const autosaved = yield* decode(
+					"progress.sav",
+					yield* fs.readFile(`${folder}/${kept[1]?.progress.path}`)
+				);
+				expect(
+					read(autosaved, Bun.hash.murmur32v3("IsTreasureBoxOpen.5005"))
+				).toEqual(Option.some(true));
+			}).pipe(Effect.provide(BunServices.layer))
+	);
+
+	it.live(
+		"a save the game writes during pressUntil names the press it followed",
+		() =>
+			Effect.gen(function* () {
+				let presses = 0;
+				const { record } = yield* played(
+					(game) => game.pressUntil("A", chest, true, { every: 2 }),
+					{
+						autosaveOnA: { "IsTreasureBoxOpen.5005": true },
+						onA: (lichii) => {
+							presses += 1;
+							if (presses === 2) {
+								openChest(lichii);
+							}
+						},
+					}
+				);
+				expect(
+					Arr.map(record.saves ?? [], ({ kind, afterSteps, afterPress }) => ({
+						kind,
+						afterSteps,
+						afterPress,
+					}))
+				).toEqual([
+					{ kind: "built", afterSteps: 0, afterPress: undefined },
+					{ kind: "autosave", afterSteps: 0, afterPress: 1 },
+				]);
+			})
+	);
+
+	it.live(
+		"a run that ends broken keeps the save the game wrote in its last step",
+		() =>
+			Effect.gen(function* () {
+				const { record } = yield* played(
+					(game) =>
+						Effect.andThen(game.press("A"), Effect.die("the body gave up")),
+					{ autosaveOnA: { "IsTreasureBoxOpen.5005": true } }
+				);
+				expect(record.outcome._tag).toBe("broken");
+				expect(Arr.map(record.saves ?? [], (save) => save.kind)).toEqual([
+					"built",
+					"autosave",
+				]);
 			})
 	);
 

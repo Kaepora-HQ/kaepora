@@ -309,7 +309,8 @@ export class GameRpcs extends RpcGroup.make(
 		success: RunRecord,
 		error: RunNotFound,
 	}),
-	Rpc.make("RunPicture", {
+	/** A picture or a kept save's file of a run, by its name in the run's folder. */
+	Rpc.make("RunFile", {
 		payload: { run: RunId, path: Schema.String },
 		success: Schema.Uint8Array,
 		error: RunNotFound,

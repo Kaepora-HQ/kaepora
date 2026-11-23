@@ -68,6 +68,7 @@ export default script({
 /** A far machine with `serve`, and a caller with no game whose commands reach it: what each command printed, and how it ended. */
 const farAndCaller = (options?: {
 	readonly onA?: (lichii: FakeLichii) => void;
+	readonly autosaveOnA?: Readonly<Record<string, boolean>>;
 }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
@@ -207,6 +208,42 @@ describe("a caller on another machine, with no game", () => {
 					)
 				);
 				expect(yield* creates(far)).toBe(1);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
+		"a far run's kept saves come to the caller's machine with its record",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const { far, caller, command } = yield* farAndCaller({
+					onA: openChest,
+					autosaveOnA: { "IsTreasureBoxOpen.5005": true },
+				});
+				const { lines } = yield* command([
+					"run",
+					`${import.meta.dir}/scripts/opens-chest.ts`,
+				]);
+				const run = Option.getOrThrow(
+					Arr.findFirst(Str.split(lines[0] ?? "", "  "), Str.startsWith("20"))
+				);
+				const here = `${caller.home}/state/game-testing/runs/${run}`;
+				const record = yield* Schema.decodeEffect(
+					Schema.fromJsonString(RunRecord)
+				)(yield* fs.readFileString(`${here}/record.json`));
+				const files = Arr.flatMap(record.saves ?? [], (save) => [
+					save.progress.path,
+					save.caption.path,
+				]);
+				expect(files).toHaveLength(4);
+				for (const file of files) {
+					expect(yield* fs.readFile(`${here}/${file}`)).toEqual(
+						yield* fs.readFile(
+							`${far.home}/state/game-testing/runs/${run}/${file}`
+						)
+					);
+				}
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);
@@ -416,14 +453,14 @@ export default script({
 					Arr.findFirst(Str.split(lines[0] ?? "", "  "), Str.startsWith("20"))
 				);
 				expect(lines[1]).toBe(
-					`    The record and pictures were not copied here: the game machine has no picture picture-1.png. The game machine keeps them as run ${run}, which game-testing runs lists there.`
+					`    The record, pictures and saves were not copied here: the game machine has no file picture-1.png. The game machine keeps them as run ${run}, which game-testing runs lists there.`
 				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);
 
 	it.live(
-		"a copy refuses a picture name that is no picture's, with a sentence",
+		"a copy refuses a file name that is no picture's or save's, with a sentence",
 		() =>
 			Effect.gen(function* () {
 				const machine = yield* fakeMachine();
@@ -443,14 +480,14 @@ export default script({
 								outcome: { _tag: "passed" },
 								startedAt: Temporal.Instant.fromEpochMilliseconds(0),
 							}),
-							[{ path: "../escape.png", png: new Uint8Array([1]) }]
+							[{ path: "../escape.png", bytes: new Uint8Array([1]) }]
 						)
 					);
 				}).pipe(
 					Effect.provide(Runs.layer.pipe(Layer.provide(machine.platform)))
 				);
 				expect(refused.message).toContain(
-					"the game machine named a picture ../escape.png, which is no picture's name"
+					"the game machine named a file ../escape.png, which is no picture's or save's name"
 				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting

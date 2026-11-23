@@ -244,7 +244,7 @@ const handlers = tools.toLayer(
 			Effect.forEach(
 				names,
 				(name) =>
-					Effect.map(runs.picture(run, name), (png) =>
+					Effect.map(runs.file(run, name), (png) =>
 						Picture.make({ path: name, png })
 					),
 				{ concurrency: 1 }

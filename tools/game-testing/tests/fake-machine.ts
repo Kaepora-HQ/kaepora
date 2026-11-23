@@ -150,6 +150,10 @@ export const fakeMachine = (options?: {
 	readonly places?: number;
 	/** What A does once Link can move. */
 	readonly onA?: (lichii: FakeLichii) => void;
+	/** A once Link can move autosaves, as opening a chest does: the loaded save with these values, into `slot_01`. */
+	readonly autosaveOnA?: Readonly<Record<string, Scalar>>;
+	/** As `autosaveOnA`, written 100 ms after A is answered, so no look after the step sees it. */
+	readonly autosaveLate?: Readonly<Record<string, Scalar>>;
 	/** Values the base save holds besides the game's defaults. */
 	readonly base?: Readonly<Record<string, Scalar>>;
 	/** Values no save holds, as the game holds them when it starts. */
@@ -203,9 +207,41 @@ export const fakeMachine = (options?: {
 				new Uint8Array([7, 7])
 			);
 		}
+		/** Writes the save loaded from `slot` with `values` beside it, as the game writes an autosave. */
+		const autosave = Effect.fnUntraced(function* (
+			slot: string,
+			values: Readonly<Record<string, Scalar>>
+		) {
+			const loaded = yield* decode(
+				"progress.sav",
+				yield* fs.readFile(`${slot}/progress.sav`)
+			);
+			const shown = yield* decode(
+				"caption.sav",
+				yield* fs.readFile(`${slot}/caption.sav`)
+			);
+			const hashed = (written: Readonly<Record<string, Scalar>>) =>
+				Arr.map(Rec.toEntries(written), ([name, value]) => ({
+					hash: Bun.hash.murmur32v3(name),
+					value,
+				}));
+			const next = Str.replace("slot_00", "slot_01")(slot);
+			yield* fs.makeDirectory(next, { recursive: true });
+			yield* fs.writeFile(
+				`${next}/progress.sav`,
+				encode(yield* write(loaded, hashed(values), []))
+			);
+			yield* fs.writeFile(
+				`${next}/caption.sav`,
+				encode(
+					yield* write(shown, hashed({ "CaptionData.IsAutoSave": true }), [])
+				)
+			);
+		}, Effect.orDie);
 		const games = yield* Ref.make<readonly FakeLichii[]>([]);
 		const starts = yield* Ref.make<readonly Started[]>([]);
 		const fork = Effect.runForkWith(yield* Effect.context<never>());
+		const settle = Effect.runPromiseWith(yield* Effect.context<never>());
 		const play = Effect.fnUntraced(function* (container: FakeContainer) {
 			const folder = placeFolder(container);
 			const load = `${folder}/data/lichii/load/0400486024DEC000`;
@@ -245,6 +281,21 @@ export const fakeMachine = (options?: {
 			const scene = values.Sequence_CurrentBanc?.value as Value;
 			/** As the game's title takes A: its menu, the list of saves, the question that loads one, and then play. */
 			let menu: "title" | "list" | "question" | "play" = "title";
+			/** What A does in play, answered once its autosave is written. */
+			const played = () => {
+				options?.onA?.(lichii);
+				if (options?.autosaveLate !== undefined) {
+					fork(
+						Effect.andThen(
+							Effect.sleep("100 millis"),
+							autosave(slot, options.autosaveLate)
+						)
+					);
+				}
+				return options?.autosaveOnA === undefined
+					? undefined
+					: settle(autosave(slot, options.autosaveOnA));
+			};
 			const lichii: FakeLichii = yield* fakeLichii({
 				path: `${folder}/debug.sock`,
 				presents: 1,
@@ -268,8 +319,7 @@ export const fakeMachine = (options?: {
 						return;
 					}
 					if (menu === "play") {
-						options?.onA?.(lichii);
-						return;
+						return played();
 					}
 					if (menu === "title") {
 						menu = "list";
