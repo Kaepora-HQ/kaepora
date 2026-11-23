@@ -276,12 +276,16 @@ handle on the board and its head up in the niche.
 
 `kept_goods.tsv` has a row for each of the game's goods in SoH's list of what a seed keeps on sale, which
 `GetMinVanillaShopItems` holds: 64 goods, some of them more than once. The count picks which goods stay on sale: the
-first 64 less one for each shuffled slot. The fill picks their slots, among those the count leaves, before it places
-the shuffled items, as SoH's does, so a slot may sell another shop's goods. SoH's list is not the game's own 64: ten
-kinds of the game's goods are on it nowhere (10 Deku Seeds, Five Deku Sticks, the Magic Jar, Half-Full Lon Lon Milk,
-and six Bombchu packs but 10 and 20), and some goods stand on it more often than in the game. The generator fails
-when it starts if one of SoH's goods has no row. The spoiler log names each kept slot's goods by SoH's name without the
-price in brackets that SoH tells some apart by, with the price the slot asks.
+first 64 less one for each shuffled slot. They wait in the item pool, and the fill picks their slots, among those the
+count leaves, once the dungeon items and the songs hold theirs, so a slot may sell another shop's goods. SoH's fill
+picks them first, counting every item of the pool held, the songs too. That is safe in SoH, whose pool always holds the
+scales, and with the Silver Scale a child dives out of the Lost Woods without a shield. Here the scales stay at their
+minigames unless "Minigames" is ticked. A child in a closed forest learns no song before he leaves it, so with a started
+ocarina the one Deku Shield could go to a shop only a warp reaches, and the songs would then have no place he reaches.
+SoH's list is not the game's own 64: ten kinds of the game's goods are on it nowhere (10 Deku Seeds, Five Deku Sticks,
+the Magic Jar, Half-Full Lon Lon Milk, and six Bombchu packs but 10 and 20), and some goods stand on it more often than
+in the game. The generator fails when it starts if one of SoH's goods has no row. The spoiler log names each kept slot's
+goods by SoH's name without the price in brackets that SoH tells some apart by, with the price the slot asks.
 
 The patcher writes each kept slot as it writes a shuffled one, but with the goods actor at offset 0 and no limit to its
 count, so it sells again and again, and it leaves the game data list as it is. So a kept slot:

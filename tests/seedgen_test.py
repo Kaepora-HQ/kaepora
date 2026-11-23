@@ -123,7 +123,7 @@ SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 SEVEN_PER_SHOP = {"Shop goods": "Seven per shop shuffled"}
 # A seed whose hints name a slot that only five per shop shuffle, and one for six and seven.
-HINT_SEED_AT_FIVE = "1"
+HINT_SEED_AT_FIVE = "3"
 HINT_SEED_AT_SEVEN = "2"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
@@ -684,8 +684,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertLess(way_out, min(by_child))
 
     def test_a_route_that_buys_from_shops_is_in_reach_in_its_sphere(self):
-        # Seed 3's route buys a Hookshot and the Kokiri Sword at the Goron Shop, a Deku Shield at the Market's potion
-        # shop and the Hover Boots at the Bombchu Shop, all at shuffled slots.
+        # Seed 3's route buys at shop slots.
         log, _ = self.generate("3", SHOPS_SHUFFLED)
         self.assertTrue(any(isinstance(log["locations"].get(step), dict)
                             for steps in log["playthrough"].values() for step in steps))
@@ -1005,7 +1004,6 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
 
     def test_every_setting_changed_at_once_400_to_419(self):
-        # In seed 406 Twinrova's place holds the Lens.
         self.assert_every_setting_changed_at_once(range(400, 420))
 
     def test_every_setting_changed_at_once_420_to_439(self):
@@ -1080,6 +1078,16 @@ class SeedgenTest(unittest.TestCase):
                 "Buy Deku Shield"), 1, seed)
             self.assertTrue(reach.reachable("Queen Gohma", *spoiler["locations"].items(),
                                             settings=spoiler["settings"]), seed)
+
+    def test_a_started_fairy_ocarina_with_shop_goods_shuffled_makes_a_seed(self):
+        # A child in a closed forest learns no song before he leaves it, so the ocarina he starts with takes him
+        # nowhere until then. Seed 2's route buys the Deku Shield from a kept shelf before its first song.
+        log, _ = self.generate("2", SHOPS_SHUFFLED | {"Gifts": [], "Start with": ["Fairy Ocarina"]})
+        given = {spoiler_item(item): number for number, steps in enumerate(log["playthrough"].values())
+                 for item in steps.values()}
+        self.assertLess(given["Buy Deku Shield"], min(given[song] for song in SONGS if song in given))
+        self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assertEqual(self.route_out_of_reach(log), [])
 
     def shop_prices(self, seed, settings):
         spoiler, plan = self.generate(seed, SHOPS_SHUFFLED | settings)
@@ -2021,10 +2029,10 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
 
     def test_a_place_whose_kept_shelf_the_route_needs_is_not_foolish(self):
-        # Seed 4's route buys the Deku Shield on the Kokiri Shop's kept shelf in its first sphere, and takes nothing
+        # Seed 70's route buys the Deku Shield on the Kokiri Shop's kept shelf in its first sphere, and takes nothing
         # else in Kokiri Forest.
-        spoiler, _ = self.assert_hints_are_true("4", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
-        self.assertIn("KF Shop Item 2", list(spoiler["playthrough"].values())[0])
+        spoiler, _ = self.assert_hints_are_true("70", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
+        self.assertEqual(list(spoiler["playthrough"].values())[0].get("KF Shop Item 2"), "Buy Deku Shield")
         self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 2"])
 
     def test_hints_name_shop_goods_truly(self):
@@ -2042,8 +2050,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
     def test_hints_name_the_goods_only_six_and_seven_per_shop_shuffle(self):
-        # A stone of seed HINT_SEED_AT_SEVEN says that a Goron shopkeeper sells the Lens of Truth, at the Goron Shop's
-        # item 1.
+        # A stone of seed HINT_SEED_AT_SEVEN says that a Goron shopkeeper sells a Large Magic Jar, at the Goron Shop's
+        # item 4.
         self.assert_hints_are_true(HINT_SEED_AT_SEVEN, CHESTS_ALONE | SEVEN_PER_SHOP)
         spoiler, plan = self.generate(HINT_SEED_AT_SEVEN, CHESTS_ALONE | SEVEN_PER_SHOP)
         held = placed_remake_items(spoiler, plan)

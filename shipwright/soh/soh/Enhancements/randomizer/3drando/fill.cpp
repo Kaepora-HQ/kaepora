@@ -1219,16 +1219,10 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
             return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_SHOP;
         });
 
-        // As SoH does, the slots a count leaves take its list of the game's goods first: the logic counts only a
-        // Deku Shield Link buys, and Queen Gohma's door asks for one. Each sells at the remake's price for it.
+        // Until their own step, every step counts SoH's goods for the slots a count leaves held: the logic counts only
+        // a Deku Shield Link buys, and Queen Gohma's door asks for one.
         if (!shops.kept.empty()) {
-            std::vector<RandomizerCheck> kept;
-            std::ranges::transform(shops.kept, std::back_inserter(kept), &RemakeShopSlot::location);
-            AssumedFill(GetMinVanillaShopItems(static_cast<int>(shops.shuffled.size())), kept);
-            for (const RandomizerCheck loc : kept) {
-                Rando::ItemLocation* place = ctx->GetItemLocation(loc);
-                place->SetCustomPrice(shops.goods.at(place->GetPlacedRandomizerGet()).price);
-            }
+            SohUtils::AppendVector(itemPool, GetMinVanillaShopItems(static_cast<int>(shops.shuffled.size())));
         }
 
         std::vector<RandomizerCheck> shuffledLocations;
@@ -1252,6 +1246,28 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
                                                           ITEMTYPE_SONG;
                                                }),
                         songPlaces, true);
+        }
+
+        // The goods take their slots once the songs hold theirs, each at the remake's price for it. A child in a closed
+        // forest learns no song before he leaves it, and with no scale to dive out of the Lost Woods he leaves only
+        // past Queen Gohma's door, which asks for the one Deku Shield on sale. With the songs and a started ocarina
+        // counted held, the shield could go to a shop only a warp reaches, and the songs would then have no place he
+        // reaches. A fill that gives up leaves its slots empty for the next try.
+        if (!shops.kept.empty()) {
+            std::vector<RandomizerCheck> kept;
+            std::ranges::transform(shops.kept, std::back_inserter(kept), &RemakeShopSlot::location);
+            AssumedFill(FilterAndEraseFromPool(itemPool,
+                                               [](RandomizerGet item) {
+                                                   return Rando::StaticData::RetrieveItem(item).GetItemType() ==
+                                                          ITEMTYPE_SHOP;
+                                               }),
+                        kept);
+            if (!placementFailure) {
+                for (const RandomizerCheck loc : kept) {
+                    Rando::ItemLocation* place = ctx->GetItemLocation(loc);
+                    place->SetCustomPrice(shops.goods.at(place->GetPlacedRandomizerGet()).price);
+                }
+            }
         }
 
         // As SoH places the rewards at "End of Dungeons": among the places that hand one over, which the generator

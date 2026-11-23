@@ -53,11 +53,11 @@ class MakeSeedTest(unittest.TestCase):
         self.assertEqual(sorted(len([slot for slot in slots if key in slot]) for key in ("item", "goods")), [24, 40])
 
     def test_a_seed_with_gifts_and_shop_goods_shuffled_is_patched(self):
-        # Seed 3 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
+        # Seed 29 sells the Giant's Wallet and the Light Arrows, which only gifts hold in the game, in shop slots.
         spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
         settings = json.dumps({"Shop goods": "Four per shop shuffled", "Gifts": "Shuffled", "Songs": "Vanilla",
                                "Loose items": "Vanilla", "Dungeon rewards": "Vanilla"})
-        result = subprocess.run([SEEDGEN, "3", spoiler, plan, settings], capture_output=True, text=True)
+        result = subprocess.run([SEEDGEN, "29", spoiler, plan, settings], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
