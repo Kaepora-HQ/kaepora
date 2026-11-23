@@ -857,6 +857,42 @@ the hearts show the screen's heart, `HeartW_00_ASTC4x4`.
 The maps and compasses tell little and are left out, as are the Gerudo Fortress's keys, which no seed shuffles, the
 Kokiri Tunic and the Kokiri Boots, which Link always owns, and the rupees.
 
+## What a new game starts with
+
+A plan's start items name items as a chest or a gift names them. For each, the patcher writes what a find of it writes
+in a save, from the item's row in `RSDB/PouchActorInfo` (measured in saves the game wrote after real finds; some saves
+from before them were made by hand):
+
+- The records go to the actor the item's pack names in `Components.ActorNameRef`: `Item_Range_Bow` names
+  `Weapon_Range_Bow`, and `TBox_ArrowBundle_Large` names `Obj_ArrowBundle_Large`. Each such item's row equals its
+  actor's in every field a start reads (read).
+- Every item counts its find in `IsGet` and `HavePlayedGetEvent`, and one in `PouchData.<actor>.StockNum` where the
+  list holds that count.
+- A rupee raises `PlayerStatus.CurrentRupee` by its worth, its bundle of green rupees, up to the wallet's limit. The
+  start holds the child wallet's limit of 200, which the start sequence gives every new game anyway.
+- A bundle counts its own find in `IsGet`, and its ammunition's in both records, and adds the ammunition up to the
+  limit the start holds, none when the start holds no container. Sticks and nuts bring their small bag.
+- A bottle takes the first free of five slots: `PlayerStatus.AssignableItem.BottleInfo.Bottle<A-E>.IsValid`, the slot's
+  pouch count `PouchData.Bottle<A-E>.StockNum` at 1, and a filled bottle's `BottleItem`, such as `MaxMilk` or `Letter`.
+- A Piece of Heart counts one toward the next heart and adds one to an Int the save names only by its hash,
+  `0x0e34c167`. What else that Int counts is not known. A plan's start value may name a value by its hash this way,
+  and a value named twice, by its name or by its hash, is refused.
+- A cure the pouch does not keep, such as the Large Magic Jar, writes only its played flag, as its find does.
+
+The start sequence, `Sequence/SetPouchAndStatusForGameStart`, sets `Life` and `MaxLife` to 12 and `MP`, `MPEconomy`
+and `MPMax` to 0 after the list's defaults (read), so start values cannot carry them. A start that holds a Heart
+Container or an item that brings magic sets the sequence's own numbers in place: life and its limit 12 plus 4 for each
+Heart Container, and `MP` and `MPMax` 240, the meter full. A Heart Container's find raised `MaxLife` by 4 and filled
+`Life`, and a first find of an item whose row's `MPMax` is 24 set both 240 (measured). Every row a start accepts holds
+24; that the meter is ten times the largest such row is inferred.
+
+A start does not write what a find writes beside these: a sword or a shield in Link's hand (`PlayerStatus.EquipWeapon`,
+`EquipShield`), the menu's counts (`UI_GetAssignableItemNum`, `UI_GetWeaponShieldArmorNum`), an item's place among the
+items a button can take, or the first item a button takes (measured). A started sword goes on from the menu and swings
+(seen in an earlier look). The start refuses the songs, the dungeon items, the Treasure Chest Game's key and the Great
+Fairy's three gifts. No seed places them where a start gives: the songs go to song places only, the dungeon items to
+their own dungeon's chests, the game's key stays in its unshuffled chests, and the fairy's gifts go to chests only.
+
 ## Quests
 
 A quest is one saved value, `Step_<quest>`, and the game moves it as Link acts. A write names the step it sets, and asks

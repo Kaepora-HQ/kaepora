@@ -107,6 +107,17 @@ static byml::Node Resolved(const sarc::Files& pack, const std::string& member) {
     return pack.contains(path) ? Merged(Resolved(pack, path), node) : node;
 }
 
+std::string RecordActor(GameFile& game, const std::string& packDictionary, std::string_view item) {
+    constexpr std::string_view prefix = "?ActorSystem/ActorName/";
+    constexpr std::string_view suffix = ".engine__actor__ActorName.bgyml";
+    byml::Node actor = Resolved(Pack(game, packDictionary, item), ActorMember(item));
+    const std::string& name = Value(Value(actor, "Components"), "ActorNameRef").string;
+    if (!name.starts_with(prefix) || !name.ends_with(suffix)) {
+        throw std::runtime_error(std::format("{}'s ActorNameRef \"{}\" names no actor", item, name));
+    }
+    return name.substr(prefix.size(), name.size() - prefix.size() - suffix.size());
+}
+
 static void Add(sarc::Files& pack, const std::string& member, const std::string& data) {
     const auto [at, added] = pack.emplace(member, data);
     if (!added && at->second != data) {

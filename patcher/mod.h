@@ -2,11 +2,12 @@
 // actor pack the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English
 // text packs if the plan gives texts to gossip stones or other messages, the stones' flow if it gives gossip stones
 // texts, the opening's flow if it skips the opening, the Kokiri Sword chest's flow if the chest holds another item,
-// each logic module the plan changes a string of, the size table if a file outgrows its entry or is new, the game data
-// list if the plan names start values, start items or shop slots or skips the opening, the actor packs that let a bomb
-// out of the bag with no strength, the logic module that lets every adult put the Master Sword back, the Temple of
-// Time's placement with Sheik waiting behind the sword, and the pouch table in which the Fairy Bow and the Fairy
-// Slingshot bring their quiver and bullet bag. Under exefs/ is the patch to the game's program (program_patch.h).
+// each logic module the plan changes a string of, the start sequence's module if the start holds a Heart Container or
+// an item that brings magic, the size table if a file outgrows its entry or is new, the game data list if the plan
+// names start values, start items or shop slots or skips the opening, the actor packs that let a bomb out of the bag
+// with no strength, the logic module that lets every adult put the Master Sword back, the Temple of Time's placement
+// with Sheik waiting behind the sword, and the pouch table in which the Fairy Bow and the Fairy Slingshot bring their
+// quiver and bullet bag. Under exefs/ is the patch to the game's program (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -166,6 +167,7 @@ struct Plan {
     std::vector<PlannedEventNext> eventNexts;
     std::vector<PlannedModuleText> moduleTexts;
     std::vector<PlannedEventEntry> eventEntries;
+    // By name, or for a value the save names only by its hash, by 0x and its eight hex digits.
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedMessageText> messageTexts;
@@ -176,7 +178,10 @@ struct Plan {
     bool cutscenesSkipped;
     std::vector<PlannedActorItem> skulltulas;
     std::vector<PlannedActorItem> looseItems;
-    std::vector<std::string> startItems; // actors a new game holds, as after a find of each in turn
+    // Items a new game holds, as a chest or a gift names them, with the records a find of each in turn writes. A start
+    // does not put a sword or a shield in Link's hand, count the items in the menu or put one on a button, as a find
+    // does.
+    std::vector<std::string> startItems;
     std::vector<std::string> claims;     // saved Bools of the mod's own, false in a new game
     std::vector<PlannedExpression> expressions;
 };

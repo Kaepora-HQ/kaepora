@@ -18,6 +18,7 @@
 #include <cstring>
 #include <format>
 #include <fstream>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -790,12 +791,23 @@ static constexpr std::tuple<std::string_view, byml::Type, std::string_view> star
     { "String64", byml::Type::String, "a name" },
 };
 
+// A saved value's hash: its name's, or for a value the save names only by its hash, that hash as 0x and eight hex
+// digits.
+static uint32_t ValueHash(std::string_view name) {
+    uint32_t hash = 0;
+    const char* end = name.data() + name.size();
+    if (name.size() == 10 && name.starts_with("0x") && std::from_chars(name.data() + 2, end, hash, 16).ptr == end) {
+        return hash;
+    }
+    return Murmur3(name);
+}
+
 // A whole number may also start an unsigned value of the list, if it is not below zero.
 static byml::Node& StartValueEntry(byml::Node& data, const std::string& name, const StartValue& value) {
     const auto& [kind, type, words] = startValueKinds[value.index()];
     const auto entryIn = [&](std::string_view table, byml::Type expected) -> byml::Node* {
         byml::Node* values = Find(data, table);
-        byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
+        byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, ValueHash(name));
         const byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
         return defaultValue == nullptr || defaultValue->type != expected ? nullptr : entry;
     };
@@ -888,25 +900,122 @@ static void Bring(byml::Node& rows, const std::string& container, std::map<std::
     RaiseLimit(Row(rows, container), values);
 }
 
+// Adds to a count a find adds to, up to its limit.
+static void AddUpTo(std::map<std::string, StartValue>& values, const std::string& count, int32_t added, int32_t limit) {
+    int32_t& held = std::get<int32_t>(values.try_emplace(count, 0).first->second);
+    held = std::min(held + added, limit);
+}
+
+// A rupee counts its own find and adds its worth in green rupees, the unit of its bundle, to the rupees held, up to
+// the wallet's limit. The start holds at least the child's wallet, which the start sequence gives a new game anyway.
+static void AddRupees(byml::Node& rows, byml::Node& row, const std::string& actor,
+                      std::map<std::string, StartValue>& values) {
+    values["IsGet." + actor] = true;
+    values["HavePlayedGetEvent." + actor] = true;
+    const byml::Node* unit = Find(row, "BundleActor");
+    byml::Node& green = unit == nullptr ? row : Row(rows, WorkPathActor(unit->string));
+    const int32_t limit = RaiseLimit(Row(rows, WorkPathActor(Text(green, "SmallBagActor"))), values);
+    AddUpTo(values, "PlayerStatus.CurrentRupee", int32_t(Value(row, "BundleActorNum").scalar), limit);
+}
+
+// A bundle counts its own find and its ammunition's, and adds the ammunition up to what its container holds, none
+// when the start holds no container. Sticks and nuts bring their small bag.
+static void AddBundle(byml::Node& rows, byml::Node& row, const std::string& actor,
+                      std::map<std::string, StartValue>& values) {
+    values["IsGet." + actor] = true;
+    const std::string ammunition = WorkPathActor(Text(row, "BundleActor"));
+    byml::Node& ammunitionRow = Row(rows, ammunition);
+    if (IsTrue(ammunitionRow, "IsAbleToGetBagIfGet")) {
+        Bring(rows, WorkPathActor(Text(ammunitionRow, "SmallBagActor")), values);
+    }
+    values["IsGet." + ammunition] = true;
+    values["HavePlayedGetEvent." + ammunition] = true;
+    if (const auto limit = values.find("PouchContentMaxNum." + Text(ammunitionRow, "MaxNumGameData"));
+        limit != values.end()) {
+        AddUpTo(values, std::format("PouchData.{}.StockNum", ammunition), int32_t(Value(row, "BundleActorNum").scalar),
+                std::get<int32_t>(limit->second));
+    }
+}
+
+// A bottle takes the first of the five slots no bottle holds and counts one in that slot's pouch count, and a filled
+// one puts its content there.
+static void AddBottle(byml::Node& row, std::map<std::string, StartValue>& values) {
+    for (const char slot : std::string_view("ABCDE")) {
+        const std::string bottle = std::format("PlayerStatus.AssignableItem.BottleInfo.Bottle{}", slot);
+        if (values.try_emplace(bottle + ".IsValid", true).second) {
+            values[std::format("PouchData.Bottle{}.StockNum", slot)] = 1;
+            if (const std::string content = Text(row, "BottleItem"); !content.empty()) {
+                values[bottle + ".BottleItem"] = Choice{ content };
+            }
+            return;
+        }
+    }
+    throw std::runtime_error("the start already holds five bottles");
+}
+
+// A whole number the save names only by its hash, to which a find of a Piece of Heart adds one (measured in two
+// finds). What else it counts is not known.
+constexpr std::string_view PieceOfHeartCount = "0x0e34c167";
+
+// What a new game's start sequence sets after the list's defaults, as the items a start holds raise it: the Heart
+// Containers beyond the three hearts every game starts with, and the magic meter.
+struct StartLife {
+    int32_t hearts = 0;
+    int32_t magic = 0;
+};
+
+// The magic meter a find brings: 240 for a first item whose row's MPMax is 24 (measured in four finds), taken as ten
+// times the largest such row (inferred). Every row a start accepts holds 24.
+constexpr int32_t MagicPerRowPoint = 10;
+
 // What a find of the actor leaves in the save, as the game's pouch add writes it from the actor's row in
 // PouchActorInfo. A find also names a container in CurrentExpansionActor_<kind>. With those empty, a new game's rupee
 // and bomb counters show their limits and a bomb comes out (seen in the game), so a start leaves them empty.
-static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::string, StartValue>& values) {
+static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::string, StartValue>& values,
+                    StartLife& life) {
     byml::Node& row = Row(rows, actor);
+    const std::string deal = Text(row, "PouchSpecialDeal");
+    // A cure the pouch does not keep refills what a new game starts with full, and its find writes only its played
+    // flag (measured for the Large Magic Jar).
+    if (deal == "NotPushToPouch" && Text(row, "PouchCategory") == "CureItem") {
+        values["HavePlayedGetEvent." + actor] = true;
+        return;
+    }
+    if (Text(row, "PouchCategory") == "Rupee") {
+        AddRupees(rows, row, actor, values);
+        return;
+    }
+    if (Find(row, "BundleActor") != nullptr) {
+        AddBundle(rows, row, actor, values);
+        return;
+    }
     values["IsGet." + actor] = true;
     values["HavePlayedGetEvent." + actor] = true;
+    if (deal == "Bottle") {
+        AddBottle(row, values);
+        return;
+    }
+    if (deal == "HeartContainer") {
+        ++life.hearts;
+        return;
+    }
     values[std::format("PouchData.{}.StockNum", actor)] = 1;
-    if (const std::string deal = Text(row, "PouchSpecialDeal"); deal == "Ocarina") {
+    if (deal == "Ocarina") {
         values["PlayerStatus.EquipOcarina"] = actor;
     } else if (deal == "Gauntlet") {
         values["PlayerStatus.EquipHandArmor"] = actor;
-    } else if (deal != "None" && deal != "GoronGauntlet") {
+    } else if (deal == "HeartPiece") {
+        values[std::string(PieceOfHeartCount)] = 1;
+    } else if (deal != "None" && deal != "GoronGauntlet" && deal != "AgonyStone" && deal != "TokenGold" &&
+               deal != "GlassTruth") {
         throw std::runtime_error(std::format("its PouchSpecialDeal is {}, which a start does not write", deal));
     }
     if (const std::string ability = Text(row, "ExpansionAvility"); ability == "LiftGradeUP") {
         values["PlayerStatus.LiftGrade"] = Choice{ Text(row, "LiftableGrade") };
     } else if (ability == "DiveDepthUP") {
         values["PlayerStatus.DiveDepth"] = FloatOf(Value(row, "DiveDepth"));
+    } else if (ability == "MPMaxUP") {
+        life.magic = std::max(life.magic, MagicPerRowPoint * int32_t(Value(row, "MPMax").scalar));
     } else if (!ability.empty()) {
         throw std::runtime_error(std::format("its ExpansionAvility is {}, which a start does not write", ability));
     }
@@ -1304,6 +1413,81 @@ static void SwapString(std::string& module, std::string_view from, std::string_v
     std::string padded(to);
     padded.resize(from.size(), '\0');
     module.replace(at + 1, padded.size(), padded);
+}
+
+// A new game's start sequence. It sets life, its limit and the magic meter after the game data list's defaults, so a
+// start that holds a Heart Container or an item that brings magic raises the sequence's own numbers.
+constexpr std::string_view StartSequence = "Sequence/SetPouchAndStatusForGameStart.module.ainb";
+constexpr int32_t ShippedLife = 12; // three hearts
+constexpr int32_t LifePerHeart = 4;
+constexpr int32_t ShippedMagic = 0;
+
+// Where the module's SeqOneShotSetGameDataInt nodes keep the number they set each saved value to, by the value's name,
+// read as the layout of AINB version 0x408: the nodes of 0x3C bytes each after the commands of 0x18, each node's
+// parameters naming its inputs of each type, and an input of a whole number or a string 16 bytes long, ending in its
+// number or its string's offset in the string pool.
+static std::map<std::string, size_t> GameDataIntInputs(std::string_view module) {
+    if (!module.starts_with("AIB ") || ReadAt<uint32_t>(module, 4) != 0x408) {
+        throw std::runtime_error("it is not a module of AINB version 0x408");
+    }
+    const uint32_t pool = ReadAt<uint32_t>(module, 0x24);
+    const auto string = [&](size_t at) {
+        const size_t start = pool + ReadAt<uint32_t>(module, at);
+        const size_t end = module.find('\0', start);
+        if (start > module.size() || end == std::string_view::npos) {
+            throw std::runtime_error("a string past the end of the module");
+        }
+        return module.substr(start, end - start);
+    };
+    const uint32_t inputs = ReadAt<uint32_t>(module, 0x34);
+    const auto inputsOfType = [&](uint32_t params, size_t type) {
+        const uint32_t first = ReadAt<uint32_t>(module, params + 0x30 + 16 * type);
+        const uint32_t count = ReadAt<uint32_t>(module, params + 0x34 + 16 * type);
+        return std::views::iota(first, first + count) | std::views::transform([&, type](uint32_t input) {
+                   return size_t(ReadAt<uint32_t>(module, inputs + 8 * type)) + 16 * input;
+               });
+    };
+    constexpr size_t Ints = 0, Strings = 3;
+    std::map<std::string, size_t> numbers;
+    const size_t nodes = 0x74 + 0x18 * size_t(ReadAt<uint32_t>(module, 0x0C));
+    for (size_t node = nodes; node < nodes + 0x3C * size_t(ReadAt<uint32_t>(module, 0x10)); node += 0x3C) {
+        if (string(node + 8) != "SeqOneShotSetGameDataInt") {
+            continue;
+        }
+        const uint32_t params = ReadAt<uint32_t>(module, node + 0x14);
+        std::optional<std::string> name;
+        for (const size_t input : inputsOfType(params, Strings)) {
+            if (string(input) == "GameDataName") {
+                name = string(input + 12);
+            }
+        }
+        for (const size_t input : inputsOfType(params, Ints)) {
+            if (name && string(input) == "Value" && !numbers.emplace(*name, input + 12).second) {
+                throw std::runtime_error(std::format("two nodes set {}", *name));
+            }
+        }
+    }
+    return numbers;
+}
+
+// Sets the start sequence's life, its limit and the magic meter to what the start's items bring, in place, so the
+// module keeps its size. Throws unless each is set by one node that holds the game's own number.
+static void SetStartLife(std::string& module, StartLife life) {
+    const std::map<std::string, size_t> numbers = GameDataIntInputs(module);
+    const int32_t raised = ShippedLife + LifePerHeart * life.hearts;
+    for (const auto& [name, shipped, value] :
+         { std::tuple{ "Life", ShippedLife, raised }, std::tuple{ "MaxLife", ShippedLife, raised },
+           std::tuple{ "MP", ShippedMagic, life.magic }, std::tuple{ "MPMax", ShippedMagic, life.magic } }) {
+        const auto at = numbers.find(name);
+        if (at == numbers.end()) {
+            throw std::runtime_error(std::format("no node sets {}", name));
+        }
+        if (const int32_t held = ReadAt<int32_t>(module, at->second); held != shipped) {
+            throw std::runtime_error(
+                std::format("the node that sets {} holds {}, not the game's {}", name, held, shipped));
+        }
+        WriteAt(module, at->second, value);
+    }
 }
 
 // Before the Forest Temple, Sheik's schedule sends him to his AnchorAction1, 0.77 units in front of the Master Sword on
@@ -1756,21 +1940,21 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         addToRomfs(path, std::move(data));
     }
     std::map<std::string, std::string> modules;
-    const auto swap = [&](const std::string& path, std::string_view from, std::string_view to) {
+    const auto editModule = [&](const std::string& path, const std::function<void(std::string&)>& edit) {
         auto module = modules.find(path);
         if (module == modules.end()) {
             module = modules.emplace(path, game.Read(path)).first;
         }
         try {
-            SwapString(module->second, from, to);
+            edit(module->second);
         } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", path, e.what())); }
+    };
+    const auto swap = [&](const std::string& path, std::string_view from, std::string_view to) {
+        editModule(path, [&](std::string& module) { SwapString(module, from, to); });
     };
     swap(std::string(PedestalModule), ForestTempleDone, FirstPullDone);
     for (const PlannedModuleText& text : plan.moduleTexts) {
         swap(text.file, text.from, text.to);
-    }
-    for (auto& [path, module] : modules) {
-        addToRomfs(path, std::move(module));
     }
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;
@@ -1830,21 +2014,46 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), overhead);
         addToRomfs(path, Compress(data));
     }
-    std::map<std::string, StartValue> startValues = plan.startValues;
-    if (plan.openingSkipped && !startValues.emplace(NaviWokeLink, true).second) {
-        throw std::runtime_error(std::format("the plan's start values already name {}", NaviWokeLink));
+    // Each saved value a new game starts with, named once, by its name or by its hash.
+    std::map<std::string, StartValue> startValues;
+    std::map<uint32_t, std::string> started;
+    const auto start = [&](const std::string& name, const StartValue& value) -> const std::string* {
+        const auto [at, added] = started.emplace(ValueHash(name), name);
+        if (!added) {
+            return &at->second;
+        }
+        startValues.emplace(name, value);
+        return nullptr;
+    };
+    for (const auto& [name, value] : plan.startValues) {
+        if (const std::string* other = start(name, value)) {
+            throw std::runtime_error(std::format("start values \"{}\" and \"{}\" name one saved value", *other, name));
+        }
+    }
+    if (plan.openingSkipped) {
+        if (const std::string* other = start(std::string(NaviWokeLink), true)) {
+            throw std::runtime_error(std::format("the plan's start value \"{}\" names {}", *other, NaviWokeLink));
+        }
     }
     std::map<std::string, StartValue> found;
+    StartLife life;
     for (const std::string& item : plan.startItems) {
         try {
-            AddFind(tables.find(PouchActorInfoPath)->second.root, item, found);
+            AddFind(tables.find(PouchActorInfoPath)->second.root, RecordActor(game, packDictionary, item), found, life);
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("start item {}: {}", item, e.what()));
         }
     }
-    for (auto& [name, value] : found) {
-        if (!startValues.emplace(name, value).second) {
-            throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
+    if (life.hearts > 0 || life.magic > 0) {
+        editModule(std::string(StartSequence), [&](std::string& module) { SetStartLife(module, life); });
+    }
+    for (auto& [path, module] : modules) {
+        addToRomfs(path, std::move(module));
+    }
+    for (const auto& [name, value] : found) {
+        if (const std::string* other = start(name, value)) {
+            throw std::runtime_error(
+                std::format("the plan's start value \"{}\" names {}, a start item's", *other, name));
         }
     }
     if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty() || !plan.claims.empty() ||
