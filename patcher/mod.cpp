@@ -1350,6 +1350,12 @@ constexpr std::string_view AfterWaterStep = "Event551";
 constexpr std::string_view MarketDepthOfField = "Event65";
 constexpr std::string_view ArrivalWait = "Event268";
 
+// Each change of age runs this flow. Going back to childhood, the weapon stored when Link last grew up goes into his
+// hand. When nothing is stored, Event11 stores a Kokiri Sword first, though his pouch may hold none. Storing nothing
+// there brings back a child who pulled the Master Sword with no sword in hand as he left.
+constexpr std::string_view EraChangeFlow = "Event/EventFlow/ReplaceEquipmentForEraChange.bfevfl.zs";
+constexpr std::string_view ChildSwordWhenNoneStored = "Event11";
+
 // A new game runs this flow. The loading entry point plays the narrated opening, then asks whether Kokiri Forest has
 // loaded. The introduction waits, plays Navi waking Link, and fades out before it shows him in his house. The Deku
 // Tree's quest and the forest's first tutorial wait for Navi's scene to count as played, which a scene left out never
@@ -1674,6 +1680,10 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         if (bfevfl::SetNext(flowAt(arrival), event, next)) {
             changedFlows.insert(arrival);
         }
+    }
+    const std::string eraChange(EraChangeFlow);
+    if (bfevfl::SetString(flowAt(eraChange), ChildSwordWhenNoneStored, "Value", "")) {
+        changedFlows.insert(eraChange);
     }
     if (!plan.stoneTexts.empty()) {
         const std::string path(StoneFlow);

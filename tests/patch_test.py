@@ -26,8 +26,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step|market-arrival-writes-no-step|schedule-entry|module-texts \
-           <kaepora-patch> <game.nup>
+           river-arrival-writes-no-step|market-arrival-writes-no-step| \
+           a-child-comes-back-with-the-sword-he-left-with|schedule-entry|module-texts <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -2843,6 +2843,23 @@ def river_arrival_writes_no_step(patch, game):
     assert transitions(arrival_flow(patch, game), "Goto_ZoraDomain") == ["Dm_Zora_0000"]
 
 
+ERA_CHANGE_FLOW = "Event/EventFlow/ReplaceEquipmentForEraChange.bfevfl.zs"
+
+
+def a_child_comes_back_with_the_sword_he_left_with(patch, game):
+    """Going back to childhood, the child takes into his hand the weapon stored when he last grew up. When nothing is
+    stored, the game's Event11 stores a Kokiri Sword first, which his pouch does not hold. In every mod Event11 stores
+    nothing, so a child who pulled the Master Sword with no sword in hand comes back with none."""
+    mod = every_mod(patch, game)
+    assert ERA_CHANGE_FLOW in mod, sorted(mod)
+    expected = game.event_flow(game.read(ERA_CHANGE_FLOW))
+    stored = string_parameter(expected, "Event11", "Value")
+    assert stored[1] == "Weapon_Sword_Kokiri", stored
+    stored[1] = ""
+    flow = game.event_flow(mod[ERA_CHANGE_FLOW])
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
+
+
 def market_arrival_writes_no_step(patch, game):
     """In every mod a first walk from Hyrule Field into the Market plays the Market's scene, Dm_HrlCastle_0005, and
     leaves the castle quest where it is. The entry goes on from the scene's depth of field, Event65, to a wait that
@@ -3513,6 +3530,7 @@ def main():
         "event-numbers": event_numbers,
         "river-arrival-writes-no-step": river_arrival_writes_no_step,
         "market-arrival-writes-no-step": market_arrival_writes_no_step,
+        "a-child-comes-back-with-the-sword-he-left-with": a_child_comes_back_with_the_sword_he_left_with,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

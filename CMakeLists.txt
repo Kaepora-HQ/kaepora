@@ -486,6 +486,7 @@ if(KAEPORA_GAME_NUP)
                  bigger-containers-bring-the-small-one
                  weapon-copies event-numbers event-nexts module-texts song-table river-arrival-writes-no-step
                  market-arrival-writes-no-step
+                 a-child-comes-back-with-the-sword-he-left-with
                  schedule-entry presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out
                  sword-scene-kept both-stones-before-zelda)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
