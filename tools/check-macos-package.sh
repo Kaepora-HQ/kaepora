@@ -41,7 +41,7 @@ home=$folder/home
 mkdir "$home"
 log=$folder/window.log
 finished='qt.network.http2: stream 1 closed'
-env -i HOME="$home" CFFIXED_USER_HOME="$home" QT_FORCE_STDERR_LOGGING=1 QT_LOGGING_RULES=qt.network.http2.debug=true \
+env -i HOME="$home" CFFIXED_USER_HOME="$home" QT_LOGGING_RULES=qt.network.http2.debug=true \
     "$app/Contents/MacOS/Kaepora" 2> "$log" &
 pid=$!
 for _ in $(seq 150); do

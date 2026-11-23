@@ -159,6 +159,9 @@ target_compile_options(kaepora-pictures PRIVATE ${WARNINGS})
 
 # The window. Qt is found quietly, so everything else still builds where Qt is missing.
 find_package(Qt6 QUIET COMPONENTS Widgets Network OPTIONAL_COMPONENTS Test)
+if(Qt6_FOUND AND Qt6_VERSION VERSION_LESS 6.12)
+    message(FATAL_ERROR "The window needs Qt 6.12 or later, and the Qt found is ${Qt6_VERSION}.")
+endif()
 if(Qt6_FOUND)
     add_library(kaepora-game-values STATIC kaepora/game_values.cpp kaepora/game_watch.cpp kaepora/tracker.cpp)
     set_target_properties(kaepora-game-values PROPERTIES AUTOMOC ON)
@@ -365,9 +368,7 @@ if(Qt6Test_FOUND)
     endif()
     foreach(TEST IN LISTS WINDOW_TESTS)
         add_test(NAME window_${TEST} COMMAND kaepora-window-test ${TEST})
-        # On Windows, QTest writes to the debugger rather than to stderr when no console is attached, as under ctest.
-        set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT
-                             "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
+        set_tests_properties(window_${TEST} PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
         if(WIN32)
             # On Windows, Qt asks the system for the folder that holds the seeds, and no variable moves it, so every
             # run of the test program shares one folder.
@@ -385,7 +386,6 @@ if(Qt6Test_FOUND)
                           aWatchReportsTheFirstReadAndEachChange aWatchSaysWhyBeforeItsFirstRead
                           aWatchSaysWhyItLostTheGameAndFindsItAgainAtAnotherAddress)
         add_test(NAME game_values_${TEST} COMMAND kaepora-game-values-test ${TEST})
-        set_tests_properties(game_values_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 
     add_executable(kaepora-tracker-test tests/tracker_test.cpp)
@@ -398,7 +398,6 @@ if(Qt6Test_FOUND)
                           aCellWithNothingHeldShowsItsFirstPictureUnlit nothingShowsFromTheTitleUntilPlay
                           aNewGameShowsWhatLinkHolds nothingShowsWhileTheGameBootsBeforeTheTitle)
         add_test(NAME tracker_${TEST} COMMAND kaepora-tracker-test ${TEST})
-        set_tests_properties(tracker_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 
     add_executable(kaepora-tracker-window-test tests/tracker_window_test.cpp)
@@ -416,8 +415,7 @@ if(Qt6Test_FOUND)
                           browserSourceGivesTheLinkAndThePagesSize theBoxLetsOtherComputersShowTheTracker
                           aNewWindowServesThePageAsTheLastLeftIt browserSourceSaysWhenAnotherProgramHoldsThePort)
         add_test(NAME tracker_window_${TEST} COMMAND kaepora-tracker-window-test ${TEST})
-        set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT
-                             "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
+        set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
     endforeach()
 
     add_executable(kaepora-tracker-page-test tests/tracker_page_test.cpp)
@@ -431,7 +429,6 @@ if(Qt6Test_FOUND)
                           junkLeavesThePageAnswering manyConnectionsLeaveThePageAnsweringAndItsListenersTold
                           aSecondPageOnTheSamePortCannotListen)
         add_test(NAME tracker_page_${TEST} COMMAND kaepora-tracker-page-test ${TEST})
-        set_tests_properties(tracker_page_${TEST} PROPERTIES ENVIRONMENT QT_FORCE_STDERR_LOGGING=1)
     endforeach()
 endif()
 
@@ -547,7 +544,7 @@ if(KAEPORA_GAME_NUP)
         add_test(NAME tracker_theGameHasEveryPictureTheTableNames
                  COMMAND kaepora-tracker-test theGameHasEveryPictureTheTableNames)
         set_tests_properties(tracker_theGameHasEveryPictureTheTableNames PROPERTIES ENVIRONMENT
-                             "KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP};QT_FORCE_STDERR_LOGGING=1")
+                             "KAEPORA_GAME_NUP=${KAEPORA_GAME_NUP}")
         # Every case of the window, in parts that ctest runs side by side. Each part takes its cases from the program.
         set(WINDOW_PARTS 4)
         foreach(PART RANGE 1 ${WINDOW_PARTS})
@@ -694,8 +691,10 @@ if(Qt6_FOUND)
     install(FILES ${astcenc_SOURCE_DIR}/LICENSE.txt DESTINATION ${LICENSES}/astc-encoder)
 endif()
 
-# Windows finds a program's libraries beside it or on PATH, so the tests find Qt's on PATH.
+# Windows finds a program's libraries beside it or on PATH, so the tests find Qt's on PATH. QTest writes to the debugger
+# there when no console is attached, as under ctest, so Qt is told to write to the test's output.
 if(WIN32 AND Qt6Test_FOUND)
     get_property(tests DIRECTORY PROPERTY TESTS)
-    set_property(TEST ${tests} PROPERTY ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+    set_property(TEST ${tests} PROPERTY ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>"
+                 QT_FORCE_STDERR_LOGGING=set:1)
 endif()

@@ -37,10 +37,10 @@ cmake --install "$build" --prefix "$appdir/usr" --strip
 
 export APPIMAGE_EXTRACT_AND_RUN=1
 export QMAKE=$qt/bin/qmake
-# Wayland's platform plugins with their shell and graphics integrations; the xcb plugin for X11 is always deployed. The
+# Wayland's platform plugin with its shell and graphics integrations; the xcb plugin for X11 is always deployed. The
 # offscreen plugin lets the check below start the window without a display.
 export EXTRA_QT_MODULES=waylandcompositor
-export EXTRA_PLATFORM_PLUGINS='libqwayland-egl.so;libqwayland-generic.so;libqoffscreen.so'
+export EXTRA_PLATFORM_PLUGINS='libqwayland.so;libqoffscreen.so'
 # Qt's TLS plugin looks for OpenSSL by name at the first HTTPS request, so no library lists it as a dependency. The
 # package carries Ubuntu's, so every player runs the OpenSSL the check below proves. Without it, each system decides
 # which OpenSSL major runs inside the window.
@@ -74,7 +74,7 @@ diff -r --no-dereference "$root" "$appdir"
 # window's request to GitHub went through.
 mkdir "$work/home"
 finished='qt.network.http2: stream 1 closed'
-env -i HOME="$work/home" QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
+env -i HOME="$work/home" QT_QPA_PLATFORM=offscreen \
     QT_LOGGING_RULES=qt.network.http2.debug=true "$root/AppRun" 2> "$work/window.log" &
 pid=$!
 for _ in $(seq 150); do

@@ -25,10 +25,11 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Ubuntu 24.04's default compilers, GCC 13 and Clang 18, cannot compile #embed. This is the newest Clang that Ubuntu
-  # 24.04 packages itself.
+  # The Linux packages are built on this runner, so they run wherever glibc is 2.39 or later, as Lichii's own Linux
+  # build does. Ubuntu 26.04 would raise that to 2.43. Ubuntu 24.04's default compilers, GCC 13 and Clang 18, cannot
+  # compile #embed, which the generator uses for its tables. This is the newest Clang that Ubuntu 24.04 packages itself.
   LLVM_VERSION: "20"
-  QT_VERSION: "6.8.3"
+  QT_VERSION: "6.12.1"
   # The clang-cl that Lichii's Windows builds use.
   CLANG_CL_VERSION: "22.1.8"
 
@@ -248,6 +249,8 @@ jobs:
 
       - *python-with-pips-cache
 
+      # Qt keeps its Windows binaries from 6.11 on in a folder per compiler, which aqtinstall 3.3.0, its newest release,
+      # cannot find. This commit of its master finds them.
       - name: Install Qt
         uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
         with:
@@ -257,6 +260,7 @@ jobs:
           arch: win64_msvc2022_64
           cache: true
           setup-python: false
+          aqtsource: aqtinstall @ git+https://github.com/miurahr/aqtinstall@4c759852b1108cc801d8e24979136b895b5155d4
 
       - &windows-install-ccache
         name: Install ccache
@@ -524,9 +528,9 @@ jobs:
             exit 1
           fi
 
-      # The package carries Qt's Secure Transport plugin and not its OpenSSL one, which Qt would prefer, so the tests
-      # use Secure Transport too.
-      - name: Leave Qt's OpenSSL plugin out of the tests
+      # Qt prefers its OpenSSL plugin to Secure Transport. Without it in Qt's folder, the tests use Secure Transport, and
+      # macdeployqt leaves it out of the package.
+      - name: Leave Qt's OpenSSL plugin out of the tests and the package
         run: rm "$QT_ROOT_DIR/plugins/tls/libqopensslbackend.dylib"
 
       - name: Run tests
