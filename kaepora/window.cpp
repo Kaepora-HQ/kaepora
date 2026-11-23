@@ -7,6 +7,7 @@
 #include "pictures.h"
 #include "seed.h"
 #include "settings_dialog.h"
+#include "tracker_page.h"
 #include "tracker_window.h"
 
 #include <QDesktopServices>
@@ -516,7 +517,7 @@ void Window::openTracker() {
             return;
         }
         trackerStatus->clear();
-        tracker = new TrackerWindow(DebugServerPort, std::move(*pictures));
+        tracker = new TrackerWindow(DebugServerPort, TrackerPagePort, std::move(*pictures));
         tracker->setAttribute(Qt::WA_DeleteOnClose);
         connect(tracker, &TrackerWindow::statusChanged, trackerStatus, &QLabel::setText);
         connect(tracker, &QObject::destroyed, trackerStatus, &QLabel::hide);

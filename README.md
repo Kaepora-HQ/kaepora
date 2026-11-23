@@ -45,7 +45,21 @@ The tracker is a window of the game's item pictures. A picture lights up when yo
 2. Click **Tracker**. Under the list of seeds, Kaepora says what the tracker is doing.
 3. Right-click the tracker to change the size of its pictures, its background colour, or the groups it shows.
 
-To show the tracker on stream with OBS:
+To show the tracker on stream with OBS, use a Browser source. It shows the game through the tracker's background, and it follows the game while the tracker is minimised or covered.
+
+1. Right-click the tracker and choose **Browser source…**.
+2. In OBS, add a **Browser** source. Paste the link that Kaepora gives, and set the width and height that Kaepora names.
+3. Move the **Background** slider to choose how much of the game shows through, from see-through to solid.
+
+The page is there while the tracker is open. If the source stays empty, open the tracker. Then open the source's properties in OBS and click **Refresh cache of current page**. If you change the size of the pictures or the groups shown, set the source's new width and height.
+
+If OBS runs on a second computer, start the game and Kaepora on the first:
+
+1. In **Browser source…**, tick **Let other computers on my network show the tracker**.
+2. In OBS on the second computer, paste one of the links listed under the box.
+3. Both computers must be on the same network. If the page does not load, allow port 21199 through the first computer's firewall.
+
+To capture the window itself instead:
 
 1. Add a source that captures a window, and choose the window **Kaepora Tracker**. On Windows the source is **Window Capture**. On macOS it is **macOS Screen Capture**, with its method set to **Window Capture**. On Linux it is **Window Capture (PipeWire)** under Wayland, or **Window Capture (Xcomposite)** under X11.
 2. Key the background colour out with a **Color Key** filter, or choose a background colour that suits your layout.

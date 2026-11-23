@@ -1,13 +1,21 @@
+#include "browser.h"
 #include "fake_lichii.h"
 #include "tracker_painter.h"
 #include "tracker_window.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QClipboard>
 #include <QColorDialog>
 #include <QContextMenuEvent>
+#include <QDialog>
+#include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QPainter>
+#include <QPushButton>
 #include <QSettings>
+#include <QSlider>
 #include <QTcpServer>
 #include <QTemporaryDir>
 #include <QTest>
@@ -15,6 +23,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 static const QColor Red(200, 40, 40);
@@ -115,6 +124,42 @@ static bool Choose(QWidget& window, const QStringList& path) {
     entry->trigger();
     menu->hide();
     return true;
+}
+
+static QUrl PageAt(quint16 port, const QString& host = "127.0.0.1") {
+    return QUrl(QString("http://%1:%2/").arg(host).arg(port));
+}
+
+static QImage Served(quint16 port) {
+    return QImage::fromData(Read(Ask(PageAt(port), Get(Picture(Current(PageAt(port)))))).body, "PNG");
+}
+
+static int Alpha(int strength) {
+    return qRound(255 * strength / 100.0);
+}
+
+static QDialog* BrowserSource(QWidget& window) {
+    if (!Choose(window, { "Browser source…" })) {
+        return nullptr;
+    }
+    auto* dialog = window.findChild<QDialog*>();
+    return dialog != nullptr && dialog->isVisible() && dialog->windowTitle() == "Browser source" ? dialog : nullptr;
+}
+
+static QStringList Links(const QDialog& dialog) {
+    QList<QLineEdit*> fields = dialog.findChildren<QLineEdit*>();
+    fields.removeIf([](const QLineEdit* field) { return !field->isVisible(); });
+    std::ranges::sort(fields, {}, [&](const QLineEdit* field) { return field->mapTo(&dialog, QPoint()).y(); });
+    QStringList links;
+    for (const QLineEdit* field : fields) {
+        links << field->text();
+    }
+    return links;
+}
+
+static bool Shows(const QDialog& dialog, const QString& text) {
+    return std::ranges::any_of(dialog.findChildren<QLabel*>(),
+                               [&](const QLabel* label) { return label->isVisible() && label->text() == text; });
 }
 
 static bool ChooseBackground(QWidget& window, const QColor& colour) {
@@ -225,7 +270,7 @@ private slots:
         const Tracker tracker;
         FakeLichii lichii(
             TrackerGame(tracker, { { MenuState.name, Murmur3("Title") }, { "PouchData.Item_Hookshot.StockNum", 1 } }));
-        TrackerWindow window(lichii.port, Pictures(tracker));
+        TrackerWindow window(lichii.port, ClosedPort(), Pictures(tracker));
         QStringList statuses;
         connect(&window, &TrackerWindow::statusChanged, this, [&](const QString& status) { statuses << status; });
         window.show();
@@ -244,7 +289,7 @@ private slots:
     void aWindowSaysWhatItDoesUntilItCloses() {
         const Tracker tracker;
         FakeLichii lichii(TrackerGame(tracker, { { MenuState.name, Murmur3("Title") } }), {});
-        auto window = std::make_unique<TrackerWindow>(lichii.port, Pictures(tracker));
+        auto window = std::make_unique<TrackerWindow>(lichii.port, ClosedPort(), Pictures(tracker));
         QStringList statuses;
         connect(window.get(), &TrackerWindow::statusChanged, this, [&](const QString& status) { statuses << status; });
         const QString another =
@@ -262,7 +307,7 @@ private slots:
 
     void iconSizeChangesTheCells() {
         const Tracker tracker;
-        TrackerWindow window(ClosedPort(), Pictures(tracker));
+        TrackerWindow window(ClosedPort(), ClosedPort(), Pictures(tracker));
         window.show();
         QCOMPARE(window.windowTitle(), "Kaepora Tracker");
         QCOMPARE(window.size(), TrackerSize(FirstLook, tracker.cells()));
@@ -277,7 +322,7 @@ private slots:
 
     void showHidesABlock() {
         const Tracker tracker;
-        TrackerWindow window(ClosedPort(), Pictures(tracker));
+        TrackerWindow window(ClosedPort(), ClosedPort(), Pictures(tracker));
         window.show();
         QVERIFY(Choose(window, { "Show", "Songs" }));
         QCOMPARE(window.size(), TrackerSize({ .cell = 48, .background = FirstLook.background, .hidden = { "songs" } },
@@ -287,7 +332,7 @@ private slots:
     }
 
     void backgroundColourSetsTheColour() {
-        TrackerWindow window(ClosedPort(), Pictures(Tracker()));
+        TrackerWindow window(ClosedPort(), ClosedPort(), Pictures(Tracker()));
         window.show();
         QVERIFY(ChooseBackground(window, Green));
         QCOMPARE(window.grab().toImage().pixelColor(0, 0), Green);
@@ -296,7 +341,7 @@ private slots:
     void aNewWindowOpensAsTheLastWasLeft() {
         const Tracker tracker;
         const quint16 port = ClosedPort();
-        auto first = std::make_unique<TrackerWindow>(port, Pictures(tracker));
+        auto first = std::make_unique<TrackerWindow>(port, ClosedPort(), Pictures(tracker));
         first->show();
         QVERIFY(Choose(*first, { "Icon size", "Small" }));
         QVERIFY(Choose(*first, { "Show", "Songs" }));
@@ -305,7 +350,7 @@ private slots:
         first->close();
         first.reset();
 
-        TrackerWindow second(port, Pictures(tracker));
+        TrackerWindow second(port, ClosedPort(), Pictures(tracker));
         second.show();
         QCOMPARE(second.size(),
                  TrackerSize({ .cell = 36, .background = Green, .hidden = { "songs" } }, tracker.cells()));
@@ -316,12 +361,158 @@ private slots:
     }
 
     void pointingAtACellShowsItsName() {
-        TrackerWindow window(ClosedPort(), Pictures(Tracker()));
+        TrackerWindow window(ClosedPort(), ClosedPort(), Pictures(Tracker()));
         window.show();
         const QPoint hammer = CentreOf("Megaton Hammer");
         QHelpEvent help(QEvent::ToolTip, hammer, window.mapToGlobal(hammer));
         QApplication::sendEvent(&window, &help);
         QTRY_COMPARE(QToolTip::text(), "Megaton Hammer");
+    }
+
+    void thePageShowsTheGridOverTheBackgroundAtItsStrength() {
+        const Tracker tracker;
+        FakeLichii lichii(
+            TrackerGame(tracker, { { MenuState.name, Murmur3("None") }, { "PouchData.Item_Hookshot.StockNum", 1 } }));
+        const quint16 port = ClosedPort();
+        TrackerWindow window(lichii.port, port, Pictures(tracker));
+        window.show();
+        QTRY_COMPARE(window.grab().toImage().pixelColor(CentreOf("Hookshot")), ColourOf("Item_Hookshot"));
+        const QImage grid = window.grab().toImage();
+        const QImage page = Served(port);
+        QCOMPARE(page.size(), grid.size());
+        QCOMPARE(page.pixelColor(CentreOf("Hookshot")), ColourOf("Item_Hookshot"));
+        QCOMPARE(page.pixelColor(0, 0).alpha(), Alpha(70));
+
+        QDialog* dialog = BrowserSource(window);
+        QVERIFY(dialog != nullptr);
+        dialog->findChild<QSlider*>()->setValue(100);
+        QCOMPARE(Served(port).pixelColor(0, 0), grid.pixelColor(0, 0));
+        dialog->findChild<QSlider*>()->setValue(0);
+        QCOMPARE(Served(port).pixelColor(0, 0).alpha(), 0);
+    }
+
+    void aListenerIsToldWhenACellLightsOrTheLookChangesWithTheWindowHidden() {
+        const Tracker tracker;
+        FakeLichii lichii(TrackerGame(tracker, { { MenuState.name, Murmur3("None") } }));
+        const quint16 port = ClosedPort();
+        TrackerWindow window(lichii.port, port, Pictures(tracker));
+        QStringList statuses;
+        connect(&window, &TrackerWindow::statusChanged, this, [&](const QString& status) { statuses << status; });
+        QTRY_COMPARE(statuses, QStringList{ "The tracker follows the game." });
+        QTcpSocket stream;
+        Open(stream, PageAt(port), Get(Changes));
+        QTRY_COMPARE(Told(stream).size(), 1);
+        const int reads = 4 * int(GameWatch::ReadPause.count());
+        QTest::qWait(reads);
+        QCOMPARE(Told(stream).size(), 1);
+        lichii.set("PouchData.Item_Hookshot.StockNum", 1);
+        QTRY_COMPARE(Told(stream).size(), 2);
+        QTest::qWait(reads);
+        QCOMPARE(Told(stream).size(), 2);
+        QVERIFY(Choose(window, { "Icon size", "Large" }));
+        QTRY_COMPARE(Told(stream).size(), 3);
+    }
+
+    void browserSourceGivesTheLinkAndThePagesSize() {
+        const quint16 port = ClosedPort();
+        TrackerWindow window(ClosedPort(), port, Pictures(Tracker()));
+        window.show();
+        QVERIFY(Choose(window, { "Icon size", "Large" }));
+        QVERIFY(Choose(window, { "Show", "Songs" }));
+        QDialog* dialog = BrowserSource(window);
+        QVERIFY(dialog != nullptr);
+        QCOMPARE(Links(*dialog), QStringList{ PageAt(port).toString() });
+        const QSize size = Served(port).size();
+        QVERIFY(
+            Shows(*dialog,
+                  QString("Set the source's width to %1 and its height to %2.").arg(size.width()).arg(size.height())));
+        QCOMPARE(size, window.size());
+        const QList<QPushButton*> buttons = dialog->findChildren<QPushButton*>();
+        const auto copy = std::ranges::find(buttons, QString("Copy"), &QPushButton::text);
+        QVERIFY(copy != buttons.end());
+        (*copy)->click();
+        QCOMPARE(QApplication::clipboard()->text(), PageAt(port).toString());
+    }
+
+    void theBoxLetsOtherComputersShowTheTracker() {
+        const std::optional<QHostAddress> address = NetworkAddress();
+        if (!address) {
+            QSKIP("This computer has no network address.");
+        }
+        const quint16 port = ClosedPort();
+        const QUrl there = PageAt(port, address->toString());
+        TrackerWindow window(ClosedPort(), port, Pictures(Tracker()));
+        window.show();
+        QDialog* dialog = BrowserSource(window);
+        QVERIFY(dialog != nullptr);
+        auto* box = dialog->findChild<QCheckBox*>();
+        QCOMPARE(box->text(), "Let other computers on my network show the tracker");
+        QVERIFY(!box->isChecked());
+        QVERIFY(Ask(there, Get("/")).isEmpty());
+
+        box->click();
+        QCOMPARE(Read(Ask(there, Get("/"))).code, 200);
+        const QStringList links = Links(*dialog);
+        QCOMPARE(links.front(), PageAt(port).toString());
+        QVERIFY2(links.contains(there.toString()), qPrintable(links.join(' ')));
+        for (const QString& link : links.mid(1, links.size() - 2)) {
+            QVERIFY2(!QHostAddress(QUrl(link).host()).isNull(), qPrintable(links.join(' ')));
+        }
+        QVERIFY2(QHostAddress(QUrl(links.back()).host()).isNull(), qPrintable(links.join(' ')));
+        QVERIFY(Shows(*dialog, "In OBS on the other computer, use one of these links."));
+        QVERIFY(Shows(*dialog, QString("Both computers must be on the same network. If the page does not load there, "
+                                       "allow port %1 through this computer's firewall.")
+                                   .arg(port)));
+
+        box->click();
+        QVERIFY(Ask(there, Get("/")).isEmpty());
+        QCOMPARE(Links(*dialog), QStringList{ PageAt(port).toString() });
+        QCOMPARE(Read(Ask(PageAt(port), Get("/"))).code, 200);
+    }
+
+    void aNewWindowServesThePageAsTheLastLeftIt() {
+        const std::optional<QHostAddress> address = NetworkAddress();
+        if (!address) {
+            QSKIP("This computer has no network address.");
+        }
+        const quint16 port = ClosedPort();
+        auto first = std::make_unique<TrackerWindow>(ClosedPort(), port, Pictures(Tracker()));
+        first->show();
+        QDialog* dialog = BrowserSource(*first);
+        QVERIFY(dialog != nullptr);
+        dialog->findChild<QCheckBox*>()->click();
+        dialog->findChild<QSlider*>()->setValue(30);
+        first->close();
+        first.reset();
+
+        TrackerWindow second(ClosedPort(), port, Pictures(Tracker()));
+        second.show();
+        QCOMPARE(Read(Ask(PageAt(port, address->toString()), Get("/"))).code, 200);
+        QCOMPARE(Served(port).pixelColor(0, 0).alpha(), Alpha(30));
+        dialog = BrowserSource(second);
+        QVERIFY(dialog != nullptr);
+        QVERIFY(dialog->findChild<QCheckBox*>()->isChecked());
+        QCOMPARE(dialog->findChild<QSlider*>()->value(), 30);
+    }
+
+    void browserSourceSaysWhenAnotherProgramHoldsThePort() {
+        QTcpServer holder;
+        QVERIFY(holder.listen(QHostAddress::LocalHost));
+        const quint16 port = holder.serverPort();
+        TrackerWindow window(ClosedPort(), port, Pictures(Tracker()));
+        window.show();
+        QDialog* dialog = BrowserSource(window);
+        QVERIFY(dialog != nullptr);
+        QVERIFY(Shows(*dialog, QString("Kaepora cannot serve the page. Another program is using port %1.").arg(port)));
+        QCOMPARE(Links(*dialog), QStringList());
+
+        holder.close();
+        dialog->close();
+        QTRY_COMPARE(window.findChild<QDialog*>(), nullptr);
+        dialog = BrowserSource(window);
+        QVERIFY(dialog != nullptr);
+        QCOMPARE(Links(*dialog), QStringList{ PageAt(port).toString() });
+        QCOMPARE(Read(Ask(PageAt(port), Get("/"))).code, 200);
     }
 };
 

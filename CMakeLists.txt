@@ -173,7 +173,7 @@ if(Qt6_FOUND)
 
     add_library(kaepora-tracker-window STATIC kaepora/tracker_painter.cpp kaepora/tracker_window.cpp)
     set_target_properties(kaepora-tracker-window PROPERTIES AUTOMOC ON)
-    target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values Qt6::Widgets)
+    target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values kaepora-tracker-page Qt6::Widgets)
     target_compile_options(kaepora-tracker-window PRIVATE ${WARNINGS})
 
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
@@ -398,7 +398,11 @@ if(Qt6Test_FOUND)
                           aPictureFillsACellOfTheLooksSide theBackgroundFillsTheGrid
                           aSeeThroughBackgroundLeavesSeeThroughPixels aWindowLightsWhatTheGameHolds
                           aWindowSaysWhatItDoesUntilItCloses iconSizeChangesTheCells showHidesABlock
-                          backgroundColourSetsTheColour aNewWindowOpensAsTheLastWasLeft pointingAtACellShowsItsName)
+                          backgroundColourSetsTheColour aNewWindowOpensAsTheLastWasLeft pointingAtACellShowsItsName
+                          thePageShowsTheGridOverTheBackgroundAtItsStrength
+                          aListenerIsToldWhenACellLightsOrTheLookChangesWithTheWindowHidden
+                          browserSourceGivesTheLinkAndThePagesSize theBoxLetsOtherComputersShowTheTracker
+                          aNewWindowServesThePageAsTheLastLeftIt browserSourceSaysWhenAnotherProgramHoldsThePort)
         add_test(NAME tracker_window_${TEST} COMMAND kaepora-tracker-window-test ${TEST})
         set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT
                              "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")
