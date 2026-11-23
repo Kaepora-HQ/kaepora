@@ -281,8 +281,6 @@ static RandomizerCheck LocationNamed(const std::string& where, const std::string
     return location->second;
 }
 
-constexpr std::string_view ItemSlot = "[[1]]";
-
 static Sentence Split(const std::string& where, const std::string& sentence) {
     const size_t slot = sentence.find(ItemSlot);
     if (slot == std::string::npos || sentence.find(ItemSlot, slot + 1) != std::string::npos) {
@@ -389,11 +387,15 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
             }
             copy = MessageCopy{ .of = row[3], .flow = shown[0], .event = shown[1], .param = shown[2] };
         }
+        if (const size_t slot = row[5].find(ItemSlot);
+            row[5].empty() || (slot != std::string::npos && row[5].find(ItemSlot, slot + 1) != std::string::npos)) {
+            Fail(where + "no sentence, or one with more than one [[1]] for the item");
+        }
         tables.prizeLines.push_back({ .location = location,
                                       .file = row[1],
                                       .label = row[2],
                                       .copy = copy,
-                                      .sentence = Split(where, row[5]),
+                                      .sentence = row[5],
                                       .fit = ReadFit(where, row[6], row[7]) });
     }
 
@@ -860,6 +862,39 @@ static constexpr std::pair<std::string_view, std::string_view> daruniaJrAfterTem
     { "SageOfFire_FromDeathMt2", "Kaepora_SageOfFire_FromDeathMt2_AND_DoorOpen_Exp" },
 };
 
+// Dampé's race picks the chest at its goal by the count of its races won (Result, Event275): none gives the first
+// chest, one the heart piece's chest for a finish within a minute, and more a rupee chest. A finish counts only for a
+// Link with the Hookshot in his pouch (Event442), so an item in the first chest would be lost to a Link who found a
+// hookshot first. The goal room's only way out is a ledge above a step, under the scene's only hookshot target.
+static constexpr std::string_view dampesRaceFlow = "Event/EventFlow/MiniGame_DampeRace.bfevfl.zs";
+static const EventNext dampesRaceNexts[] = {
+    // Opening the first chest or the heart piece's counts in place of the finish, and the count goes on to where each
+    // opening went. So the first chest is the goal until it is opened, whatever Link owns.
+    { std::string(dampesRaceFlow), "Event442", "Event33" },
+    { std::string(dampesRaceFlow), "Event201", "Event35" },
+    { std::string(dampesRaceFlow), "Event200", "Event35" },
+    { std::string(dampesRaceFlow), "Event112", "Event95" },
+    // After a chest's get, Navi says what the Hookshot is for while the count is 0 (Event121), which with the count
+    // raised after the get is at the first chest, whatever it held.
+    { std::string(dampesRaceFlow), "Event121", "Event198" },
+    // The first chest is told of and appears at every finish until it is opened, as the other chests are, and Dampé's
+    // lines that tell of the Hookshot, at the finish and in his talk before a race, are left out.
+    { std::string(dampesRaceFlow), "Event277", "Event276" },
+    { std::string(dampesRaceFlow), "Event276", "Event353" },
+    { std::string(dampesRaceFlow), "Event86", "Event56" },
+    // Every race is the one a Link with the Hookshot runs, timed on the screen, so the heart piece asks only for the
+    // time. The timer leaves the screen for every Link at the goal and at a lost race's end, where the game asks for
+    // the Hookshot first: at the goal by a switch of two cases, and at the end by one with only its true case
+    // (Event157), so the stop before it goes on past it.
+    { std::string(dampesRaceFlow), "Event129", "Event131" },
+    { std::string(dampesRaceFlow), "Event98", "Event99" },
+    { std::string(dampesRaceFlow), "Event226", "Event158" },
+    // His first talk after the first chest, and his talk when Link will race no more, go on to the talk that shows the
+    // way out and ends with Link on the ledge.
+    { std::string(dampesRaceFlow), "Event415", "Event221" },
+    { std::string(dampesRaceFlow), "Event207", "Event221" },
+};
+
 static constexpr EventText eventTexts[] = {
     // The warp after Gohma completes the Forest quest in its Event1. Its Event4 sets the castle quest to Step01 even when
     // the quest is further on, and a Link who woke Talon before Gohma can then not meet Zelda. These texts make Event4 a
@@ -912,6 +947,9 @@ static constexpr EventText eventTexts[] = {
     // makes Event179 ask whether the quest is past Ready, so the write moves only a quest still at Ready.
     { "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "Event179", "GameDataName", "Get_Epona_IsAfter_Ready_Exp" },
     { "Event/EventFlow/Get_StoneOfFire.bfevfl.zs", "Event39", "GameDataName", danceGiven },
+    // Dampé's talk after his race shows Link the way out and then sets him back in front of him (dampesRaceNexts).
+    // This text sets Link on the ledge by the exit instead, at an anchor of Dampé's there.
+    { dampesRaceFlow, "Event295", "InstanceName", "ExitLookPos" },
 };
 
 // The summit's Great Fairy gives through her own entry of the shared get flow. For a Link who had no meter, which her
@@ -1299,18 +1337,21 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["event_nexts"] = nlohmann::ordered_json::array();
-    plan["module_texts"] = nlohmann::ordered_json::array();
-    if (doorOpened) {
-        for (const auto& [file, from, to] : doorOpen) {
-            plan["module_texts"].push_back({ { "file", file }, { "from", from }, { "to", to } });
-        }
-    }
     const auto addNext = [&](const EventNext& next) {
         plan["event_nexts"].push_back(
             { { "flow", next.flow },
               { "event", next.event },
               { "next", next.next ? nlohmann::ordered_json(*next.next) : nlohmann::ordered_json() } });
     };
+    for (const EventNext& next : dampesRaceNexts) {
+        addNext(next);
+    }
+    plan["module_texts"] = nlohmann::ordered_json::array();
+    if (doorOpened) {
+        for (const auto& [file, from, to] : doorOpen) {
+            plan["module_texts"].push_back({ { "file", file }, { "from", from }, { "to", to } });
+        }
+    }
     plan["event_entries"] = nlohmann::ordered_json::array();
     plan["start_values"] = StartValues(settings);
     if (biggoron) {

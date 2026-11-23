@@ -26,6 +26,53 @@ first row's item is what the location adds to the pool.
 - `note`: for a row that is not shuffled, why, in one sentence. For a shuffled row, what else its chest does, if
   anything.
 
+Dampé's race has four chests at its goal, and its flow, `MiniGame_DampeRace`, picks one by a count of races won
+(`Result`, `Event275`): none gives the first chest, one the heart piece's for a finish within a minute, and more a red
+rupee for a new record or a blue one. In the game a finish counts only for a Link with the Hookshot in his pouch
+(`Event442`), so the first chest is the goal only of a Link who never owned it. The goal room's one way out is a ledge
+5.1 units above its floor, under the scene's only hookshot target (measured from the placements and the navmesh). A
+Link with no hookshot and no warp who opened the first chest could not leave it (seen in the game). So every mod
+changes the flow, with the plan's next events and one text:
+
+- A finish no longer counts (`Event442`). Opening the first chest or the heart piece's counts in its place (`Event201`
+  and `Event200` go on to the count, `Event35`, and the count goes on to where each went, `Event95`). So the first
+  chest is the goal until it is opened, whatever Link owns.
+- The first chest is told of and appears at every finish until it is opened (`Event277`), as the other chests are. In
+  the game a second finish would only say where it is. After it, Navi's line on what the Hookshot is for, which plays
+  while the count is 0 (`Event121`), is left out.
+- Every race is the one a Link with the Hookshot runs (`Event129`): the timer on the screen, the faster Dampé and the
+  second course, which has no hookshot target (read). The timer leaves the screen for every Link at the goal (`Event98`)
+  and at a lost race's end, where the game's question has only its true case (`Event157`), so the stop before it
+  (`Event226`) goes on past it. So the heart piece asks for the time and no item, as SoH's rule does. The other race
+  wrote the Forest quest's Step03 with no test (`Event132`), which set the quest back for a Link with the Longshot alone
+  who had started the Forest Temple (read).
+- Dampé's talk after the first chest shows the way out (`SuggestExit`) and then warps Link back in front of him
+  (`Event295`, `PlayerPos1`). The warp names `ExitLookPos` instead, an anchor of his 1.7 units above the ledge (read).
+  His first talk after the chest (`Event415`), and his talk when Link will race no more (`Event207`), go on to it. In
+  the game the first went on to nothing and the second faded him out.
+- His lines that tell of the Hookshot are left out (`Event276`, `Event86`), and `prize_lines.tsv` rewrites those that
+  name it or that the lift makes untrue.
+
+Seen in the game, from saves at the race's start of a Link who owned the Hookshot and of one with no hookshot and no
+warp: the race was timed for the Hookshot's owner. At the goal Dampé said "I call it... the Boomerang!" and the first
+chest gave the Boomerang placed there. The chest's autosave held the count at 1, the state `OpenedHookShot` and the step
+`FinishAfterTalk`, so the game writes it after the count rises. After a load of it, a talk lifted Link onto the ledge
+("he moved me"; his next save stood 5.2 units above the chest's spot). The Link with no hookshot finished the timed race
+and got the first chest, walked out by the ledge's door into the windmill, and came back by the graveyard with the race
+at Ready and the count at 1. He then raced within a minute and got the heart piece's chest with a placed Megaton Hammer
+(the count 2, `OpenedHeartPiece`, `RetryCheck`), and "the second lift worked after the last race". Not yet seen: the
+timer at a lost race's end, the reworded lines before a race, and where Dampé stands after a load in the goal room for a
+Link with no hookshot.
+
+The windmill's door back into the grave, `10655111113814742873` in `Banc/KakarikoVillage/KakarikoVillage_Adult_Static`,
+leads to the ledge. Walking out by the ledge's door sets the race back to Ready (seen), and at Ready the goal room's
+shutter is held shut and Dampé talks only at the race's start (read). So a Link with no hookshot who walks back in by
+that door and steps off the ledge has no way out but a warp (inferred from reading, not seen). SoH's graph has a way
+from the grave out to the windmill and none back, so no route asks for that walk. Hiding the door with a presence on
+`IsGet.Item_Hookshot` was tried, and a Link with no hookshot who went out by the ledge's door was left on a black screen
+in Kakariko, twice (seen). The grave's exit sends Link to the start position `KakarikoWindmill_GraveYardSide`, the
+door's own name, so the door is also where Link arrives (read).
+
 `items.tsv` maps each remake item name to the SoH item it stands for, by SoH's English name. A remake key, map or
 compass names no dungeon, so it has one row per dungeon, and a chest takes the one of its own dungeon.
 
@@ -108,9 +155,14 @@ gave is unseen. The game names the letter a Bottle, so a hint does too.
 `junk_hints.tsv` has the hints that say nothing about the seed, in SoH's markup, with `@` for the player's name: SoH's
 jokes, but for three about SoH's own project, and six of ours.
 
-`prize_lines.tsv` has the lines in which a character names what a place gives. A seed that shuffles the place rewrites
-each one in our words, in SoH's markup, with `[[1]]` where the item goes: the item the seed places there. The game's own
-line names the unmodified game's item, which is true only where the seed keeps it.
+`prize_lines.tsv` has the lines in which a character names what a place gives, and the lines that the changes a
+shuffled place needs make untrue. A seed that shuffles the place rewrites each one in our words, in SoH's markup, with
+`[[1]]` where the item goes: the item the seed places there. A line that names no item has no `[[1]]`. The game's own
+line names the unmodified game's item, which is true only where the seed keeps it. Dampé's race has nine: his line at
+the finish names the first chest's item; his answer when Link asks about the treasure before a race, and his call in
+the graveyard, name nothing; four say that he lifts Link to the exit, where the game's tell Link to use the Hookshot or
+say that Dampé leaves; and two of his talk before a race, which he picks by the Hookshot in the pouch, say that the
+first prize asks only a finish and name what the heart piece's chest holds.
 
 - `location`: the SoH location, a chest of `chests.tsv` or a gift of `gifts.tsv`.
 - `file` and `label`: the message, in the English text packs. The patcher keeps the control codes the game's message

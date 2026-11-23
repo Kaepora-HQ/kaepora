@@ -211,14 +211,17 @@ struct EventNext {
     std::optional<std::string> next;
 };
 
-// A line in which a character names what a place gives. A seed that shuffles the place rewrites it to name what the
-// seed places there.
+// Where a sentence of SoH's markup names an item or a place.
+inline constexpr std::string_view ItemSlot = "[[1]]";
+
+// A line in which a character names what a place gives, or that shuffling the place makes untrue. A seed that shuffles
+// the place rewrites it.
 struct PrizeLine {
     RandomizerCheck location;
     std::string file; // the message file in the text packs
     std::string label;
     std::optional<MessageCopy> copy; // for a line under a label the file lacks
-    Sentence sentence;
+    std::string sentence;            // in SoH's markup, with ItemSlot where the line names what the seed places there
     Fit fit;
 };
 

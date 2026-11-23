@@ -350,9 +350,9 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMT Trade Claim Check", ("LH Lab Trade Eyeball Frog", "Green Rupee"),
                                         settings=GIFTS_VANILLA))
 
-    def test_dampes_heart_piece_needs_a_hookshot(self):
-        self.assertFalse(self.reachable("Graveyard Dampe Race Freestanding PoH",
-                                        ("Graveyard Hookshot Chest", "Green Rupee")))
+    def test_dampes_heart_piece_needs_no_hookshot(self):
+        # Every race is timed, and the course has no hookshot target.
+        self.assertTrue(self.reachable("Graveyard Dampe Race Freestanding PoH", NO_HOOKSHOT))
 
     def test_deku_tree_slingshot_room_side_chest_needs_an_eye_hit(self):
         # An eye in the room drops the ladder to the side chest. Without the slingshot child Link reaches only the

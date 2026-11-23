@@ -123,7 +123,7 @@ SHOPS_SHUFFLED = {"Shop goods": "Four per shop shuffled"}
 SHOPS_AT_RANDOM = {"Shop goods": "A random number per shop"}
 SEVEN_PER_SHOP = {"Shop goods": "Seven per shop shuffled"}
 # A seed whose hints name a slot that only five per shop shuffle, and one for six and seven.
-HINT_SEED_AT_FIVE = "3"
+HINT_SEED_AT_FIVE = "1"
 HINT_SEED_AT_SEVEN = "2"
 WEAPONS_WITH_CONTAINERS = {"Item_Range_Bow", "Item_Range_SlingShot"}
 KEPT_FROM_SHOPS = WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small", "Item_BombchuBundle_Small",
@@ -238,7 +238,18 @@ QUEST_TEXTS = [
     {"flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs", "event": "Event179", "param": "GameDataName",
      "text": "Get_Epona_IsAfter_Ready_Exp"},
     {"flow": "Event/EventFlow/Get_StoneOfFire.bfevfl.zs", "event": "Event39", "param": "GameDataName",
-     "text": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp"}]
+     "text": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp"},
+    {"flow": "Event/EventFlow/MiniGame_DampeRace.bfevfl.zs", "event": "Event295", "param": "InstanceName",
+     "text": "ExitLookPos"}]
+# The next events every plan carries, in Dampé's race.
+DAMPES_RACE_NEXTS = [{"flow": "Event/EventFlow/MiniGame_DampeRace.bfevfl.zs", "event": event, "next": next_event}
+                     for event, next_event in (("Event442", "Event33"), ("Event201", "Event35"),
+                                               ("Event200", "Event35"), ("Event112", "Event95"),
+                                               ("Event121", "Event198"), ("Event277", "Event276"),
+                                               ("Event276", "Event353"), ("Event86", "Event56"),
+                                               ("Event129", "Event131"), ("Event98", "Event99"),
+                                               ("Event226", "Event158"), ("Event415", "Event221"),
+                                               ("Event207", "Event221"))]
 # The expression of every plan's own that Darunia's switch after his dance asks: his gift's scene played.
 DANCE_EXPRESSION = {"name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp", "all_of": ["HavePlayedEvent.Dm_Goron_0030"]}
 # The expression the Door of Time's stone check asks in every seed.
@@ -307,11 +318,12 @@ START_STEPS = {
 }
 # The items that shuffled places name for those steps: chests, and with gifts shuffled Darunia's bracelet, the scales,
 # the wallets and the bigger and biggest bags.
-STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Goron",
-               "Item_Gauntlet_Silver", "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium",
-               "Item_Wallet_Large", "Item_BulletBag_Medium", "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large",
-               "Item_BombBag_Medium", "Item_BombBag_Large", "Item_StickBag_Medium", "Item_StickBag_Large",
-               "Item_NutBag_Medium", "Item_NutBag_Large"]
+STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Hookshot", "Item_Longshot",
+               "Item_Gauntlet_Goron", "Item_Gauntlet_Silver", "Item_Gauntlet_Gold", "Item_Scale_Silver",
+               "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large", "Item_BulletBag_Medium",
+               "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large", "Item_BombBag_Medium",
+               "Item_BombBag_Large", "Item_StickBag_Medium", "Item_StickBag_Large", "Item_NutBag_Medium",
+               "Item_NutBag_Large"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -632,24 +644,24 @@ class SeedgenTest(unittest.TestCase):
         return out_of_reach
 
     def test_route_steps_are_in_reach_in_their_sphere(self):
-        # In seed 1, the pruning drops what three steps counted on in an earlier sphere.
+        # Paring a route keeps what each later step counts on.
         log, _ = self.generate("1")
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_a_seller_left_off_the_route_stands_in_for_no_step(self):
         # The route names one seller of each purchase, the first it reaches. With the Door of Time open and the dungeon
-        # rewards shuffled, seed 5's route reaches Bombchus for sale first at the Market's Bombchu Shop, which opens
-        # after Dodongo's Cavern, and later at the Haunted Wasteland's carpet merchant, who does not wait for the
-        # cavern. Paring the route with the merchant counted dropped King Dodongo and kept the shop.
-        log, _ = self.generate("5", CHESTS_ALONE | {"Door of Time": "Open", "Dungeon rewards": "Shuffled"})
+        # rewards shuffled, seed 19's route buys Bombchus at the Market's Bombchu Shop, which opens after Dodongo's
+        # Cavern. The Haunted Wasteland's carpet merchant, who does not wait for the cavern, sells them too.
+        log, _ = self.generate("19", CHESTS_ALONE | {"Door of Time": "Open", "Dungeon rewards": "Shuffled"})
+        self.assertTrue([step for step in playthrough_steps(log) if step.startswith("Market Bombchu Shop")])
         self.assertNotIn("Wasteland Carpet Salesman", playthrough_steps(log))
         self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere(self):
-        # Only child Link drains the well, with the Song of Storms that only adult Link learns. Seed 3's route takes a
+        # Only child Link drains the well, with the Song of Storms that only adult Link learns. Seed 1's route takes a
         # chest in the well before Phantom Ganon.
-        log, _ = self.generate("3", CHESTS_ALONE)
+        log, _ = self.generate("1", CHESTS_ALONE)
         spheres = list(log["playthrough"].values())
         forest_temple = next(number for number, steps in enumerate(spheres) if "Phantom Ganon" in steps)
         self.assertTrue(any(step.startswith("Bottom of the Well") for steps in spheres[:forest_temple] for step in steps))
@@ -657,9 +669,9 @@ class SeedgenTest(unittest.TestCase):
 
     def test_a_route_warps_a_child_to_the_colossus_only_after_a_song_that_takes_him_out(self):
         # A child cannot walk out of the Desert Colossus, and only the Requiem takes him there. With keys not needed,
-        # seed 4's route takes steps that need the Requiem. Its adult Link holds the Longshot and the Hover Boots by
+        # seed 2's route takes steps that need the Requiem. Its adult Link holds the Longshot and the Hover Boots by
         # then, so he walks to the Colossus, and the child is the one who needs the song.
-        log, _ = self.generate("4", CHESTS_ALONE | KEYS_NOT_NEEDED)
+        log, _ = self.generate("2", CHESTS_ALONE | KEYS_NOT_NEEDED)
         spheres = [list(steps) for steps in log["playthrough"].values()]
         given = {spoiler_item(item): number for number, steps in enumerate(log["playthrough"].values())
                  for item in steps.values()}
@@ -672,7 +684,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertLess(way_out, min(by_child))
 
     def test_a_route_that_buys_from_shops_is_in_reach_in_its_sphere(self):
-        # Seed 3's route buys the Hookshot, the Megaton Hammer and the Mirror Shield at shuffled slots.
+        # Seed 3's route buys a Hookshot and the Kokiri Sword at the Goron Shop, a Deku Shield at the Market's potion
+        # shop and the Hover Boots at the Bombchu Shop, all at shuffled slots.
         log, _ = self.generate("3", SHOPS_SHUFFLED)
         self.assertTrue(any(isinstance(log["locations"].get(step), dict)
                             for steps in log["playthrough"].values() for step in steps))
@@ -733,6 +746,20 @@ class SeedgenTest(unittest.TestCase):
                 held[location].add(spoiler["locations"][location])
         for location in chests:
             self.assertGreater(len(held[location]), 1, location)
+
+    def test_dampes_first_chest_holds_what_the_seed_places_there(self):
+        # Every race ends at the first chest until it is opened, whatever Link owns, so the chest is shuffled, and
+        # Dampé names what it holds as he gives it.
+        held = set()
+        for seed in range(220, 230):
+            spoiler, plan = self.generate(str(seed))
+            self.assertIn("16041366920820397198", {entry["hash"] for entry in plan["chests"]})
+            item = placed_remake_items(spoiler, plan)["Graveyard Hookshot Chest"]
+            (line,) = [entry["text"] for entry in plan["message_texts"]
+                       if (entry["file"], entry["label"]) == ("EventFlowMsg/Npc_Hylia_Dampe_002.msbt", "Talk_03")]
+            self.assertIn(f"I call it... {ITEM_NAMES[item]}!", plain(line), seed)
+            held.add(item)
+        self.assertGreater(len(held), 1)
 
     def test_dins_fire_comes_from_the_summit_great_fairy(self):
         # She gives Din's Fire with the magic meter. The castle's Great Fairy gives nothing until Link holds it.
@@ -978,7 +1005,7 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"}, seed)
 
     def test_every_setting_changed_at_once_400_to_419(self):
-        # In seed 405 Queen Gohma's place holds the Lens.
+        # In seed 406 Twinrova's place holds the Lens.
         self.assert_every_setting_changed_at_once(range(400, 420))
 
     def test_every_setting_changed_at_once_420_to_439(self):
@@ -1227,8 +1254,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes Goron's Bracelet from the scrub by the Lost Woods bridge, the Boomerang from the diving
-        # game and the Weird Egg from the 10-token reward, among other gifts.
+        # Seed 10's route takes the Iron Boots from the crater's scrub, a Hookshot from the frogs in the rain and the
+        # Goron Tunic from Talon's chickens, among other gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -1237,8 +1264,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 26 hints at three gifts by their sentences, two of the House of Skulltula's rewards and Bombchu Bowling's
-        # first prize.
+        # Seed 26 hints at three gifts by their sentences: the Colossus's Great Fairy, the Deku Theater's Skull Mask
+        # prize and Zelda's scene in the Temple of Time.
         spoiler, plan = self.assert_hints_are_true("26", CHESTS_ALONE | GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
@@ -1349,7 +1376,7 @@ class SeedgenTest(unittest.TestCase):
             on_route += "DMT Trade Claim Check" in steps
             # His own expression reads his claim.
             own = [entry for entry in plan["expressions"] if entry["all_of"][0] in plan["claims"]]
-            self.assertTrue(plan["event_nexts"] and own, seed)
+            self.assertTrue([entry for entry in plan["event_nexts"] if entry not in DAMPES_RACE_NEXTS] and own, seed)
             self.assertEqual(plan["start_values"]["GetSwordBigGoron_ElapsedTime"], 1)
             self.assertEqual(self.route_out_of_reach(spoiler), [])
         self.assertTrue(on_route)
@@ -1381,9 +1408,9 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_a_child_meets_zelda_without_what_the_lost_dog_holds(self):
-        # The lost dog comes out only once Zelda's Letter is shown at Kakariko's gate. Without that rule, seed 23 puts
+        # The lost dog comes out only once Zelda's Letter is shown at Kakariko's gate. Without that rule, seed 3 puts
         # the Weird Egg there, and the child needs it to wake Talon on the way to Zelda.
-        log, _ = self.generate("23", GIFTS_SHUFFLED)
+        log, _ = self.generate("3", GIFTS_SHUFFLED)
         without_the_dog = {**log["locations"], "Market Lost Dog": "Green Rupee"}
         self.assertTrue(reach.reachable("Song from Impa", *without_the_dog.items(), settings=log["settings"]))
 
@@ -1446,9 +1473,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
 
     def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
-        # Seed 2 puts the Gerudo Pass in the chest of Dampé's race, the Zora Tunic in the scarecrow's chest at Zora's
-        # Fountain and the Light Arrows in Hyrule Field's Fairy Thought chest, and its route takes the carpenters'
-        # rescue and Zelda's scene for what they open.
+        # Seed 2 puts the Gerudo Pass in the heart piece's chest of Dampé's race, the Zora Tunic at Kakariko's
+        # 50-token reward and the Light Arrows in the Bottom of the Well's map chest, and its route takes the
+        # carpenters' rescue and Zelda's scene for what they open.
         log, _ = self.generate("2", CHESTS_ALONE | GIFTS_SHUFFLED)
         for location, item in STORY_GIFTS.items():
             self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
@@ -1487,19 +1514,21 @@ class SeedgenTest(unittest.TestCase):
 
     def test_hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle(self):
         # Her mark stands in the scene the game names Ganondorf's Castle, where the stones place that scene's
-        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 9's route takes the Lens
-        # of Truth from her, and seed 41's the Megaton Hammer.
-        for seed in ("9", "41"):
-            self.assert_hints_are_true(seed, {"Gifts": ["Great Fairies"]})
+        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 55's route takes the Lens
+        # of Truth from her, and seed 3's the Iron Boots, and a stone of each says Ganondorf's Castle is on the way.
+        for seed in ("55", "3"):
+            spoiler, _ = self.assert_hints_are_true(seed, {"Gifts": ["Great Fairies"]})
+            self.assertIn("OGC Great Fairy Reward", playthrough_steps(spoiler))
+            self.assertIn("They say that Ganondorf's Castle is on the way of the hero.", spoiler["hints"].values())
 
     def test_the_summit_passes_her_meter_scene_with_an_item_that_brings_none(self):
         # For a Link with no meter her entry plays the meter's birth and waits for its end. With an item that brings no
         # meter there is none to be born, so the two questions of that scene ask her claim, false until her paid path
-        # writes it after the gift. Seed 1 puts a Blue Rupee at the summit, and seed 29 the Ice Arrows.
+        # writes it after the gift. Seed 1 puts a Purple Rupee at the summit, and seed 14 the Ice Arrows.
         summit = next(row for row in FOUNTAIN_CLAIMS if row["location"] == "DMT Great Fairy Din's Fire")
         scene = [("Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs", event, "GameDataName")
                  for event in ("Event555", "Event554")]
-        for seed, brings in (("1", False), ("29", True)):
+        for seed, brings in (("1", False), ("14", True)):
             spoiler, plan = self.generate(seed, CHESTS_ALONE | {"Gifts": ["Great Fairies"]})
             self.assertEqual(spoiler_item(spoiler["locations"][summit["location"]]) in METER_ITEMS, brings, seed)
             texts = {(e["flow"], e["event"], e["param"]): e["text"] for e in plan["event_texts"]}
@@ -1617,7 +1646,7 @@ class SeedgenTest(unittest.TestCase):
     def test_a_route_with_gold_skulltulas_shuffled_is_in_reach_in_its_sphere(self):
         log, _ = self.generate("23", CHESTS_ALONE | SKULLTULAS_SHUFFLED)
         skulltulas = {row["location"] for row in SKULLTULAS}
-        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 7)
+        self.assertEqual(len(skulltulas & playthrough_steps(log).keys()), 8)
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_songs_shuffled_among_themselves(self):
@@ -1702,7 +1731,7 @@ class SeedgenTest(unittest.TestCase):
 
     def test_loose_items_hold_the_bomb_bag_the_bow_and_the_slingshot(self):
         given = collections.Counter()
-        for seed in range(300, 330):
+        for seed in range(300, 333):
             _, plan = self.generate(str(seed), LOOSE_SHUFFLED)
             given.update(entry["item"] for entry in plan["loose_items"])
         self.assertLessEqual(WEAPONS_WITH_CONTAINERS | {"Item_BombBag_Small"}, given.keys(), given)
@@ -1721,7 +1750,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_loose_items_truly(self):
-        # Seed 5 hints at the heart piece under Zora's Fountain by its sentence.
+        # Seed 5 hints at the Bottom of the Well's loose key, in a coffin, by its sentence.
         spoiler, plan = self.assert_hints_are_true("5", CHESTS_ALONE | LOOSE_SHUFFLED)
         loose = {row["location"] for row in LOOSE_ITEMS}
         said = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
@@ -1742,16 +1771,16 @@ class SeedgenTest(unittest.TestCase):
 
     def test_a_route_reaches_the_colossus_only_with_a_way_out(self):
         # The Desert Colossus's way into the Wasteland stands only once an adult has walked into the Wasteland from the
-        # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 7's
-        # route takes a step there before the carpenters' rescue. Were an adult's Requiem to count once the rescue is
-        # done, seed 9's route, with gifts shuffled, would take one after the rescue with the Requiem as its only warp
-        # song and no Lens of Truth for the Wasteland.
-        for seed, settings in (("7", SONGS_SHUFFLED), ("9", GIFTS_SHUFFLED | SONGS_SHUFFLED)):
+        # fortress, a walk no route names, so Link leaves the Colossus by another warp song or comes on foot. Seed 1's
+        # route takes a step there before the carpenters' rescue, and seed 9's, with gifts shuffled, after it.
+        for seed, settings, before in (("1", SONGS_SHUFFLED, True), ("9", GIFTS_SHUFFLED | SONGS_SHUFFLED, False)):
             log, _ = self.generate(seed, settings)
             spheres = list(log["playthrough"].values())
             there = next(number for number, steps in enumerate(spheres)
                          if any(step.startswith(("Colossus", "Spirit Temple")) or step == "Sheik at Colossus"
                                 for step in steps))
+            rescue = next(number for number, steps in enumerate(spheres) if "GF Freed All Carpenters" in steps)
+            self.assertEqual(there < rescue, before, seed)
             held = collections.Counter(item for steps in spheres[:there] for item in steps.values())
             # Both ages walk on from where the Minuet, the Serenade, the Nocturne and the Prelude land them. An adult
             # gets across the crater from the Bolero's landing with the Hookshot or the Hover Boots.
@@ -1776,10 +1805,10 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 19: nothing shuffled in Kokiri Forest is needed, but the seed cannot be finished without the Deku
-        # Shield on the Kokiri Shop's kept shelf.
-        self.assert_hints_are_true("19", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED | LOOSE_SHUFFLED
-                                   | REWARDS_SHUFFLED)
+        # Seed 27's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
+        spoiler, _ = self.assert_hints_are_true("27", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+                                                | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
+        self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 1"])
 
     def assert_hints_are_true(self, seed, settings=None):
         spoiler, plan = self.generate(seed, settings)
@@ -1953,13 +1982,12 @@ class SeedgenTest(unittest.TestCase):
                                  list(unstarted.values()).count("TBox_Rupee_Red") + 1, (tunic, seed))
 
     def test_a_place_that_gives_a_started_step_again_counts_for_nothing(self):
-        # Dampé's race, Saria, the diving game, the two wallet rewards and the Bomb Bag's chest of a dungeon left out
-        # each give one named step, which a seed that starts with it already holds. The logic would count the next step
-        # there.
-        again = {"Graveyard Hookshot Chest", "LW Gift From Saria", "ZD Diving Minigame", "Kak 10 Gold Skulltula Reward",
+        # Saria, the diving game, the two wallet rewards and the Bomb Bag's chest of a dungeon left out each give one
+        # named step, which a seed that starts with it already holds. The logic would count the next step there.
+        again = {"LW Gift From Saria", "ZD Diving Minigame", "Kak 10 Gold Skulltula Reward",
                  "Kak 30 Gold Skulltula Reward"}
         started = ["Hookshot", "Silver Scale", "Giant's Wallet", "Fairy Ocarina"]
-        # In seed 9 the Giant's Wallet and both rewards would make four wallets, more than the logic's count holds.
+        # With the Giant's Wallet started, both rewards would make four wallets, more than the logic's count holds.
         cases = [(seed, {"Start with": started}, again) for seed in ("9", "33", "34", "35", "36")]
         cases.append(("37", {"Start with": [*started, "Bomb Bag (20 bombs)"],
                              "Shuffled dungeons": [name for name in DUNGEONS if name != "Dodongo's Cavern"]},
@@ -1982,7 +2010,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["message_texts"], given_plan["message_texts"][:len(prize_lines)])
         sent_on = [dict(zip(("flow", "event", "next"), row["sent_on"].split(":"))) for row in CHARACTER_HINTS
                    if row["sent_on"]]
-        self.assertEqual(given_plan["event_nexts"], sent_on + plan["event_nexts"])
+        race = len(DAMPES_RACE_NEXTS)
+        self.assertEqual(plan["event_nexts"][:race], DAMPES_RACE_NEXTS)
+        self.assertEqual(given_plan["event_nexts"], DAMPES_RACE_NEXTS + sent_on + plan["event_nexts"][race:])
         told = ("stone_texts", "message_texts", "event_nexts")
         self.assertEqual({key: value for key, value in plan.items() if key not in told},
                          {key: value for key, value in given_plan.items() if key not in told})
@@ -1991,8 +2021,11 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
 
     def test_a_place_whose_kept_shelf_the_route_needs_is_not_foolish(self):
-        # Seed 189's only Deku Shield is on the Kokiri Shop's kept shelf, which the route buys in its first sphere.
-        self.assert_hints_are_true("189", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
+        # Seed 4's route buys the Deku Shield on the Kokiri Shop's kept shelf in its first sphere, and takes nothing
+        # else in Kokiri Forest.
+        spoiler, _ = self.assert_hints_are_true("4", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
+        self.assertIn("KF Shop Item 2", list(spoiler["playthrough"].values())[0])
+        self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 2"])
 
     def test_hints_name_shop_goods_truly(self):
         # Seed 4 hints at a shuffled shop slot by its sentence.
@@ -2009,8 +2042,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(sentences & set(spoiler["hints"].values()))
 
     def test_hints_name_the_goods_only_six_and_seven_per_shop_shuffle(self):
-        # A stone of seed HINT_SEED_AT_SEVEN says that the Hyrule Castle Town Potion Shop offers Three Deku Sticks,
-        # at its item 4.
+        # A stone of seed HINT_SEED_AT_SEVEN says that a Goron shopkeeper sells the Lens of Truth, at the Goron Shop's
+        # item 1.
         self.assert_hints_are_true(HINT_SEED_AT_SEVEN, CHESTS_ALONE | SEVEN_PER_SHOP)
         spoiler, plan = self.generate(HINT_SEED_AT_SEVEN, CHESTS_ALONE | SEVEN_PER_SHOP)
         held = placed_remake_items(spoiler, plan)
@@ -2053,11 +2086,15 @@ class SeedgenTest(unittest.TestCase):
                                              entry)
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
-        # Seed 408's route takes the Megaton Hammer from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall,
-        # and a hint says Hyrule Field is on the way of the hero. Seed 664's route takes the Megaton Hammer from HC OGC
-        # GS, in the scene the game calls Ganondorf's Castle, and a hint says that scene is on the way.
-        for seed in ("408", "664"):
-            self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
+        # Seed 407's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
+        # a hint says Hyrule Field is on the way of the hero. Seed 402's route takes the Fairy Bow from HC OGC GS, in
+        # the scene the game calls Ganondorf's Castle, and a hint says the Fairy Bow is at Ganondorf's Castle.
+        for seed, skulltula, hint in (
+                ("407", "LLR GS Back Wall", "They say that Hyrule Field is on the way of the hero."),
+                ("402", "HC OGC GS", "They say that the Fairy Bow can be found at Ganondorf's Castle.")):
+            spoiler, _ = self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
+            self.assertIn(skulltula, playthrough_steps(spoiler))
+            self.assertIn(hint, spoiler["hints"].values())
 
     def test_hints_name_gold_skulltulas_truly(self):
         self.assert_hints_are_true("23", CHESTS_ALONE | SKULLTULAS_SHUFFLED)
@@ -2068,7 +2105,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(said & set(spoiler["hints"].values()))
 
     def test_hints_name_song_places_truly(self):
-        # Seed 24 hints at two song places by their sentences.
+        # Seed 24 hints at three song places by their sentences.
         spoiler, plan = self.generate("24", SONGS_SHUFFLED)
         held = placed_remake_items(spoiler, plan)
         sentences = {plain(CHEST_SENTENCES[row["location"]].replace("[[1]]", ITEM_NAMES[held[row["location"]]]))

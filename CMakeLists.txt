@@ -239,6 +239,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      same_seed_same_files twenty_seeds_generate spirit_dungeon_items_stay_out_of_the_colossus
                      scrub_seeds_and_the_large_magic_jar_are_placed a_chest_kept_twice_holds_one_item
                      loose_items_the_remake_keeps_in_chests_are_shuffled
+                     dampes_first_chest_holds_what_the_seed_places_there
                      dins_fire_comes_from_the_summit_great_fairy
                      spoiler_log_records_the_settings default_settings_are_the_settings_left_out
                      an_unknown_setting_is_refused a_price_a_box_cannot_hold_or_a_range_upside_down_is_refused
@@ -509,6 +510,8 @@ if(KAEPORA_GAME_NUP)
                                                "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-darunias-son COMMAND ${PATCH_TEST} darunias-son $<TARGET_FILE:kaepora-patch>
                                              "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-dampes-race COMMAND ${PATCH_TEST} dampes-race $<TARGET_FILE:kaepora-patch>
+                                            "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-time-runs-from-the-start
         COMMAND ${PATCH_TEST} time-runs-from-the-start $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                 $<TARGET_FILE:kaepora-seedgen>)

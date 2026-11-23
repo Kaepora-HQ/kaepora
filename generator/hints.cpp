@@ -299,11 +299,12 @@ std::vector<MessageText> PrizeLines(const RemakeHintTables& tables,
         if (placed == items.end()) {
             continue;
         }
-        const std::string& item = tables.itemsByRemakeName.at(placed->second);
-        lines.push_back({ .file = line.file,
-                          .label = line.label,
-                          .copy = line.copy,
-                          .tagged = Layout(line.sentence.before + item + line.sentence.after, line.fit) });
+        std::string markup = line.sentence;
+        if (const size_t slot = markup.find(ItemSlot); slot != std::string::npos) {
+            markup.replace(slot, ItemSlot.size(), tables.itemsByRemakeName.at(placed->second));
+        }
+        lines.push_back(
+            { .file = line.file, .label = line.label, .copy = line.copy, .tagged = Layout(markup, line.fit) });
     }
     return lines;
 }

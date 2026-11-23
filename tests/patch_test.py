@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk|darunias-dance| \
-           darunias-son|time-runs-from-the-start <kaepora-patch> <game.nup> <kaepora-seedgen>
+           darunias-son|dampes-race|time-runs-from-the-start <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -843,7 +843,8 @@ UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293"),
                   ("Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42"),
                   ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172"),
                   ("Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208"),
-                  (FIRE_QUEST_FLOW, "Event39"), (DOOR_OF_TIME_FLOW, "Event38"), (DOOR_OF_TIME_FLOW, "Event148")}
+                  (FIRE_QUEST_FLOW, "Event39"), (DOOR_OF_TIME_FLOW, "Event38"), (DOOR_OF_TIME_FLOW, "Event148"),
+                  ("Event/EventFlow/MiniGame_DampeRace.bfevfl.zs", "Event295")}
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
@@ -2443,6 +2444,59 @@ def darunias_son(patch, game, seedgen):
         assert ours == expected, settings
 
 
+DAMPES_RACE_FLOW = "Event/EventFlow/MiniGame_DampeRace.bfevfl.zs"
+GRAVEYARD_ADULT_STATIC = "Banc/Graveyard/Graveyard_Adult_Static.bcett.byml.zs"
+DAMPE_RACING = 14077875928505556003
+# Every mod's next events in Dampé's race: the event that each sends on and the event it goes on to.
+DAMPES_RACE_NEXTS = [
+    # The race's result picks its chest by the count of the races won, and a finish counts only for a Link with the
+    # Hookshot in his pouch. Opening the first chest or the heart piece's counts instead, and the count goes on to
+    # where each opening went.
+    ("Event442", "Event33"),
+    ("Event201", "Event35"),
+    ("Event200", "Event35"),
+    ("Event112", "Event95"),
+    # Navi says nothing of the Hookshot after the first chest.
+    ("Event121", "Event198"),
+    # The first chest is told of and appears at every finish until it is opened, with no word of the Hookshot, and
+    # Dampé's talk before a race tells nothing of his treasure.
+    ("Event277", "Event276"),
+    ("Event276", "Event353"),
+    ("Event86", "Event56"),
+    # Every race is the timed one, and the timer leaves the screen for every Link at the goal and at a lost race's end.
+    ("Event129", "Event131"),
+    ("Event98", "Event99"),
+    ("Event226", "Event158"),
+    # His talk after the first chest, and his talk when Link will not race again, show the way out and lift Link.
+    ("Event415", "Event221"),
+    ("Event207", "Event221"),
+]
+
+
+def dampes_race(patch, game, seedgen):
+    """In every seed Dampé's race ends at its first chest until that chest is opened, whatever Link owns, and his talk
+    after any chest lifts Link to the ledge by the exit, which takes the Hookshot in the game. The race's flow is the
+    game's but for the DAMPES_RACE_NEXTS and his exit talk's warp, which names an anchor of his on the ledge in place of
+    one in front of him. Seed 2 shuffles every gift group."""
+    placement = game.placement(game.read(GRAVEYARD_ADULT_STATIC))
+    names = {a["Hash"]: a.get("Name") for a in placement["Actors"]}
+    linked = {names.get(link["Dst"]) for link in actor(placement, DAMPE_RACING)["Links"]}
+    assert {"PlayerPos1", "ExitLookPos"} <= linked, linked
+    for seed, settings in (("1", {}), ("2", {"Gifts": "Shuffled"})):
+        mod = patched(patch, game, generated_plan(seedgen, seed, settings))
+        expected = game.event_flow(game.read(DAMPES_RACE_FLOW))
+        warp = string_parameter(expected, "Event295", "InstanceName")
+        assert warp[1] == "PlayerPos1", warp
+        warp[1] = "ExitLookPos"
+        events = {named[0]: named for named in expected["events"]}
+        for event, next_event in DAMPES_RACE_NEXTS:
+            before = list(events[event])
+            sent_on(expected, event, next_event)
+            # A switch keeps the cases it has, so a row that names where an event already goes changes nothing.
+            assert list(events[event]) != before, event
+        assert game.event_flow(mod[DAMPES_RACE_FLOW]) == expected, settings
+
+
 def time_runs_from_the_start(patch, game, seedgen):
     """In every seed a new game starts with the world's time running and free to pass 15:00 into the night. The game
     holds the time until the owl's scene on the child's first walk into Hyrule Field sets the first value, and stops the
@@ -3631,6 +3685,7 @@ def main():
         "mido-hint-every-talk": mido_hint_every_talk,
         "darunias-dance": darunias_dance,
         "darunias-son": darunias_son,
+        "dampes-race": dampes_race,
         "time-runs-from-the-start": time_runs_from_the_start,
         "sarias-greeting": sarias_greeting,
         "new-area-scenes": new_area_scenes,

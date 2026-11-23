@@ -4,7 +4,7 @@ With the default settings, a seed shuffles the chests, the gifts of every group 
 
 ## Chests
 
-A seed moves the items that chests hold, in the overworld and in every dungeon, including the chests only the remake has. Every seed can be finished.
+A seed moves the items that chests hold, in the overworld and in every dungeon, including the chests only the remake has and the first chest of Dampé's race, which holds the Hookshot in the game. Every seed can be finished.
 
 Kaepora checks that each item you need can be reached with what you find before it.
 
@@ -142,5 +142,7 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 - **Bombs need no strength.** Link can take a bomb out of the bag before he has a strength item.
 - **The Kokiri Sword chest gives only what it holds.** In the game, the scene after that chest puts a Kokiri Sword in Link's hand, whatever the chest held. With another item in the chest, a seed leaves the scene out.
 - **Darunia's son gives whenever you reach him.** In the game he hands over his gift only if you stop him rolling before you go on to the crater. With a seed he still gives after you have been to the crater or finished the Fire Temple, so what he hands over is never lost.
+- **Every race at Dampé's is timed.** In the game only a Link who owns the Hookshot gets the timer, and the first race ends at the Hookshot's chest only for a Link without one. With a seed every race is timed, his first chest waits until you open it, whatever you own, and his second prize comes for a finish within a minute after that.
+- **Dampé lifts you to the exit.** In the game you leave his goal room with the Hookshot or a warp. With a seed he sets you on the ledge by the door: talk to him after his first chest, or after any other chest tell him you won't race again. One thing to watch: without the Hookshot, do not walk back into the grave through the windmill's door, because the room below the ledge has no way out without one.
 - **Time runs from the start.** In the game the afternoon stops at 3 PM until Impa sends you off from the castle, so before you meet Zelda the day never turns to night on its own. With a seed the day and night turn from the beginning.
 - **A few doors and scenes.** Four dungeon doors start open. A seed lets you do things in an order the game never expected, so some scenes are changed to keep up. Story scenes, the Zora diving game and your first walk into Zora's Domain no longer set a quest back. King Zora stays frozen after the Water Temple until you thaw him, so what he hands over is never lost. If you finish both stone dungeons before you meet Zelda, her escape plays as soon as Impa has sent you off, and the drawbridge is no longer raised before it.
