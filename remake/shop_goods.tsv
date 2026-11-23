@@ -23,12 +23,15 @@ Item_Sword_Kokiri		Pose_Common	-254	249	460	239
 Item_Token_Gold		Pose_Common	-193	194	360	186
 Item_Wallet_Large		Pose_Common	-244	272	427	230
 Item_Wallet_Medium		Pose_Common	-212	191	283	154
+Obj_Armor_Goron	Shop_Armor_Goron					
+Obj_Armor_Zora	Shop_Armor_Zora					
 Obj_Heart_Container		Pose_Common	14	730	795	399
 Obj_Heart_Piece		Pose_Common	8	404	441	221
 TBox_ArrowBundle_Large	Shop_ArrowBundle_01					
 TBox_ArrowBundle_Medium		Pose_Shop	-10	522	433	232
 TBox_DekuNutBundle		Pose_Common	-14	291	360	183
 TBox_Rupee_Blue		Pose_Common	7	390	206	103
+TBox_Rupee_Gold		Pose_Common	7	390	206	103
 TBox_Rupee_Green		Pose_Common	7	390	206	103
 TBox_Rupee_Purple		Pose_Common	7	390	206	103
 TBox_Rupee_Red		Pose_Common	7	390	206	103

@@ -77,6 +77,7 @@ Item_Token_Gold	Item_Token_Gold_Name	Token	a
 Item_Wallet_Large	Item_Wallet_Large_Name	Giant's Wallet	a
 Item_Wallet_Medium	Item_Wallet_Medium_Name	Adult's Wallet	an
 Item_WeirdEgg	Item_WeirdEgg_Name	Weird Egg	the
+Item_ZeldaLetter	Item_ZeldaLetter_Name	Zelda's Letter	
 Obj_Armor_Goron	Armor_Adult_Goron_Name	Goron Tunic	a
 Obj_Armor_Zora	Armor_Adult_Zora_Name	Zora Tunic	a
 Obj_Heart_Container	Obj_Heart_Container_Name	Heart Container	a
@@ -86,6 +87,7 @@ TBox_ArrowBundle_Large	Obj_ArrowBundle_Large_Name	10 Arrows
 TBox_ArrowBundle_Medium	Obj_ArrowBundle_Medium_Name	Five Arrows	
 TBox_DekuNutBundle	TBox_DekuNutBundle_Name	Three Deku Nuts	
 TBox_Rupee_Blue	Obj_Rupee_Blue_Name	Blue Rupee	a
+TBox_Rupee_Gold	Obj_Rupee_Gold_Name	Gold Rupee	a
 TBox_Rupee_Green	Obj_Rupee_Green_Name	Green Rupee	a
 TBox_Rupee_Purple	Obj_Rupee_Purple_Name	Purple Rupee	a
 TBox_Rupee_Red	Obj_Rupee_Red_Name	Red Rupee	a

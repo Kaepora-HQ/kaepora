@@ -26,8 +26,9 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step|market-arrival-writes-no-step| \
-           a-child-comes-back-with-the-sword-he-left-with|schedule-entry|module-texts <kaepora-patch> <game.nup>
+           river-arrival-writes-no-step|market-arrival-writes-no-step|fairies-and-summit-owl-without-dins-fire| \
+           a-child-comes-back-with-the-sword-he-left-with|a-child-buys-a-tunic| \
+           a-potion-shop-sells-a-first-blue-fire|schedule-entry|module-texts <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1096,10 +1097,9 @@ def tested_bomb_mod(patch, game, mod):
         result = run(patch, game, plan([]), tmp)
         assert result.returncode == 0, result.stderr
         ours = files(tmp / "mod" / "romfs" / "Pack" / "Actor")
-    assert sorted(ours) == sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), \
-        (sorted(ours), sorted(tested))
-    for name, data in ours.items():
-        assert_same_file(game, name, data, tested[name])
+    assert sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), sorted(tested)
+    for name, data in tested.items():
+        assert_same_file(game, name, ours[name], data)
 
 
 def tested_mido_mod(patch, game, mod):
@@ -3006,6 +3006,56 @@ def a_child_comes_back_with_the_sword_he_left_with(patch, game):
     assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
 
 
+SHOP_FLOW = "Event/EventFlow/DisplayShop.bfevfl.zs"
+SHOP_FLOW_NEXTS = [("Event169", "Event491"), ("Event108", "Event497")]
+POTION_SHOPKEEPERS = ["Npc_Hylia_020_Shop_Child", "Npc_Hylia_020_Shop_Adult"]
+POTION_GOODS = "Component/ShopParam/Npc_Hylia_020_Shop.game__component__ShopParam.bgyml"
+
+
+def shop_flow(patch, game):
+    mod = every_mod(patch, game)
+    assert SHOP_FLOW in mod, sorted(mod)
+    expected = game.event_flow(game.read(SHOP_FLOW))
+    for event, next_event in SHOP_FLOW_NEXTS:
+        sent_on(expected, event, next_event)
+    flow = game.event_flow(mod[SHOP_FLOW])
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
+    return flow
+
+
+def a_child_buys_a_tunic(patch, game):
+    """In every mod the Goron and Zora shopkeepers sell a child either tunic. Once the shops' flow finds by name that the
+    goods are a tunic, in Event25 or Event23, it asks in Event169 whether Link is a child, and on a child's answer those
+    two shopkeepers refuse him. Every mod sends that question on to the flow's next check, Event491, on both answers, as
+    the game does for an adult."""
+    flow = shop_flow(patch, game)
+    checked = [flow["events"][i][0] for i in sorted(reached(flow, "Outofstock_SelectCloth"))]
+    assert checked == ["Event23", "Event25", "Event169", "Event491"], checked
+
+
+def a_potion_shop_sells_a_first_blue_fire(patch, game):
+    """In every mod both potion shops sell Blue Fire to a Link who has never had it. The game refuses him twice. Once
+    Blue Fire is chosen, the shops' flow asks in Event108 whether Link has ever had it, and on a no the potion
+    shopkeepers say it is sold out: every mod sends that question on to its yes, Event497. And each potion shopkeeper's
+    goods list shows its Blue Fire, slot 4, sold out until he has had it: every mod writes that slot with the game's
+    goods at their own price and no gate."""
+    flow = shop_flow(patch, game)
+    checked = [flow["events"][i][0] for i in sorted(reached(flow, "Outofstock_SelectBottle_BlueFire"))]
+    assert checked == ["Event490", "Event497", "Event498", "Event108"], checked
+    mod = every_mod(patch, game)
+    for keeper in POTION_SHOPKEEPERS:
+        path = f"Pack/Actor/{keeper}.pack.zs"
+        theirs, ours = game.pack(game.read(path)), game.pack(mod[path])
+        assert ours.keys() == theirs.keys(), path
+        assert [name for name in theirs if ours[name] != theirs[name]] == [POTION_GOODS], path
+        expected = byml(theirs[POTION_GOODS])
+        blue_fire = expected["GoodsList"][4]
+        assert blue_fire["Release"]["SoldOutGameData"] == "IsGet.Item_Bottle_BlueFire", blue_fire
+        blue_fire.update(PriceOffset=(INT, 0), Release={"IsCheckReleaseGameData": (BOOL, 0), "ReleaseGameData": ""})
+        expected["GoodsList"][4] = dict(sorted(blue_fire.items()))  # a BYML dict holds its keys sorted
+        assert ordered(byml(ours[POTION_GOODS])) == ordered(expected), path
+
+
 def market_arrival_writes_no_step(patch, game):
     """In every mod a first walk from Hyrule Field into the Market plays the Market's scene, Dm_HrlCastle_0005, and
     leaves the castle quest where it is. The entry goes on from the scene's depth of field, Event65, to a wait that
@@ -3019,6 +3069,26 @@ def market_arrival_writes_no_step(patch, game):
     assert transitions(flow, entry) == ["Dm_HrlCastle_0005"]
     assert [flow["events"][i][0] for i in sorted(reached(flow, entry))] == ["Event200", "Event203", "Event268",
                                                                              "Event65"]
+
+
+TRIFORCE_MARK_FLOW = "Event/EventFlow/TriForcePoint.bfevfl.zs"
+SUMMIT_OWL_FLOW = "Event/EventFlow/Npc_Kaepora_DeathMountainTrail.bfevfl.zs"
+
+
+def fairies_and_summit_owl_without_dins_fire(patch, game):
+    """In every mod a Link who holds no Din's Fire goes on where the game sends one who holds it: from the question of
+    each Triforce mark but the summit's to its fairy's appearance, and from the summit owl's to his offer to fly a child
+    down to Kakariko."""
+    mod = every_mod(patch, game)
+    for path, question, holder in ((TRIFORCE_MARK_FLOW, "Event8", "Event26"), (SUMMIT_OWL_FLOW, "Event4", "Event18")):
+        expected = game.event_flow(game.read(path))
+        assert string_parameter(expected, question, "GameDataName")[1] == "IsGet.Item_DinFire", question
+        index = {event[0]: i for i, event in enumerate(expected["events"])}
+        # A yes-or-no switch stores true as case 0.
+        cases = {value: event for value, event, _ in struct.iter_unpack("<IHH", expected["events"][index[question]][3])}
+        assert cases[0] == index[holder], cases
+        assert path in mod, sorted(mod)
+        assert game.event_flow(mod[path]) == sent_on(expected, question, holder), path
 
 
 def without_mask(flow):
@@ -3699,7 +3769,10 @@ def main():
         "event-numbers": event_numbers,
         "river-arrival-writes-no-step": river_arrival_writes_no_step,
         "market-arrival-writes-no-step": market_arrival_writes_no_step,
+        "fairies-and-summit-owl-without-dins-fire": fairies_and_summit_owl_without_dins_fire,
         "a-child-comes-back-with-the-sword-he-left-with": a_child_comes_back_with_the_sword_he_left_with,
+        "a-child-buys-a-tunic": a_child_buys_a_tunic,
+        "a-potion-shop-sells-a-first-blue-fire": a_potion_shop_sells_a_first_blue_fire,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

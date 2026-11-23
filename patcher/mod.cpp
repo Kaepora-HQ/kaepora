@@ -1407,6 +1407,33 @@ constexpr std::string_view StoneCount = "Event4";
 constexpr std::pair<std::string_view, std::string_view> DoorOfTimeNext[] = { { SendOffEnd, StoneCheck },
                                                                              { BothStonesStep, StoneCount } };
 
+// Each Triforce mark but the summit's asks in Event8 whether Link holds Din's Fire, which the summit's Great Fairy
+// gives, and only with it goes on to Event26, where its fairy appears. The summit's owl asks it in Event4, and only
+// with it goes on to Event18, his offer to fly a child down to Kakariko. Sent on to those events, every fairy comes and
+// the owl flies for a Link without it.
+constexpr struct {
+    std::string_view flow, question, next;
+} DinsFireQuestions[] = { { "Event/EventFlow/TriForcePoint.bfevfl.zs", "Event8", "Event26" },
+                          { "Event/EventFlow/Npc_Kaepora_DeathMountainTrail.bfevfl.zs", "Event4", "Event18" } };
+
+// A shop's choice of goods runs this flow's Outofstock_SelectCloth. Once the goods are found by name to be a tunic, it
+// asks whether Link is a child, and on a child's answer the Goron and Zora shopkeepers refuse him. Its next check finds
+// by name whether the goods are Blue Fire and asks whether Link has ever had it, and on a no the potion shopkeepers say
+// it is sold out. Both questions go on as for an adult and for a Link who has had Blue Fire.
+constexpr std::string_view ShopFlow = "Event/EventFlow/DisplayShop.bfevfl.zs";
+constexpr std::string_view ChildQuery = "Event169";
+constexpr std::string_view BlueFireCheck = "Event491";
+constexpr std::string_view HadBlueFireQuery = "Event108";
+constexpr std::string_view NormalSale = "Event497";
+constexpr std::pair<std::string_view, std::string_view> ShopFlowNext[] = { { ChildQuery, BlueFireCheck },
+                                                                           { HadBlueFireQuery, NormalSale } };
+// Each potion shopkeeper's goods list also shows its Blue Fire sold out until Link has had Blue Fire. SetGoods writes
+// the slot with no gate.
+constexpr std::string_view PotionShopkeepers[] = { "Npc_Hylia_020_Shop_Child", "Npc_Hylia_020_Shop_Adult" };
+constexpr std::string_view PotionGoodsList = "Npc_Hylia_020_Shop";
+constexpr uint32_t BlueFireSlot = 4;
+constexpr std::string_view BlueFireGoods = "Shop_Bottle_BlueFire";
+
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
 // message opens with. Another language's pack keeps the game's words, and a copy there says its copied message whole.
 static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan,
@@ -1506,6 +1533,18 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     std::map<std::string, NewActor> goodsActors;
     std::map<std::string, NewActor> tokenCopies;
     std::map<std::string, NewActor> pickupCopies;
+    const auto shopPack = [&](std::string_view actor) -> ShopPack& {
+        const std::string path = std::format("Pack/Actor/{}.pack.zs", actor);
+        auto pack = packs.find(path);
+        if (pack == packs.end()) {
+            pack = packs.emplace(path, ShopPack{ sarc::Parse(Decompress(game.Read(path), packDictionary)) }).first;
+        }
+        return pack->second;
+    };
+    for (const std::string_view keeper : PotionShopkeepers) {
+        SetGoods(shopPack(keeper).GoodsList(std::string(PotionGoodsList)), BlueFireSlot, std::string(BlueFireGoods), 0,
+                 UnlimitedStock);
+    }
     for (const PlannedShopSlot& slot : plan.shops) {
         try {
             byml::Node& pouch = tables.find(PouchActorInfoPath)->second.root;
@@ -1536,12 +1575,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 quantity = Quantity(Row(pouch, goodsActor));
             }
             for (const Shopkeeper& keeper : slot.shopkeepers) {
-                const std::string path = std::format("Pack/Actor/{}.pack.zs", keeper.actor);
-                auto pack = packs.find(path);
-                if (pack == packs.end()) {
-                    pack = packs.emplace(path, ShopPack{ sarc::Parse(Decompress(game.Read(path), packDictionary)) }).first;
-                }
-                SetGoods(pack->second.GoodsList(keeper.goodsList), slot.slot, goodsActor, priceOffset, stock);
+                SetGoods(shopPack(keeper.actor).GoodsList(keeper.goodsList), slot.slot, goodsActor, priceOffset, stock);
                 if (stock != UnlimitedStock) {
                     soldOnce.insert(std::format("Shop_SoldNum.{}.{}", keeper.actor, slot.slot));
                 }
@@ -1739,6 +1773,18 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     for (const auto& [event, next] : DoorOfTimeNext) {
         if (bfevfl::SetNext(flowAt(doorOfTime), event, next)) {
             changedFlows.insert(doorOfTime);
+        }
+    }
+    for (const auto& [flow, question, next] : DinsFireQuestions) {
+        const std::string path(flow);
+        if (bfevfl::SetNext(flowAt(path), question, next)) {
+            changedFlows.insert(path);
+        }
+    }
+    const std::string shopFlow(ShopFlow);
+    for (const auto& [event, next] : ShopFlowNext) {
+        if (bfevfl::SetNext(flowAt(shopFlow), event, next)) {
+            changedFlows.insert(shopFlow);
         }
     }
 

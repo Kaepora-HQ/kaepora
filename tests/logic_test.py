@@ -42,6 +42,12 @@ NO_RANGED = (NO_BOOMERANG, NO_HOOKSHOT, ("Water Temple Longshot Chest", "Green R
 NO_SLINGSHOT_OR_BOW = (("Deku Tree Slingshot Chest", "Green Rupee"), ("Forest Temple Bow Chest", "Green Rupee"))
 NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Green Rupee"),
              ("Kak Anju as Child", "Green Rupee"), ("LLR Talons Chickens", "Green Rupee"))
+# Every place that gives a spell, the Lens, a magic arrow or a magic blessing, each of which brings the meter.
+NO_METER = (("HC Great Fairy Reward", "Green Rupee"), ("DMC Great Fairy Reward", "Green Rupee"),
+            ("DMT Great Fairy Din's Fire", "Green Rupee"), ("ZF Great Fairy Reward", "Green Rupee"),
+            ("Colossus Great Fairy Reward", "Green Rupee"), ("Bottom of the Well Lens of Truth Chest", "Green Rupee"),
+            ("LH Sun", "Green Rupee"), ("Gerudo Training Ground Maze Path Final Chest", "Green Rupee"),
+            ("Market ToT Light Arrow Cutscene", "Green Rupee"))
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
@@ -155,10 +161,12 @@ class LogicTest(unittest.TestCase):
                 others = [pair for pair in no_way_out if pair != song]
                 self.assertTrue(self.reachable(location, *others), (location, song[0]))
 
-    def test_only_adult_link_buys_a_tunic(self):
-        never_adult = ("HF Ocarina of Time Item", "Green Rupee")
-        self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
-        self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
+    def test_a_child_buys_a_tunic_in_any_shop(self):
+        # Every mod sends the Goron and Zora shopkeepers' question whether Link is a child on to the sale, and the
+        # Kokiri shopkeeper sells a child a tunic in the game (seen).
+        for location, tunic in (("GC Shop Item 5", "Buy Goron Tunic"), ("ZD Shop Item 1", "Buy Zora Tunic"),
+                                ("KF Shop Item 2", "Buy Goron Tunic")):
+            self.assertTrue(self.reachable(location, NEVER_ADULT, (location, {"item": tunic, "price": 10})), location)
 
     def test_a_tunic_needs_the_largest_wallet(self):
         # Each tunic costs 600.
@@ -167,24 +175,6 @@ class LogicTest(unittest.TestCase):
             self.assertTrue(self.reachable(location))
         # The price belongs to the shop slot, so it holds whatever is placed there.
         self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
-
-    def test_the_tunic_and_blue_fire_gates_follow_the_goods(self):
-        # The Goron and Zora shopkeepers refuse a child a tunic on any shelf of theirs, and the Kokiri shopkeeper sells
-        # him one (seen). The potion shops sell Blue Fire only to a Link who has had some, and another shop's shelf
-        # sells it to him as it sells other bottle contents.
-        tunic = {"item": "Buy Goron Tunic", "price": 10}
-        nuts = {"item": "Buy Deku Nut (5)", "price": 10}
-        blue_fire = {"item": "Buy Blue Fire", "price": 10}
-        bottle = ("KF Mido Top Left Chest", "Empty Bottle")
-        self.assertFalse(self.reachable("GC Shop Item 1", NEVER_ADULT, ("GC Shop Item 1", tunic)))
-        self.assertTrue(self.reachable("GC Shop Item 5", NEVER_ADULT, ("GC Shop Item 5", nuts)))
-        self.assertTrue(self.reachable("KF Shop Item 2", NEVER_ADULT, ("KF Shop Item 2", tunic)))
-        self.assertFalse(self.reachable("Market Potion Shop Item 4", NEVER_ADULT, bottle,
-                                        ("Market Potion Shop Item 4", blue_fire)))
-        self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, bottle,
-                                       ("Market Potion Shop Item 2", nuts)))
-        self.assertTrue(self.reachable("Market Bazaar Item 4", NEVER_ADULT, bottle,
-                                       ("Market Bazaar Item 4", blue_fire)))
 
     def test_bombchus_on_a_shelf_wait_for_the_goron_ruby(self):
         # The game sells its own bombchus only once the Goron Ruby is won. A shelf of another shop selling them before
@@ -196,11 +186,11 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("KF Shop Item 2", bombchus, *child))
         self.assertFalse(self.reachable("KF Shop Item 2", bombchus, *child, no_bracelet))
 
-    def test_a_potion_shop_is_never_the_first_blue_fire(self):
-        self.assertTrue(self.reachable("Market Potion Shop Item 2"))
-        # Without the Ocarina of Time, Link never becomes adult, and only adult Link reaches other Blue Fire.
-        self.assertFalse(self.reachable("Market Potion Shop Item 2", ("HF Ocarina of Time Item", "Green Rupee"),
-                                        ("KF Mido Top Left Chest", "Empty Bottle")))
+    def test_a_potion_shop_sells_a_first_blue_fire(self):
+        # Every mod sells Blue Fire in both potion shops to a Link who has never had it, and with an empty bottle.
+        # Market Potion Shop Item 2 sells Blue Fire, and only adult Link reaches other Blue Fire.
+        self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT))
+        self.assertFalse(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, *NO_BOTTLE))
 
     def test_shops_charge_the_remakes_prices(self):
         # A fish costs 50 at the Market Potion Shop. 20 bombchus cost 240.
@@ -218,6 +208,14 @@ class LogicTest(unittest.TestCase):
         # whatever song it teaches.
         self.assertTrue(self.reachable("GF HBA 1000 Points", ("Song from Malon", "Saria's Song"),
                                        ("Song from Saria", "Epona's Song")))
+
+    def test_kakarikos_gate_opens_to_the_letter_only_once_zelda_is_met(self):
+        # Shown Zelda's Letter, Kakariko's gate guard takes it and opens the gate, from any source. Whether he takes one
+        # before Zelda has been met is unseen. Without the Weird Egg, Talon never leaves the castle and a child never
+        # reaches her courtyard. The lost dog comes out only once the gate is open.
+        letter = (("KF Mido Top Left Chest", "Zelda's Letter"), ("HC Zeldas Letter", "Green Rupee"))
+        self.assertFalse(self.reachable("Market Lost Dog", *letter, ("HC Malon Egg", "Green Rupee")))
+        self.assertTrue(self.reachable("Market Lost Dog", *letter))
 
     def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_not_for_the_card(self):
         # After the last carpenter a scene moves the Spirit quest on. The guards, the Wasteland's gate keeper and the
@@ -275,12 +273,6 @@ class LogicTest(unittest.TestCase):
         # program; seen for Din's Fire, the Fire Arrows and the Ice Arrows). Each check below asks for one source's own
         # use, which takes the meter, with every other source and both blessings taken out. No check asks for Farore's
         # Wind or the Ice Arrows, and the one that asks for the meter alone has other ways.
-        no_sources = (("HC Great Fairy Reward", "Green Rupee"), ("DMC Great Fairy Reward", "Green Rupee"),
-                      ("DMT Great Fairy Din's Fire", "Green Rupee"), ("ZF Great Fairy Reward", "Green Rupee"),
-                      ("Colossus Great Fairy Reward", "Green Rupee"),
-                      ("Bottom of the Well Lens of Truth Chest", "Green Rupee"), ("LH Sun", "Green Rupee"),
-                      ("Gerudo Training Ground Maze Path Final Chest", "Green Rupee"),
-                      ("Market ToT Light Arrow Cutscene", "Green Rupee"))
         # A child with no shield climbs past the summit's falling rocks only under Nayru's Love.
         a_child_with_no_shield = (NEVER_ADULT, ("Graveyard Shield Grave Chest", "Green Rupee"),
                                   *((f"Market Bazaar Item {slot}", "Green Rupee") for slot in range(1, 9)))
@@ -291,42 +283,43 @@ class LogicTest(unittest.TestCase):
                  ("Light Arrows", "Ganon", (SPIRIT_KEY_AT_START,), BRIDGE_OPEN | NO_TRIALS))
         for source, check, others, settings in cases:
             with self.subTest(source=source):
-                self.assertFalse(self.reachable(check, *no_sources, *others, settings=settings))
-                self.assertTrue(self.reachable(check, *no_sources, *others, ("KF Mido Top Right Chest", source),
+                self.assertFalse(self.reachable(check, *NO_METER, *others, settings=settings))
+                self.assertTrue(self.reachable(check, *NO_METER, *others, ("KF Mido Top Right Chest", source),
                                                settings=settings))
 
-    def test_four_great_fairies_wait_for_dins_fire(self):
-        # Every fountain's Triforce mark but the summit's asks whether Link holds Din's Fire, which the summit's Great
-        # Fairy gives (read from the flows; seen in the game at the castle). A Spirit Temple key at the start lets the
-        # search reach the Golden Gauntlets that open the fountain outside Ganon's Castle.
+    def test_the_great_fairies_ask_no_dins_fire(self):
+        # Every mod's Triforce mark lets each fairy come for Zelda's Lullaby whether or not Link holds Din's Fire.
+        # Golden Gauntlets found early open the fountain outside Ganon's Castle: the castle's own lie past the Shadow
+        # Temple, whose entrance wants Din's Fire.
         no_dins_fire = ("DMT Great Fairy Din's Fire", "Green Rupee")
-        for fairy in ("DMC Great Fairy Reward", "OGC Great Fairy Reward", "ZF Great Fairy Reward",
-                      "Colossus Great Fairy Reward"):
-            self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
-            self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, no_dins_fire), fairy)
+        golden_gauntlets = ("KF Mido Top Left Chest", "Golden Gauntlets")
+        for fairy in ("HC Great Fairy Reward", "DMC Great Fairy Reward", "OGC Great Fairy Reward",
+                      "ZF Great Fairy Reward", "Colossus Great Fairy Reward"):
+            self.assertTrue(self.reachable(fairy, no_dins_fire, golden_gauntlets), fairy)
 
-    def test_the_summit_owl_flies_a_child_down_only_once_he_holds_dins_fire(self):
-        # The summit owl offers the flight down only to a Link who holds Din's Fire (read from his flow). Seen in the
-        # game: he will not fly down a child with a meter and no Din's Fire. A child with no Kokiri Sword stays in the
-        # closed forest; with a bomb bag and a shield he climbs to the summit through Goron City, and only the flight
-        # takes him down to Kakariko. A meter alone does not.
-        stranded = (("KF Kokiri Sword Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Progressive Bomb Bag"),
-                    ("KF Mido Bottom Right Chest", "Buy Hylian Shield"))
-        self.assertFalse(self.reachable("Kak Anju as Child", *stranded,
-                                        ("KF Mido Top Right Chest", "Progressive Magic Meter")))
-        self.assertTrue(self.reachable("Kak Anju as Child", *stranded, ("KF Mido Top Right Chest", "Din's Fire")))
+    def test_the_crater_great_fairy_waits_for_a_meter(self):
+        # After her gift her scene plays the meter's doubling, which has not been seen to end for a Link with no meter.
+        self.assertFalse(self.reachable("DMC Great Fairy Reward", *NO_METER))
+        self.assertTrue(self.reachable("DMC Great Fairy Reward", *NO_METER,
+                                       ("KF Mido Top Right Chest", "Farore's Wind")))
+
+    def test_the_summit_owl_flies_a_child_down_without_dins_fire(self):
+        # Every mod's owl offers a child the flight down whether or not he holds Din's Fire. A child with no Kokiri
+        # Sword stays in the closed forest; with a bomb bag and a shield he climbs to the summit through Goron City,
+        # and only the flight takes him down to Kakariko. Without the shield he stays on the trail below the falling
+        # rocks, short of the owl, and Kakariko's gate stays shut to him.
+        no_sword, bomb_bag, shield = (("KF Kokiri Sword Chest", "Green Rupee"),
+                                      ("KF Mido Top Left Chest", "Progressive Bomb Bag"),
+                                      ("KF Mido Bottom Right Chest", "Buy Hylian Shield"))
+        self.assertTrue(self.reachable("Kak Anju as Child", no_sword, bomb_bag, shield))
+        self.assertTrue(self.reachable("DMT Chest", no_sword, bomb_bag))
+        self.assertFalse(self.reachable("Kak Anju as Child", no_sword, bomb_bag))
 
     def test_two_great_fairies_ask_more_than_a_childs_wallet_holds(self):
         # Outside Ganon's Castle she asks 500 rupees and at the Colossus 300 (read from the flows).
         for fairy in ("OGC Great Fairy Reward", "Colossus Great Fairy Reward"):
             self.assertTrue(self.reachable(fairy, SPIRIT_KEY_AT_START), fairy)
             self.assertFalse(self.reachable(fairy, SPIRIT_KEY_AT_START, *NO_WALLET_UPGRADE), fairy)
-
-    def test_the_castle_great_fairy_gives_the_meter_once_link_holds_dins_fire(self):
-        # Seen in the game: the castle's Great Fairy gives her blessing, with the meter, only to a Link who holds Din's
-        # Fire, which the summit's Great Fairy gives.
-        self.assertTrue(self.reachable("HC Great Fairy Reward"))
-        self.assertFalse(self.reachable("HC Great Fairy Reward", ("DMT Great Fairy Din's Fire", "Green Rupee")))
 
     def test_only_the_bean_lifts_link_to_the_volcano_heart_piece(self):
         # The remake has no bomb or bombchu hover.
@@ -404,6 +397,14 @@ class LogicTest(unittest.TestCase):
         bomb_bag = ("KF Mido Top Left Chest", "Progressive Bomb Bag")
         self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet))
         self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
+
+    def test_a_bigger_bomb_bag_found_first_is_the_bomb_bag(self):
+        # Every mod makes a bigger bomb bag bring the small one with its bombs, and the small one is what the rolling
+        # Goron asks for.
+        self.assertFalse(self.reachable("GC Rolling Goron as Child", *NO_BOMB_BAG))
+        for bag in ("Big Bomb Bag", "Biggest Bomb Bag"):
+            self.assertTrue(self.reachable("GC Rolling Goron as Child", *NO_BOMB_BAG, ("KF Mido Top Left Chest", bag)),
+                            bag)
 
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Boulders only the Silver Gauntlets lift ring the rightmost chest of the Goron City maze.

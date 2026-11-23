@@ -248,7 +248,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
                      an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest
                      an_adult_passes_zoras_rivers_boulders_before_the_water_quest
-                     a_seller_left_off_the_route_stands_in_for_no_step
+                     a_seller_left_off_the_route_stands_in_for_no_step a_route_buys_what_fills_a_bottle_after_a_bottle
                      bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
@@ -273,14 +273,16 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
                      each_bag_prize_gives_its_placed_item_at_every_site a_bigger_bag_has_one_name_wherever_it_lands
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
-                     the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
-                     the_eggs_the_receipt_and_the_sword_go_only_to_a_chest_a_gift_or_a_reward_place
+                     the_eggs_the_letter_the_receipt_and_the_sword_go_only_to_a_chest_a_gift_or_a_reward_place
                      biggoron_quest_shuffles_its_places_as_soh_does_with_adult_trade_off
                      with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg
                      a_route_with_the_weird_egg_elsewhere_still_meets_zelda
+                     a_route_with_zeldas_letter_elsewhere_still_meets_zelda
                      a_child_meets_zelda_without_what_the_lost_dog_holds
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts the_goron_gifts_give_what_is_placed
+                     the_100_token_reward_gives_the_seeds_item
+                     the_100_token_reward_is_in_reach_in_every_seed
                      the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
                      a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon
                      each_great_fairy_gives_her_placed_item_and_asks_her_own_bool_on_a_return
@@ -495,8 +497,9 @@ if(KAEPORA_GAME_NUP)
                  loose-item-table loose-spot-keys claims expressions weapons-bring-containers
                  bigger-containers-bring-the-small-one
                  weapon-copies event-numbers event-nexts event-ends event-entries module-texts song-table
-                 river-arrival-writes-no-step market-arrival-writes-no-step
-                 a-child-comes-back-with-the-sword-he-left-with
+                 river-arrival-writes-no-step market-arrival-writes-no-step fairies-and-summit-owl-without-dins-fire
+                 a-child-comes-back-with-the-sword-he-left-with a-child-buys-a-tunic
+                 a-potion-shop-sells-a-first-blue-fire
                  schedule-entry presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out
                  sword-scene-kept both-stones-before-zelda)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")

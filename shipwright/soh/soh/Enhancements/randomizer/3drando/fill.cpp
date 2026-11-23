@@ -29,7 +29,7 @@ static bool placementFailure = false;
 // each boss and the dungeon its blue warp clears, the scene after the last carpenter and the Gerudo letting Link pass,
 // Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows, and the talks of Malon at the castle
 // and of adult Anju, after which each one's egg found hatches.
-static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
+static constexpr std::pair<RandomizerCheck, LogicVal> everySeedsScenePlaces[] = {
     { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
     { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
     { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
@@ -38,6 +38,13 @@ static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
     { RC_HC_MALON_EGG, LOGIC_MET_MALON_AT_CASTLE },
     { RC_KAK_ANJU_AS_ADULT, LOGIC_MET_ADULT_ANJU },
 };
+
+// Zelda's courtyard, where Link meets her, which Impa's and Saria's lessons, the moat and Kakariko's gate wait for. It
+// is a scene's place only in a seed that shuffles it: one that keeps her letter there keeps SoH's route, which names
+// her place where a step waits for the letter.
+static constexpr std::pair<RandomizerCheck, LogicVal> zeldasCourtyard = { RC_HC_ZELDAS_LETTER, LOGIC_MET_ZELDA };
+
+static std::vector<std::pair<RandomizerCheck, LogicVal>> scenePlaces;
 
 // The events of scenePlaces that no region sets, so every search sets each where it takes or reaches its place, the
 // moment it would take an item there: a giver's talk, which an egg's hatch follows whatever the talk gives.
@@ -895,6 +902,22 @@ static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerChe
     }
 }
 
+// Whether a gift group shuffles the 100-token reward. Then the fill keeps the reward in reach as it keeps Ganon in
+// reach: Ganon asks nothing of it, so the fill would place the rest of the items anywhere once Ganon is in reach, and a
+// token placed on the reward, or one that only the reward's own item reaches, leaves the reward to a player who can
+// hold 99.
+static bool hundredTokenRewardShuffled = false;
+
+// Whether the items placed so far reach the 100-token reward, or no group shuffles it.
+static bool HundredTokenRewardInReach() {
+    if (!hundredTokenRewardShuffled) {
+        return true;
+    }
+    logic->Reset();
+    ReachabilitySearch({});
+    return Rando::Context::GetInstance()->GetItemLocation(RC_KAK_100_GOLD_SKULLTULA_REWARD)->IsAddedToPool();
+}
+
 /*
 | The algorithm places items in the world in reverse.
 | This means we first assume we have every item in the item pool and
@@ -993,7 +1016,7 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
             // If the game is beatable, then we can stop placing items with logic.
             if (!ctx->GetOption(RSK_ALL_CHECKS_REACHABLE)) {
                 logic->Reset();
-                if (CheckBeatable()) {
+                if (CheckBeatable() && HundredTokenRewardInReach()) {
                     SPDLOG_DEBUG("Game beatable, now placing items randomly. {} major items remaining",
                                  itemsToPlace.size());
                     FastFill(itemsToPlace, GetEmptyLocations(allowedLocations));
@@ -1061,7 +1084,9 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     for (RandomizerCheck loc :
          { RC_TOT_MASTER_SWORD, RC_KAK_100_GOLD_SKULLTULA_REWARD, RC_LH_HYRULE_LOACH, RC_ZR_FROGS_ZELDAS_LULLABY,
            RC_ZR_FROGS_EPONAS_SONG, RC_ZR_FROGS_SARIAS_SONG, RC_ZR_FROGS_SUNS_SONG, RC_ZR_FROGS_SONG_OF_TIME }) {
-        ctx->GetItemLocation(loc)->PlaceVanillaItem();
+        if (!pooled.contains(loc)) {
+            ctx->GetItemLocation(loc)->PlaceVanillaItem();
+        }
     }
     return shuffled;
 }
@@ -1094,15 +1119,21 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     }
 }
 
-// Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests, shop
-// slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The shuffled chests', gifts' and
-// song places' items, a Red Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item
-// pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
+// Resets the world graph, the starting inventory, the prices and the scenes' places, and gives every location but the
+// shuffled chests, shop slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The
+// shuffled chests', gifts' and song places' items, a Red Rupee for each shuffled shop slot and a token for each
+// shuffled skulltula make up the item pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                                            const std::vector<RemakeGift>& gifts,
                                            const std::vector<RemakeSkulltula>& skulltulas,
                                            const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
+    scenePlaces.assign(std::begin(everySeedsScenePlaces), std::end(everySeedsScenePlaces));
+    if (std::ranges::find(gifts, zeldasCourtyard.first, &RemakeGift::location) != gifts.end()) {
+        scenePlaces.push_back(zeldasCourtyard);
+    }
+    hundredTokenRewardShuffled =
+        std::ranges::find(gifts, RC_KAK_100_GOLD_SKULLTULA_REWARD, &RemakeGift::location) != gifts.end();
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();
@@ -1162,8 +1193,8 @@ void ClearProgress() {
 
 bool KeptInChestsAndCalls(RandomizerGet item) {
     return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_DUNGEONREWARD ||
-           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_POCKET_EGG ||
-           item == RG_CLAIM_CHECK || item == RG_BIGGORON_SWORD;
+           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_ZELDAS_LETTER ||
+           item == RG_POCKET_EGG || item == RG_CLAIM_CHECK || item == RG_BIGGORON_SWORD;
 }
 
 bool KeptInChests(RandomizerGet item) {
@@ -1179,7 +1210,7 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_BIGGEST_BULLET_BAG || item == RG_BIG_BOMB_BAG || item == RG_BIGGEST_BOMB_BAG ||
            item == RG_DEKU_STICK_CAPACITY_20 || item == RG_DEKU_STICK_CAPACITY_30 || item == RG_DEKU_NUT_CAPACITY_30 ||
            item == RG_DEKU_NUT_CAPACITY_40 || item == RG_BOMBCHU_5 || item == RG_BOMBCHU_20 ||
-           item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK || item == RG_GORON_TUNIC || item == RG_ZORA_TUNIC;
+           item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK;
 }
 
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
