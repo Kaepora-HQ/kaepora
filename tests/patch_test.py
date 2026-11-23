@@ -591,11 +591,16 @@ def actor(placement, hash):
     return next(a for a in placement["Actors"] if a["Hash"] == (UINT64, hash))
 
 
+LARGEST_SEED_ID = 0xFFFFFFFF
+SEED_VALUE = "Kaepora_Seed"
+
+
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
          loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=(),
          kept_goods=(), schedule_entries=(), module_texts=(), event_entries=()):
-    return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
+    return {"seed": "1", "seed_id": LARGEST_SEED_ID,
+            "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
                             for flow, event, param, text in event_texts],
@@ -692,15 +697,13 @@ def tested_mod(patch, game, mod_file):
 
 
 def tested_start_mod(patch, game, mod_file):
-    """The start state the game accepted: two lock records and one Mido's House chest record start set."""
+    """The start state the game accepted: two lock records and one Mido's House chest record start set, in a list
+    that holds the seed's id as every mod's does."""
     tested = pathlib.Path(mod_file).read_bytes()
     mod = patched(patch, game, plan([], {FIRE_LOCK: True, WATER_LOCK: True, MIDO_CHEST: True}))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
-    ours, game_frame = mod[GAME_DATA_LIST], game.read(GAME_DATA_LIST)
-    assert_same_frame_header(ours, game_frame)
-    assert zstd.get_frame_info(ours).decompressed_size == zstd.get_frame_info(game_frame).decompressed_size
-    assert zstd.decompress(ours, zstd_dict=game.zs_dictionary) == zstd.decompress(
-        tested, zstd_dict=game.zs_dictionary)
+    assert_same_frame_header(mod[GAME_DATA_LIST], game.read(GAME_DATA_LIST))
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_seed_value(game.game_data_list(tested))
 
 
 def ordered(node):
@@ -754,7 +757,7 @@ def tested_song_mod(patch, game, romfs):
     for path, theirs in tested.items():
         assert_same_frame_header(ours[path], theirs)
     assert read_size_table(zstd.decompress(ours.pop(SIZE_TABLE))) == \
-        raised_pouch_entry(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
+        raised_entries(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
     for path, theirs in tested.items():
         dictionary = game.dictionary if path.startswith("Banc/") else game.zs_dictionary
         assert zstd.decompress(ours[path], zstd_dict=dictionary) == zstd.decompress(theirs, zstd_dict=dictionary), path
@@ -835,7 +838,7 @@ def tested_colossus_mod(patch, game, romfs):
     for path in (COLOSSUS_ADULT_STATIC, COLOSSUS_CHILD_STATIC):
         assert_same_file(game, path, ours[path], tested[path])
     assert read_size_table(zstd.decompress(ours[SIZE_TABLE])) == \
-        raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
+        raised_entries(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
 # The texts every plan carries that no played mod this test reads has.
@@ -904,7 +907,7 @@ def tested_first_gifts_mod(patch, game, romfs):
     mod = patched(patch, game, plan(chests, event_texts=texts))
     tested = files(pathlib.Path(romfs))
     assert read_size_table(zstd.decompress(mod.pop(SIZE_TABLE))) == \
-        raised_pouch_entry(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
+        raised_entries(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
     assert sorted(mod) == sorted(tested), sorted(mod)
     for path, data in tested.items():
         assert_same_file(game, path, mod[path], data)
@@ -963,7 +966,7 @@ def tested_message_text_mod(patch, game, romfs):
     for path in ENGLISH_PACKS:
         assert_same_file(game, path, mod[path], tested[path])
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == \
-        raised_pouch_entry(patch, game, zstd.decompress(tested[SIZE_TABLE]))
+        raised_entries(patch, game, zstd.decompress(tested[SIZE_TABLE]))
 
 
 def tested_added_item_mod(patch, game, romfs):
@@ -1204,8 +1207,32 @@ class Choice(str):
     """An Enum's value, by its name."""
 
 
+def with_seed_value(data):
+    """A game data list, read, as a mod of these tests' plans writes it: with the seed's id the default of an Int of
+    the mod's own, kept in the progress save. The Int is a record of the progress save's table, so it moves the
+    table's end, the save's size and the offset and size of all saves by 8 bytes."""
+    data["Data"]["Int"].append({"DefaultValue": (INT, LARGEST_SEED_ID), "Hash": (UINT, murmur3(SEED_VALUE)),
+                                "ResetTypeValue": (INT, 8), "SaveFileIndex": (INT, 0)})
+    meta = data["MetaData"]
+    for key in ("SaveDataOffsetPos", "SaveDataSize"):
+        meta[key] = [(INT, meta[key][0][1] + 8), *meta[key][1:]]
+    for key in ("AllDataSaveOffset", "AllDataSaveSize"):
+        meta[key] = (INT, meta[key][1] + 8)
+    return data
+
+
+def every_list(game):
+    """The game data list of every mod of these tests' plans, read."""
+    return with_seed_value(game.game_data_list(game.read(GAME_DATA_LIST)))
+
+
+def every_list_size(patch, game):
+    """The decompressed size of every mod's game data list."""
+    return len(zstd.decompress(every_mod(patch, game)[GAME_DATA_LIST], zstd_dict=game.zs_dictionary))
+
+
 def with_defaults(game, values):
-    data = game.game_data_list(game.read(GAME_DATA_LIST))
+    data = every_list(game)
     for name, value in values.items():
         if isinstance(value, Choice):
             kind, default = "Enum", (UINT, murmur3(value))
@@ -1254,8 +1281,8 @@ def together(patch, game):
                          "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions",
                          "schedule_entries")}
-    whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
-              "cutscenes_skipped": False}
+    whole |= {"seed": "1", "seed_id": LARGEST_SEED_ID, "start_values": values, "mido_castle_entry_removed": False,
+              "opening_skipped": False, "cutscenes_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
     tables = [read_size_table(zstd.decompress(part.pop(SIZE_TABLE))) for part in alone if SIZE_TABLE in part]
     assert len(tables) == 3, len(tables)
@@ -1268,25 +1295,25 @@ def together(patch, game):
 
 
 def start_values(patch, game):
-    """A value set, a value cleared and a whole number changed, signed and unsigned. The list keeps its size, so it
-    still fits its size table entry."""
+    """A value set, a value cleared and a whole number changed, signed and unsigned. The list keeps every mod's size,
+    so it still fits every mod's size table entry."""
     values = {FIRE_LOCK: True, FOREST_EXIT_SHUT: False, TRIALS_LEFT: 0, SWORD_ORDERED_AT: 1}
     mod = patched(patch, game, plan([], values))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
-    assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
+    assert len(ours) == every_list_size(patch, game)
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
 
 
 def start_items(patch, game):
     """A new game holds each item a seed can start with, counts its get scene played and has one in the pouch, as after
-    a find. The list keeps its size."""
+    a find. The list keeps every mod's size."""
     values = {f"{record}.{item}": True for item in START_ITEMS for record in ("IsGet", "HavePlayedGetEvent")}
     values |= {f"PouchData.{item}.StockNum": 1 for item in START_ITEMS}
     mod = patched(patch, game, plan([], start_items=START_ITEMS))
     assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
     ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
-    assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
+    assert len(ours) == every_list_size(patch, game)
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, values)
 
 
@@ -1314,7 +1341,7 @@ def start_steps(patch, game):
     mod = patched(patch, game, plan([], start_items=START_STEPS))
     assert sorted(mod) == [GAME_DATA_LIST, SIZE_TABLE], sorted(mod)
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, expected)
-    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     size = load_size(len(zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)))
     entries = [(key, size if key == size_key(GAME_DATA_LIST) else entry) for key, entry in entries]
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, entries, names)
@@ -1499,7 +1526,7 @@ def shop(patch, game):
     for path in chest[1]:
         actor(placements[path], STORMS_GROTTO_CHEST)["Dynamic"]["Drop__DropActor"] = chest[2]
 
-    _, entries, _ = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    _, entries, _ = raised_entries(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     def needs(path, dictionary, overhead=264):
         return size_key(path), load_size(len(zstd.decompress(mod[path], zstd_dict=dictionary)), overhead)
 
@@ -1812,20 +1839,21 @@ def tested_skulltula_mod(patch, game, romfs):
     showed: the skulltula dropped a token that gave the Boomerang, and stayed away after a reload."""
     tested = files(pathlib.Path(romfs))
     mod = patched(patch, game, plan([], skulltulas=[(*SIDE_ROOM_SKULLTULA, "Item_Boomerang")]))
-    assert_as_the_game_ran(game, mod, tested)
+    assert_as_the_game_ran(patch, game, mod, tested)
 
 
-def assert_as_the_game_ran(game, mod, tested, rebuilt=()):
+def assert_as_the_game_ran(patch, game, mod, tested, rebuilt=()):
     """The mod's files are those of a mod the game ran with the game's own rows for the weapons: the same files and
-    frames, the pouch table with the weapons' rows changed, and its size table entry raised to fit. A rebuilt file is
-    the caller's to check, and its size table entry is raised to fit it too."""
+    frames, the pouch table with the weapons' rows changed, and its size table entry raised to fit, and the game data
+    list's raised as every mod raises it. A rebuilt file is the caller's to check, and its size table entry is raised
+    to fit it too."""
     assert sorted(mod) == sorted(tested), (sorted(mod), sorted(tested))
     for path, data in tested.items():
         assert_same_frame_header(mod[path], data)
     mod, tested = dict(mod), dict(tested)
     pouch = zstd.decompress(mod.pop(POUCH_ACTOR_INFO))
     assert byml(pouch) == with_containers(byml(zstd.decompress(tested.pop(POUCH_ACTOR_INFO))))
-    header, entries, names = read_size_table(zstd.decompress(tested.pop(SIZE_TABLE)))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(tested.pop(SIZE_TABLE)))
     entries = dict(entries)
     pouch_key = size_key(POUCH_ACTOR_INFO)
     entries[pouch_key] = max(entries[pouch_key], load_size(len(pouch)))
@@ -1906,7 +1934,7 @@ def tested_pickup_mod(patch, game, romfs):
     spot, tested_spot = game.placement(mod[path]), game.placement(tested[path])
     actor(tested_spot, h)["Translate"] = actor(spot, h)["Translate"]
     assert spot == tested_spot
-    assert_as_the_game_ran(game, mod, tested, rebuilt=[pack, path])
+    assert_as_the_game_ran(patch, game, mod, tested, rebuilt=[pack, path])
 
 
 def body_members(files, name):
@@ -2066,7 +2094,7 @@ def loose_spot_keys(patch, game):
     the game's own lists lay theirs out, and the list's size table entry grows with the list."""
     mod = patched(patch, game, plan([], loose_items=[(*LETTER_SPOT, "Obj_Heart_Piece"),
                                                      (*GOHMA_HEART_CONTAINER, "Obj_Heart_Piece")]))
-    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    theirs = every_list(game)
     ours = game.game_data_list(mod[GAME_DATA_LIST])
     keys = theirs["Data"]["Bool64bitKey"]
     gohma = next(key for key in keys if key["Hash"] == (UINT64, GOHMA_HEART_CONTAINER[0]))
@@ -2086,7 +2114,7 @@ def claims(patch, game):
     the offset and size of all saves by 8 bytes."""
     names = ["Kaepora_Once_1", "Kaepora_Once_2"]
     mod = patched(patch, game, plan([], claims=names))
-    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    theirs = every_list(game)
     ours = game.game_data_list(mod[GAME_DATA_LIST])
     added = [{"DefaultValue": (BOOL, 0), "Hash": (UINT, murmur3(name)), "ResetTypeValue": (INT, 8),
               "SaveFileIndex": (INT, 0)} for name in names]
@@ -2102,7 +2130,7 @@ def claims(patch, game):
 def expressions(patch, game):
     """Each expression of the plan is one of the mod's own in the game data list, true while every saved Bool and
     expression it names is, and written as the game writes its own expression of the same names. It may name a claim
-    of the plan as well as a Bool of the game. An expression query may name it, and the saves keep the game's layout
+    of the plan as well as a Bool of the game. An expression query may name it, and the saves keep every mod's layout
     but for the claim."""
     claim = "Kaepora_Once_1"
     # Each expression with the names it joins and the game's own expression of the same names.
@@ -2117,7 +2145,7 @@ def expressions(patch, game):
     joined = [("Kaepora_Test_Claim_Exp", [claim])] + [(name, names) for name, (names, _) in named.items()]
     mod = patched(patch, game, plan([], claims=[claim], expressions=joined,
                                     event_texts=[(*DANCE_QUESTION, "Kaepora_Test_Burning_Exp")]))
-    theirs = game.game_data_list(game.read(GAME_DATA_LIST))
+    theirs = every_list(game)
     ours = game.game_data_list(mod[GAME_DATA_LIST])
     games = {entry["Hash"][1]: entry for entry in theirs["Data"]["BoolExp"]}
     # A save index of -1, no save, as the reader gives the raw 32 bits.
@@ -2135,6 +2163,18 @@ def expressions(patch, game):
     assert save_layout(ours) == grown
     flow = game.event_flow(mod[FIRE_QUEST_FLOW])
     assert string_parameter(flow, DANCE_QUESTION[1], DANCE_QUESTION[2])[1] == "Kaepora_Test_Burning_Exp"
+
+
+def seed_value(patch, game, seedgen):
+    """A seed's mod adds an Int of its own to the game data list, Kaepora_Seed, whose default is the plan's id. The list
+    gives it to the progress save with reset type 8, as it gives most of the game's own saved Ints. The Int is a record
+    of the progress save's table, and the list's save sizes hold to the rule the game's lists follow."""
+    planned = generated_plan(seedgen, "OWL", {})
+    data = game.game_data_list(mod_files(patch, game, planned)[GAME_DATA_LIST])
+    named = [entry for entry in data["Data"]["Int"] if entry["Hash"] == (UINT, murmur3(SEED_VALUE))]
+    assert named == [{"DefaultValue": (INT, planned["seed_id"]), "Hash": (UINT, murmur3(SEED_VALUE)),
+                      "ResetTypeValue": (INT, 8), "SaveFileIndex": (INT, 0)}], named
+    save_layout(data)
 
 
 def flow_reach(flow, blocked=(), roots=None):
@@ -2318,6 +2358,8 @@ def skip_starts(patch, game, seedgen, skip, started):
             value = values.pop(entry["Hash"][1])
             assert entry["DefaultValue"] == (BOOL, int(not value)), entry
             entry["DefaultValue"] = (BOOL, int(value))
+    for data in (skipped, played):
+        data["Data"]["Int"] = [entry for entry in data["Data"]["Int"] if entry["Hash"] != (UINT, murmur3(SEED_VALUE))]
     assert not values and skipped == played
 
 
@@ -2707,13 +2749,14 @@ def weapon_copies(patch, game):
 def weapons_bring_containers(patch, game):
     """In every mod, getting the Bow or the Slingshot gives what its small container gives: the limit of its arrows or
     seeds, filled, and the container itself, which a shop asks for before it sells arrows or seeds. Every other row is
-    the game's, and the size table takes the larger table."""
+    the game's, and the size table takes the larger table, and the larger game data list every mod writes."""
     mod = every_mod(patch, game)
     table = byml(zstd.decompress(game.read(POUCH_ACTOR_INFO)))
     assert byml(zstd.decompress(mod[POUCH_ACTOR_INFO])) == with_containers(table)
     header, entries, names = read_size_table(zstd.decompress(game.read(SIZE_TABLE)))
-    size = load_size(len(zstd.decompress(mod[POUCH_ACTOR_INFO])))
-    expected = [(key, max(entry, size) if key == size_key(POUCH_ACTOR_INFO) else entry) for key, entry in entries]
+    sizes = {size_key(path): load_size(len(decompressed(game, mod[path])))
+             for path in (POUCH_ACTOR_INFO, GAME_DATA_LIST)}
+    expected = [(key, max(entry, sizes.get(key, 0))) for key, entry in entries]
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, expected, names)
 
 
@@ -2728,12 +2771,13 @@ def bigger_containers_bring_the_small_one(patch, game):
         assert ours[bigger] == theirs[bigger] | {"ExpansionMaxNumActor": f"{listed},{goods(small)}"}, bigger
 
 
-def raised_pouch_entry(patch, game, table):
-    """A decompressed size table, read, with the pouch table's entry as every mod raises it."""
+def raised_entries(patch, game, table):
+    """A decompressed size table, read, with the entries every mod raises: the pouch table's and the game data
+    list's."""
     header, entries, names = read_size_table(table)
-    pouch = size_key(POUCH_ACTOR_INFO)
-    raised = dict(read_size_table(zstd.decompress(every_mod(patch, game)[SIZE_TABLE]))[1])[pouch]
-    return header, [(key, max(size, raised) if key == pouch else size) for key, size in entries], names
+    every = dict(read_size_table(zstd.decompress(every_mod(patch, game)[SIZE_TABLE]))[1])
+    raised = {key: every[key] for key in (size_key(POUCH_ACTOR_INFO), size_key(GAME_DATA_LIST))}
+    return header, [(key, max(size, raised.get(key, 0))) for key, size in entries], names
 
 
 def read_size_table(data):
@@ -2767,7 +2811,7 @@ def size_table_entries(patch, game):
     # what its entry lets the game load.
     chests = rotated(game) + [(LONGSHOT_CHEST, [WATER_STATIC], "Item_DekuStickBundle_Small")]
     game_frame = game.read(SIZE_TABLE)
-    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game_frame))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(game_frame))
     mod = patched(patch, game, plan(chests))
     changed = sorted({path for _, files, _ in chests for path in files})
     assert sorted(mod) == sorted(changed + [SIZE_TABLE, SWORD_FLOW]), sorted(mod)
@@ -2833,7 +2877,7 @@ def gift_size_table(patch, game):
     byte of the table is every mod's, and the flow, read apart from the patcher, is the game's with the one parameter
     changed."""
     path = DINS_FIRE_GIFT[0]
-    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     mod = patched(patch, game, plan([], event_texts=[(*DINS_FIRE_GIFT, "Item_HeavyBoot")]))
     assert sorted(mod) == sorted([path, SIZE_TABLE]), sorted(mod)
     data = zstd.decompress(mod[path], zstd_dict=game.zs_dictionary)
@@ -3041,7 +3085,7 @@ def stone_texts(patch, game):
     game's pack with the two messages changed. Both grow past their size table entries, and the entries are raised.
     The stones' flow, read apart from the patcher, sends the mask question on to the stone's message, and keeps its
     size."""
-    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     packs = ENGLISH_PACKS
     planned = [(KOKIRI_STONE, TESTED_STONE_TEXT), (SHORT_RUMOUR_STONE, LONG_STONE_TEXT)]
     mod = patched(patch, game, plan([], stone_texts=planned))
@@ -3085,7 +3129,7 @@ def message_texts(patch, game):
     pack is the game's with the planned messages changed, each after the control codes the game's message opens
     with: Mido's face and voice, and none for a sign. A stone's text goes into the same packs in the same write. Both
     packs grow past their size table entries, and the entries are raised."""
-    header, entries, names = raised_pouch_entry(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
+    header, entries, names = raised_entries(patch, game, zstd.decompress(game.read(SIZE_TABLE)))
     planned = [(MIDO_MESSAGES, MIDO_TALK, MIDO_TEXT), (SIGN_MESSAGES, MASK_SHOP_SIGN, SIGN_TEXT)]
     mod = patched(patch, game, plan([], stone_texts=[(KOKIRI_STONE, TESTED_STONE_TEXT)], message_texts=planned))
     assert sorted(mod) == sorted(ENGLISH_PACKS + [STONE_FLOW, SIZE_TABLE]), sorted(mod)
@@ -3423,6 +3467,8 @@ def bad_input(patch, game):
     plans["start item listed twice"] = (good | {"start_items": ["Item_Hammer", "Item_Hammer"]},
                                         ["plan.json", "start_items", "Item_Hammer", "twice"])
     plans["no claims"] = ({key: value for key, value in good.items() if key != "claims"}, ["plan.json", "claims"])
+    plans["no seed_id"] = ({key: value for key, value in good.items() if key != "seed_id"}, ["plan.json", "seed_id"])
+    plans["seed id past 32 bits"] = (good | {"seed_id": 2**32}, ["plan.json", "seed_id", "4294967295"])
     plans["claim listed twice"] = (good | {"claims": ["Kaepora_Once_1", "Kaepora_Once_1"]},
                                    ["plan.json", "claims", "Kaepora_Once_1", "twice"])
     plans["claim of a value the list has"] = (good | {"claims": ["IsGet.Item_Hammer"]},
@@ -3691,6 +3737,7 @@ def main():
         "new-area-scenes": new_area_scenes,
         "tutorial-messages": tutorial_messages,
         "fountain-claims": fountain_claims,
+        "seed-value": seed_value,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,
         "presence": presence,

@@ -159,6 +159,7 @@ struct Choice {
 using StartValue = std::variant<bool, int32_t, float, Choice, std::string>;
 
 struct Plan {
+    uint32_t seedId; // a new game starts with it in Kaepora_Seed
     std::vector<PlannedChest> chests;
     std::vector<PlannedPresence> presences;
     std::vector<PlannedEventText> eventTexts;

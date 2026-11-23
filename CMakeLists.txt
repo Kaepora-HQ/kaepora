@@ -508,6 +508,8 @@ if(KAEPORA_GAME_NUP)
     endforeach()
     add_test(NAME patch-fountain-claims COMMAND ${PATCH_TEST} fountain-claims $<TARGET_FILE:kaepora-patch>
                                                 "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-seed-value COMMAND ${PATCH_TEST} seed-value $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
+                                           $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-biggoron-place COMMAND ${PATCH_TEST} biggoron-place $<TARGET_FILE:kaepora-patch>
                                                "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-mido-hint-every-talk COMMAND ${PATCH_TEST} mido-hint-every-talk $<TARGET_FILE:kaepora-patch>
