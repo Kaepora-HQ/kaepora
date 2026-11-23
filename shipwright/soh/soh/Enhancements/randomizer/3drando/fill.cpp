@@ -29,7 +29,7 @@ static bool placementFailure = false;
 // each boss and the dungeon its blue warp clears, the scene after the last carpenter and the Gerudo letting Link pass,
 // Zelda's scene in the Temple of Time, which the bridge to Ganon's Castle follows, and the talks of Malon at the castle
 // and of adult Anju, after which each one's egg found hatches.
-static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
+static constexpr std::pair<RandomizerCheck, LogicVal> everySeedsScenePlaces[] = {
     { RC_QUEEN_GOHMA, LOGIC_DEKU_TREE_CLEAR },     { RC_KING_DODONGO, LOGIC_DODONGOS_CAVERN_CLEAR },
     { RC_BARINADE, LOGIC_JABU_JABUS_BELLY_CLEAR }, { RC_PHANTOM_GANON, LOGIC_FOREST_TEMPLE_CLEAR },
     { RC_VOLVAGIA, LOGIC_FIRE_TEMPLE_CLEAR },      { RC_MORPHA, LOGIC_WATER_TEMPLE_CLEAR },
@@ -38,6 +38,13 @@ static constexpr std::pair<RandomizerCheck, LogicVal> scenePlaces[] = {
     { RC_HC_MALON_EGG, LOGIC_MET_MALON_AT_CASTLE },
     { RC_KAK_ANJU_AS_ADULT, LOGIC_MET_ADULT_ANJU },
 };
+
+// Zelda's courtyard, where Link meets her, which Impa's and Saria's lessons, the moat and Kakariko's gate wait for. It
+// is a scene's place only in a seed that shuffles it: one that keeps her letter there keeps SoH's route, which names
+// her place where a step waits for the letter.
+static constexpr std::pair<RandomizerCheck, LogicVal> zeldasCourtyard = { RC_HC_ZELDAS_LETTER, LOGIC_MET_ZELDA };
+
+static std::vector<std::pair<RandomizerCheck, LogicVal>> scenePlaces;
 
 // The events of scenePlaces that no region sets, so every search sets each where it takes or reaches its place, the
 // moment it would take an item there: a giver's talk, which an egg's hatch follows whatever the talk gives.
@@ -1094,15 +1101,19 @@ static void PlaceDungeonItems(const std::vector<const RemakeChest*>& shuffled) {
     }
 }
 
-// Resets the world graph, the starting inventory and the prices, and gives every location but the shuffled chests, shop
-// slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The shuffled chests', gifts' and
-// song places' items, a Red Rupee for each shuffled shop slot and a token for each shuffled skulltula make up the item
-// pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
+// Resets the world graph, the starting inventory, the prices and the scenes' places, and gives every location but the
+// shuffled chests, shop slots, gifts, Gold Skulltulas and song places what the unmodified game gives there. The
+// shuffled chests', gifts' and song places' items, a Red Rupee for each shuffled shop slot and a token for each
+// shuffled skulltula make up the item pool, and each shuffled shop slot takes a price. Returns the shuffled chests.
 std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                                            const std::vector<RemakeGift>& gifts,
                                            const std::vector<RemakeSkulltula>& skulltulas,
                                            const std::vector<RemakeSongPlace>& songs) {
     auto ctx = Rando::Context::GetInstance();
+    scenePlaces.assign(std::begin(everySeedsScenePlaces), std::end(everySeedsScenePlaces));
+    if (std::ranges::find(gifts, zeldasCourtyard.first, &RemakeGift::location) != gifts.end()) {
+        scenePlaces.push_back(zeldasCourtyard);
+    }
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();
@@ -1162,8 +1173,8 @@ void ClearProgress() {
 
 bool KeptInChestsAndCalls(RandomizerGet item) {
     return Rando::StaticData::RetrieveItem(item).GetItemType() == ITEMTYPE_DUNGEONREWARD ||
-           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_POCKET_EGG ||
-           item == RG_CLAIM_CHECK || item == RG_BIGGORON_SWORD;
+           item == RG_GERUDO_MEMBERSHIP_CARD || item == RG_WEIRD_EGG || item == RG_ZELDAS_LETTER ||
+           item == RG_POCKET_EGG || item == RG_CLAIM_CHECK || item == RG_BIGGORON_SWORD;
 }
 
 bool KeptInChests(RandomizerGet item) {

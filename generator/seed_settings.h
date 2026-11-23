@@ -264,16 +264,20 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Great Fairies", "", "Great Fairies" },
     { "Story gifts", "", "Story gifts" },
     { "Malon's Egg", "", "Malon's Egg" },
+    { "Zelda's Letter", "", "Zelda's Letter" },
     { BiggoronQuest, "", BiggoronQuest },
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 
 // The groups a seed shuffles unless its settings say otherwise: SoH's default seed shuffles every group's places but
-// Malon's, whose "Shuffle Weird Egg" starts at Vanilla. It leaves its three one-time scrubs out of the game, which
-// Kaepora cannot do, and their group holds the Deku Theater's two prizes, which SoH shuffles, so the group is in.
+// Malon's and Zelda's, whose "Shuffle Weird Egg" starts at Vanilla and "Shuffle Zelda's Letter" off. It leaves its
+// three one-time scrubs out of the game, which Kaepora cannot do, and their group holds the Deku Theater's two prizes,
+// which SoH shuffles, so the group is in.
 inline std::set<GiftGroup> DefaultGifts() {
     std::set<GiftGroup> groups(std::begin(GiftGroups), std::end(GiftGroups));
-    std::erase_if(groups, [](const GiftGroup& group) { return group.name == "Malon's Egg"; });
+    std::erase_if(groups, [](const GiftGroup& group) {
+        return group.name == "Malon's Egg" || group.name == "Zelda's Letter";
+    });
     return groups;
 }
 

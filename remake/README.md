@@ -305,15 +305,16 @@ count, so it sells again and again, and it leaves the game data list as it is. S
   SoH's three Red Potions, at 30, 40 and 50 rupees, are all the remake's one Red Potion at 30, and its two 5 Bombs are
   the remake's one at 35.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 47 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 48 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, five places where the story moves (the scene
 after the last carpenter in the Gerudo Fortress, Darunia's dance, his son's talk once an adult stops him rolling, King
-Zora's thanks once he is thawed, and Zelda's scene in the Temple of Time), the two eggs, Biggoron's sword, four Business
-Scrubs that sell once (the stick bag by the Lost Woods bridge, the nut bag in the Lost Woods grotto, and a Piece of
-Heart in a Hyrule Field grotto and in the crater), and the gifts of the six Great Fairies. Each group ticked in "Gifts"
-puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its
-places. A location of a group left out keeps what the game gives, and the plan names none of its places.
+Zora's thanks once he is thawed, and Zelda's scene in the Temple of Time), the two eggs, Zelda's Letter, Biggoron's
+sword, four Business Scrubs that sell once (the stick bag by the Lost Woods bridge, the nut bag in the Lost Woods
+grotto, and a Piece of Heart in a Hyrule Field grotto and in the crater), and the gifts of the six Great Fairies. Each
+group ticked in "Gifts" puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the
+placed item at each of its places. A location of a group left out keeps what the game gives, and the plan names none of
+its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -412,6 +413,29 @@ her place holds whatever the seed puts there:
 
 The egg's caption still says who gave it ("Malon gave you this egg").
 
+Zelda gives her letter in the castle courtyard, in `Dm_HrlCastle_0050` `Event59`, through `GetInEvent_Zeldaletter`,
+which shows the item's model, opens its window and adds it straight to the pouch (read). While "Zelda's Letter"
+shuffles her place, the letter is an item of the pool, and her place holds whatever the seed puts there:
+
+- Her meeting writes `Goto_HyruleCastle` Complete and `DoorOfTime` Step01 in `Goto_HyruleCastle_MeetZelda`, whatever she
+  gives, and Impa's lesson follows (read). Only Kakariko's gate guard asks for the letter. Three other flows name it
+  only as a scene's prop: her scene, the gate's scene `Dm_Kakariko_0010` and the give `Dm_SY_GetInEvent`. No logic
+  module, placement or saved expression names it, and no actor pack but its own and the guard's (measured). So a letter
+  found before the courtyard changes nothing there.
+- Shown the letter, the guard takes it (`Npc_Hylia_Soldier_003` `Event57`), opens the gate and writes `Get_StoneOfFire`
+  DeathMtTrailIn with no step check (`Event152`), whatever gave it (read). His reaction to a shown letter
+  (`ShowItemReplaceEventParam` in his pack) stands while `Npc_Hylia_Soldier_003_GateOpen` is false and asks nothing
+  else, and his talks ask for the letter at the Fire quest's two steps that Impa's send-off and his first talk write
+  (read). Whether he takes a letter shown before Zelda has been met is unseen, so the gate's rule asks for the letter
+  and for Zelda met. The masks, the lost dog and the trail beyond the gate follow that rule.
+- A letter shown after the Fire quest has moved on sets it back to DeathMtTrailIn, as a late show of the letter from
+  Zelda does (the Quests section below). A completed quest takes no write.
+- Impa's and Saria's lessons, the moat and the gate wait for Zelda met, whatever her place gives. So with her place
+  shuffled, the route names it as it names a boss's place (`scenePlaces` in `fill.cpp`), before each step that waits for
+  her, and it keeps the castle from being called foolish. A seed that keeps her letter there keeps SoH's route, which
+  names her place where a step waits for the letter.
+- The letter goes only to a chest, a gift or a reward's place, as the eggs do.
+
 A Business Scrub that sells once names its item in a call to the one-time sale of `Enemy_Scrub_Business_Common`. The
 sale charges the call's price, 40 rupees at the bridge and the grotto and 100 at the field and the crater, adds the item
 through `Dm_SY_GetInEvent:GetInEvent_NotTurn_2DShop`, the add a gift's call reaches, and then sets the scrub's own saved
@@ -469,8 +493,8 @@ Richard beside his owner stands until then: `Logic/Market_Child_Prefab_f3a2` rem
 `SubEvent_FindRichard_RichardRivival`, which a find sets, is false. The dog's quest, `SubEvent_FindRichard`, stays at
 `NotReady` until the flag is true (`depends_on`), and only Zelda's Letter shown to Kakariko's gate guard sets it. Seen
 in the game: at night before Zelda the dog stayed in the house. So the logic's rule for the place asks for the letter
-shown at the gate, `LOGIC_KAKARIKO_GATE_OPEN`, beside SoH's child at night. The letter is not shuffled, so the place
-opens only after Zelda.
+shown at the gate, `LOGIC_KAKARIKO_GATE_OPEN`, beside SoH's child at night. The gate waits for Zelda met as well
+(below), so the place opens only after Zelda.
 
 A Great Fairy gives her item once Link has paid her offering. On a return visit she asks whether he has got her own
 item, and sells it again if not (read from her flow). `fountain_claims.tsv` has a row for each of the six: by `location`

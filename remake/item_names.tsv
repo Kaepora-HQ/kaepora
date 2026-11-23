@@ -77,6 +77,7 @@ Item_Token_Gold	Item_Token_Gold_Name	Token	a
 Item_Wallet_Large	Item_Wallet_Large_Name	Giant's Wallet	a
 Item_Wallet_Medium	Item_Wallet_Medium_Name	Adult's Wallet	an
 Item_WeirdEgg	Item_WeirdEgg_Name	Weird Egg	the
+Item_ZeldaLetter	Item_ZeldaLetter_Name	Zelda's Letter	
 Obj_Armor_Goron	Armor_Adult_Goron_Name	Goron Tunic	a
 Obj_Armor_Zora	Armor_Adult_Zora_Name	Zora Tunic	a
 Obj_Heart_Container	Obj_Heart_Container_Name	Heart Container	a

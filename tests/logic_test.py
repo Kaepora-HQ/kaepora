@@ -219,6 +219,14 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GF HBA 1000 Points", ("Song from Malon", "Saria's Song"),
                                        ("Song from Saria", "Epona's Song")))
 
+    def test_kakarikos_gate_opens_to_the_letter_only_once_zelda_is_met(self):
+        # Shown Zelda's Letter, Kakariko's gate guard takes it and opens the gate, from any source. Whether he takes one
+        # before Zelda has been met is unseen. Without the Weird Egg, Talon never leaves the castle and a child never
+        # reaches her courtyard. The lost dog comes out only once the gate is open.
+        letter = (("KF Mido Top Left Chest", "Zelda's Letter"), ("HC Zeldas Letter", "Green Rupee"))
+        self.assertFalse(self.reachable("Market Lost Dog", *letter, ("HC Malon Egg", "Green Rupee")))
+        self.assertTrue(self.reachable("Market Lost Dog", *letter))
+
     def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_not_for_the_card(self):
         # After the last carpenter a scene moves the Spirit quest on. The guards, the Wasteland's gate keeper and the
         # archery range follow the quest, not the card the scene gives.

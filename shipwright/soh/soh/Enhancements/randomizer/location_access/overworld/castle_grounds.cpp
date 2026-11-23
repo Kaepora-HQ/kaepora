@@ -139,7 +139,9 @@ void RegionTable_Init_CastleGrounds() {
         EVENT_ACCESS(LOGIC_MET_ZELDA, logic->HasItem(RG_SPEAK_HYLIAN)),
     }, {
         //Locations
-        LOCATION(RC_HC_ZELDAS_LETTER,                 logic->Get(LOGIC_MET_ZELDA)),
+        // Zelda hands over her letter as Link meets her, so the place asks what her meeting asks. Where her place is
+        // shuffled, the route's search sets her meeting only as it takes this place (fill.cpp, scenePlaces).
+        LOCATION(RC_HC_ZELDAS_LETTER,                 logic->HasItem(RG_SPEAK_HYLIAN)),
         LOCATION(RC_SONG_FROM_IMPA,                   logic->Get(LOGIC_MET_ZELDA)),
         LOCATION(RC_HC_WONDER_COURTYARD_RIGHT_WINDOW, logic->CanUse(RG_FAIRY_SLINGSHOT)),
         LOCATION(RC_HC_WONDER_COURTYARD_LEFT_WINDOW,  logic->CanUse(RG_FAIRY_SLINGSHOT)),
