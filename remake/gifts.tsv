@@ -38,6 +38,7 @@ Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event7
 Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large	House of Skulltula	
 Kak 40 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event200	TakenRewardActor	Item_BombchuBundle_Large	Item_BombchuBundle_Large	House of Skulltula	
 Kak 50 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event219	TakenRewardActor	Obj_Heart_Piece	Obj_Heart_Piece	House of Skulltula	
+Kak 100 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event215	TakenRewardActor	Obj_Rupee_Gold	TBox_Rupee_Gold	100 Gold Skulltulas	
 Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Characters	
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event381	ReveiveItem	Item_Quiver_Medium	Item_Quiver_Medium	Minigames	
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event242	ReveiveItem	Item_Quiver_Large	Item_Quiver_Medium	Minigames	

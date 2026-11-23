@@ -1,6 +1,6 @@
 # What is randomized
 
-With the default settings, a seed shuffles the chests, the gifts of every group but **Malon's Egg** and **Zelda's Letter**, the loose items, the songs among themselves, and the stones and medallions among the bosses and Rauru. **Shop goods** and **Gold Skulltulas** start at **Vanilla**. Change any of it in **Settings…**.
+With the default settings, a seed shuffles the chests, the gifts of every group but **100 Gold Skulltulas**, **Malon's Egg** and **Zelda's Letter**, the loose items, the songs among themselves, and the stones and medallions among the bosses and Rauru. **Shop goods** and **Gold Skulltulas** start at **Vanilla**. Change any of it in **Settings…**.
 
 ## Chests
 
@@ -36,11 +36,12 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 ## Gifts
 
-Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives. By default every group but **Malon's Egg** and **Zelda's Letter** is ticked, and **Deku Scrubs** is at **One Time Rewards**.
+Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives. By default every group but **100 Gold Skulltulas**, **Malon's Egg** and **Zelda's Letter** is ticked, and **Deku Scrubs** is at **One Time Rewards**.
 
 - **Minigames:** both fishing prizes, the Zora diving game, horseback archery's two prizes, Bombchu Bowling's two prizes, the frogs' two prizes, the ocarina memory game in the Lost Woods, both shooting galleries, the target in the Lost Woods, the rolling Goron in Goron City, Talon's cuccos, Anju's cuccos and Dampé's digging tour.
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer and the lakeside laboratory's dive.
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
+- **100 Gold Skulltulas:** the cursed man's last reward in the House of Skulltula, for all 100 tokens.
 - **Great Fairies:** the gifts of the six Great Fairies.
 - **Story gifts:** the scene after the carpenters' rescue, Darunia's dance, his son's thanks once you stop him rolling, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
@@ -53,6 +54,8 @@ Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone.
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
+
+With **100 Gold Skulltulas** ticked, the man in the House of Skulltula hands you the seed's item once you bring him all 100 tokens, and the Gold Rupee he would give is one of the shuffled items. A seed may need that item, and then it needs every token. Talk to him again and he gives a Gold Rupee each time, as in the game.
 
 With **Malon's Egg** ticked, her egg is one of the shuffled items, and Malon at the castle hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, the egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle.
 

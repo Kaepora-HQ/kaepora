@@ -64,8 +64,8 @@ EVERY_SETTING_CHANGED = {
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Skip": [],
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
-    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Zelda's Letter",
-              "Biggoron Quest", "Deku Scrubs (One Time Rewards)"],
+    "Gifts": ["Minigames", "Characters", "House of Skulltula", "100 Gold Skulltulas", "Story gifts", "Malon's Egg",
+              "Zelda's Letter", "Biggoron Quest", "Deku Scrubs (One Time Rewards)"],
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
 # In every seed the Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the
@@ -136,8 +136,8 @@ GIFT_LOCATIONS = {(row["flow"], row["event"], row["param"]): row["location"] for
 POOLED_AS_SOH = {"Kak Anju as Adult": "Item_ClaimCheck"}
 GIFT_POOL = collections.Counter(POOLED_AS_SOH.get(row["location"], row["item"])
                                 for row in {row["location"]: row for row in GIFT_SITES}.values())
-GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts", "Malon's Egg",
-               "Zelda's Letter", "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
+GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "100 Gold Skulltulas", "Great Fairies", "Story gifts",
+               "Malon's Egg", "Zelda's Letter", "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
 # The groups "Shuffled" names, in a seed's settings and in the settings a window remembers.
 RELEASED_GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
 GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
@@ -577,12 +577,13 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_a_seed_with_no_settings_shuffles_what_sohs_default_seed_shuffles(self):
-        # SoH's default seed shuffles every gift place but Malon's and Zelda's, whose Weird Egg and letter start as the
-        # game has them, the loose items, the songs among the song places and the dungeon rewards among the places that
-        # hand one over. It leaves the Gold Skulltulas and the shops' goods where the game has them.
+        # SoH's default seed shuffles every gift place but Malon's, Zelda's and the 100-token reward, whose own settings
+        # start at Vanilla or off, the loose items, the songs among the song places and the dungeon rewards among the
+        # places that hand one over. It leaves the Gold Skulltulas and the shops' goods where the game has them.
         spoiler, plan = self.generate("1")
         listed = spoiler["locations"].keys()
-        kept_gifts = {row["location"] for row in GIFT_SITES if row["group"] in ("Malon's Egg", "Zelda's Letter")}
+        kept_gifts = {row["location"] for row in GIFT_SITES
+                      if row["group"] in ("Malon's Egg", "Zelda's Letter", "100 Gold Skulltulas")}
         self.assertLessEqual({row["location"] for row in GIFT_SITES} - kept_gifts, listed)
         self.assertLessEqual({row["location"] for row in LOOSE_ITEMS}, listed)
         self.assertLessEqual({row["location"] for row in SONG_PLACES}, listed)
@@ -1476,6 +1477,22 @@ class SeedgenTest(unittest.TestCase):
         self.assertIn("shop", kinds["Item_Gauntlet_Goron"], kinds)
         self.assertNotIn("shop", kinds["Obj_Armor_Goron"], kinds)
 
+    def test_the_100_token_reward_gives_the_seeds_item(self):
+        # SoH gives its own place to the 100-token reward only while the reward is shuffled. With its group ticked, the
+        # cursed man's last reward gives what the seed puts there, and the Gold Rupee goes elsewhere.
+        self.assert_gifts_give_what_is_placed({"Kak 100 Gold Skulltula Reward": "TBox_Rupee_Gold"},
+                                              map(str, range(700, 720)))
+
+    def test_the_100_token_reward_is_in_reach_in_every_seed(self):
+        # With its group ticked the fill keeps the cursed man's last reward in reach, as it keeps Ganon in reach,
+        # wherever the seed puts the tokens and whatever the reward holds.
+        gifts = [group for group in GIFT_GROUPS if group not in ("Malon's Egg", "Zelda's Letter")]
+        for skulltulas in ("In the overworld", "All"):
+            for seed in map(str, range(155, 179)):
+                log, _ = self.generate(seed, {"Gifts": gifts, "Gold Skulltulas": skulltulas})
+                self.assertTrue(reach.reachable("Kak 100 Gold Skulltula Reward", *log["locations"].items(),
+                                                settings=log["settings"]), (skulltulas, seed))
+
     def test_the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them(self):
         # The Gerudo let Link pass after the last carpenter's scene, and the bridge follows Zelda's scene, whatever
         # their places give. So the route names each place before any step that waits for it.
@@ -1825,8 +1842,8 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 72's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
-        spoiler, _ = self.assert_hints_are_true("72", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+        # Seed 6's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
+        spoiler, _ = self.assert_hints_are_true("6", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
                                                 | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
         self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 1"])
 

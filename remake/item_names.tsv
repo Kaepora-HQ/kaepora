@@ -87,6 +87,7 @@ TBox_ArrowBundle_Large	Obj_ArrowBundle_Large_Name	10 Arrows
 TBox_ArrowBundle_Medium	Obj_ArrowBundle_Medium_Name	Five Arrows	
 TBox_DekuNutBundle	TBox_DekuNutBundle_Name	Three Deku Nuts	
 TBox_Rupee_Blue	Obj_Rupee_Blue_Name	Blue Rupee	a
+TBox_Rupee_Gold	Obj_Rupee_Gold_Name	Gold Rupee	a
 TBox_Rupee_Green	Obj_Rupee_Green_Name	Green Rupee	a
 TBox_Rupee_Purple	Obj_Rupee_Purple_Name	Purple Rupee	a
 TBox_Rupee_Red	Obj_Rupee_Red_Name	Red Rupee	a

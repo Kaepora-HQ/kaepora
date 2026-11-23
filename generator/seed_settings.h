@@ -261,6 +261,7 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Minigames", "", "Minigames" },
     { "Characters", "", "Characters" },
     { "House of Skulltula", "", "House of Skulltula" },
+    { "100 Gold Skulltulas", "", "100 Gold Skulltulas" },
     { "Great Fairies", "", "Great Fairies" },
     { "Story gifts", "", "Story gifts" },
     { "Malon's Egg", "", "Malon's Egg" },
@@ -269,14 +270,18 @@ inline constexpr GiftGroup GiftGroups[] = {
     { "Deku Scrubs", "One Time Rewards", "Deku Scrubs (One Time Rewards)" },
 };
 
-// The groups a seed shuffles unless its settings say otherwise: SoH's default seed shuffles every group's places but
-// Malon's and Zelda's, whose "Shuffle Weird Egg" starts at Vanilla and "Shuffle Zelda's Letter" off. It leaves its
-// three one-time scrubs out of the game, which Kaepora cannot do, and their group holds the Deku Theater's two prizes,
-// which SoH shuffles, so the group is in.
+// The groups whose places SoH's default seed keeps: its "Shuffle Weird Egg" starts at Vanilla, and its "Shuffle Zelda's
+// Letter" and "Shuffle 100 GS Reward" start off.
+inline constexpr std::string_view GiftGroupsKeptByDefault[] = { "Malon's Egg", "Zelda's Letter",
+                                                                 "100 Gold Skulltulas" };
+
+// The groups a seed shuffles unless its settings say otherwise: every group but those SoH's default seed keeps. SoH
+// leaves its three one-time scrubs out of the game, which Kaepora cannot do, and their group holds the Deku Theater's
+// two prizes, which SoH shuffles, so the group is in.
 inline std::set<GiftGroup> DefaultGifts() {
     std::set<GiftGroup> groups(std::begin(GiftGroups), std::end(GiftGroups));
     std::erase_if(groups, [](const GiftGroup& group) {
-        return group.name == "Malon's Egg" || group.name == "Zelda's Letter";
+        return std::ranges::find(GiftGroupsKeptByDefault, group.name) != std::end(GiftGroupsKeptByDefault);
     });
     return groups;
 }
