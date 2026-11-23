@@ -312,8 +312,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      with_songs_shuffled_the_courtyard_scene_starts_played
                      a_seed_starts_with_what_is_chosen
                      a_seed_that_starts_with_the_kokiri_sword_starts_the_forest_visited
-                     the_opening_is_skipped_unless_played
-                     cutscenes_are_skipped_unless_played
+                     the_opening_movie_is_skipped_while_listed player_skippable_scenes_are_skipped_while_listed
                      a_seed_starts_with_each_item_that_comes_in_steps_at_its_highest_step
                      a_started_strength_step_leaves_darunias_bracelet_out a_started_tunic_leaves_the_gifts
                      a_place_that_gives_a_started_step_again_counts_for_nothing)
@@ -341,6 +340,9 @@ if(Qt6Test_FOUND)
                      goodsBackAtVanillaLeaveNoPriceChoice rememberedPricesWithVanillaGoodsStartAsTheDefaults
                      longSettingsLeaveTheWindowWidth aSeedMadeBeforeASettingHasNoneOfIt
                      aSeedMadeBeforeTheOpeningSettingPlaysIt aSeedMadeBeforeTheCutscenesSettingPlaysThem
+                     aSeedMadeBeforeTheSkipListSkipsWhatItsOpeningAndCutscenesSay
+                     rememberedSettingsFromBeforeTheSkipListKeepTheirChoices
+                     theSkipRowHasACheckedBoxForEachSkipOneUnderAnother anUncheckedSkipShowsInTheSummary
                      aSeedWhoseSpoilerLogCannotBeReadIsListed settingsAreRemembered
                      unreadableRememberedSettingsStartAsTheDefaults theWindowShowsTheVersionRunning
                      aNewerVersionShowsTheNotice aNewerVersionAsksInAPopup thePopupsDownloadOpensTheReleasePage

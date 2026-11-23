@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iterator>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string_view>
 #include <utility>
@@ -18,8 +19,7 @@ inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view DoorOfTimeSetting = "Door of Time";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
-inline constexpr std::string_view OpeningSetting = "Opening";
-inline constexpr std::string_view CutscenesSetting = "Cutscenes";
+inline constexpr std::string_view SkipSetting = "Skip";
 inline constexpr std::string_view StartWithSetting = "Start with";
 inline constexpr std::string_view ShopsSetting = "Shop goods";
 inline constexpr std::string_view ShopPricesSetting = "Shop prices";
@@ -98,16 +98,16 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::None, "None" },
 };
 
-enum class Opening { Skipped, Played };
-inline constexpr std::pair<Opening, std::string_view> OpeningChoices[] = {
-    { Opening::Skipped, "Skipped" },
-    { Opening::Played, "Played" },
+enum class Skip { OpeningMovie, SkippableScenes };
+inline constexpr std::pair<Skip, std::string_view> SkipChoices[] = {
+    { Skip::OpeningMovie, "Opening movie" },
+    { Skip::SkippableScenes, "Player skippable scenes" },
 };
 
-enum class Cutscenes { Skipped, Played };
-inline constexpr std::pair<Cutscenes, std::string_view> CutscenesChoices[] = {
-    { Cutscenes::Skipped, "Skipped" },
-    { Cutscenes::Played, "Played" },
+// The settings of released seeds name each of the first two skips under a setting of its own, "Skipped" or "Played".
+inline constexpr std::pair<std::string_view, Skip> ReleasedSkipSettings[] = {
+    { "Opening", Skip::OpeningMovie },
+    { "Cutscenes", Skip::SkippableScenes },
 };
 
 // A step of an item a seed can start with. An item comes in one step or in several, and a step includes the ones
@@ -328,8 +328,7 @@ struct SeedSettings {
     DoorOfTime doorOfTime = DoorOfTime::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
-    Opening opening = Opening::Skipped;
-    Cutscenes cutscenes = Cutscenes::Skipped;
+    std::set<Skip> skips{ std::views::keys(SkipChoices).begin(), std::views::keys(SkipChoices).end() };
     std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
     std::set<GiftGroup> gifts = DefaultGifts(); // at most one choice of each row

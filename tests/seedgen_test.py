@@ -41,11 +41,12 @@ ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.t
 DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
             "Ganon's Castle"]
+SKIPS = ["Opening movie", "Player skippable scenes"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Door of Time": "Closed",
-                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Opening": "Skipped",
-                    "Cutscenes": "Skipped", "Start with": [],
+                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Skip": SKIPS,
+                    "Start with": [],
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
                     "Gifts": ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts",
                               "Biggoron Quest", "Deku Scrubs (One Time Rewards)"],
@@ -60,7 +61,7 @@ EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
     "Door of Time": "Open",
-    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
+    "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Skip": [],
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
     "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
@@ -354,6 +355,10 @@ LINE_LENGTH = 65
 
 def folder(path):
     return path.split("/")[1]
+
+
+def without_skip(log):
+    return log | {"settings": {key: value for key, value in log["settings"].items() if key != "Skip"}}
 
 
 def without_version(log):
@@ -768,7 +773,9 @@ class SeedgenTest(unittest.TestCase):
                                   ({"Forest": "Open"}, "Forest"),
                                   ({"Start with": ["Kokiri Sword", "Master Sword"]}, "Master Sword"),
                                   ({"Start with": ["Hookshot", "Longshot"]}, "Hookshot and Longshot"),
-                                  ({"Gifts": ["Minigames", "Fishing"]}, "Fishing")):
+                                  ({"Gifts": ["Minigames", "Fishing"]}, "Fishing"),
+                                  ({"Skip": ["Opening movie", "Credits"]}, "Credits"),
+                                  ({"Skip": [], "Opening": "Played"}, "Opening: applies only")):
             result = subprocess.run([SEEDGEN, "11", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
@@ -873,17 +880,20 @@ class SeedgenTest(unittest.TestCase):
             _, plan = self.generate("19", {"Kokiri Forest": choice})
             self.assertIs(plan["mido_castle_entry_removed"], removed, choice)
 
-    def test_the_opening_is_skipped_unless_played(self):
-        for settings, skipped in (({}, True), ({"Opening": "Played"}, False)):
-            spoiler, plan = self.generate("20", settings)
-            self.assertEqual(spoiler["settings"]["Opening"], "Played" if settings else "Skipped")
-            self.assertIs(plan["opening_skipped"], skipped, settings)
+    def assert_skip_adds_only_its_parts(self, skip, with_parts):
+        others = [name for name in SKIPS if name != skip]
+        spoiler, plan = self.generate("20")
+        played, plan_played = self.generate("20", {"Skip": others})
+        self.assertEqual((spoiler["settings"]["Skip"], played["settings"]["Skip"]), (SKIPS, others))
+        self.assertEqual(without_skip(spoiler), without_skip(played))
+        self.assertNotEqual(plan, plan_played)
+        self.assertEqual(plan, with_parts(plan_played))
 
-    def test_cutscenes_are_skipped_unless_played(self):
-        for settings, skipped in (({}, True), ({"Cutscenes": "Played"}, False)):
-            spoiler, plan = self.generate("20", settings)
-            self.assertEqual(spoiler["settings"]["Cutscenes"], "Played" if settings else "Skipped")
-            self.assertIs(plan["cutscenes_skipped"], skipped, settings)
+    def test_the_opening_movie_is_skipped_while_listed(self):
+        self.assert_skip_adds_only_its_parts("Opening movie", lambda plan: plan | {"opening_skipped": True})
+
+    def test_player_skippable_scenes_are_skipped_while_listed(self):
+        self.assert_skip_adds_only_its_parts("Player skippable scenes", lambda plan: plan | {"cutscenes_skipped": True})
 
     def test_bridge_always_open(self):
         spoiler, plan = self.generate("17", CHESTS_ALONE | {"Rainbow Bridge": "Always open"})

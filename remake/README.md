@@ -363,7 +363,7 @@ nothing of the item before the sale, and the bridge scrub's two questions of wha
 three calls gives (read from the flows and the modules). The field's scrub sells only to child Link, and only once Link
 has read the password on the Fairy Thought outside, which only the adult field holds; to an adult its talk says a fairy
 bought what it sold (read). An adult buys at the bridge, from the Lost Woods' copy of the scrub (seen). The sale is
-talk, which no cutscene setting skips.
+talk, which nothing under "Skip" skips.
 
 A location with two or three rows gives its item from that many events of one flow, such as the frogs' game on a first
 try and on a retry, and both give the placed item. Dampé's tour names the `.110` copy of its flow, the copy the game
@@ -446,8 +446,8 @@ the meter, the two magic blessings set their records and doubled it, and the gif
 The castle's and the crater's blessings stand for SoH's Progressive Magic Meter, and either found first brings the meter
 (measured from the program).
 
-With "Cutscenes" at "Skipped" the skip ends only a fairy's appearance. Her gift comes after that window on both of her
-flow's paths, and the summit's gift has no window at all (read from the flows).
+With "Player skippable scenes" under "Skip" the skip ends only a fairy's appearance. Her gift comes after that window on
+both of her flow's paths, and the summit's gift has no window at all (read from the flows).
 
 The five story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, Darunia's dance the Fire quest to DodongoCavernOpne, his son's talk the Fire Temple's quest to MoveStatue, which
@@ -952,8 +952,8 @@ A mod also rests on a step in these places, where no write changes:
   hatches the Chicken while `Goto_HyruleCastle` is at Step03, the step Malon's talk writes.
 - With "Ganon's trials" at "None", nothing writes `Defeat_Ganon` Step04, and the boss door's write of Step05 goes
   forward (read).
-- With "Opening" at "Skipped", `HavePlayedEvent.Dm_Kokiri_0030` starts true. It is the flag that forces `Meet_DekuTree`
-  to Ready, Navi waking Link.
+- With "Opening movie" under "Skip", `HavePlayedEvent.Dm_Kokiri_0030` starts true. It is the flag that forces
+  `Meet_DekuTree` to Ready, Navi waking Link.
 - In every seed `HyruleField_ArriveEntrance` and `HavePlayedEvent.Dm_HrlField_0020` start true. The program holds the
   world's time until the first is true, which only the owl's scene on the child's first walk into Hyrule Field sets, and
   stops the afternoon at 15:00 until the second, the played flag of Impa's send-off film, is true (read; the stop at

@@ -82,6 +82,10 @@ static std::pair<QStringList, QStringList> GiftGroupsShuffledAndLeftOut(const Se
     return names;
 }
 
+static QString SkipName(Skip skip) {
+    return QString::fromUtf8(Words(SkipChoices, skip));
+}
+
 QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     if (settings == SeedSettings{}) {
         return "Default settings";
@@ -116,11 +120,12 @@ QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
-    if (settings.opening == Opening::Played) {
-        changed << "opening played";
-    }
-    if (settings.cutscenes == Cutscenes::Played) {
-        changed << "cutscenes played";
+    for (const Skip skip : std::views::keys(SkipChoices)) {
+        if (!settings.skips.contains(skip)) {
+            QString name = SkipName(skip);
+            name[0] = name[0].toLower();
+            changed << name + " played";
+        }
     }
     if (!settings.startWith.empty()) {
         changed << "starts with " + Counted(settings.startWith.size());
@@ -192,6 +197,16 @@ static QString StartWith(const SeedSettings& settings) {
     return names.isEmpty() ? "None" : Listed(names);
 }
 
+static QString Skipped(const SeedSettings& settings) {
+    QStringList names;
+    for (const Skip skip : std::views::keys(SkipChoices)) {
+        if (settings.skips.contains(skip)) {
+            names << SkipName(skip);
+        }
+    }
+    return names.isEmpty() ? "None" : Listed(names);
+}
+
 static QString ShopPricesDetail(const ShopPrices& prices) {
     if (const auto* one = std::get_if<OnePrice>(&prices)) {
         return QString("One price of %1 rupees").arg(one->price);
@@ -218,8 +233,7 @@ QString Details(const SeedSettings& settings, LoggedGifts gifts) {
                         Line(DoorOfTimeSetting, QString::fromUtf8(Words(DoorOfTimeChoices, settings.doorOfTime))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
-                        Line(OpeningSetting, QString::fromUtf8(Words(OpeningChoices, settings.opening))),
-                        Line(CutscenesSetting, QString::fromUtf8(Words(CutscenesChoices, settings.cutscenes))),
+                        Line(SkipSetting, Skipped(settings)),
                         Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
     if (ShopPricesApply(settings.shops)) {
@@ -466,11 +480,14 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         ChooseInList<StartStep>(dialog, StartWithSetting, "Items", StartSteps, &StartStep::item, "None", *startWith,
                                 showStartWith);
     });
-    QComboBox* opening = Choice(OpeningChoices);
-    QComboBox* cutscenes = Choice(CutscenesChoices);
+    std::vector<std::pair<Skip, QCheckBox*>> skips;
+    auto* skipList = new QVBoxLayout;
+    for (const Skip skip : std::views::keys(SkipChoices)) {
+        skips.emplace_back(skip, new QCheckBox(SkipName(skip)));
+        skipList->addWidget(skips.back().second);
+    }
     auto* startForm = new QFormLayout;
-    startForm->addRow(QString::fromUtf8(OpeningSetting), opening);
-    startForm->addRow(QString::fromUtf8(CutscenesSetting), cutscenes);
+    startForm->addRow(QString::fromUtf8(SkipSetting), skipList);
     startForm->addRow("Items", items);
     auto* startGroup = new QGroupBox("Start");
     startGroup->setLayout(startForm);
@@ -517,8 +534,9 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(doorOfTime, shown.doorOfTime);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
-        Select(opening, shown.opening);
-        Select(cutscenes, shown.cutscenes);
+        for (const auto& [skip, box] : skips) {
+            box->setChecked(shown.skips.contains(skip));
+        }
         showStartWith(shown.startWith);
         shops->setCurrentIndex(shown.shops ? shops->findData(static_cast<int>(shown.shops->count)) : 0);
         const ShopPrices prices = shown.shops ? shown.shops->prices : DefaultShopPrices;
@@ -557,8 +575,12 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.doorOfTime = Selected<DoorOfTime>(doorOfTime);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
-        shown.opening = Selected<Opening>(opening);
-        shown.cutscenes = Selected<Cutscenes>(cutscenes);
+        shown.skips.clear();
+        for (const auto& [skip, box] : skips) {
+            if (box->isChecked()) {
+                shown.skips.insert(skip);
+            }
+        }
         shown.startWith = *startWith;
         if (shops->currentIndex() != 0) {
             shown.shops = ShuffledShops{ Selected<ShopCount>(shops) };

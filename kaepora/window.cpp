@@ -146,12 +146,11 @@ struct LoggedSettings {
 
 // A seed's settings as its spoiler log holds them. A setting a log leaves out is one its release did not have, so the
 // seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
+// A log that leaves out "Skip" is of a seed whose mod skips only what its "Opening" and "Cutscenes" say it skips.
 static LoggedSettings SettingsOf(const QString& folder) {
     nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
     const nlohmann::json asTheGameIs = {
         { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
-        { OpeningSetting, Words(OpeningChoices, Opening::Played) },
-        { CutscenesSetting, Words(CutscenesChoices, Cutscenes::Played) },
         { GiftsSetting, nlohmann::json::array() },
         { SongsSetting, Words(SongsChoices, Songs::Vanilla) },
         { LooseItemsSetting, Words(LooseItemsChoices, LooseItems::Vanilla) },
@@ -160,9 +159,16 @@ static LoggedSettings SettingsOf(const QString& folder) {
     for (const auto& [setting, value] : asTheGameIs.items()) {
         logged.emplace(setting, value);
     }
-    return { ParseSeedSettings(logged), logged.at(std::string(GiftsSetting)) == "Shuffled"
-                                            ? LoggedGifts::ShuffledByARelease
-                                            : LoggedGifts::AsGroups };
+    SeedSettings settings = ParseSeedSettings(logged);
+    if (!logged.contains(std::string(SkipSetting))) {
+        std::erase_if(settings.skips, [&](Skip skip) {
+            const auto released =
+                std::ranges::find(ReleasedSkipSettings, skip, &std::pair<std::string_view, Skip>::second);
+            return released == std::end(ReleasedSkipSettings) || !logged.contains(std::string(released->first));
+        });
+    }
+    return { settings, logged.at(std::string(GiftsSetting)) == "Shuffled" ? LoggedGifts::ShuffledByARelease
+                                                                           : LoggedGifts::AsGroups };
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.

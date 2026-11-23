@@ -104,6 +104,8 @@ static void RefuseUnless(bool applies, std::string_view setting, std::string_vie
     }
 }
 
+static constexpr std::pair<bool, std::string_view> ReleasedSkipChoices[] = { { true, "Skipped" }, { false, "Played" } };
+
 // The shop settings as read, by name. Only the prices in effect are kept: none while no slot is shuffled, a price only
 // with one price and a range only between two prices. A left-out price takes its default.
 static std::optional<ShuffledShops> ParseShops(const std::map<std::string_view, nlohmann::json>& read) {
@@ -171,9 +173,13 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { DoorOfTimeSetting, Words(DoorOfTimeChoices, settings.doorOfTime) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
-             { OpeningSetting, Words(OpeningChoices, settings.opening) },
-             { CutscenesSetting, Words(CutscenesChoices, settings.cutscenes) },
+             { SkipSetting, nlohmann::ordered_json::array() },
              { StartWithSetting, nlohmann::ordered_json::array() } };
+    for (const auto& [skip, name] : SkipChoices) {
+        if (settings.skips.contains(skip)) {
+            json[std::string(SkipSetting)].push_back(name);
+        }
+    }
     for (const StartStep& step : StartWithInOrder(settings)) {
         json[std::string(StartWithSetting)].push_back(step.name);
     }
@@ -230,10 +236,20 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.bridge = Parse(BridgeChoices, setting, value);
         } else if (setting == TrialsSetting) {
             settings.trials = Parse(TrialsChoices, setting, value);
-        } else if (setting == OpeningSetting) {
-            settings.opening = Parse(OpeningChoices, setting, value);
-        } else if (setting == CutscenesSetting) {
-            settings.cutscenes = Parse(CutscenesChoices, setting, value);
+        } else if (setting == SkipSetting) {
+            settings.skips.clear();
+            for (const nlohmann::json& name : value) {
+                settings.skips.insert(Parse(SkipChoices, setting, name));
+            }
+        } else if (const auto released =
+                       std::ranges::find(ReleasedSkipSettings, setting, &std::pair<std::string_view, Skip>::first);
+                   released != std::end(ReleasedSkipSettings)) {
+            RefuseUnless(!json.contains(std::string(SkipSetting)), setting, "without \"Skip\"");
+            if (Parse(ReleasedSkipChoices, setting, value)) {
+                settings.skips.insert(released->second);
+            } else {
+                settings.skips.erase(released->second);
+            }
         } else if (setting == StartWithSetting) {
             settings.startWith = StartWith(setting, value);
         } else if (const auto shop = std::ranges::find(ShopSettings, setting); shop != std::end(ShopSettings)) {

@@ -1,5 +1,5 @@
 {
-    "kaepora": "0.4.0",
+    "kaepora": "0.6.0",
     "seed": "6332265119",
     "settings": {
         "Shuffled dungeons": [
@@ -22,8 +22,10 @@
         "Door of Time": "Closed",
         "Rainbow Bridge": "After the Light Arrows",
         "Ganon's trials": "All six",
-        "Opening": "Skipped",
-        "Cutscenes": "Skipped",
+        "Skip": [
+            "Opening movie",
+            "Player skippable scenes"
+        ],
         "Start with": [],
         "Shop goods": "Vanilla",
         "Gold Skulltulas": "Vanilla",

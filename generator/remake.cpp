@@ -1302,8 +1302,8 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                              { "flag", joined },
                                              { "talk", daruniaJrAfterTempleTalk } });
     }
-    plan["opening_skipped"] = settings.opening == Opening::Skipped;
-    plan["cutscenes_skipped"] = settings.cutscenes == Cutscenes::Skipped;
+    plan["opening_skipped"] = settings.skips.contains(Skip::OpeningMovie);
+    plan["cutscenes_skipped"] = settings.skips.contains(Skip::SkippableScenes);
     plan["skulltulas"] = nlohmann::ordered_json::array();
     for (const RemakeSkulltula& skulltula : skulltulas) {
         plan["skulltulas"].push_back({ { "hash", skulltula.actor.hash },

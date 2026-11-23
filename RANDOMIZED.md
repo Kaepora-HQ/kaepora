@@ -104,13 +104,14 @@ Four settings open the world sooner. They cover the way out of Kokiri Forest, th
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 
-## The opening
+## What a seed skips
 
-Under **Start**, **Opening** decides how a new game begins. **Skipped** leaves out the narrated movie and the scene of Navi waking Link, so a new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes. **Played** keeps both, as the game has them. With **Cutscenes** at **Skipped**, the scene of Navi waking Link goes by itself even then.
+Under **Start**, **Skip** lists what a seed leaves out of the game. Every box starts checked. Uncheck one to keep that part as the game has it.
 
-## Cutscenes
+- **Opening movie.** The narrated movie and the scene of Navi waking Link. A new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes.
+- **Player skippable scenes.** Every scene the game would let you skip. The seed skips each one the moment it starts, as if you had pressed Skip: the screen goes black for a moment and the game goes on. Boss introductions and part of the credits are among them. The scene of Navi waking Link is one too, so it is skipped even with **Opening movie** unchecked.
 
-Under **Start**, **Cutscenes** decides what happens to the scenes you could skip yourself. **Skipped** skips each one the moment it starts, as if you had pressed Skip: the screen goes black for a moment and the game goes on. It covers every scene the game would let you skip, such as boss introductions and the credits. Scenes in which someone talks to you in a text box, and item, song and ocarina scenes, still play, since the game does not let you skip them. **Played** leaves skipping to you, as the game has it.
+Scenes in which someone talks to you in a text box, and item, song and ocarina scenes, still play.
 
 ## What you start with
 

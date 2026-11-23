@@ -313,6 +313,31 @@ private:
         return nullptr;
     }
 
+    QList<QCheckBox*> skipBoxes() const {
+        QList<QCheckBox*> boxes;
+        for (QGroupBox* group : dialog()->findChildren<QGroupBox*>()) {
+            auto* form = qobject_cast<QFormLayout*>(group->layout());
+            for (int row = 0; group->title() == "Start" && row < form->rowCount(); ++row) {
+                if (qobject_cast<QLabel*>(form->itemAt(row, QFormLayout::LabelRole)->widget())->text() == "Skip") {
+                    QLayout* column = form->itemAt(row, QFormLayout::FieldRole)->layout();
+                    for (int index = 0; index < column->count(); ++index) {
+                        boxes << qobject_cast<QCheckBox*>(column->itemAt(index)->widget());
+                    }
+                }
+            }
+        }
+        return boxes;
+    }
+
+    QCheckBox* skipBox(const QString& name) const {
+        for (QCheckBox* box : skipBoxes()) {
+            if (box->text() == name) {
+                return box;
+            }
+        }
+        return nullptr;
+    }
+
     QComboBox* choice(const QString& label) const {
         for (QLabel* text : dialog()->findChildren<QLabel*>()) {
             if (text->text() == label) {
@@ -666,8 +691,7 @@ private slots:
                                 "Door of Time: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
-                                "Opening: Skipped\n"
-                                "Cutscenes: Skipped\n"
+                                "Skip: Opening movie and Player skippable scenes\n"
                                 "Start with: None\n"
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
@@ -735,26 +759,15 @@ private slots:
         QVERIFY(entry("7")->toolTip(1).split('\n').contains("Door of Time: Open"));
     }
 
-    void aPlayedOpeningGoesIntoTheSeed() {
+    void aSkipLeftOutGoesIntoTheSeed() {
         button("Settings…")->click();
-        choice("Opening")->setCurrentText("Played");
+        skipBox("Opening movie")->setChecked(false);
         dialogButton("OK")->click();
         QVERIFY(create("7"));
         const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
-        QCOMPARE(settings["Opening"].toString(), QString("Played"));
-        QCOMPARE(listed(1), QStringList{ "Opening played" });
-        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Opening: Played"));
-    }
-
-    void playedCutscenesGoIntoTheSeed() {
-        button("Settings…")->click();
-        choice("Cutscenes")->setCurrentText("Played");
-        dialogButton("OK")->click();
-        QVERIFY(create("7"));
-        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
-        QCOMPARE(settings["Cutscenes"].toString(), QString("Played"));
-        QCOMPARE(listed(1), QStringList{ "Cutscenes played" });
-        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Cutscenes: Played"));
+        QCOMPARE(settings["Skip"].toArray(), QJsonArray{ "Player skippable scenes" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Skip: Player skippable scenes"));
     }
 
     void cancelChangesNothing() {
@@ -783,8 +796,9 @@ private slots:
         choice("Songs")->setCurrentText("Vanilla");
         choice("Loose items")->setCurrentText("Vanilla");
         choice("Dungeon rewards")->setCurrentText("Shuffled");
-        choice("Opening")->setCurrentText("Played");
-        choice("Cutscenes")->setCurrentText("Played");
+        for (QCheckBox* box : skipBoxes()) {
+            box->setChecked(false);
+        }
         dialogButton("Defaults")->click();
         for (QCheckBox* box : dialog()->findChildren<QCheckBox*>()) {
             QVERIFY(box->isChecked());
@@ -796,8 +810,6 @@ private slots:
         QCOMPARE(choice("Door of Time")->currentText(), QString("Closed"));
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
-        QCOMPARE(choice("Opening")->currentText(), QString("Skipped"));
-        QCOMPARE(choice("Cutscenes")->currentText(), QString("Skipped"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
         expectSohsDefaultShuffles();
@@ -976,7 +988,40 @@ private slots:
         QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
                                                 "Loose items", "Dungeon rewards" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Door of Time", "Rainbow Bridge", "Ganon's trials" }));
-        QCOMPARE(rows("Start"), (QStringList{ "Opening", "Cutscenes", "Items" }));
+        QCOMPARE(rows("Start"), (QStringList{ "Skip", "Items" }));
+    }
+
+    void theSkipRowHasACheckedBoxForEachSkipOneUnderAnother() {
+        button("Settings…")->click();
+        QCoreApplication::processEvents();
+        QStringList names;
+        for (QCheckBox* box : skipBoxes()) {
+            names << box->text();
+            QVERIFY(box->isChecked());
+            QCOMPARE(box->x(), skipBoxes().front()->x());
+            QVERIFY(box == skipBoxes().front() || box->y() > skipBoxes()[names.size() - 2]->y());
+        }
+        QCOMPARE(names, (QStringList{ "Opening movie", "Player skippable scenes" }));
+    }
+
+    void anUncheckedSkipShowsInTheSummary_data() {
+        QTest::addColumn<QString>("skip");
+        QTest::addColumn<QString>("summary");
+        QTest::addColumn<QString>("details");
+        QTest::newRow("opening movie") << "Opening movie" << "Opening movie played" << "Skip: Player skippable scenes";
+        QTest::newRow("skippable scenes") << "Player skippable scenes" << "Player skippable scenes played"
+                                          << "Skip: Opening movie";
+    }
+
+    void anUncheckedSkipShowsInTheSummary() {
+        QFETCH(QString, skip);
+        QFETCH(QString, summary);
+        QFETCH(QString, details);
+        button("Settings…")->click();
+        skipBox(skip)->setChecked(false);
+        dialogButton("OK")->click();
+        QVERIFY(shows(summary));
+        QVERIFY(label(summary)->toolTip().split('\n').contains(details));
     }
 
     void theStartWithListHasTheItems() {
@@ -1197,8 +1242,6 @@ private slots:
         QTest::newRow("door") << "Door of Time" << "Open" << "Door of Time open";
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
-        QTest::newRow("opening") << "Opening" << "Played" << "Opening played";
-        QTest::newRow("cutscenes") << "Cutscenes" << "Played" << "Cutscenes played";
         QTest::newRow("shops") << "Shop goods" << "Four per shop shuffled" << "Shop goods shuffled";
         QTest::newRow("shops at random") << "Shop goods" << "A random number per shop" << "Shop goods shuffled";
         QTest::newRow("dungeon skulltulas") << "Gold Skulltulas" << "In dungeons" << "Dungeon Gold Skulltulas shuffled";
@@ -1254,9 +1297,9 @@ private slots:
               "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, no gifts shuffled, songs not shuffled, "
-                                         "loose items not shuffled, dungeon rewards not shuffled, no hints from "
-                                         "characters" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, no gifts shuffled, "
+                                         "songs not shuffled, loose items not shuffled, dungeon rewards not "
+                                         "shuffled, no hints from characters" });
         const QStringList details = entry("OWL")->toolTip(1).split('\n');
         for (const QString line : { "Gifts: Vanilla", "Songs: Vanilla", "Loose items: Vanilla",
                                     "Dungeon rewards: Vanilla", "Hints from characters: Vanilla" }) {
@@ -1279,9 +1322,10 @@ private slots:
               "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, no gifts shuffled, songs not shuffled, "
-                                         "loose items not shuffled, dungeon rewards not shuffled" });
-        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Opening: Played"));
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, no gifts shuffled, "
+                                         "songs not shuffled, loose items not shuffled, dungeon rewards not "
+                                         "shuffled" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: None"));
     }
 
     void aSeedMadeBeforeTheCutscenesSettingPlaysThem() {
@@ -1298,9 +1342,29 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Cutscenes played, no gifts shuffled, songs not shuffled, loose items not "
-                                         "shuffled, dungeon rewards not shuffled" });
-        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Cutscenes: Played"));
+        QCOMPARE(listed(1), QStringList{ "Player skippable scenes played, no gifts shuffled, songs not shuffled, "
+                                         "loose items not shuffled, dungeon rewards not shuffled" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: Opening movie"));
+    }
+
+    void aSeedMadeBeforeTheSkipListSkipsWhatItsOpeningAndCutscenesSay() {
+        // The settings of a seed made by Kaepora 0.6.0 with the opening played.
+        QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
+        Write(library + "/OWL/spoiler.json",
+              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
+              "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
+              "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
+              "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
+              "Opening": "Played", "Cutscenes": "Skipped", "Start with": [], "Shop goods": "Vanilla",
+              "Gold Skulltulas": "Vanilla", "Gifts": [], "Songs": "Vanilla", "Loose items": "Vanilla",
+              "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints",
+              "Hints from characters": "Give hints"}})");
+        window = std::make_unique<Window>();
+        window->show();
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, no gifts shuffled, songs not shuffled, loose items "
+                                         "not shuffled, dungeon rewards not shuffled" });
+        QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: Player skippable scenes"));
     }
 
     void aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts() {
@@ -1319,8 +1383,8 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, shop goods shuffled, Gold Skulltulas "
-                                         "shuffled, 21 gifts shuffled, dungeon rewards not shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, shop goods shuffled, "
+                                         "Gold Skulltulas shuffled, 21 gifts shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains(
             "Gifts: Characters, House of Skulltula, and Minigames without the six bigger bags"));
     }
@@ -1364,6 +1428,17 @@ private slots:
         QCOMPARE(ticked, (QStringList{ "Minigames", "Characters", "House of Skulltula", "Story gifts" }));
         QCOMPARE(listRow("Gifts", "Deku Scrubs")->currentText(), QString("Vanilla"));
         closeList("Gifts", "Cancel");
+    }
+
+    void rememberedSettingsFromBeforeTheSkipListKeepTheirChoices() {
+        QSettings().setValue("seedSettings",
+                             R"({"Opening": "Played", "Cutscenes": "Skipped", "Lens of Truth": "Never needed"})");
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows("Opening movie played, Lens never needed"));
+        button("Settings…")->click();
+        QVERIFY(!skipBox("Opening movie")->isChecked());
+        QVERIFY(skipBox("Player skippable scenes")->isChecked());
     }
 
     void unreadableRememberedSettingsStartAsTheDefaults() {
