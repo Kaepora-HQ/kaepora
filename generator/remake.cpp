@@ -971,6 +971,21 @@ static constexpr Presence kingZoraIce = { .file = "Banc/ZoraDomain/ZoraDomain_Ad
                                           .flag = "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
                                           .replaces = "SageOfWater_IsCompleted_Exp" };
 
+// Zora's River keeps seven invisible walls at its two boulders while both are whole and the Water quest is below
+// Step03 (ZoraRiver_Common_08f0), and the adult's river places them too. SoH lets an adult by with nothing, and with
+// the Door of Time open he can come before the child's Water quest. So in the adult's river they stand only for a
+// child, which is never.
+static constexpr std::string_view adultRiver = "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs";
+static constexpr Presence riverWalls[] = {
+    { adultRiver, "7850395794748438732", "Sequence_IsChildhood" },
+    { adultRiver, "13781426553798151043", "Sequence_IsChildhood" },
+    { adultRiver, "7982339630050931435", "Sequence_IsChildhood" },
+    { adultRiver, "14077907143773739344", "Sequence_IsChildhood" },
+    { adultRiver, "9371429508151251838", "Sequence_IsChildhood" },
+    { adultRiver, "11266001672277786960", "Sequence_IsChildhood" },
+    { adultRiver, "4565321854739336115", "Sequence_IsChildhood" },
+};
+
 // The presence every seed that shuffles Malon's place carries. The area at the top of the vine climb in the castle
 // grounds hatches the Chicken for any Link while the castle quest is at Step03, the step her talk writes
 // (HyruleCastle_Prefab_ee1b). So it stands only for a Link whose save says he got the Weird Egg, as the egg's own timer
@@ -1135,6 +1150,9 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                   { "hash", kingZoraIce.hash },
                                   { "flag", kingZoraIce.flag },
                                   { "replaces", *kingZoraIce.replaces } });
+    for (const Presence& wall : riverWalls) {
+        plan["presences"].push_back({ { "file", wall.file }, { "hash", wall.hash }, { "flag", wall.flag } });
+    }
     if (!songs.empty()) {
         for (const Presence& gate : colossusGates) {
             plan["presences"].push_back({ { "file", gate.file }, { "hash", gate.hash }, { "flag", gate.flag } });

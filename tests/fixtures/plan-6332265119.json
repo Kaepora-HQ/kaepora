@@ -1317,6 +1317,41 @@
       "hash": "3341274640047764997",
       "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
       "replaces": "SageOfWater_IsCompleted_Exp"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "7850395794748438732",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "13781426553798151043",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "7982339630050931435",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "14077907143773739344",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "9371429508151251838",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "11266001672277786960",
+      "flag": "Sequence_IsChildhood"
+    },
+    {
+      "file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs",
+      "hash": "4565321854739336115",
+      "flag": "Sequence_IsChildhood"
     }
   ],
   "event_texts": [

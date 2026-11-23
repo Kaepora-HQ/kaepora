@@ -252,6 +252,13 @@ VINE_HATCH = {"file": "Banc/HyruleCastle/HyruleCastle_Static.bcett.byml.zs", "ha
 KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
                  "hash": "3341274640047764997", "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
                  "replaces": "SageOfWater_IsCompleted_Exp"}
+# The seven invisible walls at Zora's River's boulders, in the adult's river, stand only for a child in every seed. They
+# stand while both boulders are whole and the Water quest is below Step03, and SoH lets an adult by with nothing.
+RIVER_WALLS = [{"file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs", "hash": hash,
+                "flag": "Sequence_IsChildhood"}
+               for hash in ("7850395794748438732", "13781426553798151043", "7982339630050931435",
+                            "14077907143773739344", "9371429508151251838", "11266001672277786960",
+                            "4565321854739336115")]
 # The Desert Colossus's way into the Wasteland and the Spirit Temple's front entrance, in both ages' files, stand only
 # once the Spirit quest is past Step02 in every seed that shuffles the songs.
 COLOSSUS_GATES = [{"file": f"Banc/DesertColossus/DesertColossus_{age}_Static.bcett.byml.zs", "hash": hash,
@@ -662,10 +669,18 @@ class SeedgenTest(unittest.TestCase):
     def test_plan_keeps_king_zoras_ice_until_he_is_thawed(self):
         # The game's ice in the domain after the Water Temple never stands, so a Link who finished the temple first
         # would never get what King Zora hands over.
-        for settings, presences in ((CHESTS_ALONE, [KING_ZORA_ICE]),
-                                    (CHESTS_ALONE | {"Gifts": GIFT_GROUPS}, [KING_ZORA_ICE, VINE_HATCH])):
+        for settings, presences in ((CHESTS_ALONE, [KING_ZORA_ICE] + RIVER_WALLS),
+                                    (CHESTS_ALONE | {"Gifts": GIFT_GROUPS},
+                                     [KING_ZORA_ICE] + RIVER_WALLS + [VINE_HATCH])):
             _, plan = self.generate("12", settings)
             self.assertEqual(plan["presences"], presences, settings)
+
+    def test_an_adult_passes_zoras_rivers_boulders_before_the_water_quest(self):
+        # With the Door of Time open, an adult can reach the river before the child's Water quest, and the walls would
+        # then ask him for a bomb or the hammer.
+        for settings in (None, {"Door of Time": "Open"}):
+            _, plan = self.generate("12", settings)
+            self.assertEqual(plan["presences"][1:8], RIVER_WALLS, settings)
 
     def test_scrub_seeds_and_the_large_magic_jar_are_placed(self):
         # SoH has neither item. Each shuffled chest that holds one gives it to the pool, named as the game names it.
@@ -1564,7 +1579,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["event_texts"], QUEST_TEXTS + SONG_FIXES + texts)
         self.assertEqual(plan["event_numbers"], numbers)
         self.assertEqual(len(numbers), 26)
-        self.assertEqual(plan["presences"], [KING_ZORA_ICE] + COLOSSUS_GATES)
+        self.assertEqual(plan["presences"], [KING_ZORA_ICE] + RIVER_WALLS + COLOSSUS_GATES)
 
     def test_a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere(self):
         # Seed 22's route learns songs at places that teach others in the game.

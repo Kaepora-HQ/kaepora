@@ -769,6 +769,13 @@ invisible walls at the river's two boulders while the boulders are whole and the
 game: a first walk in at Ready plays the intro and its banner, keeps Ready and puts the domain on the map. After a show
 through the tunnel the quest stands at Step07 before the walk in, after it and in Zora's Fountain.
 
+`Logic/ZoraRiver_Common_08f0` places its seven walls in the adult's river too, `Banc/ZoraRiver/ZoraRiver_Adult_Static`.
+Every adult a closed Door of Time lets out comes after both stone quests, so the walls are gone for him, but with the
+door open he can come before the Water quest. Every mod gives those seven walls a presence on `Sequence_IsChildhood`,
+false for every adult, so they never stand in the adult's river, as SoH lets an adult by with nothing. Seen in the game
+with the door open: an adult with no bomb and no hammer, the Water quest at Ready and both boulders whole, walked up the
+river to the waterfall.
+
 The stone check of the Door of Time, the entry `DoorOfTime_CheckStoneNum` of the flow `DoorOfTime`, runs at each stone
 dungeon's first completion, and `DoorOfTime` is `NotReady` until Link meets Zelda (`depends_on`). With both stones done
 before Zelda, the engine refuses the check's write of Step03 in `Event37`, and the next event, `Event77`, raises Hyrule
