@@ -1467,7 +1467,11 @@
     "Gimmick_DefeatEnemy_Open_ForestTemple_03": true,
     "SpiritTemple_Room07_Unlocked": true,
     "HyruleField_ArriveEntrance": true,
-    "HavePlayedEvent.Dm_HrlField_0020": true
+    "HavePlayedEvent.Dm_HrlField_0020": true,
+    "HavePlayedEvent.Dm_Kokiri_0045": true,
+    "HavePlayedEvent.Dm_Kokiri_0050": true,
+    "HavePlayedEvent.Dm_Kokiri_0060": true,
+    "IsVisitLocation.KokiriForest": true
   },
   "stone_texts": [
     {

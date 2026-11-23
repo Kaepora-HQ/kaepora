@@ -691,7 +691,7 @@ private slots:
                                 "Door of Time: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
-                                "Skip: Opening movie and Player skippable scenes\n"
+                                "Skip: Opening movie, Player skippable scenes and Saria's greeting\n"
                                 "Start with: None\n"
                                 "Shop goods: Vanilla\n"
                                 "Gold Skulltulas: Vanilla\n"
@@ -765,9 +765,9 @@ private slots:
         dialogButton("OK")->click();
         QVERIFY(create("7"));
         const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
-        QCOMPARE(settings["Skip"].toArray(), QJsonArray{ "Player skippable scenes" });
+        QCOMPARE(settings["Skip"].toArray(), (QJsonArray{ "Player skippable scenes", "Saria's greeting" }));
         QCOMPARE(listed(1), QStringList{ "Opening movie played" });
-        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Skip: Player skippable scenes"));
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Skip: Player skippable scenes and Saria's greeting"));
     }
 
     void cancelChangesNothing() {
@@ -1001,16 +1001,19 @@ private slots:
             QCOMPARE(box->x(), skipBoxes().front()->x());
             QVERIFY(box == skipBoxes().front() || box->y() > skipBoxes()[names.size() - 2]->y());
         }
-        QCOMPARE(names, (QStringList{ "Opening movie", "Player skippable scenes" }));
+        QCOMPARE(names, (QStringList{ "Opening movie", "Player skippable scenes", "Saria's greeting 😢" }));
     }
 
     void anUncheckedSkipShowsInTheSummary_data() {
         QTest::addColumn<QString>("skip");
         QTest::addColumn<QString>("summary");
         QTest::addColumn<QString>("details");
-        QTest::newRow("opening movie") << "Opening movie" << "Opening movie played" << "Skip: Player skippable scenes";
+        QTest::newRow("opening movie") << "Opening movie" << "Opening movie played"
+                                       << "Skip: Player skippable scenes and Saria's greeting";
         QTest::newRow("skippable scenes") << "Player skippable scenes" << "Player skippable scenes played"
-                                          << "Skip: Opening movie";
+                                          << "Skip: Opening movie and Saria's greeting";
+        QTest::newRow("Saria's greeting") << "Saria's greeting 😢" << "Saria's greeting played"
+                                          << "Skip: Opening movie and Player skippable scenes";
     }
 
     void anUncheckedSkipShowsInTheSummary() {
@@ -1297,9 +1300,9 @@ private slots:
               "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, no gifts shuffled, "
-                                         "songs not shuffled, loose items not shuffled, dungeon rewards not "
-                                         "shuffled, no hints from characters" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, Saria's greeting "
+                                         "played, no gifts shuffled, songs not shuffled, loose items not shuffled, "
+                                         "dungeon rewards not shuffled, no hints from characters" });
         const QStringList details = entry("OWL")->toolTip(1).split('\n');
         for (const QString line : { "Gifts: Vanilla", "Songs: Vanilla", "Loose items: Vanilla",
                                     "Dungeon rewards: Vanilla", "Hints from characters: Vanilla" }) {
@@ -1322,9 +1325,9 @@ private slots:
               "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, no gifts shuffled, "
-                                         "songs not shuffled, loose items not shuffled, dungeon rewards not "
-                                         "shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, Saria's greeting "
+                                         "played, no gifts shuffled, songs not shuffled, loose items not shuffled, "
+                                         "dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: None"));
     }
 
@@ -1342,8 +1345,9 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Player skippable scenes played, no gifts shuffled, songs not shuffled, "
-                                         "loose items not shuffled, dungeon rewards not shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Player skippable scenes played, Saria's greeting played, no gifts "
+                                         "shuffled, songs not shuffled, loose items not shuffled, dungeon rewards "
+                                         "not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: Opening movie"));
     }
 
@@ -1362,8 +1366,8 @@ private slots:
               "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening movie played, no gifts shuffled, songs not shuffled, loose items "
-                                         "not shuffled, dungeon rewards not shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, Saria's greeting played, no gifts shuffled, songs "
+                                         "not shuffled, loose items not shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Skip: Player skippable scenes"));
     }
 
@@ -1383,8 +1387,9 @@ private slots:
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, shop goods shuffled, "
-                                         "Gold Skulltulas shuffled, 21 gifts shuffled, dungeon rewards not shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, Saria's greeting "
+                                         "played, shop goods shuffled, Gold Skulltulas shuffled, 21 gifts "
+                                         "shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains(
             "Gifts: Characters, House of Skulltula, and Minigames without the six bigger bags"));
     }
@@ -1439,6 +1444,7 @@ private slots:
         button("Settings…")->click();
         QVERIFY(!skipBox("Opening movie")->isChecked());
         QVERIFY(skipBox("Player skippable scenes")->isChecked());
+        QVERIFY(skipBox("Saria's greeting 😢")->isChecked());
     }
 
     void unreadableRememberedSettingsStartAsTheDefaults() {

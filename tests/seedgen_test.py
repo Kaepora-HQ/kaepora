@@ -41,7 +41,7 @@ ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.t
 DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
             "Ganon's Castle"]
-SKIPS = ["Opening movie", "Player skippable scenes"]
+SKIPS = ["Opening movie", "Player skippable scenes", "Saria's greeting"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Door of Time": "Closed",
@@ -74,6 +74,9 @@ EVERY_SETTING_CHANGED = {
 EVERY_SEED = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorOpen.2202807660383340401": True,
               "Gimmick_DefeatEnemy_Open_ForestTemple_03": True, "SpiritTemple_Room07_Unlocked": True,
               "HyruleField_ArriveEntrance": True, "HavePlayedEvent.Dm_HrlField_0020": True}
+SARIAS_GREETING = {"HavePlayedEvent.Dm_Kokiri_0045": True, "HavePlayedEvent.Dm_Kokiri_0050": True,
+                   "HavePlayedEvent.Dm_Kokiri_0060": True, "IsVisitLocation.KokiriForest": True}
+DEFAULT_START_VALUES = EVERY_SEED | SARIAS_GREETING
 SHOP_SLOTS = read_tsv("shops.tsv")
 # SoH's shopsanity takes a shop's items in this order.
 SHOPSANITY_ORDER = [7, 5, 8, 6, 3, 1, 4]
@@ -674,7 +677,7 @@ class SeedgenTest(unittest.TestCase):
 
     def test_plan_starts_what_every_seed_starts(self):
         _, plan = self.generate("6", CHESTS_ALONE)
-        self.assertEqual(plan["start_values"], EVERY_SEED)
+        self.assertEqual(plan["start_values"], DEFAULT_START_VALUES)
 
     def test_plan_keeps_quests_from_going_back(self):
         _, plan = self.generate("12", CHESTS_ALONE)
@@ -848,13 +851,15 @@ class SeedgenTest(unittest.TestCase):
     def test_forest_open(self):
         spoiler, plan = self.generate("16", CHESTS_ALONE | {"Kokiri Forest": "Open"})
         self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Open")
-        self.assertEqual(plan["start_values"], EVERY_SEED | {"KokiriForest_Npc_Kokiri_Mido_Child_Blocker": False,
-                                                             "KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
+        self.assertEqual(plan["start_values"],
+                         DEFAULT_START_VALUES | {"KokiriForest_Npc_Kokiri_Mido_Child_Blocker": False,
+                                                 "KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
 
     def test_forest_closed_deku(self):
         spoiler, plan = self.generate("19", CHESTS_ALONE | {"Kokiri Forest": "Closed Deku"})
         self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed Deku")
-        self.assertEqual(plan["start_values"], EVERY_SEED | {"KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
+        self.assertEqual(plan["start_values"],
+                         DEFAULT_START_VALUES | {"KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
 
     def test_an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest(self):
         # The door opens once AllSage is at Ready, true in every new game, and the child's first pull waits for AllSage
@@ -895,10 +900,15 @@ class SeedgenTest(unittest.TestCase):
     def test_player_skippable_scenes_are_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts("Player skippable scenes", lambda plan: plan | {"cutscenes_skipped": True})
 
+    def test_sarias_greeting_is_skipped_while_listed(self):
+        self.assert_skip_adds_only_its_parts(
+            "Saria's greeting", lambda plan: plan | {"start_values": plan["start_values"] | SARIAS_GREETING})
+
     def test_bridge_always_open(self):
         spoiler, plan = self.generate("17", CHESTS_ALONE | {"Rainbow Bridge": "Always open"})
         self.assertEqual(spoiler["settings"]["Rainbow Bridge"], "Always open")
-        self.assertEqual(plan["start_values"], EVERY_SEED | {"HavePlayedEvent.GanonCastle_Adult_Field_Rainbow": True})
+        self.assertEqual(plan["start_values"],
+                         DEFAULT_START_VALUES | {"HavePlayedEvent.GanonCastle_Adult_Field_Rainbow": True})
 
     def test_no_trials(self):
         spoiler, plan = self.generate("18", CHESTS_ALONE | {"Ganon's trials": "None"})
@@ -909,7 +919,7 @@ class SeedgenTest(unittest.TestCase):
         for trial in trials:
             done[f"InsideGanonCastle_Dungeon_BarrierRemove_{trial}"] = True
             done[f"HavePlayedEvent.InsideGanonCastle_Dungeon_BarrierRemove_{trial}"] = True
-        self.assertEqual(plan["start_values"], EVERY_SEED | done)
+        self.assertEqual(plan["start_values"], DEFAULT_START_VALUES | done)
 
     def test_keys_not_needed(self):
         spoiler, plan = self.generate("15", CHESTS_ALONE | {"Small and boss keys": "Not needed"})
@@ -917,7 +927,7 @@ class SeedgenTest(unittest.TestCase):
         doors = {f"IsChainLockDoorOpen.{door}": True for door in SMALL_KEY_DOORS}
         boss_keys = {f"DungeonInfo.{dungeon}.IsGetBossKey": True for dungeon in BOSS_KEY_DUNGEONS}
         self.assertEqual(len(doors), 37)
-        self.assertEqual(plan["start_values"], EVERY_SEED | doors | boss_keys)
+        self.assertEqual(plan["start_values"], DEFAULT_START_VALUES | doors | boss_keys)
         self.assertEqual({entry["hash"] for entry in plan["chests"]}, {row["hash"] for row in SHUFFLED})
 
     def test_maps_and_compasses_given_at_the_start(self):
@@ -925,7 +935,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(spoiler["settings"]["Maps and compasses"], "Given at the start")
         given = {f"DungeonInfo.{dungeon}.{value}": True for dungeon in MAP_DUNGEONS
                  for value in ("IsGetMap", "IsGetCompass")}
-        self.assertEqual(plan["start_values"], EVERY_SEED | given)
+        self.assertEqual(plan["start_values"], DEFAULT_START_VALUES | given)
         self.assertEqual({entry["hash"] for entry in plan["chests"]}, {row["hash"] for row in SHUFFLED})
 
     def test_lens_never_needed_leaves_the_lens_off_the_route(self):
@@ -1881,8 +1891,9 @@ class SeedgenTest(unittest.TestCase):
 
     def test_a_seed_that_starts_with_the_kokiri_sword_starts_the_forest_visited(self):
         visited = {"IsVisitLocation.KokiriForest": True, "HavePlayedEvent.Dm_Kokiri_0050": True}
-        _, sword = self.generate("38", {"Start with": ["Kokiri Sword"]})
-        _, shield = self.generate("38", {"Start with": ["Deku Shield"]})
+        greeting_played = {"Skip": [name for name in SKIPS if name != "Saria's greeting"]}
+        _, sword = self.generate("38", {"Start with": ["Kokiri Sword"]} | greeting_played)
+        _, shield = self.generate("38", {"Start with": ["Deku Shield"]} | greeting_played)
         self.assertLessEqual(visited.items(), sword["start_values"].items())
         self.assertFalse(visited.keys() & shield["start_values"].keys())
 

@@ -98,10 +98,11 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::None, "None" },
 };
 
-enum class Skip { OpeningMovie, SkippableScenes };
+enum class Skip { OpeningMovie, SkippableScenes, SariasGreeting };
 inline constexpr std::pair<Skip, std::string_view> SkipChoices[] = {
     { Skip::OpeningMovie, "Opening movie" },
     { Skip::SkippableScenes, "Player skippable scenes" },
+    { Skip::SariasGreeting, "Saria's greeting" },
 };
 
 // The settings of released seeds name each of the first two skips under a setting of its own, "Skipped" or "Played".

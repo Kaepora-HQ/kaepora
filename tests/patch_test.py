@@ -2291,6 +2291,27 @@ def mido_hint_every_talk(patch, game, seedgen):
                 assert end[MIDO_QUESTIONS[2]] or sword or not shield, (state, said)
 
 
+def skip_starts_true(patch, game, seedgen, skip, started):
+    """The game data list of a seed that skips this is the list of one that does not, read apart from the patcher, but
+    for these Bools, which start true in the first and as the game has them in the second."""
+    every = ["Opening movie", "Player skippable scenes", "Saria's greeting"]
+    skipped, played = (game.game_data_list(patched(patch, game, generated_plan(seedgen, "1", {"Skip": skips}))[
+        GAME_DATA_LIST]) for skips in (every, [name for name in every if name != skip]))
+    hashes = {murmur3(name) for name in started}
+    for entry in played["Data"]["Bool"]:
+        if entry["Hash"][1] in hashes:
+            hashes.remove(entry["Hash"][1])
+            assert entry["DefaultValue"] == (BOOL, 0), entry
+            entry["DefaultValue"] = (BOOL, 1)
+    assert not hashes and skipped == played
+
+
+def sarias_greeting(patch, game, seedgen):
+    skip_starts_true(patch, game, seedgen, "Saria's greeting",
+                     ["HavePlayedEvent.Dm_Kokiri_0045", "HavePlayedEvent.Dm_Kokiri_0050",
+                      "HavePlayedEvent.Dm_Kokiri_0060", "IsVisitLocation.KokiriForest"])
+
+
 def biggoron_place(patch, game, seedgen):
     """With Biggoron's place shuffled, he gives the seed's item once and never completes the trade quest, so adult
     Anju's offer stays open whichever of the two comes first. In the mod's flow his hand-over goes on from its last
@@ -3521,6 +3542,7 @@ def main():
         "darunias-dance": darunias_dance,
         "darunias-son": darunias_son,
         "time-runs-from-the-start": time_runs_from_the_start,
+        "sarias-greeting": sarias_greeting,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

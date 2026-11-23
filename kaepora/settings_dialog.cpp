@@ -86,6 +86,10 @@ static QString SkipName(Skip skip) {
     return QString::fromUtf8(Words(SkipChoices, skip));
 }
 
+static QString SkipBox(Skip skip) {
+    return skip == Skip::SariasGreeting ? SkipName(skip) + " 😢" : SkipName(skip);
+}
+
 QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     if (settings == SeedSettings{}) {
         return "Default settings";
@@ -123,7 +127,9 @@ QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     for (const Skip skip : std::views::keys(SkipChoices)) {
         if (!settings.skips.contains(skip)) {
             QString name = SkipName(skip);
-            name[0] = name[0].toLower();
+            if (skip != Skip::SariasGreeting) {
+                name[0] = name[0].toLower();
+            }
             changed << name + " played";
         }
     }
@@ -483,7 +489,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     std::vector<std::pair<Skip, QCheckBox*>> skips;
     auto* skipList = new QVBoxLayout;
     for (const Skip skip : std::views::keys(SkipChoices)) {
-        skips.emplace_back(skip, new QCheckBox(SkipName(skip)));
+        skips.emplace_back(skip, new QCheckBox(SkipBox(skip)));
         skipList->addWidget(skips.back().second);
     }
     auto* startForm = new QFormLayout;

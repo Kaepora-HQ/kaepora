@@ -1094,6 +1094,15 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         values["IsVisitLocation.KokiriForest"] = true;
         values["HavePlayedEvent.Dm_Kokiri_0050"] = true;
     }
+    if (settings.skips.contains(Skip::SariasGreeting)) {
+        // With Saria's run-up played, the house has the plain door from the first frame, so the forest's first scene
+        // and the run-up after it never play. With her talk played, her stop at the ladder and the talk's entry in her
+        // schedule are gone. The first scene's banner is the only thing that marks the forest visited.
+        for (const char* played : { "Dm_Kokiri_0045", "Dm_Kokiri_0050", "Dm_Kokiri_0060" }) {
+            values[std::format("HavePlayedEvent.{}", played)] = true;
+        }
+        values["IsVisitLocation.KokiriForest"] = true;
+    }
     if (settings.songs == Songs::ShuffledAmongThemselves) {
         // A child can learn a warp song and, grown up, warp out of the Temple of Time before he walks through its door.
         // The scene at the door plays only while AllSage stands at Step01, and the adult's world map waits for it.
