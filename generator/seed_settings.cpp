@@ -173,6 +173,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { DoorOfTimeSetting, Words(DoorOfTimeChoices, settings.doorOfTime) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
+             { AgeSetting, Words(AgeChoices, settings.age) },
              { SkipSetting, nlohmann::ordered_json::array() },
              { StartWithSetting, nlohmann::ordered_json::array() } };
     for (const auto& [skip, name] : SkipChoices) {
@@ -236,6 +237,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.bridge = Parse(BridgeChoices, setting, value);
         } else if (setting == TrialsSetting) {
             settings.trials = Parse(TrialsChoices, setting, value);
+        } else if (setting == AgeSetting) {
+            settings.age = Parse(AgeChoices, setting, value);
         } else if (setting == SkipSetting) {
             settings.skips.clear();
             for (const nlohmann::json& name : value) {
@@ -275,5 +278,13 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
         }
     }
     settings.shops = ParseShops(shops);
+    if (settings.age != Age::Child && !AnAdultCanStart(settings)) {
+        throw std::runtime_error(
+            std::format("{}: an adult start needs the Door of Time open and Kokiri Forest not Closed", AgeSetting));
+    }
+    if (settings.age == Age::Adult && !settings.skips.contains(Skip::OpeningMovie)) {
+        throw std::runtime_error(std::format("{}: an adult start has no opening, so it skips \"{}\"", SkipSetting,
+                                             Words(SkipChoices, Skip::OpeningMovie)));
+    }
     return settings;
 }

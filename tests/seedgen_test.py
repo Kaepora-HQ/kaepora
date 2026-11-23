@@ -45,8 +45,8 @@ SKIPS = ["Opening movie", "Player skippable scenes", "New area scenes", "Tutoria
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Door of Time": "Closed",
-                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Skip": SKIPS,
-                    "Start with": [],
+                    "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Age": "Child",
+                    "Skip": SKIPS, "Start with": [],
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
                     "Gifts": ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts",
                               "Biggoron Quest", "Deku Scrubs (One Time Rewards)"],
@@ -364,6 +364,29 @@ DOOR_MODULE = "Logic/Market_Common_f252.logic.module.ainb"
 FIRST_PULL_MODULE = "Logic/Market_Child_Prefab_e700.logic.module.ainb"
 DOOR_OF_TIME_QUEST = "Work/Challenge/DoorOfTime.game__challenge__Challenge.gyml"
 ALL_SAGE_QUEST = "Work/Challenge/AllSage.game__challenge__Challenge.gyml"
+DOOR_OPEN = [{"file": DOOR_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
+             {"file": DOOR_MODULE, "from": "Step06", "to": "Ready"},
+             {"file": FIRST_PULL_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
+             {"file": FIRST_PULL_MODULE, "from": "Step06", "to": "Ready"}]
+# An adult start: the door open and the forest's exit open.
+ADULT_START = {"Door of Time": "Open", "Kokiri Forest": "Closed Deku", "Age": "Adult"}
+# A new game begins in the Chamber of Sages with Rauru's scene, which goes on past his two films to the move to the
+# Temple of Time. That move starts the first pull's last scene, which goes on past Sheik's two films to standing Link by
+# the pedestal.
+FIRST_SCENE = "Work/Banc/GameBancParam/KokiriForest_Child.game__banc__GameBancParam.gyml"
+ADULT_FIRST_SCENE = [{"file": f"Sequence/{name}.ainb", "from": FIRST_SCENE,
+                      "to": FIRST_SCENE.replace("KokiriForest_Child", "SageRoom")}
+                     for name in ("FormalSequence.root", "Title.module", "NormalTitle.module", "Opening.module")]
+ADULT_FIRST_SCENE.append({"file": "Sequence/Opening.module.ainb", "from": "Opening_Introduction",
+                          "to": "SageRoom_MeetRauru"})
+PAST_RAURUS_FILMS = {"flow": "Event/EventFlow/DoorOfTime.bfevfl.zs", "event": "Event142", "next": "Event96"}
+PAST_SHEIKS_FILMS = {"flow": "Event/EventFlow/AllSage.bfevfl.zs", "entry": "Market_Adult_AllSage_Start",
+                     "event": "Event2"}
+# Every skip but the opening movie.
+OPENING_PLAYED = {"Skip": [skip for skip in SKIPS if skip != "Opening movie"]}
+# What the first pull and the films left out would have written.
+ADULT_VALUES = {"Sequence_IsChildhood": False, "HavePlayedEvent.Dm_TimeTemple_0030": True,
+                "HavePlayedEvent.Dm_TimeTemple_0040": True}
 SOH_MAJOR_ITEMS = {"Boomerang", "Progressive Bow", "Progressive Slingshot", "Progressive Hookshot",
                    "Megaton Hammer", "Iron Boots", "Hover Boots", "Lens of Truth", "Silver Gauntlets",
                    "Golden Gauntlets", "Mirror Shield", "Kokiri Sword", "Progressive Bomb Bag", "Ice Arrows"}
@@ -895,20 +918,94 @@ class SeedgenTest(unittest.TestCase):
         # The door opens once AllSage is at Ready, true in every new game, and the child's first pull waits for AllSage
         # at Ready exactly, true until that pull's last scene. Rauru's write of the Door of Time's quest names the
         # Light sage's quest, which the next scene completes, so the child's story keeps its step.
-        door = [{"file": DOOR_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
-                {"file": DOOR_MODULE, "from": "Step06", "to": "Ready"},
-                {"file": FIRST_PULL_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
-                {"file": FIRST_PULL_MODULE, "from": "Step06", "to": "Ready"}]
         rauru = {"flow": "Event/EventFlow/DoorOfTime.bfevfl.zs", "event": "Event93", "param": "ChallengeName",
                  "text": "SageOfLight"}
         spoiler, plan = self.generate("21", {"Door of Time": "Open"})
         self.assertEqual(spoiler["settings"]["Door of Time"], "Open")
-        self.assertEqual(plan["module_texts"], door)
+        self.assertEqual(plan["module_texts"], DOOR_OPEN)
         self.assertIn(rauru, plan["event_texts"])
         spoiler, plan = self.generate("21")
         self.assertEqual(spoiler["settings"]["Door of Time"], "Closed")
         self.assertEqual(plan["module_texts"], [])
         self.assertNotIn(rauru, plan["event_texts"])
+
+    def test_an_adult_start_needs_the_door_open_and_the_forest_not_closed(self):
+        # SoH starts a child unless the door is open and the forest not closed.
+        out = pathlib.Path(self.tmp.name)
+        refused = [ADULT_START | {"Age": age} | blocking
+                   for age in ("Adult", "Random")
+                   for blocking in ({"Door of Time": "Closed"}, {"Kokiri Forest": "Closed"})]
+        for settings in refused:
+            result = subprocess.run([SEEDGEN, "22", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, settings)
+            self.assertIn("Age:", result.stderr, settings)
+            self.assertFalse((out / "spoiler.json").exists())
+        for age in ("Adult", "Random"):
+            for forest in ("Closed Deku", "Open"):
+                for rewards in ("Vanilla", "Shuffled among themselves", "Shuffled"):
+                    settings = ADULT_START | {"Age": age, "Kokiri Forest": forest, "Dungeon rewards": rewards}
+                    spoiler, _ = self.generate("22", settings)
+                    self.assertEqual(spoiler["settings"]["Age"], age)
+
+    def test_an_adult_start_has_no_opening(self):
+        out = pathlib.Path(self.tmp.name)
+        settings = ADULT_START | OPENING_PLAYED
+        result = subprocess.run([SEEDGEN, "23", out / "spoiler.json", out / "plan.json", json.dumps(settings)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Skip:", result.stderr)
+        spoiler, _ = self.generate("23", settings | {"Age": "Random"})
+        self.assertEqual(spoiler["settings"]["Skip"], OPENING_PLAYED["Skip"])
+
+    def test_an_adult_start_begins_by_the_pedestal_with_the_sword_and_raurus_gift(self):
+        for rewards in ("Vanilla", "Shuffled among themselves", "Shuffled"):
+            spoiler, plan = self.generate("24", ADULT_START | {"Dungeon rewards": rewards})
+            self.assertEqual(spoiler["settings"]["Age"], "Adult")
+            self.assertNotIn("age", spoiler)
+            self.assertEqual(plan["module_texts"], DOOR_OPEN + ADULT_FIRST_SCENE)
+            self.assertIn(PAST_RAURUS_FILMS, plan["event_nexts"])
+            self.assertIn(PAST_SHEIKS_FILMS, plan["event_entries"])
+            self.assertLessEqual(ADULT_VALUES.items(), plan["start_values"].items())
+            self.assertIs(plan["opening_skipped"], True)
+            sword, gift = plan["start_items"]
+            self.assertEqual(sword, "Weapon_Sword_Master")
+            # Rauru's place, left out of a shuffle, gives the Light Medallion.
+            self.assertIn((gift, spoiler["locations"].get("Gift from Rauru", "Light Medallion")), ITEM_PAIRS, rewards)
+        spoiler, plan = self.generate("24", ADULT_START | {"Age": "Child"})
+        self.assertEqual(plan["module_texts"], DOOR_OPEN)
+        self.assertNotIn(PAST_RAURUS_FILMS, plan["event_nexts"])
+        self.assertNotIn(PAST_SHEIKS_FILMS, plan["event_entries"])
+        self.assertFalse(ADULT_VALUES.keys() & plan["start_values"].keys())
+        self.assertEqual(plan["start_items"], [])
+
+    def test_an_adult_starts_route_is_in_reach_in_its_sphere(self):
+        log, _ = self.generate("25", ADULT_START)
+        self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_an_adult_start_starts_the_forest_visited(self):
+        # Skipping Saria's greeting starts both values in every seed.
+        greeting = {"Skip": [skip for skip in SKIPS if skip != "Saria's greeting"]}
+        visited = {"IsVisitLocation.KokiriForest": True, "HavePlayedEvent.Dm_Kokiri_0050": True}
+        _, adult = self.generate("26", ADULT_START | greeting)
+        _, child = self.generate("26", ADULT_START | greeting | {"Age": "Child"})
+        self.assertLessEqual(visited.items(), adult["start_values"].items())
+        self.assertFalse(visited.keys() & child["start_values"].keys())
+
+    def test_a_random_age_starts_the_seed_at_the_age_it_draws(self):
+        drawn = set()
+        for seed in range(1, 13):
+            spoiler, plan = self.generate(str(seed), ADULT_START | {"Age": "Random"} | OPENING_PLAYED)
+            self.assertEqual(list(spoiler)[:4], ["kaepora", "seed", "age", "settings"])
+            drawn.add(spoiler["age"])
+            adult = spoiler["age"] == "Adult"
+            self.assertEqual(PAST_RAURUS_FILMS in plan["event_nexts"], adult, seed)
+            self.assertEqual(PAST_SHEIKS_FILMS in plan["event_entries"], adult, seed)
+            self.assertEqual(ADULT_VALUES.items() <= plan["start_values"].items(), adult, seed)
+            # The opening applies to a child start alone.
+            self.assertIs(plan["opening_skipped"], adult, seed)
+        self.assertEqual(drawn, {"Child", "Adult"})
 
     def test_only_closed_deku_removes_midos_castle_entry(self):
         for choice, removed in (("Closed", False), ("Closed Deku", True), ("Open", False)):

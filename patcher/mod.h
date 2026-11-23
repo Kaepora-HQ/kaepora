@@ -58,9 +58,9 @@ struct PlannedEventEntry {
     std::string event;
 };
 
-// A string of a logic module, which the game reads uncompressed, and the string that takes its place. The new string
-// is no longer than the old, and NUL bytes fill the rest, so the module keeps its size. The Door of Time opens on
-// another quest's step this way.
+// A string of a logic or sequence module, which the game reads uncompressed, and the string that takes its place. The
+// new string is no longer than the old, and NUL bytes fill the rest, so the module keeps its size. The Door of Time
+// opens on another quest's step this way, and an adult start names its first scene.
 struct PlannedModuleText {
     std::string file; // RomFS path of the module
     std::string from;

@@ -322,6 +322,9 @@ void SetOptions(const SeedSettings& settings) {
     if (settings.doorOfTime == DoorOfTime::Open) {
         ctx->GetOption(RSK_DOOR_OF_TIME).Set(RO_DOOROFTIME_OPEN);
     }
+    if (settings.age != Age::Child) {
+        ctx->GetOption(RSK_STARTING_AGE).Set(settings.age == Age::Adult ? RO_AGE_ADULT : RO_AGE_RANDOM);
+    }
     if (settings.bridge == Bridge::AlwaysOpen) {
         ctx->GetOption(RSK_RAINBOW_BRIDGE).Set(RO_BRIDGE_ALWAYS_OPEN);
     }

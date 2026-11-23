@@ -1123,6 +1123,26 @@ A mod also rests on a step in these places, where no write changes:
   forward (read).
 - With "Opening movie" under "Skip", `HavePlayedEvent.Dm_Kokiri_0030` starts true. It is the flag that forces
   `Meet_DekuTree` to Ready, Navi waking Link.
+- With "Age" at "Adult", or at "Random" when the seed draws an adult, a new game starts by the Master Sword's pedestal
+  through the first pull's own last scenes, with the opening movie skipped. The four sequence modules that name Kokiri
+  Forest as the first scene, `Sequence/FormalSequence.root`, `Title.module`, `NormalTitle.module` and `Opening.module`,
+  name the Chamber of Sages, and `Opening.module` starts `SageRoom_MeetRauru` in place of `Opening_Introduction`.
+  Rauru's entry goes on from `Event142`, its preload of the temple, to `Event96`, the move there, past his films
+  `Dm_SageRoom_0000` and `Dm_SageRoom_0005`. The move starts `AllSage` `Market_Adult_AllSage_Start`, whose entry starts
+  at `Event2`, past Sheik's films `Dm_TimeTemple_0050` and `Dm_TimeTemple_0055`. From there it stands Link by the
+  pedestal and writes `AllSage` Step01, `SageOfForest` Step01 and `SageOfLight` Complete, as every first pull does.
+  `Sequence_IsChildhood` starts false, and the pull's films `HavePlayedEvent.Dm_TimeTemple_0030` and `_0040` start
+  played. The start gives the Master Sword, and what Rauru's place holds in place of `Dm_SageRoom_0005` `Event48`.
+  `DoorOfTime` stays at NotReady, so Impa, the escape, the moat's Ocarina of Time and the Song of Time still wait for
+  the child. Sheik's second film sets `HrlField_HasEnteredFirstTime_Adult`, which holds the world's time at 20:00 (read
+  in the program). Passed, it stays false, and the time runs from the first frame. Seen in the game: a new game passed
+  quickly through Rauru's and Sheik's scenes to the pedestal, as an adult with the Master Sword and the Light Medallion.
+  "Return" made him a child there, who walked out to the Market and whose next pull played only the short change of age.
+  With the two values every seed starts, the time ran from night into day. That child's Map tab said "Unavailable right
+  now" (seen): the forest's name banner, in the scene that plays as Link first walks out of his house, is the only
+  writer of `IsVisitLocation.KokiriForest`, and the forest's banner area and the close of its first guide wait for
+  Saria's run-up after it (read). So an adult start starts `IsVisitLocation.KokiriForest` and
+  `HavePlayedEvent.Dm_Kokiri_0050` true.
 - In every seed `HyruleField_ArriveEntrance` and `HavePlayedEvent.Dm_HrlField_0020` start true. The program holds the
   world's time until the first is true, which only the owl's scene on the child's first walk into Hyrule Field sets, and
   stops the afternoon at 15:00 until the second, the played flag of Impa's send-off film, is true (read; the stop at

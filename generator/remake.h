@@ -282,6 +282,12 @@ struct MessageText {
     std::string tagged;
 };
 
+// A new game that starts as an adult by the Master Sword's pedestal, with the sword and what Rauru's place holds: the
+// remake item his film would give, which the start passes.
+struct AdultStart {
+    std::string raurusGift;
+};
+
 // The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there,
 // with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest, and with Malon's place
 // shuffled the vine climb's hatch that waits for the Weird Egg's record. Then the event flow
@@ -293,11 +299,13 @@ struct MessageText {
 // event that brings each one the game says once on every talk, each shuffled shop slot with its item and price, each
 // slot a count leaves with the game's goods it sells, each shuffled skulltula with its item, each shuffled loose item
 // that gives another item than its own, with that item, and for each step the seed starts with the actors of the finds
-// that bring a new game to it.
+// that bring a new game to it. An adult start also begins by the pedestal, past the opening and the first pull's
+// films, with the sword and Rauru's gift.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
                                   const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas,
                                   const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
-                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages);
+                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages,
+                                  const std::optional<AdultStart>& adultStart);

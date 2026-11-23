@@ -691,6 +691,7 @@ private slots:
                                 "Door of Time: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
+                                "Age: Child\n"
                                 "Skip: Opening movie, Player skippable scenes, New area scenes, Tutorial messages and "
                                 "Saria's greeting\n"
                                 "Start with: None\n"
@@ -760,6 +761,67 @@ private slots:
         QVERIFY(entry("7")->toolTip(1).split('\n').contains("Door of Time: Open"));
     }
 
+    void anAdultStartGoesIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Door of Time")->setCurrentText("Open");
+        choice("Kokiri Forest")->setCurrentText("Open");
+        choice("Age")->setCurrentText("Adult");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Age"].toString(), QString("Adult"));
+        QCOMPARE(listed(1), QStringList{ "Forest open, Door of Time open, starts as an adult" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Age: Adult"));
+    }
+
+    void aRandomAgeShowsInTheSummary() {
+        button("Settings…")->click();
+        choice("Door of Time")->setCurrentText("Open");
+        choice("Kokiri Forest")->setCurrentText("Closed Deku");
+        choice("Age")->setCurrentText("Random");
+        dialogButton("OK")->click();
+        QVERIFY(shows("Forest exit open, Door of Time open, random age"));
+        QVERIFY(
+            label("Forest exit open, Door of Time open, random age")->toolTip().split('\n').contains("Age: Random"));
+    }
+
+    void anAdultStartWaitsForAnOpenDoorAndAForestNotClosed() {
+        button("Settings…")->click();
+        const QString why = "An adult start needs the Door of Time open and Kokiri Forest not Closed.";
+        const auto greyed = [&] {
+            return !choice("Age")->isEnabled() && choice("Age")->currentText() == "Child" &&
+                   choice("Age")->toolTip() == why;
+        };
+        const auto open = [&] { return choice("Age")->isEnabled() && choice("Age")->toolTip().isEmpty(); };
+        QVERIFY(greyed());
+        choice("Door of Time")->setCurrentText("Open");
+        QVERIFY(greyed());
+        choice("Kokiri Forest")->setCurrentText("Closed Deku");
+        QVERIFY(open());
+        choice("Age")->setCurrentText("Random");
+        choice("Kokiri Forest")->setCurrentText("Closed");
+        QVERIFY(greyed());
+        dialogButton("OK")->click();
+        QVERIFY(shows("Door of Time open"));
+    }
+
+    void theOpeningMovieWaitsForAStartThatCanBeAChild() {
+        button("Settings…")->click();
+        choice("Door of Time")->setCurrentText("Open");
+        choice("Kokiri Forest")->setCurrentText("Open");
+        skipBox("Opening movie")->setChecked(false);
+        choice("Age")->setCurrentText("Adult");
+        QVERIFY(!skipBox("Opening movie")->isEnabled());
+        QVERIFY(skipBox("Opening movie")->isChecked());
+        QCOMPARE(skipBox("Opening movie")->toolTip(), QString("An adult start has no opening."));
+        choice("Age")->setCurrentText("Random");
+        QVERIFY(skipBox("Opening movie")->isEnabled());
+        QVERIFY(skipBox("Opening movie")->toolTip().isEmpty());
+        skipBox("Opening movie")->setChecked(false);
+        dialogButton("OK")->click();
+        QVERIFY(shows("Forest open, Door of Time open, random age, opening movie played"));
+    }
+
     void aSkipLeftOutGoesIntoTheSeed() {
         button("Settings…")->click();
         skipBox("Opening movie")->setChecked(false);
@@ -813,6 +875,7 @@ private slots:
         QCOMPARE(choice("Door of Time")->currentText(), QString("Closed"));
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
+        QCOMPARE(choice("Age")->currentText(), QString("Child"));
         QCOMPARE(choice("Shop goods")->currentText(), QString("Vanilla"));
         QCOMPARE(choice("Gold Skulltulas")->currentText(), QString("Vanilla"));
         expectSohsDefaultShuffles();
@@ -991,7 +1054,7 @@ private slots:
         QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
                                                 "Loose items", "Dungeon rewards" }));
         QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Door of Time", "Rainbow Bridge", "Ganon's trials" }));
-        QCOMPARE(rows("Start"), (QStringList{ "Skip", "Items" }));
+        QCOMPARE(rows("Start"), (QStringList{ "Age", "Skip", "Items" }));
     }
 
     void theSkipRowHasACheckedBoxForEachSkipOneUnderAnother() {

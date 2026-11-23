@@ -1082,6 +1082,34 @@ static constexpr ModuleText doorOpen[] = {
 static constexpr EventText rauruCompletesTheDoor = { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event93", "ChallengeName",
                                                      "SageOfLight" };
 
+// An adult start. A new game's first scene is the Chamber of Sages, named once in each sequence module that names
+// Kokiri Forest's, and its first event Rauru's scene in place of Navi waking Link.
+static constexpr std::string_view firstScene =
+    "Work/Banc/GameBancParam/KokiriForest_Child.game__banc__GameBancParam.gyml";
+static constexpr std::string_view sageRoom = "Work/Banc/GameBancParam/SageRoom.game__banc__GameBancParam.gyml";
+static constexpr ModuleText adultFirstScene[] = {
+    { "Sequence/FormalSequence.root.ainb", firstScene, sageRoom },
+    { "Sequence/Title.module.ainb", firstScene, sageRoom },
+    { "Sequence/NormalTitle.module.ainb", firstScene, sageRoom },
+    { "Sequence/Opening.module.ainb", firstScene, sageRoom },
+    { "Sequence/Opening.module.ainb", "Opening_Introduction", "SageRoom_MeetRauru" },
+};
+// Rauru's scene goes on from its preload of the Temple of Time to the move there, past his two films. The second gives
+// his gift, which the start gives instead. The move starts the first pull's last scene, which then starts at standing
+// Link by the pedestal, past Sheik's two films, and writes what every first pull leaves.
+static const EventNext pastRaurusFilms = { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event142", "Event96" };
+static constexpr std::string_view sheiksFlow = "Event/EventFlow/AllSage.bfevfl.zs";
+static constexpr std::string_view pullsLastScene = "Market_Adult_AllSage_Start";
+static constexpr std::string_view byThePedestal = "Event2";
+// What the first pull and the films the start passes would have written: an adult, and the pull's two films played,
+// which the child's pedestal reads to start a later pull.
+static constexpr std::pair<std::string_view, bool> adultStartValues[] = {
+    { "Sequence_IsChildhood", false },
+    { "HavePlayedEvent.Dm_TimeTemple_0030", true },
+    { "HavePlayedEvent.Dm_TimeTemple_0040", true },
+};
+static constexpr std::string_view masterSword = "Weapon_Sword_Master";
+
 static const EventNext biggoronNexts[] = {
     // The hand-over's last line goes on to that write and his talk about the receipt, past the write of Complete.
     { std::string(biggoronFlow), "Event112", "Event21" },
@@ -1117,10 +1145,15 @@ static constexpr std::string_view bossKeyDungeons[] = {
     "ForestTemple", "FireTemple", "WaterTemple", "ShadowTemple", "SpiritTemple", "InsideGanonCastle",
 };
 
-static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
+static nlohmann::ordered_json StartValues(const SeedSettings& settings, bool adultStart) {
     nlohmann::ordered_json values = nlohmann::ordered_json::object();
     for (const char* flag : startFlags) {
         values[flag] = true;
+    }
+    if (adultStart) {
+        for (const auto& [name, value] : adultStartValues) {
+            values[name] = value;
+        }
     }
     if (settings.forest == Forest::Open) {
         // Mido no longer blocks the way to the Deku Tree, and the invisible wall beside him is gone.
@@ -1130,11 +1163,13 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
         // The Kokiri at the exit no longer blocks the way out, and the invisible wall beside him is gone.
         values["KokiriForest_Npc_Kokiri_007_Child_Blocker_00"] = false;
     }
-    if (std::ranges::any_of(settings.startWith,
-                            [](const StartStep& step) { return step.actor == "Weapon_Sword_Kokiri"; })) {
-        // Link's house swaps in the plain door for a Link who holds the sword, so the forest's first scene never plays,
-        // and its name banner is the only thing that marks the forest visited. The forest's banner area and the close
-        // of its first guide wait for Saria's run-up, which follows that scene. Her talk still waits for Link.
+    if (adultStart || std::ranges::any_of(settings.startWith,
+                                          [](const StartStep& step) { return step.actor == "Weapon_Sword_Kokiri"; })) {
+        // Link's house swaps in the plain door for a Link who holds the sword, and the child an adult start brings back
+        // has never been in it, so the forest's first scene, which plays as Link first walks out of the house, never
+        // plays. Its name banner is the only thing that marks the forest visited, which the world map waits for. The
+        // forest's banner area and the close of its first guide wait for Saria's run-up, which follows that scene. Her
+        // talk still waits for Link.
         values["IsVisitLocation.KokiriForest"] = true;
         values["HavePlayedEvent.Dm_Kokiri_0050"] = true;
     }
@@ -1249,7 +1284,8 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                   const std::vector<RemakeSkulltula>& skulltulas,
                                   const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
-                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages) {
+                                  const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages,
+                                  const std::optional<AdultStart>& adultStart) {
     nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
         if (!chest.shuffled) {
@@ -1347,13 +1383,22 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         addNext(next);
     }
     plan["module_texts"] = nlohmann::ordered_json::array();
-    if (doorOpened) {
-        for (const auto& [file, from, to] : doorOpen) {
+    const auto addModuleTexts = [&](std::span<const ModuleText> texts) {
+        for (const auto& [file, from, to] : texts) {
             plan["module_texts"].push_back({ { "file", file }, { "from", from }, { "to", to } });
         }
+    };
+    if (doorOpened) {
+        addModuleTexts(doorOpen);
     }
     plan["event_entries"] = nlohmann::ordered_json::array();
-    plan["start_values"] = StartValues(settings);
+    if (adultStart) {
+        addModuleTexts(adultFirstScene);
+        addNext(pastRaurusFilms);
+        plan["event_entries"].push_back(
+            { { "flow", sheiksFlow }, { "entry", pullsLastScene }, { "event", byThePedestal } });
+    }
+    plan["start_values"] = StartValues(settings, adultStart.has_value());
     if (biggoron) {
         for (const EventNext& next : biggoronNexts) {
             addNext(next);
@@ -1434,7 +1479,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                              { "flag", joined },
                                              { "talk", daruniaJrAfterTempleTalk } });
     }
-    plan["opening_skipped"] = settings.skips.contains(Skip::OpeningMovie);
+    plan["opening_skipped"] = adultStart || settings.skips.contains(Skip::OpeningMovie);
     plan["cutscenes_skipped"] = settings.skips.contains(Skip::SkippableScenes);
     plan["skulltulas"] = nlohmann::ordered_json::array();
     for (const RemakeSkulltula& skulltula : skulltulas) {
@@ -1477,6 +1522,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         for (const StartStep& step : StepsTo(started)) {
             plan["start_items"].push_back(step.actor);
         }
+    }
+    if (adultStart) {
+        plan["start_items"].push_back(masterSword);
+        plan["start_items"].push_back(adultStart->raurusGift);
     }
     return plan;
 }

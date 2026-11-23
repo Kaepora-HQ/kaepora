@@ -104,15 +104,21 @@ Four settings open the world sooner. They cover the way out of Kokiri Forest, th
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 
+## Age
+
+Under **Start**, **Age** decides whether Link begins as a child or as an adult. **Child** starts in Link's house, as in the game. **Adult** starts as an adult at the Master Sword's pedestal in the Temple of Time, at night, with the Master Sword and what the Sage of Light gives after the first pull. The sword starts in your menu, so equip it before you fight. There is no opening, and the game passes quickly through the scenes of the first pull. Put the sword back to become a child. **Random** picks a child or an adult with the seed, and the spoiler log says which.
+
+An adult start needs the Door of Time **Open** and Kokiri Forest not **Closed**. Otherwise **Age** stays at **Child**.
+
 ## What a seed skips
 
 Under **Start**, **Skip** lists what a seed leaves out of the game. Every box starts checked. Uncheck one to keep that part as the game has it.
 
-- **Opening movie.** The narrated movie and the scene of Navi waking Link. A new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes.
+- **Opening movie.** The narrated movie and the scene of Navi waking Link. A new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes. An adult start has no opening, so with **Age** at **Adult** this box stays checked. With **Random** it counts when the seed starts as a child.
 - **Player skippable scenes.** Every scene the game would let you skip. The seed skips each one the moment it starts, as if you had pressed Skip: the screen goes black for a moment and the game goes on. Boss introductions and part of the credits are among them. The scene of Navi waking Link is one too, so it is skipped even with **Opening movie** unchecked.
 - **New area scenes.** The camera's first look over a place, which the game plays the first time you arrive and gives you no way to skip. The map still marks the place, though its name may not show. The owl's talk on your first walk to Hyrule Castle goes with it, and so do Rauru's words about the barriers on your first walk into Ganon's Castle.
 - **Tutorial messages.** The lessons the game stops you for, such as the two at the Kokiri Shop that teach targeting and the shield, Navi's talk on your first walk into the Deku Tree, and the guide screens that follow your first find of an item. Two lessons still play: the Potion Shop's in the Market, which hands you a bottle, and the fishing pond's.
-- **Saria's greeting.** Saria's welcome outside Link's house, with the forest's first scene before it. If you start with the Kokiri Sword, unchecking this box brings back only her talk: the game leaves out the forest's scene and her run-up for a Link who holds the sword.
+- **Saria's greeting.** Saria's welcome outside Link's house, with the forest's first scene before it. If you start with the Kokiri Sword or as an adult, unchecking this box brings back only her talk, without the forest's first scene and her run-up.
 
 Other scenes in which someone talks to you in a text box, and item, song and ocarina scenes, still play.
 
