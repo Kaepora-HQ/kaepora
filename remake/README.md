@@ -305,7 +305,7 @@ count, so it sells again and again, and it leaves the game data list as it is. S
   SoH's three Red Potions, at 30, 40 and 50 rupees, are all the remake's one Red Potion at 30, and its two 5 Bombs are
   the remake's one at 35.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 48 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 49 SoH locations: the six
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, five places where the story moves (the scene
 after the last carpenter in the Gerudo Fortress, Darunia's dance, his son's talk once an adult stops him rolling, King
@@ -330,6 +330,21 @@ its places.
 - `place`: where the place stands, as an `area` of `places.tsv`, when that is not its location's SoH area, and empty
   otherwise. Hints name it there. SoH files the Great Fairy outside Ganon's Castle under Hyrule Castle; her mark stands
   in the scene the game names Ganondorf's Castle, where `skulltulas.tsv` places that scene's skulltula too.
+
+The House of Skulltula's sixth reward, for 100 tokens, comes in the cursed man's thanks once he is human again
+(`GatheringTokenGold`, the entry `Reward100`, read). His talk with 100 tokens or more starts it. It gives the five
+earlier rewards Link has not taken, each through its own event, then the sixth through `Event215`, which passes
+`TakenRewardActor` to `TakenReward_Common_Event_200Rupee`. That entry gives `$TakenRewardActor` by name, through
+`GetInEvent_NotTurn_PosCam_InvNPC` once he is human, as he is by then, and through `GetInEvent_NotTurn` before (read).
+Only the check for the 100 tokens leads to `Event215`, after the fifth reward's record, and only `Reward100` reaches
+that check with 100 tokens: a talk with fewer goes to the earlier rewards, whose checks stop at it (read). After the
+sixth reward his thanks write the quest `GatheringTokenGold` Complete, and every later talk asks that and gives a Gold
+Rupee of its own (`Event471`), so his reward comes once. No record of its own marks the sixth reward: a game left
+between its give and the quest's write would give it again (inferred). "100 Gold Skulltulas" shuffles the place as SoH's
+"Shuffle 100 GS Reward" does, which leaves it out of SoH's locations while off. Its item is `TBox_Rupee_Gold`, the
+chests' Gold Rupee, which stands on a shop's shelf as the other rupees do (measured). SoH's rule asks for 100 tokens.
+While the group shuffles the place, the fill keeps it in reach as it keeps Ganon in reach, so no token lies on it and
+none lies behind its own item.
 
 A bag prize or sale gives the bigger of two sizes from one event and the biggest from another: the biggest only to a
 Link who already holds the bigger (read from the flows). It adds one size to the pool: the Market and Kakariko

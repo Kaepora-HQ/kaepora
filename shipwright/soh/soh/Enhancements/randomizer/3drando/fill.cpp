@@ -902,6 +902,22 @@ static void FastFill(std::vector<RandomizerGet> items, std::vector<RandomizerChe
     }
 }
 
+// Whether a gift group shuffles the 100-token reward. Then the fill keeps the reward in reach as it keeps Ganon in
+// reach: Ganon asks nothing of it, so the fill would place the rest of the items anywhere once Ganon is in reach, and a
+// token placed on the reward, or one that only the reward's own item reaches, leaves the reward to a player who can
+// hold 99.
+static bool hundredTokenRewardShuffled = false;
+
+// Whether the items placed so far reach the 100-token reward, or no group shuffles it.
+static bool HundredTokenRewardInReach() {
+    if (!hundredTokenRewardShuffled) {
+        return true;
+    }
+    logic->Reset();
+    ReachabilitySearch({});
+    return Rando::Context::GetInstance()->GetItemLocation(RC_KAK_100_GOLD_SKULLTULA_REWARD)->IsAddedToPool();
+}
+
 /*
 | The algorithm places items in the world in reverse.
 | This means we first assume we have every item in the item pool and
@@ -1000,7 +1016,7 @@ static void AssumedFill(const std::vector<RandomizerGet>& items, const std::vect
             // If the game is beatable, then we can stop placing items with logic.
             if (!ctx->GetOption(RSK_ALL_CHECKS_REACHABLE)) {
                 logic->Reset();
-                if (CheckBeatable()) {
+                if (CheckBeatable() && HundredTokenRewardInReach()) {
                     SPDLOG_DEBUG("Game beatable, now placing items randomly. {} major items remaining",
                                  itemsToPlace.size());
                     FastFill(itemsToPlace, GetEmptyLocations(allowedLocations));
@@ -1068,7 +1084,9 @@ static std::vector<const RemakeChest*> PlaceUnshuffledItems(const std::vector<Re
     for (RandomizerCheck loc :
          { RC_TOT_MASTER_SWORD, RC_KAK_100_GOLD_SKULLTULA_REWARD, RC_LH_HYRULE_LOACH, RC_ZR_FROGS_ZELDAS_LULLABY,
            RC_ZR_FROGS_EPONAS_SONG, RC_ZR_FROGS_SARIAS_SONG, RC_ZR_FROGS_SUNS_SONG, RC_ZR_FROGS_SONG_OF_TIME }) {
-        ctx->GetItemLocation(loc)->PlaceVanillaItem();
+        if (!pooled.contains(loc)) {
+            ctx->GetItemLocation(loc)->PlaceVanillaItem();
+        }
     }
     return shuffled;
 }
@@ -1114,6 +1132,8 @@ std::vector<const RemakeChest*> SetUpWorld(const std::vector<RemakeChest>& chest
     if (std::ranges::find(gifts, zeldasCourtyard.first, &RemakeGift::location) != gifts.end()) {
         scenePlaces.push_back(zeldasCourtyard);
     }
+    hundredTokenRewardShuffled =
+        std::ranges::find(gifts, RC_KAK_100_GOLD_SKULLTULA_REWARD, &RemakeGift::location) != gifts.end();
     RegionTable_Init(); // Reset the world graph to initialize the proper locations
     ctx->ItemReset();
     ctx->GenerateLocationPool();

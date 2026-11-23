@@ -281,6 +281,8 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_route_with_zeldas_letter_elsewhere_still_meets_zelda
                      a_child_meets_zelda_without_what_the_lost_dog_holds
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts the_goron_gifts_give_what_is_placed
+                     the_100_token_reward_gives_the_seeds_item
+                     the_100_token_reward_is_in_reach_in_every_seed
                      the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
                      a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon
                      each_great_fairy_gives_her_placed_item_and_asks_her_own_bool_on_a_return
