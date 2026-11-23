@@ -1343,6 +1343,12 @@ constexpr std::pair<std::string_view, std::string_view> StoneFlowNext[] = { { Ma
 constexpr std::string_view ArrivalFlow = "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs";
 constexpr std::string_view ZoraDomainIntro = "Event48";
 constexpr std::string_view AfterWaterStep = "Event551";
+// A first walk from Hyrule Field into the Market plays the Market's scene, sets its depth of field, and calls the
+// castle quest's entry that writes Step02_01 with no test. A child who reached the castle from the Temple of Time
+// stands at Step03 or Step04 by then, and the write would set him back. The arrival ends with a wait of its flow
+// instead. The Market's own request at Step02 still calls the write, and nothing tells Step02 from Step02_01.
+constexpr std::string_view MarketDepthOfField = "Event65";
+constexpr std::string_view ArrivalWait = "Event268";
 
 // A new game runs this flow. The loading entry point plays the narrated opening, then asks whether Kokiri Forest has
 // loaded. The introduction waits, plays Navi waking Link, and fades out before it shows him in his house. The Deku
@@ -1663,8 +1669,11 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         }
     }
     const std::string arrival(ArrivalFlow);
-    if (bfevfl::SetNext(flowAt(arrival), ZoraDomainIntro, AfterWaterStep)) {
-        changedFlows.insert(arrival);
+    for (const auto& [event, next] :
+         { std::pair{ ZoraDomainIntro, AfterWaterStep }, std::pair{ MarketDepthOfField, ArrivalWait } }) {
+        if (bfevfl::SetNext(flowAt(arrival), event, next)) {
+            changedFlows.insert(arrival);
+        }
     }
     if (!plan.stoneTexts.empty()) {
         const std::string path(StoneFlow);

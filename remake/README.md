@@ -776,6 +776,17 @@ false for every adult, so they never stand in the adult's river, as SoH lets an 
 with the door open: an adult with no bomb and no hammer, the Water quest at Ready and both boulders whole, walked up the
 river to the waterfall.
 
+The first walk from Hyrule Field into the Market, the entry `Dm_SY_BancChangeArrive_Market` of the same flow, plays the
+Market's scene and then calls `Goto_HyruleCastle_EntryMarket`, whose `Event51` sets `Goto_HyruleCastle` to Step02_01
+with no test. A child who reached the castle from the Temple of Time without that walk can stand at Step03 or Step04,
+the steps Malon and Talon write, and the walk then sets him back (read). A child warped into the temple with the songs
+shuffled can take that order, and so can every child of an adult start. Seen in the game: a child who started at the
+temple held the quest at Step02_01 in place of Ready after his first walk in from the field. The scene's depth of
+field, `Event65`, goes on to `Event268`, a wait of the flow that ends it, past the call. The Market's own request,
+`Logic/Market_Child_Prefab_c061`, still calls the write at Step02 exactly, and the four readers of Step02_01 ask only
+whether the quest is past it. Seen in the game: a child at Step04 who had never walked in from the field saw the
+Market's scene on his first walk in, and the quest stayed at Step04.
+
 The stone check of the Door of Time, the entry `DoorOfTime_CheckStoneNum` of the flow `DoorOfTime`, runs at each stone
 dungeon's first completion, and `DoorOfTime` is `NotReady` until Link meets Zelda (`depends_on`). With both stones done
 before Zelda, the engine refuses the check's write of Step03 in `Event37`, and the next event, `Event77`, raises Hyrule

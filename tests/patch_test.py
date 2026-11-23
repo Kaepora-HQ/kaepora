@@ -26,7 +26,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step|schedule-entry|module-texts <kaepora-patch> <game.nup>
+           river-arrival-writes-no-step|market-arrival-writes-no-step|schedule-entry|module-texts \
+           <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1357,9 +1358,9 @@ def tested_opening_mod(patch, game, mod):
     assert entry["DefaultValue"] == (BOOL, 1), entry
 
 
-def transitions(flow, entry):
-    """The events that the EventTransitions reached from the entry point of a parsed flow play, in the order of the
-    flow's events."""
+def reached(flow, entry):
+    """The indices of the events reached from the entry point of a parsed flow, following every next event, every case
+    of a switch and every branch and join of a fork."""
     events = flow["events"]
     names = [name for _, name in flow["entry points"][0][1:]]
     todo = [struct.unpack_from("<H", flow["entry points"][1][names.index(entry)][0], 4)[0]]
@@ -1377,8 +1378,15 @@ def transitions(flow, entry):
             todo += [event for _, event, _ in struct.iter_unpack("<IHH", rest[1] or b"")]
         elif kind == 2:  # fork
             todo += [event for (event,) in struct.iter_unpack("<H", rest[0])] + [join]
+    return reached
+
+
+def transitions(flow, entry):
+    """The events that the EventTransitions reached from the entry point of a parsed flow play, in the order of the
+    flow's events."""
+    events = flow["events"]
     played = []
-    for index in sorted(reached):
+    for index in sorted(reached(flow, entry)):
         _, header, *rest = events[index]
         actor, action = struct.unpack_from("<HH", header, 4)
         if header[0] == 0 and flow["actors"][actor][5][action] == "EventTransition":
@@ -2803,27 +2811,51 @@ def module_texts(patch, game):
     assert Ainb(ours).nodes == expected
 
 
-def river_arrival_writes_no_step(patch, game):
-    """In every mod the arrival flow is the game's but for one next event, so a first walk into Zora's Domain from
-    Zora's River plays the domain's intro and leaves the Water quest where it is. Entry point Goto_ZoraDomain goes on
-    from the intro, Event48, to Event551, past the Bool that picks Step03 or Step03_Impa and past both writes."""
+# The arrival flow's next events every mod changes: the event that each sends on, the game's next and the mod's.
+ARRIVAL_NEXTS = [("Event48", "Event46", "Event551"), ("Event65", "Event11", "Event268")]
+
+
+def arrival_flow(patch, game):
+    """The arrival flow of every mod, which is the game's but for the ARRIVAL_NEXTS, both in its model and byte for
+    byte."""
     mod = every_mod(patch, game)
     assert ARRIVAL_FLOW in mod, sorted(mod)
     expected = game.event_flow(game.read(ARRIVAL_FLOW))
-    events = expected["events"]
-    index = {event[0]: i for i, event in enumerate(events)}
-    intro = events[index["Event48"]]
-    now, then = index["Event46"], index["Event551"]
-    assert struct.unpack_from("<H", intro[1], 2)[0] == now, intro[1]
-    intro[1] = intro[1][:2] + struct.pack("<H", then) + intro[1][4:]
+    index = {event[0]: i for i, event in enumerate(expected["events"])}
+    changed_bytes = 0
+    for event, now, then in ARRIVAL_NEXTS:
+        assert struct.unpack_from("<H", expected["events"][index[event]][1], 2)[0] == index[now], event
+        sent_on(expected, event, then)
+        changed_bytes += sum(a != b for a, b in zip(struct.pack("<H", index[now]), struct.pack("<H", index[then])))
     flow = game.event_flow(mod[ARRIVAL_FLOW])
-    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], events) if ours != theirs]
-    assert transitions(flow, "Goto_ZoraDomain") == ["Dm_Zora_0000"]
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
     ours = zstd.decompress(mod[ARRIVAL_FLOW], zstd_dict=game.zs_dictionary)
     theirs = zstd.decompress(game.read(ARRIVAL_FLOW), zstd_dict=game.zs_dictionary)
     changed = [at for at, (a, b) in enumerate(zip(ours, theirs)) if a != b]
-    in_next = sum(a != b for a, b in zip(struct.pack("<H", now), struct.pack("<H", then)))
-    assert len(ours) == len(theirs) and len(changed) == in_next, changed
+    assert len(ours) == len(theirs) and len(changed) == changed_bytes, changed
+    return flow
+
+
+def river_arrival_writes_no_step(patch, game):
+    """In every mod a first walk into Zora's Domain from Zora's River plays the domain's intro and leaves the Water
+    quest where it is. Entry point Goto_ZoraDomain goes on from the intro, Event48, to Event551, past the Bool that
+    picks Step03 or Step03_Impa and past both writes."""
+    assert transitions(arrival_flow(patch, game), "Goto_ZoraDomain") == ["Dm_Zora_0000"]
+
+
+def market_arrival_writes_no_step(patch, game):
+    """In every mod a first walk from Hyrule Field into the Market plays the Market's scene, Dm_HrlCastle_0005, and
+    leaves the castle quest where it is. The entry goes on from the scene's depth of field, Event65, to a wait that
+    ends it, past Event11, its call of the castle quest's entry that writes Step02_01 with no test. That write would
+    set a quest at Step03 or Step04 back, for a child who reached the castle from the Temple of Time. The Market's own
+    request, at Step02 exactly, still calls the write."""
+    entry = "Dm_SY_BancChangeArrive_Market"
+    game_flow = game.event_flow(game.read(ARRIVAL_FLOW))
+    assert "Event11" in [game_flow["events"][i][0] for i in reached(game_flow, entry)]
+    flow = arrival_flow(patch, game)
+    assert transitions(flow, entry) == ["Dm_HrlCastle_0005"]
+    assert [flow["events"][i][0] for i in sorted(reached(flow, entry))] == ["Event200", "Event203", "Event268",
+                                                                             "Event65"]
 
 
 def without_mask(flow):
@@ -3480,6 +3512,7 @@ def main():
         "tested-colossus-mod": tested_colossus_mod,
         "event-numbers": event_numbers,
         "river-arrival-writes-no-step": river_arrival_writes_no_step,
+        "market-arrival-writes-no-step": market_arrival_writes_no_step,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")
