@@ -545,6 +545,42 @@ The castle's and the crater's blessings stand for SoH's Progressive Magic Meter,
 With "Player skippable scenes" under "Skip" the skip ends only a fairy's appearance. Her gift comes after that window on
 both of her flow's paths, and the summit's gift has no window at all (read from the flows).
 
+Every mod lets each Great Fairy come, and the owl on Death Mountain's summit fly a child down, without Din's Fire,
+whatever the seed's settings. In the game the summit's Great Fairy gives Din's Fire, and the others wait for it. A
+Triforce mark's ocarina entry, `TriForcePoint` `Sub_PlayOcarinaSequence_FairyFountain`, asks `IsGet.Item_DinFire` in
+`Event8` at every fountain but the summit's. Without it the fairy does not come, and Navi says nothing seems to have
+happened: once the Fire stone's quest is complete she adds that Darunia told Link to visit the Great Fairy at the summit
+first, and before that she says to come back later. The owl's talk asks the same in `Npc_Kaepora_DeathMountainTrail`
+`Event4`, and without it he says he will fly Link down once he has the Great Fairy's blessing (read; seen: he would not
+fly down a child with a meter and no Din's Fire). In every mod `Event8` goes on to `Event26`, the fairy's appearance,
+and `Event4` to `Event18`, his offer, where the game sends a Link who holds Din's Fire. After each fairy the mark's
+`Check_Complete` asks for Din's Fire once more, in `Event137`, with the five other fairy items, only to complete the
+quest `Meet_GreatFairy` once all six are held. It gates no gift: without them the entry goes on to the autosave. No
+other event of the six fountains' flows or their shared entries asks for it: the summit's own `Event78` is her question
+whether Link has her item, which her claim answers when "Great Fairies" is ticked. Nor does the owl's schedule, whose
+entry on `Npc_Kaepora_DeathMountainTrail_Turn`, set after the summit's fairy, starts the same talk (read).
+
+The flight lands a child at `FromMountainTrail` in Kakariko, 18.7 units above the village's entrance from Hyrule Field
+and about 10.6 above the street's flagstones 7 to 9 units away, beside a placed part of Impa's house. SoH's flight lands
+him on Impa's rooftop (read; the roof inferred). The landing starts no first-arrival scene: Kakariko's intro,
+`Dm_Kakariko_0000`, starts only from the seven ways in from Hyrule Field, the trail and the graveyard, which name it as
+their `InitEventName`, and the flight changes the scene itself, with its own arrival film. So a child whose first
+arrival is the flight sees no banner then, and the intro plays, or its cut where "New area scenes" is ticked, the first
+time he walks in one of those ways (read).
+
+So each fairy's rule asks for Zelda's Lullaby and the owl's for a child, as SoH's do, but where the remake asks more.
+Outside Ganon's Castle and at the Colossus the rules also ask for the wallet that holds the offering, 500 and 300
+rupees. At the crater the rule also asks for the meter, which neither the game nor SoH asks: it guards a scene that has
+not been seen for a Link with no meter. Her own entry of the get flow, `GetInEvent_GreatFairyWisdom`, plays the meter's
+doubling after her gift, whatever she gives, and waits for it. It runs the node that plays the summit's birth,
+`ExecuteBornMPGauge`, with `IsDouble` set, and that node ends when its animation reaches its last frame and reads no
+meter (read from the program). Whether that animation runs for a Link with no meter is unknown, and in the game every
+Link who reaches her holds Din's Fire and its meter. If it is seen to end, her rule takes SoH's line. Zora's Fountain's
+fairy vanishes Link in Farore's Wind's style and brings him back, each waited (`Dm_FairyFountain_Frore` `Event159` and
+`Event165`), the action a warp song plays, which is unseen for a Link with no meter. The fountain outside Ganon's Castle
+plays the halved damage's scene on the hearts, which every Link has. The castle's and the Colossus's play effects on
+Link that nothing waits for (read).
+
 The five story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, Darunia's dance the Fire quest to DodongoCavernOpne, his son's talk the Fire Temple's quest to MoveStatue, which
 moves Darunia's statue and opens his door (with the temple finished the engine refuses the write and the quest stays

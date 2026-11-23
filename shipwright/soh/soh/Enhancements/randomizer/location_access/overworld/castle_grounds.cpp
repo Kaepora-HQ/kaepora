@@ -152,8 +152,7 @@ void RegionTable_Init_CastleGrounds() {
 
     areaTable[RR_HC_GREAT_FAIRY_FOUNTAIN] = Region("HC Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_SPELLS, {}, {
         //Locations
-        // She gives the improved spin attack, and the meter to a Link who has none, once he holds Din's Fire.
-        LOCATION(RC_HC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE)),
+        LOCATION(RC_HC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY)),
     }, {
         //Exits
         ENTRANCE(RR_CASTLE_GROUNDS_FROM_GREAT_FAIRY, true),
@@ -223,8 +222,8 @@ void RegionTable_Init_CastleGrounds() {
 
     areaTable[RR_OGC_GREAT_FAIRY_FOUNTAIN] = Region("OGC Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC, {}, {
         //Locations
-        // Her Triforce mark asks whether Link holds Din's Fire, and she asks 500 rupees.
-        LOCATION(RC_OGC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE) && GetWalletCapacity() >= 500),
+        // She asks 500 rupees.
+        LOCATION(RC_OGC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && GetWalletCapacity() >= 500),
     }, {
         //Exits
         ENTRANCE(RR_CASTLE_GROUNDS_FROM_GREAT_FAIRY, true),

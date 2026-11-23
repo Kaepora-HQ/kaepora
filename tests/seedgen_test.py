@@ -1551,17 +1551,17 @@ class SeedgenTest(unittest.TestCase):
 
     def test_hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle(self):
         # Her mark stands in the scene the game names Ganondorf's Castle, where the stones place that scene's
-        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 55's route takes the Lens
-        # of Truth from her, and seed 3's the Iron Boots, and a stone of each says Ganondorf's Castle is on the way.
-        for seed in ("55", "3"):
+        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 50's route takes the Hover
+        # Boots from her, and seed 87's the Hookshot, and a stone of each says Ganondorf's Castle is on the way.
+        for seed, item in (("50", "Hover Boots"), ("87", "Progressive Hookshot")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gifts": ["Great Fairies"]})
-            self.assertIn("OGC Great Fairy Reward", playthrough_steps(spoiler))
+            self.assertEqual(playthrough_steps(spoiler).get("OGC Great Fairy Reward"), item, seed)
             self.assertIn("They say that Ganondorf's Castle is on the way of the hero.", spoiler["hints"].values())
 
     def test_the_summit_passes_her_meter_scene_with_an_item_that_brings_none(self):
         # For a Link with no meter her entry plays the meter's birth and waits for its end. With an item that brings no
         # meter there is none to be born, so the two questions of that scene ask her claim, false until her paid path
-        # writes it after the gift. Seed 1 puts a Purple Rupee at the summit, and seed 14 the Ice Arrows.
+        # writes it after the gift.
         summit = next(row for row in FOUNTAIN_CLAIMS if row["location"] == "DMT Great Fairy Din's Fire")
         scene = [("Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs", event, "GameDataName")
                  for event in ("Event555", "Event554")]
@@ -2058,9 +2058,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
 
     def test_a_place_whose_kept_shelf_the_route_needs_is_not_foolish(self):
-        # Seed 70's route buys the Deku Shield on the Kokiri Shop's kept shelf in its first sphere, and takes nothing
+        # Seed 106's route buys the Deku Shield on the Kokiri Shop's kept shelf in its first sphere, and takes nothing
         # else in Kokiri Forest.
-        spoiler, _ = self.assert_hints_are_true("70", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
+        spoiler, _ = self.assert_hints_are_true("106", SEVEN_PER_SHOP | {"Kokiri Forest": "Closed Deku"})
         self.assertEqual(list(spoiler["playthrough"].values())[0].get("KF Shop Item 2"), "Buy Deku Shield")
         self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 2"])
 
@@ -2123,14 +2123,16 @@ class SeedgenTest(unittest.TestCase):
                                              entry)
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
-        # Seed 407's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
+        # Seed 384's route takes the Boomerang from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
         # a hint says Hyrule Field is on the way of the hero. Seed 499's route takes the Lens of Truth from HC OGC GS,
         # in the scene the game calls Ganondorf's Castle, and a hint says the Lens of Truth is at Ganondorf's Castle.
-        for seed, skulltula, hint in (
-                ("407", "LLR GS Back Wall", "They say that Hyrule Field is on the way of the hero."),
-                ("499", "HC OGC GS", "They say that the Lenses of Truth can be found at Ganondorf's Castle.")):
+        for seed, skulltula, item, hint in (
+                ("384", "LLR GS Back Wall", "Boomerang",
+                 "They say that Hyrule Field is on the way of the hero."),
+                ("499", "HC OGC GS", "Lens of Truth",
+                 "They say that the Lenses of Truth can be found at Ganondorf's Castle.")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
-            self.assertIn(skulltula, playthrough_steps(spoiler))
+            self.assertEqual(playthrough_steps(spoiler).get(skulltula), item, seed)
             self.assertIn(hint, spoiler["hints"].values())
 
     def test_hints_name_gold_skulltulas_truly(self):

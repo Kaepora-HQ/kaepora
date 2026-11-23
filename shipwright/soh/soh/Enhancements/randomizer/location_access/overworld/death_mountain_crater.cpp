@@ -391,8 +391,9 @@ void RegionTable_Init_DeathMountainCrater() {
 
     areaTable[RR_DMC_GREAT_FAIRY_FOUNTAIN] = Region("DMC Great Fairy Fountain", SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC, {}, {
         //Locations
-        // Her Triforce mark asks whether Link holds Din's Fire, as at every fountain but the summit.
-        LOCATION(RC_DMC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_DINS_FIRE)),
+        // After her gift, whatever it is, her scene plays the meter's doubling, which has not been seen to end for a
+        // Link with no meter.
+        LOCATION(RC_DMC_GREAT_FAIRY_REWARD, logic->CanUse(RG_ZELDAS_LULLABY) && logic->HasItem(RG_MAGIC_SINGLE)),
     }, {
         //Exits
         ENTRANCE(RR_DMC_BLOCKED_ENTRY, true),
