@@ -111,7 +111,7 @@ def qt(folder, qt_root, texts, shipped, licenses, where):
         sys.exit(f"Qt's SBOMs do not list {sorted(shipped.keys() - found)}")
 
     version = next(ref["referenceLocator"].split(":")[5] for ref in modules[0]["externalRefs"]
-                   if ref["referenceLocator"].startswith("cpe:2.3:a:qt:qt:"))
+                   if ref["referenceLocator"].startswith("cpe:2.3:a:qt:"))
     lines = [
         f"Qt {version}",
         "",

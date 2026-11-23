@@ -1744,9 +1744,6 @@ int main(int argc, char** argv) {
     qputenv("HOME", home.path().toUtf8());
     // On macOS Qt asks the system for the user's folders, and the system reads its home from CFFIXED_USER_HOME.
     qputenv("CFFIXED_USER_HOME", home.path().toUtf8());
-    // Qt's Secure Transport backend, the one macOS uses, imports the fake server's key into the default keychain, and
-    // this HOME has none. With this set, it makes a keychain of its own in the temporary folder.
-    qputenv("QT_SSL_USE_TEMPORARY_KEYCHAIN", "1");
     QStandardPaths::setTestModeEnabled(true);
     // Test mode does not move the Windows registry, so the settings go to a file in the temporary folder. Lichii's data
     // is looked for there too: in APPDATA on Windows, and under HOME elsewhere.

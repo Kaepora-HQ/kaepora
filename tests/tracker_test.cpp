@@ -32,7 +32,7 @@ static QStringList Shown(const Tracker& tracker, const QStringList& names) {
             continue;
         }
         shown.append(
-            QString("%1: %2 %3").arg(name, QString::fromStdString(cell->picture), cell->lit ? "lit" : "unlit") +
+            QString("%1: %2 %3").arg(name, cell->picture, cell->lit ? "lit" : "unlit") +
             (cell->count ? QString(" %1").arg(*cell->count) : "") +
             (cell->count && cell->total ? QString("/%1").arg(*cell->total) : ""));
     }
