@@ -13,7 +13,8 @@ void ApplyCheck(Rando::ItemLocation* location);
 
 // Whether event is one that, while the spoiler log's route is made, only its scene's place sets: a dungeon clear, which
 // the boss's blue warp sets, the Gerudo letting Link pass, which the scene after the last carpenter sets, Zelda's scene
-// in the Temple of Time, which the bridge to Ganon's Castle follows, or a giver's talk, which an egg's hatch follows.
+// in the Temple of Time, which the bridge to Ganon's Castle follows, a giver's talk, which an egg's hatch follows, or,
+// where her place is shuffled, meeting Zelda in the castle courtyard.
 // Later steps wait for those scenes, which come with those places whatever they give, so the route names a place
 // wherever a later step waits for its scene. The fill's own searches set a talk where they take or reach the giver's
 // place, and each of the others as soon as its scene can play.
@@ -84,11 +85,12 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 // spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
-// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, the two eggs, the Claim
-// Check and Biggoron's sword. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora Sapphire, each with
-// its model, Link's hold-up pose and its named window (seen), and a gift raises an item the same way. No shop slot,
-// Gold Skulltula or loose spot has been seen to give one, and no shop row names the sword, so the fill places them
-// before those join it: in a chest, at a gift or at one of the nine places that hand over a stone or a medallion.
+// The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, the two eggs, Zelda's
+// Letter, the Claim Check and Biggoron's sword. A chest gave the Kokiri Emerald, the Forest Medallion and the Zora
+// Sapphire, each with its model, Link's hold-up pose and its named window (seen), and a gift raises an item the same
+// way. No shop slot, Gold Skulltula or loose spot has been seen to give one, and no shop row names the sword, so the
+// fill places them before those join it: in a chest, at a gift or at one of the nine places that hand over a stone
+// or a medallion.
 bool KeptInChestsAndCalls(RandomizerGet item);
 
 // Ruto's Letter, and the Great Fairies' three spells and three blessings. King Zora took the letter a chest gave
