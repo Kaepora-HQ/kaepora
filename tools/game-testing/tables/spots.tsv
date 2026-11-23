@@ -3,8 +3,8 @@ Kak House of Skulltula	KakarikoVillage_Adult		-27.302	102.885	74.203	155.0	save	
 Deku Tree Boss Room	InsideTheDekuTree	10	15.383	46.990	67.636	80.1	save	a save the game wrote		Facing the heart container's spot.
 ZR Near Open Grotto Pillar	ZoraRiver_Child		10.074	115.126	-33.063	65.8	save	a save the game wrote		Before the heart piece on the pillar.
 DMT Great Fairy Fountain	DeathMountainTrail_Child		-34.000	211.240	-189.180	-160.0	save	test-runs/owner-playtest/runs/gf2-summit-autosave		On the Great Fairy's mark, inside the fountain: with MountainTrail_FairyRockBreak 0 the rock shuts Link in.
-KF Kokiri Sword Chest	KokiriForest_Child		-82.000	122.257	33.650	-138.2	save	spikes/windows-playtest/in/save2/0400486024DEC000/slot_01/progress.sav		
-KF Mido Top Left Chest	KokiriForest_Child		-52.569	112.251	-42.202	-80.7	save	test-runs/agent-first-seed/chest-2-autosave/progress.sav		
+KF Kokiri Sword Chest	KokiriForest_Child		-82.000	122.257	33.650	-138.2	save	spikes/windows-playtest/in/save2/0400486024DEC000/slot_01/progress.sav	passed 20261123-203621-o2cm	
+KF Mido Top Left Chest	KokiriForest_Child		-52.486	112.260	-41.938	-102.7	play	a running game on 2026-11-23	passed 20261123-203015-cncd	
 KF Mido Top Right Chest	KokiriForest_Adult		-50.025	112.290	-40.250	132.2	save	spikes/biggoron-place/look/results/look2-step1/191341-slot_01/progress.sav		
 KF Mido Top Right Chest	KokiriForest_Child		-49.839	112.286	-41.230	56.9	save	test-runs/20261117-well-rocks/check3/results-20261122/162715-slot_05/progress.sav		
 KF Mido Bottom Left Chest	KokiriForest_Child		-49.817	112.285	-41.549	-136.0	save	test-runs/20261116-new-edits/runs/L8/autosave-1-after-small/progress.sav		
@@ -15,23 +15,28 @@ HF South Poe Chest	HyruleField_Adult		-5.250	146.231	407.713	-150.5	save	test-ru
 HF North Poe Chest	HyruleField_Adult		84.666	152.603	46.074	-159.4	save	test-runs/agent-looks/GF1-gifts/f/autosave-gift/progress.sav		
 HF Tower Chest	HyruleField_Adult		-152.058	162.030	266.252	169.1	save	test-runs/agent-looks/GF1-gifts/g/autosave-gift/progress.sav		
 HF Fairy Thought Chest	HyruleField_Child		-213.721	133.425	138.006	32.1	save	test-runs/agent-looks/1-fairy/autosave/progress.sav		
-GV Chest	GerudoValley_Adult		-34.077	102.223	22.813	154.1	save	test-runs/agent-looks/bow-look/results/watch/04-095622/slot_01/progress.sav		Link opens it from behind the side its actor faces.
+GV Chest	GerudoValley_Adult		-34.077	102.223	22.813	154.1	save	test-runs/agent-looks/bow-look/results/watch/04-095622/slot_01/progress.sav	failed 20261123-203527-4cl2	The hammer's rocks stand between Link and the chest until they are broken; the save was written after.
 Wasteland Chest	HountedWasteland_Adult		15.975	87.690	-97.379	177.8	save	spikes/story-gifts/look-b/results/1-chest/progress.sav		
+Kak Open Grotto Chest	KakarikoVillage_Child		-40.747	79.817	11.737	250.0	worked out		passed 20261123-203357-udmm	
 Kak Lookout Chest	KakarikoVillage_Adult		4.594	130.156	41.059	68.9	save	test-runs/20261117-first-seed-route/runs/L2/autosave-B8/progress.sav		
 Graveyard Hookshot Chest	Graveyard_Adult		-5.151	82.480	77.660	-90.0	save	spikes/dampe-race/looks/results/d1-first-chest/085008-slot_05/progress.sav		
 Graveyard Dampe Race Freestanding PoH	Graveyard_Adult		-5.151	82.480	77.658	-90.0	save	spikes/dampe-race/looks/results/d2-fast-race/090326-slot_02/progress.sav		
 GC Maze Left Chest	GoronCity_Adult		-48.040	113.684	1.301	-28.5	save	test-runs/owner-playtest/runs/gcd-autosave/progress.sav		
 GC Maze Center Chest	GoronCity_Adult		-46.623	113.684	-4.479	-132.7	save	test-runs/owner-playtest/runs/gca-autosave/progress.sav		
 GC Maze Center Chest	GoronCity_Child		-46.806	113.684	-4.538	-138.3	save	test-runs/owner-playtest/runs/gcb-autosave/progress.sav		
-ZD Chest	ZoraDomain_Child		27.806	100.390	-4.877	90.0	save	spikes/loose-letter/look/L3-chest/results/2-193416/progress.sav		
+ZD Chest	ZoraDomain_Child		27.806	100.390	-4.877	90.0	save	spikes/loose-letter/look/L3-chest/results/2-193416/progress.sav	failed 20261123-203434-e8sg	No chest stood here when the look started: it appears once the torches are lit.
+Deku Tree Map Chest	InsideTheDekuTree	0	5.816	108.500	6.530	44.2	worked out		passed 20261123-203110-pa1j	
 Deku Tree Slingshot Chest	InsideTheDekuTree	2	-53.396	111.964	12.124	-85.0	save	spikes/save-read/work/B-pre-smoke/slot_02/progress.sav		
 Dodongos Cavern Map Chest	DodongoCavern	1	-25.504	100.252	-38.000	-90.0	save	test-runs/20261117-first-seed-route/runs/L1/autosave-after-sword/progress.sav		
 Dodongos Cavern Lobby Alcove Chest	DodongoCavern	1	-29.304	100.014	-7.961	-92.9	save	test-runs/agent-looks/GS1-prototypes/D/autosave-token/progress.sav		
+Dodongos Cavern Bomb Bag Chest	DodongoCavern	13	40.000	115.818	-23.000	270.0	worked out		passed 20261123-203154-vg9d	
+Jabu Jabus Belly Boomerang Chest	InsideJabuJabuBelly	9	-30.304	92.493	-131.909	270.0	worked out		failed 20261123-203238-gm6p	No chest stood here when the look started: it appears once the room's enemies are beaten.
 Jabu Jabus Belly Pot Island Chest	InsideJabuJabuBelly	13	-33.573	82.471	-52.387	-56.4	save	spikes/agent-looks/backups/20261118-085603-pre-test-save/slot_01/progress.sav		
-Forest Temple First Room Chest	ForestTemple	0	-8.862	117.513	64.370	-89.9	save	test-runs/agent-looks/A4R-compass-first-room/autosave/progress.sav		
+Forest Temple First Room Chest	ForestTemple	0	-8.862	117.513	64.370	-89.9	save	test-runs/agent-looks/A4R-compass-first-room/autosave/progress.sav	passed 20261123-203736-7h8d	
 Forest Temple Raised Island Courtyard Chest	ForestTemple	14	37.873	101.414	-35.750	90.0	save	test-runs/agent-looks/A5-boss-key-large/autosave/progress.sav		
-Forest Temple Bow Chest	ForestTemple	17	0.200	114.760	-67.620	180.0	save	test-runs/owner-playtest/runs/f1b-autosave/progress.sav		
+Forest Temple Bow Chest	ForestTemple	17	0.200	114.760	-67.620	180.0	save	test-runs/owner-playtest/runs/f1b-autosave/progress.sav	failed 20261123-205357-uq9o	No chest stood here when the look started: it appears once the room's Stalfos are beaten.
 Fire Temple Scarecrow Ledge Right Chest	FireTemple	8	33.750	194.352	-9.280	-135.0	save	test-runs/agent-looks/R1-second-boss-key/autosave/progress.sav		
+Water Temple Compass Chest	WaterTemple	4	56.865	118.490	-27.120	180.0	worked out		passed 20261123-205318-933m	
 Water Temple Like Like Chest	WaterTemple	3	-67.376	104.286	20.150	-90.0	save	test-runs/owner-playtest/runs/water4-autosave/progress.sav		
 Shadow Temple Hover Boots Chest	ShadowTemple	4	-71.744	90.521	-10.149	-90.0	save	test-runs/20261117-first-seed-route/runs/L2/autosave-B1-slot05/progress.sav		
 Bottom of the Well Before Dead Hand Chest	BottomOfTheWell	11	-0.586	102.171	-100.709	68.0	save	test-runs/owner-playtest/runs/k01-well-autosave/progress.sav		Link opens it from behind the side its actor faces.
