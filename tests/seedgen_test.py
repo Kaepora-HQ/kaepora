@@ -234,6 +234,12 @@ DANCE_EXPRESSION = {"name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp", "all_of
 STONE_CHECK = {"name": "Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp",
                "all_of": ["Get_StoneOfFire_IsCompleted_Exp", "Get_StoneOfWater_IsCompleted_Exp",
                           "DoorOfTime_IsAfter_Step01_Exp"]}
+# The expressions of every plan's own that Darunia's son's entries for the Fire quest complete ask: each holds while
+# the entry's own flag and his door's flag both do.
+SON_EXPRESSIONS = [{"name": f"Kaepora_{flag.removesuffix('_Exp')}_AND_DoorOpen_Exp",
+                    "all_of": [flag, "SageOfFire_Step02_DoorOpen"]}
+                   for flag in ("SageOfFire_IsCompleted_Exp", "SageOfFire_FromCrater", "SageOfFire_FromCrater_FarJr",
+                                "SageOfFire_FromDeathMt", "SageOfFire_FromDeathMt2")]
 # King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
 # in every seed.
 # The area at the top of the vine climb, which stands only for a Link whose save says he got the Weird Egg while Malon's
@@ -644,7 +650,7 @@ class SeedgenTest(unittest.TestCase):
         _, plan = self.generate("12", CHESTS_ALONE)
         self.assertEqual(plan["event_texts"], QUEST_TEXTS)
         self.assertEqual(plan["event_numbers"], [])
-        self.assertEqual(plan["expressions"], [DANCE_EXPRESSION, STONE_CHECK])
+        self.assertEqual(plan["expressions"], [DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS])
 
     def test_plan_keeps_king_zoras_ice_until_he_is_thawed(self):
         # The game's ice in the domain after the Water Temple never stands, so a Link who finished the temple first
@@ -1251,13 +1257,16 @@ class SeedgenTest(unittest.TestCase):
             steps = playthrough_steps(spoiler)
             self.assertFalse([step for step in steps if "Trade" in step and step != "DMT Trade Claim Check"], seed)
             on_route += "DMT Trade Claim Check" in steps
-            self.assertTrue(plan["event_nexts"] and plan["expressions"][2:], seed)
+            # His own expression reads his claim.
+            own = [entry for entry in plan["expressions"] if entry["all_of"][0] in plan["claims"]]
+            self.assertTrue(plan["event_nexts"] and own, seed)
             self.assertEqual(plan["start_values"]["GetSwordBigGoron_ElapsedTime"], 1)
             self.assertEqual(self.route_out_of_reach(spoiler), [])
         self.assertTrue(on_route)
         _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"],
                                          **NO_CHARACTER_HINTS})
-        self.assertEqual((plan["event_nexts"], plan["expressions"]), ([], [DANCE_EXPRESSION, STONE_CHECK]))
+        self.assertEqual((plan["event_nexts"], plan["expressions"]),
+                         ([], [DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS]))
         self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
     def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):

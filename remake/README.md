@@ -442,7 +442,8 @@ flow's paths, and the summit's gift has no window at all (read from the flows).
 
 The five story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
 Step02, Darunia's dance the Fire quest to DodongoCavernOpne, his son's talk the Fire Temple's quest to MoveStatue, which
-moves Darunia's statue and opens his door, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage
+moves Darunia's statue and opens his door (with the temple finished the engine refuses the write and the quest stays
+Complete, seen), King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage
 quest to Complete and the Ganon quest to Step01 (read from the flows). The fortress's guards, the Wasteland's gate
 keeper and the archery range follow the Spirit quest, the Training Ground's keeper asks for 30 rupees and no card, and
 the bridge to Ganon's Castle follows the Ganon quest, so the rules ask for the scenes, not the Gerudo's card or the
@@ -476,11 +477,12 @@ Darunia's scene binds a bracelet model to his hand whatever he gives (`Dm_Goron_
 its give, `GetInEvent_Goron`, adds the item it is handed (read). He gives once, at the first Saria's Song after his
 first meeting, at any step of the Fire quest (the Quests section below). His son gives through `GetInEvent_NotTurn`,
 which does the same, and then moves the statue and opens the door whatever he gives (read). The son gives once, at his
-talk at his step or past it, until the Fire Temple is finished (the Quests section below).
+talk at his step or at any later one (the Quests section below).
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
 A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a
-child, seen), and a slot's rule asks for no age, so no shop sells the Zora Tunic or the Goron Tunic. The Light Arrows
+child, seen), and a slot's rule asks for no age, so no shuffled slot holds the Zora Tunic or the Goron Tunic
+(`KeptFromShops`). A slot a count leaves may sell the game's own, at 600 rupees (`kept_goods.tsv`). The Light Arrows
 may go wherever the Fire and Ice Arrows go. Seen in the game: a chest gave the pass; a chest, a Gold Skulltula and a
 loose spot gave the Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the Light Arrows, the shelf to a child. A
 seed that starts with either tunic leaves its copy at King Zora's or Darunia's son's place out of the pool, with a Red
@@ -682,7 +684,7 @@ shapes:
 - The switch before the write asks another flag or expression.
 - The event before the write goes on to a later event, past the write.
 - A placed actor's presence names another flag.
-- An entry of an NPC's schedule holds on another flag and starts another talk.
+- An entry of an NPC's schedule holds on another flag, and may start another talk.
 
 The warp after Gohma, `Dm_SY_BancChange_EscapeDungeon` `Event4`, sets `Goto_HyruleCastle` to Step01 with no test. A Link
 who woke Talon before Gohma stood at Step04 and was set back: Talon was gone from the crates, and Zelda only asked
@@ -796,7 +798,7 @@ own schedule, `Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult`, applies, wi
 game, with the quest at MeetSheik and no Goron Tunic: he stood at his post and gave nothing. Every mod changes that
 schedule's entry [0], which holds while `SageOfFire_Step01_DaruniaJr_BombHit` is false and starts his plain talk: it
 holds while `DoorOpen` is false instead, still reversed, and starts the gift talk. Only that talk's door scene sets
-`DoorOpen`, so past his step he gives once, until the Fire Temple is finished. Seen in the game with the quest at
+`DoorOpen`, so past his step he gives once. Seen in the game with the quest at
 MeetSheik: he gave, and a second talk gave nothing. His gift writes MoveStatue back from the later step, and the quest
 lands on EnterCrater: `Logic/GoronCity_Adult_Prefab_d9d1` writes EnterCrater whenever the quest is before it and
 Darunia's statue stands in `Area_64c2`, and it forces the statue there while the quest is past MoveStatue (read; seen
@@ -805,13 +807,24 @@ EnterTemple, GetBossKey, MeetBoss and DefeatBoss do not come again (read). `Bomb
 order he takes entry [0] again from MoveStatue on. In a mod `DoorOpen` is set by then, so he takes his default entry,
 one unit from his post, with the balloon "It's up to you! Gowo!" in place of "Dad... Where are you?" (read).
 
-Once the Fire Temple is finished the son gives nothing, and he stands in front of Darunia's door (seen). At Complete
-entry [1] holds too, on `SageOfFire_IsCompleted_Exp`, and with both holding the later entry won (seen). Entries [2] to
-[5] hold on `SageOfFire_FromCrater`, `_FromCrater_FarJr`, `_FromDeathMt` and `_FromDeathMt2`: unsaved Bools, set only
-while the quest is complete and his temple talk (`Npc_Goron_DaruniaJr_SageOfFireClearTalked`) is not done. The
-arrivals from the trail and the crater set `FromDeathMt` and `FromCrater` (`SageOfFire_CityInFromDeathMt` and
-`_CityInFromCrater`), and the areas of `Logic/GoronCity_Adult_Prefab_a09c` and `_64b3` set `FromDeathMt2` and
-`FromCrater_FarJr` (read). So a Link who beats Volvagia before the son's talk loses what his place holds.
+Once the Fire Temple is finished his entries [1] to [5] apply as well. Entry [1] holds on `SageOfFire_IsCompleted_Exp`,
+at `AnchorAction2` in front of Darunia's door. Entries [2] to [5] hold on `SageOfFire_FromCrater`, `_FromCrater_FarJr`,
+`_FromDeathMt` and `_FromDeathMt2`: unsaved Bools, set only while the quest is complete and his temple talk
+(`Npc_Goron_DaruniaJr_SageOfFireClearTalked`) is not done. The arrivals from the trail and the crater set `FromDeathMt`
+and `FromCrater` (`SageOfFire_CityInFromDeathMt` and `_CityInFromCrater`), and the areas of
+`Logic/GoronCity_Adult_Prefab_a09c` and `_64b3` set `FromDeathMt2` and `FromCrater_FarJr` (read). All five start his
+talk after the temple, which gives nothing. With the temple finished and entry [0] alone changed, [0] and [1] both held,
+and he stood in front of Darunia's door and gave nothing (seen). The rule that picks between two entries is not read, so
+every mod changes entries [1] to [5] too. Each holds on an expression of the mod's own, such as
+`Kaepora_SageOfFire_IsCompleted_AND_DoorOpen_Exp`, that holds while its own flag and `DoorOpen` both do, and keeps its
+talk. Until his gift sets `DoorOpen`, entry [0] is the only one that holds, at any step and after any arrival, so with
+the temple finished he stands at his post and gives once. From then on the five hold as in the game (read). Seen in the
+game with the temple finished, loaded in Goron City and walking in from the trail: he gave once each time, and nothing
+more. `DoorOpen` went to 1 and the quest stayed Complete, as the engine refuses his gift's write of MoveStatue. Loaded in
+Goron City, a second talk in the same visit gave nothing, he stayed in place after the gift, and after Link left and
+came back he stood at Darunia's door. So his talk follows the changed flag at once, and his spot at the next load. After
+a walk in from the trail his talk after the temple sets `FromDeathMt2`, so entry [5] can hold beside [1], with its spot
+by the trail's entrance; where he then stands is not settled, and both start the talk that gives nothing (read).
 
 With "Biggoron Quest" ticked, a mod changes one more write. Biggoron's hand-over for the Claim Check,
 `Npc_Goron_Biggoron_Adult` `Event89`, sets `SubEvent_GetSwordBigGoron` to Complete after his gift, and his question

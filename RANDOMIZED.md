@@ -57,8 +57,6 @@ With **Malon's Egg** ticked, her egg is one of the shuffled items, and Malon at 
 
 With **Biggoron Quest** ticked, Anju as an adult and Biggoron on Death Mountain hand you the seed's items, and the Biggoron Receipt and the Biggoron Sword are among the shuffled items. The Pocket Egg is not, so the trade that starts with it never begins. Show Biggoron the receipt for his item. He is ready three game days after your game begins, and until then he tells you it is still in the works. He hands his item over once, and his lines still speak of the sword whatever he holds. Anju makes her offer whether you see her before him or after.
 
-With **Story gifts** ticked, stop Darunia's son before you finish the Fire Temple: once it is done, he gives nothing.
-
 A Deku Scrub still asks its price: 40 rupees by the bridge in the Lost Woods and in the Lost Woods grotto, 100 in the Hyrule Field grotto and in Death Mountain Crater. The one in the Hyrule Field grotto sells only to young Link, and only once adult Link has read the password on the tree outside.
 
 A Great Fairy still asks for her offering, and each but the summit's for Din's Fire as well, as she does in the game. What she hands you is the seed's item, and she hands it over once.
@@ -138,4 +136,5 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 - **The Master Sword goes back at any time.** In the game, adult Link can return the sword and be a child again only once the Forest Temple is done. With a seed he can from the start, and Sheik waits behind the pedestal, out of the way. One thing to watch: a child who warps to the Evil Desert Colossus or into Death Mountain Crater cannot walk out. Learn a warp song that lands somewhere else first: the Minuet, the Serenade, the Nocturne or the Prelude.
 - **Bombs need no strength.** Link can take a bomb out of the bag before he has a strength item.
 - **The Kokiri Sword chest gives only what it holds.** In the game, the scene after that chest puts a Kokiri Sword in Link's hand, whatever the chest held. With another item in the chest, a seed leaves the scene out.
+- **Darunia's son gives whenever you reach him.** In the game he hands over his gift only if you stop him rolling before you go on to the crater. With a seed he still gives after you have been to the crater or finished the Fire Temple, so what he hands over is never lost.
 - **A few doors and scenes.** Four dungeon doors start open. A seed lets you do things in an order the game never expected, so some scenes are changed to keep up. Story scenes, the Zora diving game and your first walk into Zora's Domain no longer set a quest back. King Zora stays frozen after the Water Temple until you thaw him, so what he hands over is never lost. If you finish both stone dungeons before you meet Zelda, her escape plays as soon as Impa has sent you off, and the drawbridge is no longer raised before it.

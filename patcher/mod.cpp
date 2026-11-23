@@ -1016,7 +1016,7 @@ constexpr uint64_t ReadBool = 0;
 constexpr uint64_t And = 3;
 constexpr uint64_t ReadExpression = 10;
 
-// An expression of the mod's own, unsaved and in the shape of the game's own that join saved Bools and expressions.
+// An expression of the mod's own, unsaved and in the shape of the game's own that join Bools and expressions.
 // SageOfShadow_Kakariko_Burning joins three expressions so, and HappyMaskShop_AppearMask_Keaton reads one Bool.
 static byml::Node AndExpression(uint32_t hash, const std::vector<std::pair<uint64_t, uint32_t>>& reads) {
     byml::Node entry{ .type = byml::Type::Dict };

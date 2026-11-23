@@ -393,6 +393,8 @@ if(KAEPORA_GAME_NUP)
                                                      "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-darunias-dance COMMAND ${PATCH_TEST} darunias-dance $<TARGET_FILE:kaepora-patch>
                                                "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-darunias-son COMMAND ${PATCH_TEST} darunias-son $<TARGET_FILE:kaepora-patch>
+                                             "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME remake-tables
         COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-vine-hatch

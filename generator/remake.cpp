@@ -830,6 +830,24 @@ static constexpr std::string_view danceGiftPlayed = "HavePlayedEvent.Dm_Goron_00
 
 static constexpr std::string_view stonesAfterStep01 = "Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp";
 
+// Darunia's son's own schedule, and the flag his gift talk sets as it opens the door. Its entries [1] to [5] apply once
+// the Fire quest is complete: [1] holds on the quest complete, and [2] to [5] on four unsaved flags that arrivals and
+// areas of Goron City set only then. All five start the same talk, and it gives nothing. Which of two entries that hold
+// the game takes is not known, so each of the five holds only once the door's flag is set as well, and until then the
+// entry that starts his gift talk is the only one that holds.
+static constexpr std::string_view daruniaJrSchedule =
+    "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml";
+static constexpr std::string_view daruniaJrDoorOpen = "SageOfFire_Step02_DoorOpen";
+static constexpr std::string_view daruniaJrAfterTempleTalk = "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT";
+// Each of the five by the flag it holds on in the game, with the expression of the mod's own it holds on instead.
+static constexpr std::pair<std::string_view, std::string_view> daruniaJrAfterTemple[] = {
+    { "SageOfFire_IsCompleted_Exp", "Kaepora_SageOfFire_IsCompleted_AND_DoorOpen_Exp" },
+    { "SageOfFire_FromCrater", "Kaepora_SageOfFire_FromCrater_AND_DoorOpen_Exp" },
+    { "SageOfFire_FromCrater_FarJr", "Kaepora_SageOfFire_FromCrater_FarJr_AND_DoorOpen_Exp" },
+    { "SageOfFire_FromDeathMt", "Kaepora_SageOfFire_FromDeathMt_AND_DoorOpen_Exp" },
+    { "SageOfFire_FromDeathMt2", "Kaepora_SageOfFire_FromDeathMt2_AND_DoorOpen_Exp" },
+};
+
 static constexpr EventText eventTexts[] = {
     // The warp after Gohma completes the Forest quest in its Event1. Its Event4 sets the castle quest to Step01 even when
     // the quest is further on, and a Link who woke Talon before Gohma can then not meet Zelda. These texts make Event4 a
@@ -1205,11 +1223,16 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     // TalkDaruniaJr. Past it his own schedule applies, and its entry for a son no bomb has hit talks with no gift. That
     // entry holds instead until his gift has opened the door, and starts his gift talk.
     plan["schedule_entries"] = nlohmann::ordered_json::array();
-    plan["schedule_entries"].push_back(
-        { { "file", "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml" },
-          { "replaces", "SageOfFire_Step01_DaruniaJr_BombHit" },
-          { "flag", "SageOfFire_Step02_DoorOpen" },
-          { "talk", "1396283892_1460050088_2425371882_C1_T" } });
+    plan["schedule_entries"].push_back({ { "file", daruniaJrSchedule },
+                                         { "replaces", "SageOfFire_Step01_DaruniaJr_BombHit" },
+                                         { "flag", daruniaJrDoorOpen },
+                                         { "talk", "1396283892_1460050088_2425371882_C1_T" } });
+    for (const auto& [flag, joined] : daruniaJrAfterTemple) {
+        plan["schedule_entries"].push_back({ { "file", daruniaJrSchedule },
+                                             { "replaces", flag },
+                                             { "flag", joined },
+                                             { "talk", daruniaJrAfterTempleTalk } });
+    }
     plan["opening_skipped"] = settings.opening == Opening::Skipped;
     plan["cutscenes_skipped"] = settings.cutscenes == Cutscenes::Skipped;
     plan["skulltulas"] = nlohmann::ordered_json::array();
@@ -1239,6 +1262,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                                     { "all_of", nlohmann::ordered_json::array({ "Get_StoneOfFire_IsCompleted_Exp",
                                                                                 "Get_StoneOfWater_IsCompleted_Exp",
                                                                                 "DoorOfTime_IsAfter_Step01_Exp" }) } });
+    for (const auto& [flag, joined] : daruniaJrAfterTemple) {
+        plan["expressions"].push_back(
+            { { "name", joined }, { "all_of", nlohmann::ordered_json::array({ flag, daruniaJrDoorOpen }) } });
+    }
     if (biggoron) {
         plan["claims"].push_back(biggoronClaim);
         plan["expressions"].push_back(

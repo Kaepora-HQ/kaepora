@@ -19,8 +19,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
-       python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk|darunias-dance <kaepora-patch> \
-           <game.nup> <kaepora-seedgen>
+       python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk|darunias-dance| \
+           darunias-son <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -121,6 +121,10 @@ KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bc
 DARUNIA_JR_SCHEDULE = "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml"
 DARUNIA_JR_GIFT = {"file": DARUNIA_JR_SCHEDULE, "replaces": "SageOfFire_Step01_DaruniaJr_BombHit",
                    "flag": "SageOfFire_Step02_DoorOpen", "talk": "1396283892_1460050088_2425371882_C1_T"}
+# His entries for the Fire quest complete, each by the flag it holds on in the game, with the operation of a saved
+# expression that reads that flag: 10 reads an expression and 0 a Bool.
+DARUNIA_JR_AFTER_TEMPLE = {"SageOfFire_IsCompleted_Exp": 10, "SageOfFire_FromCrater": 0,
+                           "SageOfFire_FromCrater_FarJr": 0, "SageOfFire_FromDeathMt": 0, "SageOfFire_FromDeathMt2": 0}
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
@@ -2336,6 +2340,30 @@ def darunias_dance(patch, game, seedgen):
                 "Values": [[(UINT64, 0), (UINT64, murmur3(DARUNIA_DANCE))]]} in data["BoolExp"], settings
 
 
+def darunias_son(patch, game, seedgen):
+    """In every seed Darunia's son's entries for the Fire quest complete hold only once his gift has opened the door.
+    Each asks an expression of the mod's own that joins the entry's own flag and the door's flag, so while the door's
+    flag is unset his gift talk's entry is the only one that holds, with the Fire Temple finished or not. His schedule
+    is the game's but for those names and the gift's entry. Seed 1 at the defaults shuffles his place, and seed 2
+    leaves every gift group out."""
+    door = DARUNIA_JR_GIFT["flag"]
+    for seed, settings in (("1", {}), ("2", {"Gifts": []})):
+        mod = patched(patch, game, generated_plan(seedgen, seed, settings))
+        expected = byml(game.read(DARUNIA_JR_SCHEDULE))
+        with_schedule_entry(expected, DARUNIA_JR_GIFT)
+        ours = byml(mod[DARUNIA_JR_SCHEDULE])
+        data = game.game_data_list(mod[GAME_DATA_LIST])["Data"]
+        for theirs, entry in zip(expected["ConditionalSchedule"][1:], ours["ConditionalSchedule"][1:], strict=True):
+            own = theirs["ConditionFlag"]
+            joined = {"Hash": (UINT, murmur3(entry["ConditionFlag"])), "ResetTypeValue": (INT, 0),
+                      "SaveFileIndex": (INT, 0xFFFFFFFF),
+                      "Values": [[(UINT64, DARUNIA_JR_AFTER_TEMPLE[own]), (UINT64, murmur3(own))],
+                                 [(UINT64, 0), (UINT64, murmur3(door))], [(UINT64, 3)]]}
+            assert joined in data["BoolExp"], (settings, own, entry["ConditionFlag"])
+            theirs["ConditionFlag"] = entry["ConditionFlag"]
+        assert ours == expected, settings
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -3386,6 +3414,7 @@ def main():
         "biggoron-place": biggoron_place,
         "mido-hint-every-talk": mido_hint_every_talk,
         "darunias-dance": darunias_dance,
+        "darunias-son": darunias_son,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

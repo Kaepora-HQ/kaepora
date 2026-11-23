@@ -1623,6 +1623,36 @@
       "replaces": "SageOfFire_Step01_DaruniaJr_BombHit",
       "flag": "SageOfFire_Step02_DoorOpen",
       "talk": "1396283892_1460050088_2425371882_C1_T"
+    },
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_IsCompleted_Exp",
+      "flag": "Kaepora_SageOfFire_IsCompleted_AND_DoorOpen_Exp",
+      "talk": "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT"
+    },
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_FromCrater",
+      "flag": "Kaepora_SageOfFire_FromCrater_AND_DoorOpen_Exp",
+      "talk": "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT"
+    },
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_FromCrater_FarJr",
+      "flag": "Kaepora_SageOfFire_FromCrater_FarJr_AND_DoorOpen_Exp",
+      "talk": "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT"
+    },
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_FromDeathMt",
+      "flag": "Kaepora_SageOfFire_FromDeathMt_AND_DoorOpen_Exp",
+      "talk": "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT"
+    },
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_FromDeathMt2",
+      "flag": "Kaepora_SageOfFire_FromDeathMt2_AND_DoorOpen_Exp",
+      "talk": "Npc_Goron_DaruniaJr_Adult_C1C2C3C4C5_TTTTT"
     }
   ],
   "opening_skipped": true,
@@ -1643,6 +1673,41 @@
         "Get_StoneOfFire_IsCompleted_Exp",
         "Get_StoneOfWater_IsCompleted_Exp",
         "DoorOfTime_IsAfter_Step01_Exp"
+      ]
+    },
+    {
+      "name": "Kaepora_SageOfFire_IsCompleted_AND_DoorOpen_Exp",
+      "all_of": [
+        "SageOfFire_IsCompleted_Exp",
+        "SageOfFire_Step02_DoorOpen"
+      ]
+    },
+    {
+      "name": "Kaepora_SageOfFire_FromCrater_AND_DoorOpen_Exp",
+      "all_of": [
+        "SageOfFire_FromCrater",
+        "SageOfFire_Step02_DoorOpen"
+      ]
+    },
+    {
+      "name": "Kaepora_SageOfFire_FromCrater_FarJr_AND_DoorOpen_Exp",
+      "all_of": [
+        "SageOfFire_FromCrater_FarJr",
+        "SageOfFire_Step02_DoorOpen"
+      ]
+    },
+    {
+      "name": "Kaepora_SageOfFire_FromDeathMt_AND_DoorOpen_Exp",
+      "all_of": [
+        "SageOfFire_FromDeathMt",
+        "SageOfFire_Step02_DoorOpen"
+      ]
+    },
+    {
+      "name": "Kaepora_SageOfFire_FromDeathMt2_AND_DoorOpen_Exp",
+      "all_of": [
+        "SageOfFire_FromDeathMt2",
+        "SageOfFire_Step02_DoorOpen"
       ]
     }
   ],
