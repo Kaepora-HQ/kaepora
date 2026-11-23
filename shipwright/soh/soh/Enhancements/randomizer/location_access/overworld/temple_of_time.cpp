@@ -43,7 +43,9 @@ void RegionTable_Init_TempleOfTime() {
     }, {
         //Exits
         ENTRANCE(RR_TOT_ENTRANCE,            true),
-        ENTRANCE(RR_TOT_BEYOND_DOOR_OF_TIME, ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_OPEN) || (logic->CanUse(RG_SONG_OF_TIME) && (ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_SONGONLY) || (logic->StoneBossesBeaten() && logic->HasItem(RG_OCARINA_OF_TIME))))),
+        // The altar opens the door to the Song of Time on either ocarina once the door's quest is past Step04. Zelda's
+        // scene at the moat writes Step05, whatever its place gives.
+        ENTRANCE(RR_TOT_BEYOND_DOOR_OF_TIME, ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_OPEN) || (logic->CanUse(RG_SONG_OF_TIME) && (ctx->GetOption(RSK_DOOR_OF_TIME).Is(RO_DOOROFTIME_SONGONLY) || logic->Get(LOGIC_MOAT_SCENE)))),
     });
 
     areaTable[RR_TOT_BEYOND_DOOR_OF_TIME] = Region("Beyond Door of Time", SCENE_TEMPLE_OF_TIME, {}, {

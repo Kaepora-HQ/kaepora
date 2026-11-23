@@ -1063,7 +1063,7 @@ struct ModuleText {
 };
 
 // The Door of Time, in both ages' Temple of Time, opens once its quest is at Step06, which the Song of Time at the
-// altar writes after Zelda, the stones and the Ocarina of Time. The child's pedestal starts the first pull at that step
+// altar writes after Zelda, the stones and her scene at the moat. The child's pedestal starts the first pull at that step
 // exactly, and later pulls once AllSage is past Ready. AllSage waits on nothing, stands at Ready in a new game, and
 // only the first pull's last scene writes its first step. So the door opens on AllSage at Ready or after, and the first
 // pull waits for AllSage at Ready exactly.

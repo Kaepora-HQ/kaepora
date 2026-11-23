@@ -64,8 +64,8 @@ EVERY_SETTING_CHANGED = {
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Skip": [],
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
-    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Biggoron Quest",
-              "Deku Scrubs (One Time Rewards)"],
+    "Gifts": ["Minigames", "Characters", "House of Skulltula", "Story gifts", "Malon's Egg", "Ocarinas",
+              "Biggoron Quest", "Deku Scrubs (One Time Rewards)"],
     "Songs": "Shuffled among themselves", "Loose items": "Shuffled", "Dungeon rewards": "Shuffled",
     "Lens of Truth": "Never needed"}
 # In every seed the Fire Temple's lowest locked door, the Water Temple's west middle-floor door, the west door of the
@@ -137,7 +137,7 @@ POOLED_AS_SOH = {"Kak Anju as Adult": "Item_ClaimCheck"}
 GIFT_POOL = collections.Counter(POOLED_AS_SOH.get(row["location"], row["item"])
                                 for row in {row["location"]: row for row in GIFT_SITES}.values())
 GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts", "Malon's Egg",
-               "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
+               "Ocarinas", "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
 # The groups "Shuffled" names, in a seed's settings and in the settings a window remembers.
 RELEASED_GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
 GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
@@ -173,6 +173,7 @@ GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # What a shuffled group adds that only a chest, a gift's call or a reward's place gives: each item with its group and
 # the place that holds it in SoH's own list.
 KEPT_IN_CHESTS_AND_CALLS = {"Item_WeirdEgg": ("Malon's Egg", "HC Malon Egg"),
+                            "Item_Ocarina_Fairy": ("Ocarinas", "LW Gift From Saria"),
                             "Item_ClaimCheck": ("Biggoron Quest", "Kak Anju as Adult"),
                             "Item_Sword_Biggoron": ("Biggoron Quest", "DMT Trade Claim Check")}
 SCRUB_FLOW = "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs"
@@ -317,13 +318,13 @@ START_STEPS = {
     "Fairy Ocarina": ["Item_Ocarina_Fairy"],
 }
 # The items that shuffled places name for those steps: chests, and with gifts shuffled Darunia's bracelet, the scales,
-# the wallets and the bigger and biggest bags.
+# the wallets, the bigger and biggest bags and Saria's Fairy Ocarina.
 STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Hookshot", "Item_Longshot",
                "Item_Gauntlet_Goron", "Item_Gauntlet_Silver", "Item_Gauntlet_Gold", "Item_Scale_Silver",
                "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large", "Item_BulletBag_Medium",
                "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large", "Item_BombBag_Medium",
                "Item_BombBag_Large", "Item_StickBag_Medium", "Item_StickBag_Large", "Item_NutBag_Medium",
-               "Item_NutBag_Large"]
+               "Item_NutBag_Large", "Item_Ocarina_Fairy"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
                 "ShadowTemple", "SpiritTemple", "BottomOfTheWell", "IceCavern"]
 SMALL_KEY_DOORS = [
@@ -576,17 +577,17 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
 
     def test_a_seed_with_no_settings_shuffles_what_sohs_default_seed_shuffles(self):
-        # SoH's default seed shuffles every gift place but Malon's, whose Weird Egg starts at Vanilla, the loose items,
-        # the songs among the song places and the dungeon rewards among the places that hand one over. It leaves the
-        # Gold Skulltulas and the shops' goods where the game has them.
+        # SoH's default seed shuffles every gift place but Malon's and the ocarinas', whose Weird Egg starts at Vanilla
+        # and "Shuffle Ocarinas" off, the loose items, the songs among the song places and the dungeon rewards among
+        # the places that hand one over. It leaves the Gold Skulltulas and the shops' goods where the game has them.
         spoiler, plan = self.generate("1")
         listed = spoiler["locations"].keys()
-        malons = {row["location"] for row in GIFT_SITES if row["group"] == "Malon's Egg"}
-        self.assertLessEqual({row["location"] for row in GIFT_SITES} - malons, listed)
+        left_out = {row["location"] for row in GIFT_SITES if row["group"] in ("Malon's Egg", "Ocarinas")}
+        self.assertLessEqual({row["location"] for row in GIFT_SITES} - left_out, listed)
         self.assertLessEqual({row["location"] for row in LOOSE_ITEMS}, listed)
         self.assertLessEqual({row["location"] for row in SONG_PLACES}, listed)
         self.assertEqual(sorted(dict(reward_sites(plan)).values()), sorted(REWARDS))
-        for kept in (malons, {row["location"] for row in SKULLTULAS}, {row["location"] for row in SHOP_SLOTS}):
+        for kept in (left_out, {row["location"] for row in SKULLTULAS}, {row["location"] for row in SHOP_SLOTS}):
             self.assertFalse(kept & listed, kept)
         self.assertEqual((plan["skulltulas"], plan["shops"]), ([], []))
 
@@ -1805,10 +1806,17 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 27's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
-        spoiler, _ = self.assert_hints_are_true("27", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+        # Seed 23's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf, and no
+        # place of the forest holds a major item, so SoH's rule alone would call the forest foolish. The seed draws
+        # foolish hints, which the hint check finds true.
+        spoiler, _ = self.assert_hints_are_true("23", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
                                                 | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
-        self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 1"])
+        steps = playthrough_steps(spoiler)
+        self.assertEqual({step: item for step, item in steps.items() if step.startswith("KF ")},
+                         {"KF Shop Item 1": "Buy Deku Shield"})
+        forest = {spoiler_item(item) for location, item in spoiler["locations"].items() if place_of(location) == "KF"}
+        self.assertFalse(SOH_MAJOR_ITEMS & forest)
+        self.assertTrue([hint for hint in spoiler["hints"].values() if hint.endswith("is a foolish choice.")])
 
     def assert_hints_are_true(self, seed, settings=None):
         spoiler, plan = self.generate(seed, settings)
@@ -1981,6 +1989,39 @@ class SeedgenTest(unittest.TestCase):
                 self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
                                  list(unstarted.values()).count("TBox_Rupee_Red") + 1, (tunic, seed))
 
+    def test_sarias_place_gives_its_item_with_her_greeting_skipped_or_played(self):
+        # Her farewell on the bridge plays once Link walks onto it, until Dm_Kokiri_0150 has played, and her gift's
+        # scene follows it. The greeting's skip starts only her talk outside Link's house played, so either way the
+        # bridge scene comes and both of its events give the placed item.
+        sites = [("Event/EventFlow/Dm_Kokiri_0155.bfevfl.zs", event, param)
+                 for event, param in (("Event68", "Actor"), ("Event77", "ActorName"))]
+        for skip in (SKIPS, [name for name in SKIPS if name != "Saria's greeting"]):
+            spoiler, plan = self.generate("21", {"Gifts": ["Ocarinas"], "Skip": skip})
+            texts = {(entry["flow"], entry["event"], entry["param"]): entry["text"] for entry in plan["event_texts"]}
+            held = placed_remake_items(spoiler, plan)["LW Gift From Saria"]
+            self.assertNotIn(held, ("Item_Ocarina_Fairy", "TBox_Rupee_Red"), skip)
+            self.assertEqual([texts.get(site) for site in sites], [held, held], skip)
+            self.assertFalse({"HavePlayedEvent.Dm_Kokiri_0150", "HavePlayedEvent.Dm_Kokiri_0155"}
+                             & plan["start_values"].keys(), skip)
+            self.assertEqual(self.route_out_of_reach(spoiler), [], skip)
+
+    def test_a_started_fairy_ocarina_leaves_one_ocarina_out_and_sarias_place_in(self):
+        # With its ocarinas shuffled, SoH's pool holds one ocarina fewer for a started one, and Saria's place stays in
+        # the shuffle. So a seed that starts with the Fairy Ocarina leaves hers out of the pool, with a Red Rupee in its
+        # stead, and her place holds what the seed puts there, a step of the route in some seeds.
+        on_route = 0
+        for seed in map(str, range(1, 21)):
+            spoiler, plan = self.generate(seed, {"Gifts": ["Ocarinas"], "Start with": ["Fairy Ocarina"]})
+            placed = placed_remake_items(spoiler, plan)
+            unstarted = placed_remake_items(*self.generate(seed, {"Gifts": ["Ocarinas"]}))
+            self.assertIn("Item_Ocarina_Fairy", unstarted.values(), seed)
+            self.assertNotIn("Item_Ocarina_Fairy", placed.values(), seed)
+            self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
+                             list(unstarted.values()).count("TBox_Rupee_Red") + 1, seed)
+            on_route += "LW Gift From Saria" in playthrough_steps(spoiler)
+            self.assertEqual(self.route_out_of_reach(spoiler), [], seed)
+        self.assertTrue(on_route)
+
     def test_a_place_that_gives_a_started_step_again_counts_for_nothing(self):
         # Saria, the diving game, the two wallet rewards and the Bomb Bag's chest of a dungeon left out each give one
         # named step, which a seed that starts with it already holds. The logic would count the next step there.
@@ -2087,11 +2128,11 @@ class SeedgenTest(unittest.TestCase):
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
         # Seed 407's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
-        # a hint says Hyrule Field is on the way of the hero. Seed 402's route takes the Fairy Bow from HC OGC GS, in
-        # the scene the game calls Ganondorf's Castle, and a hint says the Fairy Bow is at Ganondorf's Castle.
+        # a hint says Hyrule Field is on the way of the hero. Seed 180's route takes the Hover Boots from HC OGC GS, in
+        # the scene the game calls Ganondorf's Castle, and a hint says the Hover Boots are at Ganondorf's Castle.
         for seed, skulltula, hint in (
                 ("407", "LLR GS Back Wall", "They say that Hyrule Field is on the way of the hero."),
-                ("402", "HC OGC GS", "They say that the Fairy Bow can be found at Ganondorf's Castle.")):
+                ("180", "HC OGC GS", "They say that the Hover Boots can be found at Ganondorf's Castle.")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
             self.assertIn(skulltula, playthrough_steps(spoiler))
             self.assertIn(hint, spoiler["hints"].values())
