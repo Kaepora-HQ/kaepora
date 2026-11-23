@@ -12,8 +12,22 @@
     "skipLibCheck": true,
     "noEmit": true,
     "moduleDetection": "force",
+    "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["effect/ByteSize", "effect/http", "effect/http-api", "effect/sql", "@effect/sql-pg"],
+        "diagnosticSeverity": {
+          "anyUnknownInErrorContext": "error",
+          "effectTryWithoutCatch": "error",
+          "globalJsonInEffect": "error",
+          "processEnvInEffect": "error",
+          "tryCatchInEffectGen": "error"
+        }
+      }
+    ]
   }
 }

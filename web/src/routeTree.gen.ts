@@ -14,6 +14,7 @@ import { Route as DownloadRouteImport } from './routes/download'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LinkPreviewRouteImport } from './routes/link-preview'
 import { Route as RandomizedRouteImport } from './routes/randomized'
+import { Route as V1SplatRouteImport } from './routes/v1/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const RandomizedRoute = RandomizedRouteImport.update({
   path: '/randomized',
   getParentRoute: () => rootRouteImport,
 } as any)
+const V1SplatRoute = V1SplatRouteImport.update({
+  id: '/v1/$',
+  path: '/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
   '/randomized': typeof RandomizedRoute
+  '/v1/$': typeof V1SplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
   '/randomized': typeof RandomizedRoute
+  '/v1/$': typeof V1SplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,22 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/link-preview': typeof LinkPreviewRoute
   '/randomized': typeof RandomizedRoute
+  '/v1/$': typeof V1SplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/download' | '/faq' | '/link-preview' | '/randomized'
+  fullPaths:
+    '/' | '/download' | '/faq' | '/link-preview' | '/randomized' | '/v1/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/download' | '/faq' | '/link-preview' | '/randomized'
-  id: '__root__' | '/' | '/download' | '/faq' | '/link-preview' | '/randomized'
+  to: '/' | '/download' | '/faq' | '/link-preview' | '/randomized' | '/v1/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/download'
+    | '/faq'
+    | '/link-preview'
+    | '/randomized'
+    | '/v1/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LinkPreviewRoute: typeof LinkPreviewRoute
   RandomizedRoute: typeof RandomizedRoute
+  V1SplatRoute: typeof V1SplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RandomizedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/v1/$': {
+      id: '/v1/$'
+      path: '/v1/$'
+      fullPath: '/v1/$'
+      preLoaderRoute: typeof V1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LinkPreviewRoute: LinkPreviewRoute,
   RandomizedRoute: RandomizedRoute,
+  V1SplatRoute: V1SplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
