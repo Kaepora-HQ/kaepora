@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "bunVersion": "1.4.x",
-  "buildCommand": "bun run migrate && bun run build"
+  "buildCommand": "bun run migrate && bun run build",
+  "git": {
+    "deploymentEnabled": false
+  }
 }

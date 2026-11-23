@@ -2,33 +2,53 @@ name: web
 
 on:
   pull_request:
-    paths:
+    types: [opened, synchronize, reopened, closed]
+    paths: &site
       - web/**
+      - CHANGELOG.md
       - FAQ.md
       - RANDOMIZED.md
       - remake/chests.tsv
       - remake/stones.tsv
+      - tools/site-database.sh
       - .github/workflows/web.yml
   push:
     branches: [main]
-    paths:
-      - web/**
-      - FAQ.md
-      - RANDOMIZED.md
-      - remake/chests.tsv
-      - remake/stones.tsv
-      - .github/workflows/web.yml
+    paths: *site
+  # A pull request with a merge conflict starts no pull_request run, not even when it closes, so the deletion of its git
+  # branch also retires its preview's database. A delete starts the copy of this file on main.
+  delete:
 
 permissions:
   contents: read
 
+# Named, bash runs each step with -eo pipefail, so a command that fails inside a pipe fails its step. A job's own
+# defaults.run replaces this one whole, so it names the shell again.
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.event_name == 'push' && 'web-production' || format('web-preview-{0}', github.event.pull_request.head.ref || github.event.ref) }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_CLI: vercel@66.6.0
+  VERCEL_ORG_ID: team_4ioBliCcG6cN0YIiwd7IxrPw
+  VERCEL_PROJECT_ID: prj_kT2iD3T18eKtdtvboRQ8DA7OGEBT
+  NEON_PROJECT_ID: round-sky-46963086
+
 jobs:
   check:
     name: Website type check, tests and build
+    if: github.event_name != 'delete' && github.event.action != 'closed'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    outputs:
+      site: ${{ steps.site.outputs.changed }}
     defaults:
       run:
+        shell: bash
         working-directory: web
     # The major version of the site's Neon database.
     services:
@@ -47,7 +67,21 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 2
           persist-credentials: false
+
+      # A pull request's run checks out GitHub's merge of it into its base, whose first parent is the base. Only a
+      # change to the site's code gets a preview. A change to the content alone gets these checks, and reaches the site
+      # from main.
+      - id: site
+        name: Look for a change to the site's code
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --quiet HEAD^1 HEAD -- .; then
+            echo changed=false >> "$GITHUB_OUTPUT"
+          else
+            echo changed=true >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -65,3 +99,145 @@ jobs:
 
       - name: Build
         run: bun run build
+
+  # A pull request from a fork or from Dependabot runs without secrets, so it deploys nothing.
+  secrets:
+    name: Deploy secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    outputs:
+      present: ${{ steps.look.outputs.present }}
+    steps:
+      - id: look
+        name: Look for VERCEL_TOKEN and NEON_API_KEY
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$NEON_API_KEY" ]; then
+            echo present=true >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::This run has no VERCEL_TOKEN or NEON_API_KEY, so it deploys nothing and changes no database."
+          fi
+
+  production:
+    name: Deploy to production
+    needs: [check, secrets]
+    if: github.event_name == 'push' && needs.secrets.outputs.present == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.4"
+
+      - name: Find production's database
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: tools/site-database.sh production
+
+      - name: Pull the project's settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bunx "$VERCEL_CLI" pull --yes --environment=production
+
+      - name: Migrate the database and build
+        run: bunx "$VERCEL_CLI" build --prod
+
+      - name: Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bunx "$VERCEL_CLI" deploy --prebuilt --prod
+
+  preview:
+    name: Deploy a preview
+    needs: [check, secrets]
+    if: >-
+      github.event_name == 'pull_request' && github.event.action != 'closed' &&
+      needs.check.outputs.site == 'true' && needs.secrets.outputs.present == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+    steps:
+      # GitHub's merge of the pull request into its base: the tree the checks tested, with this workflow's own script.
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.4"
+
+      - name: Find or make the database branch preview/${{ env.BRANCH }}
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: tools/site-database.sh preview "$BRANCH"
+
+      - name: Pull the project's settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bunx "$VERCEL_CLI" pull --yes --environment=preview
+
+      - name: Migrate the database and build
+        run: bunx "$VERCEL_CLI" build
+
+      # The project's database variables are for production only, so the preview's address goes with the deployment.
+      # --env with no value takes it from the environment, which keeps it off the command line.
+      - name: Deploy
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment=$(bunx "$VERCEL_CLI" deploy --prebuilt --env DATABASE_URL --format=json)
+          url=$(jq -er .url <<<"$deployment")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment the preview's address
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST: ${{ github.event.pull_request.html_url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          gh pr comment "$PULL_REQUEST" --edit-last --create-if-none --body-file - <<EOF
+          Preview of ${SHA::7} merged into \`$BASE\`: $URL
+
+          Its database is the Neon branch \`preview/$BRANCH\`, made from production's. Each deploy sets it to expire 7 days later, and closing this pull request a day later.
+          EOF
+
+  expire:
+    name: Expire the preview's database
+    needs: secrets
+    if: >-
+      needs.secrets.outputs.present == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.action == 'closed') ||
+      (github.event_name == 'delete' && github.event.ref_type == 'branch'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      BRANCH: ${{ github.event.pull_request.head.ref || github.event.ref }}
+    steps:
+      - name: Check out the script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: tools/site-database.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Rename preview/${{ env.BRANCH }} and set it to expire
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: tools/site-database.sh expire "$BRANCH"
