@@ -78,6 +78,9 @@ static constexpr unsigned char songTable[] = {
 static constexpr unsigned char areaSceneTable[] = {
 #embed "../remake/area_scenes.tsv"
 };
+static constexpr unsigned char tutorialTable[] = {
+#embed "../remake/tutorials.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -1177,6 +1180,31 @@ static const nlohmann::ordered_json& AreaSceneCuts() {
     return cuts;
 }
 
+static const std::vector<std::pair<std::string, bool>>& TutorialValues() {
+    static const std::vector<std::pair<std::string, bool>> values = [] {
+        std::vector<std::pair<std::string, bool>> read;
+        size_t line = 1;
+        for (const auto& row : ReadTable("remake/tutorials.tsv", tutorialTable, "tutorial\tvalue\tstart")) {
+            const std::string where = std::format("remake/tutorials.tsv line {}: ", ++line);
+            if (row[1].empty() || (row[2] != "true" && row[2] != "false")) {
+                Fail(where + "not a value and true or false");
+            }
+            read.emplace_back(row[1], row[2] == "true");
+        }
+        return read;
+    }();
+    return values;
+}
+
+// The two lessons no start value stops, each as the event that goes on past it. The first walk into the Deku Tree goes
+// on from the scene to the camera's reset, past Navi's talk and her guide screen, which opens with no check that it
+// has opened before. The castle Great Fairy's gift ends its cut at the get, past the spin attack's guide, which opens
+// the same way and is the cut's last event in the game.
+static const EventNext tutorialNexts[] = {
+    { "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs", "Event9", "Event10" },
+    { "Event/EventFlow/Dm_FairyFountain_Power.bfevfl.zs", "Event141", std::nullopt },
+};
+
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
                                   const std::vector<RemakeGift>& gifts,
@@ -1277,11 +1305,17 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             plan["module_texts"].push_back({ { "file", file }, { "from", from }, { "to", to } });
         }
     }
+    const auto addNext = [&](const EventNext& next) {
+        plan["event_nexts"].push_back(
+            { { "flow", next.flow },
+              { "event", next.event },
+              { "next", next.next ? nlohmann::ordered_json(*next.next) : nlohmann::ordered_json() } });
+    };
     plan["event_entries"] = nlohmann::ordered_json::array();
     plan["start_values"] = StartValues(settings);
     if (biggoron) {
-        for (const auto& [flow, event, next] : biggoronNexts) {
-            plan["event_nexts"].push_back({ { "flow", flow }, { "event", event }, { "next", next } });
+        for (const EventNext& next : biggoronNexts) {
+            addNext(next);
         }
         plan["start_values"][swordOrderedAt] = 1;
     }
@@ -1292,9 +1326,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     plan["message_texts"] = nlohmann::ordered_json::array();
     for (const MessageText& message : messages) {
         if (message.sentOn) {
-            plan["event_nexts"].push_back({ { "flow", message.sentOn->flow },
-                                            { "event", message.sentOn->event },
-                                            { "next", message.sentOn->next } });
+            addNext(*message.sentOn);
         }
         nlohmann::ordered_json& planned = plan["message_texts"].emplace_back(
             nlohmann::ordered_json{ { "file", message.file }, { "label", message.label } });
@@ -1314,6 +1346,14 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             for (const nlohmann::ordered_json& cut : cuts) {
                 plan[list].push_back(cut);
             }
+        }
+    }
+    if (settings.skips.contains(Skip::TutorialMessages)) {
+        for (const auto& [name, value] : TutorialValues()) {
+            plan["start_values"][name] = value;
+        }
+        for (const EventNext& next : tutorialNexts) {
+            addNext(next);
         }
     }
     plan["shops"] = nlohmann::ordered_json::array();

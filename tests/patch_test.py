@@ -2301,19 +2301,23 @@ def mido_hint_every_talk(patch, game, seedgen):
                 assert end[MIDO_QUESTIONS[2]] or sword or not shield, (state, said)
 
 
-def skip_starts_true(patch, game, seedgen, skip, started):
-    """The game data list of a seed that skips this is the list of one that does not, read apart from the patcher, but
-    for these Bools, which start true in the first and as the game has them in the second."""
-    every = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
-    skipped, played = (game.game_data_list(patched(patch, game, generated_plan(seedgen, "1", {"Skip": skips}))[
-        GAME_DATA_LIST]) for skips in (every, [name for name in every if name != skip]))
-    hashes = {murmur3(name) for name in started}
+SKIPS = ["Opening movie", "Player skippable scenes", "New area scenes", "Tutorial messages", "Saria's greeting"]
+
+
+def skip_mods(patch, game, seedgen, skip):
+    return (patched(patch, game, generated_plan(seedgen, "1", {"Skip": skips}))
+            for skips in (SKIPS, [name for name in SKIPS if name != skip]))
+
+
+def skip_starts(patch, game, seedgen, skip, started):
+    skipped, played = (game.game_data_list(mod[GAME_DATA_LIST]) for mod in skip_mods(patch, game, seedgen, skip))
+    values = {murmur3(name): value for name, value in started.items()}
     for entry in played["Data"]["Bool"]:
-        if entry["Hash"][1] in hashes:
-            hashes.remove(entry["Hash"][1])
-            assert entry["DefaultValue"] == (BOOL, 0), entry
-            entry["DefaultValue"] = (BOOL, 1)
-    assert not hashes and skipped == played
+        if entry["Hash"][1] in values:
+            value = values.pop(entry["Hash"][1])
+            assert entry["DefaultValue"] == (BOOL, int(not value)), entry
+            entry["DefaultValue"] = (BOOL, int(value))
+    assert not values and skipped == played
 
 
 def area_scene_cuts(flow, rows):
@@ -2327,9 +2331,7 @@ def area_scene_cuts(flow, rows):
 
 def new_area_scenes(patch, game, seedgen):
     rows = remake_table("area_scenes.tsv")
-    every = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
-    cut = patched(patch, game, generated_plan(seedgen, "1", {"Skip": every}))
-    played = patched(patch, game, generated_plan(seedgen, "1", {"Skip": [n for n in every if n != "New area scenes"]}))
+    cut, played = skip_mods(patch, game, seedgen, "New area scenes")
     flows = dict.fromkeys(row["flow"] for row in rows)
     for path in flows:
         expected = area_scene_cuts(game.event_flow(game.read(path)), [row for row in rows if row["flow"] == path])
@@ -2338,9 +2340,20 @@ def new_area_scenes(patch, game, seedgen):
 
 
 def sarias_greeting(patch, game, seedgen):
-    skip_starts_true(patch, game, seedgen, "Saria's greeting",
-                     ["HavePlayedEvent.Dm_Kokiri_0045", "HavePlayedEvent.Dm_Kokiri_0050",
-                      "HavePlayedEvent.Dm_Kokiri_0060", "IsVisitLocation.KokiriForest"])
+    skip_starts(patch, game, seedgen, "Saria's greeting",
+                {name: True for name in ("HavePlayedEvent.Dm_Kokiri_0045", "HavePlayedEvent.Dm_Kokiri_0050",
+                                         "HavePlayedEvent.Dm_Kokiri_0060", "IsVisitLocation.KokiriForest")})
+
+
+def tutorial_messages(patch, game, seedgen):
+    values = {row["value"]: row["start"] == "true" for row in remake_table("tutorials.tsv")}
+    skip_starts(patch, game, seedgen, "Tutorial messages", values)
+    skipped, played = skip_mods(patch, game, seedgen, "Tutorial messages")
+    every = every_mod(patch, game)
+    for flow, event, next_event in ((ARRIVAL_FLOW, "Event9", "Event10"),
+                                    ("Event/EventFlow/Dm_FairyFountain_Power.bfevfl.zs", "Event141", None)):
+        expected = sent_on(game.event_flow(played.get(flow) or every.get(flow) or game.read(flow)), event, next_event)
+        assert game.event_flow(skipped[flow]) == expected, flow
 
 
 def biggoron_place(patch, game, seedgen):
@@ -3621,6 +3634,7 @@ def main():
         "time-runs-from-the-start": time_runs_from_the_start,
         "sarias-greeting": sarias_greeting,
         "new-area-scenes": new_area_scenes,
+        "tutorial-messages": tutorial_messages,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

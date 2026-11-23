@@ -67,17 +67,20 @@ class MakeSeedTest(unittest.TestCase):
             self.assertTrue((mod / f"romfs/Pack/Actor/Shop_{item}.pack.zs").is_file(), item)
 
     def test_a_seed_with_one_gift_group_shuffled_is_patched(self):
-        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
-        settings = json.dumps({"Gifts": ["Minigames"]})
-        result = subprocess.run([SEEDGEN, "21", spoiler, plan, settings], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        mods = {}
+        for name, gifts in (("minigames", ["Minigames"]), ("no gifts", [])):
+            spoiler, plan, mods[name] = (self.tmp / f"{name}-{part}" for part in ("spoiler.json", "plan.json", "mod"))
+            result = subprocess.run([SEEDGEN, "21", spoiler, plan, json.dumps({"Gifts": gifts})], capture_output=True,
+                                    text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([PATCH, NUP, plan, mods[name]], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
         with open(pathlib.Path(__file__).resolve().parent.parent / "remake" / "gifts.tsv", newline="") as f:
             rows = list(csv.DictReader(f, delimiter="\t"))
-        written = {row["flow"] for row in rows if (mod / "romfs" / row["flow"]).is_file()}
-        self.assertTrue(written)
-        self.assertEqual({row["group"] for row in rows if row["flow"] in written}, {"Minigames"})
+        added_by_minigames = {row["flow"] for row in rows if (mods["minigames"] / "romfs" / row["flow"]).is_file()
+                              and not (mods["no gifts"] / "romfs" / row["flow"]).is_file()}
+        self.assertTrue(added_by_minigames)
+        self.assertEqual({row["group"] for row in rows if row["flow"] in added_by_minigames}, {"Minigames"})
 
     def test_a_seed_with_the_deku_scrubs_shuffled_is_patched(self):
         # The crater's scrub shows its offer from a copy of the field's under a label of its own.

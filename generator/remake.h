@@ -204,11 +204,11 @@ struct MessageCopy {
 };
 
 // An event of an event flow that goes on to another event of its flow: an action, a join or a sub-flow call by its next
-// event, a switch by each of its cases.
+// event, a switch by each of its cases. With no next, an action, a join or a sub-flow call ends its branch.
 struct EventNext {
     std::string flow;
     std::string event;
-    std::string next;
+    std::optional<std::string> next;
 };
 
 // A line in which a character names what a place gives. A seed that shuffles the place rewrites it to name what the

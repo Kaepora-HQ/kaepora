@@ -1,0 +1,62 @@
+tutorial	value	start
+Roof girl: lock-on lesson	HavePlayedEvent.KokiriForest_Kokiri_011_StopInFrontOfShop_00	true
+Roof girl: lock-on lesson	ActionGuide_IsEnd.LockOn	true
+Shop girl: shield lesson	KokiriForest_Meet_DekuTree_BoughtDekuShield	true
+Shop girl: shield lesson	ActionGuide_IsEnd.LockOnShield	true
+First movement prompt (Move / Change View)	KokiriForest_Tutorial_BasicGuide	true
+Attack prompt (Swing Sword)	KokiriForest_Tutorial_AttackGuide	false
+Navi's dungeon talk and the Talk to Navi guide	ActionGuide_IsEnd.Navi	true
+Navi's first-call practice (Hint_Trial)	HavePlayedEvent.NaviHint_Trial	true
+Navi's Hylian Shield talk	HavePlayedEvent.NaviHint_Shield_Hylian	true
+Navi's Hylian Shield talk	HavePlayedEvent.NaviHint_Shield_Hylian_BuyShop	true
+Navi's Hylian Shield talk	ActionGuide_IsEnd.Weapon_Shield_Hylian	true
+Ocarina guide at the first field arrival	ActionGuide_IsEnd.Ocarina	true
+Threads of Time guide (quest menu)	ActionGuide_IsEnd.TimeTrail	true
+Map guide at the first map or compass chest	ActionGuide_IsEnd.SystemMinus	true
+Ocarina song suggestion guide	ActionGuide_IsEnd.OcarinaSongEstimate	true
+Echo Gem guide in the House of Skulltula	ActionGuide_IsEnd.AgonyStone	true
+Echo Gem guide in the House of Skulltula	KakarikoVillage_GatheringTokenGold_ActionGuide_AgonyStone_True	true
+Goron Bracelet guide	ActionGuide_IsEnd.GoronGauntlet	true
+Great Fairy spin attack guide	ActionGuide_IsEnd.RotarySlash	true
+Fishing Rod guide	ActionGuide_IsEnd.FishingRod	true
+Sinking Lure guide	ActionGuide_IsEnd.SinkingLure	true
+Item guide: Kokiri Sword	ActionGuide_IsEnd.HorizontalSlash	true
+Item guide: Kokiri Sword	ActionGuide_IsEnd.VerticalSlash	true
+Item guide: Kokiri Sword	ActionGuide_IsEnd.Thrust	true
+Item guide: Fairy Slingshot	ActionGuide_IsEnd.SlingShot	true
+Item guide: Fairy Bow	ActionGuide_IsEnd.Bow	true
+Item guide: Fire Arrows	ActionGuide_IsEnd.FireArrow	true
+Item guide: Ice Arrows	ActionGuide_IsEnd.IceArrow	true
+Item guide: Light Arrows	ActionGuide_IsEnd.LightArrow	true
+Item guide: bombs and bomb bags	ActionGuide_IsEnd.Bomb	true
+Item guide: Bombchus	ActionGuide_IsEnd.Bombchu	true
+Item guide: Boomerang	ActionGuide_IsEnd.Boomerang	true
+Item guide: Deku Sticks	ActionGuide_IsEnd.DekuStick	true
+Item guide: Deku Nuts	ActionGuide_IsEnd.DekuNut	true
+Item guide: Din's Fire	ActionGuide_IsEnd.DinFire	true
+Item guide: Farore's Wind	ActionGuide_IsEnd.FaroreWind	true
+Item guide: Nayru's Love	ActionGuide_IsEnd.NayruLove	true
+Item guide: Hookshot	ActionGuide_IsEnd.Hookshot	true
+Item guide: Longshot	ActionGuide_IsEnd.Longshot	true
+Item guide: Megaton Hammer	ActionGuide_IsEnd.Hammer	true
+Item guide: Magic Beans	ActionGuide_IsEnd.MagicBean	true
+Item guide: any bottle or bottled thing	ActionGuide_IsEnd.Bottle	true
+Item guide: masks, Lens of Truth, Stone of Agony	ActionGuide_IsEnd.HeadShortcut	true
+Item guide: Iron Boots, Hover Boots	ActionGuide_IsEnd.BootShortcut	true
+Item guide: Mirror Shield	ActionGuide_IsEnd.Weapon_Shield_Mirror	true
+Item guide: Zelda's Letter	ActionGuide_IsEnd.ZeldaLetter	true
+Item guide: the Weird Egg's cucco (Item_AlarmCucco)	ActionGuide_IsEnd.AlarmCucco	true
+Item guide: Business Scrub seed	ActionGuide_IsEnd.ScrubBusinessSeed	true
+Menu page guide: Equipment Menu	UI_IsNeedOpenPlusMenuEquipActionGuide	false
+Menu page guide: Equipment Menu	ActionGuide_IsEnd.EquipmentMenu	true
+Menu page guide: Accessories page	UI_IsNeedOpenPlusMenuHeadActionGuide	false
+Menu page guide: Accessories page	ActionGuide_IsEnd.EquipmentMenuForHeadArmor	true
+Menu page guide: Boots page	UI_IsNeedOpenPlusMenuBootActionGuide	false
+Menu page guide: Boots page	ActionGuide_IsEnd.EquipmentMenuForBoot	true
+Menu page guide: Item Menu	UI_IsNeedOpenPlusMenuItemActionGuide	false
+Menu page guide: Item Menu	ActionGuide_IsEnd.ItemMenu	true
+Menu page guide: Quick Swap	UI_IsNeedOpenShortCutActionGuide	false
+Menu page guide: Quick Swap	ActionGuide_IsEnd.ItemShortcut	true
+Jump sign prompt	Area_JumpDisplay_02	true
+Fado's camera prompt	Area_LookAroundDisplay_02	true
+Kokiri message board: Save guide	ActionGuide_IsEnd.Save	true

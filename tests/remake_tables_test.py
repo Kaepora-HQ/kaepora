@@ -287,6 +287,13 @@ class RemakeTablesTest(unittest.TestCase):
                                 patch_test.ways_through(cut, entry, cases, holds_the_event) if not held]
         self.assertEqual(instant, [])
 
+    def test_every_tutorial_value_is_a_bool_a_new_game_starts_the_other_way(self):
+        data = self.game.game_data_list(self.game.read(patch_test.GAME_DATA_LIST))["Data"]["Bool"]
+        defaults = {entry["Hash"][1]: entry["DefaultValue"] for entry in data}
+        for row in read_tsv("tutorials.tsv"):
+            self.assertEqual(defaults.get(patch_test.murmur3(row["value"])),
+                             (patch_test.BOOL, int(row["start"] != "true")), row["value"])
+
     def test_the_quest_tables_hold_the_writes_and_reads_not_named_through_an_expression(self):
         tables = quest_tables(self.game)
         writes, reads = tables["quest_writes.tsv"], tables["quest_reads.tsv"]

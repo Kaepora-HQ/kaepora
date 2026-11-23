@@ -41,7 +41,7 @@ ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.t
 DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
             "Ganon's Castle"]
-SKIPS = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
+SKIPS = ["Opening movie", "Player skippable scenes", "New area scenes", "Tutorial messages", "Saria's greeting"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Door of Time": "Closed",
@@ -76,7 +76,10 @@ EVERY_SEED = {"IsChainLockDoorOpen.4189300454150217955": True, "IsChainLockDoorO
               "HyruleField_ArriveEntrance": True, "HavePlayedEvent.Dm_HrlField_0020": True}
 SARIAS_GREETING = {"HavePlayedEvent.Dm_Kokiri_0045": True, "HavePlayedEvent.Dm_Kokiri_0050": True,
                    "HavePlayedEvent.Dm_Kokiri_0060": True, "IsVisitLocation.KokiriForest": True}
-DEFAULT_START_VALUES = EVERY_SEED | SARIAS_GREETING
+TUTORIALS = {row["value"]: row["start"] == "true" for row in read_tsv("tutorials.tsv")}
+TUTORIAL_NEXTS = [{"flow": "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs", "event": "Event9", "next": "Event10"},
+                  {"flow": "Event/EventFlow/Dm_FairyFountain_Power.bfevfl.zs", "event": "Event141", "next": None}]
+DEFAULT_START_VALUES = EVERY_SEED | TUTORIALS | SARIAS_GREETING
 SHOP_SLOTS = read_tsv("shops.tsv")
 # SoH's shopsanity takes a shop's items in this order.
 SHOPSANITY_ORDER = [7, 5, 8, 6, 3, 1, 4]
@@ -892,7 +895,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual((spoiler["settings"]["Skip"], played["settings"]["Skip"]), (SKIPS, others))
         self.assertEqual(without_skip(spoiler), without_skip(played))
         self.assertNotEqual(plan, plan_played)
-        self.assertEqual(plan, with_parts(plan_played))
+        unordered = lambda plan: {key: sorted(value, key=json.dumps) if isinstance(value, list) else value
+                                  for key, value in plan.items()}
+        self.assertEqual(unordered(plan), unordered(with_parts(plan_played)))
 
     def test_the_opening_movie_is_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts("Opening movie", lambda plan: plan | {"opening_skipped": True})
@@ -908,6 +913,10 @@ class SeedgenTest(unittest.TestCase):
                  for row in rows if row["kind"] == "next"]
         self.assert_skip_adds_only_its_parts("New area scenes", lambda plan: plan | {
             "event_entries": plan["event_entries"] + entries, "event_nexts": plan["event_nexts"] + nexts})
+
+    def test_tutorial_messages_are_skipped_while_listed(self):
+        self.assert_skip_adds_only_its_parts("Tutorial messages", lambda plan: plan | {
+            "start_values": plan["start_values"] | TUTORIALS, "event_nexts": plan["event_nexts"] + TUTORIAL_NEXTS})
 
     def test_sarias_greeting_is_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts(

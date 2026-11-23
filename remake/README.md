@@ -664,6 +664,26 @@ the first walk to Hyrule Castle, and Rauru's three lines about the barriers on t
 are not true with "Ganon's trials" at "None". The ruined Market's scene starts played when the songs are shuffled, so
 its cut changes nothing then.
 
+`tutorials.tsv` has the saved values that "Tutorial messages" starts a new game with, 61 of them, each as the lesson it
+stops leaves it:
+
+- `tutorial`: the lesson or guide screen the value stops.
+- `value`: a Bool of the game data list.
+- `start`: `true` or `false`.
+
+Most are the marks `ActionGuide_IsEnd.<type>` that the program sets as a guide screen opens, and that the shared flow
+`ActionGuide` asks before it opens one. The others are the guards of the lessons a character or Navi stops Link for (the
+girl on the Kokiri Shop's roof, the girl in the shop, Navi's call practice and her Hylian Shield talk), the five Bools
+that open a menu page's guide, and the Kokiri Forest prompts that a Bool of their own holds. Two guide screens open with
+no check of their mark, so the generator sends the event before each on past it: on the first walk into the Deku Tree,
+`Dm_SY_BancChangeArrive` `Event9` goes on to `Event10`, past Navi's talk and her guide, and the castle Great Fairy's
+gift, `Dm_FairyFountain_Power` `Event141`, ends its branch, past the spin attack's guide. Navi's guide is the only
+thing that sets `ActionGuide_IsEnd.Navi`, which Link's call of Navi waits for, so the table starts it true.
+`tests/remake_tables_test.py` checks that each value is a Bool that a new game starts the other way. Left out (read from
+the game's files): the lessons a player asks for (the training ground's, the roll attack sign's, the amiibo guide) and
+their seven marks; the prompts that wait only on a quest step, in the Deku Tree and at three places in the forest; the
+Market Potion Shop's bottle lesson, which hands over a bottle; and the fishing pond's lesson, whose guards were not
+traced.
 The quest tables say what the game's files hold about its quests: names and places, with no reading of which way a
 scene goes. They are of the files of the game's update package, version 2.0.0, which is what the patcher reads; a file
 only the base package holds is not in them. `tests/quests.py` writes them, and `tests/remake_tables_test.py` makes them
