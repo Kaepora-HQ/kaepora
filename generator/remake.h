@@ -183,6 +183,14 @@ struct MessageCopy {
     std::string param;
 };
 
+// An event of an event flow that goes on to another event of its flow: an action, a join or a sub-flow call by its next
+// event, a switch by each of its cases.
+struct EventNext {
+    std::string flow;
+    std::string event;
+    std::string next;
+};
+
 // A line in which a character names what a place gives. A seed that shuffles the place rewrites it to name what the
 // seed places there.
 struct PrizeLine {
@@ -200,6 +208,7 @@ struct CharacterHint {
     RandomizerGet item;
     std::string file; // the message file in the text packs
     std::string label;
+    std::optional<EventNext> sentOn; // for a line the game says once, the event that brings it on every talk
     Sentence sentence; // [[1]] is the place
     Fit fit;
 };
@@ -246,6 +255,7 @@ struct MessageText {
     std::string file;
     std::string label;
     std::optional<MessageCopy> copy;
+    std::optional<EventNext> sentOn;
     std::string tagged;
 };
 
@@ -256,10 +266,10 @@ struct MessageText {
 // Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the Bolero's lessons then
 // name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and
 // the gift of the song it teaches. Then the saved values a new game starts with that the rules or the settings count
-// on, the gossip stones' texts, the messages the seed rewrites or adds, with the event that shows each one added, each
-// shuffled shop slot with its item and price, each shuffled skulltula with its item, each shuffled loose item that
-// gives another item than its own, with that item, and for each step the seed starts with the actors of the finds that
-// bring a new game to it.
+// on, the gossip stones' texts, the messages the seed rewrites or adds, with the event that shows each one added and the
+// event that brings each one the game says once on every talk, each shuffled shop slot with its item and price, each
+// shuffled skulltula with its item, each shuffled loose item that gives another item than its own, with that item, and
+// for each step the seed starts with the actors of the finds that bring a new game to it.
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems,
                                   const std::vector<RemakeShopSlot>& shops, const std::vector<RemakeGift>& gifts,

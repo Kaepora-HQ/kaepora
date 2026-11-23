@@ -18,7 +18,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            <a plan kaepora-seedgen wrote> <tested mod's folder>
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
-       python3 -I tests/patch_test.py fountain-claims <kaepora-patch> <game.nup> <kaepora-seedgen>
+       python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk <kaepora-patch> <game.nup> \
+           <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -2108,6 +2109,92 @@ def generated_plan(seedgen, seed, settings):
         return json.loads(planned.read_text())
 
 
+def ways_through(flow, entry, state):
+    """Each way through an entry point of a parsed flow, as the messages its talks show in order, for a Link whose
+    equipped slots and saved values state holds: ("slot", n) for slot n, and a Bool or an expression by its name. A
+    yes-or-no question takes case 0 for yes. A random choice and any other question take each case. A write of a Bool
+    holds for the rest of the way. A call into an entry point of the same flow walks it; a call into another flow is
+    passed over."""
+    events, (names, entries) = flow["events"], flow["entry points"]
+    starts = {name: struct.unpack_from("<H", point[0], 4)[0] for (_, name), point in zip(names[1:], entries)}
+
+    def parameters(event):
+        keys, values = event[2] or ([None], [])
+        return {key: value[1] for (_, key), value in zip(keys[1:], values)}
+
+    def walk(index, said, state):
+        """Yields what each way from the event says, and the state it ends in."""
+        while index != 0xFFFF:
+            event = events[index]
+            kind, first, second = event[1][0], *struct.unpack_from("<HH", event[1], 2)
+            actor, call = struct.unpack_from("<HH", event[1], 4)
+            if kind == 6:  # return
+                break
+            if kind == 3:  # join
+                index = first
+            elif kind == 2:  # fork: each forked way in turn, then the join
+                ways = [(said, state)]
+                for forked in struct.unpack_from(f"<{first}H", event[2]):
+                    ways = [way for way_said, way_state in ways for way in walk(forked, way_said, way_state)]
+                for way_said, way_state in ways:
+                    yield from walk(second, way_said, way_state)
+                return
+            elif kind == 4:  # sub-flow call
+                if event[-2] in ("", flow["flowchart"]):
+                    for way_said, way_state in walk(starts[event[-1]], said, state):
+                        yield from walk(first, way_said, way_state)
+                    return
+                index = first
+            elif kind == 0:
+                action, given = flow["actors"][actor][5][call], parameters(event)
+                if action == "EventTalk":
+                    said = (*said, given["MessageId"])
+                if action == "EventTriggerSetGameDataBool":
+                    state = {**state, given["GameDataName"]: given["Value"] != bytes(4)}
+                index = first
+            else:
+                assert kind == 1, f"{event[0]}: a sub-flow switch"
+                query, given = flow["actors"][actor][6][call], parameters(event)
+                answer = None
+                if query in ("EventQueryIsGameDataBool", "EventQueryIsGameDataBoolExp"):
+                    answer = 0 if state[given["GameDataName"]] else 1
+                if query == "EventQueryCheckIsEquippedDynamicEquipment":
+                    answer = 0 if state[("slot", int.from_bytes(given["DynamicEquipmentSlot"], "little"))] else 1
+                for case in range(first):
+                    value, target = struct.unpack_from("<IH", event[3], 8 * case)
+                    if answer in (None, value):
+                        yield from walk(target, said, state)
+                return
+        yield said, state
+
+    return walk(starts[entry], (), state)
+
+
+MIDO_FLOW = "Event/EventFlow/Npc_Kokiri_Mido_Child.bfevfl.zs"
+# What Mido's talk asks besides what Link wears: whether Mido has met him, and whether Mido has seen his sword and
+# his shield.
+MIDO_QUESTIONS = ("Meet_DekuTree_IsAfter_Step01_Exp", "KokiriForest_Npc_Kokiri_Mido_Child_Talk_01",
+                  "KokiriForest_Npc_Kokiri_Mido_Child_Talk_02")
+
+
+def mido_hint_every_talk(patch, game, seedgen):
+    """In a seed with "Kokiri Forest" at "Closed" and hints from characters given, every way through Mido's talk for a
+    Link with the shield worn and no sword says a line with the hint, whatever Mido has seen before, and writes that he
+    has seen the shield, which his balloon line asks. No way through it says a line with the hint to a Link with the
+    sword worn."""
+    planned = generated_plan(seedgen, "1", {"Kokiri Forest": "Closed", "Hints from characters": "Give hints"})
+    hinted = {f"{text['file'].removesuffix('.msbt')}:{text['label']}" for text in planned["message_texts"]
+              if text["file"] == MIDO_MESSAGES}
+    assert len(hinted) == 3, hinted
+    flow = game.event_flow(mod_files(patch, game, planned).get(MIDO_FLOW) or game.read(MIDO_FLOW))
+    for sword, shield in ((False, True), (True, False), (True, True)):
+        for seen in itertools.product((False, True), repeat=len(MIDO_QUESTIONS)):
+            state = {("slot", 0): sword, ("slot", 4): shield, **dict(zip(MIDO_QUESTIONS, seen))}
+            for said, end in ways_through(flow, "Talk", state):
+                assert bool(hinted & set(said)) != sword, (state, said)
+                assert end[MIDO_QUESTIONS[2]] or sword or not shield, (state, said)
+
+
 def biggoron_place(patch, game, seedgen):
     """With Biggoron's place shuffled, he gives the seed's item once and never completes the trade quest, so adult
     Anju's offer stays open whichever of the two comes first. In the mod's flow his hand-over goes on from its last
@@ -2741,8 +2828,9 @@ def message_bytes(text, page=RUMOUR_PAGE):
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
     substitute where it has one, and as an added value where it names none, every planned stone and message saying
-    its text in both English text packs, the opening skipped where the plan skips it, and the Kokiri Sword's scene left
-    out where its chest holds another item. Each fits the size table entry the game reads."""
+    its text in both English text packs, every planned event going on to its next, the opening skipped where the plan
+    skips it, and the Kokiri Sword's scene left out where its chest holds another item. Each fits the size table entry
+    the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -2765,7 +2853,7 @@ def seed_plan(patch, game, plan_file):
         with_presence(expected[planned["file"]], planned)
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
-    edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"]}
+    edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"] + seed["event_nexts"]}
     flows = {path: game.event_flow(game.read(path)) for path in edited}
     if seed["opening_skipped"]:
         flows[OPENING_FLOW] = skipped_opening(game.event_flow(game.read(OPENING_FLOW)))
@@ -2777,6 +2865,8 @@ def seed_plan(patch, game, plan_file):
     for number in seed["event_numbers"]:
         parameter(flows[number["flow"]], number["event"], number["param"], 2)[1] = number["value"].to_bytes(
             4, "little", signed=True)
+    for sent in seed["event_nexts"]:
+        sent_on(flows[sent["flow"]], sent["event"], sent["next"])
     assert seed["stone_texts"]
     planned_files = {STONE_MESSAGES} | {entry["file"] for entry in seed["message_texts"]}
     mod = patched(patch, game, seed)
@@ -3175,6 +3265,7 @@ def main():
         "expressions": expressions,
         "event-nexts": event_nexts,
         "biggoron-place": biggoron_place,
+        "mido-hint-every-talk": mido_hint_every_talk,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

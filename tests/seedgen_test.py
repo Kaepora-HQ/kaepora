@@ -1165,9 +1165,10 @@ class SeedgenTest(unittest.TestCase):
         # SoH's pool with adult trade off holds the Claim Check and Biggoron's sword and no Pocket Egg, and Biggoron's
         # place asks for the receipt, so no route takes a step of the chain. With his place shuffled, the plan has him
         # give once without completing the trade quest and starts the record his wait counts from.
+        # Mido's hint sends an event of his own flow on, so these seeds leave his hint out.
         on_route = 0
         for seed in map(str, range(2000, 2020)):
-            spoiler, plan = self.generate(seed, {"Gifts": ["Biggoron Quest"]})
+            spoiler, plan = self.generate(seed, {"Gifts": ["Biggoron Quest"], **NO_CHARACTER_HINTS})
             placed = list(placed_remake_items(spoiler, plan).values())
             self.assertEqual([placed.count(item) for item in ("Item_ClaimCheck", "Item_Sword_Biggoron")], [1, 1])
             self.assertNotIn("Item_PocketEgg", placed)
@@ -1178,7 +1179,8 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(plan["start_values"]["GetSwordBigGoron_ElapsedTime"], 1)
             self.assertEqual(self.route_out_of_reach(spoiler), [])
         self.assertTrue(on_route)
-        _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"]})
+        _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"],
+                                         **NO_CHARACTER_HINTS})
         self.assertEqual((plan["event_nexts"], plan["expressions"]), ([], []))
         self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
@@ -1737,9 +1739,12 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(spoiler["hints from characters"], {})
         self.assertEqual([(entry["file"], entry["label"]) for entry in plan["message_texts"]], prize_lines)
         self.assertEqual(plan["message_texts"], given_plan["message_texts"][:len(prize_lines)])
-        self.assertEqual({key: value for key, value in plan.items() if key not in ("stone_texts", "message_texts")},
-                         {key: value for key, value in given_plan.items()
-                          if key not in ("stone_texts", "message_texts")})
+        sent_on = [dict(zip(("flow", "event", "next"), row["sent_on"].split(":"))) for row in CHARACTER_HINTS
+                   if row["sent_on"]]
+        self.assertEqual((plan["event_nexts"], given_plan["event_nexts"]), ([], sent_on))
+        told = ("stone_texts", "message_texts", "event_nexts")
+        self.assertEqual({key: value for key, value in plan.items() if key not in told},
+                         {key: value for key, value in given_plan.items() if key not in told})
         self.assertEqual((spoiler["locations"], spoiler["playthrough"]), (given["locations"], given["playthrough"]))
         self.assertIn("They say that the Kokiri Sword can be found at Kokiri Forest.", spoiler["hints"].values())
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())

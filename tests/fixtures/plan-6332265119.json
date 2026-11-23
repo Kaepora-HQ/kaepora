@@ -1394,7 +1394,13 @@
     }
   ],
   "event_numbers": [],
-  "event_nexts": [],
+  "event_nexts": [
+    {
+      "flow": "Event/EventFlow/Npc_Kokiri_Mido_Child.bfevfl.zs",
+      "event": "Event64",
+      "next": "Event54"
+    }
+  ],
   "start_values": {
     "IsChainLockDoorOpen.4189300454150217955": true,
     "IsChainLockDoorOpen.2202807660383340401": true,

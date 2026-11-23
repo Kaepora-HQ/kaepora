@@ -133,6 +133,14 @@ line it replaces.
 - `file`, `label`, `line_length` and `box_lines`: as in `prize_lines.tsv`, but Mido's 60 characters are not read from
   the game's own lines. His widest line at full size is 53 characters, and a 60-character line of ours was seen in the
   game, whole on one line at normal size inside his box.
+- `sent_on`: for a line the game says only once, the `flow:event:next` that brings it on every talk: the plan sends
+  the event on to the next whatever it asks. Mido says `Talk_26`, his line for a Link with a shield and no sword,
+  until he has seen the shield (`KokiriForest_Npc_Kokiri_Mido_Child_Talk_02`). After that his question (`Event64`)
+  picks `Talk_18` or `Talk_19`, lines that a Link with the sword and no shield hears too. So the question goes on, on
+  either answer, to the game's own write of that flag (`Event54`), whose only next is `Talk_26` (`Event41`). The flag
+  is then written at the first such talk, as in the game: his question for a Link who wears both reads it, and so does
+  his balloon line, through the saved expression `KokiriForest_Npc_Kokiri_Blocker_Surprised_BoolExp`. A Link he met
+  before without a shield no longer hears `Talk_16`, his surprise at the shield.
 
 `shops.tsv` has a row for each of SoH's 64 shop locations, by shop and then by item number. Each row is one slot of a
 remake shop. With "Shop goods" at "Four per shop shuffled", items 5 to 8 of each shop are shuffled, the four that SoH's

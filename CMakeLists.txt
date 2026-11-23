@@ -381,6 +381,8 @@ if(KAEPORA_GAME_NUP)
                                                 "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-biggoron-place COMMAND ${PATCH_TEST} biggoron-place $<TARGET_FILE:kaepora-patch>
                                                "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-mido-hint-every-talk COMMAND ${PATCH_TEST} mido-hint-every-talk $<TARGET_FILE:kaepora-patch>
+                                                     "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME remake-tables
         COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/tests/remake_tables_test.py "${KAEPORA_GAME_NUP}")
     add_test(NAME patch-vine-hatch

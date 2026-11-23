@@ -335,7 +335,10 @@ std::vector<CharacterHintText> CharacterHints(const RemakeHintTables& tables,
                                    hint.sentence.after;
         texts.push_back({ .hint = hint.hint,
                           .place = *place,
-                          .message = { .file = hint.file, .label = hint.label, .tagged = Layout(markup, hint.fit) },
+                          .message = { .file = hint.file,
+                                       .label = hint.label,
+                                       .sentOn = hint.sentOn,
+                                       .tagged = Layout(markup, hint.fit) },
                           .plain = Plain(Words(markup)) });
     }
     return texts;

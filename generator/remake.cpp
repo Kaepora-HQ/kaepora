@@ -389,7 +389,7 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
 
     line = 1;
     for (const auto& row : ReadTable("remake/character_hints.tsv", characterHintTable,
-                                     "hint\titem\tfile\tlabel\tsentence\tline_length\tbox_lines")) {
+                                     "hint\titem\tfile\tlabel\tsent_on\tsentence\tline_length\tbox_lines")) {
         const std::string where = std::format("remake/character_hints.tsv line {}: ", ++line);
         const RandomizerCheck hint = LocationNamed(where, row[0]);
         const auto item = Rando::StaticData::itemNameToEnum.find(row[1]);
@@ -398,12 +398,21 @@ RemakeHintTables LoadRemakeHintTables(const std::vector<RemakeChest>& chests, co
             row[3].empty()) {
             Fail(where + "no SoH hint location, an unknown SoH item, or no file or label");
         }
+        std::optional<EventNext> sentOn;
+        if (!row[4].empty()) {
+            const std::vector<std::string> sent = SohUtils::StringSplit(row[4], ":");
+            if (sent.size() != 3 || std::ranges::any_of(sent, [](const std::string& part) { return part.empty(); })) {
+                Fail(where + "sent_on is not flow:event:next");
+            }
+            sentOn = EventNext{ .flow = sent[0], .event = sent[1], .next = sent[2] };
+        }
         tables.characterHints.push_back({ .hint = hint,
                                           .item = item->second,
                                           .file = row[2],
                                           .label = row[3],
-                                          .sentence = Split(where, row[4]),
-                                          .fit = ReadFit(where, row[5], row[6]) });
+                                          .sentOn = sentOn,
+                                          .sentence = Split(where, row[5]),
+                                          .fit = ReadFit(where, row[6], row[7]) });
     }
 
     std::set<RandomizerCheck> shuffled;
@@ -909,18 +918,12 @@ static constexpr EventText biggoronTexts[] = {
     { biggoronFlow, "Event49", "GameDataName", biggoronGiven },
 };
 
-struct EventNext {
-    std::string_view flow;
-    std::string_view event;
-    std::string_view next;
-};
-
-static constexpr EventNext biggoronNexts[] = {
+static const EventNext biggoronNexts[] = {
     // The hand-over's last line goes on to that write and his talk about the receipt, past the write of Complete.
-    { biggoronFlow, "Event112", "Event21" },
+    { std::string(biggoronFlow), "Event112", "Event21" },
     // Link hands over the Giant's Knife or the broken knife with the receipt if he holds one (Event53, Event54). The
     // hand-over takes neither and goes on to the wait's question.
-    { biggoronFlow, "Event53", "Event71" },
+    { std::string(biggoronFlow), "Event53", "Event71" },
     // The get flow's entry for his sword waits after the give (Event636) until the Biggoron Sword is equipped, unless
     // the Master Sword is, so with another item it can wait for ever. Only his hand-over calls that entry.
     { "Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs", "Event334", "Event392" },
@@ -1104,6 +1107,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     plan["message_texts"] = nlohmann::ordered_json::array();
     for (const MessageText& message : messages) {
+        if (message.sentOn) {
+            plan["event_nexts"].push_back({ { "flow", message.sentOn->flow },
+                                            { "event", message.sentOn->event },
+                                            { "next", message.sentOn->next } });
+        }
         nlohmann::ordered_json& planned = plan["message_texts"].emplace_back(
             nlohmann::ordered_json{ { "file", message.file }, { "label", message.label } });
         if (message.copy) {
