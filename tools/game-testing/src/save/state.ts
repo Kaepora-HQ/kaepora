@@ -197,8 +197,8 @@ export class StartStates extends Context.Service<
 					discard: true,
 				});
 				yield* words.story(state.story);
-				if (state.at !== undefined) {
-					yield* words.at(state.at, state.age);
+				if (state.location !== undefined) {
+					yield* words.location(state.location, state.age);
 				}
 				yield* words.set(state.set ?? {});
 				yield* words.counts(state.has ?? []);
@@ -755,11 +755,11 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			}
 		}),
 
-		at: Effect.fn("StartStates.at")(function* (
-			at: StartState["at"] & {},
+		location: Effect.fn("StartStates.location")(function* (
+			location: StartState["location"] & {},
 			age: Age | undefined
 		) {
-			const spot = yield* spotOf(data, own, at, ageOf(age));
+			const spot = yield* spotOf(data, own, location, ageOf(age));
 			const scene = yield* sceneOf(spot.scene);
 			if (spot.room !== undefined) {
 				yield* roomOf(scene, spot.room);
@@ -772,7 +772,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				});
 			}
 			yield* shut(spot, scene);
-			const from = `at ${typeof at === "string" ? at : spot.scene}`;
+			const from = `location ${typeof location === "string" ? location : spot.scene}`;
 			const facing = direction(spot.facing);
 			const writes: readonly (readonly [string, Saved])[] = [
 				["Sequence_CurrentBanc", scene.name],
@@ -875,24 +875,24 @@ interface Standing {
 const spotOf = Effect.fn("StartStates.spot")(function* (
 	data: GameData["Service"],
 	own: OwnTables["Service"],
-	at: StartState["at"] & {},
+	location: StartState["location"] & {},
 	age: Age
 ) {
-	if (typeof at !== "string") {
+	if (typeof location !== "string") {
 		const exact: Standing = {
-			scene: at.scene,
-			room: at.room,
-			position: at.position,
-			facing: at.facing,
+			scene: location.scene,
+			room: location.room,
+			position: location.position,
+			facing: location.facing,
 		};
 		return exact;
 	}
 	const found: Standing[] = [];
-	const spot = own.spots.get(at);
+	const spot = own.spots.get(location);
 	if (spot !== undefined) {
 		found.push(spot);
 	}
-	const check = own.checks.get(at);
+	const check = own.checks.get(location);
 	if (check !== undefined && Arr.isReadonlyArrayNonEmpty(check.placements)) {
 		const each = yield* Effect.forEach(
 			check.placements,
@@ -910,7 +910,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 		if (subject === undefined || others.length > 0) {
 			return yield* StateRefused.make({
 				reason: "ambiguous",
-				detail: `${at} is placed ${forAge.length} times for ${age === "child" ? "a child" : "an adult"}, so Link's spot before it is not one.`,
+				detail: `${location} is placed ${forAge.length} times for ${age === "child" ? "a child" : "an adult"}, so Link's spot before it is not one.`,
 			});
 		}
 		found.push({
@@ -924,7 +924,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 			facing: degrees(subject.yaw) + 180,
 		});
 	}
-	const landing = Option.getOrUndefined(data.landing(at));
+	const landing = Option.getOrUndefined(data.landing(location));
 	if (landing !== undefined) {
 		found.push({
 			scene: landing.scene,
@@ -938,8 +938,8 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 		const landings = yield* data.names("landing");
 		return yield* UnknownName.make({
 			kind: "spot",
-			asked: at,
-			suggestions: nearest(at, [
+			asked: location,
+			suggestions: nearest(location, [
 				...own.spots.keys(),
 				...own.checks.keys(),
 				...landings,
@@ -949,7 +949,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 	if (more.length > 0) {
 		return yield* StateRefused.make({
 			reason: "ambiguous",
-			detail: `${at} names ${found.length} spots: a row of tables/spots.tsv, a check or a landing.`,
+			detail: `${location} names ${found.length} spots: a row of tables/spots.tsv, a check or a landing.`,
 		});
 	}
 	return only;

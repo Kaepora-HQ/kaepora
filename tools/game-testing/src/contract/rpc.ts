@@ -76,7 +76,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 9;
+export const contract = 10;
 
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([

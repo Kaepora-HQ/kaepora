@@ -9,7 +9,7 @@ export default script({
 		"The top left chest in Mido's house opens to A for a Link who stands before it.",
 	state: {
 		base: "new-game-autosave",
-		at: "KF Mido Top Left Chest",
+		location: "KF Mido Top Left Chest",
 		fresh: ["KF Mido Top Left Chest"],
 	},
 	run: (game) =>

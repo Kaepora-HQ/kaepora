@@ -31,7 +31,7 @@ export default script({
 	about: "Mido's top left chest opens to A.",
 	state: {
 		base: "new-game-autosave",
-		at: "KF Mido Top Left Chest",
+		location: "KF Mido Top Left Chest",
 		fresh: ["KF Mido Top Left Chest"],
 	},
 	run: (game) =>
@@ -66,7 +66,7 @@ Only `base` is needed. Every other word changes the base save.
 ```ts
 state: {
 	base: "early-adult",                  // a row of tables/bases.tsv
-	at: "GV Chest",                       // stand before a check, on a spot, or at a landing
+	location: "GV Chest",                 // where Link stands: a check, a spot or a landing
 	age: "child",                         // the sword and shield swap with it
 	has: ["Item_Hammer", { item: "Item_Token_Gold", count: 30 }],
 	lacks: ["Item_Range_Bow"],            // with its quiver, arrows and button
@@ -81,9 +81,10 @@ The bases: `new-game-autosave` (a child in Link's house, holding nothing), `earl
 `early-adult` (an adult in the Temple of Time, time standing still) and `complete`. Start from a new or early base:
 the complete game has every story flag set, which hides what a place waits for.
 
-`at` can also be `{ scene, position: [x, y, z], facing }`, with `facing` in degrees and 0 facing the scene's +Z. A
-check stands Link one unit before its chest or actor, on the side the actor faces. Look at the first picture: a chest
-behind rocks, or a gift with no actor, needs a spot of its own.
+`location` can also be `{ scene, room, position: [x, y, z], facing }` in the game's own coordinates, with `room` only
+inside a dungeon and `facing` in degrees, 0 facing the scene's +Z. A location that is a check stands Link one unit
+before its chest or actor, on the side the actor faces. Look at the first picture: a chest behind rocks, or a gift with
+no actor, needs a spot of its own.
 
 ## Find a name
 

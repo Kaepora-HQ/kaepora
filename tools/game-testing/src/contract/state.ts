@@ -21,9 +21,9 @@ export const Holding = Schema.Union([
 /**
  * Where Link stands. A name is looked up in this order: a row of `tables/spots.tsv` (a spot play showed to be floor),
  * a check (Link stands before its subject), a landing of `StartPos`. A name two of them hold is refused, with both.
- * `exact` places him by hand.
+ * A scene, room, position and facing place him by hand.
  */
-export const Spot = Schema.Union([
+export const Location = Schema.Union([
 	Schema.String,
 	Schema.Struct({
 		scene: Schema.String,
@@ -54,7 +54,7 @@ export class StartState extends Schema.Class<
 >("game-testing/contract/state/StartState")({
 	/** A row of `tables/bases.tsv`, such as `new-game`; the base's hour is the run's hour. */
 	base: Schema.String,
-	at: Schema.optionalKey(Spot),
+	location: Schema.optionalKey(Location),
 	age: Schema.optionalKey(Age),
 	/** Items held, with every record, container, tier and limit the pouch table joins to them. */
 	has: Schema.optionalKey(Schema.Array(Holding)),

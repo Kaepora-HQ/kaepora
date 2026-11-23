@@ -730,10 +730,10 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"at a landing places Link in its scene, room, spot and facing, and names the place in the caption",
+		"a location that is a landing places Link in its scene, room, spot and facing, and names the place in the caption",
 		() =>
 			Effect.gen(function* () {
-				const { edits } = yield* plan({ at: "ForestTemple" });
+				const { edits } = yield* plan({ location: "ForestTemple" });
 				const position = [1, 2, 3] as const;
 				expect(writes(edits)).toEqual({
 					Sequence_CurrentBanc: "ForestTemple",
@@ -752,17 +752,17 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"at a check stands Link before its actor, facing it, and at a spot of the table where it says",
+		"a location that is a check stands Link before its actor, facing it, and one that is a spot stands him where the table says",
 		() =>
 			Effect.gen(function* () {
-				const before = yield* plan({ at: "Forest Temple Bow Chest" });
+				const before = yield* plan({ location: "Forest Temple Bow Chest" });
 				expect(writes(before.edits)).toMatchObject({
 					Sequence_CurrentBanc: "ForestTemple",
 					DungeonRoom: 17,
 					"PlayerStatus.SavePos": [7, 8.1, 10],
 					"PlayerStatus.SavePosRadY": Math.PI,
 				});
-				const spot = yield* plan({ age: "adult", at: "Fake Field Gate" });
+				const spot = yield* plan({ age: "adult", location: "Fake Field Gate" });
 				expect(writes(spot.edits)).toMatchObject({
 					Sequence_CurrentBanc: "FakeField_Adult",
 					"PlayerStatus.SavePos": [41, 50, 42],
@@ -776,7 +776,10 @@ describe("the start state", () => {
 		"a facing past half a turn is saved as the game holds it, between minus and plus half a turn",
 		() =>
 			Effect.gen(function* () {
-				const { edits } = yield* plan({ age: "adult", at: "Fake Field Stump" });
+				const { edits } = yield* plan({
+					age: "adult",
+					location: "Fake Field Stump",
+				});
 				expect(writes(edits)).toMatchObject({
 					"PlayerStatus.SavePosRadY": -Math.PI / 2,
 				});
@@ -788,14 +791,14 @@ describe("the start state", () => {
 		() =>
 			Effect.gen(function* () {
 				const shut = yield* Effect.flip(
-					plan({ age: "adult", at: "FF Fake Grotto Chest" })
+					plan({ age: "adult", location: "FF Fake Grotto Chest" })
 				);
 				expect(shut).toMatchObject({
 					reason: "shut",
 					detail: expect.stringContaining(cover),
 				});
 				const open = yield* plan(
-					{ age: "adult", at: "FF Fake Grotto Chest" },
+					{ age: "adult", location: "FF Fake Grotto Chest" },
 					{},
 					[cover]
 				);
@@ -808,7 +811,7 @@ describe("the start state", () => {
 		() =>
 			Effect.gen(function* () {
 				const shut = yield* Effect.flip(
-					plan({ age: "adult", at: "FF Fake Rock Grotto Chest" })
+					plan({ age: "adult", location: "FF Fake Rock Grotto Chest" })
 				);
 				expect(shut).toMatchObject({
 					reason: "shut",
@@ -821,14 +824,17 @@ describe("the start state", () => {
 		"a start beside a closed grotto, as low as its floor, is not refused",
 		() =>
 			Effect.gen(function* () {
-				const { edits } = yield* plan({ age: "adult", at: "Fake Field Pond" });
+				const { edits } = yield* plan({
+					age: "adult",
+					location: "Fake Field Pond",
+				});
 				expect(writes(edits)["PlayerStatus.SavePos"]).toEqual([122, 30, 100]);
 			})
 	);
 
 	it.effect("a child in an adult's scene is refused", () =>
 		Effect.gen(function* () {
-			const refused = yield* Effect.flip(plan({ at: "Fake Field Gate" }));
+			const refused = yield* Effect.flip(plan({ location: "Fake Field Gate" }));
 			expect(refused).toMatchObject({ reason: "contradiction" });
 		})
 	);
@@ -918,7 +924,7 @@ describe("the start state", () => {
 						const planned = yield* states.plan(
 							StartState.make({
 								base: "test-base",
-								at: "ForestTemple",
+								location: "ForestTemple",
 								fresh: ["ForestTemple/17"],
 								set: { "PlayerStatus.CurrentRupee": 99 },
 							})
