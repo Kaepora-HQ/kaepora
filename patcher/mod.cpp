@@ -1269,11 +1269,11 @@ static std::string MidoScheduleWithoutCastleEntry(GameFile& game) {
 }
 
 // Adult Link becomes a child by putting the Master Sword back. This logic module takes the sword's interaction away
-// while the expression it names is false, and the game names the Forest Temple's quest complete. Every adult has the
-// Door of Time's quest complete, since the first pull of the sword completes it.
+// while the expression it names is false, and the game names the Forest Temple's quest complete. Every adult has
+// AllSage past Ready: the first pull's last scene writes its Step01, and it never goes back.
 constexpr std::string_view PedestalModule = "Logic/Market_Adult_Prefab_89da.logic.module.ainb";
 constexpr std::string_view ForestTempleDone = "SageOfForest_IsCompleted_Exp";
-constexpr std::string_view DoorOfTimeOpened = "DoorOfTime_IsCompleted_Exp";
+constexpr std::string_view FirstPullDone = "AllSage_IsAfter_Ready_Exp";
 
 // A module names each string once, in its string pool, and the file is stored uncompressed. A shorter string ends in
 // NUL bytes where the longer one stood, so the module keeps its size and its size table entry.
@@ -1722,7 +1722,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             SwapString(module->second, from, to);
         } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", path, e.what())); }
     };
-    swap(std::string(PedestalModule), ForestTempleDone, DoorOfTimeOpened);
+    swap(std::string(PedestalModule), ForestTempleDone, FirstPullDone);
     for (const PlannedModuleText& text : plan.moduleTexts) {
         swap(text.file, text.from, text.to);
     }

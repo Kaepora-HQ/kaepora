@@ -894,7 +894,9 @@ King Zora's ice is the one presence among them, told with the story gifts above:
 A mod also rests on a step in these places, where no write changes:
 
 - The pedestal's module, `Logic/Market_Adult_Prefab_89da`, takes the sword's interaction away while `SageOfForest` is
-  not complete. Every mod makes it ask `DoorOfTime_IsCompleted_Exp`, so every adult can put the Master Sword back.
+  not complete. Every mod makes it ask `AllSage_IsAfter_Ready_Exp`, so every adult can put the Master Sword back:
+  `AllSage` waits on nothing, stands at Ready in a new game, and passes it only in the first pull's last scene,
+  `Market_Adult_AllSage_Start`, whose `Event18` writes Step01.
 - Sheik's schedule sends him to `AnchorAction1` of `Banc/Market/Market_Adult_Static` until `SageOfForest` is complete.
   Every mod moves that anchor from in front of the pedestal to behind it.
 - With "Kokiri Forest" at "Closed Deku", Mido's schedule loses its last entry, the one on
