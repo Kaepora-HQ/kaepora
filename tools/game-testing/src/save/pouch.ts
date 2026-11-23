@@ -99,7 +99,7 @@ interface Family {
 	readonly members: readonly Item[];
 }
 
-/** What `has` and `lacks` write for an item, through the pouch table, the tiers of ours and what the base holds. */
+/** What `withItems` and `withoutItems` write for an item, through the pouch table, the tiers of ours and what the base holds. */
 export const makePouch = (
 	data: GameData["Service"],
 	tiers: readonly (readonly string[])[],
@@ -312,7 +312,7 @@ export const makePouch = (
 		}
 	});
 
-	const lacksContainer = Effect.fnUntraced(function* (
+	const withoutContainer = Effect.fnUntraced(function* (
 		from: string,
 		item: Item,
 		row: PouchRow,
@@ -351,7 +351,7 @@ export const makePouch = (
 	});
 
 	/** A weapon that holds its ammunition takes it, every container of it, and its limit. */
-	const lacksAmmunition = Effect.fnUntraced(function* (
+	const withoutAmmunition = Effect.fnUntraced(function* (
 		from: string,
 		item: Item,
 		row: PouchRow
@@ -398,11 +398,11 @@ export const makePouch = (
 			Arr.contains(asked, container.name)
 		);
 		if (held.length === 0 && !named) {
-			yield* has(bag, undefined, asked, from, "derived");
+			yield* withItem(bag, undefined, asked, from, "derived");
 		}
 	});
 
-	const lacks = Effect.fn("StartStates.lacks")(function* (
+	const withoutItem = Effect.fn("StartStates.withoutItem")(function* (
 		item: Item,
 		from: string
 	) {
@@ -411,13 +411,13 @@ export const makePouch = (
 		yield* unhold(from, item, row);
 		const family = yield* familyOf(item, row);
 		if (family?.kind === "container") {
-			yield* lacksContainer(from, item, row, family);
+			yield* withoutContainer(from, item, row, family);
 		}
 		if (family?.kind === "ability") {
 			yield* grade(from, item, row, family, false);
 		}
 		if (family === undefined) {
-			yield* lacksAmmunition(from, item, row);
+			yield* withoutAmmunition(from, item, row);
 		}
 		for (const equipment of [row.ChildEquipment, row.AdultEquipment]) {
 			if (equipment !== undefined && equipment !== item.savedActor) {
@@ -469,13 +469,13 @@ export const makePouch = (
 		}
 	});
 
-	const has: (
+	const withItem: (
 		item: Item,
 		count: number | undefined,
 		asked: readonly string[],
 		from: string,
 		weight: Weight
-	) => Effect.Effect<void, StateRefused> = Effect.fn("StartStates.has")(
+	) => Effect.Effect<void, StateRefused> = Effect.fn("StartStates.withItem")(
 		function* (
 			item: Item,
 			count: number | undefined,
@@ -528,5 +528,5 @@ export const makePouch = (
 				});
 	};
 
-	return { lacks, has, holderOf };
+	return { withoutItem, withItem, holderOf };
 };

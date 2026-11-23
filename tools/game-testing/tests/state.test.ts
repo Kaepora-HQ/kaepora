@@ -484,10 +484,10 @@ const archer = {
 };
 
 describe("the start state", () => {
-	it.effect("lacks the Bow gives the 17 values", () =>
+	it.effect("the Bow in withoutItems gives the 17 values", () =>
 		Effect.gen(function* () {
 			const { edits } = yield* plan(
-				{ lacks: ["Item_Range_Bow"] },
+				{ withoutItems: ["Item_Range_Bow"] },
 				{
 					"PlayerStatus.AssignableItem.Child": "Bow",
 					"PlayerStatus.AssignableItem.Adult": "SlingShot",
@@ -516,10 +516,13 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"lacks the Light Arrows takes only them, and keeps the Bow's quivers and arrows",
+		"the Light Arrows in withoutItems go alone, and the Bow's quivers and arrows stay",
 		() =>
 			Effect.gen(function* () {
-				const { edits } = yield* plan({ lacks: ["Item_Arrow_Light"] }, archer);
+				const { edits } = yield* plan(
+					{ withoutItems: ["Item_Arrow_Light"] },
+					archer
+				);
 				expect(writes(edits)).toEqual({
 					"IsGet.Item_Arrow_Light": false,
 					"HavePlayedGetEvent.Item_Arrow_Light": false,
@@ -531,11 +534,11 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"lacks the large quiver leaves the highest quiver the base holds, not one it lacks",
+		"the large quiver in withoutItems leaves the highest quiver the base still holds",
 		() =>
 			Effect.gen(function* () {
 				const { edits } = yield* plan(
-					{ lacks: ["Item_Quiver_Large"] },
+					{ withoutItems: ["Item_Quiver_Large"] },
 					{
 						...archer,
 						"IsGet.Item_Quiver_Medium": false,
@@ -552,10 +555,10 @@ describe("the start state", () => {
 			})
 	);
 
-	it.effect("has the large quiver gives that quiver alone, full", () =>
+	it.effect("the large quiver in withItems comes alone, full", () =>
 		Effect.gen(function* () {
 			const { edits } = yield* plan(
-				{ has: ["Item_Quiver_Large"] },
+				{ withItems: ["Item_Quiver_Large"] },
 				{ "IsGet.Item_Quiver_Small": true, "PouchContentMaxNum.Arrow": 30 }
 			);
 			expect(writes(edits)).toEqual({
@@ -576,8 +579,10 @@ describe("the start state", () => {
 		() =>
 			Effect.gen(function* () {
 				const arrows = { item: "Item_Arrow_Normal", count: 17 };
-				const first = yield* plan({ has: [arrows, "Item_Quiver_Small"] });
-				const second = yield* plan({ has: ["Item_Quiver_Small", arrows] });
+				const first = yield* plan({ withItems: [arrows, "Item_Quiver_Small"] });
+				const second = yield* plan({
+					withItems: ["Item_Quiver_Small", arrows],
+				});
 				expect(
 					writes(first.edits)["PouchData.Item_Arrow_Normal.StockNum"]
 				).toBe(17);
@@ -587,29 +592,31 @@ describe("the start state", () => {
 			})
 	);
 
-	it.effect("has the Bow brings the smallest quiver, full of arrows", () =>
-		Effect.gen(function* () {
-			const { edits } = yield* plan({ has: ["Item_Range_Bow"] });
-			expect(writes(edits)).toEqual({
-				"IsGet.Weapon_Range_Bow": true,
-				"HavePlayedGetEvent.Weapon_Range_Bow": true,
-				"PouchData.Weapon_Range_Bow.StockNum": 1,
-				"IsGet.Item_Quiver_Small": true,
-				"HavePlayedGetEvent.Item_Quiver_Small": true,
-				"PouchData.Item_Quiver_Small.StockNum": 1,
-				"PouchContentMaxNum.Arrow": 30,
-				CurrentExpansionActor_Arrow: "Item_Quiver_Small",
-				"IsGet.Item_Arrow_Normal": true,
-				"HavePlayedGetEvent.Item_Arrow_Normal": true,
-				"PouchData.Item_Arrow_Normal.StockNum": 30,
-			});
-		})
+	it.effect(
+		"the Bow in withItems brings the smallest quiver, full of arrows",
+		() =>
+			Effect.gen(function* () {
+				const { edits } = yield* plan({ withItems: ["Item_Range_Bow"] });
+				expect(writes(edits)).toEqual({
+					"IsGet.Weapon_Range_Bow": true,
+					"HavePlayedGetEvent.Weapon_Range_Bow": true,
+					"PouchData.Weapon_Range_Bow.StockNum": 1,
+					"IsGet.Item_Quiver_Small": true,
+					"HavePlayedGetEvent.Item_Quiver_Small": true,
+					"PouchData.Item_Quiver_Small.StockNum": 1,
+					"PouchContentMaxNum.Arrow": 30,
+					CurrentExpansionActor_Arrow: "Item_Quiver_Small",
+					"IsGet.Item_Arrow_Normal": true,
+					"HavePlayedGetEvent.Item_Arrow_Normal": true,
+					"PouchData.Item_Arrow_Normal.StockNum": 30,
+				});
+			})
 	);
 
-	it.effect("lacks the Kokiri Sword takes it out of its slot", () =>
+	it.effect("the Kokiri Sword in withoutItems leaves its slot", () =>
 		Effect.gen(function* () {
 			const { edits } = yield* plan(
-				{ lacks: ["Item_Sword_Kokiri"] },
+				{ withoutItems: ["Item_Sword_Kokiri"] },
 				{
 					"IsGet.Weapon_Sword_Kokiri": true,
 					"PlayerStatus.EquipWeapon": "Weapon_Sword_Kokiri",
@@ -627,8 +634,8 @@ describe("the start state", () => {
 		() =>
 			Effect.gen(function* () {
 				const words: Words[] = [
-					{ has: [{ item: "Item_Range_Bow", count: 5 }] },
-					{ has: [{ item: "Item_Bomb", count: 20 }] },
+					{ withItems: [{ item: "Item_Range_Bow", count: 5 }] },
+					{ withItems: [{ item: "Item_Bomb", count: 20 }] },
 					{ equip: ["Item_Sword_Kokiri"] },
 				];
 				const refusals = yield* Effect.forEach(
@@ -642,17 +649,20 @@ describe("the start state", () => {
 						reason: "incomplete",
 						detail: expect.stringContaining("Item_BombBag_Small"),
 					},
-					{ reason: "incomplete", detail: expect.stringContaining("has") },
+					{
+						reason: "incomplete",
+						detail: expect.stringContaining("withItems"),
+					},
 				]);
 			})
 	);
 
-	it.effect("an item both had and lacked is refused", () =>
+	it.effect("an item in both withItems and withoutItems is refused", () =>
 		Effect.gen(function* () {
 			const refused = yield* Effect.flip(
 				plan({
-					has: [{ item: "Item_Arrow_Normal", count: 1 }],
-					lacks: ["Item_Arrow_Normal"],
+					withItems: [{ item: "Item_Arrow_Normal", count: 1 }],
+					withoutItems: ["Item_Arrow_Normal"],
 				})
 			);
 			expect(refused).toBeInstanceOf(StateRefused);
@@ -866,7 +876,7 @@ describe("the start state", () => {
 			Effect.gen(function* () {
 				const { edits } = yield* plan(
 					{
-						has: ["Item_Range_Bow"],
+						withItems: ["Item_Range_Bow"],
 						equip: ["Item_Sword_Kokiri", "Item_Range_Bow"],
 					},
 					{ "IsGet.Weapon_Sword_Kokiri": true }
@@ -898,7 +908,7 @@ describe("the start state", () => {
 		() =>
 			Effect.gen(function* () {
 				const { edits } = yield* plan({
-					lacks: ["Item_Range_Bow"],
+					withoutItems: ["Item_Range_Bow"],
 					set: { "PouchContentMaxNum.Arrow": 40 },
 				});
 				expect(writes(edits)["PouchContentMaxNum.Arrow"]).toBe(40);

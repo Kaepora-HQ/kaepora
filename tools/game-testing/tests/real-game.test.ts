@@ -40,12 +40,12 @@ describe("on the real game", () => {
 	);
 
 	it.effect.skipIf(noGame)(
-		"lacks the Bow gives the 17 values, each at a new game's value",
+		"the Bow in withoutItems gives the 17 values, each at a new game's value",
 		() =>
 			Effect.gen(function* () {
 				const states = yield* StartStates;
 				const { edits } = yield* states.plan(
-					StartState.make({ base, lacks: ["Item_Range_Bow"] })
+					StartState.make({ base, withoutItems: ["Item_Range_Bow"] })
 				);
 				const quivers = ["Small", "Medium", "Large"];
 				const owned = (saved: string): [string, Saved][] => [

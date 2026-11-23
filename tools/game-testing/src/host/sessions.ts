@@ -355,7 +355,9 @@ export class Sessions extends Context.Service<
 				const item = itemOf(value.name);
 				if (Option.isSome(item) && typeof wanted.value !== "string") {
 					const word =
-						wanted.value === false || wanted.value === 0 ? "lacks" : "has";
+						wanted.value === false || wanted.value === 0
+							? "withoutItems"
+							: "withItems";
 					return `${word}: ["${item.value.name}"] would make it ${asJson(wanted.value)}.`;
 				}
 				return `set: { "${value.name}": ${asJson(wanted.value)} } would make it so.`;

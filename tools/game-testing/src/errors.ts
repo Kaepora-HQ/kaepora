@@ -44,12 +44,13 @@ export class UnknownName extends Schema.TaggedError<
 }
 
 /**
- * The start state was refused before the emulator started. `contradiction`: two words disagree, such as has and lacks
- * one item, two words writing one record two ways, or an age that does not fit the scene Link stands in. `ambiguous`:
- * a name two tables hold. `shut`: Link would stand inside a grotto the base leaves shut. `mod-too-large`: a mod file is
- * larger than its size-table entry, which the game drops silently. `unsaved`: `set` names a value neither
- * `progress.sav` nor `caption.sav` keeps, which only a running game can change. `no-slot`: `equip` names an item that
- * no slot or button holds. `incomplete`: a word needs another to be honoured whole, which the detail names.
+ * The start state was refused before the emulator started. `contradiction`: two words disagree, such as `withItems`
+ * and `withoutItems` naming one item, two words writing one record two ways, or an age that does not fit the scene Link
+ * stands in. `ambiguous`: a name two tables hold. `shut`: Link would stand inside a grotto the base leaves shut.
+ * `mod-too-large`: a mod file is larger than its size-table entry, which the game drops silently. `unsaved`: `set`
+ * names a value neither `progress.sav` nor `caption.sav` keeps, which only a running game can change. `no-slot`:
+ * `equip` names an item that no slot or button holds. `incomplete`: a word needs another to be honoured whole, which
+ * the detail names.
  */
 export class StateRefused extends Schema.TaggedError<
 	StateRefused,

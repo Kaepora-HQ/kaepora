@@ -56,10 +56,13 @@ export class StartState extends Schema.Class<
 	base: Schema.String,
 	location: Schema.optionalKey(Location),
 	age: Schema.optionalKey(Age),
-	/** Items held, with every record, container, tier and limit the pouch table joins to them. */
-	has: Schema.optionalKey(Schema.Array(Holding)),
-	/** Items not held, with the same expansion; tiers above a lacked tier go too. */
-	lacks: Schema.optionalKey(Schema.Array(Schema.String)),
+	/**
+	 * Items Link holds besides what the base holds, with every record, container, tier and limit the pouch table joins to
+	 * them. A count is the count he holds.
+	 */
+	withItems: Schema.optionalKey(Schema.Array(Holding)),
+	/** Items taken from what the base holds, with the same expansion; tiers above one taken go too. */
+	withoutItems: Schema.optionalKey(Schema.Array(Schema.String)),
 	/** Items worn or assigned, in the slot their pouch row names. */
 	equip: Schema.optionalKey(Schema.Array(Schema.String)),
 	fresh: Schema.optionalKey(Schema.Array(Subject)),

@@ -190,8 +190,12 @@ export class StartStates extends Context.Service<
 				const words = makeWords({ data, own, items, quests, saves });
 				yield* words.notAutosave();
 				yield* words.age(state.age);
-				yield* words.items(state.has ?? [], state.lacks ?? []);
-				yield* words.equip(state.equip ?? [], state.age, state.lacks ?? []);
+				yield* words.items(state.withItems ?? [], state.withoutItems ?? []);
+				yield* words.equip(
+					state.equip ?? [],
+					state.age,
+					state.withoutItems ?? []
+				);
 				yield* Effect.forEach(state.fresh ?? [], words.fresh, {
 					concurrency: 1,
 					discard: true,
@@ -201,7 +205,7 @@ export class StartStates extends Context.Service<
 					yield* words.location(state.location, state.age);
 				}
 				yield* words.set(state.set ?? {});
-				yield* words.counts(state.has ?? []);
+				yield* words.counts(state.withItems ?? []);
 				const planned: Plan = { base, ...words.result() };
 				return planned;
 			});
@@ -581,41 +585,47 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		}),
 
 		items: Effect.fn("StartStates.items")(function* (
-			has: StartState["has"] & {},
-			lacks: readonly string[]
+			withItems: StartState["withItems"] & {},
+			withoutItems: readonly string[]
 		) {
-			const asked = Arr.map(has, (holding) =>
+			const asked = Arr.map(withItems, (holding) =>
 				typeof holding === "string" ? holding : holding.item
 			);
-			const both = Arr.intersection(asked, lacks);
+			const both = Arr.intersection(asked, withoutItems);
 			if (Arr.isReadonlyArrayNonEmpty(both)) {
 				return yield* StateRefused.make({
 					reason: "contradiction",
-					detail: `${Arr.join(both, ", ")} is both had and lacked.`,
+					detail: `${Arr.join(both, ", ")} is in both withItems and withoutItems.`,
 				});
 			}
-			for (const name of lacks) {
+			for (const name of withoutItems) {
 				const item = yield* data.item(name);
-				yield* pouch.lacks(item, `lacks ${name}`);
+				yield* pouch.withoutItem(item, `withoutItems ${name}`);
 			}
-			for (const holding of has) {
+			for (const holding of withItems) {
 				const name = typeof holding === "string" ? holding : holding.item;
 				const count = typeof holding === "string" ? undefined : holding.count;
 				const item = yield* data.item(name);
-				yield* pouch.has(item, count, asked, `has ${name}`, "written");
+				yield* pouch.withItem(
+					item,
+					count,
+					asked,
+					`withItems ${name}`,
+					"written"
+				);
 			}
 		}),
 
 		equip: Effect.fn("StartStates.equip")(function* (
 			names: readonly string[],
 			age: Age | undefined,
-			lacks: readonly string[]
+			withoutItems: readonly string[]
 		) {
 			for (const name of names) {
-				if (Arr.contains(lacks, name)) {
+				if (Arr.contains(withoutItems, name)) {
 					return yield* StateRefused.make({
 						reason: "contradiction",
-						detail: `${name} is both equipped and lacked.`,
+						detail: `${name} is both equipped and in withoutItems.`,
 					});
 				}
 				const item = yield* data.item(name);
@@ -623,7 +633,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				if (!Option.exists(got, (value) => current(value) === true)) {
 					return yield* StateRefused.make({
 						reason: "incomplete",
-						detail: `${name} is equipped but not held; add it to has.`,
+						detail: `${name} is equipped but not held; add it to withItems.`,
 					});
 				}
 				const slot = Option.getOrUndefined(
@@ -816,9 +826,9 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 
 		/** A count of ammunition needs something to hold it, as many as it holds. */
 		counts: Effect.fn("StartStates.counts")(function* (
-			has: StartState["has"] & {}
+			withItems: StartState["withItems"] & {}
 		) {
-			for (const holding of has) {
+			for (const holding of withItems) {
 				if (typeof holding === "string") {
 					continue;
 				}
@@ -832,7 +842,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				if (typeof limit === "number" && holding.count > limit) {
 					return yield* StateRefused.make({
 						reason: "incomplete",
-						detail: `${holding.count} of ${holding.item} need room for them, and ${holder.limit} is ${limit}; add has ${holder.bag ?? "a container"}.`,
+						detail: `${holding.count} of ${holding.item} need room for them, and ${holder.limit} is ${limit}; add ${holder.bag ?? "a container"} to withItems.`,
 					});
 				}
 			}

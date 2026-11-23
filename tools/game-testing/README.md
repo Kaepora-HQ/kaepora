@@ -68,8 +68,8 @@ state: {
 	base: "early-adult",                  // a row of tables/bases.tsv
 	location: "GV Chest",                 // where Link stands: a check, a spot or a landing
 	age: "child",                         // the sword and shield swap with it
-	has: ["Item_Hammer", { item: "Item_Token_Gold", count: 30 }],
-	lacks: ["Item_Range_Bow"],            // with its quiver, arrows and button
+	withItems: ["Item_Hammer", { item: "Item_Token_Gold", count: 30 }], // added to what the base holds
+	withoutItems: ["Item_Range_Bow"],     // taken away, with its quiver, arrows and button
 	equip: ["Item_Hammer"],               // on its button or slot
 	fresh: ["GV Chest"],                  // as on a first visit: a check, a scene, or a scene and room
 	story: { quests: { GatheringTokenGold: "CollectToken" }, events: ["Dm_Kakariko_0000"] },
