@@ -302,7 +302,10 @@ Plan ParsePlan(const nlohmann::json& json) {
     const auto expressions = json.at("expressions").get<std::vector<nlohmann::json>>();
     for (size_t i = 0; i < expressions.size(); ++i) {
         const PlannedExpression& expression = plan.expressions.emplace_back(
-            expressions[i].at("name").get<std::string>(), expressions[i].at("flag").get<std::string>());
+            expressions[i].at("name").get<std::string>(), expressions[i].at("all_of").get<std::vector<std::string>>());
+        if (expression.allOf.empty()) {
+            throw std::runtime_error(std::format("expressions[{}]: {} names nothing", i, expression.name));
+        }
         if (std::ranges::count(plan.expressions, expression.name, &PlannedExpression::name) > 1) {
             throw std::runtime_error(std::format("expressions[{}]: {} is listed twice", i, expression.name));
         }
@@ -1008,18 +1011,26 @@ static byml::Node ClaimBool(uint32_t hash) {
     return entry;
 }
 
-// An expression of the mod's own that reads one saved Bool, in the shape of the game's own that do: unsaved, reset type
-// 0, and one operation, 0, that reads the Bool by its hash. HappyMaskShop_AppearMask_Keaton reads
-// Npc_Hylia_Soldier_003_GateOpen so.
-static byml::Node ReadingExpression(uint32_t hash, uint32_t flag) {
+// The operations of a saved expression that a plan's expression uses. The game lists them in postfix order.
+constexpr uint64_t ReadBool = 0;
+constexpr uint64_t And = 3;
+constexpr uint64_t ReadExpression = 10;
+
+// An expression of the mod's own, unsaved and in the shape of the game's own that join saved Bools and expressions.
+// SageOfShadow_Kakariko_Burning joins three expressions so, and HappyMaskShop_AppearMask_Keaton reads one Bool.
+static byml::Node AndExpression(uint32_t hash, const std::vector<std::pair<uint64_t, uint32_t>>& reads) {
     byml::Node entry{ .type = byml::Type::Dict };
     FindOrAdd(entry, "Hash", byml::Type::UInt).scalar = hash;
     FindOrAdd(entry, "ResetTypeValue", byml::Type::Int).scalar = 0;
     FindOrAdd(entry, "SaveFileIndex", byml::Type::Int).scalar = uint32_t(-1);
-    const byml::Node read{ .type = byml::Type::Array,
-                           .array = { { .type = byml::Type::UInt64, .scalar = 0 },
-                                      { .type = byml::Type::UInt64, .scalar = flag } } };
-    FindOrAdd(entry, "Values", byml::Type::Array).array = { read };
+    std::vector<byml::Node>& operations = FindOrAdd(entry, "Values", byml::Type::Array).array;
+    for (const auto& [operation, named] : reads) {
+        operations.push_back({ .type = byml::Type::Array,
+                               .array = { { .type = byml::Type::UInt64, .scalar = operation },
+                                          { .type = byml::Type::UInt64, .scalar = named } } });
+    }
+    const byml::Node join{ .type = byml::Type::Array, .array = { { .type = byml::Type::UInt64, .scalar = And } } };
+    operations.insert(operations.end(), reads.size() - 1, join);
     return entry;
 }
 
@@ -1096,12 +1107,20 @@ static std::optional<std::string> GameDataList(GameFile& game, const std::string
                         std::format("expression \"{}\" has the hash of a value in {}", expression.name, table.key));
                 }
             }
-            const uint32_t flag = Murmur3(expression.flag);
-            if (FindHash(Value(*data, "Bool"), flag) == nullptr) {
-                throw std::runtime_error(std::format("expression \"{}\" reads \"{}\", which is no true-or-false value",
-                                                     expression.name, expression.flag));
+            std::vector<std::pair<uint64_t, uint32_t>> reads;
+            for (const std::string& name : expression.allOf) {
+                const uint32_t named = Murmur3(name);
+                if (FindHash(Value(*data, "Bool"), named) != nullptr) {
+                    reads.emplace_back(ReadBool, named);
+                } else if (FindHash(Value(*data, "BoolExp"), named) != nullptr) {
+                    reads.emplace_back(ReadExpression, named);
+                } else {
+                    throw std::runtime_error(
+                        std::format("expression \"{}\" names \"{}\", which is no true-or-false value or expression",
+                                    expression.name, name));
+                }
             }
-            Value(*data, "BoolExp").array.push_back(ReadingExpression(hash, flag));
+            Value(*data, "BoolExp").array.push_back(AndExpression(hash, reads));
         }
         if (values.empty() && soldOnce.empty() && !keyed && claims.empty() && expressions.empty()) {
             return std::nullopt;

@@ -88,11 +88,11 @@ struct PlannedPresence {
     std::optional<std::string> replaces;
 };
 
-// An expression of the mod's own, true while one saved Bool is: one of the game data list or a claim of the plan.
-// An expression query can name it, and none can name a Bool.
+// An expression of the mod's own, true while every saved Bool and expression it names is: each one of the game data
+// list or a claim of the plan. An expression query can name it, and none can name a Bool.
 struct PlannedExpression {
     std::string name;
-    std::string flag;
+    std::vector<std::string> allOf;
 };
 
 // The entry of an NPC's schedule that holds on a flag in the game, made to hold on another and to start another

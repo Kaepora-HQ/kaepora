@@ -224,7 +224,7 @@ QUEST_TEXTS = [
     {"flow": "Event/EventFlow/Get_StoneOfFire.bfevfl.zs", "event": "Event39", "param": "GameDataName",
      "text": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp"}]
 # The expression of every plan's own that Darunia's switch after his dance asks: his gift's scene played.
-DANCE_EXPRESSION = {"name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp", "flag": "HavePlayedEvent.Dm_Goron_0030"}
+DANCE_EXPRESSION = {"name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp", "all_of": ["HavePlayedEvent.Dm_Goron_0030"]}
 # King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
 # in every seed.
 # The area at the top of the vine climb, which stands only for a Link whose save says he got the Weird Egg while Malon's

@@ -1221,10 +1221,12 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["expressions"] = nlohmann::ordered_json::array();
-    plan["expressions"].push_back({ { "name", danceGiven }, { "flag", danceGiftPlayed } });
+    plan["expressions"].push_back(
+        { { "name", danceGiven }, { "all_of", nlohmann::ordered_json::array({ danceGiftPlayed }) } });
     if (biggoron) {
         plan["claims"].push_back(biggoronClaim);
-        plan["expressions"].push_back({ { "name", biggoronGiven }, { "flag", biggoronClaim } });
+        plan["expressions"].push_back(
+            { { "name", biggoronGiven }, { "all_of", nlohmann::ordered_json::array({ biggoronClaim }) } });
     }
     plan["start_items"] = nlohmann::ordered_json::array();
     for (const StartStep& started : StartWithInOrder(settings)) {

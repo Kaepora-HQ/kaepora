@@ -1615,7 +1615,9 @@
   "expressions": [
     {
       "name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp",
-      "flag": "HavePlayedEvent.Dm_Goron_0030"
+      "all_of": [
+        "HavePlayedEvent.Dm_Goron_0030"
+      ]
     }
   ],
   "start_items": []

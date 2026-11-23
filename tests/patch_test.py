@@ -607,7 +607,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "loose_items": [{"hash": str(h), "files": files, "item": item} for h, files, item in loose_items],
             "start_items": list(start_items),
             "claims": list(claims),
-            "expressions": [{"name": name, "flag": flag} for name, flag in expressions]}
+            "expressions": [{"name": name, "all_of": list(names)} for name, names in expressions]}
 
 
 def shop_slot(slot, item, price):
@@ -847,7 +847,7 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
     mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts],
-                                    expressions=[(e["name"], e["flag"]) for e in planned["expressions"]]))
+                                    expressions=[(e["name"], e["all_of"]) for e in planned["expressions"]]))
     # Zelda's flow grows past its size table entry, which gift-size-table covers, and the dance's question asks an
     # expression of the list, which expressions covers.
     mod.pop(SIZE_TABLE)
@@ -2079,20 +2079,31 @@ def claims(patch, game):
 
 
 def expressions(patch, game):
-    """Each expression of the plan is one of the mod's own in the game data list, in the shape of the game's own that
-    read one saved Bool: unsaved, reset type 0, and one operation that reads the Bool by its hash. It may read a claim
+    """Each expression of the plan is one of the mod's own in the game data list, true while every saved Bool and
+    expression it names is, and written as the game writes its own expression of the same names. It may name a claim
     of the plan as well as a Bool of the game. An expression query may name it, and the saves keep the game's layout
     but for the claim."""
     claim = "Kaepora_Once_1"
-    named = [("Kaepora_Test_Claim_Exp", claim), ("Kaepora_Test_Dance_Exp", DARUNIA_DANCE)]
-    mod = patched(patch, game, plan([], claims=[claim], expressions=named,
-                                    event_texts=[(*DANCE_QUESTION, "Kaepora_Test_Dance_Exp")]))
+    # Each expression with the names it joins and the game's own expression of the same names.
+    named = {
+        "Kaepora_Test_Keaton_Exp": (["Npc_Hylia_Soldier_003_GateOpen"], "HappyMaskShop_AppearMask_Keaton"),
+        "Kaepora_Test_Prison_Exp": (["GerudoFortress_NPCGerudo018_LookPrison", "SageOfSpirit_IsAfter_Step01_Exp"],
+                                    "GerudoFortress_Npc_Gerudo_018_LookPrison_After_Step01"),
+        "Kaepora_Test_Burning_Exp": (
+            ["SageOfForest_IsCompleted_Exp", "SageOfFire_IsCompleted_Exp", "SageOfWater_IsCompleted_Exp"],
+            "SageOfShadow_Kakariko_Burning"),
+    }
+    joined = [("Kaepora_Test_Claim_Exp", [claim])] + [(name, names) for name, (names, _) in named.items()]
+    mod = patched(patch, game, plan([], claims=[claim], expressions=joined,
+                                    event_texts=[(*DANCE_QUESTION, "Kaepora_Test_Burning_Exp")]))
     theirs = game.game_data_list(game.read(GAME_DATA_LIST))
     ours = game.game_data_list(mod[GAME_DATA_LIST])
+    games = {entry["Hash"][1]: entry for entry in theirs["Data"]["BoolExp"]}
     # A save index of -1, no save, as the reader gives the raw 32 bits.
-    added = [{"Hash": (UINT, murmur3(name)), "ResetTypeValue": (INT, 0), "SaveFileIndex": (INT, 0xFFFFFFFF),
-              "Values": [[(UINT64, 0), (UINT64, murmur3(flag))]]} for name, flag in named]
-    assert ours["Data"]["BoolExp"] == theirs["Data"]["BoolExp"] + added
+    reads_claim = {"Hash": (UINT, murmur3("Kaepora_Test_Claim_Exp")), "ResetTypeValue": (INT, 0),
+                   "SaveFileIndex": (INT, 0xFFFFFFFF), "Values": [[(UINT64, 0), (UINT64, murmur3(claim))]]}
+    added = [games[murmur3(twin)] | {"Hash": (UINT, murmur3(name))} for name, (_, twin) in named.items()]
+    assert ours["Data"]["BoolExp"] == theirs["Data"]["BoolExp"] + [reads_claim] + added
     assert {table: values for table, values in ours["Data"].items() if table not in ("Bool", "BoolExp")} == {
         table: values for table, values in theirs["Data"].items() if table not in ("Bool", "BoolExp")}
     grown = save_layout(theirs)
@@ -2102,7 +2113,7 @@ def expressions(patch, game):
         grown[key] = (INT, grown[key][1] + 8)
     assert save_layout(ours) == grown
     flow = game.event_flow(mod[FIRE_QUEST_FLOW])
-    assert string_parameter(flow, DANCE_QUESTION[1], DANCE_QUESTION[2])[1] == "Kaepora_Test_Dance_Exp"
+    assert string_parameter(flow, DANCE_QUESTION[1], DANCE_QUESTION[2])[1] == "Kaepora_Test_Burning_Exp"
 
 
 def flow_reach(flow, blocked=()):
@@ -2272,8 +2283,8 @@ def biggoron_place(patch, game, seedgen):
     game has them."""
     planned = generated_plan(seedgen, "1", {"Gifts": ["Biggoron Quest"]})
     mod = patched(patch, game, planned)
-    (expression,) = [entry for entry in planned["expressions"] if entry["flag"] in planned["claims"]]
-    claim = expression["flag"]
+    (expression,) = [e for e in planned["expressions"] if set(e["all_of"]) & set(planned["claims"])]
+    (claim,) = expression["all_of"]
     placed = next(text["text"] for text in planned["event_texts"]
                   if (text["flow"], text["event"], text["param"]) == (BIGGORON_FLOW, "Event123", "ActorName"))
     theirs, ours = game.event_flow(game.read(BIGGORON_FLOW)), game.event_flow(mod[BIGGORON_FLOW])
@@ -3210,13 +3221,15 @@ def bad_input(patch, game):
     for name, (entry, named) in texts.items():
         plans[name] = (good | {"event_texts": [valid_gift, entry]}, named)
     ours = "Kaepora_Test_Dance_Exp"
-    reads_dance = {"name": ours, "flag": DARUNIA_DANCE}
+    reads_dance = {"name": ours, "all_of": [DARUNIA_DANCE]}
     plans["value query given an expression of the plan's own"] = (
         good | {"expressions": [reads_dance], "event_texts": [valid_gift, dict(value_query, text=ours)]},
         ["Event17 GameDataName", WINDMILL_MAN_FLOW, ours, "asks for a true-or-false value"])
-    plans["expression reads no true-or-false value"] = (
-        good | {"expressions": [dict(reads_dance, flag=PAST_SPIRIT_STEP02)]},
-        [ours, PAST_SPIRIT_STEP02, "no true-or-false value"])
+    plans["expression names a number"] = (
+        good | {"expressions": [dict(reads_dance, all_of=[DARUNIA_DANCE, PAST_SPIRIT_STEP02, TRIALS_LEFT])]},
+        [ours, TRIALS_LEFT, "no true-or-false value or expression"])
+    plans["expression names nothing"] = (
+        good | {"expressions": [dict(reads_dance, all_of=[])]}, ["plan.json", "expressions[0]", ours, "nothing"])
     plans["expression named as a value of the list"] = (
         good | {"expressions": [dict(reads_dance, name=PAST_SPIRIT_STEP02)]},
         [PAST_SPIRIT_STEP02, "has the hash of a value in BoolExp"])
