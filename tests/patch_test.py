@@ -2136,14 +2136,15 @@ def expressions(patch, game):
     assert string_parameter(flow, DANCE_QUESTION[1], DANCE_QUESTION[2])[1] == "Kaepora_Test_Burning_Exp"
 
 
-def flow_reach(flow, blocked=()):
-    """The events of a parsed flow that its entry points reach without passing an event of blocked, following each
-    call into another entry of the same flow. A scene's cuts, entries named "C" and a number, are not entry points:
-    their scene starts them."""
+def flow_reach(flow, blocked=(), roots=None):
+    """The events of a parsed flow that the entry points named in roots reach without passing an event of blocked,
+    following each call into another entry of the same flow. With none named, its entry points. A scene's cuts,
+    entries named "C" and a number, are not entry points: their scene starts them."""
     names, entries = flow["entry points"]
     by_name = {name: entry for (_, name), entry in zip(names[1:], entries)}
-    roots = [entry for name, entry in by_name.items() if not re.fullmatch(r"C\d.*", name)]
-    todo, seen = [struct.unpack_from("<H", entry[0], 4)[0] for entry in roots], set()
+    if roots is None:
+        roots = [name for name in by_name if not re.fullmatch(r"C\d.*", name)]
+    todo, seen = [struct.unpack_from("<H", by_name[name][0], 4)[0] for name in roots], set()
     while todo:
         index = todo.pop()
         if index == 0xFFFF or index in seen or index in blocked:
@@ -2206,12 +2207,17 @@ def generated_plan(seedgen, seed, settings):
         return json.loads(planned.read_text())
 
 
-def ways_through(flow, entry, state):
-    """Each way through an entry point of a parsed flow, as the messages its talks show in order, for a Link whose
-    equipped slots and saved values state holds: ("slot", n) for slot n, and a Bool or an expression by its name. A
-    yes-or-no question takes case 0 for yes. A random choice and any other question take each case. A write of a Bool
-    holds for the rest of the way. A call into an entry point of the same flow walks it; a call into another flow is
-    passed over."""
+def talks(actor, action, given):
+    return given["MessageId"] if action == "EventTalk" else None
+
+
+def ways_through(flow, entry, state, noted=talks):
+    """Each way through an entry point of a parsed flow, as what noted gives for its actions in order (by default the
+    messages its talks show) with the state it ends in, for a Link whose equipped slots and saved values state holds:
+    ("slot", n) for slot n, and a Bool or an expression by its name. A switch named in state takes the case state gives
+    it. A yes-or-no question takes case 0 for yes. A random choice and any other question take each case. A write of a
+    Bool holds for the rest of the way. A call into an entry point of the same flow walks it; a call into another flow
+    is passed over."""
     events, (names, entries) = flow["events"], flow["entry points"]
     starts = {name: struct.unpack_from("<H", point[0], 4)[0] for (_, name), point in zip(names[1:], entries)}
 
@@ -2243,9 +2249,10 @@ def ways_through(flow, entry, state):
                     return
                 index = first
             elif kind == 0:
-                action, given = flow["actors"][actor][5][call], parameters(event)
-                if action == "EventTalk":
-                    said = (*said, given["MessageId"])
+                named, given = flow["actors"][actor], parameters(event)
+                action = named[5][call]
+                if (note := noted(named[0], action, given)) is not None:
+                    said = (*said, note)
                 if action == "EventTriggerSetGameDataBool":
                     state = {**state, given["GameDataName"]: given["Value"] != bytes(4)}
                 index = first
@@ -2253,9 +2260,11 @@ def ways_through(flow, entry, state):
                 assert kind == 1, f"{event[0]}: a sub-flow switch"
                 query, given = flow["actors"][actor][6][call], parameters(event)
                 answer = None
-                if query in ("EventQueryIsGameDataBool", "EventQueryIsGameDataBoolExp"):
+                if event[0] in state:
+                    answer = state[event[0]]
+                elif query in ("EventQueryIsGameDataBool", "EventQueryIsGameDataBoolExp"):
                     answer = 0 if state[given["GameDataName"]] else 1
-                if query == "EventQueryCheckIsEquippedDynamicEquipment":
+                elif query == "EventQueryCheckIsEquippedDynamicEquipment":
                     answer = 0 if state[("slot", int.from_bytes(given["DynamicEquipmentSlot"], "little"))] else 1
                 for case in range(first):
                     value, target = struct.unpack_from("<IH", event[3], 8 * case)
@@ -2295,7 +2304,7 @@ def mido_hint_every_talk(patch, game, seedgen):
 def skip_starts_true(patch, game, seedgen, skip, started):
     """The game data list of a seed that skips this is the list of one that does not, read apart from the patcher, but
     for these Bools, which start true in the first and as the game has them in the second."""
-    every = ["Opening movie", "Player skippable scenes", "Saria's greeting"]
+    every = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
     skipped, played = (game.game_data_list(patched(patch, game, generated_plan(seedgen, "1", {"Skip": skips}))[
         GAME_DATA_LIST]) for skips in (every, [name for name in every if name != skip]))
     hashes = {murmur3(name) for name in started}
@@ -2305,6 +2314,27 @@ def skip_starts_true(patch, game, seedgen, skip, started):
             assert entry["DefaultValue"] == (BOOL, 0), entry
             entry["DefaultValue"] = (BOOL, 1)
     assert not hashes and skipped == played
+
+
+def area_scene_cuts(flow, rows):
+    for row in rows:
+        if row["kind"] == "entry":
+            entered_at(flow, row["from"], row["to"])
+        else:
+            sent_on(flow, row["from"], row["to"] or None)
+    return flow
+
+
+def new_area_scenes(patch, game, seedgen):
+    rows = remake_table("area_scenes.tsv")
+    every = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
+    cut = patched(patch, game, generated_plan(seedgen, "1", {"Skip": every}))
+    played = patched(patch, game, generated_plan(seedgen, "1", {"Skip": [n for n in every if n != "New area scenes"]}))
+    flows = dict.fromkeys(row["flow"] for row in rows)
+    for path in flows:
+        expected = area_scene_cuts(game.event_flow(game.read(path)), [row for row in rows if row["flow"] == path])
+        assert game.event_flow(cut[path]) == expected, path
+    assert not flows.keys() & played.keys(), sorted(flows.keys() & played.keys())
 
 
 def sarias_greeting(patch, game, seedgen):
@@ -3085,9 +3115,9 @@ def message_bytes(text, page=RUMOUR_PAGE):
 def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is every mod's with every planned chest giving its item, also as its
     substitute where it has one, and as an added value where it names none, every planned stone and message saying
-    its text in both English text packs, every planned event going on to its next, the opening skipped where the plan
-    skips it, the Kokiri Sword's scene left out where its chest holds another item, and each planned schedule entry on
-    its flag with its talk. Each fits the size table entry the game reads."""
+    its text in both English text packs, every planned event going on to its next and entry point starting at its
+    event, the opening skipped where the plan skips it, the Kokiri Sword's scene left out where its chest holds another
+    item, and each planned schedule entry on its flag with its talk. Each fits the size table entry the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -3113,7 +3143,8 @@ def seed_plan(patch, game, plan_file):
     schedules = {}
     for planned in seed["schedule_entries"]:
         with_schedule_entry(schedules.setdefault(planned["file"], byml(game.read(planned["file"]))), planned)
-    edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"] + seed["event_nexts"]}
+    edited = {edit["flow"] for key in ("event_texts", "event_numbers", "event_nexts", "event_entries")
+              for edit in seed[key]}
     every = every_mod(patch, game)
     flows = {path: game.event_flow(every.get(path) or game.read(path)) for path in edited}
     if seed["opening_skipped"]:
@@ -3128,6 +3159,8 @@ def seed_plan(patch, game, plan_file):
             4, "little", signed=True)
     for sent in seed["event_nexts"]:
         sent_on(flows[sent["flow"]], sent["event"], sent["next"])
+    for entry in seed["event_entries"]:
+        entered_at(flows[entry["flow"]], entry["entry"], entry["event"])
     assert seed["stone_texts"]
     planned_files = {STONE_MESSAGES} | {entry["file"] for entry in seed["message_texts"]}
     mod = patched(patch, game, seed)
@@ -3587,6 +3620,7 @@ def main():
         "darunias-son": darunias_son,
         "time-runs-from-the-start": time_runs_from_the_start,
         "sarias-greeting": sarias_greeting,
+        "new-area-scenes": new_area_scenes,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

@@ -603,6 +603,67 @@ loose spot has been seen to give one, so the fill places the rewards before thos
 reward opens nothing in the remake, so it is no major item: no hint names one as an item to find, and none keeps its
 area from being called foolish. The place after a boss, or Rauru's, keeps its area from being foolish whatever it holds.
 
+`area_scenes.tsv` has the cuts that "New area scenes" makes to the scenes the game plays the first time Link arrives in
+an area: 34 scenes, each in a flow of its own. A cut scene still runs as an event, so the game writes its played flag as
+it ends, and its name banner, `UISystemActor.EventTriggerOpenLocationUI`, still marks the area visited, which nothing
+else does for most areas. Every cut keeps the scene's banner, its saved writes, and the clock and the music the scene
+leaves, and then ends. Six cuts also keep the triggers that set how Link starts the event, three a music ducking and its
+release, and the inside of Ganon's Castle its sound occlusion setting. The camera's pan, the other waits, Link's warps
+and walks, depth of field, Navi's balloon and the scene's other sounds go. Each row is one edit:
+
+- `area`: the area, as the page names it.
+- `flow`: the romfs path of the scene's flow.
+- `kind`: `entry` for an entry point that starts at another event, or `next` for an event that goes on to another.
+- `from`: the entry point or the event.
+- `to`: the event it starts at or goes on to. Empty ends the branch.
+
+Hyrule Field's pan is the one scene that moves the clock. It turns it toward 7:30 over 22 seconds and sets 7:00 as it
+ends. The cut sets 7:00 at once, so Link leaves the cut at 7:00, as he leaves the scene. Three scenes start a track of
+their own, `SoundSystemActor.EventTriggerStartBgmSimple`, and never stop it: Hyrule Field's pan, the outside of Ganon's
+Castle and the ruined Market. Read from the game's files: a scene that ends its own track stops it (`Dm_HrlField_0030`,
+`Dm_HrlField_0080` and `Dm_HrlCastle_0035` each call `EventTriggerSoundStopBGM` on theirs), so these three leave theirs
+playing as they end, and each cut starts the same track after its banner. Seen in the game: the track plays on after the
+cut, outside Ganon's Castle and in the ruined Market. Lake Hylia's scene from Gerudo Valley keeps its stop of the
+underwater music filter. The one from Zora's Domain drops it: kept, it would bring a sub-flow call into the entry
+point's reach, and the plain arrival through that entrance does not stop the filter either.
+
+The game plays 25 of these scenes as Link arrives after a scene change, and each of their cuts keeps one event that
+holds the event for a moment: the scene's fade in (19 cuts) or, where the scene has none, its shortest wait before the
+banner (6 cuts: 6 frames on both ways into Lake Hylia from the valley and from Zora's Domain, 20 at Hyrule Castle, 60
+on Death Mountain Trail, 85 in the Market, 155 in Goron City). Seen in the game: an arrival event of instant actions
+alone leaves the loading screen up for good while the game runs on under it, with the played flag, the visit and the
+music written and the pause menu shut. That was seen outside Ganon's Castle (with the music start kept, without it, and
+with a wait for the loading screen added after the scene in its caller) and at Hyrule Castle (with a camera reset kept).
+Each came back with the scene's fade in or its wait kept, the castle's with a fade in that does not wait for its end.
+Which part of the program waits on the event was not read. The other 9 scenes start as Link walks into an area of a
+place he is already in.
+
+A cut's banner does not always show. Seen in the game: it shows in Hyrule Field, on the way into Lake Hylia from the
+field, in the ruined Market, at the Desert Colossus and outside Ganon's Castle. It does not show at Zora's River or
+Gerudo's Fortress, whose cuts open it as soon as a fade in of length 1 or 2 ends, while in the scene seconds pass
+between them. Swimming in from Zora's Domain, the name shown is Hyrule Field's, not Lake Hylia's. The area is marked
+visited in every one of them.
+
+One cut writes a value its scene would not. Lon Lon Ranch's scene asks Link's age before its pan, and only a child's way
+writes `LonLonRanch_IsVisited_Child`. An edit sends every case of a question to the same event, so the cut cannot keep
+that question ahead of the write, and an adult who reaches the scene first writes it too. Nothing reads it: a search of
+every flow, logic module, placement, pack and table of the game's files, by name and by hash, finds no reader, and the
+program holds neither the name nor the hash.
+
+`tests/remake_tables_test.py` takes each entry point that a cut plays once for every answer to the flow's questions,
+such as Link's age or where the camera stands. The way through the cut keeps the saved writes and the banner of the way
+through the scene, and ends on the same clock set and the same music start. The test also checks that no edit brings
+into an entry point's reach a sub-flow call the entry point does not list. And it takes each entry point that the game
+plays as Link arrives after a scene change, from every entrance's and every scene change's named event and the events
+those start, and checks that every way through its cut keeps a wait or a fade in. Read from the game's files: no flow
+here holds a letterbox, HUD or control action, and each cut keeps its music ducking paired. Where a scene moved Link,
+the cut leaves him where the arrival put him: at the entrance's start position, which every later arrival through that
+entrance uses, or where he walked into the area that starts the scene. Kokiri Forest's first scene is not here: "Saria's
+greeting" leaves it out with her, as it leads into her run-up. Two scenes hold talk, and it goes with them: the owl's on
+the first walk to Hyrule Castle, and Rauru's three lines about the barriers on the first walk into Ganon's Castle, which
+are not true with "Ganon's trials" at "None". The ruined Market's scene starts played when the songs are shuffled, so
+its cut changes nothing then.
+
 The quest tables say what the game's files hold about its quests: names and places, with no reading of which way a
 scene goes. They are of the files of the game's update package, version 2.0.0, which is what the patcher reads; a file
 only the base package holds is not in them. `tests/quests.py` writes them, and `tests/remake_tables_test.py` makes them

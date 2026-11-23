@@ -1458,10 +1458,526 @@
       "flow": "Event/EventFlow/Npc_Kokiri_Mido_Child.bfevfl.zs",
       "event": "Event64",
       "next": "Event54"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlField_0000.bfevfl.zs",
+      "event": "Event115",
+      "next": "Event52"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlField_0000.bfevfl.zs",
+      "event": "Event52",
+      "next": "Event37"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlField_0000.bfevfl.zs",
+      "event": "Event37",
+      "next": "Event2"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs",
+      "event": "Event1",
+      "next": "Event5"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs",
+      "event": "Event5",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_TimeTemple_0000.bfevfl.zs",
+      "event": "Event18",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs",
+      "event": "Event47",
+      "next": "Event13"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs",
+      "event": "Event13",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LonLon_0010.bfevfl.zs",
+      "event": "Event3",
+      "next": "Event29"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LonLon_0010.bfevfl.zs",
+      "event": "Event29",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Kakariko_0000.bfevfl.zs",
+      "event": "Event4",
+      "next": "Event11"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs",
+      "event": "Event24",
+      "next": "Event5"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs",
+      "event": "Event5",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Goron_0000.bfevfl.zs",
+      "event": "Event21",
+      "next": "Event26"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "event": "Event127",
+      "next": "Event110"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "event": "Event110",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "event": "Event126",
+      "next": "Event115"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "event": "Event115",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ZoraRiver.bfevfl.zs",
+      "event": "Event24",
+      "next": "Event17"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ZoraRiver.bfevfl.zs",
+      "event": "Event17",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Zora_0000.bfevfl.zs",
+      "event": "Event31",
+      "next": "Event18"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Zora_0000.bfevfl.zs",
+      "event": "Event18",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs",
+      "event": "Event6",
+      "next": "Event7"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs",
+      "event": "Event7",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0000.bfevfl.zs",
+      "event": "Event8",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs",
+      "event": "Event3",
+      "next": "Event43"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs",
+      "event": "Event43",
+      "next": "Event20"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs",
+      "event": "Event20",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs",
+      "event": "Event51",
+      "next": "Event57"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs",
+      "event": "Event57",
+      "next": "Event10"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs",
+      "event": "Event6",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs",
+      "event": "Event18",
+      "next": "Event4"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs",
+      "event": "Event4",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs",
+      "event": "Event6",
+      "next": "Event2"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs",
+      "event": "Event2",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs",
+      "event": "Event11",
+      "next": "Event2"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs",
+      "event": "Event2",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs",
+      "event": "Event33",
+      "next": "Event36"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs",
+      "event": "Event36",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SpiritTemple.bfevfl.zs",
+      "event": "Event27",
+      "next": "Event12"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SpiritTemple.bfevfl.zs",
+      "event": "Event12",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SacredForest.bfevfl.zs",
+      "event": "Event8",
+      "next": "Event1"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SacredForest.bfevfl.zs",
+      "event": "Event1",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Deku_0000.bfevfl.zs",
+      "event": "Event4",
+      "next": "Event1"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Deku_0000.bfevfl.zs",
+      "event": "Event1",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DodongoCave_0000.bfevfl.zs",
+      "event": "Event11",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs",
+      "event": "Event18",
+      "next": "Event6"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs",
+      "event": "Event6",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs",
+      "event": "Event12",
+      "next": "Event2"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs",
+      "event": "Event2",
+      "next": "Event10"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs",
+      "event": "Event10",
+      "next": "Event18"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_FireTemple.bfevfl.zs",
+      "event": "Event9",
+      "next": "Event1"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_FireTemple.bfevfl.zs",
+      "event": "Event1",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_WaterTemple.bfevfl.zs",
+      "event": "Event2",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_IceCave.bfevfl.zs",
+      "event": "Event9",
+      "next": "Event1"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_IceCave.bfevfl.zs",
+      "event": "Event1",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_KakarikoWells.bfevfl.zs",
+      "event": "Event8",
+      "next": "Event13"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_KakarikoWells.bfevfl.zs",
+      "event": "Event13",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ShadowTemple.bfevfl.zs",
+      "event": "Event27",
+      "next": "Event12"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ShadowTemple.bfevfl.zs",
+      "event": "Event12",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs",
+      "event": "Event63",
+      "next": "Event11"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs",
+      "event": "Event11",
+      "next": "Event54"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs",
+      "event": "Event52",
+      "next": "Event46"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs",
+      "event": "Event46",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs",
+      "event": "Event32",
+      "next": null
+    },
+    {
+      "flow": "Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs",
+      "event": "Event18",
+      "next": "Event47"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs",
+      "event": "Event47",
+      "next": "Event19"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs",
+      "event": "Event19",
+      "next": null
     }
   ],
   "module_texts": [],
-  "event_entries": [],
+  "event_entries": [
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event1"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_TimeTemple_0000.bfevfl.zs",
+      "entry": "C01",
+      "event": "Event18"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event55"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs",
+      "entry": "C01",
+      "event": "Event47"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LonLon_0010.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event3"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Kakariko_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event4"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event24"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtTrail_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event17"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Goron_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event21"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "entry": "EnterDeathMountainTrail",
+      "event": "Event127"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs",
+      "entry": "EnterFromGoronCity",
+      "event": "Event126"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ZoraRiver.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event24"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Zora_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event31"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event6"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event8"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event40"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event51"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs",
+      "entry": "C03",
+      "event": "Event6"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event37"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event6"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event11"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event33"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SpiritTemple.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event27"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_SacredForest.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event8"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_Deku_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event4"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_DodongoCave_0000.bfevfl.zs",
+      "entry": "C01",
+      "event": "Event11"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event18"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs",
+      "entry": "C01",
+      "event": "Event12"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_FireTemple.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event9"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_WaterTemple.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event2"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_IceCave.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event9"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_KakarikoWells.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event8"
+    },
+    {
+      "flow": "Event/EventFlow/Goto_ShadowTemple.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event27"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs",
+      "entry": "EntryPoint0",
+      "event": "Event7"
+    },
+    {
+      "flow": "Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs",
+      "entry": "C05",
+      "event": "Event63"
+    }
+  ],
   "start_values": {
     "IsChainLockDoorOpen.4189300454150217955": true,
     "IsChainLockDoorOpen.2202807660383340401": true,

@@ -98,10 +98,11 @@ inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::None, "None" },
 };
 
-enum class Skip { OpeningMovie, SkippableScenes, SariasGreeting };
+enum class Skip { OpeningMovie, SkippableScenes, NewAreaScenes, SariasGreeting };
 inline constexpr std::pair<Skip, std::string_view> SkipChoices[] = {
     { Skip::OpeningMovie, "Opening movie" },
     { Skip::SkippableScenes, "Player skippable scenes" },
+    { Skip::NewAreaScenes, "New area scenes" },
     { Skip::SariasGreeting, "Saria's greeting" },
 };
 

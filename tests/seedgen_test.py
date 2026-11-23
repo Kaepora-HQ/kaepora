@@ -41,7 +41,7 @@ ITEM_PAIRS = {(row["remake_item"], row["soh_item"]) for row in read_tsv("items.t
 DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
             "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
             "Ganon's Castle"]
-SKIPS = ["Opening movie", "Player skippable scenes", "Saria's greeting"]
+SKIPS = ["Opening movie", "Player skippable scenes", "New area scenes", "Saria's greeting"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
                     "Door of Time": "Closed",
@@ -900,6 +900,15 @@ class SeedgenTest(unittest.TestCase):
     def test_player_skippable_scenes_are_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts("Player skippable scenes", lambda plan: plan | {"cutscenes_skipped": True})
 
+    def test_new_area_scenes_are_cut_while_listed(self):
+        rows = read_tsv("area_scenes.tsv")
+        entries = [{"flow": row["flow"], "entry": row["from"], "event": row["to"]}
+                   for row in rows if row["kind"] == "entry"]
+        nexts = [{"flow": row["flow"], "event": row["from"], "next": row["to"] or None}
+                 for row in rows if row["kind"] == "next"]
+        self.assert_skip_adds_only_its_parts("New area scenes", lambda plan: plan | {
+            "event_entries": plan["event_entries"] + entries, "event_nexts": plan["event_nexts"] + nexts})
+
     def test_sarias_greeting_is_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts(
             "Saria's greeting", lambda plan: plan | {"start_values": plan["start_values"] | SARIAS_GREETING})
@@ -1337,8 +1346,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertTrue(on_route)
         _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"],
                                          **NO_CHARACTER_HINTS})
+        _, no_gifts = self.generate("2000", {"Gifts": [], **NO_CHARACTER_HINTS})
         self.assertEqual((plan["event_nexts"], plan["expressions"]),
-                         ([], [DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS]))
+                         (no_gifts["event_nexts"], [DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS]))
         self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
     def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):
@@ -1963,7 +1973,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["message_texts"], given_plan["message_texts"][:len(prize_lines)])
         sent_on = [dict(zip(("flow", "event", "next"), row["sent_on"].split(":"))) for row in CHARACTER_HINTS
                    if row["sent_on"]]
-        self.assertEqual((plan["event_nexts"], given_plan["event_nexts"]), ([], sent_on))
+        self.assertEqual(given_plan["event_nexts"], sent_on + plan["event_nexts"])
         told = ("stone_texts", "message_texts", "event_nexts")
         self.assertEqual({key: value for key, value in plan.items() if key not in told},
                          {key: value for key, value in given_plan.items() if key not in told})

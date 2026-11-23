@@ -75,6 +75,9 @@ static constexpr unsigned char looseItemTable[] = {
 static constexpr unsigned char songTable[] = {
 #embed "../remake/songs.tsv"
 };
+static constexpr unsigned char areaSceneTable[] = {
+#embed "../remake/area_scenes.tsv"
+};
 
 [[noreturn]] static void Fail(const std::string& message) {
     throw std::runtime_error(message);
@@ -1145,6 +1148,35 @@ static nlohmann::ordered_json StartValues(const SeedSettings& settings) {
     return values;
 }
 
+static const nlohmann::ordered_json& AreaSceneCuts() {
+    static const nlohmann::ordered_json cuts = [] {
+        nlohmann::ordered_json read = { { "event_entries", nlohmann::ordered_json::array() },
+                                        { "event_nexts", nlohmann::ordered_json::array() } };
+        size_t line = 1;
+        for (const auto& row : ReadTable("remake/area_scenes.tsv", areaSceneTable, "area\tflow\tkind\tfrom\tto")) {
+            const std::string where = std::format("remake/area_scenes.tsv line {}: ", ++line);
+            const std::string& flow = row[1];
+            const std::string& kind = row[2];
+            const std::string& from = row[3];
+            const std::string& to = row[4];
+            if (!flow.starts_with("Event/EventFlow/") || !flow.ends_with(".bfevfl.zs") || from.empty() ||
+                (kind == "entry" ? to.empty() : kind != "next")) {
+                Fail(where + "not a flow's entry point starting at an event, or an event going on to another or none");
+            }
+            if (kind == "entry") {
+                read["event_entries"].push_back({ { "flow", flow }, { "entry", from }, { "event", to } });
+            } else {
+                read["event_nexts"].push_back(
+                    { { "flow", flow },
+                      { "event", from },
+                      { "next", to.empty() ? nlohmann::ordered_json() : nlohmann::ordered_json(to) } });
+            }
+        }
+        return read;
+    }();
+    return cuts;
+}
+
 nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
                                   const std::vector<RemakeGift>& gifts,
@@ -1274,6 +1306,15 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
                         message.label);
         }
         planned["text"] = message.tagged;
+    }
+    if (settings.skips.contains(Skip::NewAreaScenes)) {
+        // Each scene still runs as an event, so the game writes its played flag as it ends, and its banner marks the
+        // area visited.
+        for (const auto& [list, cuts] : AreaSceneCuts().items()) {
+            for (const nlohmann::ordered_json& cut : cuts) {
+                plan[list].push_back(cut);
+            }
+        }
     }
     plan["shops"] = nlohmann::ordered_json::array();
     const auto shopSlot = [](const RemakeShopSlot& slot) {

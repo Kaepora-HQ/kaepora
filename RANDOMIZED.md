@@ -110,6 +110,7 @@ Under **Start**, **Skip** lists what a seed leaves out of the game. Every box st
 
 - **Opening movie.** The narrated movie and the scene of Navi waking Link. A new game starts with Link in his house and Navi beside him, about 15 seconds after you begin. The whole opening takes about six minutes.
 - **Player skippable scenes.** Every scene the game would let you skip. The seed skips each one the moment it starts, as if you had pressed Skip: the screen goes black for a moment and the game goes on. Boss introductions and part of the credits are among them. The scene of Navi waking Link is one too, so it is skipped even with **Opening movie** unchecked.
+- **New area scenes.** The camera's first look over a place, which the game plays the first time you arrive and gives you no way to skip. The map still marks the place, though its name may not show. The owl's talk on your first walk to Hyrule Castle goes with it, and so do Rauru's words about the barriers on your first walk into Ganon's Castle.
 - **Saria's greeting.** Saria's welcome outside Link's house, with the forest's first scene before it. If you start with the Kokiri Sword, unchecking this box brings back only her talk: the game leaves out the forest's scene and her run-up for a Link who holds the sword.
 
 Other scenes in which someone talks to you in a text box, and item, song and ocarina scenes, still play.

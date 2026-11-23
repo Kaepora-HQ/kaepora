@@ -5,6 +5,7 @@ Usage: python3 -I -B tests/remake_tables_test.py <game.nup> [test name ...]
 
 import csv
 import functools
+import itertools
 import pathlib
 import struct
 import sys
@@ -79,6 +80,122 @@ def without_grammar_codes(text):
     return shown.decode()
 
 
+SAVE_WRITERS = {"GameDataActor", "ChallengeSystemActor"}
+BANNER = "EventTriggerOpenLocationUI"
+CLOCK_SETS = {"EventTrigger_SetTime", "Event_SetTimeForFlowchart"}
+MUSIC_STARTS = {"EventTriggerStartBgmSimple"}
+
+
+def scene_effect(actor, action, given):
+    if actor in SAVE_WRITERS or action in {BANNER, *CLOCK_SETS, *MUSIC_STARTS}:
+        return actor, action, repr(given)
+    return None
+
+
+def what_a_way_leaves(flow, entry, cases):
+    """The saved writes and banners of the way through the entry point that takes these cases, with the last clock set
+    and the last music start on it, which hold as the event ends."""
+    (effects, _), = patch_test.ways_through(flow, entry, cases, scene_effect)
+    last = [next((effect for effect in reversed(effects) if effect[1] in names), None)
+            for names in (CLOCK_SETS, MUSIC_STARTS)]
+    return {effect for effect in effects if effect[1] not in CLOCK_SETS | MUSIC_STARTS}, *last
+
+
+def sub_flow_calls(flow, reached):
+    return {index for index in reached if flow["events"][index][1][0] in (4, 5)}
+
+
+def every_answer(flow):
+    """Each way to answer the questions of a parsed flow, as the case each switch takes, by the switch's name."""
+    switches = {event[0]: [struct.unpack_from("<I", event[3], 8 * case)[0]
+                           for case in range(struct.unpack_from("<H", event[1], 2)[0])]
+                for event in flow["events"] if event[1][0] == 1}
+    return [dict(zip(switches, answers)) for answers in itertools.product(*switches.values())]
+
+
+def played_in(flow, entries):
+    """The entry points of a parsed flow that play when these do: they and those their ways call, in turn."""
+    played = set(entries)
+    while True:
+        calls = sub_flow_calls(flow, patch_test.flow_reach(flow, roots=played))
+        more = {flow["events"][index][-1] for index in calls if flow["events"][index][-2] in ("", flow["flowchart"])}
+        if more <= played:
+            return played
+        played |= more
+
+
+def parameters(flow, index):
+    """An action's or a call's parameters, by name; an empty one for the other events."""
+    event = flow["events"][index]
+    keys, values = (event[2] if event[1][0] in (0, 1, 4, 5) else None) or ([None], [])
+    return {key: value[1] for (_, key), value in zip(keys[1:], values)}
+
+
+def event_settings(game):
+    """Each event setting's flow, as a RomFS path, and the entry point it starts, empty for the flow's first."""
+    rows = patch_test.byml(zstd_decompressed(game, "RSDB/EventSetting.Product.111.rstbl.byml.zs", None))
+    flow = "Event/EventFlow/{}.bfevfl.zs".format
+    return {row["__RowId"]: (flow(row["FlowchartFileName"].rsplit("/", 1)[1].removesuffix(".evfc")),
+                             row.get("EntryPointName", ""))
+            for row in rows if "FlowchartFileName" in row}
+
+
+def arrivals(game):
+    """The event settings the game starts as Link arrives after a scene change: those an entrance names for a first
+    arrival (InitEventName) or a later one (NextEventName), and the boot events a scene change names
+    (BootEventName)."""
+    named = set()
+    for path in game.files:
+        if path.startswith("Banc/") and path.endswith(".bcett.byml.zs"):
+            data = zstd_decompressed(game, path, game.dictionary)
+            if b"EventName" in data:
+                named |= {actor["Dynamic"][key] for actor in patch_test.byml(data).get("Actors", [])
+                          for key in ("InitEventName", "NextEventName") if key in actor.get("Dynamic", {})}
+        elif path.startswith("Event/EventFlow/"):
+            data = zstd_decompressed(game, path, game.zs_dictionary)
+            if b"BootEventName" in data:
+                flow = patch_test.event_flow(data)
+                named |= {given["BootEventName"] for index in range(len(flow["events"]))
+                          if isinstance((given := parameters(flow, index)).get("BootEventName"), str)}
+    return named
+
+
+def zstd_decompressed(game, path, dictionary):
+    data = game.read(path)
+    return patch_test.zstd.decompress(data, zstd_dict=dictionary) if dictionary else patch_test.zstd.decompress(data)
+
+
+def scene_change_starts(game):
+    """By flow, the entry points the game plays as Link arrives after a scene change: those the arrival events start,
+    and those that these start in turn through an EventTransition."""
+    settings = event_settings(game)
+    flows, starts, seen, todo = {}, {}, set(), sorted(arrivals(game))
+    while todo:
+        setting = todo.pop()
+        if setting in seen or setting not in settings:
+            continue
+        seen.add(setting)
+        path, entry = settings[setting]
+        if path not in flows:
+            flows[path] = game.event_flow(game.read(path))
+        flow = flows[path]
+        entry = entry or flow["entry points"][0][1][1]
+        starts.setdefault(path, set()).add(entry)
+        for index in patch_test.flow_reach(flow, roots=[entry]):
+            actor, action = struct.unpack_from("<HH", flow["events"][index][1], 4)
+            if flow["events"][index][1][0] == 0 and flow["actors"][actor][5][action] == "EventTransition":
+                todo.append(parameters(flow, index)["EventName"])
+    return starts
+
+
+def holds_the_event(actor, action, given):
+    """A wait or a fade in, which hold the event for a moment at least. Seen in the game: an arrival after a scene
+    change whose event is all instant actions leaves the loading screen up for good."""
+    if action == "EventWait" and given["Frames"] != bytes(4) or action == "EventEventFadeIn":
+        return action
+    return None
+
+
 class RemakeTablesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -132,6 +249,43 @@ class RemakeTablesTest(unittest.TestCase):
             with open(ROOT / "remake" / name, newline="") as f:
                 self.assertEqual(list(csv.reader(f, delimiter="\t")), rows,
                                  f"{name}: python3 -I -B tests/quests.py <game.nup> remake writes it again")
+
+    def test_every_area_scene_cut_leaves_what_its_scene_leaves_and_reaches_no_unlisted_call(self):
+        rows = read_tsv("area_scenes.tsv")
+        settings = event_settings(self.game)
+        held = set()
+        for path in dict.fromkeys(row["flow"] for row in rows):
+            game = self.game.event_flow(self.game.read(path))
+            cut = patch_test.area_scene_cuts(self.game.event_flow(self.game.read(path)),
+                                             [row for row in rows if row["flow"] == path])
+            self.assertNotEqual(cut, game, path)
+            held |= {name for actor in game["actors"] for name in (actor[0], *actor[5])}
+            names = [name for _, name in game["entry points"][0][1:]]
+            runs = played_in(cut, {entry or names[0] for flow, entry in settings.values() if flow == path})
+            for entry, listed in zip(names, game["entry points"][1]):
+                for cases in every_answer(game) if entry in runs else ():
+                    kept, clock, music = what_a_way_leaves(game, entry, cases)
+                    kept_cut, clock_cut, music_cut = what_a_way_leaves(cut, entry, cases)
+                    self.assertLessEqual(kept, kept_cut, (path, entry, cases))
+                    self.assertEqual((clock_cut, music_cut), (clock, music), (path, entry, cases))
+                calls = sub_flow_calls(game, patch_test.flow_reach(game, roots=[entry]))
+                calls_cut = sub_flow_calls(cut, patch_test.flow_reach(cut, roots=[entry]))
+                self.assertLessEqual(calls_cut - calls, set(struct.unpack(f"<{len(listed[1]) // 2}H", listed[1])),
+                                     (path, entry))
+        self.assertLessEqual(SAVE_WRITERS | {BANNER} | CLOCK_SETS | MUSIC_STARTS, held)
+
+    def test_every_area_scene_cut_a_scene_change_plays_holds_the_event_on_every_way(self):
+        starts = scene_change_starts(self.game)
+        rows = read_tsv("area_scenes.tsv")
+        instant = []
+        for path in dict.fromkeys(row["flow"] for row in rows):
+            cut = patch_test.area_scene_cuts(self.game.event_flow(self.game.read(path)),
+                                             [row for row in rows if row["flow"] == path])
+            for entry in sorted(starts.get(path, ())):
+                for cases in every_answer(cut):
+                    instant += [(path, entry, cases) for held, _ in
+                                patch_test.ways_through(cut, entry, cases, holds_the_event) if not held]
+        self.assertEqual(instant, [])
 
     def test_the_quest_tables_hold_the_writes_and_reads_not_named_through_an_expression(self):
         tables = quest_tables(self.game)

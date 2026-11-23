@@ -1,0 +1,104 @@
+area	flow	kind	from	to
+Hyrule Field	Event/EventFlow/Dm_HrlField_0000.bfevfl.zs	next	Event115	Event52
+Hyrule Field	Event/EventFlow/Dm_HrlField_0000.bfevfl.zs	next	Event52	Event37
+Hyrule Field	Event/EventFlow/Dm_HrlField_0000.bfevfl.zs	next	Event37	Event2
+Market	Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs	entry	EntryPoint0	Event1
+Market	Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs	next	Event1	Event5
+Market	Event/EventFlow/Dm_HrlCastle_0005.bfevfl.zs	next	Event5	
+Temple of Time	Event/EventFlow/Dm_TimeTemple_0000.bfevfl.zs	entry	C01	Event18
+Temple of Time	Event/EventFlow/Dm_TimeTemple_0000.bfevfl.zs	next	Event18	
+Hyrule Castle	Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs	entry	EntryPoint0	Event55
+Hyrule Castle	Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs	entry	C01	Event47
+Hyrule Castle	Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs	next	Event47	Event13
+Hyrule Castle	Event/EventFlow/Dm_HrlCastle_0000.bfevfl.zs	next	Event13	
+Lon Lon Ranch	Event/EventFlow/Dm_LonLon_0010.bfevfl.zs	entry	EntryPoint0	Event3
+Lon Lon Ranch	Event/EventFlow/Dm_LonLon_0010.bfevfl.zs	next	Event3	Event29
+Lon Lon Ranch	Event/EventFlow/Dm_LonLon_0010.bfevfl.zs	next	Event29	
+Kakariko Village	Event/EventFlow/Dm_Kakariko_0000.bfevfl.zs	entry	EntryPoint0	Event4
+Kakariko Village	Event/EventFlow/Dm_Kakariko_0000.bfevfl.zs	next	Event4	Event11
+Graveyard	Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs	entry	EntryPoint0	Event24
+Graveyard	Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs	next	Event24	Event5
+Graveyard	Event/EventFlow/Dm_Graveyard_0000.bfevfl.zs	next	Event5	
+Death Mountain Trail	Event/EventFlow/Dm_DeathMtTrail_0000.bfevfl.zs	entry	EntryPoint0	Event17
+Goron City	Event/EventFlow/Dm_Goron_0000.bfevfl.zs	entry	EntryPoint0	Event21
+Goron City	Event/EventFlow/Dm_Goron_0000.bfevfl.zs	next	Event21	Event26
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	entry	EnterDeathMountainTrail	Event127
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	next	Event127	Event110
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	next	Event110	
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	entry	EnterFromGoronCity	Event126
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	next	Event126	Event115
+Death Mountain Crater	Event/EventFlow/Dm_DeathMtCrater_0000.bfevfl.zs	next	Event115	
+Zora's River	Event/EventFlow/Goto_ZoraRiver.bfevfl.zs	entry	EntryPoint0	Event24
+Zora's River	Event/EventFlow/Goto_ZoraRiver.bfevfl.zs	next	Event24	Event17
+Zora's River	Event/EventFlow/Goto_ZoraRiver.bfevfl.zs	next	Event17	
+Zora's Domain	Event/EventFlow/Dm_Zora_0000.bfevfl.zs	entry	EntryPoint0	Event31
+Zora's Domain	Event/EventFlow/Dm_Zora_0000.bfevfl.zs	next	Event31	Event18
+Zora's Domain	Event/EventFlow/Dm_Zora_0000.bfevfl.zs	next	Event18	
+Zora's Fountain	Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs	entry	EntryPoint0	Event6
+Zora's Fountain	Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs	next	Event6	Event7
+Zora's Fountain	Event/EventFlow/Dm_ZoraFountain_0000.bfevfl.zs	next	Event7	
+Lake Hylia (from the field)	Event/EventFlow/Dm_LakeHrl_0000.bfevfl.zs	entry	EntryPoint0	Event8
+Lake Hylia (from the field)	Event/EventFlow/Dm_LakeHrl_0000.bfevfl.zs	next	Event8	
+Lake Hylia (from the valley)	Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs	entry	EntryPoint0	Event40
+Lake Hylia (from the valley)	Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs	next	Event3	Event43
+Lake Hylia (from the valley)	Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs	next	Event43	Event20
+Lake Hylia (from the valley)	Event/EventFlow/Dm_LakeHrl_0003.bfevfl.zs	next	Event20	
+Lake Hylia (from Zora's Domain)	Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs	entry	EntryPoint0	Event51
+Lake Hylia (from Zora's Domain)	Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs	next	Event51	Event57
+Lake Hylia (from Zora's Domain)	Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs	next	Event57	Event10
+Lake Hylia (from Zora's Domain)	Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs	entry	C03	Event6
+Lake Hylia (from Zora's Domain)	Event/EventFlow/Dm_LakeHrl_0005.bfevfl.zs	next	Event6	
+Gerudo Valley	Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs	entry	EntryPoint0	Event37
+Gerudo Valley	Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs	next	Event18	Event4
+Gerudo Valley	Event/EventFlow/Dm_GerudoValley_0000.bfevfl.zs	next	Event4	
+Gerudo's Fortress	Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs	entry	EntryPoint0	Event6
+Gerudo's Fortress	Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs	next	Event6	Event2
+Gerudo's Fortress	Event/EventFlow/Dm_Gerudo_0000.bfevfl.zs	next	Event2	
+Gerudo Training Ground	Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs	entry	EntryPoint0	Event11
+Gerudo Training Ground	Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs	next	Event11	Event2
+Gerudo Training Ground	Event/EventFlow/Goto_GerudoTrainingGround.bfevfl.zs	next	Event2	
+Desert Colossus	Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs	entry	EntryPoint0	Event33
+Desert Colossus	Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs	next	Event33	Event36
+Desert Colossus	Event/EventFlow/Dm_DesertColossus_0000.bfevfl.zs	next	Event36	
+Spirit Temple	Event/EventFlow/Goto_SpiritTemple.bfevfl.zs	entry	EntryPoint0	Event27
+Spirit Temple	Event/EventFlow/Goto_SpiritTemple.bfevfl.zs	next	Event27	Event12
+Spirit Temple	Event/EventFlow/Goto_SpiritTemple.bfevfl.zs	next	Event12	
+Sacred Forest Meadow	Event/EventFlow/Goto_SacredForest.bfevfl.zs	entry	EntryPoint0	Event8
+Sacred Forest Meadow	Event/EventFlow/Goto_SacredForest.bfevfl.zs	next	Event8	Event1
+Sacred Forest Meadow	Event/EventFlow/Goto_SacredForest.bfevfl.zs	next	Event1	
+Inside the Deku Tree	Event/EventFlow/Dm_Deku_0000.bfevfl.zs	entry	EntryPoint0	Event4
+Inside the Deku Tree	Event/EventFlow/Dm_Deku_0000.bfevfl.zs	next	Event4	Event1
+Inside the Deku Tree	Event/EventFlow/Dm_Deku_0000.bfevfl.zs	next	Event1	
+Dodongo's Cavern	Event/EventFlow/Dm_DodongoCave_0000.bfevfl.zs	entry	C01	Event11
+Dodongo's Cavern	Event/EventFlow/Dm_DodongoCave_0000.bfevfl.zs	next	Event11	
+Jabu-Jabu's Belly	Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs	entry	EntryPoint0	Event18
+Jabu-Jabu's Belly	Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs	next	Event18	Event6
+Jabu-Jabu's Belly	Event/EventFlow/Dm_InsideJabu_Jabu_0000.bfevfl.zs	next	Event6	
+Forest Temple	Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs	entry	C01	Event12
+Forest Temple	Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs	next	Event12	Event2
+Forest Temple	Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs	next	Event2	Event10
+Forest Temple	Event/EventFlow/Dm_ForestTemple_0000.bfevfl.zs	next	Event10	Event18
+Fire Temple	Event/EventFlow/Goto_FireTemple.bfevfl.zs	entry	EntryPoint0	Event9
+Fire Temple	Event/EventFlow/Goto_FireTemple.bfevfl.zs	next	Event9	Event1
+Fire Temple	Event/EventFlow/Goto_FireTemple.bfevfl.zs	next	Event1	
+Water Temple	Event/EventFlow/Goto_WaterTemple.bfevfl.zs	entry	EntryPoint0	Event2
+Water Temple	Event/EventFlow/Goto_WaterTemple.bfevfl.zs	next	Event2	
+Ice Cavern	Event/EventFlow/Goto_IceCave.bfevfl.zs	entry	EntryPoint0	Event9
+Ice Cavern	Event/EventFlow/Goto_IceCave.bfevfl.zs	next	Event9	Event1
+Ice Cavern	Event/EventFlow/Goto_IceCave.bfevfl.zs	next	Event1	
+Bottom of the Well	Event/EventFlow/Goto_KakarikoWells.bfevfl.zs	entry	EntryPoint0	Event8
+Bottom of the Well	Event/EventFlow/Goto_KakarikoWells.bfevfl.zs	next	Event8	Event13
+Bottom of the Well	Event/EventFlow/Goto_KakarikoWells.bfevfl.zs	next	Event13	
+Shadow Temple	Event/EventFlow/Goto_ShadowTemple.bfevfl.zs	entry	EntryPoint0	Event27
+Shadow Temple	Event/EventFlow/Goto_ShadowTemple.bfevfl.zs	next	Event27	Event12
+Shadow Temple	Event/EventFlow/Goto_ShadowTemple.bfevfl.zs	next	Event12	
+Ganon's Castle (outside)	Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs	entry	EntryPoint0	Event7
+Ganon's Castle (outside)	Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs	entry	C05	Event63
+Ganon's Castle (outside)	Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs	next	Event63	Event11
+Ganon's Castle (outside)	Event/EventFlow/Dm_GanonCastle_0000.bfevfl.zs	next	Event11	Event54
+Inside Ganon's Castle	Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs	next	Event52	Event46
+Inside Ganon's Castle	Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs	next	Event46	
+Inside Ganon's Castle	Event/EventFlow/Dm_InsideGanonCastle_0003.bfevfl.zs	next	Event32	
+Market (adult ruins)	Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs	next	Event18	Event47
+Market (adult ruins)	Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs	next	Event47	Event19
+Market (adult ruins)	Event/EventFlow/Dm_TimeTemple_0065.bfevfl.zs	next	Event19	
