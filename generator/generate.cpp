@@ -23,18 +23,20 @@ static void AddPlacement(nlohmann::ordered_json& placements, RandomizerCheck loc
         Rando::Context::GetInstance()->GetItemLocation(location)->GetPlacedItemName().GetEnglish();
 }
 
-static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings,
+static std::string SpoilerLog(const std::string& seed, const SeedSettings& settings, bool adultStart,
                               const std::vector<RemakeChest>& chests, const RemakeShops& shops,
                               const std::vector<RemakeGift>& gifts, const std::vector<RemakeSkulltula>& skulltulas,
                               const std::vector<RemakeSongPlace>& songs, const std::vector<StoneHint>& hints,
                               const std::vector<CharacterHintText>& characterHints) {
-    nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION },
-                                   { "seed", seed },
-                                   { "settings", ToJson(settings) },
-                                   { "locations", nlohmann::ordered_json::object() },
-                                   { "playthrough", nlohmann::ordered_json::object() },
-                                   { "hints", nlohmann::ordered_json::object() },
-                                   { "hints from characters", nlohmann::ordered_json::object() } };
+    nlohmann::ordered_json log = { { "kaepora", KAEPORA_VERSION }, { "seed", seed } };
+    // A random age is drawn with the seed.
+    if (settings.age == Age::Random) {
+        log["age"] = Words(AgeChoices, adultStart ? Age::Adult : Age::Child);
+    }
+    log["settings"] = ToJson(settings);
+    for (const char* list : { "locations", "playthrough", "hints", "hints from characters" }) {
+        log[list] = nlohmann::ordered_json::object();
+    }
     for (const RemakeChest& chest : chests) {
         if (chest.shuffled) {
             AddPlacement(log["locations"], chest.location);
@@ -292,6 +294,14 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     }
     const std::map<RandomizerCheck, std::string> items =
         PlacedRemakeItems(locations, shops.shuffled, gifts, skulltulas, songs);
+    // SoH draws a random age as it finalizes the settings, before the fill.
+    std::optional<AdultStart> adultStart;
+    if (ctx->GetOption(RSK_SELECTED_STARTING_AGE).Is(RO_AGE_ADULT)) {
+        adultStart =
+            AdultStart{ items.contains(RC_GIFT_FROM_RAURU)
+                            ? items.at(RC_GIFT_FROM_RAURU)
+                            : std::ranges::find(rewardTable, RC_GIFT_FROM_RAURU, &RemakeGift::location)->item };
+    }
     const std::vector<CharacterHintText> characterHints = settings.hintsFromCharacters == HintsFromCharacters::GiveHints
                                                               ? CharacterHints(hintTables, items, settings)
                                                               : std::vector<CharacterHintText>{};
@@ -304,6 +314,8 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
     const std::vector<StoneHint> hints = settings.gossipStones == GossipStones::GiveHints
                                              ? PickHints(hintTables, items, named)
                                              : std::vector<StoneHint>{};
-    return { SpoilerLog(seed, settings, locations, shops, gifts, skulltulas, songs, hints, characterHints),
-             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, songs, settings, items, hints, messages) };
+    return { SpoilerLog(seed, settings, adultStart.has_value(), locations, shops, gifts, skulltulas, songs, hints,
+                        characterHints),
+             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, songs, settings, items, hints, messages,
+                        adultStart) };
 }

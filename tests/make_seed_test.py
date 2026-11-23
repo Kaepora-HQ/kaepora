@@ -141,6 +141,18 @@ class MakeSeedTest(unittest.TestCase):
         self.assertTrue(changed)
         self.assertEqual({flow for flow in own if (mod / "romfs" / flow).is_file()}, changed)
 
+    def test_an_adult_seed_with_a_piece_of_heart_at_raurus_place_is_patched(self):
+        # An adult start passes Rauru's film and gives what his place holds at the start. With the rewards shuffled
+        # among every item, seed 3 puts a Piece of Heart there.
+        spoiler, plan, mod = self.tmp / "spoiler.json", self.tmp / "plan.json", self.tmp / "mod"
+        settings = json.dumps({"Door of Time": "Open", "Kokiri Forest": "Open", "Age": "Adult",
+                               "Dungeon rewards": "Shuffled"})
+        result = subprocess.run([SEEDGEN, "3", spoiler, plan, settings], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(plan.read_text())["start_items"], ["Weapon_Sword_Master", "Obj_Heart_Piece"])
+        result = subprocess.run([PATCH, NUP, plan, mod], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_two_seeds_in_one_process(self):
         for seed in ["7", "8"]:
             result = self.make_seeds((seed, self.tmp / "alone" / seed))

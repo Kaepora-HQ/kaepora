@@ -124,6 +124,11 @@ QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     if (settings.trials == Trials::None) {
         changed << "no trials";
     }
+    if (settings.age == Age::Adult) {
+        changed << "starts as an adult";
+    } else if (settings.age == Age::Random) {
+        changed << "random age";
+    }
     for (const Skip skip : std::views::keys(SkipChoices)) {
         if (!settings.skips.contains(skip)) {
             QString name = SkipName(skip);
@@ -239,6 +244,7 @@ QString Details(const SeedSettings& settings, LoggedGifts gifts) {
                         Line(DoorOfTimeSetting, QString::fromUtf8(Words(DoorOfTimeChoices, settings.doorOfTime))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
+                        Line(AgeSetting, QString::fromUtf8(Words(AgeChoices, settings.age))),
                         Line(SkipSetting, Skipped(settings)),
                         Line(StartWithSetting, StartWith(settings)),
                         Line(ShopsSetting, QString::fromUtf8(ShopsWords(settings.shops))) };
@@ -486,13 +492,16 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         ChooseInList<StartStep>(dialog, StartWithSetting, "Items", StartSteps, &StartStep::item, "None", *startWith,
                                 showStartWith);
     });
+    QComboBox* age = Choice(AgeChoices);
     std::vector<std::pair<Skip, QCheckBox*>> skips;
     auto* skipList = new QVBoxLayout;
     for (const Skip skip : std::views::keys(SkipChoices)) {
         skips.emplace_back(skip, new QCheckBox(SkipBox(skip)));
         skipList->addWidget(skips.back().second);
     }
+    QCheckBox* openingMovie = skips.front().second;
     auto* startForm = new QFormLayout;
+    startForm->addRow(QString::fromUtf8(AgeSetting), age);
     startForm->addRow(QString::fromUtf8(SkipSetting), skipList);
     startForm->addRow("Items", items);
     auto* startGroup = new QGroupBox("Start");
@@ -530,6 +539,31 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     QObject::connect(shops, &QComboBox::currentIndexChanged, dialog, showPrices);
     QObject::connect(shopPrices, &QComboBox::currentIndexChanged, dialog, showPrices);
 
+    // A child starts unless the door and the forest let an adult start, and an adult start has no opening. A greyed
+    // choice shows what the seed takes and says why.
+    const auto showStart = [=] {
+        SeedSettings shown;
+        shown.doorOfTime = Selected<DoorOfTime>(doorOfTime);
+        shown.forest = Selected<Forest>(forest);
+        const bool child = !AnAdultCanStart(shown);
+        if (child) {
+            Select(age, Age::Child);
+        }
+        age->setEnabled(!child);
+        for (QWidget* row : std::initializer_list<QWidget*>{ age, startForm->labelForField(age) }) {
+            row->setToolTip(child ? "An adult start needs the Door of Time open and Kokiri Forest not Closed." : "");
+        }
+        const bool adult = Selected<Age>(age) == Age::Adult;
+        if (adult) {
+            openingMovie->setChecked(true);
+        }
+        openingMovie->setEnabled(!adult);
+        openingMovie->setToolTip(adult ? "An adult start has no opening." : "");
+    };
+    for (QComboBox* box : { doorOfTime, forest, age }) {
+        QObject::connect(box, &QComboBox::currentIndexChanged, dialog, showStart);
+    }
+
     const auto show = [=](const SeedSettings& shown) {
         for (const auto& [dungeon, box] : dungeons) {
             box->setChecked(shown.shuffledDungeons.contains(dungeon));
@@ -540,6 +574,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(doorOfTime, shown.doorOfTime);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
+        Select(age, shown.age);
         for (const auto& [skip, box] : skips) {
             box->setChecked(shown.skips.contains(skip));
         }
@@ -562,6 +597,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(lens, shown.lens);
         Select(gossipStones, shown.gossipStones);
         Select(hintsFromCharacters, shown.hintsFromCharacters);
+        showStart();
     };
     show(settings);
 
@@ -581,6 +617,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.doorOfTime = Selected<DoorOfTime>(doorOfTime);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
+        shown.age = Selected<Age>(age);
         shown.skips.clear();
         for (const auto& [skip, box] : skips) {
             if (box->isChecked()) {

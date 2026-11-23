@@ -247,6 +247,10 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
                      an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest
+                     an_adult_start_needs_the_door_open_and_the_forest_not_closed
+                     an_adult_start_has_no_opening an_adult_start_begins_by_the_pedestal_with_the_sword_and_raurus_gift
+                     an_adult_starts_route_is_in_reach_in_its_sphere an_adult_start_starts_the_forest_visited
+                     a_random_age_starts_the_seed_at_the_age_it_draws
                      an_adult_passes_zoras_rivers_boulders_before_the_water_quest
                      a_seller_left_off_the_route_stands_in_for_no_step
                      bridge_always_open no_trials
@@ -536,7 +540,8 @@ if(KAEPORA_GAME_NUP)
                           a_seed_with_the_deku_scrubs_shuffled_is_patched
                           a_seed_with_gold_skulltulas_shuffled_is_patched
                           a_seed_with_loose_items_shuffled_is_patched a_seed_with_songs_shuffled_is_patched
-                          a_seed_with_dungeon_rewards_shuffled_is_patched two_seeds_in_one_process
+                          a_seed_with_dungeon_rewards_shuffled_is_patched
+                          an_adult_seed_with_a_piece_of_heart_at_raurus_place_is_patched two_seeds_in_one_process
                           same_seed_twice_in_one_process existing_folder_is_refused new_folder_in_a_missing_folder)
         add_test(NAME make_seed_${TEST}
                  COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/make_seed_test.py

@@ -19,6 +19,7 @@ inline constexpr std::string_view ForestSetting = "Kokiri Forest";
 inline constexpr std::string_view DoorOfTimeSetting = "Door of Time";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
+inline constexpr std::string_view AgeSetting = "Age";
 inline constexpr std::string_view SkipSetting = "Skip";
 inline constexpr std::string_view StartWithSetting = "Start with";
 inline constexpr std::string_view ShopsSetting = "Shop goods";
@@ -96,6 +97,14 @@ enum class Trials { AllSix, None };
 inline constexpr std::pair<Trials, std::string_view> TrialsChoices[] = {
     { Trials::AllSix, "All six" },
     { Trials::None, "None" },
+};
+
+// SoH's starting age. A random age is drawn with the seed, a child or an adult alike.
+enum class Age { Child, Adult, Random };
+inline constexpr std::pair<Age, std::string_view> AgeChoices[] = {
+    { Age::Child, "Child" },
+    { Age::Adult, "Adult" },
+    { Age::Random, "Random" },
 };
 
 enum class Skip { OpeningMovie, SkippableScenes, NewAreaScenes, TutorialMessages, SariasGreeting };
@@ -331,6 +340,7 @@ struct SeedSettings {
     DoorOfTime doorOfTime = DoorOfTime::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
+    Age age = Age::Child;
     std::set<Skip> skips{ std::views::keys(SkipChoices).begin(), std::views::keys(SkipChoices).end() };
     std::set<StartStep> startWith;      // at most one step of each item
     std::optional<ShuffledShops> shops; // none when "Shop goods" is "Vanilla"
@@ -345,6 +355,13 @@ struct SeedSettings {
 
     bool operator==(const SeedSettings&) const = default;
 };
+
+// Whether "Age" may be "Adult" or "Random". SoH starts a child unless the Door of Time is open and Kokiri Forest not
+// closed: a closed door keeps an adult from the Ocarina of Time it asks for, and a closed forest keeps in a child who
+// comes back.
+inline bool AnAdultCanStart(const SeedSettings& settings) {
+    return settings.doorOfTime == DoorOfTime::Open && settings.forest != Forest::Closed;
+}
 
 // The steps the settings start with, in the list's order.
 std::vector<StartStep> StartWithInOrder(const SeedSettings& settings);
