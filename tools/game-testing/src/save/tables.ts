@@ -1,6 +1,6 @@
 /**
- * - `tables/spots.tsv`: spots where Link stands on the floor before a subject, each from a save the game wrote
- *   there, where standing him before the subject's actor puts him in a wall or a ceiling.
+ * - `tables/spots.tsv`: where Link starts for a location by name, a check or a spot of its own, with how each was found
+ *   and the look that started there. `Spots` reads it with the recorded table beside it.
  * - `tables/bases.tsv`: the base saves, which stay on machines with the game.
  * - Tiers from `remake/items.tsv`: the items that stand for one SoH item, in the table's order, which puts the
  *   Hookshot before the Longshot. The wallets and scales stand there too, highest first; the pouch table joins
@@ -18,19 +18,13 @@ import {
 	String as Str,
 } from "effect";
 import type { NameMatch } from "../contract/rpc.ts";
+import type { Spot } from "../contract/spots.ts";
+import { Found, Look, SpotName } from "../contract/spots.ts";
 import { Age } from "../contract/state.ts";
 import type { NameKind } from "../contract/values.ts";
+import { RunId } from "../contract/values.ts";
 import { stem } from "../data/dump.ts";
-import type { GameData, Point } from "../data/game-data.ts";
-
-export interface Spot {
-	/** Degrees: 0 faces the scene's +Z, 90 its +X. */
-	readonly facing: number;
-	readonly name: string;
-	readonly position: Point;
-	readonly room: number | undefined;
-	readonly scene: string;
-}
+import type { GameData } from "../data/game-data.ts";
 
 export interface Base {
 	readonly about: string;
@@ -65,13 +59,20 @@ const Finite = Schema.FiniteFromString;
 const Int = Schema.FiniteFromString.check(Schema.isInt());
 
 const SpotRow = Schema.Struct({
-	name: Text,
+	name: SpotName,
 	scene: Text,
-	room: Text,
+	room: Schema.Union([Schema.Literal(""), Int]),
 	x: Finite,
 	y: Finite,
 	z: Finite,
 	facing: Finite,
+	found: Found,
+	evidence: Text,
+	look: Schema.Union([
+		Schema.Literal(""),
+		Schema.TemplateLiteralParser([Look.fields.outcome, " ", RunId]),
+	]),
+	note: Text,
 });
 const BaseRow = Schema.Struct({
 	name: Text,
@@ -87,11 +88,10 @@ const PlacedRow = Schema.Struct({ location: Text, hash: Text });
 const FlowRow = Schema.Struct({ location: Text, flow: Text });
 const ShopRow = Schema.Struct({ location: Text, slot: Int, shopkeepers: Text });
 
-const readTable = Effect.fn("OwnTables.read")(function* <
+/** A table's rows from its text: a header of column names, then one line a row, cells split by tabs. */
+const parseTable = Effect.fnUntraced(function* <
 	S extends Schema.Top & { readonly DecodingServices: never },
->(path: string, row: S) {
-	const fs = yield* FileSystem.FileSystem;
-	const text = yield* fs.readFileString(path).pipe(Effect.orDie);
+>(text: string, row: S) {
 	const [header = "", ...lines] = Arr.filter(
 		Str.split(text, "\n"),
 		Str.isNonEmpty
@@ -103,8 +103,35 @@ const readTable = Effect.fn("OwnTables.read")(function* <
 			Arr.map(columns, (column, i) => [column, cells[i] ?? ""])
 		);
 	});
-	return yield* Schema.decodeUnknownEffect(Schema.Array(row))(rows).pipe(
-		Effect.orDie
+	return yield* Schema.decodeUnknownEffect(Schema.Array(row))(rows);
+});
+
+const readTable = Effect.fn("OwnTables.read")(function* <
+	S extends Schema.Top & { readonly DecodingServices: never },
+>(path: string, row: S) {
+	const fs = yield* FileSystem.FileSystem;
+	const text = yield* fs.readFileString(path).pipe(Effect.orDie);
+	return yield* parseTable(text, row).pipe(Effect.orDie);
+});
+
+/** The spots a table's text holds. A look is `passed <run>` or `failed <run>`. */
+export const parseSpots = Effect.fnUntraced(function* (text: string) {
+	const rows = yield* parseTable(text, SpotRow);
+	return Arr.map(
+		rows,
+		(row): Spot => ({
+			name: row.name,
+			scene: row.scene,
+			...(row.room === "" ? {} : { room: row.room }),
+			position: [row.x, row.y, row.z],
+			facing: row.facing,
+			found: row.found,
+			evidence: row.evidence,
+			...(row.look === ""
+				? {}
+				: { look: { outcome: row.look[0], run: row.look[2] } }),
+			note: row.note,
+		})
 	);
 });
 
@@ -114,7 +141,10 @@ const byName = <A extends { readonly name: string }>(rows: readonly A[]) =>
 export class OwnTables extends Context.Service<
 	OwnTables,
 	{
-		readonly spots: ReadonlyMap<string, Spot>;
+		/** The tracked spots, `tables/spots.tsv`. */
+		readonly spots: readonly Spot[];
+		/** Every chest check of `remake/chests.tsv`, by its spoiler log name, once, in the table's order. */
+		readonly chests: readonly string[];
 		readonly bases: ReadonlyMap<string, Base>;
 		readonly tiers: readonly (readonly string[])[];
 		readonly checks: ReadonlyMap<string, Check>;
@@ -123,11 +153,14 @@ export class OwnTables extends Context.Service<
 	static readonly layer = Layer.effect(
 		OwnTables,
 		Effect.gen(function* () {
-			const spots = yield* readTable(`${tables}/spots.tsv`, SpotRow);
+			const fs = yield* FileSystem.FileSystem;
+			const spots = yield* fs
+				.readFileString(`${tables}/spots.tsv`)
+				.pipe(Effect.flatMap(parseSpots), Effect.orDie);
 			const bases = yield* readTable(`${tables}/bases.tsv`, BaseRow);
 			const items = yield* readTable(`${remake}/items.tsv`, ItemRow);
 			const placed = yield* Effect.forEach(
-				["chests", "loose_items", "skulltulas"],
+				["chests", "loose_items", "skulltulas"] as const,
 				(table) => readTable(`${remake}/${table}.tsv`, PlacedRow),
 				{ concurrency: 1 }
 			);
@@ -171,14 +204,12 @@ export class OwnTables extends Context.Service<
 			}
 			const groups = Arr.groupBy(items, (row) => row.soh_item);
 			return OwnTables.of({
-				spots: byName(
-					Arr.map(spots, (row) => ({
-						name: row.name,
-						scene: row.scene,
-						room: row.room === "" ? undefined : Number(row.room),
-						position: [row.x, row.y, row.z] as const,
-						facing: row.facing,
-					}))
+				spots,
+				chests: Arr.dedupe(
+					Arr.filter(
+						Arr.map(placed[0], (row) => row.location),
+						Str.isNonEmpty
+					)
 				),
 				bases: byName(bases),
 				tiers: Arr.flatMapNullishOr(Rec.values(groups), (group) =>
@@ -204,6 +235,7 @@ const byLength = Order.combine(
 export const searchNames = Effect.fn("searchNames")(function* (
 	data: GameData["Service"],
 	own: OwnTables["Service"],
+	spots: readonly Spot[],
 	text: string,
 	options: { readonly kind?: NameKind | undefined; readonly limit: number }
 ) {
@@ -218,7 +250,7 @@ export const searchNames = Effect.fn("searchNames")(function* (
 			name,
 			about: "a check by its spoiler log name",
 		})),
-		...Arr.map([...own.spots.values()], (spot) => ({
+		...Arr.map(spots, (spot) => ({
 			kind: "spot",
 			name: spot.name,
 			about: spot.scene,

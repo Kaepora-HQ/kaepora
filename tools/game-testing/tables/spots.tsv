@@ -1,5 +1,5 @@
-name	scene	room	x	y	z	facing	found
-Kak House of Skulltula	KakarikoVillage_Adult		-27.302	102.885	74.203	155.0	A save the game wrote on the floor before the cursed man; the spot a step higher is in the ceiling.
-Deku Tree Boss Room	InsideTheDekuTree	10	15.383	46.990	67.636	80.1	A save the game wrote facing the heart container's spot.
-ZR Near Open Grotto Pillar	ZoraRiver_Child		10.074	115.126	-33.063	65.8	A save the game wrote before the heart piece on the pillar.
-DMT Great Fairy Fountain	DeathMountainTrail_Child		-34.000	211.240	-189.180	-160.0	An autosave the game wrote on the Great Fairy's mark.
+name	scene	room	x	y	z	facing	found	evidence	look	note
+Kak House of Skulltula	KakarikoVillage_Adult		-27.302	102.885	74.203	155.0	save	spikes/gifts-upgrades/look/u4-bow-after-quiver/results/b-autosave-after-bow		On the floor before the cursed man; the spot a step higher is in the ceiling.
+Deku Tree Boss Room	InsideTheDekuTree	10	15.383	46.990	67.636	80.1	save	a save the game wrote		Facing the heart container's spot.
+ZR Near Open Grotto Pillar	ZoraRiver_Child		10.074	115.126	-33.063	65.8	save	a save the game wrote		Before the heart piece on the pillar.
+DMT Great Fairy Fountain	DeathMountainTrail_Child		-34.000	211.240	-189.180	-160.0	save	test-runs/owner-playtest/runs/gf2-summit-autosave		On the Great Fairy's mark, inside the fountain: with MountainTrail_FairyRockBreak 0 the rock shuts Link in.

@@ -14,6 +14,7 @@ import {
 	Layer,
 	Option,
 	Path,
+	Record as Rec,
 	Schema,
 	String as Str,
 } from "effect";
@@ -22,6 +23,7 @@ import { Argument, CliError, Command, Flag } from "effect/cli";
 import type { Origin, PlannedEdit, StatePlan } from "./contract/plan.ts";
 import { originText } from "./contract/plan.ts";
 import type { Outcome } from "./contract/record.ts";
+import type { ChestSpots, StartSpot } from "./contract/spots.ts";
 import { StartState } from "./contract/state.ts";
 import { NameKind, RunId } from "./contract/values.ts";
 import { namesHere, writeNames } from "./data/declarations.ts";
@@ -38,6 +40,7 @@ import {
 	serverName,
 } from "./mcp/server.ts";
 import { readMod, scriptMod } from "./mod.ts";
+import { chestSpots, Spots } from "./save/spots.ts";
 import { StartStates } from "./save/state.ts";
 import { OwnTables, searchNames } from "./save/tables.ts";
 import type { ScriptRun } from "./scripts/runner.ts";
@@ -243,8 +246,20 @@ const wasOf = (edit: PlannedEdit) =>
 		? "added by the mod: the base has no record, so the game starts it so"
 		: `was ${String(edit.base)}`;
 
+const spotKinds: Readonly<Record<StartSpot["kind"], string>> = {
+	given: "a place the state gives",
+	landing: "a landing of the game",
+	"worked out": "a worked-out spot",
+	found: "a found spot",
+	proven: "a proven spot",
+};
+
+/** Where a start stands Link, and what kind of spot that is. */
+const standing = (spot: StartSpot) =>
+	`Link stands in ${spot.scene}${spot.room === undefined ? "" : ` room ${spot.room}`} at (${Arr.join(Arr.map(spot.position, String), ", ")}), facing ${spot.facing}: ${spotKinds[spot.kind]}, ${spot.about}`;
+
 /**
- * A plan as `plan` prints it: the base, each value the words write, each a place it resets leaves alone, and then under a
+ * A plan as `plan` prints it: the base, where Link stands, each value the words write, each a place it resets leaves alone, and then under a
  * heading of its own what the mod's new game starts with.
  */
 const printPlan = (planned: StatePlan) =>
@@ -254,6 +269,9 @@ const printPlan = (planned: StatePlan) =>
 		const left = Arr.filter(planned.leftAlone, (each) => !fromMod(each.from));
 		const moved = Arr.filter(planned.leftAlone, (each) => fromMod(each.from));
 		yield* Console.log(`From ${planned.base.name}: ${planned.base.about}`);
+		if (planned.location !== undefined) {
+			yield* Console.log(standing(planned.location));
+		}
 		for (const edit of words) {
 			yield* Console.log(
 				`${nameOf(edit)} = ${String(edit.to)}    ${wasOf(edit)}, from ${originText(edit.from)}`
@@ -293,8 +311,16 @@ const plan = Command.make(
 					Effect.gen(function* () {
 						const states = yield* StartStates;
 						const { state, mod } = yield* declaredIn(file, namesHere);
-						const { base, edits, leftAlone } = yield* states.plan(state, mod);
-						const planned: StatePlan = { base, edits, leftAlone };
+						const { base, edits, leftAlone, location } = yield* states.plan(
+							state,
+							mod
+						);
+						const planned: StatePlan = {
+							base,
+							edits,
+							leftAlone,
+							...(location === undefined ? {} : { location }),
+						};
 						return planned;
 					}).pipe(Effect.provide(tables)),
 					Effect.fnUntraced(function* (far) {
@@ -357,11 +383,12 @@ const search = Command.make(
 					Effect.gen(function* () {
 						const data = yield* GameData;
 						const own = yield* OwnTables;
-						return yield* searchNames(data, own, text, {
+						const kept = yield* Spots.use((service) => service.all);
+						return yield* searchNames(data, own, kept, text, {
 							limit,
 							kind: Option.getOrUndefined(kind),
 						});
-					}).pipe(Effect.provide(GameData.layer)),
+					}).pipe(Effect.provide([GameData.layer, Spots.layer])),
 					(far) =>
 						reached(
 							far.url,
@@ -387,6 +414,70 @@ const search = Command.make(
 ).pipe(
 	Command.withDescription(
 		"Finds every name a state or a script takes that contains the text: saved values, items, quests, scenes, landings, event settings, checks, spots and bases. With GAME_TESTING_URL, the far machine finds them."
+	)
+);
+
+const kindOrder: readonly ChestSpots["spots"][number]["kind"][] = [
+	"proven",
+	"found",
+	"worked out",
+];
+
+/** A chest's best spot, of any age, or none. */
+const bestOf = (chest: ChestSpots) =>
+	Arr.findFirst(kindOrder, (kind) =>
+		Arr.some(chest.spots, (spot) => spot.kind === kind)
+	).pipe(Option.getOrElse(() => "none"));
+
+/** How many of `chests` have a best spot of each kind, in words. */
+const counted = (chests: readonly ChestSpots[]) =>
+	Arr.join(
+		Arr.flatMapNullishOr([...kindOrder, "none"], (kind) => {
+			const count = Arr.filter(
+				chests,
+				(chest) => bestOf(chest) === kind
+			).length;
+			return count === 0 ? undefined : `${count} ${kind}`;
+		}),
+		", "
+	);
+
+const spots = Command.make("spots", {}, () =>
+	shown(
+		Effect.flatMap(
+			hereOrFar(
+				Effect.gen(function* () {
+					const data = yield* GameData;
+					const own = yield* OwnTables;
+					const kept = yield* Spots;
+					return yield* chestSpots(data, own, kept);
+				}).pipe(Effect.provide([GameData.layer, Spots.layer])),
+				(far) => reached(far.url, far.client.Spots())
+			),
+			Effect.fnUntraced(function* (chests) {
+				const areas = Arr.groupBy(chests, (chest) => chest.area);
+				for (const [area, inArea] of Rec.toEntries(areas)) {
+					yield* Console.log(
+						`${area === "" ? "No chest in the remake" : area}: ${counted(inArea)}`
+					);
+					for (const chest of inArea) {
+						if (chest.spots.length === 0) {
+							yield* Console.log(`  none        ${chest.name}`);
+						}
+						for (const spot of chest.spots) {
+							yield* Console.log(
+								`  ${Str.padEnd(10)(spot.kind)}  ${chest.name}  ${spot.age}: ${spot.about}`
+							);
+						}
+					}
+				}
+				yield* Console.log(`${chests.length} chests: ${counted(chests)}.`);
+			})
+		)
+	)
+).pipe(
+	Command.withDescription(
+		"Lists every chest by area, with the spot each age starts on: proven once a look passed from it, found in a save or a running game, worked out before its actor, or none. With GAME_TESTING_URL, the far machine's spots, which are the ones its looks use."
 	)
 );
 
@@ -535,6 +626,7 @@ export const cli = Command.make("game-testing").pipe(
 		plan,
 		places,
 		search,
+		spots,
 		runs,
 		names,
 		mcp,

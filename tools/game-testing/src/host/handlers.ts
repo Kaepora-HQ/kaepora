@@ -9,6 +9,7 @@ import { contract, GameRpcs } from "../contract/rpc.ts";
 import { namesText } from "../data/declarations.ts";
 import { GameData } from "../data/game-data.ts";
 import { VersionMismatch } from "../errors.ts";
+import { chestSpots, Spots } from "../save/spots.ts";
 import { StartStates } from "../save/state.ts";
 import { OwnTables, searchNames } from "../save/tables.ts";
 import { Places } from "./places.ts";
@@ -25,6 +26,7 @@ export const handlers = GameRpcs.toLayer(
 		const runs = yield* Runs;
 		const data = yield* GameData;
 		const own = yield* OwnTables;
+		const spots = yield* Spots;
 		const states = yield* StartStates;
 		const machine = hostname();
 		const count = (yield* places.list).length;
@@ -107,14 +109,21 @@ export const handlers = GameRpcs.toLayer(
 					})
 				),
 			Plan: ({ state, mod }) =>
-				Effect.map(states.plan(state, mod), ({ base, edits, leftAlone }) => ({
-					base,
-					edits,
-					leftAlone,
-				})),
+				Effect.map(
+					states.plan(state, mod),
+					({ base, edits, leftAlone, location }) => ({
+						base,
+						edits,
+						leftAlone,
+						...(location === undefined ? {} : { location }),
+					})
+				),
 			Names: () => names,
 			Search: ({ text, kind, limit }) =>
-				searchNames(data, own, text, { limit, kind }),
+				Effect.flatMap(spots.all, (kept) =>
+					searchNames(data, own, kept, text, { limit, kind })
+				),
+			Spots: () => chestSpots(data, own, spots),
 			Runs: ({ script, limit }) => runs.list({ script, limit }),
 			Run: ({ run }) => runs.get(run),
 			RunFile: ({ run, path }) => runs.file(run, path),

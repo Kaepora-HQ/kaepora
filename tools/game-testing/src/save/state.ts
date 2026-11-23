@@ -14,6 +14,8 @@ import {
 import { UserDirectories } from "effect/persistence";
 import type { Origin, PlannedEdit, StatePlan } from "../contract/plan.ts";
 import { originText } from "../contract/plan.ts";
+import type { StartSpot } from "../contract/spots.ts";
+import { kindOf } from "../contract/spots.ts";
 import type { Age, Mod, StartState } from "../contract/state.ts";
 import type { Saved, Value } from "../contract/values.ts";
 import type {
@@ -40,6 +42,7 @@ import type { SaveFile } from "./codec.ts";
 import { decode, encode, read, write } from "./codec.ts";
 import type { Weight, Writer } from "./pouch.ts";
 import { makePouch, rowOf, slotOf } from "./pouch.ts";
+import { aboutSpot, placedFor, Spots, workedOutAbout } from "./spots.ts";
 import type { Base, Check, Stock } from "./tables.ts";
 import { OwnTables } from "./tables.ts";
 
@@ -146,6 +149,7 @@ export class StartStates extends Context.Service<
 		Effect.gen(function* () {
 			const data = yield* GameData;
 			const own = yield* OwnTables;
+			const spots = yield* Spots;
 			const fs = yield* FileSystem.FileSystem;
 			const paths = yield* Path.Path;
 			const directories = yield* UserDirectories.UserDirectories;
@@ -226,7 +230,15 @@ export class StartStates extends Context.Service<
 					Option.isNone(mod) || state.startValues === "base"
 						? []
 						: yield* data.startValues(mod.value);
-				const words = makeWords({ data, own, items, quests, saves, starts });
+				const words = makeWords({
+					data,
+					own,
+					spots,
+					items,
+					quests,
+					saves,
+					starts,
+				});
 				yield* words.notAutosave();
 				if (Option.isSome(mod)) {
 					yield* words.startValues(mod.value.name, starts);
@@ -294,12 +306,21 @@ interface Inputs {
 	readonly own: OwnTables["Service"];
 	readonly quests: ReadonlySet<string>;
 	readonly saves: { readonly progress: SaveFile; readonly caption: SaveFile };
+	readonly spots: Spots["Service"];
 	/** What the mod's new game starts with, where the game's own starts otherwise. */
 	readonly starts: readonly StartValue[];
 }
 
 /** The words of one state, writing into one plan. */
-const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
+const makeWords = ({
+	data,
+	own,
+	spots,
+	items,
+	quests,
+	saves,
+	starts,
+}: Inputs) => {
 	const planned = new Map<
 		string,
 		{ readonly edit: PlannedEdit; readonly weight: Weight }
@@ -308,6 +329,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 		string,
 		{ readonly name: string; readonly from: Origin }
 	>();
+	let standing: StartSpot | undefined;
 
 	/** A record keeps its strongest edit; two words that write it two ways are refused. */
 	const place = Effect.fnUntraced(function* (
@@ -540,7 +562,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 				});
 
 	/** Refuses a start inside a grotto the plan or the base leaves shut. */
-	const shut = (spot: Standing, scene: Scene) =>
+	const shut = (spot: StartSpot, scene: Scene) =>
 		Effect.gen(function* () {
 			const placements = yield* data.placements({ scene: scene.name });
 			const named = (name: string) =>
@@ -588,6 +610,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 
 	return {
 		result: (): Written => ({
+			...(standing === undefined ? {} : { location: standing }),
 			edits: Arr.map([...planned.values()], (each) => each.edit),
 			leftAlone: Arr.sort(
 				Arr.filter(
@@ -881,7 +904,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 			location: StartState["location"] & {},
 			age: Age | undefined
 		) {
-			const spot = yield* spotOf(data, own, location, ageOf(age));
+			const spot = yield* spotOf(data, own, spots, location, ageOf(age));
 			const scene = yield* sceneOf(spot.scene);
 			if (spot.room !== undefined) {
 				yield* roomOf(scene, spot.room);
@@ -894,11 +917,11 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 				});
 			}
 			yield* shut(spot, scene);
-			const from: Origin = {
-				_tag: "word",
-				word: "location",
-				named: typeof location === "string" ? location : spot.scene,
-			};
+			standing = spot;
+			const from: Origin =
+				typeof location === "string"
+					? { _tag: "spot", name: location, kind: spot.kind }
+					: { _tag: "word", word: "location", named: spot.scene };
 			const facing = direction(spot.facing);
 			const writes: readonly (readonly [string, Saved])[] = [
 				["Sequence_CurrentBanc", scene.name],
@@ -996,72 +1019,68 @@ const fits = (entry: GameValue, value: Value) => {
 	}
 };
 
-interface Standing {
-	readonly facing: number;
-	readonly position: Point;
-	readonly room: number | undefined;
-	readonly scene: string;
-}
-
 const spotOf = Effect.fn("StartStates.spot")(function* (
 	data: GameData["Service"],
 	own: OwnTables["Service"],
+	spots: Spots["Service"],
 	location: StartState["location"] & {},
 	age: Age
 ) {
 	if (typeof location !== "string") {
-		const exact: Standing = {
-			scene: location.scene,
-			room: location.room,
-			position: location.position,
-			facing: location.facing,
+		const given: StartSpot = {
+			...location,
+			kind: "given",
+			about: "where the state places Link",
 		};
-		return exact;
+		return given;
 	}
-	const found: Standing[] = [];
-	const spot = own.spots.get(location);
-	if (spot !== undefined) {
-		found.push(spot);
-	}
+	const found: StartSpot[] = [];
 	const check = own.checks.get(location);
-	if (check !== undefined && Arr.isReadonlyArrayNonEmpty(check.placements)) {
-		const each = yield* Effect.forEach(
-			check.placements,
-			(hash) => data.placements({ hash }),
-			{
-				concurrency: 1,
-			}
-		);
-		const other = age === "child" ? "_Adult" : "_Child";
-		const forAge = Arr.filter(
-			Arr.flatten(each),
-			(placement) => !Str.includes(other)(placement.scene)
-		);
-		const [subject, ...others] = forAge;
+	const kept = yield* spots.all;
+	const named = Arr.filter(kept, (each) => each.name === location);
+	// A spot of the other age stands only for a name no check has, and the scene's age then refuses it.
+	const forAge = yield* spots.find(location, age);
+	const spot = Option.orElse(forAge, () =>
+		check === undefined ? Arr.head(named) : Option.none()
+	);
+	if (Option.isSome(spot)) {
+		found.push({
+			scene: spot.value.scene,
+			...(spot.value.room === undefined ? {} : { room: spot.value.room }),
+			position: spot.value.position,
+			facing: spot.value.facing,
+			kind: kindOf(spot.value),
+			about: aboutSpot(spot.value),
+		});
+	} else if (check !== undefined) {
+		if (!Arr.isReadonlyArrayNonEmpty(check.placements)) {
+			return yield* StateRefused.make({
+				reason: "no-place",
+				detail: `${location} has no place of its own: no actor in the game's files stands for it, so no spot before it can be worked out. Add a row for it to tables/spots.tsv, with where Link stands to be given it or to find it.`,
+			});
+		}
+		const placed = yield* placedFor(data, check, age);
+		const [subject, ...others] = placed;
 		if (subject === undefined || others.length > 0) {
 			return yield* StateRefused.make({
 				reason: "ambiguous",
-				detail: `${location} is placed ${forAge.length} times for ${age === "child" ? "a child" : "an adult"}, so Link's spot before it is not one.`,
+				detail: `${location} is placed ${placed.length} times for ${age === "child" ? "a child" : "an adult"}, so Link's spot before it is not one.`,
 			});
 		}
 		found.push({
-			scene: subject.scene,
-			room: subject.room,
-			position: [
-				subject.position[0] + before * Math.sin(subject.yaw),
-				subject.position[1] + lift,
-				subject.position[2] + before * Math.cos(subject.yaw),
-			],
-			facing: degrees(subject.yaw) + 180,
+			...workedOut(subject),
+			kind: "worked out",
+			about: workedOutAbout,
 		});
 	}
 	const landing = Option.getOrUndefined(data.landing(location));
 	if (landing !== undefined) {
 		found.push({
 			scene: landing.scene,
-			room: undefined,
 			position: landing.position,
 			facing: degrees(landing.yaw),
+			kind: "landing",
+			about: `the game's landing ${landing.name}`,
 		});
 	}
 	const [only, ...more] = found;
@@ -1071,7 +1090,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 			kind: "spot",
 			asked: location,
 			suggestions: nearest(location, [
-				...own.spots.keys(),
+				...Arr.map(kept, (each) => each.name),
 				...own.checks.keys(),
 				...landings,
 			]),
@@ -1080,8 +1099,20 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 	if (more.length > 0) {
 		return yield* StateRefused.make({
 			reason: "ambiguous",
-			detail: `${location} names ${found.length} spots: a row of tables/spots.tsv, a check or a landing.`,
+			detail: `${location} names ${found.length} spots: a spot or a check, and a landing.`,
 		});
 	}
 	return only;
+});
+
+/** One unit before a placement's actor, on the side it faces, facing it. */
+const workedOut = (subject: Placement) => ({
+	scene: subject.scene,
+	...(subject.room === undefined ? {} : { room: subject.room }),
+	position: [
+		subject.position[0] + before * Math.sin(subject.yaw),
+		subject.position[1] + lift,
+		subject.position[2] + before * Math.cos(subject.yaw),
+	] as const,
+	facing: (degrees(subject.yaw) + 180) % 360,
 });

@@ -12,6 +12,7 @@ import {
 } from "effect";
 import { UserDirectories } from "effect/persistence";
 import type { PlannedEdit } from "../src/contract/plan.ts";
+import type { Spot } from "../src/contract/spots.ts";
 import type { Mod } from "../src/contract/state.ts";
 import { StartState } from "../src/contract/state.ts";
 import type { Saved } from "../src/contract/values.ts";
@@ -24,8 +25,9 @@ import {
 } from "../src/errors.ts";
 import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
+import { chestSpots, Spots } from "../src/save/spots.ts";
 import { StartStates } from "../src/save/state.ts";
-import type { Check, Spot } from "../src/save/tables.ts";
+import type { Check } from "../src/save/tables.ts";
 import { OwnTables } from "../src/save/tables.ts";
 import type { FakeGame, FakeValue } from "./fake-game.ts";
 import { fakeDump, fakeSave, modList, startList } from "./fake-game.ts";
@@ -330,6 +332,19 @@ const checks = new Map<string, Check>([
 		},
 	],
 	[
+		"Forest Temple Pot Chest",
+		{
+			name: "Forest Temple Pot Chest",
+			placements: [pot],
+			flows: [],
+			stock: [],
+		},
+	],
+	[
+		"Fake Missing Chest",
+		{ name: "Fake Missing Chest", placements: [], flows: [], stock: [] },
+	],
+	[
 		"Fake 20 Token Reward",
 		{
 			name: "Fake 20 Token Reward",
@@ -342,38 +357,39 @@ const checks = new Map<string, Check>([
 
 const rewardFlowValues = /Fake_Reward10.*Fake_Reward20/u;
 
-const spots = new Map<string, Spot>([
-	[
-		"Fake Field Gate",
-		{
-			name: "Fake Field Gate",
-			scene: "FakeField_Adult",
-			room: undefined,
-			position: [41, 50, 42],
-			facing: 90,
-		},
-	],
-	[
-		"Fake Field Pond",
-		{
-			name: "Fake Field Pond",
-			scene: "FakeField_Adult",
-			room: undefined,
-			position: [122, 30, 100],
-			facing: 0,
-		},
-	],
-	[
-		"Fake Field Stump",
-		{
-			name: "Fake Field Stump",
-			scene: "FakeField_Adult",
-			room: undefined,
-			position: [60, 30, 80],
-			facing: 270,
-		},
-	],
-]);
+const found = (
+	name: string,
+	scene: string,
+	position: Spot["position"],
+	facing: number
+): Spot => ({
+	name,
+	scene,
+	position,
+	facing,
+	found: "save",
+	evidence: "a save the game wrote",
+	note: "",
+});
+
+const spots: readonly Spot[] = [
+	found("Fake Field Gate", "FakeField_Adult", [41, 50, 42], 90),
+	found("Fake Field Pond", "FakeField_Adult", [122, 30, 100], 0),
+	found("Fake Field Stump", "FakeField_Adult", [60, 30, 80], 270),
+	{
+		...found("Forest Temple Pot Chest", "ForestTemple", [4, 8, 6], 270),
+		room: 17,
+	},
+	found("Fake Two Ages", "FakeField_Child", [1, 30, 1], 0),
+	found("Fake Two Ages", "FakeField_Adult", [2, 30, 2], 0),
+];
+
+const chests = [
+	"Forest Temple Bow Chest",
+	"Forest Temple Pot Chest",
+	"FF Fake Grotto Chest",
+	"Fake Missing Chest",
+];
 
 /** The start states of the fake game, from a base of its defaults with `holding` and `keys` written over them. */
 const startStates = (
@@ -435,10 +451,12 @@ const startStates = (
 				]),
 				tiers: [],
 				checks,
+				chests,
 			})
 		);
 		return StartStates.layer.pipe(
-			Layer.provide([GameData.layer, own]),
+			Layer.provideMerge(Spots.layer),
+			Layer.provideMerge([GameData.layer, own]),
 			Layer.provide([dump.layer, UserDirectories.layer, config, Path.layer])
 		);
 	}).pipe(Effect.provide(BunFileSystem.layer));
@@ -449,12 +467,18 @@ const plan = (
 	words: Words,
 	holding?: Readonly<Record<string, Scalar>>,
 	keys?: readonly string[],
-	mod: Mod | "none" = "none"
+	mod: Mod | "none" = "none",
+	recorded: readonly Spot[] = []
 ) =>
 	Effect.gen(function* () {
 		const layer = yield* startStates(holding, keys);
 		return yield* Effect.provide(
 			Effect.gen(function* () {
+				const kept = yield* Spots;
+				yield* Effect.forEach(recorded, kept.keep, {
+					concurrency: 1,
+					discard: true,
+				});
 				const states = yield* StartStates;
 				return yield* states.plan(
 					StartState.make({ base: "test-base", ...words }),
@@ -1126,5 +1150,93 @@ describe("the start state", () => {
 				);
 				expect(progress.keys).toEqual([]);
 			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+});
+
+describe("the spots", () => {
+	it.effect(
+		"a location that is a check with a spot stands Link on the spot, and the plan says it was found",
+		() =>
+			Effect.gen(function* () {
+				const planned = yield* plan({ location: "Forest Temple Pot Chest" });
+				expect(writes(planned.edits)).toMatchObject({
+					"PlayerStatus.SavePos": [4, 8, 6],
+					DungeonRoom: 17,
+				});
+				expect(planned.location).toMatchObject({
+					scene: "ForestTemple",
+					kind: "found",
+				});
+			})
+	);
+
+	it.effect(
+		"a spot recorded on this machine wins over the tracked one at once",
+		() =>
+			Effect.gen(function* () {
+				const recorded: Spot = {
+					...found("Forest Temple Pot Chest", "ForestTemple", [5, 8, 6], 270),
+					room: 17,
+					found: "play",
+				};
+				const planned = yield* plan(
+					{ location: "Forest Temple Pot Chest" },
+					{},
+					undefined,
+					"none",
+					[recorded]
+				);
+				expect(writes(planned.edits)["PlayerStatus.SavePos"]).toEqual([
+					5, 8, 6,
+				]);
+				expect(planned.location?.kind).toBe("found");
+			})
+	);
+
+	it.effect(
+		"a location that is a check with no place of its own and no spot is refused with how to give it one",
+		() =>
+			Effect.gen(function* () {
+				const refused = yield* Effect.flip(
+					plan({ location: "Fake 20 Token Reward" })
+				);
+				expect(refused.message).toContain("no place of its own");
+				expect(refused.message).toContain("tables/spots.tsv");
+				expect(refused).toMatchObject({ reason: "no-place" });
+			})
+	);
+
+	it.effect("the list gives every chest its best spot, or none", () =>
+		Effect.gen(function* () {
+			const layer = yield* startStates();
+			const listed = yield* Effect.provide(
+				Effect.gen(function* () {
+					const kept = yield* Spots;
+					yield* kept.keep({
+						...found(
+							"FF Fake Grotto Chest",
+							"FakeField_Adult",
+							[110, 30, 100],
+							90
+						),
+						found: "play",
+					});
+					return yield* chestSpots(yield* GameData, yield* OwnTables, kept);
+				}),
+				[layer, BunFileSystem.layer]
+			);
+			expect(
+				Arr.map(listed, (listedChest) => [
+					listedChest.name,
+					listedChest.area,
+					Arr.map(listedChest.spots, (spot) => `${spot.age} ${spot.kind}`),
+				])
+			).toEqual([
+				["Forest Temple Bow Chest", "ForestTemple", ["either worked out"]],
+				["Forest Temple Pot Chest", "ForestTemple", ["either found"]],
+				["FF Fake Grotto Chest", "FakeField", ["adult found"]],
+				["Fake Missing Chest", "", []],
+			]);
+		}).pipe(Effect.provide(BunFileSystem.layer))
 	);
 });

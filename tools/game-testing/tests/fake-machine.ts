@@ -396,18 +396,18 @@ export const fakeMachine = (options?: {
 		const own = Layer.succeed(
 			OwnTables,
 			OwnTables.of({
-				spots: new Map([
-					[
-						"Fake Spot Before The Chest",
-						{
-							name: "Fake Spot Before The Chest",
-							scene: "KokiriForest",
-							room: undefined,
-							position: [1, 2, 3],
-							facing: 0,
-						},
-					],
-				]),
+				spots: [
+					{
+						name: "Fake Spot Before The Chest",
+						scene: "KokiriForest",
+						position: [1, 2, 3],
+						facing: 0,
+						found: "save",
+						evidence: "a save the game wrote",
+						note: "",
+					},
+				],
+				chests: [],
 				bases: new Map([
 					[
 						"test-base",

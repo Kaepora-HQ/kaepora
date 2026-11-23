@@ -10,6 +10,7 @@ import { RpcSerialization, RpcServer } from "effect/rpc";
 import { GameRpcs } from "../contract/rpc.ts";
 import { GameData } from "../data/game-data.ts";
 import { Launcher } from "../emulator/launcher.ts";
+import { Spots } from "../save/spots.ts";
 import { StartStates } from "../save/state.ts";
 import { Boot } from "./boot.ts";
 import { handlers } from "./handlers.ts";
@@ -19,7 +20,7 @@ import { Sessions } from "./sessions.ts";
 
 /** The game's tables and the start states built on them, on our own tables. */
 export const tables = StartStates.layer.pipe(
-	Layer.provideMerge(GameData.layer)
+	Layer.provideMerge(Layer.merge(GameData.layer, Spots.layer))
 );
 
 /** Every service a host's commands use, on our own tables. */

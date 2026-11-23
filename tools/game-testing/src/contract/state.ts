@@ -19,9 +19,9 @@ export const Holding = Schema.Union([
 ]);
 
 /**
- * Where Link stands. A name is looked up in this order: a row of `tables/spots.tsv` (a spot play showed to be floor),
- * a check (Link stands before its subject), a landing of `StartPos`. A name two of them hold is refused, with both.
- * A scene, room, position and facing place him by hand.
+ * Where Link stands. A name is looked up in this order: a spot of `tables/spots.tsv` or of the recorded table beside
+ * it, a check (Link stands one unit before its actor), a landing of `StartPos`. A name that is a spot or a check and a
+ * landing is refused, and so is a check with no actor and no spot. A scene, room, position and facing place him by hand.
  */
 export const Location = Schema.Union([
 	Schema.String,

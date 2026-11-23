@@ -1,6 +1,6 @@
 import { BunFileSystem } from "@effect/platform-bun";
 import { describe, expect, it } from "@voila.dev/effect-bun-test";
-import { Effect, Layer } from "effect";
+import { Array as Arr, Effect, Layer, Option } from "effect";
 import { OwnTables } from "../src/save/tables.ts";
 
 describe("our own tables", () => {
@@ -9,13 +9,23 @@ describe("our own tables", () => {
 		() =>
 			Effect.gen(function* () {
 				const tables = yield* OwnTables;
-				expect(tables.spots.get("Deku Tree Boss Room")).toEqual({
-					name: "Deku Tree Boss Room",
-					scene: "InsideTheDekuTree",
-					room: 10,
-					position: [15.383, 46.99, 67.636],
-					facing: 80.1,
-				});
+				expect(
+					Arr.findFirst(
+						tables.spots,
+						(spot) => spot.name === "Deku Tree Boss Room"
+					)
+				).toEqual(
+					Option.some({
+						name: "Deku Tree Boss Room",
+						scene: "InsideTheDekuTree",
+						room: 10,
+						position: [15.383, 46.99, 67.636],
+						facing: 80.1,
+						found: "save",
+						evidence: "a save the game wrote",
+						note: "Facing the heart container's spot.",
+					})
+				);
 				expect(tables.bases.get("early-child")?.hour).toBe("night");
 				expect(tables.tiers).toContainEqual(["Item_Hookshot", "Item_Longshot"]);
 				expect(

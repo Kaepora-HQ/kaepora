@@ -16,6 +16,7 @@ gt import            # the line your script starts with
 gt run look.ts       # the start, your steps, and the outcome
 gt plan look.ts      # what the start state writes, without a game
 gt search Slingshot  # the names a state or a script takes
+gt spots             # every chest, and the spot a look starts on before it
 gt runs              # past runs on the game machine
 ```
 
@@ -80,9 +81,13 @@ The bases: `new-game-autosave` (a child in Link's house, holding nothing), `earl
 the complete game has every story flag set, which hides what a place waits for.
 
 `location` can also be `{ scene, room, position: [x, y, z], facing }` in the game's own coordinates, with `room` only
-inside a dungeon and `facing` in degrees, 0 facing the scene's +Z. A location that is a check stands Link one unit
-before its chest or actor, on the side the actor faces. Look at the first picture: a chest behind rocks, or a gift with
-no actor, needs a spot of its own.
+inside a dungeon and `facing` in degrees, 0 facing the scene's +Z.
+
+A location that is a check stands Link on its spot, from `tables/spots.tsv` or from the spots recorded on the game
+machine, which win. A check with no spot stands him one unit before its chest or actor, on the side the actor faces.
+`gt plan` says which kind of spot a start stands on: proven once a look passed from it, found in a save or a running
+game, or worked out. `gt spots` lists every chest with its kind of spot. Look at the first picture: a chest behind
+rocks needs a spot of its own, and a gift with no actor is refused until it has one.
 
 ## Find a name
 

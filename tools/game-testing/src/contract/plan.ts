@@ -3,6 +3,7 @@
  * `plan_state` answer it, and a run's record keeps it.
  */
 import { Schema } from "effect";
+import { StartSpot } from "./spots.ts";
 import { Saved } from "./values.ts";
 
 /** The types of a saved value the library reads and writes. */
@@ -31,11 +32,16 @@ export const Word = Schema.Literals([
 ]);
 
 /**
- * Where a planned value came from: a word of the state and what it named, such as `withItems` and `Item_Range_Bow`;
- * the mod, whose new game starts the value so; or a rule of the library's own.
+ * Where a planned value came from: a word of the state and what it named, such as `withItems` and `Item_Range_Bow`; a
+ * location by name and its kind of spot; the mod, whose new game starts the value so; or a rule of the library's own.
  */
 export const Origin = Schema.Union([
 	Schema.TaggedStruct("word", { word: Word, named: Schema.String }),
+	/** A location by name, and the kind of spot it stands Link on, such as a row of `tables/spots.tsv` found in a save. */
+	Schema.TaggedStruct("spot", {
+		name: Schema.String,
+		kind: StartSpot.fields.kind,
+	}),
 	Schema.TaggedStruct("mod", { mod: Schema.String }),
 	Schema.TaggedStruct("rule", { rule: Schema.String }),
 ]);
@@ -46,6 +52,8 @@ export const originText = (origin: Origin) => {
 	switch (origin._tag) {
 		case "word":
 			return `${origin.word} ${origin.named}`;
+		case "spot":
+			return `location ${origin.name}, a ${origin.kind} spot`;
 		case "mod":
 			return `the mod ${origin.mod}`;
 		default:
@@ -94,6 +102,8 @@ export type PlannedEdit = typeof PlannedEdit.Type;
  */
 export const StatePlan = Schema.Struct({
 	base: Schema.Struct({ name: Schema.String, about: Schema.String }),
+	/** Where the state's location stands Link, and what kind of spot that is. */
+	location: Schema.optionalKey(StartSpot),
 	edits: Schema.Array(PlannedEdit),
 	leftAlone: Schema.Array(Schema.Struct({ name: Schema.String, from: Origin })),
 });

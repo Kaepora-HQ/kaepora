@@ -33,6 +33,7 @@ import {
 } from "../errors.ts";
 import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
+import { ChestSpots } from "./spots.ts";
 import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
 	Button,
@@ -298,6 +299,11 @@ export class GameRpcs extends RpcGroup.make(
 			limit: Schema.Int,
 		},
 		success: Schema.Array(NameMatch),
+		error: Schema.Union([NoGameHere, DumpFailed]),
+	}),
+	/** Every chest of `remake/chests.tsv` with the spot each age starts on, from this machine's tables. */
+	Rpc.make("Spots", {
+		success: Schema.Array(ChestSpots),
 		error: Schema.Union([NoGameHere, DumpFailed]),
 	}),
 	Rpc.make("Runs", {

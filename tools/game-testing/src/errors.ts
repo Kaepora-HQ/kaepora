@@ -57,7 +57,7 @@ export class UnknownName extends Schema.TaggedError<
  * `mod-too-large`: a mod file is larger than its size-table entry, which the game drops silently. `unsaved`: `set`
  * names a value neither `progress.sav` nor `caption.sav` keeps, which only a running game can change. `no-slot`:
  * `equipped` names an item that no slot or button holds. `incomplete`: a word needs another to be honoured whole, which
- * the detail names.
+ * the detail names. `no-place`: a location names a check with no actor of its own and no spot.
  */
 export class StateRefused extends Schema.TaggedError<
 	StateRefused,
@@ -71,6 +71,7 @@ export class StateRefused extends Schema.TaggedError<
 		"unsaved",
 		"no-slot",
 		"incomplete",
+		"no-place",
 	]),
 	detail: Schema.String,
 }) {

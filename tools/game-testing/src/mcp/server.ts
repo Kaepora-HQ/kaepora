@@ -43,6 +43,7 @@ import type { Person } from "../host/sessions.ts";
 import { Sessions } from "../host/sessions.ts";
 import { readMod } from "../mod.ts";
 import { ran } from "../process.ts";
+import { Spots } from "../save/spots.ts";
 import { StartStates } from "../save/state.ts";
 import { OwnTables, searchNames } from "../save/tables.ts";
 import { inlineFolder, packageRoot, Scripts } from "../scripts/runner.ts";
@@ -226,6 +227,7 @@ const handlers = tools.toLayer(
 		const places = yield* Places;
 		const data = yield* GameData;
 		const own = yield* OwnTables;
+		const spots = yield* Spots;
 		const states = yield* StartStates;
 		const fs = yield* FileSystem.FileSystem;
 		const path = yield* Path.Path;
@@ -489,7 +491,8 @@ const handlers = tools.toLayer(
 				return yield* ranOf(latest);
 			}),
 			search_names: Effect.fnUntraced(function* ({ text: words, kind, limit }) {
-				const names = yield* searchNames(data, own, words, {
+				const kept = yield* spots.all;
+				const names = yield* searchNames(data, own, kept, words, {
 					limit: limit ?? searchLimit,
 					kind,
 				});
@@ -509,15 +512,20 @@ const handlers = tools.toLayer(
 						: yield* readMod(fs, path, mod.folder)
 				);
 				const { edits, leftAlone } = planned;
-				const base = { name: planned.base.name, about: planned.base.about };
+				const head = {
+					base: { name: planned.base.name, about: planned.base.about },
+					...(planned.location === undefined
+						? {}
+						: { location: planned.location }),
+				};
 				const count = fitting(
 					edits,
-					bytes({ base, edits: [], leftAlone }) + moreRoom
+					bytes({ ...head, edits: [], leftAlone }) + moreRoom
 				);
 				return count === edits.length
-					? { base, edits, leftAlone }
+					? { ...head, edits, leftAlone }
 					: {
-							base,
+							...head,
 							edits: Arr.take(edits, count),
 							leftAlone,
 							more: `${count} of the ${edits.length} edits are here; plan the state a few words at a time to see the rest`,
