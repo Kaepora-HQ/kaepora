@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/Kaepora-HQ/kaepora/compare/v0.7.0...v0.7.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* count on the lost dog only after Kakariko's gate opens ([2898a8b](https://github.com/Kaepora-HQ/kaepora/commit/2898a8b007cc8169cc9f473d873ca76cca32f5cd))
+
 ## [0.7.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.6.0...v0.7.0) (2026-11-23)
 
 
