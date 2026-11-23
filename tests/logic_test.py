@@ -23,8 +23,8 @@ NO_HAMMER = ("Fire Temple Megaton Hammer Chest", "Green Rupee")
 NO_SILVER_GAUNTLETS = ("Spirit Temple Silver Gauntlets Chest", "Green Rupee")
 NO_GOLDEN_GAUNTLETS = ("Ganon's Castle Shadow Trial Golden Gauntlets Chest", "Green Rupee")
 SILVER_GAUNTLETS_AT_START = ("Link's Pocket", "Silver Gauntlets")
-# Without the Ocarina of Time, Link never becomes adult.
-NEVER_ADULT = ("HF Ocarina of Time Item", "Green Rupee")
+# Without the Song of Time, which only Zelda's scene at the moat teaches, Link never becomes adult.
+NEVER_ADULT = ("Song from Ocarina of Time", "Green Rupee")
 # Dampe's race gives the first hookshot. The Water Temple's Longshot chest lies past places that need one.
 NO_HOOKSHOT = ("Graveyard Hookshot Chest", "Green Rupee")
 # The well holds the only Lens of Truth.
@@ -87,8 +87,22 @@ class LogicTest(unittest.TestCase):
         for location in ("HF Ocarina of Time Item", "Song from Ocarina of Time", "Gift from Rauru"):
             self.assertTrue(self.reachable(location, *never_gohma, settings=CLOSED_DEKU), location)
 
+    def test_the_door_of_time_opens_after_the_moat_scene_to_either_ocarina(self):
+        # Zelda's scene at the moat moves the Door of Time's quest to Step05 whatever it gives, and the altar then opens
+        # the door to the Song of Time played on either ocarina (seen with the Fairy Ocarina alone). Saria's Fairy
+        # Ocarina plays the song the scene teaches.
+        self.assertTrue(self.reachable("Gift from Rauru", ("HF Ocarina of Time Item", "Green Rupee")))
+
+    def test_sarias_gift_waits_for_a_child(self):
+        # Saria's request on the bridge is placed in the child's forest alone. With the forest closed, a child leaves
+        # by the bridge only once Gohma falls, and Mido keeps him from Gohma without the Kokiri Sword. With a scale he
+        # dives out through the Lost Woods, and with the door open he grows up and walks back to the bridge as an adult.
+        out_by_the_river = (("KF Kokiri Sword Chest", "Green Rupee"), ("KF Mido Top Left Chest", "Progressive Scale"))
+        self.assertTrue(self.reachable("Gift from Rauru", *out_by_the_river, settings=DOOR_OPEN))
+        self.assertFalse(self.reachable("LW Gift From Saria", *out_by_the_river, settings=DOOR_OPEN))
+
     def test_an_open_door_of_time_asks_nothing(self):
-        # With no Ocarina of Time, the closed door shuts the adult out, and the open one lets a child walk through and
+        # Without the Song of Time, the closed door shuts the adult out, and the open one lets a child walk through and
         # pull the sword.
         for location in ("Gift from Rauru", "Sheik in Forest"):
             self.assertFalse(self.reachable(location, NEVER_ADULT), location)
@@ -156,9 +170,8 @@ class LogicTest(unittest.TestCase):
                 self.assertTrue(self.reachable(location, *others), (location, song[0]))
 
     def test_only_adult_link_buys_a_tunic(self):
-        never_adult = ("HF Ocarina of Time Item", "Green Rupee")
-        self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
-        self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
+        self.assertFalse(self.reachable("ZD Shop Item 1", NEVER_ADULT))
+        self.assertFalse(self.reachable("GC Shop Item 5", NEVER_ADULT))
 
     def test_a_tunic_needs_the_largest_wallet(self):
         # Each tunic costs 600.
@@ -198,8 +211,8 @@ class LogicTest(unittest.TestCase):
 
     def test_a_potion_shop_is_never_the_first_blue_fire(self):
         self.assertTrue(self.reachable("Market Potion Shop Item 2"))
-        # Without the Ocarina of Time, Link never becomes adult, and only adult Link reaches other Blue Fire.
-        self.assertFalse(self.reachable("Market Potion Shop Item 2", ("HF Ocarina of Time Item", "Green Rupee"),
+        # Only adult Link reaches other Blue Fire.
+        self.assertFalse(self.reachable("Market Potion Shop Item 2", NEVER_ADULT,
                                         ("KF Mido Top Left Chest", "Empty Bottle")))
 
     def test_shops_charge_the_remakes_prices(self):
@@ -387,9 +400,8 @@ class LogicTest(unittest.TestCase):
     # tier found, and only adult Link can use them.
 
     def test_gauntlets_are_not_the_bracelet_for_a_child(self):
-        # Without the Ocarina of Time, Link never becomes adult. Without the bracelet, a child cannot pick the bomb
-        # flower whose fruit opens Dodongo's Cavern.
-        child_without_bracelet = (("HF Ocarina of Time Item", "Green Rupee"), ("GC Darunias Joy", "Green Rupee"))
+        # Without the bracelet, a child cannot pick the bomb flower whose fruit opens Dodongo's Cavern.
+        child_without_bracelet = (NEVER_ADULT, ("GC Darunias Joy", "Green Rupee"))
         self.assertFalse(self.reachable("Dodongos Cavern Map Chest", *child_without_bracelet,
                                         ("KF Mido Top Left Chest", "Silver Gauntlets"),
                                         ("KF Mido Top Right Chest", "Golden Gauntlets")))

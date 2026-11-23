@@ -301,15 +301,16 @@ count, so it sells again and again, and it leaves the game data list as it is. S
   SoH's three Red Potions, at 30, 40 and 50 rupees, are all the remake's one Red Potion at 30, and its two 5 Bombs are
   the remake's one at 35.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 47 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 49 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
 that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, five places where the story moves (the scene
 after the last carpenter in the Gerudo Fortress, Darunia's dance, his son's talk once an adult stops him rolling, King
 Zora's thanks once he is thawed, and Zelda's scene in the Temple of Time), the two eggs, Biggoron's sword, four Business
 Scrubs that sell once (the stick bag by the Lost Woods bridge, the nut bag in the Lost Woods grotto, and a Piece of
-Heart in a Hyrule Field grotto and in the crater), and the gifts of the six Great Fairies. Each group ticked in "Gifts"
-puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its
-places. A location of a group left out keeps what the game gives, and the plan names none of its places.
+Heart in a Hyrule Field grotto and in the crater), the gifts of the six Great Fairies, Saria's gift on the bridge and
+Zelda's at the moat. Each group ticked in "Gifts" puts its locations in the shuffle. Each adds its item to the pool, and
+the plan writes the placed item at each of its places. A location of a group left out keeps what the game gives, and
+the plan names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -406,6 +407,37 @@ her place holds whatever the seed puts there:
 - The egg goes only to a chest, a gift or a reward's place. A chest gave one (seen).
 
 The egg's caption still says who gave it ("Malon gave you this egg").
+
+Saria gives the Fairy Ocarina on the bridge out of Kokiri Forest, and Zelda the Ocarina of Time in the castle's moat.
+While "Ocarinas" shuffles their places, both ocarinas are items of the pool, SoH's two Progressive Ocarinas, and each
+place holds whatever the seed puts there. Of the two places that hold an ocarina, the one the plan lists first gives
+`Item_Ocarina_Fairy` and the other `Item_Ocarina_Time`, as the hookshots take their names:
+
+- Her request, `KokiriForest_ArriveLostWood` of `Goto_HyruleCastle`, starts as a child walks onto the bridge. It is
+  placed in the child's forest alone, and its area goes away once her farewell, `Dm_Kokiri_0150`, has played. The
+  request plays the farewell and then `Dm_Kokiri_0155`, whose `Event68` adds the item by `Actor`, with no window, and
+  whose `Event77` shows the item's window by `ActorName`. The plan writes the placed item at both. The request then
+  writes only `HyruleField_ChangeENV`, a Bool of the field's world settings and placements, and no quest step (read).
+  So her place asks for a child, and no other rule waits for her scene.
+- The Ocarina of Time lies in the moat only while the Door of Time's quest is at Step04, which Zelda's escape writes.
+  Taking it plays `Dm_MelodyGet_Time`. Its entry adds the item in `Event70` by `Actor`, with no window, before the
+  scene's cuts, which hold the item's window (`Event229`, by `ActorName`) and Zelda's lesson of the Song of Time, and
+  its last call writes Step05. The plan writes the placed item at both events, and the moat and Zelda's hand still
+  show the ocarina's model. The altar opens the door to the Song of Time at Step05, so the door's rule asks for her
+  scene, an event the moat's place sets whatever it gives, as Malon's place sets her talk.
+- No skip touches either scene: "Saria's greeting" starts her talk outside Link's house played, and "New area scenes"
+  cuts no scene of the forest, of the castle quest or of the moat (read from the greeting's start values and
+  `area_scenes.tsv`).
+- The ocarinas go only to a chest, a gift or a reward's place, as the eggs do. No shelf, Gold Skulltula or loose spot
+  has been seen to give an ocarina, and a chest's ocarina is not yet seen either.
+- A seed that starts with the Fairy Ocarina leaves Saria's out of the pool, with a Red Rupee in its stead, keeps the
+  Ocarina of Time, and her place stays in the shuffle, as SoH's pool does with its ocarinas shuffled.
+
+Seen in the game with no mod: a Fairy Ocarina held with the Ocarina of Time owned, and the Fairy Ocarina alone, each
+opened the Door of Time to the Song of Time at its quest's Step05. Impa taught Zelda's Lullaby to a Link with no
+ocarina, who mimed the notes, and a Fairy Ocarina given afterwards played the song. So the Door of Time asks for the
+Song of Time on either ocarina once Zelda's scene at the moat has moved its quest to Step05, whatever the moat gives.
+Malon's place and the windmill man's ask for an ocarina, and no other lesson's place asks for one.
 
 A Business Scrub that sells once names its item in a call to the one-time sale of `Enemy_Scrub_Business_Common`. The
 sale charges the call's price, 40 rupees at the bridge and the grotto and 100 at the field and the crater, adds the item
