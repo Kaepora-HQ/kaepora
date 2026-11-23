@@ -866,6 +866,29 @@ static void CalculateBarren(const std::vector<RemakeShopSlot>& kept) {
         }
     }
 
+    // The way of the hero asks only about the places a hint can name, one at a time, and neither a dungeon's own small
+    // key nor a shop's goods is a major item. So by that rule alone a needed key in its own dungeon, a needed good on a
+    // kept shop shelf, or tokens a reward counts only together keep no area from being foolish. An area stays foolish
+    // only if the seed can be finished with every place of it in allLocations emptied at once. Ganon's place is the
+    // goal itself.
+    std::map<RandomizerCheckArea, std::vector<RandomizerCheck>> areas;
+    for (RandomizerCheck loc : ctx->allLocations) {
+        const RandomizerCheckArea area = Rando::StaticData::GetLocation(loc)->GetArea();
+        if (!NotBarren[area] && loc != RC_GANON && ctx->GetItemLocation(loc)->GetPlacedRandomizerGet() != RG_NONE) {
+            areas[area].push_back(loc);
+        }
+    }
+    for (const auto& [area, places] : areas) {
+        for (RandomizerCheck loc : places) {
+            ctx->GetItemLocation(loc)->DelayItem();
+        }
+        logic->Reset();
+        NotBarren[area] = !CheckBeatable();
+        for (RandomizerCheck loc : places) {
+            ctx->GetItemLocation(loc)->SaveDelayedItem();
+        }
+    }
+
     for (RandomizerCheck loc : ctx->allLocations) {
         if (!NotBarren[Rando::StaticData::GetLocation(loc)->GetArea()]) {
             ctx->GetItemLocation(loc)->SetBarrenCandidate();

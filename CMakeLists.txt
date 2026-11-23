@@ -254,6 +254,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      every_setting_changed_at_once_400_to_419 every_setting_changed_at_once_420_to_439
                      every_setting_changed_at_once_440_to_459 every_setting_changed_at_once_460_to_479
                      every_setting_changed_at_once_480_to_499 seed_text_ignores_case every_hint_is_true
+                     a_place_called_foolish_holds_nothing_the_seed_needs
                      every_stone_has_a_hint_that_fits_its_boxes hints_never_move_an_item fixed_seed_matches_fixture
                      the_chest_game_owner_names_the_prize every_message_fits_its_box
                      mido_names_where_the_kokiri_sword_lies a_place_a_character_names_is_not_named_again_by_a_stone

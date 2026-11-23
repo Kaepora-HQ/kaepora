@@ -289,6 +289,9 @@ MAPS_AND_COMPASSES = {"Item_Dungeon_Map", "Item_Dungeon_Compass"}
 
 STONES = {row["label"]: row["location"] for row in read_tsv("stones.tsv")}
 PLACE_BY_AREA_PREFIX = {row["area"]: row["says"] for row in read_tsv("places.tsv")}
+# Every place of the remake's tables, shuffled or kept as the game has it.
+EVERY_PLACE = {row["location"] for table in (read_tsv("chests.tsv"), SHOP_SLOTS, GIFT_SITES, REWARD_SITES, SKULLTULAS,
+                                             LOOSE_ITEMS, SONG_PLACES) for row in table}
 DUNGEON_PLACES = {"Deku Tree", "Dodongos Cavern", "Jabu Jabus Belly", "Forest Temple", "Fire Temple", "Water Temple",
                   "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground",
                   "Ganon's Castle"}
@@ -1597,6 +1600,12 @@ class SeedgenTest(unittest.TestCase):
         for seed in map(str, range(620, 625)):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
+    def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
+        # Seed 19: nothing shuffled in Kokiri Forest is needed, but the seed cannot be finished without the Deku
+        # Shield on the Kokiri Shop's kept shelf.
+        self.assert_hints_are_true("19", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED | LOOSE_SHUFFLED
+                                   | REWARDS_SHUFFLED)
+
     def assert_hints_are_true(self, seed, settings=None):
         spoiler, plan = self.generate(seed, settings)
         hints = spoiler["hints"]
@@ -1630,15 +1639,18 @@ class SeedgenTest(unittest.TestCase):
                                                             settings=spoiler["settings"])
                                         for location in needed))
                 elif found := re.fullmatch(r"They say that plundering (.+) is a foolish choice\.", hint):
-                    # SoH's rule: no chest of the area holds a major item or one the seed cannot be finished without.
+                    # No shuffled place of the area holds a major item, as SoH asks, and the seed can be finished
+                    # with every place of the area emptied at once, the places the seed keeps as the game has them
+                    # included: a dungeon's small keys, a kept shop shelf, or tokens a reward counts only together.
                     area = places[found[1]]
                     chests = [location for location in spoiler["locations"] if place_of(location) == area]
                     self.assertTrue(chests)
                     self.assertFalse(SOH_MAJOR_ITEMS
                                      & {spoiler_item(spoiler["locations"][location]) for location in chests})
-                    self.assertTrue(all(reach.reachable("Ganon", *placed, (location, "Green Rupee"),
-                                                        settings=spoiler["settings"])
-                                        for location in steps if location in chests))
+                    emptied = dict(spoiler["locations"]) | {location: "Green Rupee" for location in
+                                                            EVERY_PLACE | spoiler["locations"].keys()
+                                                            if place_of(location) == area}
+                    self.assertTrue(reach.reachable("Ganon", *emptied.items(), settings=spoiler["settings"]))
                 elif found := re.fullmatch(r"They say that (.+) can be found at (.+)\.", hint):
                     area = places[found[2]]
                     self.assertIn(found[1], items_at(area, False))
