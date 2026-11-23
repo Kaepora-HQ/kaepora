@@ -107,6 +107,9 @@ QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     } else if (settings.forest == Forest::Open) {
         changed << "forest open";
     }
+    if (settings.doorOfTime == DoorOfTime::Open) {
+        changed << "Door of Time open";
+    }
     if (settings.bridge == Bridge::AlwaysOpen) {
         changed << "bridge always open";
     }
@@ -212,6 +215,7 @@ QString Details(const SeedSettings& settings, LoggedGifts gifts) {
                         Line(MapsAndCompassesSetting,
                              QString::fromUtf8(Words(MapsAndCompassesChoices, settings.mapsAndCompasses))),
                         Line(ForestSetting, QString::fromUtf8(Words(ForestChoices, settings.forest))),
+                        Line(DoorOfTimeSetting, QString::fromUtf8(Words(DoorOfTimeChoices, settings.doorOfTime))),
                         Line(BridgeSetting, QString::fromUtf8(Words(BridgeChoices, settings.bridge))),
                         Line(TrialsSetting, QString::fromUtf8(Words(TrialsChoices, settings.trials))),
                         Line(OpeningSetting, QString::fromUtf8(Words(OpeningChoices, settings.opening))),
@@ -440,10 +444,12 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
     shuffleGroup->setLayout(shuffleForm);
 
     QComboBox* forest = Choice(ForestChoices);
+    QComboBox* doorOfTime = Choice(DoorOfTimeChoices);
     QComboBox* bridge = Choice(BridgeChoices);
     QComboBox* trials = Choice(TrialsChoices);
     auto* worldForm = new QFormLayout;
     worldForm->addRow(QString::fromUtf8(ForestSetting), forest);
+    worldForm->addRow(QString::fromUtf8(DoorOfTimeSetting), doorOfTime);
     worldForm->addRow(QString::fromUtf8(BridgeSetting), bridge);
     worldForm->addRow(QString::fromUtf8(TrialsSetting), trials);
     auto* worldGroup = new QGroupBox("World");
@@ -508,6 +514,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         Select(keys, shown.keys);
         Select(mapsAndCompasses, shown.mapsAndCompasses);
         Select(forest, shown.forest);
+        Select(doorOfTime, shown.doorOfTime);
         Select(bridge, shown.bridge);
         Select(trials, shown.trials);
         Select(opening, shown.opening);
@@ -547,6 +554,7 @@ void ChooseSettings(QWidget* window, const SeedSettings& settings,
         shown.keys = Selected<DungeonItems>(keys);
         shown.mapsAndCompasses = Selected<DungeonItems>(mapsAndCompasses);
         shown.forest = Selected<Forest>(forest);
+        shown.doorOfTime = Selected<DoorOfTime>(doorOfTime);
         shown.bridge = Selected<Bridge>(bridge);
         shown.trials = Selected<Trials>(trials);
         shown.opening = Selected<Opening>(opening);

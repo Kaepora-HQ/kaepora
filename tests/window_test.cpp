@@ -663,6 +663,7 @@ private slots:
                                 "Small and boss keys: In their own chests\n"
                                 "Maps and compasses: Anywhere in their dungeon\n"
                                 "Kokiri Forest: Closed\n"
+                                "Door of Time: Closed\n"
                                 "Rainbow Bridge: After the Light Arrows\n"
                                 "Ganon's trials: All six\n"
                                 "Opening: Skipped\n"
@@ -723,6 +724,17 @@ private slots:
         QVERIFY(entry("7")->toolTip(1).split('\n').contains("Kokiri Forest: Closed Deku"));
     }
 
+    void anOpenDoorOfTimeGoesIntoTheSeed() {
+        button("Settings…")->click();
+        choice("Door of Time")->setCurrentText("Open");
+        dialogButton("OK")->click();
+        QVERIFY(create("7"));
+        const QJsonObject settings = ReadJson(library + "/7/spoiler.json")["settings"].toObject();
+        QCOMPARE(settings["Door of Time"].toString(), QString("Open"));
+        QCOMPARE(listed(1), QStringList{ "Door of Time open" });
+        QVERIFY(entry("7")->toolTip(1).split('\n').contains("Door of Time: Open"));
+    }
+
     void aPlayedOpeningGoesIntoTheSeed() {
         button("Settings…")->click();
         choice("Opening")->setCurrentText("Played");
@@ -781,6 +793,7 @@ private slots:
             QCOMPARE(choice(label)->currentText(), QString("Anywhere in their dungeon"));
         }
         QCOMPARE(choice("Kokiri Forest")->currentText(), QString("Closed"));
+        QCOMPARE(choice("Door of Time")->currentText(), QString("Closed"));
         QCOMPARE(choice("Rainbow Bridge")->currentText(), QString("After the Light Arrows"));
         QCOMPARE(choice("Ganon's trials")->currentText(), QString("All six"));
         QCOMPARE(choice("Opening")->currentText(), QString("Skipped"));
@@ -962,7 +975,7 @@ private slots:
         QCOMPARE(titles, (QStringList{ "Dungeons", "Shuffle", "World", "Start", "Logic", "Hints" }));
         QCOMPARE(rows("Shuffle"), (QStringList{ "Shop goods", "Shop prices", "Gold Skulltulas", "Gifts", "Songs",
                                                 "Loose items", "Dungeon rewards" }));
-        QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Rainbow Bridge", "Ganon's trials" }));
+        QCOMPARE(rows("World"), (QStringList{ "Kokiri Forest", "Door of Time", "Rainbow Bridge", "Ganon's trials" }));
         QCOMPARE(rows("Start"), (QStringList{ "Opening", "Cutscenes", "Items" }));
     }
 
@@ -1181,6 +1194,7 @@ private slots:
         QTest::newRow("keys") << "Small and boss keys" << "Not needed" << "Keys not needed";
         QTest::newRow("forest exit") << "Kokiri Forest" << "Closed Deku" << "Forest exit open";
         QTest::newRow("forest") << "Kokiri Forest" << "Open" << "Forest open";
+        QTest::newRow("door") << "Door of Time" << "Open" << "Door of Time open";
         QTest::newRow("bridge") << "Rainbow Bridge" << "Always open" << "Bridge always open";
         QTest::newRow("trials") << "Ganon's trials" << "None" << "No trials";
         QTest::newRow("opening") << "Opening" << "Played" << "Opening played";

@@ -15,6 +15,7 @@ inline constexpr std::string_view ShuffledDungeonsSetting = "Shuffled dungeons";
 inline constexpr std::string_view KeysSetting = "Small and boss keys";
 inline constexpr std::string_view MapsAndCompassesSetting = "Maps and compasses";
 inline constexpr std::string_view ForestSetting = "Kokiri Forest";
+inline constexpr std::string_view DoorOfTimeSetting = "Door of Time";
 inline constexpr std::string_view BridgeSetting = "Rainbow Bridge";
 inline constexpr std::string_view TrialsSetting = "Ganon's trials";
 inline constexpr std::string_view OpeningSetting = "Opening";
@@ -77,6 +78,12 @@ inline constexpr std::pair<Forest, std::string_view> ForestChoices[] = {
     { Forest::Closed, "Closed" },
     { Forest::ClosedDeku, "Closed Deku" },
     { Forest::Open, "Open" },
+};
+
+enum class DoorOfTime { Closed, Open };
+inline constexpr std::pair<DoorOfTime, std::string_view> DoorOfTimeChoices[] = {
+    { DoorOfTime::Closed, "Closed" },
+    { DoorOfTime::Open, "Open" },
 };
 
 enum class Bridge { AfterTheLightArrows, AlwaysOpen };
@@ -318,6 +325,7 @@ struct SeedSettings {
     DungeonItems keys = DungeonItems::AnywhereInTheirDungeon;
     DungeonItems mapsAndCompasses = DungeonItems::AnywhereInTheirDungeon;
     Forest forest = Forest::Closed;
+    DoorOfTime doorOfTime = DoorOfTime::Closed;
     Bridge bridge = Bridge::AfterTheLightArrows;
     Trials trials = Trials::AllSix;
     Opening opening = Opening::Skipped;

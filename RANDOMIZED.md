@@ -97,9 +97,10 @@ Whatever you choose, the owner of the Treasure Chest Game names the prize your s
 
 ## How the game starts
 
-Three settings open the world sooner. They cover the way out of Kokiri Forest, the Rainbow Bridge and Ganon's trials.
+Four settings open the world sooner. They cover the way out of Kokiri Forest, the Door of Time, the Rainbow Bridge and Ganon's trials.
 
-- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both. With **Closed Deku** or **Open**, a seed may never send you into the Deku Tree: the Ocarina of Time and the Door of Time wait for King Dodongo and Barinade, not for Queen Gohma.
+- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both. With **Closed Deku** or **Open**, a seed may never send you into the Deku Tree: the Ocarina of Time waits for King Dodongo and Barinade, not for Queen Gohma, and so does a **Closed** Door of Time.
+- **Door of Time.** **Closed** is the game as you know it: the door opens when you play the Song of Time at the altar, once Zelda has given you the Ocarina of Time. **Open** has the door standing open from the start, so you can pull the Master Sword and grow up at any time. Zelda, Impa, the Ocarina of Time and the Song of Time still wait for you as a child, and you can put the sword back to be a child again. If you beat King Dodongo as an adult first, Darunia thanks you with adult Link drawn at a child's size.
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 

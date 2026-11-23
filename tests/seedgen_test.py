@@ -43,6 +43,7 @@ DUNGEONS = ["Deku Tree", "Dodongo's Cavern", "Jabu-Jabu's Belly", "Forest Temple
             "Ganon's Castle"]
 DEFAULT_SETTINGS = {"Shuffled dungeons": DUNGEONS, "Small and boss keys": "Anywhere in their dungeon",
                     "Maps and compasses": "Anywhere in their dungeon", "Kokiri Forest": "Closed",
+                    "Door of Time": "Closed",
                     "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six", "Opening": "Skipped",
                     "Cutscenes": "Skipped", "Start with": [],
                     "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
@@ -332,6 +333,10 @@ CHARACTER_HINTS = read_tsv("character_hints.tsv")
 CHEST_GAME_PRIZE = "Market Treasure Chest Game Reward"
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
+DOOR_MODULE = "Logic/Market_Common_f252.logic.module.ainb"
+FIRST_PULL_MODULE = "Logic/Market_Child_Prefab_e700.logic.module.ainb"
+DOOR_OF_TIME_QUEST = "Work/Challenge/DoorOfTime.game__challenge__Challenge.gyml"
+ALL_SAGE_QUEST = "Work/Challenge/AllSage.game__challenge__Challenge.gyml"
 SOH_MAJOR_ITEMS = {"Boomerang", "Progressive Bow", "Progressive Slingshot", "Progressive Hookshot",
                    "Megaton Hammer", "Iron Boots", "Hover Boots", "Lens of Truth", "Silver Gauntlets",
                    "Golden Gauntlets", "Mirror Shield", "Kokiri Sword", "Progressive Bomb Bag", "Ice Arrows"}
@@ -817,6 +822,25 @@ class SeedgenTest(unittest.TestCase):
         spoiler, plan = self.generate("19", CHESTS_ALONE | {"Kokiri Forest": "Closed Deku"})
         self.assertEqual(spoiler["settings"]["Kokiri Forest"], "Closed Deku")
         self.assertEqual(plan["start_values"], EVERY_SEED | {"KokiriForest_Npc_Kokiri_007_Child_Blocker_00": False})
+
+    def test_an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest(self):
+        # The door opens once AllSage is at Ready, true in every new game, and the child's first pull waits for AllSage
+        # at Ready exactly, true until that pull's last scene. Rauru's write of the Door of Time's quest names the
+        # Light sage's quest, which the next scene completes, so the child's story keeps its step.
+        door = [{"file": DOOR_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
+                {"file": DOOR_MODULE, "from": "Step06", "to": "Ready"},
+                {"file": FIRST_PULL_MODULE, "from": DOOR_OF_TIME_QUEST, "to": ALL_SAGE_QUEST},
+                {"file": FIRST_PULL_MODULE, "from": "Step06", "to": "Ready"}]
+        rauru = {"flow": "Event/EventFlow/DoorOfTime.bfevfl.zs", "event": "Event93", "param": "ChallengeName",
+                 "text": "SageOfLight"}
+        spoiler, plan = self.generate("21", {"Door of Time": "Open"})
+        self.assertEqual(spoiler["settings"]["Door of Time"], "Open")
+        self.assertEqual(plan["module_texts"], door)
+        self.assertIn(rauru, plan["event_texts"])
+        spoiler, plan = self.generate("21")
+        self.assertEqual(spoiler["settings"]["Door of Time"], "Closed")
+        self.assertEqual(plan["module_texts"], [])
+        self.assertNotIn(rauru, plan["event_texts"])
 
     def test_only_closed_deku_removes_midos_castle_entry(self):
         for choice, removed in (("Closed", False), ("Closed Deku", True), ("Open", False)):

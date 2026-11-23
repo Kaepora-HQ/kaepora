@@ -168,6 +168,7 @@ nlohmann::ordered_json ToJson(const SeedSettings& settings) {
              { KeysSetting, Words(KeysChoices, settings.keys) },
              { MapsAndCompassesSetting, Words(MapsAndCompassesChoices, settings.mapsAndCompasses) },
              { ForestSetting, Words(ForestChoices, settings.forest) },
+             { DoorOfTimeSetting, Words(DoorOfTimeChoices, settings.doorOfTime) },
              { BridgeSetting, Words(BridgeChoices, settings.bridge) },
              { TrialsSetting, Words(TrialsChoices, settings.trials) },
              { OpeningSetting, Words(OpeningChoices, settings.opening) },
@@ -223,6 +224,8 @@ SeedSettings ParseSeedSettings(const nlohmann::json& json) {
             settings.mapsAndCompasses = Parse(MapsAndCompassesChoices, setting, value);
         } else if (setting == ForestSetting) {
             settings.forest = Parse(ForestChoices, setting, value);
+        } else if (setting == DoorOfTimeSetting) {
+            settings.doorOfTime = Parse(DoorOfTimeChoices, setting, value);
         } else if (setting == BridgeSetting) {
             settings.bridge = Parse(BridgeChoices, setting, value);
         } else if (setting == TrialsSetting) {

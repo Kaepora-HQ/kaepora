@@ -45,6 +45,7 @@ NO_BOTTLE = (("LH Underwater Item", "Green Rupee"), ("Market 10 Big Poes", "Gree
 LENS_NEVER_NEEDED = {"Lens of Truth": "Never needed"}
 KEYS_NOT_NEEDED = {"Small and boss keys": "Not needed"}
 FOREST_OPEN = {"Kokiri Forest": "Open"}
+DOOR_OPEN = {"Door of Time": "Open"}
 CLOSED_DEKU = {"Kokiri Forest": "Closed Deku"}
 BRIDGE_OPEN = {"Rainbow Bridge": "Always open"}
 NO_TRIALS = {"Ganon's trials": "None"}
@@ -85,6 +86,13 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("Queen Gohma", *never_gohma, settings=CLOSED_DEKU))
         for location in ("HF Ocarina of Time Item", "Song from Ocarina of Time", "Gift from Rauru"):
             self.assertTrue(self.reachable(location, *never_gohma, settings=CLOSED_DEKU), location)
+
+    def test_an_open_door_of_time_asks_nothing(self):
+        # With no Ocarina of Time, the closed door shuts the adult out, and the open one lets a child walk through and
+        # pull the sword.
+        for location in ("Gift from Rauru", "Sheik in Forest"):
+            self.assertFalse(self.reachable(location, NEVER_ADULT), location)
+            self.assertTrue(self.reachable(location, NEVER_ADULT, settings=DOOR_OPEN), location)
 
     def test_the_prelude_of_light_follows_phantom_ganon(self):
         # Sheik waits at the pedestal once the Forest quest is complete. The Forest Temple's only bow lies on the way to

@@ -798,7 +798,10 @@ Step02 until both stones are done. Only `Npc_Hylia_037_Child` `Event53` and Sari
 Step02 from Step2_1 and Step2_2, and both only choose a line (read). Seen in the game: with both stones done and the
 quest at Step01, Impa teaches, her send-off plays Zelda's escape, and the moat holds the Ocarina of Time. With the
 Goron's Ruby got and the quest at Step01, the warp after Barinade keeps Step01. A child holds a warp song before Zelda
-only with the songs shuffled.
+only with the songs shuffled, or with the Door of Time open, where his adult self can learn one from Sheik first. The
+check asks no age, so an adult's stone dungeon after the warp keeps Step01 as well. Seen in the game with the door
+open: an adult who beat King Dodongo with the quest at Step01 completed `Get_StoneOfFire` and got the Goron's Ruby,
+and the quest stayed at Step01 with `DoorOfTime_GetStoneCount` still 2.
 
 After a warp out, the send-off can come after the letter is shown to Kakariko's guard. The send-off's `Event62` then
 sets `Get_StoneOfFire` back to KakarikoVillageNpc with no test, and the walk into Kakariko sets it to
@@ -901,6 +904,20 @@ A mod also rests on a step in these places, where no write changes:
   Every mod moves that anchor from in front of the pedestal to behind it.
 - With "Kokiri Forest" at "Closed Deku", Mido's schedule loses its last entry, the one on
   `Goto_HyruleCastle_IsCompleted_Exp`.
+- With "Door of Time" at "Open", the door's module, `Logic/Market_Common_f252`, asks `AllSage` at Ready or after in
+  place of `DoorOfTime` at Step06 or after (node 8), so the door stands open for both ages from a new game on. The
+  child's pedestal, `Logic/Market_Child_Prefab_e700`, starts the first pull on `AllSage` at Ready exactly in place of
+  `DoorOfTime` at Step06 exactly (node 2), and node 5 starts the later pulls on `AllSage` past Ready, as in the game.
+  Rauru's write after the first pull, `DoorOfTime` `Event93`, names `SageOfLight`, which `Market_Adult_AllSage_Start`
+  `Event1` completes next. So a pull before Zelda, the stones or the Ocarina of Time leaves `DoorOfTime` at its step,
+  and Impa, the escape, the moat's Ocarina of Time and the Song of Time still wait for the child. Seen in the game:
+  the door open for a child before Zelda, and after the first pull `DoorOfTime` still at NotReady. Seen in the game
+  after a first pull before Zelda: Zelda's scene and letter, Impa's lesson and her send-off came (`DoorOfTime` Step02
+  after it); Barinade's warp with the Goron's Ruby got brought Step03; then Zelda's escape, the moat's Ocarina of Time,
+  the Song of Time, the altar's scene and a later pull came (`DoorOfTime` Step06). An adult can also beat King Dodongo
+  first. Seen in the game: his win plays the child's two films, `Dm_DeathMtTrail_0020` and `Dm_DeathMtTrail_0025`,
+  with adult Link at a child's size, the place gives inside the second, `Get_StoneOfFire` goes to `Complete`, and the
+  stone check runs.
 - With the songs shuffled, the Colossus's gates stand on `SageOfSpirit_IsAfter_Step02_Exp` (above), and
   `HavePlayedEvent.Dm_TimeTemple_0065` starts true: that scene at the Door of Time plays only while `AllSage` stands at
   Step01, and the adult's world map waits for it.

@@ -245,6 +245,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_price_setting_nothing_applies_is_refused the_spoiler_log_holds_only_the_prices_in_effect
                      a_dungeon_left_out_keeps_its_chests keys_stay_in_their_own_chests
                      keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
+                     an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest
                      bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route

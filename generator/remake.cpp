@@ -997,6 +997,32 @@ static constexpr EventText biggoronTexts[] = {
     { biggoronFlow, "Event49", "GameDataName", biggoronGiven },
 };
 
+struct ModuleText {
+    std::string_view file;
+    std::string_view from;
+    std::string_view to;
+};
+
+// The Door of Time, in both ages' Temple of Time, opens once its quest is at Step06, which the Song of Time at the
+// altar writes after Zelda, the stones and the Ocarina of Time. The child's pedestal starts the first pull at that step
+// exactly, and later pulls once AllSage is past Ready. AllSage waits on nothing, stands at Ready in a new game, and
+// only the first pull's last scene writes its first step. So the door opens on AllSage at Ready or after, and the first
+// pull waits for AllSage at Ready exactly.
+static constexpr std::string_view doorOfTimeQuest = "Work/Challenge/DoorOfTime.game__challenge__Challenge.gyml";
+static constexpr std::string_view allSageQuest = "Work/Challenge/AllSage.game__challenge__Challenge.gyml";
+static constexpr ModuleText doorOpen[] = {
+    { "Logic/Market_Common_f252.logic.module.ainb", doorOfTimeQuest, allSageQuest },
+    { "Logic/Market_Common_f252.logic.module.ainb", "Step06", "Ready" },
+    { "Logic/Market_Child_Prefab_e700.logic.module.ainb", doorOfTimeQuest, allSageQuest },
+    { "Logic/Market_Child_Prefab_e700.logic.module.ainb", "Step06", "Ready" },
+};
+// Rauru's scene after the first pull writes the Door of Time's quest complete, with no test. The engine drops the write
+// before Zelda's courtyard, where the quest is at NotReady. After Zelda and before the altar's Song of Time, it would
+// take what is left of Impa's lesson, the escape, the moat's Ocarina of Time and the Song of Time from the child, so it
+// names the Light sage's quest, which the next scene completes.
+static constexpr EventText rauruCompletesTheDoor = { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event93", "ChallengeName",
+                                                     "SageOfLight" };
+
 static const EventNext biggoronNexts[] = {
     // The hand-over's last line goes on to that write and his talk about the receipt, past the write of Complete.
     { std::string(biggoronFlow), "Event112", "Event21" },
@@ -1156,6 +1182,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
             addText(flow, event, param, text);
         }
     }
+    const bool doorOpened = settings.doorOfTime == DoorOfTime::Open;
+    if (doorOpened) {
+        addText(rauruCompletesTheDoor.flow, rauruCompletesTheDoor.event, rauruCompletesTheDoor.param,
+                rauruCompletesTheDoor.text);
+    }
     plan["event_numbers"] = nlohmann::ordered_json::array();
     for (const RemakeSongPlace& place : songs) {
         const RemakeSongPlace& taught = *std::ranges::find(songs, items.at(place.location), &RemakeSongPlace::song);
@@ -1174,6 +1205,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     plan["event_nexts"] = nlohmann::ordered_json::array();
     plan["module_texts"] = nlohmann::ordered_json::array();
+    if (doorOpened) {
+        for (const auto& [file, from, to] : doorOpen) {
+            plan["module_texts"].push_back({ { "file", file }, { "from", from }, { "to", to } });
+        }
+    }
     plan["start_values"] = StartValues(settings);
     if (biggoron) {
         for (const auto& [flow, event, next] : biggoronNexts) {
