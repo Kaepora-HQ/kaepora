@@ -7,7 +7,7 @@ Website and downloads: <https://kaepora.org>
 ## What you need
 
 - **Your own copy of the game**, version 2.0.0, as a `.nup` game file. Kaepora contains none of Nintendo's data, and neither do its downloads.
-- **The [Lichii](https://github.com/zortos293/Lichii) emulator.** Kaepora writes a mod that Lichii loads over the game.
+- **The Lichii emulator.** Kaepora writes a mod that Lichii loads over the game. The [download page](https://kaepora.org/download) has Kaepora's own build of it, and [Lichii's own builds](https://github.com/zortos293/Lichii/releases) work too.
 - **A computer** with Linux, Windows 10 or 11, or macOS 15 or later on Apple silicon.
 
 ## Download

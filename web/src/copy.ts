@@ -13,13 +13,24 @@ export type Copy = {
     title: string
     status: string
     noReleases: string
+    kaepora: string
+    lichii: string
+    amdOnly: string
     macosFirstOpen: {
       heading: string
       why: string
       steps: readonly string[]
       after: string
+      lichii: string
       terminal: string
       command: string
+    }
+    aboutLichii: {
+      heading: string
+      builds: { before: string; link: string; after: string }
+      linux: string
+      zen: string
+      windows: string
     }
   }
   faqPage: { title: string; questions: string }
@@ -132,6 +143,9 @@ export const copy: Copy = {
     title: 'Download Kaepora',
     status: 'Kaepora is still in development.',
     noReleases: 'No releases yet.',
+    kaepora: 'Kaepora',
+    lichii: 'Lichii, the emulator',
+    amdOnly: 'AMD only:',
     macosFirstOpen: {
       heading: 'Opening it on a Mac the first time',
       why: 'Apple has not checked this version, so macOS blocks it the first time you open it.',
@@ -141,8 +155,20 @@ export const copy: Copy = {
         'Under Security, click Open Anyway, then enter your password.',
       ],
       after: 'After that it opens like any other app.',
+      lichii: 'Lichii needs the same three steps the first time you open it.',
       terminal: 'If you prefer Terminal:',
       command: 'xattr -dr com.apple.quarantine Kaepora.app',
+    },
+    aboutLichii: {
+      heading: 'About Lichii',
+      builds: {
+        before: "Kaepora plays in Lichii, a Switch 2 emulator. These are Kaepora's own builds of it. Each one follows Lichii's newest release, and it is the build Kaepora is tested with.",
+        link: "Lichii's own builds",
+        after: 'work with Kaepora too.',
+      },
+      linux: 'On Linux, Lichii needs glibc 2.39 or newer, which Ubuntu 24.04, Fedora 40, Debian 13 and Arch have.',
+      zen: "The Zen 4 build is only for AMD processors of the Zen 4 or Zen 5 architecture, and the Zen 5 build only for Zen 5. The series number does not tell it: some Ryzen 7000 laptop processors are Zen 2 or Zen 3. AMD's page for your processor names its architecture. If you are not sure, take the main download.",
+      windows: 'On Windows, unzip it and run lichii.exe. If Windows says a DLL is missing, run vc_redist.x64.exe from the same folder first.',
     },
   },
   randomized: {
@@ -169,7 +195,7 @@ export const copy: Copy = {
   footer: {
     heart: { before: 'Made with', label: 'love', after: 'by fans of Ocarina of Time' },
     thanks: { before: 'Special thanks to', name: 'Ship of Harkinian', after: '.' },
-    smallPrint: 'For the Switch 2 remake, not the Nintendo 64 game. You need your own copy of the game and an emulator that loads mods. Kaepora includes none of the game and never changes your copy. Open source under the MIT license.',
+    smallPrint: 'For the Switch 2 remake, not the Nintendo 64 game. You need your own copy of the game and the Lichii emulator. Kaepora includes none of the game and never changes your copy. Open source under the MIT license.',
     disclosure: 'An unofficial fan project, not affiliated with or endorsed by Nintendo. The Legend of Zelda and Ocarina of Time are trademarks of Nintendo.',
   },
   meta: {
