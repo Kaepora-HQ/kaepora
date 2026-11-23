@@ -1407,6 +1407,15 @@ constexpr std::string_view StoneCount = "Event4";
 constexpr std::pair<std::string_view, std::string_view> DoorOfTimeNext[] = { { SendOffEnd, StoneCheck },
                                                                              { BothStonesStep, StoneCount } };
 
+// Each Triforce mark but the summit's asks in Event8 whether Link holds Din's Fire, which the summit's Great Fairy
+// gives, and only with it goes on to Event26, where its fairy appears. The summit's owl asks it in Event4, and only
+// with it goes on to Event18, his offer to fly a child down to Kakariko. Sent on to those events, every fairy comes and
+// the owl flies for a Link without it.
+constexpr struct {
+    std::string_view flow, question, next;
+} DinsFireQuestions[] = { { "Event/EventFlow/TriForcePoint.bfevfl.zs", "Event8", "Event26" },
+                          { "Event/EventFlow/Npc_Kaepora_DeathMountainTrail.bfevfl.zs", "Event4", "Event18" } };
+
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
 // message opens with. Another language's pack keeps the game's words, and a copy there says its copied message whole.
 static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan,
@@ -1739,6 +1748,12 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     for (const auto& [event, next] : DoorOfTimeNext) {
         if (bfevfl::SetNext(flowAt(doorOfTime), event, next)) {
             changedFlows.insert(doorOfTime);
+        }
+    }
+    for (const auto& [flow, question, next] : DinsFireQuestions) {
+        const std::string path(flow);
+        if (bfevfl::SetNext(flowAt(path), question, next)) {
+            changedFlows.insert(path);
         }
     }
 

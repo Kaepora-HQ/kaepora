@@ -26,7 +26,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step|market-arrival-writes-no-step| \
+           river-arrival-writes-no-step|market-arrival-writes-no-step|fairies-and-summit-owl-without-dins-fire| \
            a-child-comes-back-with-the-sword-he-left-with|schedule-entry|module-texts <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
@@ -3021,6 +3021,26 @@ def market_arrival_writes_no_step(patch, game):
                                                                              "Event65"]
 
 
+TRIFORCE_MARK_FLOW = "Event/EventFlow/TriForcePoint.bfevfl.zs"
+SUMMIT_OWL_FLOW = "Event/EventFlow/Npc_Kaepora_DeathMountainTrail.bfevfl.zs"
+
+
+def fairies_and_summit_owl_without_dins_fire(patch, game):
+    """In every mod a Link who holds no Din's Fire goes on where the game sends one who holds it: from the question of
+    each Triforce mark but the summit's to its fairy's appearance, and from the summit owl's to his offer to fly a child
+    down to Kakariko."""
+    mod = every_mod(patch, game)
+    for path, question, holder in ((TRIFORCE_MARK_FLOW, "Event8", "Event26"), (SUMMIT_OWL_FLOW, "Event4", "Event18")):
+        expected = game.event_flow(game.read(path))
+        assert string_parameter(expected, question, "GameDataName")[1] == "IsGet.Item_DinFire", question
+        index = {event[0]: i for i, event in enumerate(expected["events"])}
+        # A yes-or-no switch stores true as case 0.
+        cases = {value: event for value, event, _ in struct.iter_unpack("<IHH", expected["events"][index[question]][3])}
+        assert cases[0] == index[holder], cases
+        assert path in mod, sorted(mod)
+        assert game.event_flow(mod[path]) == sent_on(expected, question, holder), path
+
+
 def without_mask(flow):
     """A parsed GossipStone flow in which the mask question goes on to the stone's talk on both answers, and the talk
     straight on to the stone's message."""
@@ -3699,6 +3719,7 @@ def main():
         "event-numbers": event_numbers,
         "river-arrival-writes-no-step": river_arrival_writes_no_step,
         "market-arrival-writes-no-step": market_arrival_writes_no_step,
+        "fairies-and-summit-owl-without-dins-fire": fairies_and_summit_owl_without_dins_fire,
         "a-child-comes-back-with-the-sword-he-left-with": a_child_comes_back_with_the_sword_he_left_with,
     }
     tests[test](patch, game, *rest)

@@ -1,6 +1,6 @@
 # What is randomized
 
-With the default settings, a seed shuffles the chests, the gifts of every group but **Malon's Egg**, the loose items, the songs among themselves, and the stones and medallions among the bosses and Rauru. **Shop goods** and **Gold Skulltulas** start at **Vanilla**. Change any of it in **Settings…**.
+With the default settings, a seed shuffles the chests, the gifts of every group but **100 Gold Skulltulas**, **Malon's Egg** and **Zelda's Letter**, the loose items, the songs among themselves, and the stones and medallions among the bosses and Rauru. **Shop goods** and **Gold Skulltulas** start at **Vanilla**. Change any of it in **Settings…**.
 
 ## Chests
 
@@ -36,14 +36,16 @@ The tokens they would have given join the shuffled items, so a token can turn up
 
 ## Gifts
 
-Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives. By default every group but **Malon's Egg** is ticked, and **Deku Scrubs** is at **One Time Rewards**.
+Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**, and what those characters and minigames hand over joins the shuffle. A group left unticked, or at **Vanilla**, gives what the game gives. By default every group but **100 Gold Skulltulas**, **Malon's Egg** and **Zelda's Letter** is ticked, and **Deku Scrubs** is at **One Time Rewards**.
 
 - **Minigames:** both fishing prizes, the Zora diving game, horseback archery's two prizes, Bombchu Bowling's two prizes, the frogs' two prizes, the ocarina memory game in the Lost Woods, both shooting galleries, the target in the Lost Woods, the rolling Goron in Goron City, Talon's cuccos, Anju's cuccos and Dampé's digging tour.
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer and the lakeside laboratory's dive.
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
+- **100 Gold Skulltulas:** the cursed man's last reward in the House of Skulltula, for all 100 tokens.
 - **Great Fairies:** the gifts of the six Great Fairies.
 - **Story gifts:** the scene after the carpenters' rescue, Darunia's dance, his son's thanks once you stop him rolling, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
+- **Zelda's Letter:** what Zelda hands you in the castle courtyard.
 - **Biggoron Quest:** what Anju hands you as an adult, and what Biggoron hands you for his receipt.
 - **Deku Scrubs**, set to **One Time Rewards:** the Deku theater's two prizes, the two Deku Scrubs that sell a bigger bag, and the two that sell a Piece of Heart.
 
@@ -53,13 +55,17 @@ You still do what the game asks for each one. What you are handed is the seed's 
 
 The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
 
+With **100 Gold Skulltulas** ticked, the man in the House of Skulltula hands you the seed's item once you bring him all 100 tokens, and the Gold Rupee he would give is one of the shuffled items. A seed may need that item, and then it needs every token. Talk to him again and he gives a Gold Rupee each time, as in the game.
+
 With **Malon's Egg** ticked, her egg is one of the shuffled items, and Malon at the castle hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, the egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle.
+
+With **Zelda's Letter** ticked, her letter is one of the shuffled items, and Zelda hands you the seed's item. Impa still teaches you a song after it. The guard at Kakariko's gate takes the letter wherever you found it and opens the trail up Death Mountain. The seed counts on you showing it to him only once you have met Zelda.
 
 With **Biggoron Quest** ticked, Anju as an adult and Biggoron on Death Mountain hand you the seed's items, and the Biggoron Receipt and the Biggoron Sword are among the shuffled items. The Pocket Egg is not, so the trade that starts with it never begins. Show Biggoron the receipt for his item. He is ready three game days after your game begins, and until then he tells you it is still in the works. He hands his item over once, and his lines still speak of the sword whatever he holds. Anju makes her offer whether you see her before him or after.
 
 A Deku Scrub still asks its price: 40 rupees by the bridge in the Lost Woods and in the Lost Woods grotto, 100 in the Hyrule Field grotto and in Death Mountain Crater. The one in the Hyrule Field grotto sells only to young Link, and only once adult Link has read the password on the tree outside.
 
-A Great Fairy still asks for her offering, and each but the summit's for Din's Fire as well, as she does in the game. What she hands you is the seed's item, and she hands it over once.
+A Great Fairy still asks for her offering. What she hands you is the seed's item, and she hands it over once.
 
 ## Songs
 
@@ -145,4 +151,5 @@ A seed changes a few rules of the game, so that no order of play leaves it unfin
 - **Every race at Dampé's is timed.** In the game only a Link who owns the Hookshot gets the timer, and the first race ends at the Hookshot's chest only for a Link without one. With a seed every race is timed, his first chest waits until you open it, whatever you own, and his second prize comes for a finish within a minute after that.
 - **Dampé lifts you to the exit.** In the game you leave his goal room with the Hookshot or a warp. With a seed he sets you on the ledge by the door: talk to him after his first chest, or after any other chest tell him you won't race again. One thing to watch: without the Hookshot, do not walk back into the grave through the windmill's door, because the room below the ledge has no way out without one.
 - **Time runs from the start.** In the game the afternoon stops at 3 PM until Impa sends you off from the castle, so before you meet Zelda the day never turns to night on its own. With a seed the day and night turn from the beginning.
+- **No Great Fairy waits for Din's Fire.** In the game every Great Fairy but the one at the top of Death Mountain comes only once you hold Din's Fire, and the owl up there flies young Link down to Kakariko only then. With a seed each Great Fairy comes when you play Zelda's Lullaby at her fountain, and the owl offers young Link the flight whenever you talk to him.
 - **A few doors and scenes.** Four dungeon doors start open. A seed lets you do things in an order the game never expected, so some scenes are changed to keep up. Story scenes, the Zora diving game and your first walk into Zora's Domain no longer set a quest back. King Zora stays frozen after the Water Temple until you thaw him, so what he hands over is never lost. If you finish both stone dungeons before you meet Zelda, her escape plays as soon as Impa has sent you off, and the drawbridge is no longer raised before it.

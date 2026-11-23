@@ -32,11 +32,13 @@ Market Lost Dog	Event/EventFlow/SubEvent_FindRichard.bfevfl.zs	Event16	ReveiveIt
 Market 10 Big Poes	Event/EventFlow/Npc_Hylia_048_BottleShop.bfevfl.zs	Event329	ActorName	Item_Bottle	Item_Bottle	Characters	
 Market ToT Light Arrow Cutscene	Event/EventFlow/Dm_TimeTemple_0130.bfevfl.zs	Event85	ActorName	Item_Arrow_Light	Item_Arrow_Light	Story gifts	
 HC Malon Egg	Event/EventFlow/Goto_HyruleCastle.bfevfl.zs	Event35	ActorName	Item_WeirdEgg	Item_WeirdEgg	Malon's Egg	
+HC Zeldas Letter	Event/EventFlow/Dm_HrlCastle_0050.bfevfl.zs	Event59	ActorName	Item_ZeldaLetter	Item_ZeldaLetter	Zelda's Letter	
 Kak 10 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event398	TakenRewardActor	Item_Wallet_Medium	Item_Wallet_Medium	House of Skulltula	
 Kak 20 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event75	TakenRewardActor	Item_AgonyStone	Item_AgonyStone	House of Skulltula	
 Kak 30 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event194	TakenRewardActor	Item_Wallet_Large	Item_Wallet_Large	House of Skulltula	
 Kak 40 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event200	TakenRewardActor	Item_BombchuBundle_Large	Item_BombchuBundle_Large	House of Skulltula	
 Kak 50 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event219	TakenRewardActor	Obj_Heart_Piece	Obj_Heart_Piece	House of Skulltula	
+Kak 100 Gold Skulltula Reward	Event/EventFlow/GatheringTokenGold.bfevfl.zs	Event215	TakenRewardActor	Obj_Rupee_Gold	TBox_Rupee_Gold	100 Gold Skulltulas	
 Kak Man on Roof	Event/EventFlow/Npc_Hylia_001_Adult.bfevfl.zs	Event4	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Characters	
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event381	ReveiveItem	Item_Quiver_Medium	Item_Quiver_Medium	Minigames	
 Kak Shooting Gallery Reward	Event/EventFlow/MiniGame_HitTarget.bfevfl.zs	Event242	ReveiveItem	Item_Quiver_Large	Item_Quiver_Medium	Minigames	

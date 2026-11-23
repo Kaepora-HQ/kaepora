@@ -29,6 +29,7 @@ TBox_ArrowBundle_Large	Shop_ArrowBundle_01
 TBox_ArrowBundle_Medium		Pose_Shop	-10	522	433	232
 TBox_DekuNutBundle		Pose_Common	-14	291	360	183
 TBox_Rupee_Blue		Pose_Common	7	390	206	103
+TBox_Rupee_Gold		Pose_Common	7	390	206	103
 TBox_Rupee_Green		Pose_Common	7	390	206	103
 TBox_Rupee_Purple		Pose_Common	7	390	206	103
 TBox_Rupee_Red		Pose_Common	7	390	206	103
