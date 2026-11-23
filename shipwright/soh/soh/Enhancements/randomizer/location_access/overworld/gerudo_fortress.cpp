@@ -198,7 +198,7 @@ void RegionTable_Init_GerudoFortress() {
 //Assumes IsChild || Get(LOGIC_GERUDOS_ACCEPT_LINK) is checked on entry
     areaTable[RR_GF_TOWER] = Region("Gerudo Fortress Tower", SCENE_GERUDOS_FORTRESS, {
         //Events
-        EVENT_ACCESS(LOGIC_GF_GATE_OPEN, logic->IsAdult && logic->HasItem(RG_SPEAK_GERUDO)),
+        EVENT_ACCESS(LOGIC_GF_GATE_OPEN, logic->IsAdult && logic->HasItem(RG_GERUDO_MEMBERSHIP_CARD) && logic->HasItem(RG_SPEAK_GERUDO)),
     }, {}, {
         //Exits
         ENTRANCE(RR_GF_OUTSKIRTS,     true),
@@ -258,7 +258,7 @@ void RegionTable_Init_GerudoFortress() {
 
     areaTable[RR_GF_OUTSIDE_GATE] = Region("GF Outside Gate", SCENE_GERUDOS_FORTRESS, {
         //Events
-        EVENT_ACCESS(LOGIC_GF_GATE_OPEN, logic->IsAdult && logic->Get(LOGIC_GERUDOS_ACCEPT_LINK) && logic->HasItem(RG_SPEAK_GERUDO)),
+        EVENT_ACCESS(LOGIC_GF_GATE_OPEN, logic->IsAdult && logic->Get(LOGIC_GERUDOS_ACCEPT_LINK) && logic->HasItem(RG_GERUDO_MEMBERSHIP_CARD) && logic->HasItem(RG_SPEAK_GERUDO)),
     }, {
         //Locations
         LOCATION(RC_GF_GATE_EXIT_RECTANGLE_SIGN, logic->IsAdult && logic->CanRead()),

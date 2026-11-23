@@ -993,19 +993,54 @@ struct Presence {
     std::optional<std::string_view> replaces;
 };
 
+// The gate from the Gerudo Fortress into the Wasteland. The gatekeeper's first talk plays the gate's scene and sets
+// this flag (Event63), on which the fortress's module (GerudoFortress_Common_305a) opens the gate for an adult.
+static constexpr std::string_view gatekeeperFlow = "Event/EventFlow/Npc_Gerudo_006.bfevfl.zs";
+static constexpr std::string_view gateOpen = "Gerudo_phantomdesert_gate";
+
 // Presences every seed that shuffles the songs carries. With the Requiem learned elsewhere, Link can warp to the Desert
-// Colossus before the Gerudo Fortress. Walking out into the Wasteland and back plays the Wasteland's arrival, and the
-// Spirit Temple moves the quest on too; either takes the Spirit quest past the fortress's step, after which no
-// carpenter's thief comes. So the Colossus's way into the Wasteland and the temple's front entrance stand, for both
-// ages, only once the quest is past Step02, which Link reaches by entering the Wasteland from the fortress.
+// Colossus before the Gerudo Fortress. The Spirit Temple moves the Spirit quest on with no test of its step, and past
+// Step01 the carpenters no longer call for help and no thief comes. So the temple's front entrance stands, for both
+// ages, only once the carpenters are free. A walk in from the Wasteland lands at the Colossus's way into the Wasteland,
+// so that way stands once the fortress's gate is open, and the way back through the Wasteland never ends outside a
+// shut gate.
 static constexpr std::string_view colossusAdult = "Banc/DesertColossus/DesertColossus_Adult_Static.bcett.byml.zs";
 static constexpr std::string_view colossusChild = "Banc/DesertColossus/DesertColossus_Child_Static.bcett.byml.zs";
-static constexpr std::string_view pastSpiritStep02 = "SageOfSpirit_IsAfter_Step02_Exp";
+static constexpr std::string_view pastSpiritStep01 = "SageOfSpirit_IsAfter_Step01_Exp";
 static constexpr Presence colossusGates[] = {
-    { colossusAdult, "12141577802165947392", pastSpiritStep02 }, // the way into the Wasteland
-    { colossusAdult, "13187812046230253833", pastSpiritStep02 }, // the Spirit Temple's front entrance
-    { colossusChild, "18409754566529742762", pastSpiritStep02 },
-    { colossusChild, "15448624735210695325", pastSpiritStep02 },
+    { colossusAdult, "12141577802165947392", gateOpen },         // the way into the Wasteland
+    { colossusAdult, "13187812046230253833", pastSpiritStep01 }, // the Spirit Temple's front entrance
+    { colossusChild, "18409754566529742762", gateOpen },
+    { colossusChild, "15448624735210695325", pastSpiritStep01 },
+};
+// The first walk into the Colossus from the Wasteland plays the Colossus's scene (Event82) and then writes Step04 with
+// no test. With the temple open before the Wasteland, that walk can come after the temple has moved the quest on, so
+// the scene ends its branch.
+static const EventNext colossusArrivalKeepsTheStep = { "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs", "Event82",
+                                                       std::nullopt };
+// Her talked flag (Event6) goes on past her write of Step02 (Event61), which tests no step. After the rescue it writes
+// Step02 onto Step02, and before it or after the temple, which a pass found first or an early temple brings, it would
+// move the quest the wrong way.
+static const EventNext gatekeeperKeepsTheStep = { std::string(gatekeeperFlow), "Event6", "Event59" };
+
+// With the carpenters' rescue shuffled, the Gerudo Pass is an item of the pool, and the gatekeeper opens the gate only
+// for a Link who holds it. Her talk's first question (Event22) asks for the pass in place of her talked flag, and her
+// question whether the quest is past the walk into the Wasteland (Event106) asks the talked flag instead, through an
+// expression of the mod's own. With the pass, a Link she has not talked to goes on (Event0) to her first talk past its
+// question about Link's mask. Without it, he reaches that question (Event65), which goes on to her refusal (Event73), a
+// talk the game reaches only from Event72, which asks whether the adult Link she talks to wears the Bunny Hood. Once
+// she has opened the gate, her later talk goes on (Event3) past "You've mastered the desert, you say?", which a Link
+// who has not crossed it now reaches.
+static constexpr std::string_view gatekeeperTalked = "Kaepora_HaveTalked_Special_Npc_Gerudo_006_Talk_Event8_Exp";
+static constexpr std::string_view gatekeeperTalkedFlag = "HaveTalked_Special.Npc_Gerudo_006_Talk_Event8";
+static constexpr EventText gatekeeperTexts[] = {
+    { gatekeeperFlow, "Event22", "GameDataName", "IsGet.Item_Token_Gerudo" },
+    { gatekeeperFlow, "Event106", "GameDataName", gatekeeperTalked },
+};
+static const EventNext gatekeeperNexts[] = {
+    { std::string(gatekeeperFlow), "Event0", "Event60" },
+    { std::string(gatekeeperFlow), "Event65", "Event73" },
+    { std::string(gatekeeperFlow), "Event3", "Event45" },
 };
 
 // In the domain an adult sees once the Water Sage's quest is complete, King Zora's ice stands only while that quest is
@@ -1274,6 +1309,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     const bool biggoron = std::ranges::find(gifts, RC_DMT_TRADE_CLAIM_CHECK, &RemakeGift::location) != gifts.end();
+    const bool rescue = std::ranges::find(gifts, RC_TH_FREED_CARPENTERS, &RemakeGift::location) != gifts.end();
     if (std::ranges::find(gifts, RC_HC_MALON_EGG, &RemakeGift::location) != gifts.end()) {
         plan["presences"].push_back(
             { { "file", weirdEggHatch.file }, { "hash", weirdEggHatch.hash }, { "flag", weirdEggHatch.flag } });
@@ -1307,6 +1343,11 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     if (biggoron) {
         for (const auto& [flow, event, param, text] : biggoronTexts) {
+            addText(flow, event, param, text);
+        }
+    }
+    if (rescue) {
+        for (const auto& [flow, event, param, text] : gatekeeperTexts) {
             addText(flow, event, param, text);
         }
     }
@@ -1345,6 +1386,17 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     };
     for (const EventNext& next : dampesRaceNexts) {
         addNext(next);
+    }
+    if (rescue) {
+        for (const EventNext& next : gatekeeperNexts) {
+            addNext(next);
+        }
+    }
+    if (rescue || !songs.empty()) {
+        addNext(gatekeeperKeepsTheStep);
+    }
+    if (!songs.empty()) {
+        addNext(colossusArrivalKeepsTheStep);
     }
     plan["module_texts"] = nlohmann::ordered_json::array();
     if (doorOpened) {
@@ -1471,6 +1523,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         plan["claims"].push_back(biggoronClaim);
         plan["expressions"].push_back(
             { { "name", biggoronGiven }, { "all_of", nlohmann::ordered_json::array({ biggoronClaim }) } });
+    }
+    if (rescue) {
+        plan["expressions"].push_back(
+            { { "name", gatekeeperTalked }, { "all_of", nlohmann::ordered_json::array({ gatekeeperTalkedFlag }) } });
     }
     plan["start_items"] = nlohmann::ordered_json::array();
     for (const StartStep& started : StartWithInOrder(settings)) {

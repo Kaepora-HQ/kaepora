@@ -513,6 +513,8 @@ if(KAEPORA_GAME_NUP)
                                              "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-dampes-race COMMAND ${PATCH_TEST} dampes-race $<TARGET_FILE:kaepora-patch>
                                             "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
+    add_test(NAME patch-gatekeeper COMMAND ${PATCH_TEST} gatekeeper $<TARGET_FILE:kaepora-patch>
+                                           "${KAEPORA_GAME_NUP}" $<TARGET_FILE:kaepora-seedgen>)
     add_test(NAME patch-time-runs-from-the-start
         COMMAND ${PATCH_TEST} time-runs-from-the-start $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}"
                 $<TARGET_FILE:kaepora-seedgen>)
