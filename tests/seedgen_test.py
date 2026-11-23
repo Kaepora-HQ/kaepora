@@ -151,6 +151,8 @@ FAIRY_ITEMS = {"Item_FairyBless_MP", "Item_DinFire", "Item_FairyBless_MPDouble",
 # Three gifts where the story moves, and what each gives in the game.
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
+# The gifts of Goron City where the story moves, and what each gives in the game.
+GORON_GIFTS = {"GC Darunias Joy": "Item_Gauntlet_Goron"}
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # What a shuffled group adds that only a chest, a gift's call or a reward's place gives: each item with its group and
 # the place that holds it in SoH's own list.
@@ -264,11 +266,11 @@ START_STEPS = {
     "Deku Nuts (40)": ["Item_DekuNut", "Item_NutBag_Medium", "Item_NutBag_Large"],
     "Fairy Ocarina": ["Item_Ocarina_Fairy"],
 }
-# The items that shuffled places name for those steps: chests, and with gifts shuffled the scales, the wallets and the
-# bigger and biggest bags.
-STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Silver",
-               "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium", "Item_Wallet_Large",
-               "Item_BulletBag_Medium", "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large",
+# The items that shuffled places name for those steps: chests, and with gifts shuffled Darunia's bracelet, the scales,
+# the wallets and the bigger and biggest bags.
+STEP_COPIES = ["Item_Range_SlingShot", "Item_Range_Bow", "Item_BombBag_Small", "Item_Longshot", "Item_Gauntlet_Goron",
+               "Item_Gauntlet_Silver", "Item_Gauntlet_Gold", "Item_Scale_Silver", "Item_Scale_Gold", "Item_Wallet_Medium",
+               "Item_Wallet_Large", "Item_BulletBag_Medium", "Item_BulletBag_Large", "Item_Quiver_Medium", "Item_Quiver_Large",
                "Item_BombBag_Medium", "Item_BombBag_Large", "Item_StickBag_Medium", "Item_StickBag_Large",
                "Item_NutBag_Medium", "Item_NutBag_Large"]
 MAP_DUNGEONS = ["InsideTheDekuTree", "DodongoCavern", "InsideJabuJabuBelly", "ForestTemple", "FireTemple", "WaterTemple",
@@ -1244,24 +1246,24 @@ class SeedgenTest(unittest.TestCase):
                     self.assertLess(sphere[earlier], sphere[moat], (seed, earlier, moat))
             self.assertEqual(self.route_out_of_reach(log), [])
 
-    def test_the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts(self):
-        # Each of the three places writes the item placed there at its one event, and each item, wherever it lands,
-        # goes by its one name. The pass goes only to a chest, a gift or a reward's place, as a stone does. A shop
-        # refuses a tunic to a child, so none sells the Zora Tunic.
+    def assert_gifts_give_what_is_placed(self, gifts, seeds):
+        """Each place of gifts writes the item placed there at its one event, and each item, wherever it lands, goes by
+        its one name. Returns the kinds of place each item landed at, every item having left its own place in at least one
+        seed."""
         settings = GIFTS_SHUFFLED | REWARDS_SHUFFLED | SHOPS_SHUFFLED | SKULLTULAS_SHUFFLED | LOOSE_SHUFFLED
         chests = {row["location"] for row in SHUFFLED}
         shops = {row["location"] for row in SHOP_SLOTS}
         skulltulas = {row["location"] for row in SKULLTULAS}
         kinds, moved = collections.defaultdict(set), set()
-        for seed in map(str, range(640, 660)):
+        for seed in seeds:
             spoiler, plan = self.generate(seed, settings)
             sites = gift_sites(plan)
-            for location in STORY_GIFTS:
+            for location in gifts:
                 given = [item for at, item in sites if at == location]
                 self.assertEqual(len(given), 1, (seed, location))
                 self.assertIn((given[0], spoiler["locations"][location]), ITEM_PAIRS, (seed, location))
             placed = placed_remake_items(spoiler, plan)
-            for location, item in STORY_GIFTS.items():
+            for location, item in gifts.items():
                 at = [place for place, held in placed.items() if held == item]
                 self.assertEqual(len(at), 1, (seed, item))
                 kinds[item].add("chest" if at[0] in chests else "gift" if at[0] in GIFT_LOCATIONS.values()
@@ -1269,9 +1271,20 @@ class SeedgenTest(unittest.TestCase):
                                 else "skulltula" if at[0] in skulltulas else "loose")
                 if at[0] != location:
                     moved.add(item)
-        self.assertEqual(moved, set(STORY_GIFTS.values()))
+        self.assertEqual(moved, set(gifts.values()))
+        return kinds
+
+    def test_the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts(self):
+        # The pass goes only to a chest, a gift or a reward's place, as a stone does. A shop refuses a tunic to a child,
+        # so none sells the Zora Tunic.
+        kinds = self.assert_gifts_give_what_is_placed(STORY_GIFTS, map(str, range(640, 660)))
         self.assertLessEqual(kinds["Item_Token_Gerudo"], {"chest", "gift", "reward place"}, kinds)
         self.assertNotIn("shop", kinds["Obj_Armor_Zora"], kinds)
+
+    def test_the_goron_gifts_give_what_is_placed(self):
+        # The bracelet goes wherever the gauntlets go, a shop shelf included.
+        kinds = self.assert_gifts_give_what_is_placed(GORON_GIFTS, map(str, range(680, 700)))
+        self.assertIn("shop", kinds["Item_Gauntlet_Goron"], kinds)
 
     def test_the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them(self):
         # The Gerudo let Link pass after the last carpenter's scene, and the bridge follows Zelda's scene, whatever
@@ -1749,6 +1762,17 @@ class SeedgenTest(unittest.TestCase):
                          list(unstarted.values()).count("TBox_Rupee_Red") + len(STEP_COPIES))
         self.assertEqual(list(spoiler["playthrough"].values())[-1], {"Ganon": "Triforce"})
         self.assertEqual(self.route_out_of_reach(spoiler), [])
+
+    def test_a_started_strength_step_leaves_darunias_bracelet_out(self):
+        # Each step of strength includes the bracelet, so a seed that starts with any leaves Darunia's out of the pool,
+        # as it leaves the chest copy of each gauntlet step it holds, each with a Red Rupee in its stead.
+        unstarted = placed_remake_items(*self.generate("1", {"Gifts": ["Story gifts"]}))
+        self.assertIn("Item_Gauntlet_Goron", unstarted.values())
+        for held, step in enumerate(("Goron Bracelet", "Silver Gauntlets", "Golden Gauntlets"), 1):
+            placed = placed_remake_items(*self.generate("1", {"Gifts": ["Story gifts"], "Start with": [step]}))
+            self.assertNotIn("Item_Gauntlet_Goron", placed.values(), step)
+            self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
+                             list(unstarted.values()).count("TBox_Rupee_Red") + held, step)
 
     def test_a_started_zora_tunic_leaves_the_gifts(self):
         # With the gifts shuffled, King Zora's place adds a Zora Tunic to the pool. A seed that starts with one leaves

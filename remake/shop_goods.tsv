@@ -7,6 +7,7 @@ Item_BombBundle_Small	Shop_BombBundle_01
 Item_Boomerang		Pose_Common	-13	249	343	244
 Item_DekuStickBundle_Small		Pose_Shop	-3	492	340	209
 Item_Gauntlet_Gold		Pose_Common	-213	219	348	219
+Item_Gauntlet_Goron		Pose_Common	-116	132	243	136
 Item_Gauntlet_Silver		Pose_Common	-213	219	350	219
 Item_GlassTruth		Pose_Common	-109	-5	218	133
 Item_Hammer		Pose_Common	-293	423	1316	697

@@ -40,7 +40,7 @@ Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**,
 - **Characters:** the Skull Kid, the man on the roof, the lost dog's owner, the Big Poe buyer and the lakeside laboratory's dive.
 - **House of Skulltula:** the five rewards for Gold Skulltula tokens.
 - **Great Fairies:** the gifts of the six Great Fairies.
-- **Story gifts:** the scene after the carpenters' rescue, King Zora's thanks and Zelda's scene in the Temple of Time.
+- **Story gifts:** the scene after the carpenters' rescue, Darunia's dance, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
 - **Biggoron Quest:** what Anju hands you as an adult, and what Biggoron hands you for his receipt.
 - **Deku Scrubs**, set to **One Time Rewards:** the Deku theater's two prizes, the two Deku Scrubs that sell a bigger bag, and the two that sell a Piece of Heart.
