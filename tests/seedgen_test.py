@@ -152,7 +152,7 @@ FAIRY_ITEMS = {"Item_FairyBless_MP", "Item_DinFire", "Item_FairyBless_MPDouble",
 STORY_GIFTS = {"GF Freed All Carpenters": "Item_Token_Gerudo", "ZD King Zora Thawed": "Obj_Armor_Zora",
                "Market ToT Light Arrow Cutscene": "Item_Arrow_Light"}
 # The gifts of Goron City where the story moves, and what each gives in the game.
-GORON_GIFTS = {"GC Darunias Joy": "Item_Gauntlet_Goron"}
+GORON_GIFTS = {"GC Darunias Joy": "Item_Gauntlet_Goron", "GC Rolling Goron as Adult": "Obj_Armor_Goron"}
 GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # What a shuffled group adds that only a chest, a gift's call or a reward's place gives: each item with its group and
 # the place that holds it in SoH's own list.
@@ -1282,9 +1282,11 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotIn("shop", kinds["Obj_Armor_Zora"], kinds)
 
     def test_the_goron_gifts_give_what_is_placed(self):
-        # The bracelet goes wherever the gauntlets go, a shop shelf included.
+        # The bracelet goes wherever the gauntlets go, a shop shelf included. A shop refuses a tunic to a child, so none
+        # sells the Goron Tunic.
         kinds = self.assert_gifts_give_what_is_placed(GORON_GIFTS, map(str, range(680, 700)))
         self.assertIn("shop", kinds["Item_Gauntlet_Goron"], kinds)
+        self.assertNotIn("shop", kinds["Obj_Armor_Goron"], kinds)
 
     def test_the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them(self):
         # The Gerudo let Link pass after the last carpenter's scene, and the bridge follows Zelda's scene, whatever
@@ -1774,15 +1776,17 @@ class SeedgenTest(unittest.TestCase):
             self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
                              list(unstarted.values()).count("TBox_Rupee_Red") + held, step)
 
-    def test_a_started_zora_tunic_leaves_the_gifts(self):
-        # With the gifts shuffled, King Zora's place adds a Zora Tunic to the pool. A seed that starts with one leaves
-        # it out, with a Red Rupee in its stead.
-        for seed in ("1", "2", "3"):
-            placed = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED | {"Start with": ["Zora Tunic"]}))
-            unstarted = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED))
-            self.assertNotIn("Obj_Armor_Zora", placed.values(), seed)
-            self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
-                             list(unstarted.values()).count("TBox_Rupee_Red") + 1, seed)
+    def test_a_started_tunic_leaves_the_gifts(self):
+        # With the gifts shuffled, King Zora's place adds a Zora Tunic to the pool and Darunia's son's a Goron Tunic. A
+        # seed that starts with one leaves it out, with a Red Rupee in its stead.
+        for tunic, copy in (("Zora Tunic", "Obj_Armor_Zora"), ("Goron Tunic", "Obj_Armor_Goron")):
+            for seed in ("1", "2", "3"):
+                placed = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED | {"Start with": [tunic]}))
+                unstarted = placed_remake_items(*self.generate(seed, GIFTS_SHUFFLED))
+                self.assertIn(copy, unstarted.values(), (tunic, seed))
+                self.assertNotIn(copy, placed.values(), (tunic, seed))
+                self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
+                                 list(unstarted.values()).count("TBox_Rupee_Red") + 1, (tunic, seed))
 
     def test_a_place_that_gives_a_started_step_again_counts_for_nothing(self):
         # Dampé's race, Saria, the diving game, the two wallet rewards and the Bomb Bag's chest of a dungeon left out

@@ -79,9 +79,9 @@ int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>&
 
 // What a shop slot never holds. Dungeon items stay in their dungeons, and PlaceDungeonItems places them before shop
 // slots join the fill. The game has not shown that a shop sells the rest to a Link who lacks the bullet bag, the
-// quiver, the Goron Ruby or the empty bottle they may need, nor that a shelf sells a bag. A shop refuses the Zora
-// Tunic to a child, and a slot's rule asks for no age. So with shop goods shuffled they go to a chest, a gift or a
-// loose spot: the fill places them before shop slots and Gold Skulltulas join it.
+// quiver, the Goron Ruby or the empty bottle they may need, nor that a shelf sells a bag. A shop refuses either tunic
+// to a child, and a slot's rule asks for no age. So with shop goods shuffled they go to a chest, a gift or a loose
+// spot: the fill places them before shop slots and Gold Skulltulas join it.
 bool KeptFromShops(RandomizerGet item);
 
 // The Spiritual Stones, the medallions and the Gerudo's card, key items of the remake's pouch, the two eggs, the Claim

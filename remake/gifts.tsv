@@ -47,6 +47,7 @@ Graveyard Dampe Gravedigging Tour	Event/EventFlow/Npc_Hylia_Dampe_001.110.bfevfl
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event58	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Large	Minigames	
 GC Rolling Goron as Child	Event/EventFlow/Npc_Goron_006_Child.bfevfl.zs	Event92	ReveiveItem	Item_BombBag_Large	Item_BombBag_Large	Minigames	
 GC Darunias Joy	Event/EventFlow/Dm_Goron_0030.bfevfl.zs	Event127	ActorName	Item_Gauntlet_Goron	Item_Gauntlet_Goron	Story gifts	
+GC Rolling Goron as Adult	Event/EventFlow/SageOfFire.bfevfl.zs	Event18	ActorName	Obj_Armor_Goron	Obj_Armor_Goron	Story gifts	
 DMC Deku Scrub	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event293	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)	
 DMC Deku Scrub	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event144	Value	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)	
 ZR Frogs in the Rain	Event/EventFlow/MiniGame_FrogTenors.bfevfl.zs	Event384	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Minigames	

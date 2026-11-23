@@ -1190,7 +1190,7 @@ bool KeptFromShops(RandomizerGet item) {
            item == RG_BIGGEST_BULLET_BAG || item == RG_BIG_BOMB_BAG || item == RG_BIGGEST_BOMB_BAG ||
            item == RG_DEKU_STICK_CAPACITY_20 || item == RG_DEKU_STICK_CAPACITY_30 || item == RG_DEKU_NUT_CAPACITY_30 ||
            item == RG_DEKU_NUT_CAPACITY_40 || item == RG_BOMBCHU_5 || item == RG_BOMBCHU_20 ||
-           item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK || item == RG_ZORA_TUNIC;
+           item == RG_EMPTY_BOTTLE || item == RG_BOTTLE_WITH_MILK || item == RG_GORON_TUNIC || item == RG_ZORA_TUNIC;
 }
 
 int Fill(const std::vector<RemakeChest>& chests, const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,

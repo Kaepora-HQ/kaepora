@@ -249,15 +249,15 @@ count, so it sells again and again, and it leaves the game data list as it is. S
   SoH's three Red Potions, at 30, 40 and 50 rupees, are all the remake's one Red Potion at 30, and its two 5 Bombs are
   the remake's one at 35.
 
-`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 46 SoH locations: the five
+`gifts.tsv` has a row for each place in the game's event flows that gives the item of one of 47 SoH locations: the five
 House of Skulltula rewards, the heart pieces, bottles and scales that minigames and characters give, the eight prizes
-that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, four places where the story moves (the scene
-after the last carpenter in the Gerudo Fortress, Darunia's dance, King Zora's thanks once he is thawed, and Zelda's
-scene in the Temple of Time), the two eggs, Biggoron's sword, four Business Scrubs that sell once (the stick bag by the
-Lost Woods bridge, the nut bag in the Lost Woods grotto, and a Piece of Heart in a Hyrule Field grotto and in the
-crater), and the gifts of the six Great Fairies. Each group ticked in "Gifts" puts its locations in the shuffle. Each
-adds its item to the pool, and the plan writes the placed item at each of its places. A location of a group left out
-keeps what the game gives, and the plan names none of its places.
+that make a quiver, bullet bag, bomb bag, stick bag or nut bag bigger, five places where the story moves (the scene
+after the last carpenter in the Gerudo Fortress, Darunia's dance, his son's talk once an adult stops him rolling, King
+Zora's thanks once he is thawed, and Zelda's scene in the Temple of Time), the two eggs, Biggoron's sword, four Business
+Scrubs that sell once (the stick bag by the Lost Woods bridge, the nut bag in the Lost Woods grotto, and a Piece of
+Heart in a Hyrule Field grotto and in the crater), and the gifts of the six Great Fairies. Each group ticked in "Gifts"
+puts its locations in the shuffle. Each adds its item to the pool, and the plan writes the placed item at each of its
+places. A location of a group left out keeps what the game gives, and the plan names none of its places.
 
 - `location`: the SoH location, by SoH's English name for it.
 - `flow`: the romfs path of the event flow.
@@ -440,14 +440,15 @@ The castle's and the crater's blessings stand for SoH's Progressive Magic Meter,
 With "Cutscenes" at "Skipped" the skip ends only a fairy's appearance. Her gift comes after that window on both of her
 flow's paths, and the summit's gift has no window at all (read from the flows).
 
-The four story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
-Step02, Darunia's dance the Fire quest to DodongoCavernOpne, King Zora's talk the Water quest to Step05, and Zelda's
-scene the AllSage quest to Complete and the Ganon quest to Step01 (read from the flows). The fortress's guards, the
-Wasteland's gate keeper and the archery range follow the Spirit quest, the Training Ground's keeper asks for 30 rupees
-and no card, and the bridge to Ganon's Castle follows the Ganon quest, so the rules ask for the scenes, not the Gerudo's
-card or the Light Arrows. Of the game's flows and logic modules, one reads the card: a module that takes two of the
-fortress's sneak areas away. The program also reads it, inferred to be for the fortress's key counter on the screen, and
-a map picture's table picks its light by it (read).
+The five story places write their quest's step whatever they give: the carpenters' scene moves the Spirit quest to
+Step02, Darunia's dance the Fire quest to DodongoCavernOpne, his son's talk the Fire Temple's quest to MoveStatue, which
+moves Darunia's statue and opens his door, King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage
+quest to Complete and the Ganon quest to Step01 (read from the flows). The fortress's guards, the Wasteland's gate
+keeper and the archery range follow the Spirit quest, the Training Ground's keeper asks for 30 rupees and no card, and
+the bridge to Ganon's Castle follows the Ganon quest, so the rules ask for the scenes, not the Gerudo's card or the
+Light Arrows. Of the game's flows and logic modules, one reads the card: a module that takes two of the fortress's sneak
+areas away. The program also reads it, inferred to be for the fortress's key counter on the screen, and a map picture's
+table picks its light by it (read).
 
 Seen in the game: the scene after the fourth carpenter gave a placed Zora Tunic, the Spirit quest then stood at Step02
 with no card held, no guard caught Link, the gate keeper opened the gate to the Wasteland, and walking into the
@@ -473,14 +474,18 @@ and climbs through Zora's Fountain to the Ice Cavern and fills a bottle with Blu
 
 Darunia's scene binds a bracelet model to his hand whatever he gives (`Dm_Goron_0030` Events 0, 4, 11, 38 and 74), and
 its give, `GetInEvent_Goron`, adds the item it is handed (read). He gives once, at the first Saria's Song after his
-first meeting, at any step of the Fire quest (the Quests section below).
+first meeting, at any step of the Fire quest (the Quests section below). His son gives through `GetInEvent_NotTurn`,
+which does the same, and then moves the statue and opens the door whatever he gives (read). The son gives once, at his
+talk at his step or past it, until the Fire Temple is finished (the Quests section below).
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
 A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a
-child, seen), and a slot's rule asks for no age, so no shop sells the Zora Tunic. The Light Arrows may go wherever the
-Fire and Ice Arrows go. Seen in the game: a chest gave the pass; a chest, a Gold Skulltula and a loose spot gave the
-Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the Light Arrows, the shelf to a child. A seed that starts
-with the Zora Tunic leaves King Zora's tunic out of the pool, with a Red Rupee in its stead.
+child, seen), and a slot's rule asks for no age, so no shop sells the Zora Tunic or the Goron Tunic. The Light Arrows
+may go wherever the Fire and Ice Arrows go. Seen in the game: a chest gave the pass; a chest, a Gold Skulltula and a
+loose spot gave the Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the Light Arrows, the shelf to a child. A
+seed that starts with either tunic leaves its copy at King Zora's or Darunia's son's place out of the pool, with a Red
+Rupee in its stead. The Goron Tunic's other readers are a Gerudo's and Navi's lines and the shops' sale, which read its
+ownership and whether Link wears it (read).
 
 The Goron Bracelet may go wherever the gauntlets go, with its row in `shop_goods.tsv`. The pouch add writes its `IsGet`
 and the lift level whatever gives it (read from the program), and its other readers are a Goron shopkeeper's lines, an
