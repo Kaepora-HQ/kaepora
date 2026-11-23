@@ -1,10 +1,13 @@
 #include "window.h"
 
+#include "game_file.h"
 #include "game_values.h"
 #include "mod.h"
 #include "new_version.h"
+#include "pictures.h"
 #include "seed.h"
 #include "settings_dialog.h"
+#include "tracker_window.h"
 
 #include <QDesktopServices>
 #include <QDir>
@@ -121,6 +124,18 @@ static QString FolderOf(const QTreeWidgetItem* item) {
 
 static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
+}
+
+static QHash<QString, QImage> TrackerPictures(const std::filesystem::path& nup) {
+    GameFile game(nup);
+    QHash<QString, QImage> images;
+    for (const auto& [name, picture] : ReadPictures(game, Tracker().pictures())) {
+        images.insert(QString::fromStdString(name),
+                      QImage(reinterpret_cast<const uchar*>(picture.rgba.data()), int(picture.width),
+                             int(picture.height), QImage::Format_RGBA8888)
+                          .convertToFormat(QImage::Format_ARGB32_Premultiplied));
+    }
+    return images;
 }
 
 struct LoggedSettings {
@@ -243,8 +258,9 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     spoilerButton = new QPushButton("Open spoiler log");
     deleteButton = new QPushButton("Delete");
     playButton = new QPushButton("Play");
+    trackerButton = new QPushButton("Tracker");
     auto* seedButtons = new QVBoxLayout;
-    for (QPushButton* button : { useButton, spoilerButton, deleteButton, playButton }) {
+    for (QPushButton* button : { useButton, spoilerButton, deleteButton, playButton, trackerButton }) {
         seedButtons->addWidget(button);
     }
     seedButtons->addStretch();
@@ -254,9 +270,12 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     form->addRow("Seeds", seedList);
 
     status = new QLabel;
+    trackerStatus = new QLabel;
+    trackerStatus->hide();
     auto* layout = new QVBoxLayout(this);
     layout->addLayout(form);
     layout->addWidget(status);
+    layout->addWidget(trackerStatus);
     layout->addWidget(NewVersionRow());
 
     connect(seedField, &QLineEdit::textChanged, this, &Window::updateButtons);
@@ -274,6 +293,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     connect(spoilerButton, &QPushButton::clicked, this, &Window::openSpoilerLog);
     connect(deleteButton, &QPushButton::clicked, this, &Window::deleteSeed);
     connect(playButton, &QPushButton::clicked, this, &Window::play);
+    connect(trackerButton, &QPushButton::clicked, this, &Window::openTracker);
     refresh();
 }
 
@@ -282,6 +302,18 @@ Window::~Window() {
     if (making != nullptr) {
         making->wait();
     }
+    if (readingPictures != nullptr) {
+        readingPictures->wait();
+    }
+    delete tracker;
+}
+
+// The tracker closes with the window, so Kaepora ends when its window closes.
+void Window::closeEvent(QCloseEvent* event) {
+    if (tracker != nullptr) {
+        tracker->close();
+    }
+    QWidget::closeEvent(event);
 }
 
 // A row with a read-only path, from the settings under the key, and a button that asks for another with the dialog
@@ -454,6 +486,46 @@ void Window::play() {
     }
 }
 
+void Window::openTracker() {
+    if (tracker != nullptr) {
+        tracker->showNormal();
+        tracker->raise();
+        tracker->activateWindow();
+        return;
+    }
+    auto pictures = std::make_shared<QHash<QString, QImage>>();
+    auto error = std::make_shared<QString>();
+    readingPictures = QThread::create([nup = Path(gameFile->text()), pictures, error] {
+        try {
+            *pictures = TrackerPictures(nup);
+        } catch (const std::exception& e) {
+            *error = QString::fromUtf8(e.what());
+        }
+    });
+    readingPictures->setParent(this);
+    connect(readingPictures, &QThread::finished, this, [this, pictures, error] {
+        readingPictures->deleteLater();
+        readingPictures = nullptr;
+        updateButtons();
+        if (!error->isEmpty()) {
+            trackerStatus->hide();
+            Tell(this, QMessageBox::Critical,
+                 "The tracker could not read its pictures from the game file.\n\n" + *error);
+            return;
+        }
+        trackerStatus->clear();
+        tracker = new TrackerWindow(DebugServerPort, std::move(*pictures));
+        tracker->setAttribute(Qt::WA_DeleteOnClose);
+        connect(tracker, &TrackerWindow::statusChanged, trackerStatus, &QLabel::setText);
+        connect(tracker, &QObject::destroyed, trackerStatus, &QLabel::hide);
+        tracker->show();
+    });
+    trackerStatus->setText("The tracker is reading its pictures from the game file.");
+    trackerStatus->show();
+    readingPictures->start();
+    updateButtons();
+}
+
 // Lists the library and reads which seed the mods folder holds. The selection stays, or moves to the seed given.
 void Window::refresh(QString select) {
     if (select.isEmpty() && seeds->currentItem() != nullptr) {
@@ -500,6 +572,7 @@ void Window::updateButtons() {
     spoilerButton->setEnabled(selected);
     deleteButton->setEnabled(selected);
     playButton->setEnabled(!emulator->text().isEmpty() && !gameFile->text().isEmpty() && !inUse.isEmpty());
+    trackerButton->setEnabled(readingPictures == nullptr && !gameFile->text().isEmpty());
 }
 
 // The seed named by the file of this name in the mods folder's Kaepora folder. Empty when there is none. A folder with

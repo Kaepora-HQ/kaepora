@@ -173,7 +173,8 @@ if(Qt6_FOUND)
 
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
                            kaepora/window.cpp $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
-    target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network)
+    target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-pictures kaepora-tracker-window Qt6::Widgets
+                                          Qt6::Network)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
     set_target_properties(kaepora PROPERTIES WIN32_EXECUTABLE ON)
 
@@ -316,8 +317,8 @@ if(Qt6Test_FOUND)
     add_executable(kaepora-window-test tests/window_test.cpp kaepora/new_version.cpp kaepora/seed.cpp
                                        kaepora/settings_dialog.cpp kaepora/window.cpp)
     set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
-    target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-patch-files Qt6::Widgets Qt6::Network
-                                                      Qt6::Test)
+    target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-pictures kaepora-tracker-window
+                                                      Qt6::Widgets Qt6::Network Qt6::Test)
     target_compile_options(kaepora-window-test PRIVATE ${WARNINGS})
     # The window's tests that make no seed need no game file.
     set(WINDOW_TESTS lichiisModsFolderIsTheDefault theChoicesOfEachColumnLineUp whatJoinsTheShuffleHasItsOwnGroup
@@ -340,7 +341,8 @@ if(Qt6Test_FOUND)
                      oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
                      aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
-                     rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime)
+                     rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime
+                     aGameFileWithoutPicturesOpensNoTracker)
     if(NOT WIN32)
         list(APPEND WINDOW_TESTS playStartsLichiiWithItsDebugServerOn)
     endif()

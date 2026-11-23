@@ -1,6 +1,7 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
 #include "kaepora/game_values.h"
+#include "kaepora/tracker_window.h"
 #include "kaepora/window.h"
 #include "version.h"
 
@@ -21,6 +22,7 @@
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
+#include <QPointer>
 #include <QProcess>
 #include <QPushButton>
 #include <QScrollArea>
@@ -274,6 +276,14 @@ private:
         create->click();
         return !create->isEnabled() && shows("Creating seed…") &&
                QTest::qWaitFor([&] { return create->isEnabled(); }, MakeTimeout);
+    }
+
+    static QWidget* trackerWindow() {
+        const QWidgetList windows = QApplication::topLevelWidgets();
+        const auto found = std::ranges::find_if(windows, [](const QWidget* window) {
+            return window->isVisible() && window->windowTitle() == "Kaepora Tracker";
+        });
+        return found == windows.end() ? nullptr : *found;
     }
 
     QDialog* dialog() const {
@@ -1543,6 +1553,39 @@ private slots:
         QVERIFY(openAndAsk(ToTheTag));
         QTest::qWait(NoRequestWait);
         QCOMPARE(github.requests, 1);
+    }
+
+    void aGameFileWithoutPicturesOpensNoTracker() {
+        const QString game = QDir::home().filePath("game.nup");
+        Write(game, {});
+        QSettings().setValue("gameFile", game);
+        window = std::make_unique<Window>();
+        window->show();
+        button("Tracker")->click();
+        QTRY_VERIFY(box() != nullptr);
+        QVERIFY2(box()->text().endsWith("\n\nthe container ends early"), qPrintable(box()->text()));
+        QCOMPARE(trackerWindow(), nullptr);
+    }
+
+    void theTrackerOpensOnceWithItsLineAndClosesWithTheWindow() {
+        button("Tracker")->click();
+        QLabel* line = label("The tracker is reading its pictures from the game file.");
+        QVERIFY(line != nullptr && line->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(trackerWindow() != nullptr, MakeTimeout);
+        const QPointer opened = qobject_cast<TrackerWindow*>(trackerWindow());
+        emit opened->statusChanged("A sentence of the test's own.");
+        QVERIFY(shows("A sentence of the test's own."));
+        button("Tracker")->click();
+        QVERIFY(shows("A sentence of the test's own."));
+
+        opened->close();
+        QTRY_VERIFY(opened.isNull());
+        QVERIFY(!line->isVisible());
+
+        button("Tracker")->click();
+        QTRY_VERIFY_WITH_TIMEOUT(trackerWindow() != nullptr, MakeTimeout);
+        window->close();
+        QTRY_COMPARE(trackerWindow(), nullptr);
     }
 
     // On macOS the emulator is an app, a folder, and Play starts the program its Info.plist names.

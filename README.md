@@ -37,6 +37,20 @@ If you get stuck, **Open spoiler log** shows where every item went and one route
 
 If the game runs slowly or stutters, see the [FAQ](FAQ.md).
 
+### The tracker
+
+The tracker is a window of the game's item pictures. A picture lights up when you find its item.
+
+1. Start the game with **Play**. The tracker reads the game through Lichii, and Lichii lets it only when **Play** started the game.
+2. Click **Tracker**. Under the list of seeds, Kaepora says what the tracker is doing.
+3. Right-click the tracker to change the size of its pictures, its background colour, or the groups it shows.
+
+To show the tracker on stream with OBS:
+
+1. Add a source that captures a window, and choose the window **Kaepora Tracker**. On Windows the source is **Window Capture**. On macOS it is **macOS Screen Capture**, with its method set to **Window Capture**. On Linux it is **Window Capture (PipeWire)** under Wayland, or **Window Capture (Xcomposite)** under X11.
+2. Key the background colour out with a **Color Key** filter, or choose a background colour that suits your layout.
+3. Do not minimise the tracker. OBS cannot capture a minimised window.
+
 ## What a seed changes
 
 A seed moves the items that chests hold. With the default settings, it also moves what characters and minigames hand you, the items that lie in the open, the songs, and the stones and medallions among the bosses and Rauru, as Ship of Harkinian's default settings do. Its settings decide what joins the shuffle and how the game starts. Adult Link can put the Master Sword back at any time, to be a child again before the Forest Temple. [What is randomized](RANDOMIZED.md) has every part, and <https://kaepora.org/randomized> shows the same page with the current counts.
