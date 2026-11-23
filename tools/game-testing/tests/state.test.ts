@@ -12,7 +12,7 @@ import {
 } from "effect";
 import { UserDirectories } from "effect/persistence";
 import type { PlannedEdit } from "../src/contract/plan.ts";
-import type { Spot } from "../src/contract/spots.ts";
+import type { PlayedSpot, Spot } from "../src/contract/spots.ts";
 import type { Mod } from "../src/contract/state.ts";
 import { StartState } from "../src/contract/state.ts";
 import type { Saved } from "../src/contract/values.ts";
@@ -25,7 +25,7 @@ import {
 } from "../src/errors.ts";
 import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
-import { chestSpots, Spots } from "../src/save/spots.ts";
+import { chestSpots, keepPlayed, Spots } from "../src/save/spots.ts";
 import { StartStates } from "../src/save/state.ts";
 import type { Check } from "../src/save/tables.ts";
 import { OwnTables } from "../src/save/tables.ts";
@@ -336,6 +336,15 @@ const checks = new Map<string, Check>([
 		{
 			name: "Forest Temple Pot Chest",
 			placements: [pot],
+			flows: [],
+			stock: [],
+		},
+	],
+	[
+		"Forest Temple Two Chests",
+		{
+			name: "Forest Temple Two Chests",
+			placements: [chest, pot],
 			flows: [],
 			stock: [],
 		},
@@ -1194,16 +1203,141 @@ describe("the spots", () => {
 	);
 
 	it.effect(
-		"a location that is a check with no place of its own and no spot is refused with how to give it one",
+		"a location that is a check with no place of its own and no spot is refused with how to record one",
 		() =>
 			Effect.gen(function* () {
 				const refused = yield* Effect.flip(
 					plan({ location: "Fake 20 Token Reward" })
 				);
 				expect(refused.message).toContain("no place of its own");
-				expect(refused.message).toContain("tables/spots.tsv");
+				expect(refused.message).toContain("game-testing record");
 				expect(refused).toMatchObject({ reason: "no-place" });
 			})
+	);
+
+	it.effect(
+		"a chest opened in play keeps the spot Link stands on, facing the chest he opened, in its room",
+		() =>
+			Effect.gen(function* () {
+				const layer = yield* startStates();
+				const results = yield* Effect.provide(
+					Effect.gen(function* () {
+						const kept = yield* Spots;
+						const keep = (played: PlayedSpot) =>
+							Effect.gen(function* () {
+								const data = yield* GameData;
+								const own = yield* OwnTables;
+								return yield* keepPlayed(data, own, kept, played);
+							});
+						const opened = {
+							name: "Forest Temple Two Chests",
+							scene: "ForestTemple",
+							room: 3,
+							facing: 0,
+						};
+						const near = yield* keep({
+							...opened,
+							position: [3, 8, 7],
+							chest: pot,
+						});
+						const far = yield* Effect.flip(
+							keep({ ...opened, position: [3, 8, 11], chest: pot })
+						);
+						const states = yield* StartStates;
+						const planned = yield* states.plan(
+							StartState.make({
+								base: "test-base",
+								location: "Forest Temple Two Chests",
+							}),
+							"none"
+						);
+						return { near, far, planned };
+					}),
+					[layer, BunFileSystem.layer]
+				);
+				expect(results.near).toMatchObject({
+					room: 17,
+					position: [3, 8, 7],
+					facing: 180,
+					found: "play",
+				});
+				expect(results.far.message).toContain("5 units");
+				expect(writes(results.planned.edits)["PlayerStatus.SavePos"]).toEqual([
+					3, 8, 7,
+				]);
+				expect(results.planned.location?.kind).toBe("found");
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect(
+		"a spot kept by name needs a name the tool knows or one new on purpose, and keeps a dungeon's room",
+		() =>
+			Effect.gen(function* () {
+				const layer = yield* startStates();
+				const results = yield* Effect.provide(
+					Effect.gen(function* () {
+						const kept = yield* Spots;
+						const keep = (played: PlayedSpot) =>
+							Effect.gen(function* () {
+								const data = yield* GameData;
+								const own = yield* OwnTables;
+								return yield* keepPlayed(data, own, kept, played);
+							});
+						const here = {
+							scene: "ForestTemple",
+							room: 3,
+							position: [9, 8, 9] as const,
+							facing: 45,
+						};
+						const typo = yield* Effect.flip(
+							keep({ ...here, name: "Forest Temple Bow Chets" })
+						);
+						const landing = yield* Effect.flip(
+							keep({ ...here, name: "ForestTemple", new: true })
+						);
+						const known = yield* keep({
+							...here,
+							name: "Fake 20 Token Reward",
+						});
+						const fresh = yield* keep({
+							...here,
+							name: "Fake Statue",
+							new: true,
+						});
+						return { typo, landing, known, fresh };
+					}),
+					[layer, BunFileSystem.layer]
+				);
+				expect(results.typo.message).toContain("Forest Temple Bow Chest");
+				expect(results.typo.message).toContain("--new");
+				expect(results.landing.message).toContain("landing");
+				expect(results.known).toMatchObject({ room: 3, facing: 45 });
+				expect(results.fresh).toMatchObject({ name: "Fake Statue", room: 3 });
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect(
+		"spots moved into git leave the recorded table, and one recorded again since stays",
+		() =>
+			Effect.gen(function* () {
+				const layer = yield* startStates();
+				const left = yield* Effect.provide(
+					Effect.gen(function* () {
+						const kept = yield* Spots;
+						const first = {
+							...found("Fake Statue", "ForestTemple", [1, 8, 1], 0),
+							found: "play" as const,
+						};
+						yield* kept.keep(first);
+						const moved = yield* kept.recorded;
+						yield* kept.keep({ ...first, position: [2, 8, 2] });
+						yield* kept.forget(moved);
+						return yield* kept.recorded;
+					}),
+					[layer, BunFileSystem.layer]
+				);
+				expect(Arr.map(left, (spot) => spot.position)).toEqual([[2, 8, 2]]);
+			}).pipe(Effect.provide(BunFileSystem.layer))
 	);
 
 	it.effect("the list gives every chest its best spot, or none", () =>

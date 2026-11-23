@@ -85,3 +85,18 @@ export const ChestSpots = Schema.Struct({
 	),
 });
 export type ChestSpots = typeof ChestSpots.Type;
+
+/** Where Link stands in a running game, sent to be kept as a spot found in play. */
+export const PlayedSpot = Schema.Struct({
+	name: SpotName,
+	scene: Schema.String,
+	/** The game's `DungeonRoom`, which is a room only inside a dungeon. */
+	room: Schema.Int,
+	position: Position,
+	facing: Schema.Finite,
+	/** The actor of the chest Link has just opened, by its hash, so the spot stands near that chest and faces it. */
+	chest: Schema.optionalKey(Schema.String),
+	/** A name that is no check and no spot yet, kept on purpose. */
+	new: Schema.optionalKey(Schema.Boolean),
+});
+export type PlayedSpot = typeof PlayedSpot.Type;

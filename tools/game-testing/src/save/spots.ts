@@ -7,6 +7,7 @@
 import { Database } from "bun:sqlite";
 import {
 	Array as Arr,
+	Clock,
 	Context,
 	Effect,
 	FileSystem,
@@ -16,10 +17,17 @@ import {
 	String as Str,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
-import type { ChestSpots, Spot, SpotAge } from "../contract/spots.ts";
+import type {
+	ChestSpots,
+	PlayedSpot,
+	Spot,
+	SpotAge,
+} from "../contract/spots.ts";
 import { Found, kindOf, SpotName } from "../contract/spots.ts";
 import type { Age } from "../contract/state.ts";
 import type { GameData } from "../data/game-data.ts";
+import { nearest } from "../data/game-data.ts";
+import { SpotRefused } from "../errors.ts";
 import type { Check } from "./tables.ts";
 import { OwnTables } from "./tables.ts";
 
@@ -56,6 +64,23 @@ const merged = (tracked: readonly Spot[], recorded: readonly Spot[]) => [
 	...recorded,
 ];
 
+/** The tracked spots with recorded ones moved in: each in place of a tracked spot it stands for, else added. */
+export const intoTracked = (
+	tracked: readonly Spot[],
+	recorded: readonly Spot[]
+) => [
+	...Arr.map(tracked, (spot) =>
+		Option.getOrElse(
+			Arr.findFirst(recorded, (over) => overlap(over, spot)),
+			() => spot
+		)
+	),
+	...Arr.filter(
+		recorded,
+		(over) => !Arr.some(tracked, (spot) => overlap(over, spot))
+	),
+];
+
 /** A recorded spot as its table holds it. */
 const RecordedRow = Schema.Struct({
 	name: SpotName,
@@ -88,6 +113,10 @@ export class Spots extends Context.Service<
 		) => Effect.Effect<Option.Option<Spot>>;
 		/** Records `spot`, in place of a recorded spot it stands for. */
 		readonly keep: (spot: Recorded) => Effect.Effect<void>;
+		/** The recorded spots alone, which git does not have yet. */
+		readonly recorded: Effect.Effect<readonly Spot[]>;
+		/** Takes these recorded spots out, as they are now in git; a spot recorded again since stays. */
+		readonly forget: (spots: readonly Recorded[]) => Effect.Effect<void>;
 	}
 >()("game-testing/save/spots") {
 	static readonly layer = Layer.effect(
@@ -150,6 +179,29 @@ export class Spots extends Context.Service<
 
 			return Spots.of({
 				all,
+				recorded,
+				forget: (spots) =>
+					Effect.sync(() =>
+						db
+							.transaction(() => {
+								for (const spot of spots) {
+									db.run(
+										"DELETE FROM spot WHERE name = ? AND scene = ? AND room IS ? AND x = ? AND y = ? AND z = ? AND facing = ? AND found = ? AND evidence = ? AND note = ?",
+										[
+											spot.name,
+											spot.scene,
+											spot.room ?? null,
+											...spot.position,
+											spot.facing,
+											spot.found,
+											spot.evidence,
+											spot.note,
+										]
+									);
+								}
+							})
+							.immediate()
+					),
 				find: (name, age) =>
 					Effect.map(all, (spots) =>
 						Arr.findFirst(
@@ -280,4 +332,100 @@ export const chestSpots = Effect.fn("chestSpots")(function* (
 		}),
 		{ concurrency: 1 }
 	);
+});
+
+/** The farthest across the floor Link stands to open a chest: the saves show small chests opened from 0.6 to 1.4. */
+const reach = 1.5;
+
+/**
+ * Keeps where Link stands in a running game as a spot found in play. A chest he has just opened must stand in his scene
+ * within reach, and the spot faces it, since the item's pose turns him to the camera; it takes the chest's room. Any
+ * other name keeps his facing, and his room inside a dungeon, and must be a check or a spot already, or new on
+ * purpose. A landing's name is never a spot's.
+ */
+export const keepPlayed = Effect.fn("keepPlayed")(function* (
+	data: GameData["Service"],
+	own: OwnTables["Service"],
+	spots: Spots["Service"],
+	played: PlayedSpot
+) {
+	const refuse = (detail: string) =>
+		SpotRefused.make({ spot: played.name, detail });
+	const scene = data.scene(played.scene);
+	if (Option.isNone(scene)) {
+		return yield* refuse(
+			played.scene === ""
+				? "the game has loaded no scene yet."
+				: `Link stands in ${played.scene}, which the game's tables do not have.`
+		);
+	}
+	if (Option.isSome(data.landing(played.name))) {
+		return yield* refuse(
+			"it is a landing of the game, which a spot's name must not be."
+		);
+	}
+	if (played.chest === undefined && played.new !== true) {
+		const kept = yield* spots.all;
+		const known = [...own.checks.keys(), ...Arr.map(kept, (each) => each.name)];
+		if (!Arr.contains(known, played.name)) {
+			return yield* refuse(
+				`it is no check and no spot. Nearest: ${Arr.join(nearest(played.name, known), ", ")}. A new spot by that name is kept with --new.`
+			);
+		}
+	}
+	const millis = yield* Clock.currentTimeMillis;
+	const day = Temporal.Instant.fromEpochMilliseconds(millis)
+		.toZonedDateTimeISO("UTC")
+		.toPlainDate()
+		.toString();
+	const place =
+		played.chest === undefined
+			? {
+					...(scene.value.dungeon === "" ? {} : { room: played.room }),
+					facing: played.facing,
+				}
+			: yield* facingChest(data, played, played.chest);
+	const spot: Recorded = {
+		name: played.name,
+		scene: played.scene,
+		position: played.position,
+		found: "play",
+		evidence: `a running game on ${day}`,
+		note: "",
+		...place,
+	};
+	yield* spots.keep(spot);
+	return spot;
+});
+
+/** The room and facing of a spot before the chest Link has just opened, which stands in his scene within reach. */
+const facingChest = Effect.fnUntraced(function* (
+	data: GameData["Service"],
+	played: PlayedSpot,
+	hash: string
+) {
+	const placed = yield* data.placements({ hash });
+	const chest = Arr.findFirst(
+		placed,
+		(placement) => placement.scene === played.scene
+	);
+	if (Option.isNone(chest)) {
+		return yield* SpotRefused.make({
+			spot: played.name,
+			detail: `its chest ${hash} has no actor in ${played.scene}.`,
+		});
+	}
+	const [x, , z] = played.position;
+	const [chestX, , chestZ] = chest.value.position;
+	const across = Math.hypot(chestX - x, chestZ - z);
+	if (across > reach) {
+		return yield* SpotRefused.make({
+			spot: played.name,
+			detail: `Link stood ${Number(across.toFixed(1))} units from it, and opens a chest from at most ${reach}.`,
+		});
+	}
+	return {
+		...(chest.value.room === undefined ? {} : { room: chest.value.room }),
+		facing: (Math.atan2(chestX - x, chestZ - z) * 180) / Math.PI,
+	};
 });

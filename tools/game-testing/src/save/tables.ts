@@ -52,6 +52,8 @@ export interface Check {
 }
 
 const tables = `${import.meta.dir}/../../tables`;
+/** This package's tracked spots, which a commit changes. */
+export const trackedSpots = `${tables}/spots.tsv`;
 const remake = `${import.meta.dir}/../../../../remake`;
 
 const Text = Schema.String;
@@ -135,6 +137,34 @@ export const parseSpots = Effect.fnUntraced(function* (text: string) {
 	);
 });
 
+/** The text of a spots table: its header, then one line a spot, as `parseSpots` reads it back. */
+export const spotsText = (spots: readonly Spot[]) =>
+	Arr.join(
+		[
+			Arr.join(Rec.keys(SpotRow.fields), "\t"),
+			...Arr.map(spots, (spot) =>
+				Arr.join(
+					[
+						spot.name,
+						spot.scene,
+						spot.room === undefined ? "" : String(spot.room),
+						...Arr.map(spot.position, (axis) => axis.toFixed(3)),
+						spot.facing.toFixed(1),
+						spot.found,
+						spot.evidence,
+						spot.look === undefined
+							? ""
+							: `${spot.look.outcome} ${spot.look.run}`,
+						spot.note,
+					],
+					"\t"
+				)
+			),
+			"",
+		],
+		"\n"
+	);
+
 const byName = <A extends { readonly name: string }>(rows: readonly A[]) =>
 	new Map(Arr.map(rows, (row) => [row.name, row]));
 
@@ -155,7 +185,7 @@ export class OwnTables extends Context.Service<
 		Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
 			const spots = yield* fs
-				.readFileString(`${tables}/spots.tsv`)
+				.readFileString(trackedSpots)
 				.pipe(Effect.flatMap(parseSpots), Effect.orDie);
 			const bases = yield* readTable(`${tables}/bases.tsv`, BaseRow);
 			const items = yield* readTable(`${remake}/items.tsv`, ItemRow);

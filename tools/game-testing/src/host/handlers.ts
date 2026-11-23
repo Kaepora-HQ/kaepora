@@ -9,7 +9,7 @@ import { contract, GameRpcs } from "../contract/rpc.ts";
 import { namesText } from "../data/declarations.ts";
 import { GameData } from "../data/game-data.ts";
 import { VersionMismatch } from "../errors.ts";
-import { chestSpots, Spots } from "../save/spots.ts";
+import { chestSpots, keepPlayed, Spots } from "../save/spots.ts";
 import { StartStates } from "../save/state.ts";
 import { OwnTables, searchNames } from "../save/tables.ts";
 import { Places } from "./places.ts";
@@ -124,6 +124,9 @@ export const handlers = GameRpcs.toLayer(
 					searchNames(data, own, kept, text, { limit, kind })
 				),
 			Spots: () => chestSpots(data, own, spots),
+			RecordSpot: ({ spot }) => keepPlayed(data, own, spots, spot),
+			Recorded: () => Effect.map(spots.recorded, (kept) => ({ spots: kept })),
+			Forget: ({ spots: moved }) => spots.forget(moved),
 			Runs: ({ script, limit }) => runs.list({ script, limit }),
 			Run: ({ run }) => runs.get(run),
 			RunFile: ({ run, path }) => runs.file(run, path),

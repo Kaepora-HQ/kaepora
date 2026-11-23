@@ -24,7 +24,11 @@ export type FakeValue =
 			readonly value: string;
 			readonly choices: readonly string[];
 	  }
-	| { readonly type: "String64"; readonly value: string };
+	| { readonly type: "String64"; readonly value: string }
+	| {
+			readonly type: "Vector3";
+			readonly value: readonly [number, number, number];
+	  };
 
 export interface Request {
 	readonly method: string;
@@ -43,19 +47,28 @@ export interface FakeLichii {
 	readonly path: string;
 	/** Plays an event, such as a talk, or ends it, as the game's event manager says. */
 	readonly playing: (event: boolean) => Effect.Effect<void>;
+	/** The loopback port it also serves on. */
+	readonly port: number;
 	/** Sets a value as the game would. */
-	readonly put: (name: string, value: Value) => Effect.Effect<void>;
+	readonly put: (
+		name: string,
+		value: Value | readonly [number, number, number]
+	) => Effect.Effect<void>;
 	/** Waits until a request for `method` has arrived. */
 	readonly received: (method: string) => Effect.Effect<void>;
 	readonly release: Effect.Effect<void>;
 	readonly requests: Effect.Effect<readonly Request[]>;
 	/** The copy after a value that the game saves. */
-	readonly savedCopy: (name: string) => Effect.Effect<Value>;
+	readonly savedCopy: (
+		name: string
+	) => Effect.Effect<Value | readonly [number, number, number]>;
 	/** The next memory read is answered one byte short. */
 	readonly shortRead: Effect.Effect<void>;
 	/** Every search ends its page where it began, as when its budget runs out before it scans a byte. */
 	readonly stuckSearch: Effect.Effect<void>;
-	readonly value: (name: string) => Effect.Effect<Value>;
+	readonly value: (
+		name: string
+	) => Effect.Effect<Value | readonly [number, number, number]>;
 }
 
 const programStart = 0x80_27_c0_00n;
@@ -72,6 +85,7 @@ const tables = {
 	Enum: { slot: 6, stride: 0x38, at: 0x1c, size: 4 },
 	String64: { slot: 16, stride: 0x1_08, at: 0x74, size: 64 },
 	UInt: { slot: 20, stride: 0x28, at: 0x1c, size: 4 },
+	Vector3: { slot: 10, stride: 0x40, at: 0x24, size: 12 },
 } as const;
 
 /** The most bytes one read returns, and the keys a step of input may have, as the real server has them. */
@@ -146,12 +160,20 @@ const writeValue = (view: DataView, value: FakeValue) => {
 				new TextEncoder().encode(value.value)
 			);
 			return;
+		case "Vector3":
+			for (const [axis, at] of value.value.entries()) {
+				view.setFloat32(axis * 4, at, true);
+			}
+			return;
 		default:
 			return value satisfies never;
 	}
 };
 
-const readValue = (view: DataView, value: FakeValue): Value => {
+const readValue = (
+	view: DataView,
+	value: FakeValue
+): Value | readonly [number, number, number] => {
 	switch (value.type) {
 		case "Bool":
 			return view.getUint8(0) !== 0;
@@ -173,6 +195,12 @@ const readValue = (view: DataView, value: FakeValue): Value => {
 			const end = bytes.indexOf(0);
 			return new TextDecoder().decode(bytes.subarray(0, end === -1 ? 64 : end));
 		}
+		case "Vector3":
+			return [
+				view.getFloat32(0, true),
+				view.getFloat32(4, true),
+				view.getFloat32(8, true),
+			];
 		default:
 			return value satisfies never;
 	}
@@ -465,30 +493,36 @@ export const fakeLichii = (options?: {
 			queue.push(request);
 		};
 
+		// As a place's relay serves it, on a Unix socket, and as a player's Lichii serves it, on a loopback port.
+		const handlers: Bun.SocketHandler<Connection> = {
+			open: (socket) => {
+				socket.data = { text: "" };
+				sockets.add(socket);
+			},
+			data: (socket, chunk) => {
+				const lines = Str.split(socket.data.text + chunk.toString(), "\n");
+				socket.data.text = Arr.lastNonEmpty(lines);
+				for (const line of Arr.initNonEmpty(lines)) {
+					arrive({ ...(JSON.parse(line) as Incoming), socket });
+				}
+				answerNext();
+			},
+			close: (socket) => {
+				sockets.delete(socket);
+			},
+		};
 		const server = yield* Effect.acquireRelease(
 			Effect.sync(() =>
+				Bun.listen<Connection>({ unix: path, socket: handlers })
+			),
+			(listener) => Effect.sync(() => listener.stop(true))
+		);
+		const tcp = yield* Effect.acquireRelease(
+			Effect.sync(() =>
 				Bun.listen<Connection>({
-					unix: path,
-					socket: {
-						open: (socket) => {
-							socket.data = { text: "" };
-							sockets.add(socket);
-						},
-						data: (socket, chunk) => {
-							const lines = Str.split(
-								socket.data.text + chunk.toString(),
-								"\n"
-							);
-							socket.data.text = Arr.lastNonEmpty(lines);
-							for (const line of Arr.initNonEmpty(lines)) {
-								arrive({ ...(JSON.parse(line) as Incoming), socket });
-							}
-							answerNext();
-						},
-						close: (socket) => {
-							sockets.delete(socket);
-						},
-					},
+					hostname: "127.0.0.1",
+					port: 0,
+					socket: handlers,
 				})
 			),
 			(listener) => Effect.sync(() => listener.stop(true))
@@ -513,6 +547,7 @@ export const fakeLichii = (options?: {
 
 		const fake: FakeLichii = {
 			path,
+			port: tcp.port,
 			requests: Effect.sync(() => [...log]),
 			received: (method) =>
 				Effect.gen(function* () {
@@ -540,7 +575,14 @@ export const fakeLichii = (options?: {
 				state.misnumbered = true;
 			}),
 			drop: closeAll,
-			exit: closeAll.pipe(Effect.andThen(Effect.sync(() => server.stop(true)))),
+			exit: closeAll.pipe(
+				Effect.andThen(
+					Effect.sync(() => {
+						server.stop(true);
+						tcp.stop(true);
+					})
+				)
+			),
 			playing: (event) =>
 				Effect.sync(() => {
 					const view = memory.view(events + 0x68n, 8);

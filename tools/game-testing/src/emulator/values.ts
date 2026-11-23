@@ -37,6 +37,20 @@ export interface Values {
 	readonly read: (
 		entry: ValueEntry
 	) => Effect.Effect<Value, EmulatorError | ValueNotFound>;
+	/**
+	 * Bools by name, read together in a few requests: one span of the Bool table covers them. A name the running game
+	 * does not hold is left out of the answer.
+	 */
+	readonly readFlags: (
+		names: readonly string[]
+	) => Effect.Effect<ReadonlyMap<string, boolean>, EmulatorError>;
+	/** A Vector3 of the game data list by name, such as `PlayerStatus.CurrentPos`, which no save need hold. */
+	readonly readPoint: (
+		name: string
+	) => Effect.Effect<
+		readonly [number, number, number],
+		EmulatorError | ValueNotFound
+	>;
 	/** Writes the value, and a scalar's saved copy, so the game saves what was set. */
 	readonly write: (
 		entry: ValueEntry,
@@ -47,9 +61,21 @@ export interface Values {
 	>;
 }
 
-/** How one type is held: its table's slot, the size of an entry and where the value sits in it, and its bytes. */
-interface Codec {
+/** Where a type's table sits in the manager, how long an entry is, and where its value sits in an entry. */
+interface Layout {
 	readonly at: number;
+	readonly slot: number;
+	readonly stride: number;
+}
+
+/**
+ * A Vector3's layout, measured on the game: its table holds the list's 26 Vector3 values, and `PlayerStatus.CurrentPos`
+ * read there follows Link as he walks.
+ */
+const vector3: Layout = { slot: 10, stride: 0x40, at: 0x24 };
+
+/** How one type is held: its table's slot, the size of an entry and where the value sits in it, and its bytes. */
+interface Codec extends Layout {
 	/** Whether the saved copy follows the value. */
 	readonly copied: boolean;
 	readonly decode: (view: DataView) => Option.Option<Value>;
@@ -57,8 +83,6 @@ interface Codec {
 	/** What a value of the type is, for the sentence that refuses one that does not fit. */
 	readonly holds: string;
 	readonly size: number;
-	readonly slot: number;
-	readonly stride: number;
 }
 
 const filled = (size: number, fill: (view: DataView) => void) => {
@@ -245,6 +269,10 @@ export const attach = Effect.fn("Values.attach")(function* (
 	}
 	const global = program + managerGlobal;
 	const indexes = new Map<string, { manager: bigint; index: number }>();
+	/** Each Bool's index by its hash, for the manager the map was read from. */
+	let flagMap:
+		| { readonly manager: bigint; readonly byHash: Map<number, number> }
+		| undefined;
 
 	const u64 = (address: bigint) =>
 		Effect.map(emulator.readMemory(address, 8), (bytes) =>
@@ -252,7 +280,11 @@ export const attach = Effect.fn("Values.attach")(function* (
 		);
 
 	const indexOf = Effect.fnUntraced(function* (
-		entry: ValueEntry,
+		entry: {
+			readonly name: string;
+			readonly hash: number;
+			readonly type: string;
+		},
 		manager: bigint,
 		head: DataView
 	) {
@@ -292,8 +324,12 @@ export const attach = Effect.fn("Values.attach")(function* (
 	});
 
 	const addressOf = Effect.fnUntraced(function* (
-		entry: ValueEntry,
-		codec: Codec
+		entry: {
+			readonly name: string;
+			readonly hash: number;
+			readonly type: string;
+		},
+		codec: Layout
 	) {
 		const slot = yield* u64(global);
 		const manager = yield* u64(slot);
@@ -321,6 +357,66 @@ export const attach = Effect.fn("Values.attach")(function* (
 				);
 			}
 			return value.value;
+		}),
+		readFlags: Effect.fn("Values.readFlags")(function* (names) {
+			const flag = codecOf({ name: "", hash: 0, type: "Bool" });
+			const slot = yield* u64(global);
+			const manager = yield* u64(slot);
+			const tableHead = yield* emulator.readMemory(manager + 0x8n, 0x28);
+			const head = viewOf(tableHead);
+			const count = head.getUint32(0x8, true);
+			const capacity = head.getUint32(0x24, true);
+			if (count === 0 || capacity === 0 || capacity > mapLimit) {
+				return new Map<string, boolean>();
+			}
+			if (flagMap?.manager !== manager) {
+				const pairs = yield* emulator.readMemory(
+					head.getBigUint64(0x18, true),
+					capacity * 8
+				);
+				const map = viewOf(pairs);
+				const byHash = new Map<number, number>();
+				for (const pair of Arr.range(0, capacity - 1)) {
+					const index = map.getUint32(pair * 8 + 4, true);
+					if (index < count) {
+						byHash.set(map.getUint32(pair * 8, true), index);
+					}
+				}
+				flagMap = { manager, byHash };
+			}
+			const { byHash } = flagMap;
+			const held = Arr.flatMapNullishOr(names, (name) => {
+				const index = byHash.get(Bun.hash.murmur32v3(name));
+				return index === undefined ? undefined : ([name, index] as const);
+			});
+			if (!Arr.isReadonlyArrayNonEmpty(held)) {
+				return new Map<string, boolean>();
+			}
+			const first = Math.min(...Arr.map(held, ([, index]) => index));
+			const last = Math.max(...Arr.map(held, ([, index]) => index));
+			const span = yield* emulator.readMemory(
+				head.getBigUint64(0x10, true) + BigInt(first * flag.stride),
+				(last - first + 1) * flag.stride
+			);
+			return new Map(
+				Arr.map(held, ([name, index]) => [
+					name,
+					span[(index - first) * flag.stride + flag.at] !== 0,
+				])
+			);
+		}),
+		readPoint: Effect.fn("Values.readPoint")(function* (name) {
+			const address = yield* addressOf(
+				{ name, hash: Bun.hash.murmur32v3(name), type: "Vector3" },
+				vector3
+			);
+			const bytes = yield* emulator.readMemory(address, 12);
+			const view = viewOf(bytes);
+			return [
+				view.getFloat32(0, true),
+				view.getFloat32(4, true),
+				view.getFloat32(8, true),
+			] as const;
 		}),
 		write: Effect.fn("Values.write")(function* (entry, value) {
 			const bytes = yield* encodeValue(entry, value);

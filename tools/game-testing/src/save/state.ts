@@ -1056,7 +1056,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 		if (!Arr.isReadonlyArrayNonEmpty(check.placements)) {
 			return yield* StateRefused.make({
 				reason: "no-place",
-				detail: `${location} has no place of its own: no actor in the game's files stands for it, so no spot before it can be worked out. Add a row for it to tables/spots.tsv, with where Link stands to be given it or to find it.`,
+				detail: `${location} has no place of its own: no actor in the game's files stands for it, so no spot before it can be worked out. Stand Link where it is given or found in a running game and keep the spot with game-testing record "${location}", or add a row for it to tables/spots.tsv.`,
 			});
 		}
 		const placed = yield* placedFor(data, check, age);

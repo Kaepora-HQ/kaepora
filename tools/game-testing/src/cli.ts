@@ -24,10 +24,14 @@ import type { Origin, PlannedEdit, StatePlan } from "./contract/plan.ts";
 import { originText } from "./contract/plan.ts";
 import type { Outcome } from "./contract/record.ts";
 import type { ChestSpots, StartSpot } from "./contract/spots.ts";
+import { SpotName } from "./contract/spots.ts";
 import { StartState } from "./contract/state.ts";
 import { NameKind, RunId } from "./contract/values.ts";
 import { namesHere, writeNames } from "./data/declarations.ts";
 import { GameData } from "./data/game-data.ts";
+import type { DebugServer } from "./emulator/emulator.ts";
+import type { Keep } from "./emulator/recorder.ts";
+import { recordHere, watchChests } from "./emulator/recorder.ts";
 import { TokenRequired } from "./errors.ts";
 import { Far, farUrl, reached, token, writeFarNames } from "./far.ts";
 import { host, tables } from "./host/host.ts";
@@ -40,9 +44,15 @@ import {
 	serverName,
 } from "./mcp/server.ts";
 import { readMod, scriptMod } from "./mod.ts";
-import { chestSpots, Spots } from "./save/spots.ts";
+import { chestSpots, intoTracked, keepPlayed, Spots } from "./save/spots.ts";
 import { StartStates } from "./save/state.ts";
-import { OwnTables, searchNames } from "./save/tables.ts";
+import {
+	OwnTables,
+	parseSpots,
+	searchNames,
+	spotsText,
+	trackedSpots,
+} from "./save/tables.ts";
 import type { ScriptRun } from "./scripts/runner.ts";
 import {
 	declarationCommand,
@@ -481,6 +491,157 @@ const spots = Command.make("spots", {}, () =>
 	)
 );
 
+/** A debug server by its address: `host:port`, or a Unix socket's path. */
+const debugServer = (address: string) => {
+	if (Str.includes("/")(address)) {
+		return Effect.succeed<DebugServer>({ path: address });
+	}
+	const url = URL.parse(`tcp://${address}`);
+	return url === null || url.port === ""
+		? Effect.fail(
+				CliError.UserError.make({
+					cause: address,
+					userMessage: `--game takes host:port, such as 127.0.0.1:6545, or a socket's path, not ${address}.`,
+				})
+			)
+		: Effect.succeed<DebugServer>({
+				host: url.hostname,
+				port: Number(url.port),
+			});
+};
+
+/**
+ * Runs `use` with the keeper of the machine that plans looks: this one, or with GAME_TESTING_URL the far one, reached
+ * afresh for each spot, so a server restarted between two spots takes the second.
+ */
+const keeping = <A, E, R>(
+	use: (keep: Keep<KeepFailure>) => Effect.Effect<A, E, R>
+) =>
+	Effect.gen(function* () {
+		const url = yield* farUrl;
+		if (Option.isNone(url)) {
+			return yield* Effect.gen(function* () {
+				const data = yield* GameData;
+				const own = yield* OwnTables;
+				const kept = yield* Spots;
+				return yield* use((played) => keepPlayed(data, own, kept, played));
+			}).pipe(Effect.provide([GameData.layer, Spots.layer]));
+		}
+		return yield* use((played) =>
+			Far.use((far) =>
+				reached(far.url, far.client.RecordSpot({ spot: played }))
+			).pipe(Effect.provide(Far.layer(url.value)))
+		);
+	});
+
+/** Why a spot was not kept: a refusal, or a machine that did not answer, which `RemoteUnavailable` names. */
+interface KeepFailure {
+	readonly _tag: string;
+	readonly message: string;
+}
+
+const record = Command.make(
+	"record",
+	{
+		name: Argument.String("name").pipe(
+			Argument.withSchema(SpotName),
+			Argument.optional
+		),
+		game: Flag.String("game").pipe(
+			Flag.withDescription(
+				"The running game's debug server: host:port, as EDEN_NX2_DEBUG_SERVER gives it, or a socket's path."
+			),
+			Flag.withDefault("127.0.0.1:6545")
+		),
+		isNew: Flag.Boolean("new").pipe(
+			Flag.withDescription(
+				"Keeps a name that is no check and no spot yet as a new spot. Without it such a name is refused with the nearest names."
+			),
+			Flag.withDefault(false)
+		),
+	},
+	({ name, game, isNew }) =>
+		shown(
+			Effect.gen(function* () {
+				const server = yield* debugServer(game);
+				return yield* keeping((keep) =>
+					Option.match(name, {
+						onSome: (named) =>
+							Effect.flatMap(recordHere(server, named, keep, isNew), (spot) =>
+								Console.log(
+									`kept ${spot.name}: ${spot.scene} at (${Arr.join(Arr.map(spot.position, String), ", ")}), facing ${spot.facing.toFixed(1)}`
+								)
+							),
+						onNone: () =>
+							Effect.gen(function* () {
+								const own = yield* OwnTables;
+								const chests = Arr.flatMapNullishOr(own.chests, (chest) => {
+									const hashes = own.checks.get(chest)?.placements ?? [];
+									return hashes.length === 0
+										? undefined
+										: { name: chest, hashes };
+								});
+								yield* Console.log(
+									`Watching the game at ${game}: a chest Link opens keeps the spot he opened it from. Stop with Ctrl+C.`
+								);
+								return yield* watchChests(server, chests, keep, (line) =>
+									Console.log(line)
+								);
+							}),
+					})
+				);
+			})
+		)
+).pipe(
+	Command.withDescription(
+		"Reads a running game and keeps spots from it, sending nothing that changes the game. With a name, it keeps where Link stands now under that name, for a gift, a character or a place no chest marks; a name that is no check and no spot needs --new. Without one, it watches, and each chest Link opens keeps the spot he opened it from. The spots go to the recorded spots of the machine that plans looks: with GAME_TESTING_URL the far one, where they work at once. A spot that machine cannot take is held and sent again."
+	)
+);
+
+const moveSpots = Command.make("move-spots", {}, () =>
+	shown(
+		Effect.gen(function* () {
+			const fs = yield* FileSystem.FileSystem;
+			const { spots: recorded } = yield* hereOrFar(
+				Effect.map(
+					Spots.use((kept) => kept.recorded),
+					(listed) => ({ spots: listed })
+				).pipe(Effect.provide(Spots.layer)),
+				(far) => reached(far.url, far.client.Recorded())
+			);
+			if (!Arr.isReadonlyArrayNonEmpty(recorded)) {
+				return yield* Console.log(
+					"No spot is recorded that git does not have."
+				);
+			}
+			const text = yield* Effect.orDie(fs.readFileString(trackedSpots));
+			const tracked = yield* Effect.orDie(parseSpots(text));
+			yield* Effect.orDie(
+				fs.writeFileString(
+					trackedSpots,
+					spotsText(intoTracked(tracked, recorded))
+				)
+			);
+			yield* hereOrFar(
+				Spots.use((kept) => kept.forget(recorded)).pipe(
+					Effect.provide(Spots.layer)
+				),
+				(far) => reached(far.url, far.client.Forget({ spots: recorded }))
+			);
+			for (const spot of recorded) {
+				yield* Console.log(`moved ${spot.name}  ${spot.scene}`);
+			}
+			yield* Console.log(
+				`${recorded.length} spots are in ${trackedSpots} now and no longer recorded. Commit them.`
+			);
+		})
+	)
+).pipe(
+	Command.withDescription(
+		"Moves the spots recorded on the machine that plans looks, with GAME_TESTING_URL the far one, into this package's tables/spots.tsv, and takes them out of the recorded spots there. Run it from the worktree you commit in."
+	)
+);
+
 const runs = Command.make(
 	"runs",
 	{
@@ -627,6 +788,8 @@ export const cli = Command.make("game-testing").pipe(
 		places,
 		search,
 		spots,
+		record,
+		moveSpots,
 		runs,
 		names,
 		mcp,

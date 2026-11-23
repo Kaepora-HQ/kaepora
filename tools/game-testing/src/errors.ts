@@ -491,6 +491,28 @@ export class RunNotFound extends Schema.TaggedError<
 	}
 }
 
+/** A running game holds no chest's value yet, as while it boots. */
+export class GameStarting extends Schema.TaggedError<
+	GameStarting,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/GameStarting")("GameStarting", {}) {
+	override readonly message =
+		"The game holds no chest's value yet, so it is still starting.";
+}
+
+/** A spot sent from a running game was not kept, and the detail says why. */
+export class SpotRefused extends Schema.TaggedError<
+	SpotRefused,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/SpotRefused")("SpotRefused", {
+	spot: Schema.String,
+	detail: Schema.String,
+}) {
+	override get message() {
+		return `No spot is kept for ${this.spot}: ${this.detail}`;
+	}
+}
+
 /** `serve` refused to start: it needs a token, so it never listens unguarded. */
 export class TokenRequired extends Schema.TaggedError<
 	TokenRequired,

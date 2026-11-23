@@ -148,17 +148,27 @@ interface Ended {
 	readonly reason: EmulatorUnavailable["reason"];
 }
 
-export const connect = Effect.fn("Emulator.connect")(function* (options: {
-	/** The Unix socket a place's relay passes the debug server through. */
-	readonly path: string;
-	readonly wire: WireLog;
-	/** The end of Lichii's log file, read when the connection ends, since the server may be gone. */
-	readonly logFileTail: Effect.Effect<readonly string[]>;
-}) {
+/**
+ * Where a debug server listens: the Unix socket a place's relay passes it through, or the loopback address a player's
+ * Lichii serves it on.
+ */
+export type DebugServer =
+	| { readonly path: string }
+	| { readonly host: string; readonly port: number };
+
+export const connect = Effect.fn("Emulator.connect")(function* (
+	options: DebugServer & {
+		readonly wire: WireLog;
+		/** The end of Lichii's log file, read when the connection ends, since the server may be gone. */
+		readonly logFileTail: Effect.Effect<readonly string[]>;
+	}
+) {
 	const scope = yield* Effect.scope;
 	const connection = yield* Scope.fork(scope);
 	const socket = yield* BunSocket.makeNet({
-		path: options.path,
+		...("path" in options
+			? { path: options.path }
+			: { host: options.host, port: options.port }),
 		openTimeout: connectDeadline,
 	});
 	const pull = yield* Socket.readerString(socket).pipe(

@@ -21,6 +21,7 @@ import {
 	RunNotFound,
 	SaveUnreadable,
 	SessionNotFound,
+	SpotRefused,
 	StartNotTaken,
 	StateRefused,
 	UnknownName,
@@ -33,7 +34,7 @@ import {
 } from "../errors.ts";
 import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
-import { ChestSpots } from "./spots.ts";
+import { ChestSpots, PlayedSpot, Spot } from "./spots.ts";
 import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
 	Button,
@@ -306,6 +307,18 @@ export class GameRpcs extends RpcGroup.make(
 		success: Schema.Array(ChestSpots),
 		error: Schema.Union([NoGameHere, DumpFailed]),
 	}),
+	/** Keeps where Link stands in a running game, in this machine's recorded spots, and answers the spot kept. */
+	Rpc.make("RecordSpot", {
+		payload: { spot: PlayedSpot },
+		success: Spot,
+		error: Schema.Union([SpotRefused, NoGameHere, DumpFailed]),
+	}),
+	/** This machine's recorded spots, which git does not have yet. */
+	Rpc.make("Recorded", {
+		success: Schema.Struct({ spots: Schema.Array(Spot) }),
+	}),
+	/** Takes recorded spots out once they are in git; a spot recorded again since stays. */
+	Rpc.make("Forget", { payload: { spots: Schema.Array(Spot) } }),
 	Rpc.make("Runs", {
 		payload: { script: Schema.optionalKey(Schema.String), limit: Schema.Int },
 		success: RunList,

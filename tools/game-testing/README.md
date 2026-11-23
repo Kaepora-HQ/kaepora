@@ -83,11 +83,46 @@ the complete game has every story flag set, which hides what a place waits for.
 `location` can also be `{ scene, room, position: [x, y, z], facing }` in the game's own coordinates, with `room` only
 inside a dungeon and `facing` in degrees, 0 facing the scene's +Z.
 
-A location that is a check stands Link on its spot, from `tables/spots.tsv` or from the spots recorded on the game
-machine, which win. A check with no spot stands him one unit before its chest or actor, on the side the actor faces.
-`gt plan` says which kind of spot a start stands on: proven once a look passed from it, found in a save or a running
-game, or worked out. `gt spots` lists every chest with its kind of spot. Look at the first picture: a chest behind
-rocks needs a spot of its own, and a gift with no actor is refused until it has one.
+## Where Link starts
+
+A location that is a check stands Link on its spot. A spot is a row of `tables/spots.tsv`, or a spot recorded on the
+game machine that git does not have yet, which wins. A spot serves one age when its scene's name has `_Child` or
+`_Adult` in it, and both ages otherwise, so a check can have a spot for each age. A check with no spot stands Link one
+unit before its chest or actor, on the side the actor faces. A check with no actor, or with two for one age, has no
+such spot, and is refused until it has a spot of its own. `gt plan` says which kind of spot a start stands on: found
+in a save or a running game, or worked out. Look at the first picture: a chest behind rocks needs a spot of its own.
+
+`gt spots` lists every chest by area, with the kind of spot each age starts on. It lists chests only: a spot recorded
+by another name works, and `gt search` finds it.
+
+## Record a spot
+
+A spot comes from the game itself. `gt record` reads a running game through its debug server, which Lichii serves when
+it starts with `EDEN_NX2_DEBUG_SERVER=127.0.0.1:6545`, and sends nothing that changes the game:
+
+```sh
+gt record                                  # watch: each chest Link opens keeps the spot he opened it from
+gt record "Kak 10 Gold Skulltula Reward"   # keep where Link stands now, under a check's or a spot's name
+gt record --new "Kak Windmill Ledge"       # under a name no check or spot has yet
+gt record --game 127.0.0.1:21198           # another debug server
+```
+
+A recorded spot goes to the game machine's recorded spots, a SQLite file in its data folder
+(`~/.local/share/game-testing/recorded.sqlite`), and the next look starts on it. A chest's spot faces the chest, and
+Link must stand within 1.5 units of it across the floor, or nothing is kept. A spot by name keeps the way Link faces,
+and his room inside a dungeon. A name that is no check and no spot is refused with the nearest names, unless `--new`
+says it is new. The watcher cannot see the six trap chests, which keep no value that says they are open: record them
+by name. When the game machine does not answer, the watcher holds the spot and sends it again until it is kept.
+
+Recorded spots move into git with one command, run in this package in the worktree you commit in, with
+`GAME_TESTING_URL` and `GAME_TESTING_TOKEN` set as `gt` sets them:
+
+```sh
+bun src/main.ts move-spots
+```
+
+It writes them into this package's `tables/spots.tsv` and takes them out of the game machine's recorded spots. Commit
+the table.
 
 ## Find a name
 
