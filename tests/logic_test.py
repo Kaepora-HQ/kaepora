@@ -176,19 +176,6 @@ class LogicTest(unittest.TestCase):
         # The price belongs to the shop slot, so it holds whatever is placed there.
         self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
 
-    def test_the_blue_fire_gate_follows_the_goods(self):
-        # The potion shops sell Blue Fire only to a Link who has had some, and another shop's shelf sells it to him as
-        # it sells other bottle contents.
-        nuts = {"item": "Buy Deku Nut (5)", "price": 10}
-        blue_fire = {"item": "Buy Blue Fire", "price": 10}
-        bottle = ("KF Mido Top Left Chest", "Empty Bottle")
-        self.assertFalse(self.reachable("Market Potion Shop Item 4", NEVER_ADULT, bottle,
-                                        ("Market Potion Shop Item 4", blue_fire)))
-        self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, bottle,
-                                       ("Market Potion Shop Item 2", nuts)))
-        self.assertTrue(self.reachable("Market Bazaar Item 4", NEVER_ADULT, bottle,
-                                       ("Market Bazaar Item 4", blue_fire)))
-
     def test_bombchus_on_a_shelf_wait_for_the_goron_ruby(self):
         # The game sells its own bombchus only once the Goron Ruby is won. A shelf of another shop selling them before
         # is unseen, so the logic waits for it there too.
@@ -199,11 +186,11 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("KF Shop Item 2", bombchus, *child))
         self.assertFalse(self.reachable("KF Shop Item 2", bombchus, *child, no_bracelet))
 
-    def test_a_potion_shop_is_never_the_first_blue_fire(self):
-        self.assertTrue(self.reachable("Market Potion Shop Item 2"))
-        # Without the Ocarina of Time, Link never becomes adult, and only adult Link reaches other Blue Fire.
-        self.assertFalse(self.reachable("Market Potion Shop Item 2", ("HF Ocarina of Time Item", "Green Rupee"),
-                                        ("KF Mido Top Left Chest", "Empty Bottle")))
+    def test_a_potion_shop_sells_a_first_blue_fire(self):
+        # Every mod sells Blue Fire in both potion shops to a Link who has never had it, and with an empty bottle.
+        # Market Potion Shop Item 2 sells Blue Fire, and only adult Link reaches other Blue Fire.
+        self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT))
+        self.assertFalse(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, *NO_BOTTLE))
 
     def test_shops_charge_the_remakes_prices(self):
         # A fish costs 50 at the Market Potion Shop. 20 bombchus cost 240.

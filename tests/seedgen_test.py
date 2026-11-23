@@ -649,6 +649,17 @@ class SeedgenTest(unittest.TestCase):
         log, _ = self.generate("1")
         self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_a_route_buys_what_fills_a_bottle_after_a_bottle(self):
+        # A shop sells goods that fill a bottle only to a Link with an empty bottle. With the Door of Time open, seed
+        # 107's route buys Blue Fire in the Kakariko Potion Shop in a sphere after its first bottle.
+        log, _ = self.generate("107", {"Door of Time": "Open"})
+        sphere = {step: number for number, steps in enumerate(log["playthrough"].values()) for step in steps}
+        steps = playthrough_steps(log)
+        self.assertEqual(spoiler_item(steps["Kak Potion Shop Item 2"]), "Buy Blue Fire")
+        bottles = [sphere[step] for step, item in steps.items()
+                   if "Bottle" in spoiler_item(item) and not spoiler_item(item).startswith("Buy")]
+        self.assertLess(min(bottles), sphere["Kak Potion Shop Item 2"])
+
     def test_a_seller_left_off_the_route_stands_in_for_no_step(self):
         # The route names one seller of each purchase, the first it reaches. With the Door of Time open and the dungeon
         # rewards shuffled, seed 19's route buys Bombchus at the Market's Bombchu Shop, which opens after Dodongo's
@@ -1841,8 +1852,8 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 6's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
-        spoiler, _ = self.assert_hints_are_true("6", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+        # Seed 51's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
+        spoiler, _ = self.assert_hints_are_true("51", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
                                                 | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
         self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 1"])
 
@@ -2122,11 +2133,12 @@ class SeedgenTest(unittest.TestCase):
                                              entry)
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
-        # Seed 384's route takes the Boomerang from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
-        # a hint says Hyrule Field is on the way of the hero. Seed 761's route takes the Goron Tunic from HC OGC GS, in
-        # the scene the game calls Ganondorf's Castle, and a hint says the Goron Tunic is at Ganondorf's Castle.
+        # Seed 483's route takes the Goron Bracelet from the Hyrule Field tree skulltula that SoH calls LLR GS Back
+        # Wall, and a hint says Hyrule Field is on the way of the hero. Seed 761's route takes the Goron Tunic from HC
+        # OGC GS, in the scene the game calls Ganondorf's Castle, and a hint says the Goron Tunic is at Ganondorf's
+        # Castle.
         for seed, skulltula, item, hint in (
-                ("384", "LLR GS Back Wall", "Boomerang",
+                ("483", "LLR GS Back Wall", "Goron's Bracelet",
                  "They say that Hyrule Field is on the way of the hero."),
                 ("761", "HC OGC GS", "Goron Tunic",
                  "They say that a Goron Tunic can be found at Ganondorf's Castle.")):

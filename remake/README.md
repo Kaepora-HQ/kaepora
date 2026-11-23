@@ -229,9 +229,6 @@ Read from the game's data and not yet seen:
 
 - A day passing leaves a sold slot sold out, since its count's reset type is 0 where the game's is 2.
 - The Bombchu Shop's shopkeeper stands only once Link has the Goron Ruby.
-- The potion shops refuse Blue Fire by its name to a Link who has never had it: the shops' flow compares the chosen
-  goods with Blue Fire, then asks `IsGet.Item_Bottle_BlueFire`. So the logic asks for Blue Fire already reached
-  wherever a potion shop sells it.
 - A quantity sign is an actor of its own that the shelf and the shopkeeper link to. The goods tell it to show while
   the slot is on sale and to hide once sold out. With no message it does nothing, so a sign nothing links to would
   show. So the patcher takes a sign out of the scene with every mention of it in the placement file: its links and its
@@ -244,6 +241,14 @@ a child's answer the two shopkeepers refuse him (read). In every mod that questi
 `Event491`, on both answers, so every shop sells a child a tunic as it sells an adult one, as SoH's shops do. The flow
 still refuses a tunic Link already holds, with the shopkeeper's line for it (read), as it refuses a shield he holds
 (seen).
+
+Both potion shops refuse Blue Fire to a Link who has never had it, twice over (read). Each potion shopkeeper's goods
+list shows its slot 4, Blue Fire, sold out until `IsGet.Item_Bottle_BlueFire`. And once Blue Fire is chosen, the shops'
+flow asks that record in `Event108`, and on a no the shopkeeper says Blue Fire is sold out (`Event492` to `Event496`).
+In every mod that question goes on to its yes, `Event497`, and both shopkeepers' slot 4 is written as a kept slot
+(below), which sells its goods with no gate. So a potion shop can be Link's first Blue Fire, as in SoH. The shop still
+asks for an empty bottle before it sells any goods that fill one (`Event325`, read), so the logic asks for a bottle at
+those purchases too.
 
 The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus out of shops. A shop may refuse
 arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the
@@ -301,9 +306,8 @@ count, so it sells again and again, and it leaves the game data list as it is. S
   Five Bombs at 25 and the Zora Shop's fish at 30, by their slots' offsets, and the Market Bazaar's Hylian Shield, 20
   off once its gate opens.
 - loses the slot's gates, as a shuffled slot does: the Kokiri Shop's wait for meeting the Deku Tree, and the sold-out
-  gates of the Market Bazaar's item 2, which waits for the Goron Ruby, and of both potion shops' item 2, which wait for
-  Blue Fire. The shop's own checks by kind and by name still refuse bombs before the Goron Ruby and a first Blue Fire
-  in a potion shop, so such a shelf can show goods the shopkeeper does not sell yet.
+  gate of the Market Bazaar's item 2, which waits for the Goron Ruby. The shop's own checks by kind still refuse bombs
+  before the Goron Ruby, so such a shelf can show goods the shopkeeper does not sell yet.
 - shows how many a pack holds only where the game's shelf has a sign. 73 of the 120 shelves have none.
 
 - `item`: the SoH item, by SoH's English name for it.

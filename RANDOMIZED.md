@@ -28,7 +28,7 @@ With any choice but **Vanilla**, the shelves that hold no shuffled item are fill
 
 **Shop prices** sets what the shuffled shelves cost. **Cheap** gives each its own price, from nothing up to 95 rupees, and **Balanced** goes up to 295. **Vanilla** keeps the price the shelf had. **One price** gives every shuffled shelf the price you type, and **Between two prices** picks each one between the two you type, up to 995 rupees. A seed never asks you to pay more than your wallet can hold when you get there. With **Goods shuffled among the shops** no shelf is shuffled with the other items, so **Shop prices** is switched off.
 
-Any shop with a tunic on a shelf sells it to a child too, who cannot wear one until he grows up. In the game the Goron Shop and the Zora Shop sell theirs only to adult Link.
+Any shop with a tunic on a shelf sells it to a child too, who cannot wear one until he grows up. In the game the Goron Shop and the Zora Shop sell theirs only to adult Link. A potion shop with Blue Fire on a shelf sells it before you have had any, to anyone who brings an empty bottle. In the game it stays sold out until then.
 
 ## Gold Skulltulas
 

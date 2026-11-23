@@ -27,8 +27,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
            river-arrival-writes-no-step|market-arrival-writes-no-step|fairies-and-summit-owl-without-dins-fire| \
-           a-child-comes-back-with-the-sword-he-left-with|a-child-buys-a-tunic|schedule-entry|module-texts \
-           <kaepora-patch> <game.nup>
+           a-child-comes-back-with-the-sword-he-left-with|a-child-buys-a-tunic| \
+           a-potion-shop-sells-a-first-blue-fire|schedule-entry|module-texts <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -1097,10 +1097,9 @@ def tested_bomb_mod(patch, game, mod):
         result = run(patch, game, plan([]), tmp)
         assert result.returncode == 0, result.stderr
         ours = files(tmp / "mod" / "romfs" / "Pack" / "Actor")
-    assert sorted(ours) == sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), \
-        (sorted(ours), sorted(tested))
-    for name, data in ours.items():
-        assert_same_file(game, name, data, tested[name])
+    assert sorted(tested) == sorted(path.removeprefix("Pack/Actor/") for path in BOMB_LIFT_PACKS), sorted(tested)
+    for name, data in tested.items():
+        assert_same_file(game, name, ours[name], data)
 
 
 def tested_mido_mod(patch, game, mod):
@@ -3008,7 +3007,9 @@ def a_child_comes_back_with_the_sword_he_left_with(patch, game):
 
 
 SHOP_FLOW = "Event/EventFlow/DisplayShop.bfevfl.zs"
-SHOP_FLOW_NEXTS = [("Event169", "Event491")]
+SHOP_FLOW_NEXTS = [("Event169", "Event491"), ("Event108", "Event497")]
+POTION_SHOPKEEPERS = ["Npc_Hylia_020_Shop_Child", "Npc_Hylia_020_Shop_Adult"]
+POTION_GOODS = "Component/ShopParam/Npc_Hylia_020_Shop.game__component__ShopParam.bgyml"
 
 
 def shop_flow(patch, game):
@@ -3030,6 +3031,29 @@ def a_child_buys_a_tunic(patch, game):
     flow = shop_flow(patch, game)
     checked = [flow["events"][i][0] for i in sorted(reached(flow, "Outofstock_SelectCloth"))]
     assert checked == ["Event23", "Event25", "Event169", "Event491"], checked
+
+
+def a_potion_shop_sells_a_first_blue_fire(patch, game):
+    """In every mod both potion shops sell Blue Fire to a Link who has never had it. The game refuses him twice. Once
+    Blue Fire is chosen, the shops' flow asks in Event108 whether Link has ever had it, and on a no the potion
+    shopkeepers say it is sold out: every mod sends that question on to its yes, Event497. And each potion shopkeeper's
+    goods list shows its Blue Fire, slot 4, sold out until he has had it: every mod writes that slot with the game's
+    goods at their own price and no gate."""
+    flow = shop_flow(patch, game)
+    checked = [flow["events"][i][0] for i in sorted(reached(flow, "Outofstock_SelectBottle_BlueFire"))]
+    assert checked == ["Event490", "Event497", "Event498", "Event108"], checked
+    mod = every_mod(patch, game)
+    for keeper in POTION_SHOPKEEPERS:
+        path = f"Pack/Actor/{keeper}.pack.zs"
+        theirs, ours = game.pack(game.read(path)), game.pack(mod[path])
+        assert ours.keys() == theirs.keys(), path
+        assert [name for name in theirs if ours[name] != theirs[name]] == [POTION_GOODS], path
+        expected = byml(theirs[POTION_GOODS])
+        blue_fire = expected["GoodsList"][4]
+        assert blue_fire["Release"]["SoldOutGameData"] == "IsGet.Item_Bottle_BlueFire", blue_fire
+        blue_fire.update(PriceOffset=(INT, 0), Release={"IsCheckReleaseGameData": (BOOL, 0), "ReleaseGameData": ""})
+        expected["GoodsList"][4] = dict(sorted(blue_fire.items()))  # a BYML dict holds its keys sorted
+        assert ordered(byml(ours[POTION_GOODS])) == ordered(expected), path
 
 
 def market_arrival_writes_no_step(patch, game):
@@ -3748,6 +3772,7 @@ def main():
         "fairies-and-summit-owl-without-dins-fire": fairies_and_summit_owl_without_dins_fire,
         "a-child-comes-back-with-the-sword-he-left-with": a_child_comes_back_with_the_sword_he_left_with,
         "a-child-buys-a-tunic": a_child_buys_a_tunic,
+        "a-potion-shop-sells-a-first-blue-fire": a_potion_shop_sells_a_first_blue_fire,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

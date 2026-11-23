@@ -248,7 +248,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      keys_not_needed forest_open forest_closed_deku only_closed_deku_removes_midos_castle_entry
                      an_open_door_of_time_opens_the_door_and_the_first_pull_and_keeps_the_quest
                      an_adult_passes_zoras_rivers_boulders_before_the_water_quest
-                     a_seller_left_off_the_route_stands_in_for_no_step
+                     a_seller_left_off_the_route_stands_in_for_no_step a_route_buys_what_fills_a_bottle_after_a_bottle
                      bridge_always_open no_trials
                      maps_and_compasses_stay_in_their_own_chests maps_and_compasses_given_at_the_start
                      lens_never_needed_leaves_the_lens_off_the_route
@@ -499,6 +499,7 @@ if(KAEPORA_GAME_NUP)
                  weapon-copies event-numbers event-nexts event-ends event-entries module-texts song-table
                  river-arrival-writes-no-step market-arrival-writes-no-step fairies-and-summit-owl-without-dins-fire
                  a-child-comes-back-with-the-sword-he-left-with a-child-buys-a-tunic
+                 a-potion-shop-sells-a-first-blue-fire
                  schedule-entry presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out
                  sword-scene-kept both-stones-before-zelda)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
