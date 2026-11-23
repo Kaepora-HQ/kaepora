@@ -1,5 +1,7 @@
-// Every event flow in the game, parsed and written back, gives the bytes it was read from.
+// Every flowchart in the game, parsed and written back, gives the bytes it was read from. The other event flows are
+// timelines, which the patcher refuses.
 #include "bfevfl.h"
+#include "bytes.h"
 #include "compression.h"
 #include "game_file.h"
 
@@ -8,12 +10,13 @@
 #include <exception>
 #include <string>
 
-// Event flows in the game's RomFS.
+// Event flows in the game's RomFS, and how many are timelines: a timeline's file holds no flowchart in the count at
+// 0x20 of its header.
 constexpr int EventFlows = 914;
+constexpr int Timelines = 261;
 
-static bool RoundTrips(GameFile& game, const std::string& path, const std::string& dictionary) {
+static bool RoundTrips(const std::string& path, const std::string& original) {
     try {
-        const std::string original = Decompress(game.Read(path), dictionary);
         const std::string written = bfevfl::Write(bfevfl::Parse(original));
         if (written == original) {
             return true;
@@ -35,13 +38,21 @@ int main(int argc, char** argv) {
     GameFile game(argv[1]);
     const std::string dictionary = Dictionary(game, "zs.zsdic");
     int files = 0;
+    int timelines = 0;
     int failures = 0;
     for (const auto& [path, file] : game.Files()) {
-        if (path.starts_with("Event/EventFlow/") && path.ends_with(".bfevfl.zs")) {
-            ++files;
-            failures += !RoundTrips(game, path, dictionary);
+        if (!path.starts_with("Event/EventFlow/") || !path.ends_with(".bfevfl.zs")) {
+            continue;
+        }
+        ++files;
+        const std::string data = Decompress(game.Read(path), dictionary);
+        if (ReadAt<uint16_t>(data, 0x20) == 0) {
+            ++timelines;
+        } else {
+            failures += !RoundTrips(path, data);
         }
     }
-    std::printf("%d of %d event flows round trip\n", files - failures, files);
-    return files == EventFlows && failures == 0 ? 0 : 1;
+    std::printf("%d of %d flowcharts round trip; %d timelines\n", files - timelines - failures, files - timelines,
+                timelines);
+    return files == EventFlows && timelines == Timelines && failures == 0 ? 0 : 1;
 }

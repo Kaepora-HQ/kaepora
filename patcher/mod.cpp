@@ -1157,15 +1157,16 @@ static constexpr std::tuple<std::string_view, std::string_view, std::string_view
     { "EventQueryIsGameDataBoolExp", "BoolExp", "a true-or-false expression" },
 };
 
-static void CheckFlagName(const bfevfl::Flow& flow, const PlannedEventText& text,
+static void CheckFlagName(const bfevfl::Flowchart& flow, const PlannedEventText& text,
                           const std::map<uint32_t, std::string_view>& flags) {
-    const std::optional<bfevfl::Query> query = bfevfl::QueryOf(flow, text.event);
-    if (!query || query->actor != "GameDataActor") {
+    const bfevfl::Event& event = flow.events[bfevfl::EventIndex(flow, text.event)];
+    if (event.type != bfevfl::EventType::Switch || flow.actors[event.actor].name != "GameDataActor") {
         return;
     }
+    const std::string& query = flow.actors[event.actor].queries[event.verb];
     const auto flag = flags.find(Murmur3(text.text));
     for (const auto& [name, table, words] : flagQueries) {
-        if (query->name == name && (flag == flags.end() || flag->second != table)) {
+        if (query == name && (flag == flags.end() || flag->second != table)) {
             throw std::runtime_error(
                 std::format("{} asks for {}, and the game data list has none named \"{}\"", name, words, text.text));
         }
@@ -1650,9 +1651,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
                 std::format("presence {} in {}: {}", presence.actor.hash, presence.actor.file, e.what()));
         }
     }
-    std::map<std::string, bfevfl::Flow> flows;
+    std::map<std::string, bfevfl::Flowchart> flows;
     std::set<std::string> changedFlows;
-    const auto flowAt = [&](const std::string& path) -> bfevfl::Flow& {
+    const auto flowAt = [&](const std::string& path) -> bfevfl::Flowchart& {
         auto flow = flows.find(path);
         if (flow == flows.end()) {
             flow = flows.emplace(path, bfevfl::Parse(Decompress(game.Read(path), zsDictionary))).first;
