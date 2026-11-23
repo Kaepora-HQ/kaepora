@@ -166,8 +166,9 @@ if(Qt6_FOUND)
     target_link_libraries(kaepora-game-values PUBLIC Qt6::Network PRIVATE kaepora-patch-files)
     target_compile_options(kaepora-game-values PRIVATE ${WARNINGS})
 
-    add_library(kaepora-tracker-window STATIC kaepora/tracker_painter.cpp)
-    target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values Qt6::Gui)
+    add_library(kaepora-tracker-window STATIC kaepora/tracker_painter.cpp kaepora/tracker_window.cpp)
+    set_target_properties(kaepora-tracker-window PROPERTIES AUTOMOC ON)
+    target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values Qt6::Widgets)
     target_compile_options(kaepora-tracker-window PRIVATE ${WARNINGS})
 
     add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
@@ -383,12 +384,14 @@ if(Qt6Test_FOUND)
 
     add_executable(kaepora-tracker-window-test tests/tracker_window_test.cpp)
     set_target_properties(kaepora-tracker-window-test PROPERTIES AUTOMOC ON)
-    target_link_libraries(kaepora-tracker-window-test PRIVATE kaepora-tracker-window Qt6::Test)
+    target_link_libraries(kaepora-tracker-window-test PRIVATE kaepora-tracker-window kaepora-patch-files Qt6::Test)
     target_compile_options(kaepora-tracker-window-test PRIVATE ${WARNINGS})
     foreach(TEST IN ITEMS aLitCellShowsItsPicture anUnlitCellShowsItsPictureInAFaintGrey aTintedCellShowsItsTint
                           aCountIsDrawnAtTheCellsLowerRight aCountOfAllIsDrawnInAColourOfItsOwn aHiddenBlockTakesNoRoom
                           aPictureFillsACellOfTheLooksSide theBackgroundFillsTheGrid
-                          aSeeThroughBackgroundLeavesSeeThroughPixels)
+                          aSeeThroughBackgroundLeavesSeeThroughPixels aWindowLightsWhatTheGameHolds
+                          aWindowSaysWhatItDoesUntilItCloses iconSizeChangesTheCells showHidesABlock
+                          backgroundColourSetsTheColour aNewWindowOpensAsTheLastWasLeft pointingAtACellShowsItsName)
         add_test(NAME tracker_window_${TEST} COMMAND kaepora-tracker-window-test ${TEST})
         set_tests_properties(tracker_window_${TEST} PROPERTIES ENVIRONMENT
                              "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game_values.h"
+#include "tracker.h"
 
 #include "bytes.h"
 
@@ -16,6 +17,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -69,6 +71,16 @@ public:
         });
     }
 
+    int connections() {
+        int open = 0;
+        onItsThread([&] {
+            for (const QTcpSocket* socket : server.findChildren<QTcpSocket*>()) {
+                open += socket->state() == QAbstractSocket::ConnectedState ? 1 : 0;
+            }
+        });
+        return open;
+    }
+
     void start(const std::vector<quint64>& programs) {
         onItsThread([&] {
             layOut(programs);
@@ -103,6 +115,10 @@ private:
     std::map<quint64, QByteArray> memory;
     quint64 next = 0x2107000000;
     std::map<std::string_view, quint64> addresses;
+
+    static quint32 Hash(std::string_view name) {
+        return name.starts_with("0x") ? std::stoul(std::string(name.substr(2)), nullptr, 16) : Murmur3(name);
+    }
 
     static int Width(ValueType type) {
         return type == Bool ? 1 : type == String64 ? 64 : 4;
@@ -168,7 +184,7 @@ private:
             QByteArray entries(table.stride * held.size(), 0);
             for (size_t index = 0; index < held.size(); ++index) {
                 const int pair = (index + 1) * MapCapacity / (held.size() + 1);
-                qToLittleEndian(Murmur3(held[index]->name), pairs.data() + pair * PairSize);
+                qToLittleEndian(Hash(held[index]->name), pairs.data() + pair * PairSize);
                 qToLittleEndian(quint32(index), pairs.data() + pair * PairSize + 4);
                 char* value = entries.data() + index * table.stride + table.offset;
                 write(value, *held[index]);
@@ -248,3 +264,13 @@ private:
         return { { "error", "unknown method \"" + method + '"' } };
     }
 };
+
+inline std::vector<FakeValue> TrackerGame(const Tracker& tracker, const std::map<std::string_view, quint32>& held) {
+    std::vector<FakeValue> game;
+    for (const SavedValue& value : tracker.values()) {
+        const auto found = held.find(value.name);
+        game.push_back({ value.name, value.type, found != held.end() ? found->second : 0,
+                         value.name == Scene.name ? "KokiriForest_Child" : "" });
+    }
+    return game;
+}

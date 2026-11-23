@@ -121,6 +121,10 @@ bool Tracker::take(std::span<const quint32> read) {
     return cells() != shown;
 }
 
+bool Tracker::inPlay() const {
+    return playing.has_value();
+}
+
 std::vector<CellView> Tracker::cells() const {
     std::vector<CellView> views;
     for (const Cell& cell : table) {

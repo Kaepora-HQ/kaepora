@@ -1,13 +1,25 @@
+#include "fake_lichii.h"
 #include "tracker_painter.h"
+#include "tracker_window.h"
 
+#include <QApplication>
+#include <QColorDialog>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <QPainter>
+#include <QSettings>
+#include <QTcpServer>
+#include <QTemporaryDir>
 #include <QTest>
+#include <QToolTip>
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 static const QColor Red(200, 40, 40);
 static const QColor Blue(40, 60, 210);
+static const QColor Green(0, 177, 64);
 static const TrackerLook FirstLook{ .cell = 48, .background = QColor(0x1c, 0x1f, 0x27), .hidden = {} };
 
 static QImage Flat(const QColor& colour) {
@@ -48,10 +60,84 @@ static int Count(const QImage& image, const std::function<bool(const QColor&)>& 
     return count;
 }
 
+static QColor ColourOf(const std::string& picture) {
+    const quint32 hash = Murmur3(picture);
+    return QColor(hash & 0xFF, hash >> 8 & 0xFF, hash >> 16 & 0xFF);
+}
+
+static QHash<QString, QImage> Pictures(const Tracker& tracker) {
+    QHash<QString, QImage> pictures;
+    for (const std::string& name : tracker.pictures()) {
+        pictures.insert(QString::fromStdString(name), Flat(ColourOf(name)));
+    }
+    return pictures;
+}
+
+static QPoint CentreOf(const std::string& name) {
+    const std::vector<CellView> cells = Tracker().cells();
+    const auto cell = std::ranges::find(cells, name, &CellView::name);
+    return TrackerBoxes(FirstLook, cells)[cell - cells.begin()].center();
+}
+
+static QColor ColourAt(const QImage& shot, const std::string& name) {
+    return shot.pixelColor(CentreOf(name) * shot.devicePixelRatio());
+}
+
+static quint16 ClosedPort() {
+    QTcpServer server;
+    server.listen(QHostAddress::LocalHost);
+    return server.serverPort();
+}
+
+static QAction* Entry(QWidget& window, const QStringList& path) {
+    QMenu* menu = window.findChild<QMenu*>(Qt::FindDirectChildrenOnly);
+    QAction* entry = nullptr;
+    for (const QString& step : path) {
+        const QList<QAction*> actions = menu->actions();
+        const auto found = std::ranges::find(actions, step, &QAction::text);
+        if (found == actions.end()) {
+            return nullptr;
+        }
+        entry = *found;
+        menu = entry->menu();
+    }
+    return entry;
+}
+
+static bool Choose(QWidget& window, const QStringList& path) {
+    QContextMenuEvent click(QContextMenuEvent::Mouse, QPoint(1, 1), window.mapToGlobal(QPoint(1, 1)));
+    QApplication::sendEvent(&window, &click);
+    QMenu* menu = window.findChild<QMenu*>(Qt::FindDirectChildrenOnly);
+    QAction* entry = Entry(window, path);
+    if (menu == nullptr || !menu->isVisible() || entry == nullptr) {
+        return false;
+    }
+    entry->trigger();
+    menu->hide();
+    return true;
+}
+
+static bool ChooseBackground(QWidget& window, const QColor& colour) {
+    if (!Choose(window, { "Background colour…" })) {
+        return false;
+    }
+    auto* dialog = window.findChild<QColorDialog*>();
+    if (dialog == nullptr || !dialog->isVisible()) {
+        return false;
+    }
+    dialog->setCurrentColor(colour);
+    dialog->accept();
+    return true;
+}
+
 class TrackerWindowTest : public QObject {
     Q_OBJECT
 
 private slots:
+    void init() {
+        QSettings().clear();
+    }
+
     void aLitCellShowsItsPicture() {
         const std::vector cells = { Cell("items", "red", true) };
         QCOMPARE(Painted(FirstLook, cells, { { "red", Flat(Red) } }).pixelColor(Centre(FirstLook, cells)), Red);
@@ -134,8 +220,124 @@ private slots:
         const QImage image = Painted(clear, { Cell("items", "red", true) }, { { "red", Flat(Red) } });
         QCOMPARE(image.pixelColor(0, 0).alpha(), 0);
     }
+
+    void aWindowLightsWhatTheGameHolds() {
+        const Tracker tracker;
+        FakeLichii lichii(
+            TrackerGame(tracker, { { MenuState.name, Murmur3("Title") }, { "PouchData.Item_Hookshot.StockNum", 1 } }));
+        TrackerWindow window(lichii.port, Pictures(tracker));
+        QStringList statuses;
+        connect(&window, &TrackerWindow::statusChanged, this, [&](const QString& status) { statuses << status; });
+        window.show();
+        QTRY_COMPARE(statuses, QStringList{ "The tracker is waiting for a game to start." });
+        const QImage waiting = window.grab().toImage();
+        for (const CellView& cell : tracker.cells()) {
+            QVERIFY2(ColourAt(waiting, cell.name) != ColourOf(cell.picture), cell.name.c_str());
+        }
+        lichii.set(MenuState.name, Murmur3("None"));
+        QTRY_COMPARE(ColourAt(window.grab().toImage(), "Hookshot"), ColourOf("Item_Hookshot"));
+        QCOMPARE(statuses.back(), "The tracker follows the game.");
+        lichii.set("PouchData.Item_Longshot.StockNum", 1);
+        QTRY_COMPARE(ColourAt(window.grab().toImage(), "Hookshot"), ColourOf("Item_Longshot"));
+    }
+
+    void aWindowSaysWhatItDoesUntilItCloses() {
+        const Tracker tracker;
+        FakeLichii lichii(TrackerGame(tracker, { { MenuState.name, Murmur3("Title") } }), {});
+        auto window = std::make_unique<TrackerWindow>(lichii.port, Pictures(tracker));
+        QStringList statuses;
+        connect(window.get(), &TrackerWindow::statusChanged, this, [&](const QString& status) { statuses << status; });
+        const QString another =
+            "Lichii runs another game, or another version of this one. Kaepora works only with version 2.0.0.";
+        QTRY_COMPARE(statuses, QStringList{ another });
+        lichii.quit();
+        lichii.start({ ProgramAt });
+        QTRY_COMPARE(statuses, QStringList({ another, "The tracker is waiting for a game to start." }));
+        lichii.set(MenuState.name, Murmur3("None"));
+        QTRY_COMPARE(statuses, QStringList({ another, "The tracker is waiting for a game to start.",
+                                             "The tracker follows the game." }));
+        window.reset();
+        QTRY_COMPARE(lichii.connections(), 0);
+    }
+
+    void iconSizeChangesTheCells() {
+        const Tracker tracker;
+        TrackerWindow window(ClosedPort(), Pictures(tracker));
+        window.show();
+        QCOMPARE(window.windowTitle(), "Kaepora Tracker");
+        QCOMPARE(window.size(), TrackerSize(FirstLook, tracker.cells()));
+        QVERIFY(Entry(window, { "Icon size", "Medium" })->isChecked());
+        QVERIFY(Choose(window, { "Icon size", "Large" }));
+        QCOMPARE(window.size(),
+                 TrackerSize({ .cell = 64, .background = FirstLook.background, .hidden = {} }, tracker.cells()));
+        QVERIFY(Choose(window, { "Icon size", "Small" }));
+        QCOMPARE(window.size(),
+                 TrackerSize({ .cell = 36, .background = FirstLook.background, .hidden = {} }, tracker.cells()));
+    }
+
+    void showHidesABlock() {
+        const Tracker tracker;
+        TrackerWindow window(ClosedPort(), Pictures(tracker));
+        window.show();
+        QVERIFY(Choose(window, { "Show", "Songs" }));
+        QCOMPARE(window.size(), TrackerSize({ .cell = 48, .background = FirstLook.background, .hidden = { "songs" } },
+                                            tracker.cells()));
+        QVERIFY(Choose(window, { "Show", "Songs" }));
+        QCOMPARE(window.size(), TrackerSize(FirstLook, tracker.cells()));
+    }
+
+    void backgroundColourSetsTheColour() {
+        TrackerWindow window(ClosedPort(), Pictures(Tracker()));
+        window.show();
+        QVERIFY(ChooseBackground(window, Green));
+        QCOMPARE(window.grab().toImage().pixelColor(0, 0), Green);
+    }
+
+    void aNewWindowOpensAsTheLastWasLeft() {
+        const Tracker tracker;
+        const quint16 port = ClosedPort();
+        auto first = std::make_unique<TrackerWindow>(port, Pictures(tracker));
+        first->show();
+        QVERIFY(Choose(*first, { "Icon size", "Small" }));
+        QVERIFY(Choose(*first, { "Show", "Songs" }));
+        QVERIFY(ChooseBackground(*first, Green));
+        first->move(123, 45);
+        first->close();
+        first.reset();
+
+        TrackerWindow second(port, Pictures(tracker));
+        second.show();
+        QCOMPARE(second.size(),
+                 TrackerSize({ .cell = 36, .background = Green, .hidden = { "songs" } }, tracker.cells()));
+        QCOMPARE(second.pos(), QPoint(123, 45));
+        QCOMPARE(second.grab().toImage().pixelColor(0, 0), Green);
+        QVERIFY(Entry(second, { "Icon size", "Small" })->isChecked());
+        QVERIFY(!Entry(second, { "Show", "Songs" })->isChecked());
+    }
+
+    void pointingAtACellShowsItsName() {
+        TrackerWindow window(ClosedPort(), Pictures(Tracker()));
+        window.show();
+        const QPoint hammer = CentreOf("Megaton Hammer");
+        QHelpEvent help(QEvent::ToolTip, hammer, window.mapToGlobal(hammer));
+        QApplication::sendEvent(&window, &help);
+        QTRY_COMPARE(QToolTip::text(), "Megaton Hammer");
+    }
 };
 
-QTEST_MAIN(TrackerWindowTest)
+int main(int argc, char** argv) {
+    // The window remembers its look in the settings, so they go to a file in a temporary folder.
+    QTemporaryDir settings;
+    if (!settings.isValid()) {
+        return 1;
+    }
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
+    QApplication app(argc, argv);
+    QApplication::setOrganizationName("kaepora");
+    QApplication::setApplicationName("kaepora");
+    TrackerWindowTest test;
+    return QTest::qExec(&test, argc, argv);
+}
 
 #include "tracker_window_test.moc"

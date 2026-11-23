@@ -35,6 +35,8 @@ public:
     std::vector<std::string> pictures() const;
     // Takes one read of values(), in their order. Returns whether what cells() gives changed.
     bool take(std::span<const quint32> read);
+    // Whether a game is in play, as of the last read.
+    bool inPlay() const;
     std::vector<CellView> cells() const;
 
 private:
