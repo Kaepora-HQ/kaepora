@@ -34,7 +34,7 @@ import {
 } from "../errors.ts";
 import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
-import { ChestSpots, PlayedSpot, Spot } from "./spots.ts";
+import { ChestSpots, Mark, PlayedSpot, Recordings, Spot } from "./spots.ts";
 import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
 	Button,
@@ -313,12 +313,19 @@ export class GameRpcs extends RpcGroup.make(
 		success: Spot,
 		error: Schema.Union([SpotRefused, NoGameHere, DumpFailed]),
 	}),
-	/** This machine's recorded spots, which git does not have yet. */
-	Rpc.make("Recorded", {
-		success: Schema.Struct({ spots: Schema.Array(Spot) }),
+	/** This machine's recorded spots and marks, which git does not have yet. */
+	Rpc.make("Recorded", { success: Recordings }),
+	/** Takes recorded spots and marks out once they are in git; one recorded or marked again since stays. */
+	Rpc.make("Forget", { payload: { recordings: Recordings } }),
+	/**
+	 * Marks the spot a run of this machine started on with the run's outcome, passed or failed, and answers the mark. A
+	 * spot that moved since the run is not marked.
+	 */
+	Rpc.make("MarkSpot", {
+		payload: { run: RunId },
+		success: Mark,
+		error: Schema.Union([SpotRefused, RunNotFound, NoGameHere, DumpFailed]),
 	}),
-	/** Takes recorded spots out once they are in git; a spot recorded again since stays. */
-	Rpc.make("Forget", { payload: { spots: Schema.Array(Spot) } }),
 	Rpc.make("Runs", {
 		payload: { script: Schema.optionalKey(Schema.String), limit: Schema.Int },
 		success: RunList,

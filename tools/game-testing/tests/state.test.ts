@@ -12,10 +12,13 @@ import {
 } from "effect";
 import { UserDirectories } from "effect/persistence";
 import type { PlannedEdit } from "../src/contract/plan.ts";
+import type { Outcome } from "../src/contract/record.ts";
+import { RunRecord } from "../src/contract/record.ts";
 import type { PlayedSpot, Spot } from "../src/contract/spots.ts";
 import type { Mod } from "../src/contract/state.ts";
 import { StartState } from "../src/contract/state.ts";
 import type { Saved } from "../src/contract/values.ts";
+import { RunId, SessionId } from "../src/contract/values.ts";
 import { GameData, valueHash } from "../src/data/game-data.ts";
 import {
 	ModUnreadable,
@@ -25,6 +28,7 @@ import {
 } from "../src/errors.ts";
 import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
+import { markSpot } from "../src/save/marks.ts";
 import { chestSpots, keepPlayed, Spots } from "../src/save/spots.ts";
 import { StartStates } from "../src/save/state.ts";
 import type { Check } from "../src/save/tables.ts";
@@ -1332,12 +1336,172 @@ describe("the spots", () => {
 						const moved = yield* kept.recorded;
 						yield* kept.keep({ ...first, position: [2, 8, 2] });
 						yield* kept.forget(moved);
-						return yield* kept.recorded;
+						const { spots: stayed } = yield* kept.recorded;
+						return stayed;
 					}),
 					[layer, BunFileSystem.layer]
 				);
 				expect(Arr.map(left, (spot) => spot.position)).toEqual([[2, 8, 2]]);
 			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect(
+		"a look marks the spot it started on and copies nothing of it, a failed look says the look failed, and a spot moved since takes no mark",
+		() =>
+			Effect.gen(function* () {
+				const layer = yield* startStates();
+				const marked = yield* Effect.provide(
+					Effect.gen(function* () {
+						const kept = yield* Spots;
+						const data = yield* GameData;
+						const own = yield* OwnTables;
+						const states = yield* StartStates;
+						const record = Effect.fnUntraced(function* (
+							location: string,
+							id: string,
+							outcome: Outcome
+						) {
+							const state = StartState.make({ base: "test-base", location });
+							const planned = yield* states.plan(state, "none");
+							return RunRecord.make({
+								id: RunId.make(id),
+								session: SessionId.make("fake-session"),
+								machine: "fake",
+								emulator: { program: "fake" },
+								game: "5eed",
+								state,
+								plan: {
+									...(planned.location === undefined
+										? {}
+										: { location: planned.location }),
+									edits: planned.edits,
+									leftAlone: planned.leftAlone,
+								},
+								steps: [],
+								outcome,
+								startedAt: Temporal.Instant.fromEpochMilliseconds(0),
+							});
+						});
+						const mark = (run: RunRecord) => markSpot(data, own, kept, run);
+						const potRun = yield* record(
+							"Forest Temple Pot Chest",
+							"20261123-120000-aaaa",
+							{
+								_tag: "passed",
+							}
+						);
+						const bowRun = yield* record(
+							"Forest Temple Bow Chest",
+							"20261123-120000-bbbb",
+							{
+								_tag: "failed",
+								reason: "no chest stood there",
+							}
+						);
+						const broken = yield* record(
+							"Forest Temple Bow Chest",
+							"20261123-120000-cccc",
+							{
+								_tag: "broken",
+								reason: "the place failed",
+								error: "",
+							}
+						);
+						yield* mark(potRun);
+						yield* mark(bowRun);
+						const notMarked = yield* Effect.flip(mark(broken));
+						const before = yield* states.plan(
+							StartState.make({
+								base: "test-base",
+								location: "Forest Temple Bow Chest",
+							}),
+							"none"
+						);
+						const { spots: recorded } = yield* kept.recorded;
+						yield* kept.keep({
+							...found(
+								"Forest Temple Pot Chest",
+								"ForestTemple",
+								[6, 8, 6],
+								270
+							),
+							room: 17,
+							found: "play",
+						});
+						const moved = yield* Effect.flip(mark(potRun));
+						const after = yield* kept.find("Forest Temple Pot Chest", "child");
+						const proven = yield* Arr.findFirst(
+							yield* kept.all,
+							(spot) => spot.name === "Forest Temple Pot Chest"
+						).pipe(Effect.fromOption);
+						return { notMarked, before, recorded, moved, after, proven };
+					}),
+					[layer, BunFileSystem.layer]
+				);
+				expect(marked.recorded).toEqual([]);
+				expect(marked.before.location).toMatchObject({
+					kind: "worked out",
+					about: expect.stringContaining(
+						"a look from it failed, run 20261123-120000-bbbb"
+					),
+				});
+				expect(marked.notMarked.message).toContain("broken");
+				expect(marked.moved.message).toContain("moved");
+				expect(marked.proven.look).toBeUndefined();
+				expect(Option.map(marked.after, (spot) => spot.position)).toEqual(
+					Option.some([6, 8, 6])
+				);
+			}).pipe(Effect.provide(BunFileSystem.layer))
+	);
+
+	it.effect("a passed look proves a spot in plan and in the list", () =>
+		Effect.gen(function* () {
+			const layer = yield* startStates();
+			const results = yield* Effect.provide(
+				Effect.gen(function* () {
+					const kept = yield* Spots;
+					yield* kept.mark({
+						name: "Forest Temple Pot Chest",
+						scene: "ForestTemple",
+						room: 17,
+						position: [4, 8, 6],
+						facing: 270,
+						look: {
+							outcome: "passed",
+							run: RunId.make("20261123-120000-dddd"),
+						},
+					});
+					const states = yield* StartStates;
+					const planned = yield* states.plan(
+						StartState.make({
+							base: "test-base",
+							location: "Forest Temple Pot Chest",
+						}),
+						"none"
+					);
+					const listed = yield* chestSpots(
+						yield* GameData,
+						yield* OwnTables,
+						kept
+					);
+					return { planned, listed };
+				}),
+				[layer, BunFileSystem.layer]
+			);
+			expect(results.planned.location?.kind).toBe("proven");
+			expect(
+				Arr.findFirst(
+					results.listed,
+					(listedChest) => listedChest.name === "Forest Temple Pot Chest"
+				)
+			).toEqual(
+				Option.some(
+					expect.objectContaining({
+						spots: [expect.objectContaining({ kind: "proven" })],
+					})
+				)
+			);
+		}).pipe(Effect.provide(BunFileSystem.layer))
 	);
 
 	it.effect("the list gives every chest its best spot, or none", () =>

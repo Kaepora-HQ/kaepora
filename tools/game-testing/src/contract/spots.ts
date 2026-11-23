@@ -3,7 +3,7 @@
  * the machine with the game, which wins. Its scene says which age it serves: a scene whose name carries `_Child` or
  * `_Adult` serves that age, any other both.
  */
-import { Schema } from "effect";
+import { Array as Arr, Schema } from "effect";
 import { Position, RunId } from "./values.ts";
 
 /**
@@ -44,6 +44,51 @@ export const Spot = Schema.Struct({
 });
 export type Spot = typeof Spot.Type;
 
+/** Where a spot stands Link: its scene, room, place and facing. */
+export interface Place {
+	readonly facing: number;
+	readonly position: readonly [number, number, number];
+	readonly room?: number | undefined;
+	readonly scene: string;
+}
+
+/** How near two places are to be one spot: a table keeps three decimals of a place and one of a facing. */
+const near = { across: 0.001, turned: 0.05 };
+
+export const samePlace = (a: Place, b: Place) => {
+	const turned = Math.abs(a.facing - b.facing) % 360;
+	return (
+		a.scene === b.scene &&
+		a.room === b.room &&
+		Arr.every(
+			Arr.zip(a.position, b.position),
+			([here, there]) => Math.abs(here - there) <= near.across
+		) &&
+		Math.min(turned, 360 - turned) <= near.turned
+	);
+};
+
+/**
+ * A look's outcome on a spot, kept apart from the spot: the spot's name and the place the look started on. It holds
+ * while the spot stands there.
+ */
+export const Mark = Schema.Struct({
+	name: SpotName,
+	scene: Schema.String,
+	room: Schema.optionalKey(Schema.Int),
+	position: Position,
+	facing: Schema.Finite,
+	look: Look,
+});
+export type Mark = typeof Mark.Type;
+
+/** What a machine has recorded that git does not have yet: spots found in play, and looks' marks. */
+export const Recordings = Schema.Struct({
+	spots: Schema.Array(Spot),
+	marks: Schema.Array(Mark),
+});
+export type Recordings = typeof Recordings.Type;
+
 /** What a spot is worth: `proven` once a look passed from it, `found` when the game showed it, else `worked out`. */
 export const SpotKind = Schema.Literals(["worked out", "found", "proven"]);
 export type SpotKind = typeof SpotKind.Type;
@@ -81,6 +126,8 @@ export const ChestSpots = Schema.Struct({
 			age: SpotAge,
 			kind: SpotKind,
 			about: Schema.String,
+			/** The last look from the spot, as its mark or its row says. */
+			look: Schema.optionalKey(Look),
 		})
 	),
 });

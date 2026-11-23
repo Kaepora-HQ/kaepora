@@ -15,12 +15,11 @@ import {
 	Option,
 	Path,
 	Record as Rec,
-	Schema,
 	String as Str,
 } from "effect";
 import type { ReadBack, TextSpeed } from "../contract/state.ts";
-import type { Saved } from "../contract/values.ts";
-import { Buttons, Value } from "../contract/values.ts";
+import type { Saved, Value } from "../contract/values.ts";
+import { Buttons } from "../contract/values.ts";
 import type { GameValue } from "../data/game-data.ts";
 import { GameData, valueHash } from "../data/game-data.ts";
 import type { Emulator, EmulatorError, WireLog } from "../emulator/emulator.ts";
@@ -28,7 +27,7 @@ import { Launcher, programId, textSpeedOf } from "../emulator/launcher.ts";
 import type { Values } from "../emulator/values.ts";
 import { attach, entryOf } from "../emulator/values.ts";
 import type { EmulatorUnavailable } from "../errors.ts";
-import { LaunchFailed, StartNotTaken } from "../errors.ts";
+import { LaunchFailed, StartNotTaken, ValueNotFound } from "../errors.ts";
 import type { Plan, Saves } from "../save/state.ts";
 import type { Place } from "./places.ts";
 
@@ -320,7 +319,7 @@ type Reading =
 			readonly _tag: "read";
 			readonly value: string;
 			readonly written: Saved;
-			readonly held: Value;
+			readonly held: Saved;
 			readonly type: string;
 	  }
 	| { readonly _tag: "notRead"; readonly value: string };
@@ -336,12 +335,29 @@ const facings: Readonly<Record<string, number>> = {
 	Player_Rot_For_Map: (1e-6 * 180) / Math.PI,
 };
 
+/**
+ * How far Link's saved height may come back from what was written. The game sets Link on the floor when a save loads,
+ * and a worked-out spot does not know the floor's height: at the Dodongo's Cavern bomb bag chest it moved him 0.088 down
+ * from y 115.818 and 0.012 up from 115.718. A fall to another floor is far more. Across the floor a place holds exactly.
+ */
+const settles = 0.5;
+
 /** The game holds a Float in 32 bits, so a written Float is compared as the save stored it. */
 const sameAs = (
 	{ value, type }: { readonly value: string; readonly type: string },
 	written: Saved,
-	held: Value
+	held: Saved
 ) => {
+	// A place is held as three 32-bit Floats, as the save stores them.
+	if (typeof written === "object" && typeof held === "object") {
+		const [x, y, z] = written;
+		const [heldX, heldY, heldZ] = held;
+		return (
+			Math.fround(x) === heldX &&
+			Math.fround(z) === heldZ &&
+			Math.abs(Math.fround(y) - heldY) <= settles
+		);
+	}
 	if (typeof written !== "number" || typeof held !== "number") {
 		return Equal.equals(written, held);
 	}
@@ -385,10 +401,14 @@ const readBackOf = Effect.fnUntraced(function* (
 						}
 					: yield* Effect.orDie(data.value(edit.name));
 			const entry = yield* Effect.option(entryOf(value));
-			if (Option.isNone(entry)) {
-				return { _tag: "notRead", value: edit.name };
-			}
-			return yield* values.read(entry.value).pipe(
+			const reading: Effect.Effect<Saved, EmulatorError | ValueNotFound> =
+				value.type === "Vector3"
+					? values.readPoint(value)
+					: Option.match(entry, {
+							onNone: () => ValueNotFound.make({ value: edit.name }),
+							onSome: values.read,
+						});
+			return yield* reading.pipe(
 				Effect.map(
 					(held): Reading => ({
 						_tag: "read",
@@ -409,9 +429,7 @@ const readBackOf = Effect.fnUntraced(function* (
 		reading._tag === "read" ? [reading] : []
 	);
 	const differences = Arr.flatMap(read, ({ value, written, held, type }) =>
-		Schema.is(Value)(written) && !sameAs({ value, type }, written, held)
-			? [{ value, written, held }]
-			: []
+		sameAs({ value, type }, written, held) ? [] : [{ value, written, held }]
 	);
 	if (Arr.isReadonlyArrayNonEmpty(differences)) {
 		return yield* StartNotTaken.make({ differences });

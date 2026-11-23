@@ -10,6 +10,7 @@ import {
 	NameKind,
 	PlaceId,
 	RunId,
+	Saved,
 	SessionId,
 	Value,
 } from "./contract/values.ts";
@@ -323,7 +324,7 @@ export class StartNotTaken extends Schema.TaggedError<
 	{ readonly brand: unique symbol }
 >("game-testing/errors/StartNotTaken")("StartNotTaken", {
 	differences: Schema.Array(
-		Schema.Struct({ value: Schema.String, written: Value, held: Value })
+		Schema.Struct({ value: Schema.String, written: Saved, held: Saved })
 	),
 }) {
 	override get message() {

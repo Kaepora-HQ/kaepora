@@ -3,7 +3,7 @@
  * through the game's tables and refuses the whole state before the emulator starts.
  */
 import { Array as Arr, Schema, String as Str } from "effect";
-import { Value } from "./values.ts";
+import { Saved, Value } from "./values.ts";
 
 /** Swapping age also swaps the sword and shield, as the game does. */
 export const Age = Schema.Literals(["child", "adult"]);
@@ -83,7 +83,7 @@ export class StartState extends Schema.Class<
  * it could not be read for, a per-actor key by `key <hash>`.
  */
 export const ReadBack = Schema.Struct({
-	values: Schema.Record(Schema.String, Value),
+	values: Schema.Record(Schema.String, Saved),
 	notRead: Schema.Array(Schema.String),
 });
 

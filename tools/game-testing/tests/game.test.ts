@@ -62,7 +62,9 @@ const played = (
 		readonly onA?: (lichii: FakeLichii) => void;
 		readonly autosaveOnA?: Readonly<Record<string, Scalar>>;
 		readonly autosaveLate?: Readonly<Record<string, Scalar>>;
-		readonly rewrites?: Readonly<Record<string, Value>>;
+		readonly rewrites?: Readonly<
+			Record<string, Value | readonly [number, number, number]>
+		>;
 		readonly unsaved?: Readonly<Record<string, Value>>;
 		readonly words?: Words;
 		readonly textBytesTaken?: boolean;
@@ -499,6 +501,32 @@ describe("a game on the host", () => {
 					error:
 						"The game does not hold the state as it was written: PlayerStatus.CurrentRupee holds 0, not 25.",
 				});
+			})
+	);
+
+	it.live(
+		"a start reads Link's saved place back: one whose height the game set 0.09 lower is taken, and one a floor lower is not",
+		() =>
+			Effect.gen(function* () {
+				const location = {
+					scene: "KokiriForest",
+					position: [1.5, 2.25, 3.125] as const,
+					facing: 0,
+				};
+				// Seen on the game: a worked-out spot written at y 115.818 was held at 115.72996, set on the floor.
+				const settled = yield* played(() => Effect.void, {
+					words: { location },
+					rewrites: { "PlayerStatus.SavePos": [1.5, 2.16, 3.125] },
+				});
+				expect(settled.startFailure).toBeUndefined();
+				expect(settled.record.readBack?.values["PlayerStatus.SavePos"]).toEqual(
+					[1.5, Math.fround(2.16), 3.125]
+				);
+				const fell = yield* played(() => Effect.void, {
+					words: { location },
+					rewrites: { "PlayerStatus.SavePos": [1.5, -7.75, 3.125] },
+				});
+				expect(fell.startFailure).toBeInstanceOf(StartNotTaken);
 			})
 	);
 

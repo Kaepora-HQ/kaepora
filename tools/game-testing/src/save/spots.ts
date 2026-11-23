@@ -19,13 +19,17 @@ import {
 import { UserDirectories } from "effect/persistence";
 import type {
 	ChestSpots,
+	Mark,
+	Place,
 	PlayedSpot,
+	Recordings,
 	Spot,
 	SpotAge,
 } from "../contract/spots.ts";
-import { Found, kindOf, SpotName } from "../contract/spots.ts";
+import { Found, kindOf, Look, SpotName, samePlace } from "../contract/spots.ts";
 import type { Age } from "../contract/state.ts";
-import type { GameData } from "../data/game-data.ts";
+import { RunId } from "../contract/values.ts";
+import type { GameData, Placement } from "../data/game-data.ts";
 import { nearest } from "../data/game-data.ts";
 import { SpotRefused } from "../errors.ts";
 import type { Check } from "./tables.ts";
@@ -64,22 +68,58 @@ const merged = (tracked: readonly Spot[], recorded: readonly Spot[]) => [
 	...recorded,
 ];
 
-/** The tracked spots with recorded ones moved in: each in place of a tracked spot it stands for, else added. */
+/** The spots with each mark that stands on one of them as its look. */
+const marked = (spots: readonly Spot[], marks: readonly Mark[]) =>
+	Arr.map(spots, (spot) =>
+		Option.match(
+			Arr.findFirst(
+				marks,
+				(mark) => mark.name === spot.name && samePlace(mark, spot)
+			),
+			{ onNone: () => spot, onSome: (mark) => ({ ...spot, look: mark.look }) }
+		)
+	);
+
+/**
+ * The tracked spots with recorded ones moved in, each in place of a tracked spot it stands for, else added, and every
+ * mark as its spot's look. A mark that stands on no spot marked a worked-out spot, which it becomes.
+ */
 export const intoTracked = (
 	tracked: readonly Spot[],
-	recorded: readonly Spot[]
-) => [
-	...Arr.map(tracked, (spot) =>
-		Option.getOrElse(
-			Arr.findFirst(recorded, (over) => overlap(over, spot)),
-			() => spot
-		)
-	),
-	...Arr.filter(
-		recorded,
-		(over) => !Arr.some(tracked, (spot) => overlap(over, spot))
-	),
-];
+	recorded: { readonly spots: readonly Spot[]; readonly marks: readonly Mark[] }
+) => {
+	const spots = [
+		...Arr.map(tracked, (spot) =>
+			Option.getOrElse(
+				Arr.findFirst(recorded.spots, (over) => overlap(over, spot)),
+				() => spot
+			)
+		),
+		...Arr.filter(
+			recorded.spots,
+			(over) => !Arr.some(tracked, (spot) => overlap(over, spot))
+		),
+	];
+	const workedOut = Arr.flatMapNullishOr(recorded.marks, (mark) =>
+		Arr.some(spots, (spot) => spot.name === mark.name && samePlace(mark, spot))
+			? undefined
+			: { ...mark, found: "worked out" as const, evidence: "", note: "" }
+	);
+	return marked([...spots, ...workedOut], recorded.marks);
+};
+
+/** A mark as its table holds it. */
+const MarkRow = Schema.Struct({
+	name: SpotName,
+	scene: Schema.String,
+	room: Schema.NullOr(Schema.Int),
+	x: Schema.Finite,
+	y: Schema.Finite,
+	z: Schema.Finite,
+	facing: Schema.Finite,
+	outcome: Look.fields.outcome,
+	run: RunId,
+});
 
 /** A recorded spot as its table holds it. */
 const RecordedRow = Schema.Struct({
@@ -113,10 +153,17 @@ export class Spots extends Context.Service<
 		) => Effect.Effect<Option.Option<Spot>>;
 		/** Records `spot`, in place of a recorded spot it stands for. */
 		readonly keep: (spot: Recorded) => Effect.Effect<void>;
-		/** The recorded spots alone, which git does not have yet. */
-		readonly recorded: Effect.Effect<readonly Spot[]>;
-		/** Takes these recorded spots out, as they are now in git; a spot recorded again since stays. */
-		readonly forget: (spots: readonly Recorded[]) => Effect.Effect<void>;
+		/** Keeps a look's mark on the spot it started on, in place of an earlier mark for that name and age. */
+		readonly mark: (mark: Mark) => Effect.Effect<void>;
+		/** The look marked on the spot `name` has at `place`. */
+		readonly lookAt: (
+			name: string,
+			place: Place
+		) => Effect.Effect<Option.Option<Look>>;
+		/** The recorded spots and marks alone, which git does not have yet. */
+		readonly recorded: Effect.Effect<Recordings>;
+		/** Takes these out, as they are now in git; a spot recorded or marked again since stays. */
+		readonly forget: (recordings: Recordings) => Effect.Effect<void>;
 	}
 >()("game-testing/save/spots") {
 	static readonly layer = Layer.effect(
@@ -135,6 +182,9 @@ export class Spots extends Context.Service<
 					});
 					open.run(`PRAGMA busy_timeout = ${busyMillis}`);
 					open.run("PRAGMA journal_mode = WAL");
+					open.run(
+						"CREATE TABLE IF NOT EXISTS mark (name TEXT NOT NULL, age TEXT NOT NULL, scene TEXT NOT NULL, room INTEGER, x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, facing REAL NOT NULL, outcome TEXT NOT NULL, run TEXT NOT NULL)"
+					);
 					open.run(
 						"CREATE TABLE IF NOT EXISTS spot (name TEXT NOT NULL, age TEXT NOT NULL, scene TEXT NOT NULL, room INTEGER, x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, facing REAL NOT NULL, found TEXT NOT NULL, evidence TEXT NOT NULL, note TEXT NOT NULL)"
 					);
@@ -155,7 +205,7 @@ export class Spots extends Context.Service<
 				);
 			}
 
-			const recorded = Effect.sync((): unknown =>
+			const spotsRecorded = Effect.sync((): unknown =>
 				db.query("SELECT * FROM spot").all()
 			).pipe(
 				Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(RecordedRow))),
@@ -175,15 +225,91 @@ export class Spots extends Context.Service<
 				),
 				Effect.orDie
 			);
-			const all = Effect.map(recorded, (kept) => merged(own.spots, kept));
+			const marks = Effect.sync((): unknown =>
+				db.query("SELECT * FROM mark").all()
+			).pipe(
+				Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(MarkRow))),
+				Effect.map(
+					Arr.map(
+						(row): Mark => ({
+							name: row.name,
+							scene: row.scene,
+							...(row.room === null ? {} : { room: row.room }),
+							position: [row.x, row.y, row.z],
+							facing: row.facing,
+							look: { outcome: row.outcome, run: row.run },
+						})
+					)
+				),
+				Effect.orDie
+			);
+			const all = Effect.map(
+				Effect.all([spotsRecorded, marks], { concurrency: 1 }),
+				([kept, onSpots]) => marked(merged(own.spots, kept), onSpots)
+			);
+			const place = (at: Place) => [
+				at.scene,
+				at.room ?? null,
+				...at.position,
+				at.facing,
+			];
 
 			return Spots.of({
 				all,
-				recorded,
-				forget: (spots) =>
+				recorded: Effect.map(
+					Effect.all([spotsRecorded, marks], { concurrency: 1 }),
+					([spots, onSpots]) => ({
+						spots,
+						marks: onSpots,
+					})
+				),
+				mark: (mark) =>
 					Effect.sync(() =>
 						db
 							.transaction(() => {
+								const age = spotAge(mark.scene);
+								db.run(
+									"DELETE FROM mark WHERE name = ?1 AND (age = 'either' OR ?2 = 'either' OR age = ?2)",
+									[mark.name, age]
+								);
+								db.run(
+									"INSERT INTO mark (name, age, scene, room, x, y, z, facing, outcome, run) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+									[
+										mark.name,
+										age,
+										...place(mark),
+										mark.look.outcome,
+										mark.look.run,
+									]
+								);
+							})
+							.immediate()
+					),
+				lookAt: (name, at) =>
+					Effect.map(marks, (onSpots) =>
+						Option.map(
+							Arr.findFirst(
+								onSpots,
+								(mark) => mark.name === name && samePlace(mark, at)
+							),
+							(mark) => mark.look
+						)
+					),
+				forget: ({ spots, marks: moved }) =>
+					Effect.sync(() =>
+						db
+							.transaction(() => {
+								for (const mark of moved) {
+									db.run(
+										"DELETE FROM mark WHERE name = ? AND scene = ? AND room IS ? AND x = ? AND y = ? AND z = ? AND facing = ? AND outcome = ? AND run = ?",
+										[
+											mark.name,
+											...place(mark),
+											mark.look.outcome,
+											mark.look.run,
+										]
+									);
+								}
 								for (const spot of spots) {
 									db.run(
 										"DELETE FROM spot WHERE name = ? AND scene = ? AND room IS ? AND x = ? AND y = ? AND z = ? AND facing = ? AND found = ? AND evidence = ? AND note = ?",
@@ -264,20 +390,51 @@ export const placedFor = Effect.fnUntraced(function* (
 	return Arr.filter(placed, (placement) => standsIn(placement.scene, age));
 });
 
-export const workedOutAbout = "worked out one unit before its actor";
+/** How far before a check's actor Link stands: near enough that A reaches a small chest. */
+const before = 1;
+const lift = 0.1;
 
-/** How a spot was found, and the look that started there, in words. */
+/** The spot worked out one unit before a placement's actor, on the side it faces, facing it. */
+export const workedOut = (name: string, subject: Placement): Spot => ({
+	name,
+	scene: subject.scene,
+	...(subject.room === undefined ? {} : { room: subject.room }),
+	position: [
+		subject.position[0] + before * Math.sin(subject.yaw),
+		subject.position[1] + lift,
+		subject.position[2] + before * Math.cos(subject.yaw),
+	],
+	facing: ((subject.yaw * 180) / Math.PI + 180) % 360,
+	found: "worked out",
+	evidence: "",
+	note: "",
+});
+
+/**
+ * How a spot was found, and the look that started there, in words. A failed look says the look failed, which can be
+ * the start's state as much as the spot: a chest that is not there yet, or rocks before it.
+ */
 export const aboutSpot = (spot: Spot) =>
 	Arr.join(
 		[
-			spot.found === "worked out" ? workedOutAbout : `from ${spot.evidence}`,
+			spot.found === "worked out"
+				? "worked out one unit before its actor"
+				: `from ${spot.evidence}`,
 			...(spot.look === undefined
 				? []
-				: [`run ${spot.look.run} ${spot.look.outcome} from it`]),
+				: [`a look from it ${spot.look.outcome}, run ${spot.look.run}`]),
 			...(spot.note === "" ? [] : [spot.note]),
 		],
 		"; "
 	);
+
+/** A spot as the chest list gives it for an age. */
+const listed = (age: SpotAge, spot: Spot) => ({
+	age,
+	kind: kindOf(spot),
+	about: aboutSpot(spot),
+	...(spot.look === undefined ? {} : { look: spot.look }),
+});
 
 /**
  * Every chest of `remake/chests.tsv` in its order, with a spot for each age that stands in its scenes: the spot kept
@@ -290,6 +447,7 @@ export const chestSpots = Effect.fn("chestSpots")(function* (
 	spots: Spots["Service"]
 ) {
 	const kept = yield* spots.all;
+	const { marks: onSpots } = yield* spots.recorded;
 	return yield* Effect.forEach(
 		own.chests,
 		Effect.fnUntraced(function* (name): Effect.fn.Return<ChestSpots> {
@@ -304,18 +462,25 @@ export const chestSpots = Effect.fn("chestSpots")(function* (
 					(each) => each.name === name && standsIn(each.scene, standing)
 				);
 				if (Option.isSome(spot)) {
-					return {
-						age,
-						kind: kindOf(spot.value),
-						about: aboutSpot(spot.value),
-					};
+					return listed(age, spot.value);
 				}
 				const seen = Arr.filter(placed, (placement) =>
 					standsIn(placement.scene, standing)
 				);
-				return seen.length === 1
-					? { age, kind: "worked out" as const, about: workedOutAbout }
-					: undefined;
+				const [only, ...more] = seen;
+				if (only === undefined || more.length > 0) {
+					return;
+				}
+				const worked = workedOut(name, only);
+				const look = Arr.findFirst(
+					onSpots,
+					(mark) => mark.name === name && samePlace(mark, worked)
+				);
+				const shown = Option.match(look, {
+					onNone: () => worked,
+					onSome: (mark) => ({ ...worked, look: mark.look }),
+				});
+				return listed(age, shown);
 			});
 			const [first] = placed;
 			return {

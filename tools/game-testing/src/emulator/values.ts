@@ -44,10 +44,11 @@ export interface Values {
 	readonly readFlags: (
 		names: readonly string[]
 	) => Effect.Effect<ReadonlyMap<string, boolean>, EmulatorError>;
-	/** A Vector3 of the game data list by name, such as `PlayerStatus.CurrentPos`, which no save need hold. */
-	readonly readPoint: (
-		name: string
-	) => Effect.Effect<
+	/** A Vector3 of the game data list, such as `PlayerStatus.CurrentPos`, by its name and hash. */
+	readonly readPoint: (entry: {
+		readonly name: string;
+		readonly hash: number;
+	}) => Effect.Effect<
 		readonly [number, number, number],
 		EmulatorError | ValueNotFound
 	>;
@@ -405,9 +406,9 @@ export const attach = Effect.fn("Values.attach")(function* (
 				])
 			);
 		}),
-		readPoint: Effect.fn("Values.readPoint")(function* (name) {
+		readPoint: Effect.fn("Values.readPoint")(function* ({ name, hash }) {
 			const address = yield* addressOf(
-				{ name, hash: Bun.hash.murmur32v3(name), type: "Vector3" },
+				{ name, hash, type: "Vector3" },
 				vector3
 			);
 			const bytes = yield* emulator.readMemory(address, 12);

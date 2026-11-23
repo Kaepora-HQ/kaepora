@@ -32,6 +32,8 @@ const entry = (name: string, type: "Int" | "String64"): ValueEntry => ({
 	type,
 });
 
+const pointOf = (name: string) => ({ name, hash: Bun.hash.murmur32v3(name) });
+
 const degrees = (radians: number) => (radians * 180) / Math.PI;
 
 /** The game's values for one connection, which closes with the scope. */
@@ -49,8 +51,8 @@ const reading = (server: DebugServer) =>
 const standing = Effect.fn("Recorder.standing")(function* (values: Values) {
 	const scene = yield* values.read(entry("Sequence_CurrentBanc", "String64"));
 	const room = yield* values.read(entry("DungeonRoom", "Int"));
-	const position = yield* values.readPoint("PlayerStatus.CurrentPos");
-	const [x, , z] = yield* values.readPoint("PlayerStatus.CurrentDir");
+	const position = yield* values.readPoint(pointOf("PlayerStatus.CurrentPos"));
+	const [x, , z] = yield* values.readPoint(pointOf("PlayerStatus.CurrentDir"));
 	return {
 		scene: String(scene),
 		room: Number(room),

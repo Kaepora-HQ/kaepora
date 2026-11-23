@@ -15,11 +15,13 @@ import {
 	Option,
 	Path,
 	Record as Rec,
+	Result,
 	Schema,
 	String as Str,
 } from "effect";
 import { McpServer } from "effect/ai";
 import { Argument, CliError, Command, Flag } from "effect/cli";
+import { UserDirectories } from "effect/persistence";
 import type { Origin, PlannedEdit, StatePlan } from "./contract/plan.ts";
 import { originText } from "./contract/plan.ts";
 import type { Outcome } from "./contract/record.ts";
@@ -44,6 +46,7 @@ import {
 	serverName,
 } from "./mcp/server.ts";
 import { readMod, scriptMod } from "./mod.ts";
+import { markSpot } from "./save/marks.ts";
 import { chestSpots, intoTracked, keepPlayed, Spots } from "./save/spots.ts";
 import { StartStates } from "./save/state.ts";
 import {
@@ -53,6 +56,7 @@ import {
 	spotsText,
 	trackedSpots,
 } from "./save/tables.ts";
+import { proveScript } from "./scripts/prove.ts";
 import type { ScriptRun } from "./scripts/runner.ts";
 import {
 	declarationCommand,
@@ -153,6 +157,29 @@ const report = (
 		{ concurrency: 1, discard: true }
 	);
 
+/** One run of a script, reported as `label`: a script that fails before its game ends is a broken run. */
+const attemptRun = (
+	runner: Scripts["Service"],
+	records: Runs["Service"],
+	script: string,
+	label: string,
+	attemptOf?: RunId
+) =>
+	runner.run(script, { attemptOf }).pipe(
+		Effect.catch(
+			(failed): Effect.Effect<ScriptRun> =>
+				Effect.succeed({
+					outcome: {
+						_tag: "broken",
+						reason: `the script failed (${failed.reason})`,
+						error: failed.detail,
+					},
+					...(failed.run === undefined ? {} : { run: failed.run }),
+				})
+		),
+		Effect.tap((ran) => report(label, ran, records.folder))
+	);
+
 const run = Command.make(
 	"run",
 	{
@@ -179,20 +206,7 @@ const run = Command.make(
 			const runner = Context.get(built, Scripts);
 			const records = yield* Runs;
 			const attempt = (script: string, attemptOf?: RunId) =>
-				runner.run(script, { attemptOf }).pipe(
-					Effect.catch(
-						(failed): Effect.Effect<ScriptRun> =>
-							Effect.succeed({
-								outcome: {
-									_tag: "broken",
-									reason: `the script failed (${failed.reason})`,
-									error: failed.detail,
-								},
-								...(failed.run === undefined ? {} : { run: failed.run }),
-							})
-					),
-					Effect.tap((ran) => report(script, ran, records.folder))
-				);
+				attemptRun(runner, records, script, script, attemptOf);
 			const last = yield* Effect.forEach(
 				scripts,
 				Effect.fnUntraced(function* (script) {
@@ -439,31 +453,43 @@ const bestOf = (chest: ChestSpots) =>
 		Arr.some(chest.spots, (spot) => spot.kind === kind)
 	).pipe(Option.getOrElse(() => "none"));
 
-/** How many of `chests` have a best spot of each kind, in words. */
-const counted = (chests: readonly ChestSpots[]) =>
-	Arr.join(
-		Arr.flatMapNullishOr([...kindOrder, "none"], (kind) => {
-			const count = Arr.filter(
-				chests,
-				(chest) => bestOf(chest) === kind
-			).length;
-			return count === 0 ? undefined : `${count} ${kind}`;
-		}),
+/** How many of `chests` have a best spot of each kind, and a look that failed, in words. */
+const counted = (chests: readonly ChestSpots[]) => {
+	const failed = Arr.filter(chests, (chest) =>
+		Arr.some(chest.spots, (spot) => spot.look?.outcome === "failed")
+	).length;
+	return Arr.join(
+		[
+			...Arr.flatMapNullishOr([...kindOrder, "none"], (kind) => {
+				const count = Arr.filter(
+					chests,
+					(chest) => bestOf(chest) === kind
+				).length;
+				return count === 0 ? undefined : `${count} ${kind}`;
+			}),
+			...(failed === 0
+				? []
+				: [`${failed} with a look from a spot that failed`]),
+		],
 		", "
 	);
+};
+
+/** Every chest and the spot each age starts on, from the machine that plans looks. */
+const listing = hereOrFar(
+	Effect.gen(function* () {
+		const data = yield* GameData;
+		const own = yield* OwnTables;
+		const kept = yield* Spots;
+		return yield* chestSpots(data, own, kept);
+	}).pipe(Effect.provide([GameData.layer, Spots.layer])),
+	(far) => reached(far.url, far.client.Spots())
+);
 
 const spots = Command.make("spots", {}, () =>
 	shown(
 		Effect.flatMap(
-			hereOrFar(
-				Effect.gen(function* () {
-					const data = yield* GameData;
-					const own = yield* OwnTables;
-					const kept = yield* Spots;
-					return yield* chestSpots(data, own, kept);
-				}).pipe(Effect.provide([GameData.layer, Spots.layer])),
-				(far) => reached(far.url, far.client.Spots())
-			),
+			listing,
 			Effect.fnUntraced(function* (chests) {
 				const areas = Arr.groupBy(chests, (chest) => chest.area);
 				for (const [area, inArea] of Rec.toEntries(areas)) {
@@ -602,16 +628,13 @@ const moveSpots = Command.make("move-spots", {}, () =>
 	shown(
 		Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
-			const { spots: recorded } = yield* hereOrFar(
-				Effect.map(
-					Spots.use((kept) => kept.recorded),
-					(listed) => ({ spots: listed })
-				).pipe(Effect.provide(Spots.layer)),
+			const recorded = yield* hereOrFar(
+				Spots.use((kept) => kept.recorded).pipe(Effect.provide(Spots.layer)),
 				(far) => reached(far.url, far.client.Recorded())
 			);
-			if (!Arr.isReadonlyArrayNonEmpty(recorded)) {
+			if (recorded.spots.length + recorded.marks.length === 0) {
 				return yield* Console.log(
-					"No spot is recorded that git does not have."
+					"Nothing is recorded that git does not have."
 				);
 			}
 			const text = yield* Effect.orDie(fs.readFileString(trackedSpots));
@@ -626,19 +649,117 @@ const moveSpots = Command.make("move-spots", {}, () =>
 				Spots.use((kept) => kept.forget(recorded)).pipe(
 					Effect.provide(Spots.layer)
 				),
-				(far) => reached(far.url, far.client.Forget({ spots: recorded }))
+				(far) => reached(far.url, far.client.Forget({ recordings: recorded }))
 			);
-			for (const spot of recorded) {
-				yield* Console.log(`moved ${spot.name}  ${spot.scene}`);
+			for (const spot of recorded.spots) {
+				yield* Console.log(`moved the spot ${spot.name}  ${spot.scene}`);
+			}
+			for (const mark of recorded.marks) {
+				yield* Console.log(
+					`moved the mark ${mark.name}  a look from it ${mark.look.outcome}, run ${mark.look.run}`
+				);
 			}
 			yield* Console.log(
-				`${recorded.length} spots are in ${trackedSpots} now and no longer recorded. Commit them.`
+				"They are in this package's tables/spots.tsv now, and no longer recorded there. Commit the table."
 			);
 		})
 	)
 ).pipe(
 	Command.withDescription(
-		"Moves the spots recorded on the machine that plans looks, with GAME_TESTING_URL the far one, into this package's tables/spots.tsv, and takes them out of the recorded spots there. Run it from the worktree you commit in."
+		"Moves the spots and marks recorded on the machine that plans looks, with GAME_TESTING_URL the far one, into this package's tables/spots.tsv, and takes them out of what is recorded there. Run it from the worktree you commit in."
+	)
+);
+
+/** Marks a run's spot with its outcome on the machine that keeps the run. */
+const marking = (id: RunId) =>
+	hereOrFar(
+		Effect.gen(function* () {
+			const data = yield* GameData;
+			const own = yield* OwnTables;
+			const kept = yield* Spots;
+			const ran = yield* Runs.use((records) => records.get(id));
+			return yield* markSpot(data, own, kept, ran);
+		}).pipe(Effect.provide([GameData.layer, Spots.layer, Runs.layer])),
+		(far) => reached(far.url, far.client.MarkSpot({ run: id }))
+	);
+
+const prove = Command.make(
+	"prove",
+	{
+		checks: Argument.String("chest").pipe(Argument.variadic({ min: 1 })),
+		base: Flag.String("base").pipe(
+			Flag.withDescription(
+				"The base save each look starts from. Unless given, new-game-autosave, or early-adult for a chest only an adult stands before."
+			),
+			Flag.optional
+		),
+	},
+	({ checks, base }) =>
+		Effect.gen(function* () {
+			const built = yield* shown(Layer.build(scriptsLayer));
+			const runner = Context.get(built, Scripts);
+			const records = yield* Runs;
+			const own = yield* OwnTables;
+			const fs = yield* FileSystem.FileSystem;
+			const directories = yield* UserDirectories.UserDirectories;
+			const folder = `${yield* Effect.orDie(directories.cache("game-testing"))}/prove`;
+			yield* Effect.orDie(fs.makeDirectory(folder, { recursive: true }));
+			const listed = yield* shown(listing);
+			const unproven = yield* Effect.forEach(
+				checks,
+				Effect.fnUntraced(function* (check) {
+					const chest = Arr.findFirst(listed, (each) => each.name === check);
+					const hashes = own.checks.get(check)?.placements ?? [];
+					if (Option.isNone(chest) || hashes.length === 0) {
+						yield* Console.log(
+							`not run  ${check}: it is no chest of the remake`
+						);
+						return true;
+					}
+					const adultOnly = Arr.every(
+						chest.value.spots,
+						(spot) => spot.age === "adult"
+					);
+					const from = Option.getOrElse(base, () =>
+						adultOnly ? "early-adult" : "new-game-autosave"
+					);
+					// A folder of its own for each look, so two proofs of one chest at once each run their own.
+					const ownFolder = yield* Effect.orDie(
+						fs.makeTempDirectoryScoped({ directory: folder })
+					);
+					const file = `${ownFolder}/${Str.replace(/[^\w]+/gu, "-")(check)}.ts`;
+					yield* Effect.orDie(
+						fs.writeFileString(file, proveScript({ check, base: from, hashes }))
+					);
+					const ran = yield* attemptRun(runner, records, file, check);
+					if (ran.run === undefined) {
+						return true;
+					}
+					const mark = yield* Effect.result(marking(ran.run));
+					yield* Console.log(
+						Result.match(mark, {
+							onSuccess: (marked) =>
+								marked.look.outcome === "passed"
+									? "    marked: its spot is proven"
+									: "    marked: a look from its spot failed, which can be the start's state, such as a chest not there yet",
+							onFailure: (refused) => `    not marked: ${refused.message}`,
+						})
+					);
+					return ran.outcome._tag !== "passed";
+				}, Effect.scoped),
+				{ concurrency: 1 }
+			);
+			const missed = Arr.filter(unproven, (each) => each).length;
+			if (missed > 0) {
+				return yield* CliError.UserError.make({
+					cause: missed,
+					userMessage: `${missed} of ${checks.length} chests did not open from their spots.`,
+				});
+			}
+		}).pipe(Effect.scoped, Effect.provide(Runs.layer))
+).pipe(
+	Command.withDescription(
+		"Proves chests' spots by looks: each chest is put back closed, Link starts on its spot, and A opens it. A run that passed marks the spot proven and one that failed marks it failed, in the spots of the machine that ran it. About 40 seconds a chest, one at a time."
 	)
 );
 
@@ -790,6 +911,7 @@ export const cli = Command.make("game-testing").pipe(
 		spots,
 		record,
 		moveSpots,
+		prove,
 		runs,
 		names,
 		mcp,

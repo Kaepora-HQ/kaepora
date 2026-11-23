@@ -175,11 +175,12 @@ export class RunRecord extends Schema.Class<
 	script: Schema.optionalKey(ScriptSource),
 	state: StartState,
 	/**
-	 * What the start wrote into its base, each value with where it came from, and what it left alone; absent until the
-	 * state is planned.
+	 * What the start wrote into its base, each value with where it came from, and what it left alone, and where its
+	 * location stood Link; absent until the state is planned.
 	 */
 	plan: Schema.optionalKey(
 		Schema.Struct({
+			location: StatePlan.fields.location,
 			edits: StatePlan.fields.edits,
 			leftAlone: StatePlan.fields.leftAlone,
 		})

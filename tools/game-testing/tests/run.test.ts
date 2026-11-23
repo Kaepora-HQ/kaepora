@@ -93,6 +93,25 @@ const lasting = { timeout: 60_000 };
 
 describe("the command line", () => {
 	it.live(
+		"prove marks a chest's spot proven when A opens it, and says a look from it failed when A does not",
+		() =>
+			Effect.gen(function* () {
+				const prove = ["prove", "--base", "test-base", "Fake Chest Check"];
+				const opened = yield* command(prove, { onA: openChest });
+				expect(opened.succeeded).toBe(true);
+				expect(opened.lines[0]).toStartWith("passed  Fake Chest Check  ");
+				expect(opened.lines).toContain("    marked: its spot is proven");
+				const shut = yield* command(prove);
+				expect(shut.succeeded).toBe(false);
+				expect(shut.lines[0]).toStartWith("failed  Fake Chest Check  ");
+				expect(shut.lines).toContainEqual(
+					expect.stringContaining("marked: a look from its spot failed")
+				);
+			}),
+		lasting
+	);
+
+	it.live(
 		"run of a kept script ends passed, and its record holds each step and its picture",
 		() =>
 			Effect.gen(function* () {

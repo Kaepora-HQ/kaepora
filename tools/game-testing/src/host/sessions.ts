@@ -402,6 +402,7 @@ export class Sessions extends Context.Service<
 				});
 				const plan = yield* states.plan(start.state, start.mod);
 				yield* recorder.planned({
+					...(plan.location === undefined ? {} : { location: plan.location }),
 					edits: plan.edits,
 					leftAlone: plan.leftAlone,
 				});
@@ -464,8 +465,9 @@ export class Sessions extends Context.Service<
 
 				/** What the value held when Link could move: read back if the state wrote it, else as the built save holds it. */
 				const startOf = (value: GameValue): Option.Option<Value> => {
+					// A place read back is no Value a check compares; the built save holds it as written.
 					const readBack = booted.readBack.values[value.name];
-					if (readBack !== undefined) {
+					if (readBack !== undefined && typeof readBack !== "object") {
 						return Option.some(readBack);
 					}
 					if (value.file !== "progress" && value.file !== "caption") {

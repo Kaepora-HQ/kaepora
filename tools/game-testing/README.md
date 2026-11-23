@@ -89,8 +89,9 @@ A location that is a check stands Link on its spot. A spot is a row of `tables/s
 game machine that git does not have yet, which wins. A spot serves one age when its scene's name has `_Child` or
 `_Adult` in it, and both ages otherwise, so a check can have a spot for each age. A check with no spot stands Link one
 unit before its chest or actor, on the side the actor faces. A check with no actor, or with two for one age, has no
-such spot, and is refused until it has a spot of its own. `gt plan` says which kind of spot a start stands on: found
-in a save or a running game, or worked out. Look at the first picture: a chest behind rocks needs a spot of its own.
+such spot, and is refused until it has a spot of its own. `gt plan` says which kind of spot a start stands on: proven
+once a look passed from it, found in a save or a running game, or worked out, and the last look from it. Look at the
+first picture: a chest behind rocks needs a spot of its own.
 
 `gt spots` lists every chest by area, with the kind of spot each age starts on. It lists chests only: a spot recorded
 by another name works, and `gt search` finds it.
@@ -114,15 +115,31 @@ and his room inside a dungeon. A name that is no check and no spot is refused wi
 says it is new. The watcher cannot see the six trap chests, which keep no value that says they are open: record them
 by name. When the game machine does not answer, the watcher holds the spot and sends it again until it is kept.
 
-Recorded spots move into git with one command, run in this package in the worktree you commit in, with
-`GAME_TESTING_URL` and `GAME_TESTING_TOKEN` set as `gt` sets them:
+## Prove a spot
+
+```sh
+gt prove "GV Chest" "Deku Tree Map Chest"   # one look a chest, about 40 seconds each, one at a time
+gt prove --base early-child "ZD Chest"      # each look from another base save
+```
+
+For each chest a look puts it back closed, starts Link on its spot and presses A until it opens. It starts from
+`new-game-autosave`, or from `early-adult` for a chest only an adult stands before, unless `--base` names another. The
+look's outcome is kept as a mark on the spot it started on, in the game machine's recorded spots: a look that passed
+proves the spot, and `gt spots` and `gt plan` say when a look from it failed. A failed look says the look failed, not
+that the spot is wrong: a chest that appears once a room's enemies are beaten, or rocks before it, fail a look from the
+right spot. A mark holds while its spot stands where the look started.
+
+## Move recorded spots into git
+
+Spots and marks recorded on the game machine move into git with one command, run in this package in the worktree you
+commit in, with `GAME_TESTING_URL` and `GAME_TESTING_TOKEN` set as `gt` sets them:
 
 ```sh
 bun src/main.ts move-spots
 ```
 
-It writes them into this package's `tables/spots.tsv` and takes them out of the game machine's recorded spots. Commit
-the table.
+It writes them into this package's `tables/spots.tsv`, a mark as its spot's `look`, and takes them out of the game
+machine's recorded spots. Commit the table.
 
 ## Find a name
 

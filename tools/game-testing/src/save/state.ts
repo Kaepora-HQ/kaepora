@@ -14,7 +14,7 @@ import {
 import { UserDirectories } from "effect/persistence";
 import type { Origin, PlannedEdit, StatePlan } from "../contract/plan.ts";
 import { originText } from "../contract/plan.ts";
-import type { StartSpot } from "../contract/spots.ts";
+import type { Spot, StartSpot } from "../contract/spots.ts";
 import { kindOf } from "../contract/spots.ts";
 import type { Age, Mod, StartState } from "../contract/state.ts";
 import type { Saved, Value } from "../contract/values.ts";
@@ -42,7 +42,7 @@ import type { SaveFile } from "./codec.ts";
 import { decode, encode, read, write } from "./codec.ts";
 import type { Weight, Writer } from "./pouch.ts";
 import { makePouch, rowOf, slotOf } from "./pouch.ts";
-import { aboutSpot, placedFor, Spots, workedOutAbout } from "./spots.ts";
+import { aboutSpot, placedFor, Spots, workedOut } from "./spots.ts";
 import type { Base, Check, Stock } from "./tables.ts";
 import { OwnTables } from "./tables.ts";
 
@@ -71,10 +71,6 @@ const unnamed = {
 	/** The caption's `<folder>/<scene>`. */
 	captionLabel: "0x0cccc6cd",
 } as const;
-
-/** How far before a check's actor Link stands: near enough that A reaches a small chest. */
-const before = 1;
-const lift = 0.1;
 
 /**
  * A grotto is a hole, the anchor named `HidingHole_FieldEntranceGo`, over a floor, the anchor named
@@ -1019,7 +1015,8 @@ const fits = (entry: GameValue, value: Value) => {
 	}
 };
 
-const spotOf = Effect.fn("StartStates.spot")(function* (
+/** Where a location stands Link at an age, and what kind of spot that is. */
+export const spotOf = Effect.fn("StartStates.spot")(function* (
 	data: GameData["Service"],
 	own: OwnTables["Service"],
 	spots: Spots["Service"],
@@ -1044,14 +1041,7 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 		check === undefined ? Arr.head(named) : Option.none()
 	);
 	if (Option.isSome(spot)) {
-		found.push({
-			scene: spot.value.scene,
-			...(spot.value.room === undefined ? {} : { room: spot.value.room }),
-			position: spot.value.position,
-			facing: spot.value.facing,
-			kind: kindOf(spot.value),
-			about: aboutSpot(spot.value),
-		});
+		found.push(standingOn(spot.value));
 	} else if (check !== undefined) {
 		if (!Arr.isReadonlyArrayNonEmpty(check.placements)) {
 			return yield* StateRefused.make({
@@ -1067,11 +1057,16 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 				detail: `${location} is placed ${placed.length} times for ${age === "child" ? "a child" : "an adult"}, so Link's spot before it is not one.`,
 			});
 		}
-		found.push({
-			...workedOut(subject),
-			kind: "worked out",
-			about: workedOutAbout,
-		});
+		const worked = workedOut(location, subject);
+		const look = yield* spots.lookAt(location, worked);
+		found.push(
+			standingOn(
+				Option.match(look, {
+					onNone: () => worked,
+					onSome: (marked) => ({ ...worked, look: marked }),
+				})
+			)
+		);
 	}
 	const landing = Option.getOrUndefined(data.landing(location));
 	if (landing !== undefined) {
@@ -1105,14 +1100,12 @@ const spotOf = Effect.fn("StartStates.spot")(function* (
 	return only;
 });
 
-/** One unit before a placement's actor, on the side it faces, facing it. */
-const workedOut = (subject: Placement) => ({
-	scene: subject.scene,
-	...(subject.room === undefined ? {} : { room: subject.room }),
-	position: [
-		subject.position[0] + before * Math.sin(subject.yaw),
-		subject.position[1] + lift,
-		subject.position[2] + before * Math.cos(subject.yaw),
-	] as const,
-	facing: (degrees(subject.yaw) + 180) % 360,
+/** Where a spot stands Link, its kind, and how it was found in words. */
+const standingOn = (spot: Spot): StartSpot => ({
+	scene: spot.scene,
+	...(spot.room === undefined ? {} : { room: spot.room }),
+	position: spot.position,
+	facing: spot.facing,
+	kind: kindOf(spot),
+	about: aboutSpot(spot),
 });

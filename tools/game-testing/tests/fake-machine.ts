@@ -72,7 +72,14 @@ export const game: FakeGame = {
 		"PlayerStatus.SavePosRadY": { type: "Float", value: 0 },
 		Player_Rot_For_Map: { type: "Float", value: 0 },
 		Fake_Float: { type: "Float", value: 0 },
+		"PlayerStatus.SavePos": { type: "Vector3", value: [0, 0, 0] },
 		Fake_Lamp_Lit: { type: "Bool", value: false, file: unsaved },
+	},
+	scenes: [{ name: "KokiriForest", folder: "KokiriForest" }],
+	placements: {
+		"Banc/KokiriForest/KokiriForest_Static.bcett.byml.zs": {
+			Actors: [{ Gyaml: "Obj_TBox_Fake", Hash: "5005", Translate: [1, 2, 3] }],
+		},
 	},
 	mods: {
 		"Too Large Mod": {
@@ -135,11 +142,7 @@ const heldBy = (progress: Uint8Array, caption: Uint8Array) =>
 		([progressSave, captionSave]) =>
 			Rec.fromEntries(
 				Arr.flatMap(Rec.toEntries(game.values), ([name, value]) => {
-					if (
-						value.type === "Vector3" ||
-						value.type === "String16" ||
-						value.type === "String32"
-					) {
+					if (value.type === "String16" || value.type === "String32") {
 						return [];
 					}
 					const hash = Str.startsWith("0x")(name)
@@ -169,7 +172,9 @@ export const fakeMachine = (options?: {
 	/** Values no save holds, as the game holds them when it starts. */
 	readonly unsaved?: Readonly<Record<string, Value>>;
 	/** Values the game writes itself between the load and control, over what the save held. */
-	readonly rewrites?: Readonly<Record<string, Value>>;
+	readonly rewrites?: Readonly<
+		Record<string, Value | readonly [number, number, number]>
+	>;
 	/** The place's container exits before its debug server answers. */
 	readonly crashes?: boolean;
 	/** Config keys besides the machine's own, such as a far machine's URL and token. */
@@ -407,7 +412,7 @@ export const fakeMachine = (options?: {
 						note: "",
 					},
 				],
-				chests: [],
+				chests: ["Fake Chest Check"],
 				bases: new Map([
 					[
 						"test-base",
@@ -426,7 +431,12 @@ export const fakeMachine = (options?: {
 				checks: new Map<string, Check>([
 					[
 						"Fake Chest Check",
-						{ name: "Fake Chest Check", flows: [], placements: [], stock: [] },
+						{
+							name: "Fake Chest Check",
+							flows: [],
+							placements: ["5005"],
+							stock: [],
+						},
 					],
 				]),
 			})
