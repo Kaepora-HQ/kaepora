@@ -9,6 +9,7 @@
 #include "settings_dialog.h"
 #include "tracker_page.h"
 #include "tracker_window.h"
+#include "version.h"
 
 #include <QDesktopServices>
 #include <QDir>
@@ -142,13 +143,15 @@ static QHash<QString, QImage> TrackerPictures(const std::filesystem::path& nup) 
 struct LoggedSettings {
     SeedSettings settings;
     LoggedGifts gifts;
+    std::string version;
 };
 
 // A seed's settings as its spoiler log holds them. A setting a log leaves out is one its release did not have, so the
 // seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
 // A log that leaves out "Skip" is of a seed whose mod skips only what its "Opening" and "Cutscenes" say it skips.
 static LoggedSettings SettingsOf(const QString& folder) {
-    nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
+    const nlohmann::json log = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json")));
+    nlohmann::json logged = log.at("settings");
     const nlohmann::json asTheGameIs = {
         { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
         { GiftsSetting, nlohmann::json::array() },
@@ -167,8 +170,19 @@ static LoggedSettings SettingsOf(const QString& folder) {
             return released == std::end(ReleasedSkipSettings) || !logged.contains(std::string(released->first));
         });
     }
-    return { settings, logged.at(std::string(GiftsSetting)) == "Shuffled" ? LoggedGifts::ShuffledByARelease
-                                                                           : LoggedGifts::AsGroups };
+    return { settings,
+             logged.at(std::string(GiftsSetting)) == "Shuffled" ? LoggedGifts::ShuffledByARelease
+                                                                : LoggedGifts::AsGroups,
+             log.at("kaepora").get<std::string>() };
+}
+
+static bool IsTheGame(const QString& folder, const SeedSettings& settings) {
+    try {
+        const LoggedSettings made = SettingsOf(folder);
+        return made.version == KAEPORA_VERSION && made.settings == settings;
+    } catch (const std::exception&) {
+        return false;
+    }
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.
@@ -368,7 +382,11 @@ void Window::createSeed() {
     const QFileInfo inLibrary(QDir(library).filePath(seed));
     if (IsWholeSeed(inLibrary)) {
         Tell(this, QMessageBox::Information,
-             QString("A seed named %1 is already in the list. Type another seed, or use that one.").arg(seed));
+             (IsTheGame(inLibrary.filePath(), newSeedSettings)
+                  ? QString("A seed named %1 is already in the list. Type another seed, or use that one.")
+                  : QString("A seed named %1 is already in the list, with other settings or from another version "
+                            "of Kaepora. Delete it to create this one."))
+                 .arg(seed));
         return;
     }
     const std::filesystem::path folder = inLibrary.filesystemFilePath();

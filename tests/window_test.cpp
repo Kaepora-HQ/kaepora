@@ -43,6 +43,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 
 using Files = QMap<QString, QByteArray>;
 
@@ -473,6 +474,19 @@ private:
         list()->setCurrentItem(entry(seed));
     }
 
+    void putInLibrary(const QString& seed, const std::string& version, const SeedSettings& settings) {
+        QVERIFY(QDir().mkpath(library + "/" + seed + "/romfs"));
+        const nlohmann::ordered_json log = { { "kaepora", version },
+                                             { "seed", seed.toStdString() },
+                                             { "settings", ToJson(settings) } };
+        Write(library + "/" + seed + "/spoiler.json", QByteArray::fromStdString(log.dump()));
+    }
+
+    void chooseAnEmptyGameFile() {
+        Write(QDir::home().filePath("game.nup"), {});
+        QSettings().setValue("gameFile", QDir::home().filePath("game.nup"));
+    }
+
     void leaveOut(const QStringList& dungeons) {
         button("Settings…")->click();
         for (const QString& name : dungeons) {
@@ -616,6 +630,29 @@ private slots:
         QCOMPARE(ReadJson(library + "/OWL/spoiler.json")["seed"].toString(), QString("OWL"));
         QVERIFY(!create("OWL"));
         QVERIFY(box()->text().contains("seed named OWL"));
+    }
+
+    void aListedSeedOfTheSameNameThatIsAnotherGameMustBeDeleted() {
+        chooseAnEmptyGameFile();
+        SeedSettings lensNeverNeeded;
+        lensNeverNeeded.lens = Lens::NeverNeeded;
+        const QString sameGame = "A seed named OWL is already in the list. Type another seed, or use that one.";
+        const QString anotherGame = "A seed named OWL is already in the list, with other settings or from another "
+                                    "version of Kaepora. Delete it to create this one.";
+        const std::tuple<std::string, SeedSettings, QString> listed[] = {
+            { KAEPORA_VERSION, {}, sameGame },
+            { KAEPORA_VERSION, lensNeverNeeded, anotherGame },
+            { "0.6.0", {}, anotherGame },
+        };
+        for (const auto& [version, settings, refusal] : listed) {
+            QDir(library).removeRecursively();
+            putInLibrary("OWL", version, settings);
+            window = std::make_unique<Window>();
+            window->show();
+            QVERIFY(!create("OWL"));
+            QCOMPARE(box()->text(), refusal);
+            QVERIFY(!shows("Creating seed…"));
+        }
     }
 
     void deleteLeavesAnotherSeedInUse() {
@@ -1305,7 +1342,8 @@ private slots:
         // items, dungeon rewards or hints from characters.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.1.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1329,7 +1367,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.3.0 with its defaults.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.3.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1350,7 +1389,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.4.0 with its defaults.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.4.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1370,7 +1410,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.6.0 with the opening played.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.6.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1393,7 +1434,8 @@ private slots:
         // bags.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.2.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",

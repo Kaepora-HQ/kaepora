@@ -359,7 +359,8 @@ if(Qt6Test_FOUND)
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
                      aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
                      rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime
-                     aGameFileWithoutPicturesOpensNoTracker)
+                     aGameFileWithoutPicturesOpensNoTracker
+                     aListedSeedOfTheSameNameThatIsAnotherGameMustBeDeleted)
     if(NOT WIN32)
         list(APPEND WINDOW_TESTS playStartsLichiiWithItsDebugServerOn)
     endif()
