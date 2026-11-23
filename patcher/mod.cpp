@@ -790,12 +790,23 @@ static constexpr std::tuple<std::string_view, byml::Type, std::string_view> star
     { "String64", byml::Type::String, "a name" },
 };
 
+// A saved value's hash: its name's, or for a value the save names only by its hash, that hash as 0x and eight hex
+// digits.
+static uint32_t ValueHash(std::string_view name) {
+    uint32_t hash = 0;
+    const char* end = name.data() + name.size();
+    if (name.size() == 10 && name.starts_with("0x") && std::from_chars(name.data() + 2, end, hash, 16).ptr == end) {
+        return hash;
+    }
+    return Murmur3(name);
+}
+
 // A whole number may also start an unsigned value of the list, if it is not below zero.
 static byml::Node& StartValueEntry(byml::Node& data, const std::string& name, const StartValue& value) {
     const auto& [kind, type, words] = startValueKinds[value.index()];
     const auto entryIn = [&](std::string_view table, byml::Type expected) -> byml::Node* {
         byml::Node* values = Find(data, table);
-        byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, Murmur3(name));
+        byml::Node* entry = values == nullptr ? nullptr : FindHash(*values, ValueHash(name));
         const byml::Node* defaultValue = entry == nullptr ? nullptr : Find(*entry, "DefaultValue");
         return defaultValue == nullptr || defaultValue->type != expected ? nullptr : entry;
     };
@@ -888,19 +899,97 @@ static void Bring(byml::Node& rows, const std::string& container, std::map<std::
     RaiseLimit(Row(rows, container), values);
 }
 
+// Adds to a count a find adds to, up to its limit.
+static void AddUpTo(std::map<std::string, StartValue>& values, const std::string& count, int32_t added, int32_t limit) {
+    int32_t& held = std::get<int32_t>(values.try_emplace(count, 0).first->second);
+    held = std::min(held + added, limit);
+}
+
+// A rupee counts its own find and adds its worth in green rupees, the unit of its bundle, to the rupees held, up to
+// the wallet's limit. The start holds at least the child's wallet, which the start sequence gives a new game anyway.
+static void AddRupees(byml::Node& rows, byml::Node& row, const std::string& actor,
+                      std::map<std::string, StartValue>& values) {
+    values["IsGet." + actor] = true;
+    values["HavePlayedGetEvent." + actor] = true;
+    const byml::Node* unit = Find(row, "BundleActor");
+    byml::Node& green = unit == nullptr ? row : Row(rows, WorkPathActor(unit->string));
+    const int32_t limit = RaiseLimit(Row(rows, WorkPathActor(Text(green, "SmallBagActor"))), values);
+    AddUpTo(values, "PlayerStatus.CurrentRupee", int32_t(Value(row, "BundleActorNum").scalar), limit);
+}
+
+// A bundle counts its own find and its ammunition's, and adds the ammunition up to what its container holds, none
+// when the start holds no container. Sticks and nuts bring their small bag.
+static void AddBundle(byml::Node& rows, byml::Node& row, const std::string& actor,
+                      std::map<std::string, StartValue>& values) {
+    values["IsGet." + actor] = true;
+    const std::string ammunition = WorkPathActor(Text(row, "BundleActor"));
+    byml::Node& ammunitionRow = Row(rows, ammunition);
+    if (IsTrue(ammunitionRow, "IsAbleToGetBagIfGet")) {
+        Bring(rows, WorkPathActor(Text(ammunitionRow, "SmallBagActor")), values);
+    }
+    values["IsGet." + ammunition] = true;
+    values["HavePlayedGetEvent." + ammunition] = true;
+    if (const auto limit = values.find("PouchContentMaxNum." + Text(ammunitionRow, "MaxNumGameData"));
+        limit != values.end()) {
+        AddUpTo(values, std::format("PouchData.{}.StockNum", ammunition), int32_t(Value(row, "BundleActorNum").scalar),
+                std::get<int32_t>(limit->second));
+    }
+}
+
+// A bottle takes the first of the five slots no bottle holds and counts one in that slot's pouch count, and a filled
+// one puts its content there.
+static void AddBottle(byml::Node& row, std::map<std::string, StartValue>& values) {
+    for (const char slot : std::string_view("ABCDE")) {
+        const std::string bottle = std::format("PlayerStatus.AssignableItem.BottleInfo.Bottle{}", slot);
+        if (values.try_emplace(bottle + ".IsValid", true).second) {
+            values[std::format("PouchData.Bottle{}.StockNum", slot)] = 1;
+            if (const std::string content = Text(row, "BottleItem"); !content.empty()) {
+                values[bottle + ".BottleItem"] = Choice{ content };
+            }
+            return;
+        }
+    }
+    throw std::runtime_error("the start already holds five bottles");
+}
+
+// A whole number the save names only by its hash, to which a find of a Piece of Heart adds one (measured in two
+// finds). What else it counts is not known.
+constexpr std::string_view PieceOfHeartCount = "0x0e34c167";
+
 // What a find of the actor leaves in the save, as the game's pouch add writes it from the actor's row in
 // PouchActorInfo. A find also names a container in CurrentExpansionActor_<kind>. With those empty, a new game's rupee
 // and bomb counters show their limits and a bomb comes out (seen in the game), so a start leaves them empty.
 static void AddFind(byml::Node& rows, const std::string& actor, std::map<std::string, StartValue>& values) {
     byml::Node& row = Row(rows, actor);
+    const std::string deal = Text(row, "PouchSpecialDeal");
+    // A cure the pouch does not keep refills what a new game starts with full, and its find writes only its played
+    // flag (measured for the Large Magic Jar).
+    if (deal == "NotPushToPouch" && Text(row, "PouchCategory") == "CureItem") {
+        values["HavePlayedGetEvent." + actor] = true;
+        return;
+    }
+    if (Text(row, "PouchCategory") == "Rupee") {
+        AddRupees(rows, row, actor, values);
+        return;
+    }
+    if (Find(row, "BundleActor") != nullptr) {
+        AddBundle(rows, row, actor, values);
+        return;
+    }
     values["IsGet." + actor] = true;
     values["HavePlayedGetEvent." + actor] = true;
+    if (deal == "Bottle") {
+        AddBottle(row, values);
+        return;
+    }
     values[std::format("PouchData.{}.StockNum", actor)] = 1;
-    if (const std::string deal = Text(row, "PouchSpecialDeal"); deal == "Ocarina") {
+    if (deal == "Ocarina") {
         values["PlayerStatus.EquipOcarina"] = actor;
     } else if (deal == "Gauntlet") {
         values["PlayerStatus.EquipHandArmor"] = actor;
-    } else if (deal != "None" && deal != "GoronGauntlet") {
+    } else if (deal == "HeartPiece") {
+        values[std::string(PieceOfHeartCount)] = 1;
+    } else if (deal != "None" && deal != "GoronGauntlet" && deal != "AgonyStone" && deal != "TokenGold") {
         throw std::runtime_error(std::format("its PouchSpecialDeal is {}, which a start does not write", deal));
     }
     if (const std::string ability = Text(row, "ExpansionAvility"); ability == "LiftGradeUP") {
@@ -1830,21 +1919,39 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         tableChanged |= RaiseSize(table, path, data.size(), overhead);
         addToRomfs(path, Compress(data));
     }
-    std::map<std::string, StartValue> startValues = plan.startValues;
-    if (plan.openingSkipped && !startValues.emplace(NaviWokeLink, true).second) {
-        throw std::runtime_error(std::format("the plan's start values already name {}", NaviWokeLink));
+    // Each saved value a new game starts with, named once, by its name or by its hash.
+    std::map<std::string, StartValue> startValues;
+    std::map<uint32_t, std::string> started;
+    const auto start = [&](const std::string& name, const StartValue& value) -> const std::string* {
+        const auto [at, added] = started.emplace(ValueHash(name), name);
+        if (!added) {
+            return &at->second;
+        }
+        startValues.emplace(name, value);
+        return nullptr;
+    };
+    for (const auto& [name, value] : plan.startValues) {
+        if (const std::string* other = start(name, value)) {
+            throw std::runtime_error(std::format("start values \"{}\" and \"{}\" name one saved value", *other, name));
+        }
+    }
+    if (plan.openingSkipped) {
+        if (const std::string* other = start(std::string(NaviWokeLink), true)) {
+            throw std::runtime_error(std::format("the plan's start value \"{}\" names {}", *other, NaviWokeLink));
+        }
     }
     std::map<std::string, StartValue> found;
     for (const std::string& item : plan.startItems) {
         try {
-            AddFind(tables.find(PouchActorInfoPath)->second.root, item, found);
+            AddFind(tables.find(PouchActorInfoPath)->second.root, RecordActor(game, packDictionary, item), found);
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("start item {}: {}", item, e.what()));
         }
     }
-    for (auto& [name, value] : found) {
-        if (!startValues.emplace(name, value).second) {
-            throw std::runtime_error(std::format("the plan's start values already name {}, a start item's", name));
+    for (const auto& [name, value] : found) {
+        if (const std::string* other = start(name, value)) {
+            throw std::runtime_error(
+                std::format("the plan's start value \"{}\" names {}, a start item's", *other, name));
         }
     }
     if (!startValues.empty() || !soldOnce.empty() || !plan.looseItems.empty() || !plan.claims.empty() ||

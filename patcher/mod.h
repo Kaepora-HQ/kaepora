@@ -166,6 +166,7 @@ struct Plan {
     std::vector<PlannedEventNext> eventNexts;
     std::vector<PlannedModuleText> moduleTexts;
     std::vector<PlannedEventEntry> eventEntries;
+    // By name, or for a value the save names only by its hash, by 0x and its eight hex digits.
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedMessageText> messageTexts;
@@ -176,7 +177,10 @@ struct Plan {
     bool cutscenesSkipped;
     std::vector<PlannedActorItem> skulltulas;
     std::vector<PlannedActorItem> looseItems;
-    std::vector<std::string> startItems; // actors a new game holds, as after a find of each in turn
+    // Items a new game holds, as a chest or a gift names them, with the records a find of each in turn writes. A start
+    // does not put a sword or a shield in Link's hand, count the items in the menu or put one on a button, as a find
+    // does.
+    std::vector<std::string> startItems;
     std::vector<std::string> claims;     // saved Bools of the mod's own, false in a new game
     std::vector<PlannedExpression> expressions;
 };

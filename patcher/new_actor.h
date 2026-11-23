@@ -24,6 +24,10 @@ std::string WorkPath(std::string_view actor);
 // The actor a work path names. Throws when the path names none.
 std::string WorkPathActor(std::string_view path);
 
+// The actor whose records a find of the item writes: the one its actor's ActorNameRef names. A chest's or a drop's
+// form of an item names another actor than its own, as Item_Range_Bow names Weapon_Range_Bow.
+std::string RecordActor(GameFile& game, const std::string& packDictionary, std::string_view item);
+
 // The dict's value at the key. Throws when it has none.
 byml::Node& Value(byml::Node& dict, std::string_view key);
 

@@ -1204,6 +1204,11 @@ class Choice(str):
     """An Enum's value, by its name."""
 
 
+def value_hash(name):
+    """The hash a saved value is listed by: its name's, or the hash itself for a value the save names only by it."""
+    return int(name, 16) if name.startswith("0x") else murmur3(name)
+
+
 def with_defaults(game, values):
     data = game.game_data_list(game.read(GAME_DATA_LIST))
     for name, value in values.items():
@@ -1215,11 +1220,11 @@ def with_defaults(game, values):
             kind, default = "Float", (FLOAT, struct.unpack("<I", struct.pack("<f", value))[0])
         elif isinstance(value, bool):
             kind, default = "Bool", (BOOL, int(value))
-        elif any(e["Hash"][1] == murmur3(name) for e in data["Data"]["Int"]):
+        elif any(e["Hash"][1] == value_hash(name) for e in data["Data"]["Int"]):
             kind, default = "Int", (INT, value)
         else:
             kind, default = "UInt", (UINT, value)
-        entry = next(e for e in data["Data"][kind] if e["Hash"][1] == murmur3(name))
+        entry = next(e for e in data["Data"][kind] if e["Hash"][1] == value_hash(name))
         assert type(entry["DefaultValue"]) is type(default) and entry["DefaultValue"] != default, (name, entry)
         assert isinstance(default, str) or entry["DefaultValue"][0] == default[0], (name, entry)
         entry["DefaultValue"] = default
@@ -1318,6 +1323,45 @@ def start_steps(patch, game):
     size = load_size(len(zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)))
     entries = [(key, size if key == size_key(GAME_DATA_LIST) else entry) for key, entry in entries]
     assert read_size_table(zstd.decompress(mod[SIZE_TABLE])) == (header, entries, names)
+
+
+BOTTLE = "PlayerStatus.AssignableItem.BottleInfo.Bottle{}.{}"
+
+
+def start_items_of_every_kind(patch, game):
+    """A new game holds what a find of one item of each kind leaves, as saves the game wrote after real finds hold it.
+    A chest's sword and tunic keep their records under the actors they name. A rupee counts its own find and adds its
+    worth, and the start holds the child's wallet, which the start sequence gives anyway. A bundle counts its own find
+    and its ammunition's, and adds its ammunition up to what the bag holds: three sticks, which bring their small bag,
+    and no arrows or Bombchus, with no quiver or bomb bag. Each bottle takes the next free slot and counts one in it,
+    and the milk fills its own. A Piece of Heart counts one toward a heart and adds one to a count the save names only
+    by its hash. A Large Magic Jar refills magic, which a new game starts with full, so it leaves only its played flag.
+    The list keeps its size."""
+    items = ["Item_Sword_Kokiri", "Obj_Armor_Zora", "TBox_Rupee_Purple", "TBox_ArrowBundle_Large",
+             "Item_DekuStickBundle_Small", "Item_BombchuBundle_Small", "Item_AgonyStone", "Item_Token_Gold",
+             "Item_Bottle", "Item_Bottle_Milk", "Obj_Heart_Piece", "Tbox_MagicJar_Large"]
+    expected = (found("Weapon_Sword_Kokiri", "Armor_Adult_Zora", "Item_AgonyStone", "Item_Token_Gold",
+                      "Obj_Heart_Piece")
+                | {"IsGet.Obj_Rupee_Purple": True, "HavePlayedGetEvent.Obj_Rupee_Purple": True,
+                   "PlayerStatus.CurrentRupee": 50, "PouchContentMaxNum.Rupee": 200}
+                | {"IsGet.Obj_ArrowBundle_Large": True, "IsGet.Item_Arrow_Normal": True,
+                   "HavePlayedGetEvent.Item_Arrow_Normal": True}
+                | {"IsGet.Item_DekuStickBundle_Small": True} | brought("Item_StickBag_Small")
+                | {"PouchContentMaxNum.DekuStick": 10, "IsGet.Item_DekuStick": True,
+                   "HavePlayedGetEvent.Item_DekuStick": True, "PouchData.Item_DekuStick.StockNum": 3}
+                | {"IsGet.Item_BombchuBundle_Small": True, "IsGet.Item_Bombchu": True,
+                   "HavePlayedGetEvent.Item_Bombchu": True}
+                | {"IsGet.Item_Bottle": True, "HavePlayedGetEvent.Item_Bottle": True,
+                   BOTTLE.format("A", "IsValid"): True, "PouchData.BottleA.StockNum": 1}
+                | {"IsGet.Item_Bottle_Milk": True, "HavePlayedGetEvent.Item_Bottle_Milk": True,
+                   BOTTLE.format("B", "IsValid"): True, BOTTLE.format("B", "BottleItem"): Choice("MaxMilk"),
+                   "PouchData.BottleB.StockNum": 1}
+                | {"0x0e34c167": 1, "HavePlayedGetEvent.Obj_MagicJar_Large": True})
+    mod = patched(patch, game, plan([], start_items=items))
+    assert sorted(mod) == [GAME_DATA_LIST], sorted(mod)
+    ours = zstd.decompress(mod[GAME_DATA_LIST], zstd_dict=game.zs_dictionary)
+    assert len(ours) == len(zstd.decompress(game.read(GAME_DATA_LIST), zstd_dict=game.zs_dictionary))
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, expected)
 
 
 def skipped_opening(flow):
@@ -3427,11 +3471,23 @@ def bad_input(patch, game):
                                    ["plan.json", "claims", "Kaepora_Once_1", "twice"])
     plans["claim of a value the list has"] = (good | {"claims": ["IsGet.Item_Hammer"]},
                                               ["IsGet.Item_Hammer", "hash of a value in Bool"])
-    # A find of each of these writes more than a start does: a bottle its slot and Din's Fire the magic meter. A
-    # bombchu goes into a bomb bag, which the start does not hold.
-    for item, reason in (("Item_Bottle", "Bottle"), ("Item_DinFire", "MPMaxUP"), ("Item_Bombchu", "bag")):
+    # A find of each of these writes more than a start does: a song its lesson's records, a map its dungeon's and a
+    # Great Fairy's magic her own. No seed places them where a start gives them. A bombchu goes into a bomb bag, which
+    # the start does not hold.
+    for item, reason in (("Item_Melody_SunSong", "Melody"), ("Item_Dungeon_Map", "NotPushToPouch"),
+                         ("Item_FairyBless_MP", "FairyBlessMP"), ("Item_Bombchu", "bag")):
         plans[f"start item {item}"] = (good | {"start_items": ["Item_Hammer", item]}, ["start item", item, reason])
     plans["start item with no row"] = (good | {"start_items": ["Item_Nowhere"]}, ["start item", "Item_Nowhere"])
+    # A start value may be named by its hash, so a value named twice is refused whichever way each is named.
+    plans["start value named by its hash and its name"] = (
+        good | {"start_values": {"0xa77921d7": 5, "PlayerStatus.CurrentRupee": 7}},
+        ["0xa77921d7", "PlayerStatus.CurrentRupee", "one saved value"])
+    plans["start value a start item names by its hash"] = (
+        good | {"start_items": ["Item_Token_Gold"], "start_values": {"0x04735978": 2}},
+        ["start item", "0x04735978", "PouchData.Item_Token_Gold.StockNum"])
+    plans["start value a start item names by an upper-case hash"] = (
+        good | {"start_items": ["Obj_Heart_Piece"], "start_values": {"0x0E34C167": 3}},
+        ["start item", "0x0E34C167", "0x0e34c167"])
     plans["start item a start value names"] = (
         good | {"start_items": ["Item_Hammer"], "start_values": {"IsGet.Item_Hammer": True}},
         ["start item", "Item_Hammer", "IsGet.Item_Hammer"])
@@ -3636,6 +3692,7 @@ def main():
         "together": together,
         "start-values": start_values,
         "start-items": start_items,
+        "start-items-of-every-kind": start_items_of_every_kind,
         "start-steps": start_steps,
         "opening-skipped": opening_skipped,
         "tested-opening-mod": tested_opening_mod,
