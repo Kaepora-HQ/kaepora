@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.7.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.6.0...v0.7.0) (2026-11-23)
+
+
+### Features
+
+* ask for a new version on every open and offer it in a popup ([6227b40](https://github.com/Kaepora-HQ/kaepora/commit/6227b40f983d97b1c5989f358e44c7fe58b45efd))
+* Darunia gives his dance's gift once, at any step of his quest ([1ea21a4](https://github.com/Kaepora-HQ/kaepora/commit/1ea21a425608fbcedaad3a2b5cc1059d82cc6fe2))
+* Darunia's son gives his gift after his step has passed ([3db9cd9](https://github.com/Kaepora-HQ/kaepora/commit/3db9cd91658659d9b468beebbd88bdc426b7aab4))
+* follow the game's saved values while it runs ([1c4f541](https://github.com/Kaepora-HQ/kaepora/commit/1c4f541899c5b889c978309a022143a66ee6eb7c))
+* let a seed open the Door of Time from the start ([2a17a61](https://github.com/Kaepora-HQ/kaepora/commit/2a17a6184852d5fb59d907517a1aa76c9c71ab02))
+* list the pictures the tracker shows ([35430d8](https://github.com/Kaepora-HQ/kaepora/commit/35430d87f2dca81e45d6636ab93c24d799999b1e))
+* open the tracker from the main window ([9ea9739](https://github.com/Kaepora-HQ/kaepora/commit/9ea973971d7791b36b24d42ac25c4dd4ef861a4c))
+* paint the tracker's grid ([960fdcd](https://github.com/Kaepora-HQ/kaepora/commit/960fdcd6acd78b4fe3c05f8495ef89d0a99d2237))
+* **patch:** add an expression of the plan's own to the game data list ([3467b63](https://github.com/Kaepora-HQ/kaepora/commit/3467b63442691d268086fc54354437b18fffd844))
+* **patch:** let a plan send an event on to another ([92b44cf](https://github.com/Kaepora-HQ/kaepora/commit/92b44cfc1c201ce5b5741bd41c124834276ef6af))
+* **patch:** let a plan swap a string of a logic module ([6c5f75a](https://github.com/Kaepora-HQ/kaepora/commit/6c5f75af51aca85ac1c50ddbc353120925b1c4f8))
+* **patch:** let a plan's expression join several values ([ea15dd6](https://github.com/Kaepora-HQ/kaepora/commit/ea15dd68ca68a5c4078e63678576c907247ac122))
+* **patch:** let a whole number start an unsigned value ([552c867](https://github.com/Kaepora-HQ/kaepora/commit/552c8677e747fc59d18d028a739f328e33f321f8))
+* read the game's pictures from the game file ([93a04b9](https://github.com/Kaepora-HQ/kaepora/commit/93a04b9874caf7754918879cc28e52f998139202))
+* read the game's saved values by name ([08291ab](https://github.com/Kaepora-HQ/kaepora/commit/08291ab32dbd5bc4829678e68fabb2b9c5d6a02c))
+* sell SoH's goods on the shop slots a count leaves ([b49d66d](https://github.com/Kaepora-HQ/kaepora/commit/b49d66d03b3709dd38fec23260abf663e34a0a5f))
+* sell the game's goods from another shop's shelf ([fbb3985](https://github.com/Kaepora-HQ/kaepora/commit/fbb39852f714e973d10ccd612d70dfbccea79843))
+* serve the tracker's picture to OBS's Browser source ([6a1dca4](https://github.com/Kaepora-HQ/kaepora/commit/6a1dca4d8a0a6afaed96bf2dbffdef2235a82a3e))
+* show the tracker's grid on its page, with a dialog for OBS ([03663fb](https://github.com/Kaepora-HQ/kaepora/commit/03663fb8e627008fc2f96f13303afce45cb4d61a))
+* shuffle Biggoron's place with adult Anju's as SoH does ([126b419](https://github.com/Kaepora-HQ/kaepora/commit/126b419e8aeccea3d085baccce67264e74728157))
+* shuffle Darunia's bracelet with the story gifts ([d0debb2](https://github.com/Kaepora-HQ/kaepora/commit/d0debb246cd12a54ef453db47210e2c45f2de7e9))
+* shuffle Darunia's son's tunic with the story gifts ([5298a12](https://github.com/Kaepora-HQ/kaepora/commit/5298a123015df72909df2d74168caf536d542c0f))
+* shuffle the dungeon rewards among themselves ([67b456d](https://github.com/Kaepora-HQ/kaepora/commit/67b456da76bcd955ae9a65344894567d24cda31e))
+* start a seed with SoH's default shuffles ([7cd30a9](https://github.com/Kaepora-HQ/kaepora/commit/7cd30a9adc1b31f9fe9bc15ff0e60e9e3b2e84aa))
+* start Lichii with its debug server on ([13abe25](https://github.com/Kaepora-HQ/kaepora/commit/13abe255055d98034588fb823282eb2d35c68f12))
+* the tracker window ([ab758ac](https://github.com/Kaepora-HQ/kaepora/commit/ab758ac3c5d3a3a62327b1da081fe9bc2d4c042a))
+* the tracker's cells and what each shows ([3d9b411](https://github.com/Kaepora-HQ/kaepora/commit/3d9b41159d6825fca150955ec7914a2721d4a217))
+* **web:** count the 56 shop places ([3f2136a](https://github.com/Kaepora-HQ/kaepora/commit/3f2136a4a9cb1b5edb4dbc31a7763eda87283167))
+* **web:** say what a new seed shuffles ([f73c3b0](https://github.com/Kaepora-HQ/kaepora/commit/f73c3b028013240ed9c3eb131a40311c69bd6b7f))
+
+
+### Bug Fixes
+
+* bring a child back from the temple with the sword he left with ([7c71ca8](https://github.com/Kaepora-HQ/kaepora/commit/7c71ca8be35f2222967350dd5daed76efc2de94d))
+* call a place foolish only if the seed can be finished without it ([d46dda0](https://github.com/Kaepora-HQ/kaepora/commit/d46dda0ce6bd1fc394f6738071db565d13d3b6cc))
+* count a Deku Baba's stick only from a sword's kill ([6d762ed](https://github.com/Kaepora-HQ/kaepora/commit/6d762edcc419e1b4780ff5f195189c47cd1ceb99))
+* count no Deku Stick from pots ([7ed714c](https://github.com/Kaepora-HQ/kaepora/commit/7ed714c4bfd4fa996bb64e951b06e1d96ffeb2b0))
+* Darunia's son gives his gift with the Fire Temple finished ([1563379](https://github.com/Kaepora-HQ/kaepora/commit/1563379467006b000bd9911e2d17d9a58e54f2f5))
+* keep Impa's lesson when a stone dungeon follows a warp out ([defe9b7](https://github.com/Kaepora-HQ/kaepora/commit/defe9b7f91af0a27371d744466ef65c0e95d1ebe))
+* keep the castle quest's step on a first walk into the Market ([e46926b](https://github.com/Kaepora-HQ/kaepora/commit/e46926bd99c0aa7062cda4bc1d0e55f5d659f797))
+* let an adult pass Zora's River's boulders before the Water quest ([e428f36](https://github.com/Kaepora-HQ/kaepora/commit/e428f36e6ea67453488051cedfb46a56b8fa994a))
+* let Din's Fire open the Lost Woods shortcut from the city only ([10ee130](https://github.com/Kaepora-HQ/kaepora/commit/10ee130264bdad87db4b524cdf281a18315c07ee))
+* let every adult put the Master Sword back after any first pull ([23d15a4](https://github.com/Kaepora-HQ/kaepora/commit/23d15a4f196930820c9a64096d4f7a2a5c060165))
+* let the main window's fields grow with the window on macOS ([2d31650](https://github.com/Kaepora-HQ/kaepora/commit/2d316502e19895e93cd2db3d345e3d13e6609c46))
+* let the world's time run from the start ([4224436](https://github.com/Kaepora-HQ/kaepora/commit/4224436b2aaa0060341150ed2fdd6aaa087c2437))
+* list a seed of 0.2.0 to 0.5.0 by the gifts it shuffled ([66b2ae3](https://github.com/Kaepora-HQ/kaepora/commit/66b2ae3f4d8a35eb72ce3698a6c37c17d7c05c4e))
+* Mido says where the Kokiri Sword lies on every talk ([ee352cc](https://github.com/Kaepora-HQ/kaepora/commit/ee352cc358bad46f122c6028710d9678b3ff1289))
+* name the code built into the Linux window in its notices ([fd9a5d6](https://github.com/Kaepora-HQ/kaepora/commit/fd9a5d61081a4a078557a70a238d842997e5d600))
+* **patch:** refuse a plan that gives a query a flag of the wrong kind ([7b19d3f](https://github.com/Kaepora-HQ/kaepora/commit/7b19d3fe8fe3bec66f545208f7bc9ab09f783ff2))
+* set aside what the route leaves out before paring it ([3876025](https://github.com/Kaepora-HQ/kaepora/commit/3876025be52f79c87c66b24caf13a74763bb629d))
+
 ## [0.6.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.5.0...v0.6.0) (2026-11-22)
 
 
