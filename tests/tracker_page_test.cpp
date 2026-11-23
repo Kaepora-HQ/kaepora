@@ -1,7 +1,7 @@
+#include "browser.h"
 #include "tracker_page.h"
 
 #include <QImage>
-#include <QNetworkInterface>
 #include <QNetworkProxy>
 #include <QRegularExpression>
 #include <QScopeGuard>
@@ -11,18 +11,8 @@
 #include <QTest>
 #include <QUrl>
 
-#include <algorithm>
 #include <array>
-
-constexpr char Changes[] = "/changes";
-
-QByteArray Picture(const QByteArray& name) {
-    return "/picture.png?" + name;
-}
-
-QByteArray Get(const QByteArray& path) {
-    return "GET " + path + " HTTP/1.1\r\nHost: kaepora\r\nAccept: */*\r\nUser-Agent: Mozilla/5.0\r\n\r\n";
-}
+#include <optional>
 
 QImage Drawn(QColor color) {
     QImage picture(3, 2, QImage::Format_ARGB32_Premultiplied);
@@ -36,60 +26,6 @@ QImage Drawn(QColor color) {
 
 QUrl Here(const TrackerPage& page) {
     return QUrl(page.links().value(0));
-}
-
-void Open(QTcpSocket& socket, const QUrl& link, const QByteArray& request) {
-    socket.connectToHost(link.host(), link.port());
-    socket.write(request);
-}
-
-QByteArray Ask(const QUrl& link, const QByteArray& request) {
-    QTcpSocket socket;
-    Open(socket, link, request);
-    if (!QTest::qWaitFor([&] { return socket.state() == QAbstractSocket::UnconnectedState; })) {
-        qWarning("The connection did not end.");
-    }
-    return socket.readAll();
-}
-
-struct Answer {
-    int code = 0;
-    QByteArray type;
-    QByteArray body;
-};
-
-Answer Read(const QByteArray& bytes) {
-    const qsizetype end = bytes.indexOf("\r\n\r\n");
-    if (end < 0) {
-        return {};
-    }
-    const QList<QByteArray> lines = bytes.first(end).split('\n');
-    Answer answer{ .code = lines.front().split(' ').value(1).toInt(), .body = bytes.sliced(end + 4) };
-    for (const QByteArray& line : lines) {
-        if (line.toLower().startsWith("content-type:")) {
-            answer.type = line.sliced(line.indexOf(':') + 1).trimmed();
-        }
-    }
-    return answer;
-}
-
-QByteArrayList Told(QTcpSocket& stream) {
-    static const QRegularExpression data("^data: ?(.*)$", QRegularExpression::MultilineOption);
-    QByteArrayList names;
-    for (const QRegularExpressionMatch& event :
-         data.globalMatch(QString::fromUtf8(Read(stream.peek(stream.bytesAvailable())).body))) {
-        names.append(event.captured(1).toUtf8());
-    }
-    return names;
-}
-
-QByteArray Current(const QUrl& link) {
-    QTcpSocket stream;
-    Open(stream, link, Get(Changes));
-    if (!QTest::qWaitFor([&] { return !Told(stream).isEmpty(); })) {
-        qWarning("No picture was named.");
-    }
-    return Told(stream).value(0);
 }
 
 class TrackerPageTest : public QObject {
@@ -165,11 +101,8 @@ private slots:
     }
 
     void otherComputersReachThePageOnlyOnceTheNetworkIsAllowed() {
-        const QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
-        const auto address = std::ranges::find_if(addresses, [](const QHostAddress& address) {
-            return address.protocol() == QAbstractSocket::IPv4Protocol && !address.isLoopback();
-        });
-        if (address == addresses.end()) {
+        const std::optional<QHostAddress> address = NetworkAddress();
+        if (!address) {
             QSKIP("This computer has no network address.");
         }
         TrackerPage page(0);
