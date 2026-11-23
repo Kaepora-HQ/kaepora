@@ -51,7 +51,7 @@ Each bigger quiver, Deku-seed bag, bomb bag, Deku-stick bag and Deku-nut bag is 
 
 You still do what the game asks for each one. What you are handed is the seed's item. The things they would have given join the shuffled items, so the Golden Scale can turn up in a chest. A gift may be the Fairy Bow or the Fairy Slingshot, and so may what a Gold Skulltula or a loose spot gives. Each comes with its quiver or bullet bag and 30 arrows or seeds, as it does from a chest, unless you already hold a bigger quiver or bullet bag: then the weapon comes alone.
 
-The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the Gerudo let you through Gerudo Fortress, into the Gerudo Proving Grounds and out to the Mirage Desert, whatever you were handed. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
+Once you free the last carpenter, the Gerudo let you through Gerudo Fortress and into the Gerudo Proving Grounds, whatever you were handed. The gatekeeper opens the way out to the Mirage Desert only if you also carry the Gerudo Pass. The Rainbow Bridge appears once Zelda has met you in the Temple of Time, whatever she gave you, and you still need the Light Arrows to beat Ganondorf.
 
 With **Malon's Egg** ticked, her egg is one of the shuffled items, and Malon at the castle hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, the egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle.
 
@@ -65,7 +65,7 @@ A Great Fairy still asks for her offering, and each but the summit's for Din's F
 
 With **Songs** at **Shuffled among themselves**, its default, the twelve songs change places. Every place that teaches a song still teaches one, so Impa may teach the Minuet of the Forest and Malon may teach Saria's Song.
 
-Two things change with it. If you learn the Requiem of Spirit early and warp to the Evil Desert Colossus, the Spirit Temple and the way into the Mirage Desert stay shut there until you have walked into the desert from Gerudo Fortress. Without that, the early visit could cost you the Gerudo Pass. Until then nobody walks out of the Colossus, so warp there only once you know another warp song. The same goes for the Bolero of Fire and the middle of Death Mountain Crater, which an adult leaves only with the Hookshot, the Hover Boots or a grown bean plant.
+Two things change with it. If you learn the Requiem of Spirit early and warp to the Evil Desert Colossus, the Spirit Temple stays shut there until you have freed the carpenters, and the way into the Mirage Desert until the gatekeeper has opened the fortress's gate. Without that, the early visit could cost you what the freed carpenters hand over. Until the gate is open nobody walks out of the Colossus, so warp there only once you know another warp song. The same goes for the Bolero of Fire and the middle of Death Mountain Crater, which an adult leaves only with the Hookshot, the Hover Boots or a grown bean plant.
 
 A seed with shuffled songs also skips the short scene outside the Temple of Time after Link first draws the Master Sword. An adult who warped away before seeing it would otherwise have no map.
 

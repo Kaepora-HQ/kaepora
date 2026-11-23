@@ -2497,6 +2497,86 @@ def dampes_race(patch, game, seedgen):
         assert game.event_flow(mod[DAMPES_RACE_FLOW]) == expected, settings
 
 
+GATEKEEPER_FLOW = "Event/EventFlow/Npc_Gerudo_006.bfevfl.zs"
+GATEKEEPER_MESSAGES = "EventFlowMsg/Npc_Gerudo_006.msbt"
+# The saved values her talk asks: the pass, her talked flag, and whether the Spirit quest is past the walk into the
+# desert. Her first talk sets the gate's flag.
+PASS_HELD = "IsGet.Item_Token_Gerudo"
+GATEKEEPER_TALKED = "HaveTalked_Special.Npc_Gerudo_006_Talk_Event8"
+PAST_THE_DESERT = "SageOfSpirit_IsAfter_Step03_Exp"
+GATE_OPEN = "Gerudo_phantomdesert_gate"
+REFUSAL = "Mask_14"
+REFUSAL_WORDS = "I open this gate only for someone who carries a Gerudo Pass."
+# "You've mastered the desert, you say?", in her talk after the desert.
+MASTERED = "EventFlowMsg/Npc_Gerudo_006:Talk_09"
+
+
+def talks_and_steps(actor, action, given):
+    if action == "EventExecuteProgressChallengeStep":
+        return given["StepName"]
+    return talks(actor, action, given)
+
+
+def words(message):
+    """A message's text without its control codes, its lines joined by spaces."""
+    text, at = b"", 0
+    while at < len(message):
+        if message[at] == 0x0E:
+            at += 7 + struct.unpack_from("<H", message, at + 5)[0]
+        else:
+            text, at = text + message[at:at + 1], at + 1
+    return text.decode().replace("\n", " ")
+
+
+def gatekeeper(patch, game, seedgen):
+    """With the rescue's place shuffled, the gatekeeper opens the gate to the Wasteland only for a Link who holds the
+    Gerudo Pass. In the mod, every way through her talk for a Link without it says her refusal alone, in its own words,
+    and writes nothing. For a Link with it whom she has not talked to, every way opens the gate and marks her talked,
+    and after that no way writes anything or says that he has mastered the desert. No way writes the Spirit quest's
+    step, with the songs shuffled or at Vanilla, and the Colossus's arrival from the Wasteland still writes Step04
+    with the songs at Vanilla. With the place left out, every way through her talk says what the game's does and sets
+    the same flags, and the refusal keeps the game's words."""
+    refusal = f"{GATEKEEPER_MESSAGES.removesuffix('.msbt')}:{REFUSAL}"
+    states = [{PASS_HELD: held, GATEKEEPER_TALKED: talked, GATE_OPEN: talked, PAST_THE_DESERT: crossed}
+              for held, talked, crossed in itertools.product((False, True), repeat=3)]
+    pack = ENGLISH_PACKS[1]
+    arrival = game.event_flow(game.read(ARRIVAL_FLOW))
+    arrival_ends = [named[0] for named in arrival["events"]].index("Event82")
+    for songs in ("Shuffled among themselves", "Vanilla"):
+        shuffled = patched(patch, game, generated_plan(seedgen, "1", {"Songs": songs}))
+        assert GATEKEEPER_FLOW in shuffled, "the mod leaves her flow as the game's"
+        ours = game.event_flow(shuffled[GATEKEEPER_FLOW])
+        asked = string_parameter(ours, "Event106", "GameDataName")[1]
+        data = game.game_data_list(shuffled[GAME_DATA_LIST])["Data"]
+        assert {"Hash": (UINT, murmur3(asked)), "ResetTypeValue": (INT, 0), "SaveFileIndex": (INT, 0xFFFFFFFF),
+                "Values": [[(UINT64, 0), (UINT64, murmur3(GATEKEEPER_TALKED))]]} in data["BoolExp"], asked
+        for state in states:
+            ways = list(ways_through(ours, "Talk", state | {asked: state[GATEKEEPER_TALKED]}, talks_and_steps))
+            assert ways, (songs, state)
+            for said, end in ways:
+                assert all(note.startswith("EventFlowMsg/") for note in said), (songs, state, said)
+                if not state[PASS_HELD]:
+                    assert (said, end) == ((refusal,), state | {asked: state[GATEKEEPER_TALKED]}), (songs, said)
+                elif not state[GATEKEEPER_TALKED]:
+                    assert refusal not in said, (songs, said)
+                    assert end == state | {asked: False, GATE_OPEN: True, GATEKEEPER_TALKED: True}, (songs, said)
+                else:
+                    assert refusal not in said and MASTERED not in said, (songs, state, said)
+                    assert end == state | {asked: True}, (songs, state, said)
+        told = msbt(game.text_pack(shuffled[pack])[GATEKEEPER_MESSAGES])[1][REFUSAL]
+        assert words(told) == REFUSAL_WORDS, told
+        cut = game.event_flow(shuffled[ARRIVAL_FLOW])["events"][arrival_ends]
+        assert (cut[1][2:4] == b"\xff\xff") == (songs != "Vanilla"), songs
+        assert songs != "Vanilla" or cut == arrival["events"][arrival_ends], songs
+    left_out = patched(patch, game, generated_plan(seedgen, "1", {"Gifts": []}))
+    theirs = game.event_flow(game.read(GATEKEEPER_FLOW))
+    ours = game.event_flow(left_out[GATEKEEPER_FLOW])
+    for state in states:
+        assert list(ways_through(ours, "Talk", state)) == list(ways_through(theirs, "Talk", state)), state
+    game_pack = game.text_pack(game.read(pack))
+    assert game.text_pack(left_out.get(pack, game.read(pack)))[GATEKEEPER_MESSAGES] == game_pack[GATEKEEPER_MESSAGES]
+
+
 def time_runs_from_the_start(patch, game, seedgen):
     """In every seed a new game starts with the world's time running and free to pass 15:00 into the night. The game
     holds the time until the owl's scene on the child's first walk into Hyrule Field sets the first value, and stops the
@@ -3686,6 +3766,7 @@ def main():
         "darunias-dance": darunias_dance,
         "darunias-son": darunias_son,
         "dampes-race": dampes_race,
+        "gatekeeper": gatekeeper,
         "time-runs-from-the-start": time_runs_from_the_start,
         "sarias-greeting": sarias_greeting,
         "new-area-scenes": new_area_scenes,

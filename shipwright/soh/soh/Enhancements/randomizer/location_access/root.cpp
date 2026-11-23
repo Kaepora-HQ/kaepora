@@ -16,9 +16,9 @@ static bool WalksOnFrom(RandomizerGet song) {
             return logic->IsAdult && (logic->FireTimer() >= 16 || logic->Health() >= 3 * 16) &&
                    (logic->DMCPadToPots() || logic->BeanPlanted(LOGIC_PLANT_DEATH_MOUNTAIN_CRATER_BEAN));
         case RG_REQUIEM_OF_SPIRIT:
-            // The Desert Colossus. A child cannot walk out of it: his Haunted Wasteland leads only back to it. Its way
-            // into the Wasteland stands for an adult only once he has walked into the Wasteland from the fortress, a
-            // walk the route of a seed cannot name.
+            // The Desert Colossus. A child cannot walk out of it: his Haunted Wasteland leads only back to it. An adult
+            // walks out only across the Wasteland from the Colossus's side, which no route does without
+            // RT_HW_REVERSE.
             return false;
         default:
             return true;

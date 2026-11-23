@@ -262,6 +262,10 @@ SON_EXPRESSIONS = [{"name": f"Kaepora_{flag.removesuffix('_Exp')}_AND_DoorOpen_E
                     "all_of": [flag, "SageOfFire_Step02_DoorOpen"]}
                    for flag in ("SageOfFire_IsCompleted_Exp", "SageOfFire_FromCrater", "SageOfFire_FromCrater_FarJr",
                                 "SageOfFire_FromDeathMt", "SageOfFire_FromDeathMt2")]
+# With the rescue's place shuffled, the gatekeeper's question whether the quest is past the desert asks her talked flag
+# instead, through an expression of the plan's own.
+GATEKEEPER_EXPRESSION = {"name": "Kaepora_HaveTalked_Special_Npc_Gerudo_006_Talk_Event8_Exp",
+                         "all_of": ["HaveTalked_Special.Npc_Gerudo_006_Talk_Event8"]}
 # King Zora's ice in the domain an adult sees once the Water quest is complete stands there until his thaw has played,
 # in every seed.
 # The area at the top of the vine climb, which stands only for a Link whose save says he got the Weird Egg while Malon's
@@ -278,12 +282,17 @@ RIVER_WALLS = [{"file": "Banc/ZoraRiver/ZoraRiver_Adult_Static.bcett.byml.zs", "
                for hash in ("7850395794748438732", "13781426553798151043", "7982339630050931435",
                             "14077907143773739344", "9371429508151251838", "11266001672277786960",
                             "4565321854739336115")]
-# The Desert Colossus's way into the Wasteland and the Spirit Temple's front entrance, in both ages' files, stand only
-# once the Spirit quest is past Step02 in every seed that shuffles the songs.
-COLOSSUS_GATES = [{"file": f"Banc/DesertColossus/DesertColossus_{age}_Static.bcett.byml.zs", "hash": hash,
-                   "flag": "SageOfSpirit_IsAfter_Step02_Exp"}
-                  for age, hash in (("Adult", "12141577802165947392"), ("Adult", "13187812046230253833"),
-                                    ("Child", "18409754566529742762"), ("Child", "15448624735210695325"))]
+# In every seed that shuffles the songs, the Desert Colossus's way into the Wasteland stands only once the fortress's
+# gate is open, and the Spirit Temple's front entrance only once the carpenters are free, in both ages' files.
+COLOSSUS_GATES = [{"file": f"Banc/DesertColossus/DesertColossus_{age}_Static.bcett.byml.zs", "hash": hash, "flag": flag}
+                  for age, hash, flag in (("Adult", "12141577802165947392", "Gerudo_phantomdesert_gate"),
+                                          ("Adult", "13187812046230253833", "SageOfSpirit_IsAfter_Step01_Exp"),
+                                          ("Child", "18409754566529742762", "Gerudo_phantomdesert_gate"),
+                                          ("Child", "15448624735210695325", "SageOfSpirit_IsAfter_Step01_Exp"))]
+# With the temple open before the desert, the gatekeeper's first talk writes no Step02 and the first walk into the
+# Colossus from the Wasteland no Step04, in every seed that shuffles the songs.
+SPIRIT_STEPS_KEPT = [{"flow": "Event/EventFlow/Npc_Gerudo_006.bfevfl.zs", "event": "Event6", "next": "Event59"},
+                     {"flow": "Event/EventFlow/Dm_SY_BancChangeArrive.bfevfl.zs", "event": "Event82", "next": None}]
 # The windmill man starts his lesson while it has not played, and the Bolero's scene marks itself played, not the
 # Bolero known, in every seed that shuffles the songs.
 SONG_FIXES = [
@@ -1372,27 +1381,29 @@ class SeedgenTest(unittest.TestCase):
         # SoH's pool with adult trade off holds the Claim Check and Biggoron's sword and no Pocket Egg, and Biggoron's
         # place asks for the receipt, so no route takes a step of the chain. With his place shuffled, the plan has him
         # give once without completing the trade quest and starts the record his wait counts from.
-        # Mido's hint sends an event of his own flow on, so these seeds leave his hint out.
-        on_route = 0
-        for seed in map(str, range(2000, 2020)):
+        # Mido's hint sends an event of his own flow on, so these seeds leave his hint out. Seed 2021's route takes the
+        # Claim Check's place.
+        on_route = []
+        for seed in map(str, range(2010, 2030)):
             spoiler, plan = self.generate(seed, {"Gifts": ["Biggoron Quest"], **NO_CHARACTER_HINTS})
             placed = list(placed_remake_items(spoiler, plan).values())
             self.assertEqual([placed.count(item) for item in ("Item_ClaimCheck", "Item_Sword_Biggoron")], [1, 1])
             self.assertNotIn("Item_PocketEgg", placed)
             steps = playthrough_steps(spoiler)
             self.assertFalse([step for step in steps if "Trade" in step and step != "DMT Trade Claim Check"], seed)
-            on_route += "DMT Trade Claim Check" in steps
+            if "DMT Trade Claim Check" in steps:
+                on_route.append(seed)
             # His own expression reads his claim.
             own = [entry for entry in plan["expressions"] if entry["all_of"][0] in plan["claims"]]
             self.assertTrue([entry for entry in plan["event_nexts"] if entry not in DAMPES_RACE_NEXTS] and own, seed)
             self.assertEqual(plan["start_values"]["GetSwordBigGoron_ElapsedTime"], 1)
             self.assertEqual(self.route_out_of_reach(spoiler), [])
-        self.assertTrue(on_route)
+        self.assertIn("2021", on_route)
         _, plan = self.generate("2000", {"Gifts": [group for group in GIFT_GROUPS if group != "Biggoron Quest"],
                                          **NO_CHARACTER_HINTS})
-        _, no_gifts = self.generate("2000", {"Gifts": [], **NO_CHARACTER_HINTS})
-        self.assertEqual((plan["event_nexts"], plan["expressions"]),
-                         (no_gifts["event_nexts"], [DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS]))
+        _, story = self.generate("2000", {"Gifts": ["Story gifts"], **NO_CHARACTER_HINTS})
+        self.assertEqual((plan["event_nexts"], plan["expressions"]), (story["event_nexts"], [
+            DANCE_EXPRESSION, STONE_CHECK, *SON_EXPRESSIONS, GATEKEEPER_EXPRESSION]))
         self.assertNotIn("GetSwordBigGoron_ElapsedTime", plan["start_values"])
 
     def test_with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg(self):
@@ -1522,11 +1533,12 @@ class SeedgenTest(unittest.TestCase):
 
     def test_hints_name_the_fairy_outside_ganons_castle_at_ganondorfs_castle(self):
         # Her mark stands in the scene the game names Ganondorf's Castle, where the stones place that scene's
-        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 55's route takes the Lens
-        # of Truth from her, and seed 3's the Iron Boots, and a stone of each says Ganondorf's Castle is on the way.
-        for seed in ("55", "3"):
+        # skulltula, and not in the child's Hyrule Castle, which has a fairy of its own. Seed 10's route takes the
+        # Hookshot from her, and seed 63's the Megaton Hammer, and a stone of each says Ganondorf's Castle is on the
+        # way.
+        for seed, item in (("10", "Progressive Hookshot"), ("63", "Megaton Hammer")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gifts": ["Great Fairies"]})
-            self.assertIn("OGC Great Fairy Reward", playthrough_steps(spoiler))
+            self.assertEqual(playthrough_steps(spoiler).get("OGC Great Fairy Reward"), item, seed)
             self.assertIn("They say that Ganondorf's Castle is on the way of the hero.", spoiler["hints"].values())
 
     def test_the_summit_passes_her_meter_scene_with_an_item_that_brings_none(self):
@@ -1674,6 +1686,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(plan["event_numbers"], numbers)
         self.assertEqual(len(numbers), 26)
         self.assertEqual(plan["presences"], [KING_ZORA_ICE] + RIVER_WALLS + COLOSSUS_GATES)
+        self.assertEqual([entry for entry in plan["event_nexts"] if entry in SPIRIT_STEPS_KEPT], SPIRIT_STEPS_KEPT)
 
     def test_a_route_that_learns_songs_at_other_places_is_in_reach_in_its_sphere(self):
         # Seed 22's route learns songs at places that teach others in the game.
@@ -2094,14 +2107,16 @@ class SeedgenTest(unittest.TestCase):
                                              entry)
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
-        # Seed 407's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
-        # a hint says Hyrule Field is on the way of the hero. Seed 402's route takes the Fairy Bow from HC OGC GS, in
-        # the scene the game calls Ganondorf's Castle, and a hint says the Fairy Bow is at Ganondorf's Castle.
-        for seed, skulltula, hint in (
-                ("407", "LLR GS Back Wall", "They say that Hyrule Field is on the way of the hero."),
-                ("402", "HC OGC GS", "They say that the Fairy Bow can be found at Ganondorf's Castle.")):
+        # Seed 149's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
+        # a hint says Hyrule Field is on the way of the hero. Seed 161's route takes the Mirror Shield from HC OGC GS,
+        # in the scene the game calls Ganondorf's Castle, and a hint says the Mirror Shield is at Ganondorf's Castle.
+        for seed, skulltula, item, hint in (
+                ("149", "LLR GS Back Wall", "Progressive Bomb Bag",
+                 "They say that Hyrule Field is on the way of the hero."),
+                ("161", "HC OGC GS", "Mirror Shield",
+                 "They say that the Mirror Shield can be found at Ganondorf's Castle.")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
-            self.assertIn(skulltula, playthrough_steps(spoiler))
+            self.assertEqual(playthrough_steps(spoiler).get(skulltula), item, seed)
             self.assertIn(hint, spoiler["hints"].values())
 
     def test_hints_name_gold_skulltulas_truly(self):

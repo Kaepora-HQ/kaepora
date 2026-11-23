@@ -162,7 +162,8 @@ line names the unmodified game's item, which is true only where the seed keeps i
 the finish names the first chest's item; his answer when Link asks about the treasure before a race, and his call in
 the graveyard, name nothing; four say that he lifts Link to the exit, where the game's tell Link to use the Hookshot or
 say that Dampé leaves; and two of his talk before a race, which he picks by the Hookshot in the pouch, say that the
-first prize asks only a finish and name what the heart piece's chest holds.
+first prize asks only a finish and name what the heart piece's chest holds. The Wasteland's gatekeeper has one, her
+refusal to a Link with no Gerudo Pass, below with the story gifts.
 
 - `location`: the SoH location, a chest of `chests.tsv` or a gift of `gifts.tsv`.
 - `file` and `label`: the message, in the English text packs. The patcher keeps the control codes the game's message
@@ -509,20 +510,38 @@ The five story places write their quest's step whatever they give: the carpenter
 Step02, Darunia's dance the Fire quest to DodongoCavernOpne, his son's talk the Fire Temple's quest to MoveStatue, which
 moves Darunia's statue and opens his door (with the temple finished the engine refuses the write and the quest stays
 Complete, seen), King Zora's talk the Water quest to Step05, and Zelda's scene the AllSage
-quest to Complete and the Ganon quest to Step01 (read from the flows). The fortress's guards, the Wasteland's gate
-keeper and the archery range follow the Spirit quest, the Training Ground's keeper asks for 30 rupees and no card, and
-the bridge to Ganon's Castle follows the Ganon quest, so the rules ask for the scenes, not the Gerudo's card or the
-Light Arrows. Of the game's flows and logic modules, one reads the card: a module that takes two of the fortress's sneak
-areas away. The program also reads it, inferred to be for the fortress's key counter on the screen, and a map picture's
-table picks its light by it (read).
+quest to Complete and the Ganon quest to Step01 (read from the flows). The fortress's guards and the archery range
+follow the Spirit quest, the Training Ground's keeper asks for 30 rupees and no card, and the bridge to Ganon's Castle
+follows the Ganon quest, so the rules ask for the scenes, not the Gerudo's card or the Light Arrows. Of the game's
+flows and logic modules, one reads the card: a module that takes two of the fortress's sneak areas away. The program
+also reads it, inferred to be for the fortress's key counter on the screen, and a map picture's table picks its light by
+it (read).
+
+The Wasteland's gatekeeper, `Npc_Gerudo_006`, opens the gate in her first talk: after "Open the gate!" the gate's scene
+plays and `Event63` sets `Gerudo_phantomdesert_gate`, on which `Logic/GerudoFortress_Common_305a` opens the shutter for
+an adult. The same branch sets her talked flag (`Event6`) and writes the Spirit quest's Step02 with no test (`Event61`).
+Her talk's first question (`Event22`) asks the talked flag, and after it `Event106` asks whether the quest is past
+Step03, the walk into the Wasteland. With the carpenters' rescue shuffled, the pass is an item of the pool, and she
+opens the gate only for a Link who holds it, as SoH's gate asks for its card. `Event22` asks `IsGet.Item_Token_Gerudo`,
+so a Link without the pass goes on to her mask question (`Event65`), which goes on to `Event73` on either answer: a talk
+with no next, which the game reaches only from `Event72`, a question whether the adult Link wears the Bunny Hood. Its
+line `Mask_14` now says her refusal. `Event106` asks `Kaepora_HaveTalked_Special_Npc_Gerudo_006_Talk_Event8_Exp`, an
+expression of the mod's own that reads her talked flag, so she talks to a Link with the pass as after the desert once
+she has opened the gate, and her talk for a Link who has not crossed it (`Event0`) goes on to `Event60`, her first talk
+past its mask question. Her later talk goes on from "Remember... When you enter the desert" (`Event3`) to `Event45`,
+"The fact is, the mighty Ganondorf's right hand has yet to return", past "You've mastered the desert, you say?", which a
+Link who has not crossed it now reaches. Her talked flag goes on past her write of Step02, as with the songs shuffled
+(below): after the rescue the write sets Step02 onto Step02, and before it, for a pass found first, it would take the
+rescue away. So without the pass she refuses at every talk and writes nothing, and with it she opens the gate once and
+writes no step. With the place left out the rescue hands over the pass, and her talk asks what the game's does.
 
 Seen in the game: the scene after the fourth carpenter gave a placed Zora Tunic, the Spirit quest then stood at Step02
-with no card held, no guard caught Link, the gate keeper opened the gate to the Wasteland, and walking into the
-Wasteland wrote Step03. With the pass already found, the rescue played the same and gave its item once, and Link still
-held one pass. King Zora gives through horseback archery's call and Zelda through the reward scenes', and each of those
-has given another item (seen); their own scenes have not. Zelda's scene still shows the Light Arrows: two of its events
-pick the fanfare and the sparkle by the arrows' name, and three more bind the arrows' model, set its detail and turn it
-(read). Its window names the seed's item.
+with no card held, and no guard caught Link. Walking into the Wasteland at Step02 wrote Step03. With the pass already
+found, the rescue played the same and gave its item once, and Link still held one pass. King Zora gives through
+horseback archery's call and Zelda through the reward scenes', and each of those has given another item (seen); their
+own scenes have not. Zelda's scene still shows the Light Arrows: two of its events pick the fanfare and the sparkle by
+the arrows' name, and three more bind the arrows' model, set its detail and turn it (read). Its window names the seed's
+item.
 
 In the game King Zora's ice stands only while the Water Sage's quest is not complete, and his thanks come only after the
 thaw (read from the placement files and his talk). A Link who finished the Water Temple first would never get what King
@@ -614,13 +633,18 @@ Every seed that shuffles the songs also changes two scenes. The windmill man sta
 not while Link does not know the Song of Storms. The Bolero's scene marks its own lesson played where it marked the
 Bolero known.
 
-And it holds two ways out of the Desert Colossus back, for both ages, until the Spirit quest is past Step02, which
-Link reaches by entering the Wasteland from the Gerudo Fortress: the way into the Wasteland and the Spirit Temple's
-front entrance. With the Requiem learned elsewhere, Link can warp to the Colossus before the fortress. Walking out into
-the Wasteland and back plays the Wasteland's arrival, which moves the quest to Step04, and the temple's hand chest, Iron
-Knuckle and Twinrova move it on too. Past Step01 the fortress's carpenters no longer call for help, no thief comes, and
-the card is lost. The rules ask the same: the temple and the Wasteland from the Colossus wait for an adult who has
-entered the Wasteland from the fortress.
+And it holds two ways out of the Desert Colossus back, for both ages. With the Requiem learned elsewhere, Link can warp
+to the Colossus before the fortress. The temple's hand chest, Iron Knuckle and Twinrova move the Spirit quest on with no
+test of its step, and past Step01 the fortress's carpenters no longer call for help, no thief comes, and what the rescue
+gives is lost. So the Spirit Temple's front entrance stands only once the quest is past Step01, which the rescue's scene
+writes, and the way into the Wasteland only once the gatekeeper has set the gate's flag, so that the way back through
+the desert never ends outside a shut gate. With the temple open before the desert, two writes that come before the
+temple in the game can come after it here and would set the quest back: the gatekeeper's Step02 and the first walk into
+the Colossus from the Wasteland, which plays its scene (`Dm_SY_BancChangeArrive` `Event82`) and then writes Step04 with
+no test. Her talked flag goes on to `Event59`, past her write, and the scene ends its branch, so neither writes. Nothing
+reads Step04 exactly, and of the game's readers only four lines, hers and others', tell Step03 from a later step
+(`quest_reads.tsv`), so the quest resting at Step03 after the desert changes only those lines. The rules ask the same:
+the temple from the Colossus waits for the rescue, and the Wasteland from the Colossus for the gate.
 
 Seen in the game:
 
@@ -632,13 +656,13 @@ Seen in the game:
 - The royal tomb taught the Song of Time, and Zelda's ocarina at the moat taught the Minuet, which then warped Link to
   the Sacred Forest Meadow.
 - Malon taught Saria's Song and moved Epona's quest on, and the adult then called Epona with her song and raced Ingo.
-- Without the Colossus's change, an adult who had met the carpenters' boss, warped to the Colossus and walked into the
-  Wasteland and back found no thief at the fortress. With it, he could enter neither the temple nor the Wasteland, and
-  the first carpenter's thief came. Arriving from the Wasteland at Step03, the arrival, Sheik's lesson and the temple
-  played as in the unmodified game, which stops the quest at Step04 there too.
-- Malon taught the Requiem of Spirit, and it warped a child to the Colossus. Sheik's scene played for him and taught
-  Zelda's Lullaby, the temple's doorway and the way into the Wasteland stayed shut, and the Nocturne took him out to
-  the graveyard's ledge. An adult who had met the carpenters' boss found the same.
+- Without the Colossus's presences, an adult who had met the carpenters' boss, warped to the Colossus and walked into
+  the Wasteland and back found no thief at the fortress. With both ways standing on `SageOfSpirit_IsAfter_Step02_Exp`,
+  shut at Step01, he could enter neither the temple nor the Wasteland, and the first carpenter's thief came.
+- With both ways standing on `SageOfSpirit_IsAfter_Step02_Exp`, Malon taught the Requiem of Spirit, and it warped a
+  child to the Colossus. Sheik's scene played for him and taught Zelda's Lullaby, the temple's doorway and the way into
+  the Wasteland stayed shut, and the Nocturne took him out to the graveyard's ledge. An adult who had met the
+  carpenters' boss found the same.
 
 Read from the game's data and not yet seen: Saria's lesson, and Sheik's in the forest, the Ice Cavern, Kakariko and the
 Temple of Time.
@@ -1082,9 +1106,9 @@ A mod also rests on a step in these places, where no write changes:
   first. Seen in the game: his win plays the child's two films, `Dm_DeathMtTrail_0020` and `Dm_DeathMtTrail_0025`,
   with adult Link at a child's size, the place gives inside the second, `Get_StoneOfFire` goes to `Complete`, and the
   stone check runs.
-- With the songs shuffled, the Colossus's gates stand on `SageOfSpirit_IsAfter_Step02_Exp` (above), and
-  `HavePlayedEvent.Dm_TimeTemple_0065` starts true: that scene at the Door of Time plays only while `AllSage` stands at
-  Step01, and the adult's world map waits for it.
+- With the songs shuffled, the Spirit Temple's door at the Colossus stands on `SageOfSpirit_IsAfter_Step01_Exp`
+  (above), and `HavePlayedEvent.Dm_TimeTemple_0065` starts true: that scene at the Door of Time plays only while
+  `AllSage` stands at Step01, and the adult's world map waits for it.
 - With "Malon's Egg" ticked, the area at the top of the castle's vines stands only for a Link who got the Weird Egg. It
   hatches the Chicken while `Goto_HyruleCastle` is at Step03, the step Malon's talk writes.
 - With "Ganon's trials" at "None", nothing writes `Defeat_Ganon` Step04, and the boss door's write of Step05 goes

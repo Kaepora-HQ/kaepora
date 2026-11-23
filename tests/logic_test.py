@@ -219,27 +219,33 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("GF HBA 1000 Points", ("Song from Malon", "Saria's Song"),
                                        ("Song from Saria", "Epona's Song")))
 
-    def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_not_for_the_card(self):
-        # After the last carpenter a scene moves the Spirit quest on. The guards, the Wasteland's gate keeper and the
-        # archery range follow the quest, not the card the scene gives.
+    def test_the_gerudo_let_link_pass_once_the_carpenters_are_free_and_the_gate_asks_for_the_pass(self):
+        # After the last carpenter a scene moves the Spirit quest on. The guards and the archery range follow the
+        # quest, not the pass the scene gives, and the Training Ground's keeper asks for 30 rupees. The gatekeeper opens
+        # the way out to the Wasteland only for a Link who also holds the pass.
         card = ("Link's Pocket", "Gerudo Membership Card")
         no_card = ("GF Freed All Carpenters", "Green Rupee")
-        for location in ("GF HBA 1000 Points", "Wasteland Chest", "Gerudo Training Ground Lobby Left Chest"):
+        for location in ("GF HBA 1000 Points", "Gerudo Training Ground Lobby Left Chest"):
             self.assertFalse(self.reachable(location, NO_RESCUE, card), location)
             self.assertTrue(self.reachable(location, no_card), location)
+        for location in ("Wasteland Chest", "Sheik at Colossus"):
+            self.assertFalse(self.reachable(location, NO_RESCUE, card), location)
+            self.assertFalse(self.reachable(location, no_card), location)
+            self.assertTrue(self.reachable(location, no_card, card), location)
 
-    def test_an_early_requiem_waits_for_the_fortress_at_the_spirit_temple(self):
+    def test_an_early_requiem_opens_the_spirit_temple_once_the_carpenters_are_free(self):
         # With the Requiem learned as a child, Link warps to the Desert Colossus before the Gerudo Fortress. The
-        # Colossus is open to him, but the Spirit Temple's front entrance waits for an adult who has entered the
-        # Wasteland from the fortress, through the gate its keeper opens once the carpenters are free. Malon's Serenade
-        # takes him out again.
+        # Colossus is open to him, and the Spirit Temple's front entrance once the carpenters are free, whether or not
+        # the gatekeeper opens the way out to the Wasteland: here the rescue gives no pass, so she never does. Malon's
+        # Serenade takes him out again.
         early = (("Song from Impa", "Requiem of Spirit"), ("Sheik at Colossus", "Zelda's Lullaby"),
                  ("Song from Malon", "Serenade of Water"), ("Sheik in Ice Cavern", "Epona's Song"))
+        no_card = ("GF Freed All Carpenters", "Green Rupee")
         for location in ("Sheik at Colossus", "Colossus Great Fairy Reward", "Colossus GS Tree",
                          "Colossus Grotto Chest"):
             self.assertTrue(self.reachable(location, *early, NO_RESCUE, SILVER_GAUNTLETS_AT_START), location)
         self.assertFalse(self.reachable("Spirit Temple Child Bridge Chest", *early, NO_RESCUE))
-        self.assertTrue(self.reachable("Spirit Temple Child Bridge Chest", *early))
+        self.assertTrue(self.reachable("Spirit Temple Child Bridge Chest", *early, no_card))
 
     def test_an_adult_warps_to_the_crater_only_where_he_gets_across_or_with_a_song_that_takes_him_out(self):
         # An adult gets across from the crater's warp pad as the pad's own way to the pots asks: with the Hookshot,
@@ -253,8 +259,8 @@ class LogicTest(unittest.TestCase):
         self.assertTrue(self.reachable("Fire Temple Near Boss Chest", *only_the_bolero("Serenade of Water")))
 
     def test_an_adult_warps_to_the_colossus_only_with_a_song_that_takes_him_out(self):
-        # The Colossus's way into the Wasteland stands for an adult only once he has walked into the Wasteland from the
-        # fortress, a walk no route names, so he can no more walk out of the Colossus than a child. Here the Requiem is
+        # The Colossus's way into the Wasteland stands only once the fortress's gate is open, and no route walks the
+        # Wasteland from that side, so an adult can no more walk out of the Colossus than a child. Here the Requiem is
         # his only warp song, and Epona takes him across the valley to the fortress. Without the carpenters free he
         # cannot walk to the Colossus either, and without the Hover Boots and the Longshot he cannot cross the sand.
         # Sheik at the temple teaches the Song of Storms, so the child still comes back for the well's Lens.
