@@ -34,6 +34,8 @@ constexpr size_t PointersPerEntry = 32;
 constexpr size_t PoolOffset = 0x04;
 
 enum EventType : uint8_t { Action, Switch, Fork, Join, Subflow, SubflowSwitch, Return };
+// The index a next field holds to end its branch.
+constexpr uint16_t NoEvent = 0xFFFF;
 constexpr uint8_t IntValue = 2;
 constexpr uint8_t StringValue = 5;
 
@@ -187,10 +189,10 @@ bool SetInt(Flow& flow, std::string_view event, std::string_view param, int32_t 
     return true;
 }
 
-bool SetNext(Flow& flow, std::string_view event, std::string_view next) {
+bool SetNext(Flow& flow, std::string_view event, std::optional<std::string_view> next) {
     const uint64_t flowchart = Flowchart(flow.data);
     const uint64_t at = EventOffset(flow.data, flowchart, EventIndex(flow.data, flowchart, event));
-    const uint16_t target = EventIndex(flow.data, flowchart, next);
+    const uint16_t target = next ? EventIndex(flow.data, flowchart, *next) : NoEvent;
     // An action, a join or a sub-flow call holds the index of its next event at 0x0A. A switch holds its case count
     // there and points to its cases at 0x18. A case is 8 bytes: its value, then the index of the event it goes to.
     std::vector<uint64_t> fields;
@@ -202,6 +204,10 @@ bool SetNext(Flow& flow, std::string_view event, std::string_view next) {
             break;
         case Switch:
         case SubflowSwitch:
+            if (!next) {
+                throw std::runtime_error(
+                    std::format("{} is a switch, and no switch case in the game's flows ends its branch", event));
+            }
             for (uint16_t i = 0; i < ReadAt<uint16_t>(flow.data, at + 0x0A); ++i) {
                 fields.push_back(ReadAt<uint64_t>(flow.data, at + 0x18) + 8 * i + 4);
             }

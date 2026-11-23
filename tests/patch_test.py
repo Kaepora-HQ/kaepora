@@ -594,7 +594,7 @@ def actor(placement, hash):
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
          loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=(),
-         kept_goods=(), schedule_entries=(), module_texts=()):
+         kept_goods=(), schedule_entries=(), module_texts=(), event_entries=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -604,6 +604,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "event_nexts": [{"flow": flow, "event": event, "next": next_event}
                             for flow, event, next_event in event_nexts],
             "module_texts": [{"file": file, "from": old, "to": new} for file, old, new in module_texts],
+            "event_entries": [{"flow": flow, "entry": entry, "event": event} for flow, entry, event in event_entries],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
@@ -1247,7 +1248,7 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "module_texts",
+             for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "event_entries", "module_texts",
                          "stone_texts",
                          "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions",
@@ -2783,11 +2784,11 @@ GET_IN_FLOW = "Event/EventFlow/Dm_SY_GetInEvent.bfevfl.zs"
 
 
 def sent_on(flow, event, next_event):
-    """The parsed flow with the event going on to next_event: an action, a join or a sub-flow call by its next event,
-    a switch by each of its cases."""
+    """The parsed flow with the event going on to next_event, or ending its branch where that is None: an action, a join
+    or a sub-flow call by its next event, a switch by each of its cases."""
     events = flow["events"]
     index = {named[0]: i for i, named in enumerate(events)}
-    sent, target = events[index[event]], struct.pack("<H", index[next_event])
+    sent, target = events[index[event]], struct.pack("<H", 0xFFFF if next_event is None else index[next_event])
     if sent[1][0] in (1, 5):
         cases = bytearray(sent[3])
         for case in range(struct.unpack_from("<H", sent[1], 2)[0]):
@@ -2812,6 +2813,33 @@ def event_nexts(patch, game):
         expected[flow] = sent_on(expected.get(flow) or game.event_flow(game.read(flow)), event, next_event)
     for flow, flowchart in expected.items():
         assert game.event_flow(mod[flow]) == flowchart, flow
+
+
+FIELD_PAN_FLOW = "Event/EventFlow/Dm_HrlField_0000.bfevfl.zs"
+
+
+def event_ends(patch, game):
+    mod = patched(patch, game, plan([], event_nexts=[(FIELD_PAN_FLOW, "Event37", None)]))
+    assert sorted(mod) == [FIELD_PAN_FLOW], sorted(mod)
+    flow = game.event_flow(game.read(FIELD_PAN_FLOW))
+    assert struct.unpack_from("<H", flow["events"][[e[0] for e in flow["events"]].index("Event37")][1], 2)[0] != 0xFFFF
+    assert game.event_flow(mod[FIELD_PAN_FLOW]) == sent_on(flow, "Event37", None)
+
+
+def entered_at(flow, entry, event):
+    index = [named[0] for named in flow["events"]].index(event)
+    names = [name for _, name in flow["entry points"][0][1:]]
+    started = flow["entry points"][1][names.index(entry)]
+    started[0] = started[0][:4] + struct.pack("<H", index)
+    return flow
+
+
+def event_entries(patch, game):
+    mod = patched(patch, game, plan([], event_entries=[(FIELD_PAN_FLOW, "EntryPoint0", "Event52")]))
+    assert sorted(mod) == [FIELD_PAN_FLOW], sorted(mod)
+    theirs = game.event_flow(game.read(FIELD_PAN_FLOW))
+    assert game.event_flow(mod[FIELD_PAN_FLOW]) != theirs
+    assert game.event_flow(mod[FIELD_PAN_FLOW]) == entered_at(theirs, "EntryPoint0", "Event52")
 
 
 def module_texts(patch, game):
@@ -3400,6 +3428,8 @@ def bad_input(patch, game):
         "event next to no event": (dict(valid_next, event="Event20", next="Event9999"), ["Event20", "Event9999"]),
         "event next of a fork": (
             {"flow": GET_IN_FLOW, "event": "Event392", "next": "Event334"}, ["Event392", GET_IN_FLOW, "fork"]),
+        "end of a switch": (
+            {"flow": BIGGORON_FLOW, "event": "Event71", "next": None}, ["Event71", BIGGORON_FLOW, "switch"]),
         "event next listed twice": (
             dict(valid_next, next="Event54"), ["plan.json", "event_nexts[1]", "Event53", "twice"]),
     }
@@ -3425,6 +3455,18 @@ def bad_input(patch, game):
         {key: value for key, value in good.items() if key != "module_texts"}, ["plan.json", "module_texts"])
     plans["no event_nexts"] = (
         {key: value for key, value in good.items() if key != "event_nexts"}, ["plan.json", "event_nexts"])
+    valid_entry = {"flow": FIELD_PAN_FLOW, "entry": "EntryPoint0", "event": "Event52"}
+    entries = {
+        "event entry not this shape": (
+            {"flow": FIELD_PAN_FLOW, "entry": "EntryPoint0"}, ["plan.json", "event_entries[1]"]),
+        "entry point not in the flow": (dict(valid_entry, entry="EntryPoint9"), ["EntryPoint9", FIELD_PAN_FLOW]),
+        "event entry listed twice": (
+            dict(valid_entry, event="Event37"), ["plan.json", "event_entries[1]", "EntryPoint0", "twice"]),
+    }
+    for name, (entry, named) in entries.items():
+        plans[name] = (good | {"event_entries": [valid_entry, entry]}, named)
+    plans["no event_entries"] = (
+        {key: value for key, value in good.items() if key != "event_entries"}, ["plan.json", "event_entries"])
     for name, (entry, named) in numbers.items():
         if name == "event number also a text":
             plans[name] = (good | {"event_texts": [valid_gift], "event_numbers": [entry]}, named)
@@ -3537,6 +3579,8 @@ def main():
         "expressions": expressions,
         "event-nexts": event_nexts,
         "module-texts": module_texts,
+        "event-ends": event_ends,
+        "event-entries": event_entries,
         "biggoron-place": biggoron_place,
         "mido-hint-every-talk": mido_hint_every_talk,
         "darunias-dance": darunias_dance,

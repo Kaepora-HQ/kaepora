@@ -34,11 +34,12 @@ bool SetString(Flow& flow, std::string_view event, std::string_view param, std::
 bool SetInt(Flow& flow, std::string_view event, std::string_view param, int32_t value);
 
 // Sends the named event on to the next one: an action, a join or a sub-flow call goes there when it ends, and a switch
-// goes there on every case. Returns whether it changed. Throws, saying what is missing, when the flow has no event of
-// either name, or the first is a fork or a return. Each entry point lists the sub-flow calls it can reach, and those
-// lists stay as they are: a change may take a call out of an entry point's reach, but must not bring into reach a
-// call the entry point does not list.
-bool SetNext(Flow& flow, std::string_view event, std::string_view next);
+// goes there on every case. With none, an action, a join or a sub-flow call ends its branch. Returns whether it
+// changed. Throws, saying what is wrong, when the flow has no event of either name, the first is a fork or a return, or
+// a switch is given none, as no case of a switch in the game's flows ends its branch. Each entry point lists the
+// sub-flow calls it can reach, and those lists stay as they are: a change may take a call out of an entry point's
+// reach, but must not bring into reach a call the entry point does not list.
+bool SetNext(Flow& flow, std::string_view event, std::optional<std::string_view> next);
 
 // Starts the named entry point at the event. Returns whether it changed. Throws, saying what is missing, when the flow
 // has no entry point or event of that name. The entry point's list of the sub-flow calls it can reach stays as it is:

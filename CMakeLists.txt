@@ -491,8 +491,8 @@ if(KAEPORA_GAME_NUP)
                  skulltula-table loose-items copies-play-every-get loose-item-heights goods-and-copies
                  loose-item-table loose-spot-keys claims expressions weapons-bring-containers
                  bigger-containers-bring-the-small-one
-                 weapon-copies event-numbers event-nexts module-texts song-table river-arrival-writes-no-step
-                 market-arrival-writes-no-step
+                 weapon-copies event-numbers event-nexts event-ends event-entries module-texts song-table
+                 river-arrival-writes-no-step market-arrival-writes-no-step
                  a-child-comes-back-with-the-sword-he-left-with
                  schedule-entry presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out
                  sword-scene-kept both-stones-before-zelda)

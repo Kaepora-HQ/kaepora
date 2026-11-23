@@ -1461,6 +1461,7 @@
     }
   ],
   "module_texts": [],
+  "event_entries": [],
   "start_values": {
     "IsChainLockDoorOpen.4189300454150217955": true,
     "IsChainLockDoorOpen.2202807660383340401": true,

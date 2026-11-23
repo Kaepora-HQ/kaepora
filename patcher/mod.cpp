@@ -313,14 +313,29 @@ Plan ParsePlan(const nlohmann::json& json) {
     std::set<std::pair<std::string, std::string>> sent;
     for (size_t i = 0; i < nexts.size(); ++i) {
         try {
-            const PlannedEventNext& next = plan.eventNexts.emplace_back(nexts[i].at("flow").get<std::string>(),
-                                                                        nexts[i].at("event").get<std::string>(),
-                                                                        nexts[i].at("next").get<std::string>());
+            const nlohmann::json& to = nexts[i].at("next");
+            const PlannedEventNext& next = plan.eventNexts.emplace_back(
+                nexts[i].at("flow").get<std::string>(), nexts[i].at("event").get<std::string>(),
+                to.is_null() ? std::nullopt : std::optional(to.get<std::string>()));
             if (!sent.emplace(next.flow, next.event).second) {
                 throw std::runtime_error(std::format("{} in {} is listed twice", next.event, next.flow));
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("event_nexts[{}]: {}", i, e.what()));
+        }
+    }
+    const auto entries = json.at("event_entries").get<std::vector<nlohmann::json>>();
+    std::set<std::pair<std::string, std::string>> started;
+    for (size_t i = 0; i < entries.size(); ++i) {
+        try {
+            const PlannedEventEntry& entry = plan.eventEntries.emplace_back(entries[i].at("flow").get<std::string>(),
+                                                                            entries[i].at("entry").get<std::string>(),
+                                                                            entries[i].at("event").get<std::string>());
+            if (!started.emplace(entry.flow, entry.entry).second) {
+                throw std::runtime_error(std::format("{} in {} is listed twice", entry.entry, entry.flow));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("event_entries[{}]: {}", i, e.what()));
         }
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
@@ -1672,6 +1687,15 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
             }
         } catch (const std::exception& e) {
             throw std::runtime_error(std::format("event next {} in {}: {}", next.event, next.flow, e.what()));
+        }
+    }
+    for (const PlannedEventEntry& entry : plan.eventEntries) {
+        try {
+            if (bfevfl::SetEntry(flowAt(entry.flow), entry.entry, entry.event)) {
+                changedFlows.insert(entry.flow);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("event entry {} in {}: {}", entry.entry, entry.flow, e.what()));
         }
     }
     const std::string arrival(ArrivalFlow);

@@ -43,11 +43,18 @@ struct PlannedEventNumber {
 };
 
 // An event of an event flow that goes on to another event of its flow: an action, a join or a sub-flow call by its next
-// event, a switch by each of its cases.
+// event, a switch by each of its cases. With no next, an action, a join or a sub-flow call ends its branch.
 struct PlannedEventNext {
     std::string flow; // RomFS path of the event flow
     std::string event;
-    std::string next;
+    std::optional<std::string> next;
+};
+
+// An entry point of an event flow that starts at an event of its flow.
+struct PlannedEventEntry {
+    std::string flow; // RomFS path of the event flow
+    std::string entry;
+    std::string event;
 };
 
 // A string of a logic module, which the game reads uncompressed, and the string that takes its place. The new string
@@ -158,6 +165,7 @@ struct Plan {
     std::vector<PlannedEventNumber> eventNumbers;
     std::vector<PlannedEventNext> eventNexts;
     std::vector<PlannedModuleText> moduleTexts;
+    std::vector<PlannedEventEntry> eventEntries;
     std::map<std::string, StartValue> startValues;
     std::vector<PlannedStoneText> stoneTexts;
     std::vector<PlannedMessageText> messageTexts;
