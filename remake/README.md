@@ -406,6 +406,15 @@ So every way the 29, Malon, adult Anju and the Business Scrubs that sell once ha
 item. Read from the game's files and not yet seen: a prize talk may still name the usual prize, and the map may keep a
 heart on these places until each is won.
 
+The lost dog's owner gives once a child brings her dog Richard home at night. Read from the game's files: the three lost
+Richards of `Logic/HrlMarket_Child_Dog_Prefab_7574` are made only while `Npc_Hylia_Soldier_003_GateOpen` is true. The
+Richard beside his owner stands until then: `Logic/Market_Child_Prefab_f3a2` removes him while the flag is true and
+`SubEvent_FindRichard_RichardRivival`, which a find sets, is false. The dog's quest, `SubEvent_FindRichard`, stays at
+`NotReady` until the flag is true (`depends_on`), and only Zelda's Letter shown to Kakariko's gate guard sets it. Seen
+in the game: at night before Zelda the dog stayed in the house. So the logic's rule for the place asks for the letter
+shown at the gate, `LOGIC_KAKARIKO_GATE_OPEN`, beside SoH's child at night. The letter is not shuffled, so the place
+opens only after Zelda.
+
 A Great Fairy gives her item once Link has paid her offering. On a return visit she asks whether he has got her own
 item, and sells it again if not (read from her flow). `fountain_claims.tsv` has a row for each of the six: by `location`
 and `flow` as in `gifts.tsv`, the event of her paid path that writes `GreatFairy_AlreadyAppeared` (`paid`), the event

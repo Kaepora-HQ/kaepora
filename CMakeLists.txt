@@ -277,6 +277,7 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      biggoron_quest_shuffles_its_places_as_soh_does_with_adult_trade_off
                      with_malons_place_shuffled_the_vine_hatch_asks_for_the_weird_egg
                      a_route_with_the_weird_egg_elsewhere_still_meets_zelda
+                     a_child_meets_zelda_without_what_the_lost_dog_holds
                      the_gerudo_pass_the_zora_tunic_and_the_light_arrows_are_gifts the_goron_gifts_give_what_is_placed
                      the_route_names_the_rescue_and_zeldas_scene_before_what_waits_for_them
                      a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon

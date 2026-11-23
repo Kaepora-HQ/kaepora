@@ -239,7 +239,8 @@ void RegionTable_Init_Market() {
 
     areaTable[RR_MARKET_DOG_LADY_HOUSE] = Region("Market Dog Lady House", SCENE_DOG_LADY_HOUSE, {}, {
         //Locations
-        LOCATION(RC_MARKET_LOST_DOG,         logic->IsChild && logic->AtNight && logic->HasItem(RG_SPEAK_HYLIAN)),
+        // The game lets the dog out only once Zelda's Letter is shown at Kakariko's gate.
+        LOCATION(RC_MARKET_LOST_DOG,         logic->IsChild && logic->AtNight && logic->Get(LOGIC_KAKARIKO_GATE_OPEN) && logic->HasItem(RG_SPEAK_HYLIAN)),
         LOCATION(RC_MK_LOST_DOG_HOUSE_CRATE, logic->CanBreakCrates()),
     }, {
         //Exits

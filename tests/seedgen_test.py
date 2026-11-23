@@ -1189,8 +1189,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertGreater(len(given), len(GIFT_POOL))
 
     def test_a_route_that_takes_gifts_is_in_reach_in_its_sphere(self):
-        # Seed 10's route takes the Kokiri Sword from the Market gallery, the Golden Gauntlets from the lost dog's owner
-        # and the Hover Boots from the 10-token reward, among other gifts.
+        # Seed 10's route takes Goron's Bracelet from the scrub by the Lost Woods bridge, the Boomerang from the diving
+        # game and the Weird Egg from the 10-token reward, among other gifts.
         log, plan = self.generate("10", GIFTS_SHUFFLED)
         vanilla = {row["location"]: row["item"] for row in GIFT_SITES}
         self.assertTrue(any(location in playthrough_steps(log) and item != vanilla[location]
@@ -1199,9 +1199,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_hints_name_gifts_truly(self):
-        # Seed 23 hints at three gifts by their sentences, the castle's Great Fairy's and the frogs' in the rain among
-        # them.
-        spoiler, plan = self.assert_hints_are_true("23", CHESTS_ALONE | GIFTS_SHUFFLED)
+        # Seed 26 hints at three gifts by their sentences, two of the House of Skulltula's rewards and Bombchu Bowling's
+        # first prize.
+        spoiler, plan = self.assert_hints_are_true("26", CHESTS_ALONE | GIFTS_SHUFFLED)
         sentences = {plain(CHEST_SENTENCES[location].replace("[[1]]", ITEM_NAMES[item]))
                      for location, item in gift_sites(plan)}
         self.assertTrue(sentences & set(spoiler["hints"].values()))
@@ -1341,6 +1341,13 @@ class SeedgenTest(unittest.TestCase):
                     self.assertLess(sphere[earlier], sphere[moat], (seed, earlier, moat))
             self.assertEqual(self.route_out_of_reach(log), [])
 
+    def test_a_child_meets_zelda_without_what_the_lost_dog_holds(self):
+        # The lost dog comes out only once Zelda's Letter is shown at Kakariko's gate. Without that rule, seed 23 puts
+        # the Weird Egg there, and the child needs it to wake Talon on the way to Zelda.
+        log, _ = self.generate("23", GIFTS_SHUFFLED)
+        without_the_dog = {**log["locations"], "Market Lost Dog": "Green Rupee"}
+        self.assertTrue(reach.reachable("Song from Impa", *without_the_dog.items(), settings=log["settings"]))
+
     def assert_gifts_give_what_is_placed(self, gifts, seeds):
         """Each place of gifts writes the item placed there at its one event, and each item, wherever it lands, goes by
         its one name. Returns the kinds of place each item landed at, every item having left its own place in at least one
@@ -1400,9 +1407,9 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(other, {"GF Freed All Carpenters", "Market ToT Light Arrow Cutscene"})
 
     def test_a_seed_with_the_pass_the_tunic_and_the_arrows_elsewhere_reaches_ganon(self):
-        # Seed 2 puts the Gerudo Pass at the crater's Great Fairy, the Zora Tunic in the Forest Temple's boss key chest
-        # and the Light Arrows in the Shadow Temple's map chest, and its route takes the carpenters' rescue and Zelda's
-        # scene for what they open.
+        # Seed 2 puts the Gerudo Pass in the chest of Dampé's race, the Zora Tunic in the scarecrow's chest at Zora's
+        # Fountain and the Light Arrows in Hyrule Field's Fairy Thought chest, and its route takes the carpenters'
+        # rescue and Zelda's scene for what they open.
         log, _ = self.generate("2", CHESTS_ALONE | GIFTS_SHUFFLED)
         for location, item in STORY_GIFTS.items():
             self.assertNotIn((item, log["locations"][location]), ITEM_PAIRS, location)
