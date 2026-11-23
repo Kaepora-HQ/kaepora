@@ -37,14 +37,9 @@ export default script({
 	run: (game) =>
 		Effect.gen(function* () {
 			const chest = "IsTreasureBoxOpen.12786193094758345086";
-			let presses = 0;
-			while ((yield* game.read(chest)) !== true && presses < 15) {
-				yield* game.press("A");
-				yield* game.idle(60);
-				presses += 1;
-			}
+			const presses = yield* game.pressUntil("A", chest, true);
 			const opened = yield* game.check(chest, true);
-			return { opened, shot: yield* game.screenshot("after") };
+			return { presses, opened, shot: yield* game.screenshot("after") };
 		}),
 });
 ```
@@ -107,6 +102,21 @@ Each call is one step of the run's record.
 - `yield* game.check(name, value)` proves an effect: the value holds it now and did not at the start. `game.still`
   proves a value stayed as it started.
 - `const shot = yield* game.screenshot("label")`. Return a picture to keep its name in the result.
+- `const presses = yield* game.pressUntil("A", name, value)` reads the value, then presses and lets 60 frames pass
+  until it holds: 15 presses at most. A value that already holds takes no press. It answers how many presses it took,
+  and its step lists what each press read. Give `{ times, every }` for others, `times` from 1 to 200. When the presses
+  run out, the run ends `failed`, as a wait that ran out.
+- `const talk = yield* game.completeDialog()` reads a talk, a sign or an item's text to its end. It takes a picture,
+  presses A and lets 30 frames pass, until a dialog it saw open is over and Link can move again: 40 presses at most.
+  Its first press may open the dialog. It answers `presses` and `pictures`, the pictures' names in order, and each
+  press is a step with its picture. Give `{ button, times, every }` for others, `times` from 1 to 200.
+  - With nothing to open, it waits 2 seconds after its first press, then the run ends `failed`, saying no dialog
+    opened. A talk, an item's text and a sign each open within 2 frames of the press.
+  - With instant text each picture holds a whole page. At the game's own text speed a press does not hurry the text,
+    so a picture can catch a page half written and a page takes several presses: give more `times`.
+  - A question takes whatever A chooses, the first answer.
+  - Its pictures are 360 lines, about 0.56 MB each, so a talk of 25 presses copies about 14 MB to your machine, once,
+    with the run's record.
 
 ## What an outcome means
 

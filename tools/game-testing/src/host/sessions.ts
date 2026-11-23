@@ -36,13 +36,13 @@ import type {
 	TextSpeed,
 } from "../contract/state.ts";
 import type {
-	Buttons,
+	Button,
 	Picture,
 	PlaceId,
 	RunId,
 	StickPosition,
 } from "../contract/values.ts";
-import { SessionId, Value } from "../contract/values.ts";
+import { Buttons, SessionId, Value } from "../contract/values.ts";
 import type { GameValue } from "../data/game-data.ts";
 import { GameData } from "../data/game-data.ts";
 import type { EmulatorError } from "../emulator/emulator.ts";
@@ -72,11 +72,12 @@ import {
 	SessionNotFound,
 	WaitTimedOut,
 } from "../errors.ts";
+import { pressFrames } from "../game.ts";
 import { digestOf } from "../mod.ts";
 import { decode, read } from "../save/codec.ts";
 import type { Plan } from "../save/state.ts";
 import { StartStates } from "../save/state.ts";
-import { Boot } from "./boot.ts";
+import { Boot, isControl } from "./boot.ts";
 import { Places } from "./places.ts";
 import { Runs } from "./runs.ts";
 
@@ -106,6 +107,16 @@ interface Lease {
 /** How often a wait reads its value. */
 const waitSpacing = Duration.millis(100);
 const screenshotHeight = 720;
+/**
+ * A dialog's pictures are smaller, as a talk takes dozens: about 0.56 MB each where a screenshot takes 2.4 MB (measured
+ * over 47). Its text stays readable at this height (seen on a talk's pages).
+ */
+const dialogHeight = 360;
+/**
+ * How long the first press of `completeDialog` waits for a dialog to open. A talk, an item's text and a sign each opened
+ * within 2 frames of the press (measured), so a dialog not open by then is not coming.
+ */
+const dialogOpening = Duration.seconds(2);
 
 /** What a host needs to start one game. */
 export interface Start {
@@ -149,6 +160,18 @@ export interface HostGame {
 		{ readonly actual: Value; readonly held: boolean },
 		ReadError | ValueRefused | ProvesNothing
 	>;
+	/**
+	 * A picture, a press and `every` frames, until a dialog it saw open is over and Link can move; each press a step with
+	 * its picture. It answers the pictures by name.
+	 */
+	readonly completeDialog: (
+		button: Button,
+		times: number,
+		every: number
+	) => Effect.Effect<
+		{ readonly presses: number; readonly pictures: readonly string[] },
+		EmulatorError | WaitTimedOut
+	>;
 	/** Ends the run with `outcome`, unless it has one already. */
 	readonly end: (outcome: Outcome) => Effect.Effect<void>;
 	/** The run's end: its outcome, from the failure the script ended on or from its checks. */
@@ -169,6 +192,17 @@ export interface HostGame {
 		buttons: Buttons,
 		frames: number
 	) => Effect.Effect<void, EmulatorError>;
+	/**
+	 * Reads the value, then presses until it holds, `times` presses at most, `every` frames apart: one step that lists
+	 * what each press read, answering the presses.
+	 */
+	readonly pressUntil: (
+		buttons: Buttons,
+		value: string,
+		expected: Value,
+		times: number,
+		every: number
+	) => Effect.Effect<number, ReadError | ValueRefused | WaitTimedOut>;
 	readonly read: (
 		values: readonly string[]
 	) => Effect.Effect<Readonly<Record<string, Value>>, ReadError>;
@@ -541,6 +575,106 @@ export class Sessions extends Context.Service<
 							})
 						),
 					idle: (frames) => record("idle", { frames }, send({ frames })),
+					pressUntil: (buttons, name, expected, times, every) =>
+						record(
+							"press-until",
+							{ buttons, value: name, expected, times, every },
+							Effect.gen(function* () {
+								const { entry } = yield* lookUp(name);
+								yield* encodeValue(entry, expected);
+								const began = yield* Clock.currentTimeMillis;
+								const held: Value[] = [];
+								let last = yield* values.read(entry);
+								while (!Equal.equals(last, expected)) {
+									if (held.length === times) {
+										const ended = yield* Clock.currentTimeMillis;
+										return yield* WaitTimedOut.make({
+											value: name,
+											expected,
+											last,
+											within: Duration.millis(ended - began),
+											presses: times,
+										});
+									}
+									yield* send({ buttons, frames: pressFrames });
+									yield* send({ frames: every });
+									last = yield* values.read(entry);
+									held.push(last);
+								}
+								return { presses: held.length, held };
+							}),
+							(pressed) => ({ value: pressed })
+						).pipe(Effect.map((pressed) => pressed.presses)),
+					completeDialog: Effect.fnUntraced(function* (button, times, every) {
+						const began = yield* Clock.currentTimeMillis;
+						const pictures: string[] = [];
+						const inControl = Effect.map(
+							booted.screen,
+							Option.exists(isControl)
+						);
+						/** Whether a dialog opens within `dialogOpening`: Link out of control. */
+						const opens = inControl.pipe(
+							Effect.repeat({
+								schedule: Schedule.spaced(waitSpacing),
+								while: (control) => control,
+							}),
+							Effect.as(true),
+							Effect.timeoutOrElse({
+								duration: dialogOpening,
+								orElse: () => Effect.succeed(false),
+							})
+						);
+						const ranOut = (dialog: "none-opened" | "still-open") =>
+							Effect.flatMap(Clock.currentTimeMillis, (ended) =>
+								WaitTimedOut.make({
+									value: "Link in control",
+									expected: true,
+									last: dialog === "none-opened",
+									within: Duration.millis(ended - began),
+									presses: pictures.length,
+									dialog,
+								})
+							);
+						/** A picture, a press and `every` frames: whether a dialog is open after it. */
+						const pressOnce = (press: number, opened: boolean) =>
+							record(
+								"dialog",
+								{ button, press, every },
+								Effect.gen(function* () {
+									const png = yield* emulator.screenshot({
+										height: dialogHeight,
+									});
+									const { path: taken } = yield* recorder.picture(
+										png,
+										undefined
+									);
+									pictures.push(taken);
+									yield* send({
+										buttons: Buttons.make([button]),
+										frames: pressFrames,
+									});
+									yield* send({ frames: every });
+									const control = yield* inControl;
+									// One the first press opens a moment late is still seen.
+									const late = control && !opened && (yield* opens);
+									return { path: taken, open: !control || late };
+								}),
+								(pressed) => ({ value: pressed, pictures: [pressed.path] })
+							);
+						// A dialog an earlier press opened counts as seen.
+						let seen = !(yield* inControl);
+						for (let press = 1; press <= times; press += 1) {
+							const { open } = yield* pressOnce(press, seen);
+							if (!(open || seen)) {
+								return yield* ranOut("none-opened");
+							}
+							if (!open) {
+								return { presses: press, pictures };
+							}
+							seen = true;
+						}
+						return yield* ranOut("still-open");
+					}),
 					read: (names) =>
 						record(
 							"read",

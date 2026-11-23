@@ -41,6 +41,8 @@ export interface FakeLichii {
 	/** The next answer carries another request's id. */
 	readonly misnumber: Effect.Effect<void>;
 	readonly path: string;
+	/** Plays an event, such as a talk, or ends it, as the game's event manager says. */
+	readonly playing: (event: boolean) => Effect.Effect<void>;
 	/** Sets a value as the game would. */
 	readonly put: (name: string, value: Value) => Effect.Effect<void>;
 	/** Waits until a request for `method` has arrived. */
@@ -235,7 +237,7 @@ const layOut = (
 			true
 		);
 	}
-	return { memory, addresses };
+	return { memory, addresses, events };
 };
 
 type Reply = { readonly result: unknown } | { readonly error: string };
@@ -284,7 +286,7 @@ export const fakeLichii = (options?: {
 		const path =
 			options?.path ?? `\0game-testing-fake-lichii-${process.pid}-${listened}`;
 		const values = options?.values ?? {};
-		const { memory, addresses } = layOut(values, options?.mapCapacity);
+		const { memory, addresses, events } = layOut(values, options?.mapCapacity);
 		// The text routine's instruction at the add-on's site, and the scale after its cave's code.
 		memory.map(
 			Uint8Array.of(
@@ -528,6 +530,14 @@ export const fakeLichii = (options?: {
 			}),
 			drop: closeAll,
 			exit: closeAll.pipe(Effect.andThen(Effect.sync(() => server.stop(true)))),
+			playing: (event) =>
+				Effect.sync(() => {
+					const view = memory.view(events + 0x68n, 8);
+					if (view === undefined) {
+						throw new Error("the fake game has no event manager");
+					}
+					view.setBigUint64(0, event ? 1n : 0n, true);
+				}),
 			put: (name, value) =>
 				Effect.sync(() => {
 					const { address, size, value: held } = stored(name);

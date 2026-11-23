@@ -57,6 +57,10 @@ import type { ValueName, ValueOf } from "./names.ts";
 
 /** A press lasts this many frames unless the script says otherwise: long enough for the game to see it. */
 export const pressFrames = 4;
+export const pressUntilTimes = 15;
+export const pressUntilEvery = 60;
+export const dialogTimes = 40;
+export const dialogEvery = 30;
 
 /** A wait without its own limit fails after this long. */
 const defaultWait = Duration.seconds(10);
@@ -74,6 +78,20 @@ export interface RunningGame {
 		value: Name,
 		expected: ValueOf<Name>
 	) => Effect.Effect<boolean, CommandError | ValueRefused | ProvesNothing>;
+	/**
+	 * Takes a picture, presses `button` and lets `every` frames pass, until a dialog it saw open is over and Link can
+	 * move: A, 40 presses at most and 30 frames apart unless given, 200 at most. Each press is a step with its picture.
+	 * It answers the presses and the pictures' names in order, and fails as a wait that ran out when no dialog opens or
+	 * the presses run out. A question takes whatever the button chooses.
+	 */
+	readonly completeDialog: (options?: {
+		readonly button?: Button;
+		readonly times?: number;
+		readonly every?: number;
+	}) => Effect.Effect<
+		{ readonly presses: number; readonly pictures: readonly string[] },
+		CommandError | WaitTimedOut
+	>;
 	/** Shows a person what to do and waits until they are done. */
 	readonly handOver: (
 		say: string
@@ -88,6 +106,17 @@ export interface RunningGame {
 		buttons: Button | readonly [Button, ...Button[]],
 		options?: { readonly frames?: number }
 	) => Effect.Effect<void, CommandError>;
+	/**
+	 * Reads the value, then presses and lets `every` frames pass until it holds `expected`: 15 presses at most and 60
+	 * frames apart unless given, 200 at most. It answers the presses it took, none for a value that already holds; its
+	 * step lists what each press read. It fails as a wait that ran out when the presses run out.
+	 */
+	readonly pressUntil: <Name extends ValueName>(
+		buttons: Button | readonly [Button, ...Button[]],
+		value: Name,
+		expected: ValueOf<Name>,
+		options?: { readonly times?: number; readonly every?: number }
+	) => Effect.Effect<number, CommandError | ValueRefused | WaitTimedOut>;
 	readonly read: <Name extends ValueName>(
 		value: Name
 	) => Effect.Effect<ValueOf<Name>, CommandError>;
@@ -270,6 +299,28 @@ export class Game extends Context.Service<
 						stick: (position, { frames }) =>
 							call(client.Stick({ session, position, frames })),
 						idle: (frames) => call(client.Idle({ session, frames })),
+						pressUntil: (buttons, value, expected, pressing) =>
+							call(
+								client.PressUntil({
+									session,
+									buttons: Buttons.make(
+										typeof buttons === "string" ? [buttons] : buttons
+									),
+									value,
+									expected,
+									times: pressing?.times ?? pressUntilTimes,
+									every: pressing?.every ?? pressUntilEvery,
+								})
+							),
+						completeDialog: (talking) =>
+							call(
+								client.CompleteDialog({
+									session,
+									button: talking?.button ?? "A",
+									times: talking?.times ?? dialogTimes,
+									every: talking?.every ?? dialogEvery,
+								})
+							),
 						wait: (value, expected, waiting) =>
 							Effect.map(
 								call(

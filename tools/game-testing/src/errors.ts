@@ -346,9 +346,21 @@ export class WaitTimedOut extends Schema.TaggedError<
 	expected: Value,
 	last: Value,
 	within: Schema.DurationFromString,
+	/** The presses the wait made, for one that pressed between reads. */
+	presses: Schema.optionalKey(Schema.Int),
+	/** For a dialog: none opened after the first press, or one was still open when the presses ran out. */
+	dialog: Schema.optionalKey(Schema.Literals(["none-opened", "still-open"])),
 }) {
 	override get message() {
-		return `${this.value} still held ${String(this.last)} after ${Duration.format(this.within)}; the wait expected ${String(this.expected)}.`;
+		const within = Duration.format(this.within);
+		switch (this.dialog) {
+			case "none-opened":
+				return `No dialog opened in the ${within} after the first press: nothing before Link speaks. Stand him before a person, a sign or a chest.`;
+			case "still-open":
+				return `The dialog was still open after ${this.presses} presses, ${within}. Give more times, up to 200, or more every frames at the game's own text speed.`;
+			default:
+				return `${this.value} still held ${String(this.last)} after ${this.presses === undefined ? within : `${this.presses} presses, ${within}`}; the wait expected ${String(this.expected)}.`;
+		}
 	}
 }
 

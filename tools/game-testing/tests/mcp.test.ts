@@ -33,6 +33,9 @@ const chest = "0x1d2a8fff";
 const openChest = (lichii: FakeLichii) => {
 	Effect.runSync(lichii.put("IsTreasureBoxOpen.5005", true));
 };
+const endTalk = (lichii: FakeLichii) => {
+	Effect.runSync(lichii.playing(false));
+};
 const fakePng = new TextEncoder().encode("fake png");
 /** A note of a hundred letters, so a few hundred of them make a long record. */
 const long = Str.repeat(100)("x");
@@ -279,6 +282,59 @@ describe("the MCP tools", () => {
 						from: { _tag: "mod", mod: "Test Mod" },
 					})
 				);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
+		"complete_dialog answers its presses, four of its pictures as images, and where the rest are",
+		() =>
+			Effect.gen(function* () {
+				let presses = 0;
+				const machine = yield* fakeMachine({
+					onA: (lichii) => {
+						presses += 1;
+						if (presses === 6) {
+							endTalk(lichii);
+						}
+					},
+				});
+				const client = yield* toolsOn(machine);
+				const started = yield* call(client, "start_game", {
+					state: { base: "test-base" },
+				});
+				const { session, run } = yield* Schema.decodeEffect(
+					Schema.fromJsonString(Started)
+				)(started.text);
+				yield* Effect.forEach(
+					yield* machine.games,
+					(lichii) => lichii.playing(true),
+					{ concurrency: 1, discard: true }
+				);
+				const talk = yield* call(client, "complete_dialog", {
+					session,
+					every: 2,
+				});
+				expect(talk.images).toHaveLength(4);
+				expect(yield* Schema.decodeEffect(Json)(talk.text)).toEqual({
+					presses: 6,
+					pictures: Arr.map(
+						Arr.range(1, 6),
+						(picture) => `picture-${picture}.png`
+					),
+					more: `the pictures past the fourth are in run ${run}: get_run with pictures shows them`,
+				});
+				const until = yield* call(client, "press_until", {
+					session,
+					buttons: ["A"],
+					value: chest,
+					expected: true,
+					times: 2,
+					every: 2,
+				});
+				expect(until.error).toBe(true);
+				expect(until.text).toContain("after 2 presses");
+				yield* call(client, "stop_game", { session });
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
 	);

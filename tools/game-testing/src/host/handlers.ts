@@ -71,6 +71,14 @@ export const handlers = GameRpcs.toLayer(
 				),
 			Idle: ({ session, frames }) =>
 				Effect.flatMap(sessions.get(session), (game) => game.idle(frames)),
+			PressUntil: ({ session, buttons, value, expected, times, every }) =>
+				Effect.flatMap(sessions.get(session), (game) =>
+					game.pressUntil(buttons, value, expected, times, every)
+				),
+			CompleteDialog: ({ session, button, times, every }) =>
+				Effect.flatMap(sessions.get(session), (game) =>
+					game.completeDialog(button, times, every)
+				),
 			Wait: ({ session, value, expected, within }) =>
 				Effect.flatMap(sessions.get(session), (game) =>
 					game.wait(value, expected, within)

@@ -106,6 +106,8 @@ export interface Booted {
 	readonly build: string;
 	readonly emulator: Emulator;
 	readonly readBack: typeof ReadBack.Type;
+	/** One look at the screen; none while the game has not set up its values. */
+	readonly screen: Effect.Effect<Option.Option<Screen>, EmulatorError>;
 	/** How the game writes its text, as its program holds it. */
 	readonly textSpeed: TextSpeed;
 	readonly values: Values;
@@ -289,6 +291,7 @@ export class Boot extends Context.Service<
 					textSpeed,
 					emulator,
 					values,
+					screen: look,
 					build: status.build,
 					readBack,
 				};

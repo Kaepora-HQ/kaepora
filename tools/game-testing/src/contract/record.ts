@@ -55,6 +55,8 @@ export const Step = Schema.Struct({
 	at: Instant,
 	command: Schema.Literals([
 		"press",
+		"press-until",
+		"dialog",
 		"stick",
 		"idle",
 		"wait",

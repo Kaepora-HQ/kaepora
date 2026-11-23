@@ -29,7 +29,14 @@ import type { RunId } from "../contract/values.ts";
 import { newRunId, Picture } from "../contract/values.ts";
 import { GameData } from "../data/game-data.ts";
 import { KeptScriptExists, NobodyThere, ScriptFailed } from "../errors.ts";
-import { defaultPlaceWait, pressFrames } from "../game.ts";
+import {
+	defaultPlaceWait,
+	dialogEvery,
+	dialogTimes,
+	pressFrames,
+	pressUntilEvery,
+	pressUntilTimes,
+} from "../game.ts";
 import { Places } from "../host/places.ts";
 import { Runs } from "../host/runs.ts";
 import type { Person } from "../host/sessions.ts";
@@ -52,7 +59,7 @@ export const protocols = [
 ] as const;
 
 export const instructions =
-	"These tools run Ocarina of Time, the Switch 2 remake, in the Lichii emulator on the game testing machine. Each game runs in a place of its own and starts from a save the tools build. A test takes four steps. Find each name you need with search_names. Write the start state, and check it with plan_state, which starts no game. Send the whole test as one run_script call: it starts the game, runs your body, and answers the outcome and the pictures. Read past runs with list_runs and get_run. To look around by hand instead, start_game, then press, stick, read_values and screenshot with its session, and stop_game when you are done.";
+	"These tools run Ocarina of Time, the Switch 2 remake, in the Lichii emulator on the game testing machine. Each game runs in a place of its own and starts from a save the tools build. A test takes four steps. Find each name you need with search_names. Write the start state, and check it with plan_state, which starts no game. Send the whole test as one run_script call: it starts the game, runs your body, and answers the outcome and the pictures. Read past runs with list_runs and get_run. To look around by hand instead, start_game, then press, press_until, complete_dialog, stick, read_values and screenshot with its session, and stop_game when you are done.";
 
 /** What a person answers to a hand over: only a yes is done. */
 const Done = Schema.Struct({
@@ -565,6 +572,42 @@ const handlers = tools.toLayer(
 				Effect.flatMap(sessions.get(session), (game) =>
 					game.press(buttons, frames ?? pressFrames)
 				),
+			press_until: ({ session, buttons, value, expected, times, every }) =>
+				Effect.flatMap(sessions.get(session), (game) =>
+					game.pressUntil(
+						buttons,
+						value,
+						expected,
+						times ?? pressUntilTimes,
+						every ?? pressUntilEvery
+					)
+				),
+			complete_dialog: Effect.fnUntraced(function* ({
+				session,
+				button,
+				times,
+				every,
+			}) {
+				const game = yield* sessions.get(session);
+				const talk = yield* game.completeDialog(
+					button ?? "A",
+					times ?? dialogTimes,
+					every ?? dialogEvery
+				);
+				return {
+					presses: talk.presses,
+					pictures: talk.pictures,
+					...(talk.pictures.length > picturesPerAnswer
+						? {
+								more: `the pictures past the fourth are in run ${game.run}: get_run with pictures shows them`,
+							}
+						: {}),
+					shown: yield* picturesOf(
+						game.run,
+						Arr.take(talk.pictures, picturesPerAnswer)
+					),
+				};
+			}),
 			stick: ({ session, position, frames }) =>
 				Effect.flatMap(sessions.get(session), (game) =>
 					game.stick(position, frames)
@@ -638,6 +681,11 @@ export const registrations = McpServer.toolkit(tools, {
 		places: answer,
 		list_runs: answer,
 		screenshot: (picture) => [image(picture)],
+		press_until: answer,
+		complete_dialog: ({ shown, ...rest }) => [
+			text(rest),
+			...Arr.map(shown, image),
+		],
 		get_run: ({ record, pictures }) => [
 			text(record),
 			...Arr.map(pictures, image),

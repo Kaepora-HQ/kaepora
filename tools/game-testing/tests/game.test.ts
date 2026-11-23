@@ -41,6 +41,9 @@ const lamp = "0x33bf0164";
 const openChest = (lichii: FakeLichii) => {
 	Effect.runSync(lichii.put("IsTreasureBoxOpen.5005", true));
 };
+const endTalk = (lichii: FakeLichii) => {
+	Effect.runSync(lichii.playing(false));
+};
 
 /**
  * Starts a game on a fake machine, runs `body` in it, and gives the run's outcome, why its start failed if it did, and
@@ -311,6 +314,160 @@ describe("a game on the host", () => {
 				reason: `${chest} still held false after 1s; the wait expected true.`,
 			});
 		})
+	);
+
+	it.live(
+		"pressUntil presses until the value holds, answers how many presses it took, and its step lists what each press read",
+		() =>
+			Effect.gen(function* () {
+				let presses = 0;
+				const { record } = yield* played(
+					(game) =>
+						Effect.gen(function* () {
+							const took = yield* game.pressUntil("A", chest, true, {
+								every: 2,
+							});
+							yield* game.check(chest, true);
+							return { took };
+						}),
+					{
+						onA: (lichii) => {
+							presses += 1;
+							if (presses === 3) {
+								openChest(lichii);
+							}
+						},
+					}
+				);
+				expect(record.outcome).toEqual({ _tag: "passed" });
+				expect(record.result).toEqual({ took: 3 });
+				expect(Arr.map(record.steps, (step) => step.command)).toEqual([
+					"press-until",
+					"check",
+				]);
+				expect(record.steps[0]?.result).toEqual({
+					_tag: "ok",
+					value: { presses: 3, held: [false, false, true] },
+				});
+			})
+	);
+
+	it.live("pressUntil on a value that already holds presses nothing", () =>
+		Effect.gen(function* () {
+			let presses = 0;
+			const { record } = yield* played(
+				(game) =>
+					Effect.map(
+						game.pressUntil("A", chest, true, { every: 2 }),
+						(took) => ({ took })
+					),
+				{
+					base: { "IsTreasureBoxOpen.5005": true },
+					onA: () => {
+						presses += 1;
+					},
+				}
+			);
+			expect(record.result).toEqual({ took: 0 });
+			expect(presses).toBe(0);
+		})
+	);
+
+	it.live(
+		"pressUntil whose presses run out ends the run failed, as a wait that ran out",
+		() =>
+			Effect.gen(function* () {
+				const { outcome } = yield* played((game) =>
+					game.pressUntil("A", chest, true, { times: 4, every: 2 })
+				);
+				expect(outcome).toMatchObject({
+					_tag: "failed",
+					reason: expect.stringContaining(
+						`${chest} still held false after 4 presses`
+					),
+				});
+			})
+	);
+
+	it.live(
+		"completeDialog takes a picture before each press until the dialog is over, each press a step with its picture",
+		() =>
+			Effect.gen(function* () {
+				let presses = 0;
+				const { record } = yield* played(
+					(game) =>
+						Effect.gen(function* () {
+							const talk = yield* game.completeDialog({ every: 2 });
+							return { presses: talk.presses, pictures: talk.pictures };
+						}),
+					{
+						during: (games) =>
+							Effect.forEach(games, (lichii) => lichii.playing(true), {
+								concurrency: 1,
+								discard: true,
+							}),
+						onA: (lichii) => {
+							presses += 1;
+							if (presses === 3) {
+								endTalk(lichii);
+							}
+						},
+					}
+				);
+				expect(record.result).toEqual({
+					presses: 3,
+					pictures: ["picture-1.png", "picture-2.png", "picture-3.png"],
+				});
+				expect(
+					Arr.map(record.steps, (step) => [step.command, step.pictures])
+				).toEqual([
+					["dialog", ["picture-1.png"]],
+					["dialog", ["picture-2.png"]],
+					["dialog", ["picture-3.png"]],
+				]);
+			})
+	);
+
+	it.live(
+		"completeDialog with no dialog to open fails as a wait that ran out, and says no dialog opened",
+		() =>
+			Effect.gen(function* () {
+				let presses = 0;
+				const { outcome } = yield* played(
+					(game) => game.completeDialog({ every: 2 }),
+					{
+						onA: () => {
+							presses += 1;
+						},
+					}
+				);
+				expect(outcome).toMatchObject({
+					_tag: "failed",
+					reason: expect.stringContaining("No dialog opened"),
+				});
+				expect(presses).toBe(1);
+			})
+	);
+
+	it.live(
+		"completeDialog whose presses run out before the dialog ends ends the run failed",
+		() =>
+			Effect.gen(function* () {
+				const { outcome } = yield* played(
+					(game) => game.completeDialog({ times: 2, every: 2 }),
+					{
+						during: (games) =>
+							Effect.forEach(games, (lichii) => lichii.playing(true), {
+								concurrency: 1,
+								discard: true,
+							}),
+					}
+				);
+				expect(outcome).toMatchObject({
+					_tag: "failed",
+					reason: expect.stringContaining("after 2 presses"),
+				});
+			})
 	);
 
 	it.live(

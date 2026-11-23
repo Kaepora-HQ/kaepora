@@ -6,7 +6,7 @@ import { Option, Schema } from "effect";
 import { Tool, Toolkit } from "effect/ai";
 import { StatePlan } from "../contract/plan.ts";
 import { Outcome, RunSummary } from "../contract/record.ts";
-import { NameMatch, PlaceStatus } from "../contract/rpc.ts";
+import { NameMatch, PlaceStatus, Presses } from "../contract/rpc.ts";
 import {
 	ModFolder,
 	ReadBack,
@@ -14,6 +14,7 @@ import {
 	TextSpeed,
 } from "../contract/state.ts";
 import {
+	Button,
 	Buttons,
 	Frames,
 	Limit,
@@ -47,6 +48,7 @@ import {
 	ValueNotFound,
 	ValueRefused,
 	ValueUnreadable,
+	WaitTimedOut,
 	WriteUnsupported,
 } from "../errors.ts";
 
@@ -74,6 +76,7 @@ const ToolFailure = Schema.Union([
 	DumpFailed,
 	ScriptFailed,
 	RunNotFound,
+	WaitTimedOut,
 ]);
 
 const state = StartState.annotate({
@@ -122,6 +125,8 @@ body is the inside of an Effect.gen function, with game and Effect in scope. Eac
 - yield* game.stick({ stick: "Left", x: 0, y: 1 }, { frames: 30 }) holds a stick; each axis runs from -1 to 1.
 - yield* game.idle(60) lets 60 frames pass. The game runs at about 60 frames a second.
 - yield* game.wait(name, value, { within: "15 seconds" }) waits until a saved value holds value, 10 seconds unless given.
+- const presses = yield* game.pressUntil("A", name, value) reads the value, then presses and lets 60 frames pass until it holds: 15 presses at most, or { times, every } with times from 1 to 200. A value that already holds takes no press. Its step lists what each press read. The game writes an item's flag only when the last page of its text closes, so this is how a body takes an item. When the presses run out the run ends failed.
+- const talk = yield* game.completeDialog() reads a talk, a sign or an item's text to its end: a picture, a press of A and 30 frames, until a dialog it saw open is over and Link can move again, 40 presses at most, or { button, times, every } with times from 1 to 200. Its first press may open the dialog; with nothing to open, the run ends failed, saying no dialog opened. It answers talk.presses and talk.pictures, the pictures' names, in order; each press is a step with its picture. A question takes whatever A chooses. At the game's own text speed a press does not hurry the text, so give more times.
 - const held = yield* game.read(name), and yield* game.set(name, value).
 - yield* game.check(name, value) proves an effect: it holds when the value holds value now and did not at the start. yield* game.still(name, value) proves the value stayed as it started.
 - const shot = yield* game.screenshot("after-chest") keeps a picture; return it to see it.
@@ -258,6 +263,44 @@ export const press = Tool.make("press", {
 	.annotate(Tool.Destructive, false)
 	.annotate(Tool.OpenWorld, false);
 
+export const pressUntil = Tool.make("press_until", {
+	description:
+		"Reads the value in the session's game, then presses the buttons and lets every frames pass until it holds expected: 15 presses at most and 60 frames apart unless given, times from 1 to 200. It answers the presses it took, none for a value that already holds, and its step in the record lists what each press read. When they run out it fails as a wait that ran out, with what the value last held. The game writes an item's flag only when the last page of its text closes, so this is how a body takes an item: press A until IsGet.<item> or the chest's record holds.",
+	parameters: Schema.Struct({
+		session,
+		buttons: Buttons,
+		value: Schema.String,
+		expected: Value,
+		times: Schema.optionalKey(Presses),
+		every: Schema.optionalKey(Frames),
+	}),
+	success: Schema.Int,
+	failure: ToolFailure,
+})
+	.annotate(Tool.Destructive, false)
+	.annotate(Tool.OpenWorld, false);
+
+export const completeDialog = Tool.make("complete_dialog", {
+	description:
+		"Takes a picture of the session's game, presses button, A unless given, and lets every frames pass, 30 unless given, until a dialog it saw open is over and Link can move: 40 presses at most, times from 1 to 200. Call it with a talk, a sign or an item's text open, or let its first press open one; with nothing to open, it fails, saying no dialog opened. It answers the presses and every picture's name in order, and the first four pictures as images; get_run with pictures shows the rest. With instant text each picture holds a whole page; at the game's own text speed a press does not hurry the text, so a picture can catch a page half written and a page takes several presses. A question takes whatever the button chooses. When the presses run out with the dialog still open, it fails as a wait that ran out.",
+	parameters: Schema.Struct({
+		session,
+		button: Schema.optionalKey(Button),
+		times: Schema.optionalKey(Presses),
+		every: Schema.optionalKey(Frames),
+	}),
+	success: Schema.Struct({
+		presses: Schema.Int,
+		pictures: Schema.Array(Schema.String),
+		more,
+		shown: Schema.Array(Picture),
+	}),
+	failure: ToolFailure,
+})
+	// Its pictures and steps are kept with the run.
+	.annotate(Tool.Destructive, false)
+	.annotate(Tool.OpenWorld, false);
+
 export const stick = Tool.make("stick", {
 	description:
 		"Holds a stick at a position in the session's game for frames frames, then lets it go back to the centre. x and y run from -1 to 1, and y 1 is the stick pushed up. The game runs at about 60 frames a second, so 60 frames is about a second of walking.",
@@ -380,6 +423,8 @@ export const tools = Toolkit.make(
 	startGame,
 	stopGame,
 	press,
+	pressUntil,
+	completeDialog,
 	stick,
 	readValues,
 	setValues,

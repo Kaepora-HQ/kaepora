@@ -35,6 +35,7 @@ import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
 import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
+	Button,
 	Buttons,
 	Frames,
 	Limit,
@@ -72,6 +73,10 @@ const StartErrors = Schema.Union([
 	ValueRefused,
 ]);
 
+/** How many presses a command that presses until something holds makes at most. */
+export const Presses = Schema.Int.check(
+	Schema.isBetween({ minimum: 1, maximum: 200 })
+);
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([
 	Schema.TaggedStruct("started", {
@@ -145,6 +150,41 @@ export class GameRpcs extends RpcGroup.make(
 			frames: Frames,
 		},
 		error: CommandErrors,
+	}),
+	/**
+	 * Reads the value, then presses and lets `every` frames pass until it holds `expected`, `times` presses at most. It
+	 * answers the presses it took, none for a value that already holds, and fails with `WaitTimedOut` when they run out.
+	 */
+	Rpc.make("PressUntil", {
+		payload: {
+			session: SessionId,
+			buttons: Buttons,
+			value: Schema.String,
+			expected: Value,
+			times: Presses,
+			every: Frames,
+		},
+		success: Schema.Int,
+		error: Schema.Union([CommandErrors, WaitTimedOut, ValueRefused]),
+	}),
+	/**
+	 * Takes a picture, presses `button` and lets `every` frames pass, until a dialog it saw open is over and Link can move,
+	 * `times` presses at most. Each press is a step with its picture. It answers the presses and the pictures in order,
+	 * and fails with `WaitTimedOut` when no dialog opens or the presses run out.
+	 */
+	Rpc.make("CompleteDialog", {
+		payload: {
+			session: SessionId,
+			button: Button,
+			times: Presses,
+			every: Frames,
+		},
+		/** The pictures by name, in the run's folder; a far caller's copy brings them. */
+		success: Schema.Struct({
+			presses: Schema.Int,
+			pictures: Schema.Array(Schema.String),
+		}),
+		error: Schema.Union([CommandErrors, WaitTimedOut]),
 	}),
 	Rpc.make("Stick", {
 		payload: { session: SessionId, position: StickPosition, frames: Frames },
