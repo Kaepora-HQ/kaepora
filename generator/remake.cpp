@@ -1243,14 +1243,16 @@ static const EventNext tutorialNexts[] = {
     { "Event/EventFlow/Dm_FairyFountain_Power.bfevfl.zs", "Event141", std::nullopt },
 };
 
-nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
+nlohmann::ordered_json RemakePlan(const std::string& seed, uint32_t id, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
                                   const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas,
                                   const std::vector<RemakeSongPlace>& songs, const SeedSettings& settings,
                                   const std::map<RandomizerCheck, std::string>& items,
                                   const std::vector<StoneHint>& hints, const std::vector<MessageText>& messages) {
-    nlohmann::ordered_json plan = { { "seed", seed }, { "chests", nlohmann::ordered_json::array() } };
+    nlohmann::ordered_json plan = { { "seed", seed },
+                                    { "seed_id", id },
+                                    { "chests", nlohmann::ordered_json::array() } };
     for (const RemakeChest& chest : chests) {
         if (!chest.shuffled) {
             continue;

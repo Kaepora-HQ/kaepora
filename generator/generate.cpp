@@ -6,6 +6,7 @@
 #include "soh/Enhancements/randomizer/3drando/playthrough.hpp"
 #include "soh/util.h"
 #include "hints.h"
+#include "patcher/bytes.h"
 #include "remake.h"
 #include "setup.h"
 #include "version.h"
@@ -305,5 +306,11 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
                                              ? PickHints(hintTables, items, named)
                                              : std::vector<StoneHint>{};
     return { SpoilerLog(seed, settings, locations, shops, gifts, skulltulas, songs, hints, characterHints),
-             RemakePlan(seed, chests, looseItems, shops, gifts, skulltulas, songs, settings, items, hints, messages) };
+             RemakePlan(seed, SeedId(KAEPORA_VERSION, seed, ToJson(settings)), chests, looseItems, shops, gifts,
+                        skulltulas, songs, settings, items, hints, messages) };
+}
+
+uint32_t SeedId(const std::string& version, const std::string& seed, const nlohmann::json& settings) {
+    // nlohmann::json keeps an object's keys sorted, so the generator's settings and a log's give one text.
+    return Murmur3(nlohmann::json::array({ version, seed, settings }).dump());
 }

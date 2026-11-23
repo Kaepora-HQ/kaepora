@@ -89,6 +89,10 @@ target_link_libraries(kaepora-seedgen PRIVATE kaepora-generator)
 add_executable(kaepora-reach generator/reach.cpp)
 target_link_libraries(kaepora-reach PRIVATE kaepora-generator)
 
+add_executable(kaepora-seed-id-test tests/seed_id_test.cpp)
+target_link_libraries(kaepora-seed-id-test PRIVATE kaepora-generator)
+target_compile_options(kaepora-seed-id-test PRIVATE ${WARNINGS})
+
 # Designated initializers leave out the members that start empty, which -Wextra would report. clang-cl reads -Wall as
 # -Weverything, and its /W4 is Clang's -Wall -Wextra.
 if(MSVC)
@@ -225,6 +229,7 @@ endif()
 enable_testing()
 add_test(NAME upstream-tool COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/upstream_test.py)
 add_test(NAME patch-byml-value COMMAND kaepora-patch-value-test)
+add_test(NAME seed-id COMMAND kaepora-seed-id-test)
 foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest plan_matches_spoiler
                      spoiler_log_lists_the_shuffled_locations_and_the_route
                      a_seed_with_no_settings_shuffles_what_sohs_default_seed_shuffles

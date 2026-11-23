@@ -282,9 +282,9 @@ struct MessageText {
     std::string tagged;
 };
 
-// The plan the patcher reads: each actor of each shuffled chest, in table order, with the remake item placed there,
-// with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest, and with Malon's place
-// shuffled the vine climb's hatch that waits for the Weird Egg's record. Then the event flow
+// The plan the patcher reads: the seed's id, each actor of each shuffled chest, in table order, with the remake item
+// placed there, with the songs shuffled the Desert Colossus's ways out that wait for the Spirit quest, and with Malon's
+// place shuffled the vine climb's hatch that waits for the Weird Egg's record. Then the event flow
 // strings every seed changes, and each site of each shuffled gift with its item and the text that keeps the Stone of
 // Agony's guide shut after the 20-token reward. With the songs shuffled, the windmill's and the Bolero's lessons then
 // name their own lesson where they named their song, and each song place's lesson takes the melody type, the line and
@@ -294,7 +294,7 @@ struct MessageText {
 // slot a count leaves with the game's goods it sells, each shuffled skulltula with its item, each shuffled loose item
 // that gives another item than its own, with that item, and for each step the seed starts with the actors of the finds
 // that bring a new game to it.
-nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<RemakeChest>& chests,
+nlohmann::ordered_json RemakePlan(const std::string& seed, uint32_t id, const std::vector<RemakeChest>& chests,
                                   const std::vector<RemakeChest>& looseItems, const RemakeShops& shops,
                                   const std::vector<RemakeGift>& gifts,
                                   const std::vector<RemakeSkulltula>& skulltulas,
