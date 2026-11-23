@@ -174,6 +174,7 @@ GIFT_GROUP = {row["location"]: row["group"] for row in GIFT_SITES}
 # the place that holds it in SoH's own list.
 KEPT_IN_CHESTS_AND_CALLS = {"Item_WeirdEgg": ("Malon's Egg", "HC Malon Egg"),
                             "Item_Ocarina_Fairy": ("Ocarinas", "LW Gift From Saria"),
+                            "Item_Ocarina_Time": ("Ocarinas", "HF Ocarina of Time Item"),
                             "Item_ClaimCheck": ("Biggoron Quest", "Kak Anju as Adult"),
                             "Item_Sword_Biggoron": ("Biggoron Quest", "DMT Trade Claim Check")}
 SCRUB_FLOW = "Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs"
@@ -1806,10 +1807,10 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 23's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf, and no
+        # Seed 195's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf, and no
         # place of the forest holds a major item, so SoH's rule alone would call the forest foolish. The seed draws
         # foolish hints, which the hint check finds true.
-        spoiler, _ = self.assert_hints_are_true("23", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+        spoiler, _ = self.assert_hints_are_true("195", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
                                                 | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
         steps = playthrough_steps(spoiler)
         self.assertEqual({step: item for step, item in steps.items() if step.startswith("KF ")},
@@ -2005,10 +2006,22 @@ class SeedgenTest(unittest.TestCase):
                              & plan["start_values"].keys(), skip)
             self.assertEqual(self.route_out_of_reach(spoiler), [], skip)
 
+    def test_a_route_takes_the_moat_for_its_scene_whatever_the_moat_holds(self):
+        # The Door of Time opens after Zelda's scene at the moat, whatever her place gives, and Ganon waits beyond it
+        # for adult Link. So every route takes the moat's place, though in some seeds it holds no ocarina.
+        other = 0
+        for seed in map(str, range(1, 21)):
+            log, _ = self.generate(seed, {"Gifts": ["Ocarinas"]})
+            self.assertIn("HF Ocarina of Time Item", playthrough_steps(log), seed)
+            other += log["locations"]["HF Ocarina of Time Item"] != "Progressive Ocarina"
+            self.assertEqual(self.route_out_of_reach(log), [], seed)
+        self.assertTrue(other)
+
     def test_a_started_fairy_ocarina_leaves_one_ocarina_out_and_sarias_place_in(self):
         # With its ocarinas shuffled, SoH's pool holds one ocarina fewer for a started one, and Saria's place stays in
         # the shuffle. So a seed that starts with the Fairy Ocarina leaves hers out of the pool, with a Red Rupee in its
-        # stead, and her place holds what the seed puts there, a step of the route in some seeds.
+        # stead, keeps the Ocarina of Time, and her place holds what the seed puts there, a step of the route in some
+        # seeds.
         on_route = 0
         for seed in map(str, range(1, 21)):
             spoiler, plan = self.generate(seed, {"Gifts": ["Ocarinas"], "Start with": ["Fairy Ocarina"]})
@@ -2016,6 +2029,7 @@ class SeedgenTest(unittest.TestCase):
             unstarted = placed_remake_items(*self.generate(seed, {"Gifts": ["Ocarinas"]}))
             self.assertIn("Item_Ocarina_Fairy", unstarted.values(), seed)
             self.assertNotIn("Item_Ocarina_Fairy", placed.values(), seed)
+            self.assertIn("Item_Ocarina_Time", placed.values(), seed)
             self.assertEqual(list(placed.values()).count("TBox_Rupee_Red"),
                              list(unstarted.values()).count("TBox_Rupee_Red") + 1, seed)
             on_route += "LW Gift From Saria" in playthrough_steps(spoiler)

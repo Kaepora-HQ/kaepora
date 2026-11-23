@@ -44,7 +44,7 @@ Under **Shuffle**, **Gifts** opens a list. Tick a group, or set **Deku Scrubs**,
 - **Great Fairies:** the gifts of the six Great Fairies.
 - **Story gifts:** the scene after the carpenters' rescue, Darunia's dance, his son's thanks once you stop him rolling, King Zora's thanks and Zelda's scene in the Temple of Time.
 - **Malon's Egg:** what Malon hands you at the castle.
-- **Ocarinas:** Saria's gift on the bridge.
+- **Ocarinas:** Saria's gift on the bridge and the Ocarina of Time in the castle's moat.
 - **Biggoron Quest:** what Anju hands you as an adult, and what Biggoron hands you for his receipt.
 - **Deku Scrubs**, set to **One Time Rewards:** the Deku theater's two prizes, the two Deku Scrubs that sell a bigger bag, and the two that sell a Piece of Heart.
 
@@ -56,7 +56,7 @@ The Gerudo Pass opens nothing by itself. Once you free the last carpenter, the G
 
 With **Malon's Egg** ticked, her egg is one of the shuffled items, and Malon at the castle hands you the seed's item. You need both the egg and her talk, in either order. Once you have both, the egg hatches into the Chicken by itself after about a minute and a half, or at once at the top of the vines on the way up to the castle.
 
-With **Ocarinas** ticked, the Fairy Ocarina is one of the shuffled items, and Saria hands you the seed's item on the bridge as you leave the forest as a child. She still holds out an ocarina in her scene. You need an ocarina to play a song, and to start Malon's lesson and the windmill man's. Every other lesson teaches its song with no ocarina in hand, and Link mimes the notes. If you start with the Fairy Ocarina, the seed shuffles one ocarina fewer, and Saria still hands you the seed's item.
+With **Ocarinas** ticked, the Fairy Ocarina and the Ocarina of Time are among the shuffled items. Saria hands you the seed's item on the bridge as you leave the forest as a child, and what Zelda leaves you in the castle's moat is the seed's item too. Both scenes still show an ocarina, and Zelda still teaches her song. Either ocarina plays every song, so you may find the Ocarina of Time first and the Fairy Ocarina later. You need an ocarina to play a song, and to start Malon's lesson and the windmill man's. Every other lesson teaches its song with no ocarina in hand, and Link mimes the notes. The Door of Time opens to the Song of Time once Zelda's scene at the moat has played, whatever she left you. If you start with the Fairy Ocarina, the seed shuffles the Ocarina of Time alone, and Saria still hands you the seed's item.
 
 With **Biggoron Quest** ticked, Anju as an adult and Biggoron on Death Mountain hand you the seed's items, and the Biggoron Receipt and the Biggoron Sword are among the shuffled items. The Pocket Egg is not, so the trade that starts with it never begins. Show Biggoron the receipt for his item. He is ready three game days after your game begins, and until then he tells you it is still in the works. He hands his item over once, and his lines still speak of the sword whatever he holds. Anju makes her offer whether you see her before him or after.
 
@@ -102,8 +102,8 @@ Whatever you choose, the owner of the Treasure Chest Game names the prize your s
 
 Four settings open the world sooner. They cover the way out of Kokiri Forest, the Door of Time, the Rainbow Bridge and Ganon's trials.
 
-- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both. With any of the three, a seed may never send you into the Deku Tree: the Ocarina of Time waits for King Dodongo and Barinade, not for Queen Gohma, and so does a **Closed** Door of Time. In a **Closed** forest such a seed takes you out through the Lost Woods.
-- **Door of Time.** **Closed** is the game as you know it: the door opens when you play the Song of Time at the altar, once Zelda has given you the Ocarina of Time. **Open** has the door standing open from the start, so you can pull the Master Sword and grow up at any time. Zelda, Impa, the Ocarina of Time and the Song of Time still wait for you as a child, and you can put the sword back to be a child again. If you beat King Dodongo as an adult first, Darunia thanks you with adult Link drawn at a child's size.
+- **Kokiri Forest.** **Closed** is the game as you know it. **Closed Deku** opens the way out of the forest from the start, and Mido still wants a sword and a shield before he lets you through to the Deku Tree. **Open** opens both. With any of the three, a seed may never send you into the Deku Tree: Zelda's scene at the moat waits for King Dodongo and Barinade, not for Queen Gohma, and so does a **Closed** Door of Time. In a **Closed** forest such a seed takes you out through the Lost Woods.
+- **Door of Time.** **Closed** is the game as you know it: the door opens when you play the Song of Time at the altar, once Zelda has met you at the castle's moat. **Open** has the door standing open from the start, so you can pull the Master Sword and grow up at any time. Zelda, Impa, her scene at the moat and the Song of Time still wait for you as a child, and you can put the sword back to be a child again. If you beat King Dodongo as an adult first, Darunia thanks you with adult Link drawn at a child's size.
 - **Rainbow Bridge.** **After the Light Arrows** is the game's own rule. **Always open** has the bridge standing from the start.
 - **Ganon's trials.** **All six** leaves the barrier around Ganon's Tower to you. **None** takes it away.
 

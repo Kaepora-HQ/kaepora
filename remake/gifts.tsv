@@ -25,6 +25,8 @@ GF HBA 1500 Points	Event/EventFlow/Minigame_HorsebackArchery.bfevfl.zs	Event319	
 GF Freed All Carpenters	Event/EventFlow/Dm_Gerudo_0025.bfevfl.zs	Event294	ActorName	Item_Token_Gerudo	Item_Token_Gerudo	Story gifts	
 HF Deku Scrub Grotto	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event645	ActorName	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)	
 HF Deku Scrub Grotto	Event/EventFlow/Enemy_Scrub_Business_Common.bfevfl.zs	Event653	Value	Obj_Heart_Piece	Obj_Heart_Piece	Deku Scrubs (One Time Rewards)	
+HF Ocarina of Time Item	Event/EventFlow/Dm_MelodyGet_Time.bfevfl.zs	Event70	Actor	Item_Ocarina_Time	Item_Ocarina_Time	Ocarinas	
+HF Ocarina of Time Item	Event/EventFlow/Dm_MelodyGet_Time.bfevfl.zs	Event229	ActorName	Item_Ocarina_Time	Item_Ocarina_Time	Ocarinas	
 Market Bombchu Bowling Second Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event143	ReveiveItem	Obj_Heart_Piece	Obj_Heart_Piece	Minigames	
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event304	ReveiveItem	Item_BombBag_Medium	Item_BombBag_Medium	Minigames	
 Market Bombchu Bowling First Prize	Event/EventFlow/MiniGame_BombchuBowling.bfevfl.zs	Event306	ReveiveItem	Item_BombBag_Large	Item_BombBag_Medium	Minigames	
