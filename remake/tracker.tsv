@@ -84,17 +84,8 @@ items	3	4	Bottle 5	Item_Bottle	PouchData.BottleE.StockNum	Int	1
 				Item_Bottle_Fairy	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	Fairy						
 				Item_Bottle_Milk	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	MaxMilk						
 				Item_Bottle_HalfMilk	PlayerStatus.AssignableItem.BottleInfo.BottleE.BottleItem	Enum	HalfMilk						
-items	3	5	Child trade item	Item_WeirdEgg	PouchData.Item_WeirdEgg.StockNum	Int	1						
-				Item_AlarmCucco	PouchData.Item_AlarmCucco.StockNum	Int	1						
-				Item_ZeldaLetter	PouchData.Item_ZeldaLetter.StockNum	Int	1						
-				Armor_Child_Mask_Keaton	PouchData.Armor_Child_Mask_Keaton.StockNum	Int	1						
-				Armor_Child_Mask_Skull	PouchData.Armor_Child_Mask_Skull.StockNum	Int	1						
-				Armor_Child_Mask_Spooky	PouchData.Armor_Child_Mask_Spooky.StockNum	Int	1						
-				Armor_Child_Mask_Bunny	PouchData.Armor_Child_Mask_Bunny.StockNum	Int	1						
-				Armor_Child_Mask_Truth	PouchData.Armor_Child_Mask_Truth.StockNum	Int	1						
-				Armor_Child_Mask_Goron	PouchData.Armor_Child_Mask_Goron.StockNum	Int	1						
-				Armor_Child_Mask_Zora	PouchData.Armor_Child_Mask_Zora.StockNum	Int	1						
-				Armor_Child_Mask_Gerudo	PouchData.Armor_Child_Mask_Gerudo.StockNum	Int	1						
+items	3	5	Magic	Item_FairyBless_MP	PlayerStatus.MPMax	Int	240						
+				Item_FairyBless_MPDouble	PlayerStatus.MPMax	Int	480						
 equipment	0	0	Kokiri Sword	Weapon_Sword_Kokiri	PouchData.Weapon_Sword_Kokiri.StockNum	Int	1						
 equipment	0	1	Master Sword	Weapon_Sword_Master	PouchData.Weapon_Sword_Master.StockNum	Int	1						
 equipment	0	2	Biggoron's Sword	Weapon_Sword_Giant	PouchData.Weapon_Sword_Giant.StockNum	Int	1						
@@ -116,9 +107,18 @@ equipment	2	1	Scale	Item_Scale_Silver	PouchData.Item_Scale_Silver.StockNum	Int	1
 				Item_Scale_Gold	PouchData.Item_Scale_Gold.StockNum	Int	1						
 equipment	2	2	Wallet	Item_Wallet_Medium	PouchContentMaxNum.Rupee	Int	500						
 				Item_Wallet_Large	PouchContentMaxNum.Rupee	Int	1000						
-equipment	2	3	Magic	Item_FairyBless_MP	PlayerStatus.MPMax	Int	240						
-				Item_FairyBless_MPDouble	PlayerStatus.MPMax	Int	480						
-equipment	2	4	Gift of Halved Damage	Item_FairyBless_DefenseDouble	PouchData.Item_FairyBless_DefenseDouble.StockNum	Int	1						
+equipment	2	3	Gift of Halved Damage	Item_FairyBless_DefenseDouble	PouchData.Item_FairyBless_DefenseDouble.StockNum	Int	1						
+equipment	2	4	Child trade item	Item_WeirdEgg	PouchData.Item_WeirdEgg.StockNum	Int	1						
+				Item_AlarmCucco	PouchData.Item_AlarmCucco.StockNum	Int	1						
+				Item_ZeldaLetter	PouchData.Item_ZeldaLetter.StockNum	Int	1						
+				Armor_Child_Mask_Keaton	PouchData.Armor_Child_Mask_Keaton.StockNum	Int	1						
+				Armor_Child_Mask_Skull	PouchData.Armor_Child_Mask_Skull.StockNum	Int	1						
+				Armor_Child_Mask_Spooky	PouchData.Armor_Child_Mask_Spooky.StockNum	Int	1						
+				Armor_Child_Mask_Bunny	PouchData.Armor_Child_Mask_Bunny.StockNum	Int	1						
+				Armor_Child_Mask_Truth	PouchData.Armor_Child_Mask_Truth.StockNum	Int	1						
+				Armor_Child_Mask_Goron	PouchData.Armor_Child_Mask_Goron.StockNum	Int	1						
+				Armor_Child_Mask_Zora	PouchData.Armor_Child_Mask_Zora.StockNum	Int	1						
+				Armor_Child_Mask_Gerudo	PouchData.Armor_Child_Mask_Gerudo.StockNum	Int	1						
 equipment	2	5	Adult trade item	Item_PocketEgg	PouchData.Item_PocketEgg.StockNum	Int	1						
 				Item_PocketCucco	PouchData.Item_PocketCucco.StockNum	Int	1						
 				Item_CojiroCucco	PouchData.Item_CojiroCucco.StockNum	Int	1						
