@@ -1429,7 +1429,9 @@
     "IsChainLockDoorOpen.4189300454150217955": true,
     "IsChainLockDoorOpen.2202807660383340401": true,
     "Gimmick_DefeatEnemy_Open_ForestTemple_03": true,
-    "SpiritTemple_Room07_Unlocked": true
+    "SpiritTemple_Room07_Unlocked": true,
+    "HyruleField_ArriveEntrance": true,
+    "HavePlayedEvent.Dm_HrlField_0020": true
   },
   "stone_texts": [
     {

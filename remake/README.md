@@ -908,3 +908,12 @@ A mod also rests on a step in these places, where no write changes:
   forward (read).
 - With "Opening" at "Skipped", `HavePlayedEvent.Dm_Kokiri_0030` starts true. It is the flag that forces `Meet_DekuTree`
   to Ready, Navi waking Link.
+- In every seed `HyruleField_ArriveEntrance` and `HavePlayedEvent.Dm_HrlField_0020` start true. The program holds the
+  world's time until the first is true, which only the owl's scene on the child's first walk into Hyrule Field sets, and
+  stops the afternoon at 15:00 until the second, the played flag of Impa's send-off film, is true (read; the stop at
+  15:00 seen in the game). SoH's logic gives a child day and night from the start. Seen in the game with both values: a
+  child's new game read 06:19 in Kokiri Forest and 13:43 in Hyrule Field before the owl, the owl's scene still played
+  and moved the day on, and the time ran on to night. Nothing on the send-off's way asks the film's flag (read), and
+  Impa's lesson, her yes and the send-off's scene played with it already true, leaving `DoorOfTime` at Step02 and
+  `Get_StoneOfFire` at KakarikoVillageNpc as in the game (seen). The flag also picks the later lines of two Market
+  talks, and lets the owl at Zora's River wait for a child who has not learned Saria's Song (read).

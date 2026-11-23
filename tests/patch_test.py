@@ -20,7 +20,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
        python3 -I tests/patch_test.py seed-plan <kaepora-patch> <game.nup> <a plan kaepora-seedgen wrote>
        python3 -I tests/patch_test.py vine-hatch <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py fountain-claims|biggoron-place|mido-hint-every-talk|darunias-dance| \
-           darunias-son <kaepora-patch> <game.nup> <kaepora-seedgen>
+           darunias-son|time-runs-from-the-start <kaepora-patch> <game.nup> <kaepora-seedgen>
        python3 -I tests/patch_test.py larger-plan|bad-input|size-table|size-table-unchanged|together|gift| \
            other-version|start-values|shop|shop-table|new-actors|skulltulas|skulltula-table|loose-items| \
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
@@ -2364,6 +2364,19 @@ def darunias_son(patch, game, seedgen):
         assert ours == expected, settings
 
 
+def time_runs_from_the_start(patch, game, seedgen):
+    """In every seed a new game starts with the world's time running and free to pass 15:00 into the night. The game
+    holds the time until the owl's scene on the child's first walk into Hyrule Field sets the first value, and stops the
+    afternoon at 15:00 until Impa's send-off film has played, which the second value records. Seed 2 plays the opening,
+    so its plan starts no scene of the opening played."""
+    for seed, settings in (("1", {}), ("2", {"Opening": "Played", "Cutscenes": "Played"})):
+        mod = patched(patch, game, generated_plan(seedgen, seed, settings))
+        data = game.game_data_list(mod[GAME_DATA_LIST])["Data"]
+        for name in ("HyruleField_ArriveEntrance", "HavePlayedEvent.Dm_HrlField_0020"):
+            started = next(entry for entry in data["Bool"] if entry["Hash"] == (UINT, murmur3(name)))
+            assert started["DefaultValue"] == (BOOL, 1), (seed, name, started)
+
+
 def assert_pickup_copy(game, mod, item, copy):
     ours = game.pack(mod[f"Pack/Actor/{copy}.pack.zs"])
     theirs = game.pack(game.read(f"Pack/Actor/{item}.pack.zs"))
@@ -3415,6 +3428,7 @@ def main():
         "mido-hint-every-talk": mido_hint_every_talk,
         "darunias-dance": darunias_dance,
         "darunias-son": darunias_son,
+        "time-runs-from-the-start": time_runs_from_the_start,
         "fountain-claims": fountain_claims,
         "tested-song-mod": tested_song_mod,
         "song-table": song_table,

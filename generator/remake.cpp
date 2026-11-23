@@ -812,6 +812,12 @@ static constexpr const char* startFlags[] = {
     // counts for the temple expect an adult to walk from the statue room into the climb room. Set from the start, this
     // value lifts both of the door's locks, and the wall stays standing.
     "SpiritTemple_Room07_Unlocked",
+    // The world's time stands still until the owl's scene on the child's first walk into Hyrule Field sets
+    // HyruleField_ArriveEntrance, and the afternoon stops at 15:00 until Impa's send-off film has played. SoH's logic
+    // gives a child day and night from the start, so with both set the time runs from the first frame and through the
+    // night.
+    "HyruleField_ArriveEntrance",
+    "HavePlayedEvent.Dm_HrlField_0020",
 };
 
 struct EventText {
