@@ -1335,10 +1335,6 @@ class SeedgenTest(unittest.TestCase):
                                            {"Big Deku Seed Bullet Bag", "Biggest Deku Seed Bullet Bag"},
                                            "LW Target in Woods", others=("Boomerang",))
 
-    def test_the_rolling_goron_waits_for_the_small_bomb_bag(self):
-        self.assert_bags_count_for_nothing("Progressive Bomb Bag", {"Big Bomb Bag", "Biggest Bomb Bag"},
-                                           "GC Rolling Goron as Child")
-
     def test_a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver(self):
         # The start holds the bigger quiver, so the Kakariko gallery adds no copy of it to the pool.
         spoiler, plan = self.generate("1480", GIFTS_SHUFFLED | {"Start with": ["Fairy Bow (40 arrows)"]})
@@ -1814,8 +1810,8 @@ class SeedgenTest(unittest.TestCase):
             self.assert_hints_are_true(seed, EVERY_SETTING_CHANGED)
 
     def test_a_place_called_foolish_holds_nothing_the_seed_needs(self):
-        # Seed 27's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
-        spoiler, _ = self.assert_hints_are_true("27", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
+        # Seed 9's route takes nothing in Kokiri Forest but the Deku Shield on the Kokiri Shop's kept shelf.
+        spoiler, _ = self.assert_hints_are_true("9", GIFTS_SHUFFLED | SKULLTULAS_SHUFFLED | SONGS_SHUFFLED
                                                 | LOOSE_SHUFFLED | REWARDS_SHUFFLED)
         self.assertEqual([step for step in playthrough_steps(spoiler) if step.startswith("KF ")], ["KF Shop Item 1"])
 
@@ -2096,11 +2092,11 @@ class SeedgenTest(unittest.TestCase):
 
     def test_hints_name_the_place_a_skulltula_stands_in(self):
         # Seed 407's route takes the Bomb Bag from the Hyrule Field tree skulltula that SoH calls LLR GS Back Wall, and
-        # a hint says Hyrule Field is on the way of the hero. Seed 402's route takes the Fairy Bow from HC OGC GS, in
-        # the scene the game calls Ganondorf's Castle, and a hint says the Fairy Bow is at Ganondorf's Castle.
+        # a hint says Hyrule Field is on the way of the hero. Seed 499's route takes the Lens of Truth from HC OGC GS,
+        # in the scene the game calls Ganondorf's Castle, and a hint says the Lens of Truth is at Ganondorf's Castle.
         for seed, skulltula, hint in (
                 ("407", "LLR GS Back Wall", "They say that Hyrule Field is on the way of the hero."),
-                ("402", "HC OGC GS", "They say that the Fairy Bow can be found at Ganondorf's Castle.")):
+                ("499", "HC OGC GS", "They say that the Lenses of Truth can be found at Ganondorf's Castle.")):
             spoiler, _ = self.assert_hints_are_true(seed, {"Gold Skulltulas": "In the overworld"})
             self.assertIn(skulltula, playthrough_steps(spoiler))
             self.assertIn(hint, spoiler["hints"].values())

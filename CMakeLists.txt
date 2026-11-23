@@ -273,7 +273,6 @@ foreach(TEST IN ITEMS only_shuffled_chests_change plan_lists_each_shuffled_chest
                      a_route_that_takes_gifts_is_in_reach_in_its_sphere hints_name_gifts_truly
                      each_bag_prize_gives_its_placed_item_at_every_site a_bigger_bag_has_one_name_wherever_it_lands
                      bigger_bags_stay_out_of_shops a_bigger_quiver_or_bullet_bag_is_no_weapon
-                     the_rolling_goron_waits_for_the_small_bomb_bag
                      a_start_with_the_bows_40_arrows_shuffles_no_bigger_quiver
                      the_eggs_the_receipt_and_the_sword_go_only_to_a_chest_a_gift_or_a_reward_place
                      biggoron_quest_shuffles_its_places_as_soh_does_with_adult_trade_off

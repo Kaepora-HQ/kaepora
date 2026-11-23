@@ -2386,6 +2386,9 @@ void Logic::ApplyItemEffect(Item& item, bool state) {
                     }
                     SetInventory(ITEM_HOOKSHOT, HookshotLookup[newItem]);
                 } break;
+                // In every mod a bigger bag found first brings the small one and its bombs.
+                case RG_BIG_BOMB_BAG:
+                case RG_BIGGEST_BOMB_BAG:
                 case RG_PROGRESSIVE_BOMB_BAG: {
                     auto realGI = item.GetGIEntry();
                     if (realGI->itemId == RG_BOMB_BAG_INF && realGI->modIndex == MOD_RANDOMIZER) {
