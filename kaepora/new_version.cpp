@@ -47,7 +47,7 @@ std::optional<Release> ParseRelease(const QByteArray& json) {
 
 class Row : public QWidget {
 public:
-    Row() {
+    explicit Row(QWidget* afterBox) {
         check->setChecked(QSettings().value(CheckKey, true).toBool());
         auto* download = new QPushButton("Download");
         auto* noticeLayout = new QHBoxLayout(notice);
@@ -58,6 +58,7 @@ public:
         layout->setContentsMargins({});
         layout->addWidget(new QLabel("Version " KAEPORA_VERSION));
         layout->addWidget(check);
+        layout->addWidget(afterBox);
         layout->addStretch();
         layout->addWidget(notice);
 
@@ -131,6 +132,6 @@ private:
 };
 }
 
-QWidget* NewVersionRow() {
-    return new Row;
+QWidget* NewVersionRow(QWidget* afterBox) {
+    return new Row(afterBox);
 }

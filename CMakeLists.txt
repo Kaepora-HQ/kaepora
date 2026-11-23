@@ -180,8 +180,9 @@ if(Qt6_FOUND)
     target_link_libraries(kaepora-tracker-window PUBLIC kaepora-game-values kaepora-tracker-page Qt6::Widgets)
     target_compile_options(kaepora-tracker-window PRIVATE ${WARNINGS})
 
-    add_executable(kaepora kaepora/main.cpp kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
-                           kaepora/window.cpp $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
+    add_executable(kaepora kaepora/completion_offer.cpp kaepora/library.cpp kaepora/main.cpp kaepora/new_version.cpp
+                           kaepora/seed.cpp kaepora/settings_dialog.cpp kaepora/window.cpp
+                           $<$<PLATFORM_ID:Windows>:kaepora/kaepora.rc>)
     target_link_libraries(kaepora PRIVATE kaepora-generator kaepora-pictures kaepora-tracker-window Qt6::Widgets
                                           Qt6::Network)
     target_compile_options(kaepora PRIVATE ${WARNINGS})
@@ -333,8 +334,9 @@ add_test(NAME logic COMMAND ${Python3_EXECUTABLE} -I -B ${PROJECT_SOURCE_DIR}/te
                             $<TARGET_FILE:kaepora-reach>)
 
 if(Qt6Test_FOUND)
-    add_executable(kaepora-window-test tests/window_test.cpp kaepora/new_version.cpp kaepora/seed.cpp
-                                       kaepora/settings_dialog.cpp kaepora/window.cpp)
+    add_executable(kaepora-window-test tests/window_test.cpp kaepora/completion_offer.cpp kaepora/library.cpp
+                                       kaepora/new_version.cpp kaepora/seed.cpp kaepora/settings_dialog.cpp
+                                       kaepora/window.cpp)
     set_target_properties(kaepora-window-test PROPERTIES AUTOMOC ON)
     target_link_libraries(kaepora-window-test PRIVATE kaepora-generator kaepora-pictures kaepora-tracker-window
                                                       Qt6::Widgets Qt6::Network Qt6::Test)
@@ -364,6 +366,9 @@ if(Qt6Test_FOUND)
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
                      aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
                      rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime
+                     aCompletedSeedOfTheLibraryIsOffered recordItSendsTheCompletionOnce notNowSendsNothing
+                     aSeedNotInTheLibraryIsNotOffered anUntickedBoxOffersNothing doNotOfferThisAgainUnticksTheBox
+                     aCompletionKaeporaCouldNotSendIsSentWhenItNextOpens aGameWithNoSeedValueIsSearchedOnce
                      aGameFileWithoutPicturesOpensNoTracker)
     if(NOT WIN32)
         list(APPEND WINDOW_TESTS playStartsLichiiWithItsDebugServerOn)

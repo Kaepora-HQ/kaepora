@@ -31,7 +31,8 @@ struct Table {
 constexpr Table Tables[] = { { ValueType::Bool, 0, 0x18, 0x16, 1 },
                              { ValueType::Int, 2, 0x28, 0x1C, 4 },
                              { ValueType::Enum, 6, 0x38, 0x1C, 4 },
-                             { ValueType::String64, 16, 0x108, 0x74, 64 } };
+                             { ValueType::String64, 16, 0x108, 0x74, 64 },
+                             { ValueType::UInt, 20, 0x28, 0x1C, 4 } };
 constexpr qsizetype TablesSize = TableSpacing * std::ranges::max(Tables, {}, &Table::slot).slot + TableHeadSize;
 
 // The largest table, Bool, holds 11,292 values, so no map of the game's has 2^20 pairs.
@@ -175,7 +176,7 @@ quint64 GameValues::indexOf(const SavedValue& value, const char* head) {
     }
     const auto found = index.find(Hash(value.name));
     if (found == index.end()) {
-        throw GameUnreadable("The game holds no value named " + value.name + ".");
+        throw NoSuchValue("The game holds no value named " + value.name + ".");
     }
     return found->second;
 }

@@ -36,16 +36,18 @@ private slots:
                             { "Found", Bool, 1 },
                             { "Hearts", Int, 12 },
                             { "Sword", Enum, Murmur3("Kokiri") },
+                            { "Seconds", UInt, 7 },
                             { "Grade", Enum, Murmur3("First") },
                             { .name = "Scene", .type = String64, .text = "KokiriForest_Child" } });
         lichii.set("Hearts", 13);
         lichii.set("Grade", Murmur3("Second"));
+        lichii.set("Seconds", 4'000'000'000u);
         lichii.set("Scene", "LostWood_Child");
         const std::vector<SavedValue> wanted = {
-            { "Found", Bool }, { "Hearts", Int }, { "Grade", Enum }, { "Scene", String64 }
+            { "Found", Bool }, { "Hearts", Int }, { "Seconds", UInt }, { "Grade", Enum }, { "Scene", String64 }
         };
         QCOMPARE(GameValues(lichii.port).read(wanted),
-                 (std::vector<quint32>{ 1, 13, Murmur3("Second"), Murmur3("LostWood_Child") }));
+                 (std::vector<quint32>{ 1, 13, 4'000'000'000u, Murmur3("Second"), Murmur3("LostWood_Child") }));
     }
 
     void readsAValueTheGameNamesOnlyByItsHash() {
