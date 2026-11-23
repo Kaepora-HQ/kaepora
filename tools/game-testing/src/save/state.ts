@@ -40,6 +40,9 @@ export interface Plan extends StatePlan {
 	readonly base: Base;
 }
 
+/** What the state's words write, before the base is named beside them. */
+type Written = Omit<StatePlan, "base">;
+
 /** A place's save: the state written into the base's `progress.sav` and `caption.sav`, and the base's `option.sav`. */
 export interface Saves {
 	readonly caption: Uint8Array;
@@ -531,7 +534,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		);
 
 	return {
-		result: (): StatePlan => ({
+		result: (): Written => ({
 			edits: Arr.map([...planned.values()], (each) => each.edit),
 			leftAlone: Arr.sort(
 				Arr.filter(

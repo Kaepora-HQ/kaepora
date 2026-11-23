@@ -18,6 +18,7 @@ import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import type { RpcClientError } from "effect/rpc";
 import { RpcClient, RpcSerialization } from "effect/rpc";
 import { contract, GameRpcs } from "./contract/rpc.ts";
+import { writeFarDeclarations } from "./data/declarations.ts";
 import { RemoteUnavailable, UrlRefused } from "./errors.ts";
 
 /** `GAME_TESTING_URL`, as an http or https URL with no name or password, and no `/` at its end. */
@@ -115,16 +116,23 @@ export class Far extends Context.Service<
 					Far,
 					Effect.gen(function* () {
 						const client = yield* RpcClient.make(GameRpcs);
-						yield* client
-							.Hello({ contract })
-							.pipe(
-								Effect.catchTag("RpcClientError", () =>
-									Effect.fail(RemoteUnavailable.make({ url, reason: "closed" }))
-								)
-							);
+						yield* reached(url, client.Hello({ contract }));
 						return Far.of({ url, token: secret, client });
 					})
 				).pipe(Layer.provide(connection(url, secret)))
 			)
 		);
 }
+
+/** A call to the far machine, whose lost connection fails as the far machine being unavailable. */
+export const reached = <A, E, R>(
+	url: string,
+	call: Effect.Effect<A, E | RpcClientError.RpcClientError, R>
+) =>
+	Effect.catchTag(call, "RpcClientError", () =>
+		Effect.fail(RemoteUnavailable.make({ url, reason: "closed" }))
+	);
+
+/** Writes the far machine's names where a type check against it reads them, and gives that file. */
+export const writeFarNames = (far: Far["Service"]) =>
+	Effect.flatMap(reached(far.url, far.client.Names()), writeFarDeclarations);

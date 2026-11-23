@@ -83,7 +83,10 @@ const take = Effect.gen(function* () {
 const launched = Effect.gen(function* () {
 	const place = yield* take;
 	const launcher = yield* Launcher;
-	return yield* launcher.launch(place, { wire: { line: () => Effect.void } });
+	return yield* launcher.launch(place, {
+		wire: { line: () => Effect.void },
+		textSpeed: "game",
+	});
 });
 
 /**

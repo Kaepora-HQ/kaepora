@@ -6,6 +6,7 @@ import { hostname } from "node:os";
 import { Effect, Schedule, Stream } from "effect";
 import type { SessionEvent } from "../contract/rpc.ts";
 import { contract, GameRpcs } from "../contract/rpc.ts";
+import { namesText } from "../data/declarations.ts";
 import { GameData } from "../data/game-data.ts";
 import { VersionMismatch } from "../errors.ts";
 import { StartStates } from "../save/state.ts";
@@ -27,6 +28,8 @@ export const handlers = GameRpcs.toLayer(
 		const states = yield* StartStates;
 		const machine = hostname();
 		const count = (yield* places.list).length;
+		// Read from the game's tables once, the first time a caller asks.
+		const names = yield* Effect.cached(namesText);
 		const beats: Stream.Stream<SessionEvent> = Stream.fromSchedule(
 			Schedule.spaced(beatEvery)
 		).pipe(Stream.as({ _tag: "beat" }));
@@ -36,7 +39,11 @@ export const handlers = GameRpcs.toLayer(
 				theirs === contract
 					? Effect.succeed({ machine, places: count, gameData: true })
 					: Effect.fail(
-							VersionMismatch.make({ here: contract, there: theirs, machine })
+							VersionMismatch.make({
+								machine,
+								machineSpeaks: contract,
+								callerSpeaks: theirs,
+							})
 						),
 			Places: () => places.list,
 			Open: (open) =>
@@ -92,10 +99,12 @@ export const handlers = GameRpcs.toLayer(
 					})
 				),
 			Plan: ({ state }) =>
-				Effect.map(states.plan(state), ({ edits, leftAlone }) => ({
+				Effect.map(states.plan(state), ({ base, edits, leftAlone }) => ({
+					base,
 					edits,
 					leftAlone,
 				})),
+			Names: () => names,
 			Search: ({ text, kind, limit }) =>
 				searchNames(data, own, text, { limit, kind }),
 			Runs: ({ script, limit }) => runs.list({ script, limit }),

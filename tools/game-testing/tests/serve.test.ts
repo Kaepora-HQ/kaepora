@@ -14,13 +14,7 @@ import {
 } from "effect";
 import { McpClient, McpProtocol } from "effect/ai";
 import { Command } from "effect/cli";
-import {
-	FetchHttpClient,
-	HttpClient,
-	HttpClientRequest,
-	HttpServer,
-} from "effect/http";
-import { NetAddress } from "effect/net";
+import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { RpcClient } from "effect/rpc";
 import { TestConsole } from "effect/testing";
 import { cli } from "../src/cli.ts";
@@ -30,41 +24,9 @@ import { newRunId } from "../src/contract/values.ts";
 import { connection } from "../src/far.ts";
 import { Game } from "../src/game.ts";
 import { Runs } from "../src/host/runs.ts";
-import { Scripts } from "../src/scripts/runner.ts";
-import { serve } from "../src/serve/server.ts";
-import type { FakeLichii } from "./fake-lichii.ts";
-import { fakeMachine } from "./fake-machine.ts";
+import { fakeMachine, listening, served, token } from "./fake-machine.ts";
 
-const token = "a-token-made-for-this-test";
-const openChest = (lichii: FakeLichii) => {
-	Effect.runSync(lichii.put("IsTreasureBoxOpen.5005", true));
-};
 const lasting = { timeout: 60_000 };
-
-type Machine = Effect.Success<ReturnType<typeof fakeMachine>>;
-
-/** `serve` on a fake machine, on a port the system picks: where it listens, and its URL. */
-const listening = (machine: Machine) =>
-	Effect.gen(function* () {
-		const server = Context.get(
-			yield* Layer.build(
-				serve({ port: 0, token: Redacted.make(token), version: "test" }).pipe(
-					Layer.provide(Scripts.layer.pipe(Layer.provideMerge(machine.host)))
-				)
-			),
-			HttpServer.HttpServer
-		);
-		const { address } = server;
-		return address._tag === "UnixPathAddress"
-			? yield* Effect.die(new Error("serve listens on a TCP port"))
-			: {
-					host: NetAddress.formatHost(address),
-					url: `http://127.0.0.1:${address.port}`,
-				};
-	});
-
-const served = (machine: Machine) =>
-	Effect.map(listening(machine), ({ url }) => url);
 
 const secret = Option.some(Redacted.make(token));
 
@@ -249,7 +211,7 @@ describe("serve", () => {
 				);
 				expect(refused._tag).toBe("VersionMismatch");
 				expect(refused.message).toContain(
-					`speaks contract ${contract + 1} and this copy speaks ${contract}`
+					`speaks contract ${contract} and this copy speaks ${contract + 1}`
 				);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
 		lasting
@@ -296,46 +258,6 @@ describe("serve", () => {
 					error: "",
 				});
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
-		lasting
-	);
-
-	it.live(
-		"run with GAME_TESTING_URL runs a kept script against the far machine, and runs reads its record there",
-		() =>
-			Effect.gen(function* () {
-				const far = yield* fakeMachine({ onA: openChest });
-				const url = yield* served(far);
-				const here = yield* fakeMachine({
-					env: { GAME_TESTING_URL: url, GAME_TESTING_TOKEN: token },
-				});
-				const exit = yield* Effect.exit(
-					Command.runWith(cli, { version: "test" })([
-						"run",
-						`${import.meta.dir}/scripts/opens-chest.ts`,
-					])
-				).pipe(Effect.provide(here.platform));
-				const lines = Arr.map(yield* TestConsole.logLines, String);
-				expect(lines[0]).toStartWith("passed  ");
-				expect(Exit.isSuccess(exit)).toBe(true);
-				const run = Arr.findFirst(Str.split(lines[0] ?? "", "  "), (word) =>
-					Str.startsWith("20")(word)
-				);
-				expect(Option.isSome(run)).toBe(true);
-				expect(
-					Arr.filter(yield* here.podman.calls, (args) => args[0] === "create")
-				).toEqual([]);
-				yield* Command.runWith(cli, { version: "test" })(["runs"]).pipe(
-					Effect.provide(here.platform)
-				);
-				const listed = Arr.drop(
-					Arr.map(yield* TestConsole.logLines, String),
-					1
-				);
-				expect(listed[0]).toStartWith(`${Option.getOrThrow(run)}  passed`);
-			}).pipe(
-				Effect.scoped,
-				Effect.provide([BunServices.layer, TestConsole.layer])
-			),
 		lasting
 	);
 

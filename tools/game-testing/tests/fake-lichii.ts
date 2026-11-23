@@ -269,6 +269,8 @@ export const fakeLichii = (options?: {
 	readonly writes?: boolean;
 	/** The capacity every table's map claims, in place of its own. */
 	readonly mapCapacity?: number;
+	/** Main holds Lichii's instant text add-on, its branch and its scale, as when it applied it. */
+	readonly instantText?: boolean;
 	/**
 	 * Answers each input at once, after handing its steps to this, in place of holding the server while its frames
 	 * pass. The fake presents no frames, so an input that waits for them never answers.
@@ -283,6 +285,23 @@ export const fakeLichii = (options?: {
 			options?.path ?? `\0game-testing-fake-lichii-${process.pid}-${listened}`;
 		const values = options?.values ?? {};
 		const { memory, addresses } = layOut(values, options?.mapCapacity);
+		// The text routine's instruction at the add-on's site, and the scale after its cave's code.
+		memory.map(
+			Uint8Array.of(
+				...(options?.instantText === true
+					? [0x53, 0x23, 0xc5, 0x14]
+					: [0x69, 0xde, 0x40, 0x79])
+			),
+			programStart + 0xa_fe_1b_4n
+		);
+		memory.map(
+			Uint8Array.of(
+				...(options?.instantText === true
+					? [0, 0x24, 0x74, 0x49]
+					: [0, 0, 0, 0])
+			),
+			programStart + 0x3_c4_6f_10n
+		);
 		const log: Request[] = [];
 		const arrivals: { method: string; arrived: Deferred.Deferred<void> }[] = [];
 		const queue: Incoming[] = [];

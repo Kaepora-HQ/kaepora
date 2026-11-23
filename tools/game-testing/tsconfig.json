@@ -58,6 +58,8 @@
 					"@effect/platform-node-shared/NodeSocketServer",
 					// The folder name of a mod a place takes, and the paths of the scripts the command line runs.
 					"effect/Path",
+					// A script's child reads its stdin to know its runner is still there.
+					"effect/Stdio",
 					// The command line and its entry point.
 					"effect/cli",
 					"@effect/platform-bun/BunRuntime",
@@ -243,6 +245,16 @@
 							"diagnosticSeverity": {
 								"strictEffectProvide": "off",
 								"yieldInCallArgument": "off"
+							}
+						}
+					},
+					{
+						// Each command is an entry point, which builds only what it reads: this machine's services, or a far
+						// machine's connection.
+						"include": ["src/cli.ts"],
+						"options": {
+							"diagnosticSeverity": {
+								"strictEffectProvide": "off"
 							}
 						}
 					},

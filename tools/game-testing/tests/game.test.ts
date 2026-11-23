@@ -58,6 +58,7 @@ const played = (
 		readonly rewrites?: Readonly<Record<string, Value>>;
 		readonly unsaved?: Readonly<Record<string, Value>>;
 		readonly words?: Words;
+		readonly textBytesTaken?: boolean;
 	}
 ) =>
 	Effect.gen(function* () {
@@ -327,6 +328,20 @@ describe("a game on the host", () => {
 					error:
 						"The game does not hold the state as it was written: PlayerStatus.CurrentRupee holds 0, not 25.",
 				});
+			})
+	);
+
+	it.live(
+		"a record states the mod and the text speed the game had, which is the game's own when a mod took the add-on's bytes",
+		() =>
+			Effect.gen(function* () {
+				const plain = yield* played(() => Effect.void);
+				expect(plain.record.mod).toMatchObject({ name: "skips" });
+				expect(plain.record.textSpeed).toBe("instant");
+				const taken = yield* played(() => Effect.void, {
+					textBytesTaken: true,
+				});
+				expect(taken.record.textSpeed).toBe("game");
 			})
 	);
 

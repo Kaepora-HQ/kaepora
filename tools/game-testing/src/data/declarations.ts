@@ -1,15 +1,33 @@
 /**
- * `generated/names.d.ts`, which fills `Register` in `src/names.ts` from the game's tables, so a script's value names
- * and values are checked as it is typed and before its game starts. Its names are read from the game's files, so git
- * ignores the folder.
+ * The declarations that fill `Register` in `src/names.ts` from the game's tables, so a script's value names and values
+ * are checked as it is typed and before its game starts. A machine with the game writes them to
+ * `generated/names.d.ts`, where the package's own check and an editor read them; a caller of a far machine writes that
+ * machine's to its own cache. Their names are read from the game's files, so git ignores both.
  */
-import { Array as Arr, Effect, FileSystem, Formatter, Option } from "effect";
+import {
+	Array as Arr,
+	Effect,
+	FileSystem,
+	Formatter,
+	Option,
+	Path,
+} from "effect";
+import { UserDirectories } from "effect/persistence";
 import { OwnTables } from "../save/tables.ts";
 import type { GameValue } from "./game-data.ts";
 import { GameData } from "./game-data.ts";
 
-const namesFolder = `${import.meta.dir}/../../generated`;
+/** The package's `generated` folder, by a path with no `..`: a type check finds a file by the text of its path. */
+const namesFolder = Bun.fileURLToPath(
+	new URL("../../generated", import.meta.url)
+);
 export const namesFile = `${namesFolder}/names.d.ts`;
+
+/** What a type check includes for this machine's own names. */
+export const namesHere = `${namesFolder}/**/*.ts`;
+
+/** The module the declarations fill, by its path, for a file that does not sit in the package. */
+const namesModule = Bun.fileURLToPath(new URL("../names.ts", import.meta.url));
 
 const quoted = (text: string) => Formatter.formatJson(text);
 
@@ -34,10 +52,10 @@ const typeOf = (value: GameValue): Option.Option<string> => {
 	}
 };
 
-export const writeNames = Effect.gen(function* () {
+/** What fills `Register`, from the game's tables and our own: the declaration file's body. */
+export const namesText = Effect.gen(function* () {
 	const data = yield* GameData;
 	const own = yield* OwnTables;
-	const fs = yield* FileSystem.FileSystem;
 	const valueNames = yield* data.names("value");
 	const found = yield* Effect.forEach(valueNames, data.find, {
 		concurrency: 1,
@@ -65,13 +83,8 @@ export const writeNames = Effect.gen(function* () {
 	const items = yield* data.names("item");
 	const scenes = yield* data.names("scene");
 	const landings = yield* data.names("landing");
-	const text = Arr.join(
+	return Arr.join(
 		[
-			"// Written by `game-testing names` from the game's tables.",
-			'import "../src/names.ts";',
-			"",
-			'declare module "../src/names.ts" {',
-			"\tinterface Register {",
 			"\t\treadonly values: {",
 			...values,
 			"\t\t};",
@@ -82,17 +95,54 @@ export const writeNames = Effect.gen(function* () {
 			`\t\treadonly scenes: ${union(scenes)};`,
 			`\t\treadonly landings: ${union(landings)};`,
 			`\t\treadonly checks: ${union([...own.checks.keys()])};`,
-			"\t}",
-			"}",
-			"",
 		],
 		"\n"
 	);
-	yield* Effect.orDie(
-		fs.makeDirectory(namesFolder, {
-			recursive: true,
-		})
+});
+
+/**
+ * Writes a declaration file of `names`' body to `file`, for the names module at `module`. It is written beside and
+ * renamed over the last, so a type check never reads half of one.
+ */
+export const writeDeclarations = Effect.fnUntraced(function* (
+	file: string,
+	names: string,
+	module: string
+) {
+	const fs = yield* FileSystem.FileSystem;
+	const path = yield* Path.Path;
+	yield* fs.makeDirectory(path.dirname(file), { recursive: true });
+	yield* fs.writeFileString(
+		`${file}.new`,
+		Arr.join(
+			[
+				"// Written by `game-testing names` from the game's tables.",
+				`import ${quoted(module)};`,
+				"",
+				`declare module ${quoted(module)} {`,
+				"\tinterface Register {",
+				names,
+				"\t}",
+				"}",
+				"",
+			],
+			"\n"
+		)
 	);
-	yield* Effect.orDie(fs.writeFileString(namesFile, text));
-	yield* Effect.logInfo(`Wrote ${values.length} values to ${namesFile}.`);
+	yield* fs.rename(`${file}.new`, file);
+	yield* Effect.logInfo(`Wrote the game's names to ${file}.`);
+}, Effect.orDie);
+
+export const writeNames = Effect.flatMap(namesText, (names) =>
+	writeDeclarations(namesFile, names, "../src/names.ts")
+);
+
+/** Writes a far machine's names to this machine's cache, for a type check of a script that runs against it. */
+export const writeFarDeclarations = Effect.fnUntraced(function* (
+	names: string
+) {
+	const directories = yield* UserDirectories.UserDirectories;
+	const file = `${yield* Effect.orDie(directories.cache("game-testing"))}/names.d.ts`;
+	yield* writeDeclarations(file, names, namesModule);
+	return file;
 });

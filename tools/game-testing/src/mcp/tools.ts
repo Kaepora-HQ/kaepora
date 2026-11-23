@@ -6,7 +6,12 @@ import { Option, Schema } from "effect";
 import { Tool, Toolkit } from "effect/ai";
 import { Outcome, RunSummary } from "../contract/record.ts";
 import { NameMatch, PlaceStatus, StatePlan } from "../contract/rpc.ts";
-import { ModSource, ReadBack, StartState } from "../contract/state.ts";
+import {
+	ModFolder,
+	ReadBack,
+	StartState,
+	TextSpeed,
+} from "../contract/state.ts";
 import {
 	Buttons,
 	Frames,
@@ -26,6 +31,8 @@ import {
 	ImageBuildFailed,
 	KeptScriptExists,
 	LaunchFailed,
+	ModTooLarge,
+	ModUnreadable,
 	NoFreePlace,
 	NoGameHere,
 	NoGraphicsCard,
@@ -45,6 +52,8 @@ import {
 /** What a tool can fail with. The agent reads each error's message, which says what to do next. */
 const ToolFailure = Schema.Union([
 	KeptScriptExists,
+	ModTooLarge,
+	ModUnreadable,
 	UnknownName,
 	StateRefused,
 	StartNotTaken,
@@ -79,9 +88,14 @@ const run = RunId.annotate({
 	description: "A run's id, such as 20261122-142233-k3f9.",
 });
 
-const mod = ModSource.annotate({
+const mod = Schema.Union([ModFolder, Schema.Literal("none")]).annotate({
 	description:
-		"A mod folder on the game's machine, such as one the patcher wrote for a seed. The game's place gets it alone.",
+		"The mod the game's place gets alone: { folder } with the absolute path of a folder the patcher wrote, such as one for a seed, on the machine this server runs on; or \"none\" for the game as it ships. Unless given, the place gets the game machine's own mod: what every Kaepora seed carries, with nothing shuffled. It skips the scenes a player can skip and the scene at each new area. It also brings a weapon's container with it, such as the quiver with the Fairy Bow, lets bombs be lifted without the Goron's Bracelet, patches lifting, diving and dungeon items as a seed does, changes the Door of Time and the Master Sword's pedestal, and moves no quest on at the first arrival in Zora's Domain or the Market. A look on a base save does not get a seed's tutorial or Saria's greeting skips: those are a new game's starting values, and the base holds its own. Build a look's own mod with the current patcher: an older one loses the skips and may lose instant text.",
+});
+
+const textSpeed = TextSpeed.annotate({
+	description:
+		"instant, unless given: each page of the game's text shows at once, through Lichii's instant text add-on, as a player has it. game shows it at the game's own speed, to look at the text itself. Lichii leaves the add-on out when a mod changed the bytes it patches, as many older mods did; the run's record says the text speed the game had.",
 });
 
 /** Where an answer was cut at whole entries to keep within its size, and how to read the rest. */
@@ -128,6 +142,7 @@ The body is type-checked before any game starts, so a misspelled name or a wrong
 				"The test: the inside of an Effect.gen function, with game and Effect in scope.",
 		}),
 		mod: Schema.optionalKey(mod),
+		textSpeed: Schema.optionalKey(textSpeed),
 		limit: Schema.optionalKey(
 			Schema.String.check(
 				Schema.makeFilter((text) =>
@@ -204,7 +219,11 @@ export const planState = Tool.make("plan_state", {
 export const startGame = Tool.make("start_game", {
 	description:
 		"Starts a game in the state, to look around by hand, and answers once Link can move: its session, its run's id, its place, and each value the state wrote as the game holds it. Drive it by its session with press, stick, read_values, set_values and screenshot, and end it with stop_game. Every call is a step in the run's record. The game stops by itself when no call names its session for 10 minutes, and its run then ends stopped; it stops after 2 hours in any case. A start takes one to three minutes. A test that must pass or fail is a run_script body instead: only a body's checks give an outcome.",
-	parameters: Schema.Struct({ state, mod: Schema.optionalKey(mod) }),
+	parameters: Schema.Struct({
+		state,
+		mod: Schema.optionalKey(mod),
+		textSpeed: Schema.optionalKey(textSpeed),
+	}),
 	success: Schema.Struct({
 		session: SessionId,
 		run: RunId,
@@ -311,7 +330,7 @@ export const places = Tool.make("places", {
 
 export const listRuns = Tool.make("list_runs", {
 	description:
-		"Lists the runs on this machine, newest first: each run's id, outcome, kept script and how long it took. script narrows it to one kept script's runs, by its path such as scripts/mido-top-left-chest.ts.",
+		"Lists the runs on this machine, newest first: each run's id, outcome, kept script and how long it took. script narrows it to one kept script's runs, by its path such as scripts/mido-top-left-chest.ts. unreadable counts the records it could not read, such as one written by another version of the tool.",
 	parameters: Schema.Struct({
 		script: Schema.optionalKey(Schema.String),
 		limit: Schema.optionalKey(
@@ -320,7 +339,11 @@ export const listRuns = Tool.make("list_runs", {
 			)
 		),
 	}),
-	success: Schema.Struct({ runs: Schema.Array(RunSummary), more }),
+	success: Schema.Struct({
+		runs: Schema.Array(RunSummary),
+		unreadable: Schema.Int,
+		more,
+	}),
 	failure: ToolFailure,
 })
 	.annotate(Tool.Readonly, true)

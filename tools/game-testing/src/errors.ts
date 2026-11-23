@@ -71,6 +71,61 @@ export class StateRefused extends Schema.TaggedError<
 	}
 }
 
+/**
+ * A mod could not be read from its folder, so nothing was started. `missing`: there is no folder there. `empty`: it
+ * holds no file. `unnamed`: the path names no folder of its own, such as one ending in `..`. `no-skips`: the game's
+ * machine keeps no mod that skips, which a start that names no mod gets.
+ */
+export class ModUnreadable extends Schema.TaggedError<
+	ModUnreadable,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/ModUnreadable")("ModUnreadable", {
+	folder: Schema.String,
+	reason: Schema.Literals(["missing", "empty", "unnamed", "no-skips"]),
+}) {
+	override get message() {
+		switch (this.reason) {
+			case "missing":
+				return `There is no mod folder at ${this.folder}, so nothing was started. Give the folder the patcher wrote, as an absolute path or one from the script's own folder.`;
+			case "empty":
+				return `The mod folder ${this.folder} holds no file, so nothing was started.`;
+			case "unnamed":
+				return `The mod folder ${this.folder} names no folder of its own, so nothing was started. Give the path of the folder the patcher wrote.`;
+			default:
+				return `The game's machine keeps no mod that skips at ${this.folder}, so nothing was started. Build it there with the machine's setup, or name mod: "none" for the game with no mod.`;
+		}
+	}
+}
+
+/** A mod is larger than a start can carry to the game's machine, so nothing was sent. */
+export class ModTooLarge extends Schema.TaggedError<
+	ModTooLarge,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/ModTooLarge")("ModTooLarge", {
+	folder: Schema.String,
+	/** The mod's files as the start sends them, and the most a start carries. */
+	bytes: Schema.Int,
+	limit: Schema.Int,
+}) {
+	override get message() {
+		const mebibyte = 1024 * 1024;
+		return `The mod at ${this.folder} is ${(this.bytes / mebibyte).toFixed(1)} MiB as the start sends it, over the ${Math.floor(this.limit / mebibyte)} MiB a start can carry, so nothing was sent. A seed's mod is 6 to 9 MB: leave out what the look does not need.`;
+	}
+}
+
+/** A far run's record and pictures were not copied to this machine. The game's machine keeps them. */
+export class CopyFailed extends Schema.TaggedError<
+	CopyFailed,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/CopyFailed")("CopyFailed", {
+	run: RunId,
+	reason: Schema.String,
+}) {
+	override get message() {
+		return `The record and pictures were not copied here: ${this.reason}. The game machine keeps them as run ${this.run}, which game-testing runs lists there.`;
+	}
+}
+
 /** Every place on the machine stayed held for the whole wait. */
 export class NoFreePlace extends Schema.TaggedError<
 	NoFreePlace,
@@ -466,12 +521,14 @@ export class VersionMismatch extends Schema.TaggedError<
 	VersionMismatch,
 	{ readonly brand: unique symbol }
 >("game-testing/errors/VersionMismatch")("VersionMismatch", {
-	here: Schema.Int,
-	there: Schema.Int,
+	/** The machine that refused, and the contract it speaks. */
 	machine: Schema.String,
+	machineSpeaks: Schema.Int,
+	/** The contract the caller asked for. */
+	callerSpeaks: Schema.Int,
 }) {
 	override get message() {
-		return `${this.machine} speaks contract ${this.there} and this copy speaks ${this.here}. Update the older one to the same Kaepora commit.`;
+		return `${this.machine} speaks contract ${this.machineSpeaks} and this copy speaks ${this.callerSpeaks}. Update the older one to the same Kaepora commit.`;
 	}
 }
 
@@ -487,6 +544,8 @@ export type CommandError =
 
 /** What starting a game can fail with, on any transport. */
 export type StartError =
+	| ModUnreadable
+	| ModTooLarge
 	| UnknownName
 	| StateRefused
 	| StartNotTaken

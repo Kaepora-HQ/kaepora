@@ -9,16 +9,21 @@ import { BunServices } from "@effect/platform-bun";
 import {
 	Array as Arr,
 	ConfigProvider,
+	Context,
 	Deferred,
 	Effect,
 	FileSystem,
 	Layer,
 	Logger,
 	Option,
+	Order,
 	Record as Rec,
+	Redacted,
 	Ref,
 	String as Str,
 } from "effect";
+import { HttpServer } from "effect/http";
+import { NetAddress } from "effect/net";
 import { UserDirectories } from "effect/persistence";
 import { ChildProcessSpawner } from "effect/process";
 import type { Value } from "../src/contract/values.ts";
@@ -28,12 +33,20 @@ import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
 import type { Check } from "../src/save/tables.ts";
 import { OwnTables } from "../src/save/tables.ts";
+import { Scripts } from "../src/scripts/runner.ts";
+import { serve } from "../src/serve/server.ts";
 import type { FakeGame } from "./fake-game.ts";
 import { fakeDump, fakeSave } from "./fake-game.ts";
 import type { FakeLichii, FakeValue } from "./fake-lichii.ts";
 import { fakeLichii } from "./fake-lichii.ts";
 import type { FakeContainer } from "./fake-podman.ts";
 import { fakePodman } from "./fake-podman.ts";
+
+/** What a place held when its game started: each file under its mods folder, by path, and its settings. */
+export interface Started {
+	readonly mods: Readonly<Record<string, Uint8Array>>;
+	readonly settings: string;
+}
 
 const unsaved = -1;
 const screens = ["None", "ItemMenu", "Title", "Load", "Loading"];
@@ -57,6 +70,12 @@ export const game: FakeGame = {
 		"IsTreasureBoxOpen.6006": { type: "Bool", value: false },
 		"PlayerStatus.CurrentRupee": { type: "Int", value: 0 },
 		Fake_Lamp_Lit: { type: "Bool", value: false, file: unsaved },
+	},
+	mods: {
+		"Too Large Mod": {
+			lines: [{ path: "romfs/Fake/Big.byml.zs", needs: 4096, entry: 2048 }],
+			code: 3,
+		},
 	},
 };
 
@@ -138,6 +157,10 @@ export const fakeMachine = (options?: {
 	readonly crashes?: boolean;
 	/** Config keys besides the machine's own, such as a far machine's URL and token. */
 	readonly env?: Readonly<Record<string, string>>;
+	/** The machine keeps no mod that skips, as one set up without it. */
+	readonly noSkips?: boolean;
+	/** Every mod changes the bytes Lichii's instant text add-on patches, so Lichii leaves the add-on out. */
+	readonly textBytesTaken?: boolean;
 }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
@@ -169,10 +192,38 @@ export const fakeMachine = (options?: {
 		const sha256 = (bytes: Uint8Array) =>
 			new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
 
+		const skips = `${home}/data/game-testing/skips`;
+		if (options?.noSkips !== true) {
+			yield* fs.makeDirectory(`${skips}/romfs/System`, { recursive: true });
+			yield* fs.writeFile(
+				`${skips}/romfs/System/Skips.txt`,
+				new Uint8Array([7, 7])
+			);
+		}
 		const games = yield* Ref.make<readonly FakeLichii[]>([]);
+		const starts = yield* Ref.make<readonly Started[]>([]);
 		const fork = Effect.runForkWith(yield* Effect.context<never>());
 		const play = Effect.fnUntraced(function* (container: FakeContainer) {
 			const folder = placeFolder(container);
+			const load = `${folder}/data/lichii/load/0400486024DEC000`;
+			const loaded = yield* fs.readDirectory(load, { recursive: true });
+			const mods = yield* Effect.forEach(
+				Arr.sort(loaded, Order.String),
+				Effect.fnUntraced(function* (path) {
+					const info = yield* fs.stat(`${load}/${path}`);
+					return info.type === "File"
+						? [[path, yield* fs.readFile(`${load}/${path}`)] as const]
+						: [];
+				}),
+				{ concurrency: 1 }
+			);
+			const settings = yield* fs.readFileString(
+				`${folder}/config/lichii/qt-config.ini`
+			);
+			yield* Ref.update(starts, (all) => [
+				...all,
+				{ mods: Rec.fromEntries(Arr.flatten(mods)), settings },
+			]);
 			const nand = `${folder}/data/lichii/nand`;
 			const profiles = yield* fs.readFile(
 				`${nand}/system/save/8000000000000010/su/avators/profiles.dat`
@@ -194,6 +245,9 @@ export const fakeMachine = (options?: {
 			const lichii: FakeLichii = yield* fakeLichii({
 				path: `${folder}/debug.sock`,
 				presents: 1,
+				instantText:
+					Str.includes("+Text Speed Instant (built-in)")(settings) &&
+					options?.textBytesTaken !== true,
 				values: {
 					...values,
 					"0x578d41e1": { type: "Enum", value: "Title", choices: screens },
@@ -336,6 +390,62 @@ export const fakeMachine = (options?: {
 			platform,
 			podman,
 			games: Ref.get(games),
+			starts: Ref.get(starts),
 			home,
 		};
+	});
+
+export type Machine = Effect.Success<ReturnType<typeof fakeMachine>>;
+
+/** The token every fake machine's `serve` takes. */
+export const token = "a-token-made-for-this-test";
+
+/** `serve` on a fake machine, on a port the system picks: the host it listens on, and its URL. */
+export const listening = (machine: Machine) =>
+	Effect.gen(function* () {
+		const server = Context.get(
+			yield* Layer.build(
+				serve({ port: 0, token: Redacted.make(token), version: "test" }).pipe(
+					Layer.provide(Scripts.layer.pipe(Layer.provideMerge(machine.host)))
+				)
+			),
+			HttpServer.HttpServer
+		);
+		const { address } = server;
+		return address._tag === "UnixPathAddress"
+			? yield* Effect.die(new Error("serve listens on a TCP port"))
+			: {
+					host: NetAddress.formatHost(address),
+					url: `http://127.0.0.1:${address.port}`,
+				};
+	});
+
+export const served = (machine: Machine) =>
+	Effect.map(listening(machine), ({ url }) => url);
+
+/**
+ * An agent's machine: no game file, no kaepora-dump, no podman and no save, only Bun, this package, and the URL and
+ * token of a far machine's `serve`.
+ */
+export const fakeCaller = (url: string) =>
+	Effect.gen(function* () {
+		const fs = yield* FileSystem.FileSystem;
+		const home = yield* fs.makeTempDirectoryScoped();
+		const config = ConfigProvider.layer(
+			ConfigProvider.fromUnknown({
+				HOME: home,
+				XDG_CACHE_HOME: `${home}/cache`,
+				XDG_DATA_HOME: `${home}/data`,
+				XDG_STATE_HOME: `${home}/state`,
+				XDG_RUNTIME_DIR: `${home}/run`,
+				GAME_TESTING_URL: url,
+				GAME_TESTING_TOKEN: token,
+			})
+		);
+		const platform = Layer.mergeAll(
+			OwnTables.layer,
+			UserDirectories.layer,
+			Layer.succeed(Logger.LogToStderr, true)
+		).pipe(Layer.provideMerge(BunServices.layer), Layer.provideMerge(config));
+		return { home, platform };
 	});

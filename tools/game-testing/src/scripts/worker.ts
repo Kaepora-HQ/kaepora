@@ -1,7 +1,8 @@
 /**
  * The child's side of a script run. It imports the script, says what the script declares, starts its game through
  * `Game`, says when Link can move, runs the body, ends the run with how the body ended, and says the run's outcome.
- * Each of those is one line of its output, for the runner.
+ * Each of those is one line of its output, for the runner. The runner holds the child's stdin open while it lives, so
+ * the child stops, and its game with it, when stdin ends: a runner killed outright closes it too.
  */
 import {
 	Config,
@@ -12,7 +13,9 @@ import {
 	Layer,
 	Path,
 	Schema,
+	Stdio,
 	String as Str,
+	Stream,
 } from "effect";
 import type { Outcome } from "../contract/record.ts";
 import type { RunId } from "../contract/values.ts";
@@ -37,6 +40,11 @@ export const declare = Effect.fn("Scripts.declare")(function* (script: string) {
 	const declared = yield* load(script);
 	yield* say(declaring(declared));
 });
+
+/** Done once the runner is gone. */
+const runnerGone = Effect.flatMap(Stdio.Stdio, (stdio) =>
+	Effect.ignore(Stream.runDrain(stdio.stdin))
+);
 
 export const work = Effect.fn("Scripts.work")(function* (options: {
 	/** Its host: the socket's path of one on this machine, or the URL of a far machine's `serve`, whose token the environment holds. */
@@ -76,7 +84,17 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 				attemptOf: options.attemptOf,
 				owner: inline ? "run_script" : kept,
 				state: declared.state,
-				mod: declared.mod,
+				// A relative folder is read from the script's own folder, as its imports are.
+				mod:
+					declared.mod === undefined || declared.mod === "none"
+						? declared.mod
+						: {
+								folder: path.resolve(
+									path.dirname(options.script),
+									declared.mod.folder
+								),
+							},
+				textSpeed: declared.textSpeed,
 				script: inline ? { digest, source } : { path: kept, digest },
 			});
 			yield* say({ _tag: "started" });
@@ -93,4 +111,4 @@ export const work = Effect.fn("Scripts.work")(function* (options: {
 		)
 	);
 	yield* say({ _tag: "ended", outcome });
-});
+}, Effect.raceFirst(runnerGone));

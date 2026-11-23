@@ -14,6 +14,7 @@ import {
 	Formatter,
 	Layer,
 	Option,
+	Path,
 	Predicate,
 	Record as Rec,
 	Schedule,
@@ -33,6 +34,7 @@ import { Places } from "../host/places.ts";
 import { Runs } from "../host/runs.ts";
 import type { Person } from "../host/sessions.ts";
 import { Sessions } from "../host/sessions.ts";
+import { readMod } from "../mod.ts";
 import { ran } from "../process.ts";
 import { StartStates } from "../save/state.ts";
 import { OwnTables, searchNames } from "../save/tables.ts";
@@ -219,6 +221,7 @@ const handlers = tools.toLayer(
 		const own = yield* OwnTables;
 		const states = yield* StartStates;
 		const fs = yield* FileSystem.FileSystem;
+		const path = yield* Path.Path;
 		const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 		const host = yield* Effect.scope;
 
@@ -230,12 +233,12 @@ const handlers = tools.toLayer(
 			)
 		);
 
-		const picturesOf = (run: RunId, paths: readonly string[]) =>
+		const picturesOf = (run: RunId, names: readonly string[]) =>
 			Effect.forEach(
-				paths,
-				(path) =>
-					Effect.map(runs.picture(run, path), (png) =>
-						Picture.make({ path, png })
+				names,
+				(name) =>
+					Effect.map(runs.picture(run, name), (png) =>
+						Picture.make({ path: name, png })
 					),
 				{ concurrency: 1 }
 			);
@@ -320,31 +323,31 @@ const handlers = tools.toLayer(
 
 		/** Saves a run's script as a kept one under `scripts/`, unless a file there took its name meanwhile. */
 		const keepAs = Effect.fnUntraced(function* (
-			path: string,
+			file: string,
 			declared: Readonly<Record<string, unknown>>,
 			body: string
 		) {
 			const written = yield* Effect.exit(
 				fs.writeFileString(
-					`${packageRoot}/${path}`,
+					`${packageRoot}/${file}`,
 					scriptAround(declared, body, "../src/script.ts").text,
 					{ flag: "wx" }
 				)
 			);
 			if (written._tag === "Failure") {
 				return {
-					notKept: `${path} appeared on the game's machine during the run, so the test was not kept`,
+					notKept: `${file} appeared on the game's machine during the run, so the test was not kept`,
 				};
 			}
 			yield* ran(
 				spawner,
 				ChildProcess.make(
 					`${packageRoot}/node_modules/.bin/biome`,
-					["format", "--write", path],
+					["format", "--write", file],
 					{ cwd: packageRoot }
 				)
 			);
-			return { kept: path };
+			return { kept: file };
 		});
 
 		return tools.of({
@@ -353,6 +356,7 @@ const handlers = tools.toLayer(
 				state,
 				body,
 				mod,
+				textSpeed,
 				limit,
 				keep,
 				detach,
@@ -369,6 +373,7 @@ const handlers = tools.toLayer(
 					about,
 					state: yield* Effect.orDie(Schema.encodeEffect(StartState)(state)),
 					...(mod === undefined ? {} : { mod }),
+					...(textSpeed === undefined ? {} : { textSpeed }),
 					...(limit === undefined ? {} : { limit }),
 				};
 				const inline = scriptAround(
@@ -468,24 +473,33 @@ const handlers = tools.toLayer(
 						};
 			}),
 			plan_state: Effect.fnUntraced(function* ({ state }) {
-				const { edits, leftAlone } = yield* states.plan(state);
+				const planned = yield* states.plan(state);
+				const { edits, leftAlone } = planned;
+				const base = { name: planned.base.name, about: planned.base.about };
 				const count = fitting(
 					edits,
-					bytes({ edits: [], leftAlone }) + moreRoom
+					bytes({ base, edits: [], leftAlone }) + moreRoom
 				);
 				return count === edits.length
-					? { edits, leftAlone }
+					? { base, edits, leftAlone }
 					: {
+							base,
 							edits: Arr.take(edits, count),
 							leftAlone,
 							more: `${count} of the ${edits.length} edits are here; plan the state a few words at a time to see the rest`,
 						};
 			}),
-			start_game: Effect.fnUntraced(function* ({ state, mod }) {
+			start_game: Effect.fnUntraced(function* ({ state, mod, textSpeed }) {
+				const run = yield* newRunId;
+				const taken =
+					mod === undefined || mod === "none"
+						? mod
+						: yield* readMod(fs, path, mod.folder);
 				const game = yield* sessions.keep({
-					run: yield* newRunId,
+					run,
 					state,
-					mod,
+					mod: taken,
+					textSpeed,
 					owner: "start_game",
 					waitForPlace: defaultPlaceWait,
 				});
@@ -547,12 +561,19 @@ const handlers = tools.toLayer(
 				Effect.flatMap(sessions.get(session), (game) => game.screenshot(label)),
 			places: () => places.list,
 			list_runs: Effect.fnUntraced(function* ({ script, limit }) {
-				const found = yield* runs.list({ script, limit: limit ?? runsLimit });
-				const count = fitting(found, bytes({ runs: [] }) + moreRoom);
+				const { runs: found, unreadable } = yield* runs.list({
+					script,
+					limit: limit ?? runsLimit,
+				});
+				const count = fitting(
+					found,
+					bytes({ runs: [], unreadable }) + moreRoom
+				);
 				return count === found.length
-					? { runs: found }
+					? { runs: found, unreadable }
 					: {
 							runs: Arr.take(found, count),
+							unreadable,
 							more: `${count} of the ${found.length} runs are here; ask for one script's runs to see the rest`,
 						};
 			}),

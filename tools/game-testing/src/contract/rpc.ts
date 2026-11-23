@@ -12,6 +12,7 @@ import {
 	EmulatorUnavailable,
 	ImageBuildFailed,
 	LaunchFailed,
+	ModUnreadable,
 	NobodyThere,
 	NoFreePlace,
 	NoGameHere,
@@ -30,8 +31,8 @@ import {
 	WaitTimedOut,
 	WriteUnsupported,
 } from "../errors.ts";
-import { Outcome, RunRecord, RunSummary, ScriptSource } from "./record.ts";
-import { ModSource, ReadBack, StartState } from "./state.ts";
+import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
+import { Mod, ReadBack, StartState, TextSpeed } from "./state.ts";
 import {
 	Buttons,
 	Frames,
@@ -56,6 +57,7 @@ const CommandErrors = Schema.Union([
 ]);
 
 const StartErrors = Schema.Union([
+	ModUnreadable,
 	UnknownName,
 	StateRefused,
 	StartNotTaken,
@@ -74,7 +76,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 7;
+export const contract = 9;
 
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([
@@ -124,10 +126,11 @@ export const PlannedEdit = Schema.Union([
 export type PlannedEdit = typeof PlannedEdit.Type;
 
 /**
- * What a state writes, and the values a fresh place's files name that are not the place's own, which it leaves as the
- * base holds them, so a test that needs one adds it with `set`.
+ * What a state writes into its base, and the values a fresh place's files name that are not the place's own, which it
+ * leaves as the base holds them, so a test that needs one adds it with `set`.
  */
 export const StatePlan = Schema.Struct({
+	base: Schema.Struct({ name: Schema.String, about: Schema.String }),
 	edits: Schema.Array(PlannedEdit),
 	leftAlone: Schema.Array(
 		Schema.Struct({ name: Schema.String, from: Schema.String })
@@ -160,7 +163,10 @@ export class GameRpcs extends RpcGroup.make(
 			/** The caller names the run, so it knows the record however the start ends. A name already kept is refused. */
 			run: RunId,
 			state: StartState,
-			mod: Schema.optionalKey(ModSource),
+			/** The mod the place gets alone, `none` for none; absent, the machine's own mod that skips. */
+			mod: Schema.optionalKey(Schema.Union([Mod, Schema.Literal("none")])),
+			/** `instant` unless given. */
+			textSpeed: Schema.optionalKey(TextSpeed),
 			script: Schema.optionalKey(ScriptSource),
 			/** The broken run this one repeats. */
 			attemptOf: Schema.optionalKey(RunId),
@@ -275,6 +281,11 @@ export class GameRpcs extends RpcGroup.make(
 			SaveUnreadable,
 		]),
 	}),
+	/** `generated/names.d.ts` as this machine writes it from the game's tables, for a caller's type check. */
+	Rpc.make("Names", {
+		success: Schema.String,
+		error: Schema.Union([NoGameHere, DumpFailed]),
+	}),
 	Rpc.make("Search", {
 		payload: {
 			text: Schema.String,
@@ -286,7 +297,7 @@ export class GameRpcs extends RpcGroup.make(
 	}),
 	Rpc.make("Runs", {
 		payload: { script: Schema.optionalKey(Schema.String), limit: Schema.Int },
-		success: Schema.Array(RunSummary),
+		success: RunList,
 	}),
 	Rpc.make("Run", {
 		payload: { run: RunId },

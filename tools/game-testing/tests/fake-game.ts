@@ -236,9 +236,10 @@ const answer = (
 				code: 0,
 			};
 		case "check-mod": {
-			const mod = game.mods?.[rest[0] ?? ""];
+			// A mod is known by its folder's own name; one the game does not list fits the size table.
+			const mod = game.mods?.[Arr.lastNonEmpty(Str.split(rest[0] ?? "", "/"))];
 			return mod === undefined
-				? { stdout: "", code: 1 }
+				? { stdout: "", code: 0 }
 				: { stdout: Arr.join(Arr.map(mod.lines, line), "\n"), code: mod.code };
 		}
 		default:

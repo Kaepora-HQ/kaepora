@@ -13,8 +13,10 @@ import {
 	Effect,
 	Exit,
 	Fiber,
+	FileSystem,
 	Layer,
 	Option,
+	Path,
 	Predicate,
 	Record as Rec,
 	Schema,
@@ -24,7 +26,12 @@ import type { RpcClientError } from "effect/rpc";
 import { RpcClient, RpcSerialization } from "effect/rpc";
 import type { Outcome, ScriptSource } from "./contract/record.ts";
 import { contract, GameRpcs } from "./contract/rpc.ts";
-import type { ModSource, ReadBack, StartState } from "./contract/state.ts";
+import type {
+	ModFolder,
+	ReadBack,
+	StartState,
+	TextSpeed,
+} from "./contract/state.ts";
 import type {
 	Button,
 	PlaceId,
@@ -44,7 +51,8 @@ import type {
 	WriteUnsupported,
 } from "./errors.ts";
 import { failureOf, RemoteUnavailable } from "./errors.ts";
-import { connection } from "./far.ts";
+import { connection, reached } from "./far.ts";
+import { readMod } from "./mod.ts";
 import type { ValueName, ValueOf } from "./names.ts";
 
 /** A press lasts this many frames unless the script says otherwise: long enough for the game to see it. */
@@ -115,13 +123,15 @@ export interface RunningGame {
 export interface StartOptions {
 	/** The broken run this one repeats. */
 	readonly attemptOf?: RunId | undefined;
-	readonly mod?: ModSource | undefined;
+	/** A mod folder on this machine, which travels to the game's; `none` for no mod; absent, the machine's mod that skips. */
+	readonly mod?: ModFolder | "none" | undefined;
 	/** Who asks, for the places list. */
 	readonly owner: string;
 	/** The run's name; a new one when absent. */
 	readonly run?: RunId | undefined;
 	readonly script?: typeof ScriptSource.Type | undefined;
 	readonly state: StartState;
+	readonly textSpeed?: TextSpeed | undefined;
 	readonly waitForPlace?: Duration.Input | undefined;
 }
 
@@ -172,11 +182,11 @@ export class Game extends Context.Service<
 			Game,
 			Effect.gen(function* () {
 				const client = yield* RpcClient.make(GameRpcs);
-				const lost = () =>
-					Effect.fail(RemoteUnavailable.make({ url: where, reason: "closed" }));
+				const fs = yield* FileSystem.FileSystem;
+				const path = yield* Path.Path;
 				const remote = <A, E, R>(
 					call: Effect.Effect<A, E | RpcClientError.RpcClientError, R>
-				) => Effect.catchTag(call, "RpcClientError", lost);
+				) => reached(where, call);
 				yield* remote(client.Hello({ contract }));
 
 				/** Each started session's `Open` stream, by the effect that waits for its end. */
@@ -185,6 +195,10 @@ export class Game extends Context.Service<
 					options: StartOptions
 				) {
 					const run = options.run ?? (yield* newRunId);
+					const mod =
+						options.mod === undefined || options.mod === "none"
+							? options.mod
+							: yield* readMod(fs, path, options.mod.folder);
 					const started = yield* Deferred.make<
 						{
 							readonly session: SessionId;
@@ -201,7 +215,10 @@ export class Game extends Context.Service<
 							waitForPlace: Duration.fromInputUnsafe(
 								options.waitForPlace ?? defaultPlaceWait
 							),
-							...(options.mod === undefined ? {} : { mod: options.mod }),
+							...(mod === undefined ? {} : { mod }),
+							...(options.textSpeed === undefined
+								? {}
+								: { textSpeed: options.textSpeed }),
 							...(options.script === undefined
 								? {}
 								: { script: options.script }),

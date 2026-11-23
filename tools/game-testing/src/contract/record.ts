@@ -1,5 +1,5 @@
 import { Effect, Schema, SchemaGetter, SchemaIssue } from "effect";
-import { ModSource, ReadBack, StartState } from "./state.ts";
+import { ReadBack, StartState, TextSpeed } from "./state.ts";
 import { PlaceId, RunId, SessionId, Value } from "./values.ts";
 
 /** An instant as ISO 8601 text, decoded to a `Temporal.Instant`. */
@@ -120,9 +120,21 @@ export class RunRecord extends Schema.Class<
 	}),
 	/** The key the game file's tables are cached under. */
 	game: Schema.String,
+	/**
+	 * The mod the place got, by its folder's name and the SHA-256 over its files, each path then its bytes, or `none`;
+	 * absent when the start ended before a place was taken.
+	 */
 	mod: Schema.optionalKey(
-		Schema.Struct({ source: ModSource, digest: Schema.String })
+		Schema.Union([
+			Schema.Struct({ name: Schema.String, digest: Schema.String }),
+			Schema.Literal("none"),
+		])
 	),
+	/**
+	 * How the running game wrote its text, as read from its program once Link could move: Lichii leaves its instant
+	 * text out when a mod changed the bytes it patches. Absent when the start never got that far.
+	 */
+	textSpeed: Schema.optionalKey(TextSpeed),
 	script: Schema.optionalKey(ScriptSource),
 	state: StartState,
 	/** Every value the state wrote, as the running game held it once Link could move; absent until then. */
@@ -148,3 +160,10 @@ export const RunSummary = Schema.Struct({
 	milliseconds: Schema.optionalKey(Schema.Finite),
 });
 export type RunSummary = typeof RunSummary.Type;
+
+/** A run list, newest first, and how many records it could not read. */
+export const RunList = Schema.Struct({
+	runs: Schema.Array(RunSummary),
+	unreadable: Schema.Int,
+});
+export type RunList = typeof RunList.Type;

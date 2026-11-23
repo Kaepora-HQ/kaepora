@@ -2,7 +2,7 @@
  * The start state: a base save plus words, all in the game's own names. The game's machine resolves every name
  * through the game's tables and refuses the whole state before the emulator starts.
  */
-import { Schema } from "effect";
+import { Array as Arr, Schema, String as Str } from "effect";
 import { Value } from "./values.ts";
 
 /** Swapping age also swaps the sword and shield, as the game does. */
@@ -77,6 +77,47 @@ export const ReadBack = Schema.Struct({
 	notRead: Schema.Array(Schema.String),
 });
 
-/** A mod to install alone in the game's place: a folder the patcher wrote. */
-export const ModSource = Schema.Struct({ folder: Schema.String });
-export type ModSource = typeof ModSource.Type;
+/** A mod's folder on the machine that reads it, such as one the patcher wrote for a seed. */
+export const ModFolder = Schema.Struct({ folder: Schema.String });
+export type ModFolder = typeof ModFolder.Type;
+
+/** One part of a path, which cannot name its folder or the one above it. */
+const isPart = (part: string) => part !== "" && part !== "." && part !== "..";
+
+/** A mod's name, its folder's own name: one part of a path. */
+export const ModName = Schema.String.check(
+	Schema.makeFilter((name) =>
+		isPart(name) && !Str.includes("/")(name)
+			? undefined
+			: "a folder's own name, with no /, and not . or .."
+	)
+);
+
+/** A file's path inside its mod's folder, in parts joined by `/`, so it can name nothing outside the folder. */
+export const ModPath = Schema.String.check(
+	Schema.makeFilter((path) =>
+		Arr.every(Str.split(path, "/"), isPart)
+			? undefined
+			: "a path inside the mod's folder, in parts joined by /, none of them empty, . or .."
+	)
+);
+
+/**
+ * The most a start's message carries to a far machine's `serve`, whose WebSocket refuses a larger one, and the room the
+ * rest of a start takes beside its mod. A mod's bytes travel as base64, a third larger.
+ */
+export const startLimit = 64 * 1024 * 1024;
+export const modLimit = startLimit - 1024 * 1024;
+
+/** A mod as it travels to the game's machine: its name, and each of its files with its bytes. */
+export const Mod = Schema.Struct({
+	name: ModName,
+	files: Schema.NonEmptyArray(
+		Schema.Struct({ path: ModPath, bytes: Schema.Uint8Array })
+	),
+});
+export type Mod = typeof Mod.Type;
+
+/** How the game writes its text: at once, through Lichii's instant text add-on as a player has it, or at its own speed. */
+export const TextSpeed = Schema.Literals(["instant", "game"]);
+export type TextSpeed = typeof TextSpeed.Type;

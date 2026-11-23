@@ -11,6 +11,7 @@ import { Mac } from "effect/crypto";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { RpcSerialization, RpcServer } from "effect/rpc";
 import { GameRpcs } from "../contract/rpc.ts";
+import { startLimit } from "../contract/state.ts";
 import { handlers } from "../host/handlers.ts";
 import {
 	instructions,
@@ -79,7 +80,8 @@ export const serve = (options: {
 			BunHttpServer.layer({
 				hostname,
 				port: options.port,
-				websocket: { idleTimeout },
+				// A start carries its mod's files; Bun's own limit is 16 MiB.
+				websocket: { idleTimeout, maxPayloadLength: startLimit },
 			})
 		)
 	);

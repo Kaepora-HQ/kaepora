@@ -446,6 +446,29 @@ describe("the MCP tools", () => {
 	);
 
 	it.live(
+		"start_game refuses a mod folder that names no folder of its own, and stages nothing",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const machine = yield* fakeMachine();
+				const client = yield* toolsOn(machine);
+				const folder = `${machine.home}/mods/Up/romfs`;
+				yield* fs.makeDirectory(folder, { recursive: true });
+				yield* fs.writeFile(`${folder}/File.zs`, new Uint8Array([1]));
+				const { error, text } = yield* call(client, "start_game", {
+					state: { base: "test-base" },
+					mod: { folder: `${machine.home}/mods/Up/..` },
+				});
+				expect(error).toBe(true);
+				expect(text).toContain("names no folder of its own");
+				expect(yield* machine.podman.calls).not.toContainEqual(
+					expect.arrayContaining(["create"])
+				);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
 		"a failure answers its message, which says what to do next",
 		() =>
 			Effect.gen(function* () {

@@ -29,6 +29,7 @@ import { Outcome } from "../contract/record.ts";
 import type { RunId } from "../contract/values.ts";
 import { newRunId } from "../contract/values.ts";
 import { ScriptFailed } from "../errors.ts";
+import { Runs } from "../host/runs.ts";
 import { lastLines, ran, text } from "../process.ts";
 import { Declaration } from "../script.ts";
 import { ScriptHost } from "./host.ts";
@@ -69,8 +70,12 @@ export const ScriptEvent = Schema.Union([
 export type ScriptEvent = typeof ScriptEvent.Type;
 export const EventLine = Schema.fromJsonString(ScriptEvent);
 
-/** What a run of a script gives: its outcome, and its run's name when the host kept a record of it. */
+/**
+ * What a run of a script gives: its outcome, and its run's name when the host kept a record of it, which this
+ * machine's runs then hold too, or why the copy of a far one failed.
+ */
 export interface ScriptRun {
+	readonly notCopied?: string;
 	readonly outcome: Outcome;
 	readonly run?: RunId;
 }
@@ -168,11 +173,12 @@ const within = <A, E, R>(
 			),
 	});
 
-/** The package's type check over the script and the generated names, in a settings file of its own. */
+/** The package's type check over the script and the game's names, `names`, in a settings file of its own. */
 const typecheck = Effect.fn("Scripts.typecheck")(function* (
 	spawner: ChildProcessSpawner.ChildProcessSpawner["Service"],
 	fs: FileSystem.FileSystem,
-	script: string
+	script: string,
+	names: string
 ) {
 	// tsc finds a file in its settings by the text of its path, which then holds no `..`.
 	const file = yield* Effect.orDie(fs.realPath(script));
@@ -187,7 +193,7 @@ const typecheck = Effect.fn("Scripts.typecheck")(function* (
 			Formatter.formatJson({
 				extends: `${packageRoot}/tsconfig.json`,
 				compilerOptions: { incremental: false, tsBuildInfoFile: null },
-				include: [file, `${packageRoot}/generated/**/*.ts`],
+				include: [file, names],
 			})
 		)
 	);
@@ -232,13 +238,17 @@ const declared = (child: Child) =>
 		(limit) => `it did not declare itself within ${limit} and was stopped`
 	);
 
-/** A script's declaration, from a child, after its type check: the host never imports a script. */
+/**
+ * A script's declaration, from a child, after its type check against the game's names, `names`: the host never
+ * imports a script.
+ */
 export const declarationOf = Effect.fn("Scripts.declarationOf")(function* (
-	script: string
+	script: string,
+	names: string
 ) {
 	const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 	const fs = yield* FileSystem.FileSystem;
-	yield* typecheck(spawner, fs, script);
+	yield* typecheck(spawner, fs, script, names);
 	return yield* Effect.scoped(
 		Effect.flatMap(childOf(spawner, [declarationCommand, script]), declared)
 	);
@@ -276,7 +286,7 @@ export class Scripts extends Context.Service<
 					readonly run?: RunId | undefined;
 				}
 			) {
-				yield* typecheck(spawner, fs, script);
+				yield* typecheck(spawner, fs, script, host.names);
 				const id = given?.run ?? (yield* newRunId);
 				const outcome = yield* Effect.scoped(
 					Effect.gen(function* () {
@@ -313,22 +323,35 @@ export class Scripts extends Context.Service<
 					})
 				).pipe(
 					Effect.catchTag("ScriptFailed", (failed) =>
-						Effect.flatMap(kept(id), (recorded) =>
-							Effect.fail(
-								recorded
-									? ScriptFailed.make({
-											reason: failed.reason,
-											detail: failed.detail,
-											run: id,
-										})
-									: failed
-							)
+						Effect.flatMap(
+							Effect.catchTag(kept(id), "CopyFailed", () =>
+								Effect.succeed(true)
+							),
+							(recorded) =>
+								Effect.fail(
+									recorded
+										? ScriptFailed.make({
+												reason: failed.reason,
+												detail: failed.detail,
+												run: id,
+											})
+										: failed
+								)
 						)
 					)
 				);
-				const named = yield* kept(id);
-				const finished: ScriptRun = named ? { run: id, outcome } : { outcome };
-				return finished;
+				return yield* kept(id).pipe(
+					Effect.map(
+						(named): ScriptRun => (named ? { run: id, outcome } : { outcome })
+					),
+					Effect.catchTag("CopyFailed", (failed) =>
+						Effect.succeed<ScriptRun>({
+							run: id,
+							outcome,
+							notCopied: failed.message,
+						})
+					)
+				);
 			});
 
 			return Scripts.of({ run });
@@ -340,7 +363,10 @@ export class Scripts extends Context.Service<
 		Layer.provide(ScriptHost.layer)
 	);
 
-	/** Scripts on the far machine whose `serve` `url` reaches. */
+	/** Scripts on the far machine whose `serve` `url` reaches; their records are copied to this machine's. */
 	static readonly layerRemote = (url: string) =>
-		Scripts.layerNoDeps.pipe(Layer.provide(ScriptHost.layerRemote(url)));
+		Scripts.layerNoDeps.pipe(
+			Layer.provide(ScriptHost.layerRemote(url)),
+			Layer.provide(Runs.layer)
+		);
 }

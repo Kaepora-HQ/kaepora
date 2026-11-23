@@ -1,4 +1,5 @@
 import {
+	Array as Arr,
 	Context,
 	Duration,
 	Effect,
@@ -11,6 +12,7 @@ import {
 	String as Str,
 } from "effect";
 import { ChildProcessSpawner } from "effect/process";
+import type { TextSpeed } from "../contract/state.ts";
 import { LaunchFailed } from "../errors.ts";
 import type { Place } from "../host/places.ts";
 import { placeFiles } from "../host/places.ts";
@@ -29,16 +31,65 @@ const lookAgain = Duration.millis(500);
 
 const logLines = 20;
 
+/** The game's program id, which Lichii keys its saves, mods and add-ons by. */
+export const programId = "0400486024DEC000";
+
+/** Lichii's own add-on that writes each page of the game's text at once, which a player switches on. */
+const instantText = "Text Speed Instant (built-in)";
+
+/**
+ * Lichii's settings that switch it on: a built-in add-on that starts off is stored as its name after a `+` among the
+ * program's disabled add-ons (`nx2/src/core/file_sys/patch_manager.cpp`, `EnabledAddonKey`).
+ */
+const instantTextSettings = Arr.join(
+	[
+		"",
+		"[DisabledAddOns]",
+		"size=1",
+		"1\\title_id\\default=false",
+		`1\\title_id=${BigInt(`0x${programId}`)}`,
+		"1\\disabled\\size=1",
+		"1\\disabled\\1\\d\\default=false",
+		`1\\disabled\\1\\d=+${instantText}`,
+		"",
+	],
+	"\n"
+);
+
+/**
+ * What the add-on writes into main: a branch at 0xAFE1B4 from the letter animation to a cave at 0x3C46F00, and after
+ * the cave's 16 bytes of code the scale 1e6 that writes a page at once (`patch_manager.cpp`, `TEXT_SPEED_*`).
+ */
+const instantTextBytes = [
+	{ at: 0xa_fe_1b_4n, bytes: [0x53, 0x23, 0xc5, 0x14] },
+	{ at: 0x3_c4_6f_10n, bytes: [0x00, 0x24, 0x74, 0x49] },
+] as const;
+
+/** How the running game writes its text: at once when main, at `program`, holds the instant text add-on's bytes. */
+export const textSpeedOf = (emulator: Emulator, program: bigint) =>
+	Effect.map(
+		Effect.forEach(
+			instantTextBytes,
+			({ at, bytes }) =>
+				Effect.map(emulator.readMemory(program + at, bytes.length), (held) =>
+					Arr.every(bytes, (byte, index) => held[index] === byte)
+				),
+			{ concurrency: 1 }
+		),
+		(held): TextSpeed => (Arr.every(held, (each) => each) ? "instant" : "game")
+	);
+
 export class Launcher extends Context.Service<
 	Launcher,
 	{
 		/**
-		 * Writes the place's settings, starts its container and gives the game's debug connection once the first frame is
-		 * presented. The connection closes with the scope; the place's own scope then stops the container.
+		 * Writes the place's settings, with Lichii's instant text add-on for `instant`, starts its container and gives the
+		 * game's debug connection once the first frame is presented. The connection closes with the scope; the place's own
+		 * scope then stops the container.
 		 */
 		readonly launch: (
 			place: Place,
-			options: { readonly wire: WireLog }
+			options: { readonly wire: WireLog; readonly textSpeed: TextSpeed }
 		) => Effect.Effect<Emulator, LaunchFailed, Scope.Scope>;
 	}
 >()("game-testing/emulator/launcher") {
@@ -62,7 +113,7 @@ export class Launcher extends Context.Service<
 
 			const launch = Effect.fn("Launcher.launch")(function* (
 				place: Place,
-				options: { readonly wire: WireLog }
+				options: { readonly wire: WireLog; readonly textSpeed: TextSpeed }
 			) {
 				const scope = yield* Effect.scope;
 				const failed = (stage: LaunchFailed["stage"], detail: string) =>
@@ -75,7 +126,9 @@ export class Launcher extends Context.Service<
 				yield* Effect.orDie(
 					fs.writeFileString(
 						`${place.folder}/config/lichii/qt-config.ini`,
-						settings
+						options.textSpeed === "instant"
+							? settings + instantTextSettings
+							: settings
 					)
 				);
 				const started = yield* podman(spawner, ["start", place.container]);

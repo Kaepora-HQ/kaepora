@@ -1,9 +1,10 @@
 /**
  * What a script file is. A kept script under `scripts/` default-exports `script({...})`. The state is declared, not
- * built in the body, so it is planned and refused before any game starts, and the record names it.
+ * built in the body, so it is planned and refused before any game starts, and the record names it. A script outside
+ * the package imports `script` and `Effect` from this file by its path, which needs no packages beside the script.
  */
 import { Effect, Predicate, Schema } from "effect";
-import { ModSource, StartState } from "./contract/state.ts";
+import { ModFolder, StartState, TextSpeed } from "./contract/state.ts";
 import { Limit } from "./contract/values.ts";
 import type {
 	CommandError,
@@ -30,12 +31,18 @@ export interface Script<A> {
 	readonly about: string;
 	/** The most the body may take once Link can move, such as `10 minutes`; 5 minutes unless given. */
 	readonly limit?: string;
-	readonly mod?: typeof ModSource.Encoded;
+	/**
+	 * The mod the place gets alone: a folder the patcher wrote, as an absolute path or one from the script's own
+	 * folder, or `none` for the game as it ships. Absent, the machine's own mod that skips what a player can skip.
+	 */
+	readonly mod?: typeof ModFolder.Encoded | "none";
 	/** `here` when it hands over to a person, which `run` skips. */
 	readonly person?: "here" | "nobody";
 	/** Drives the started game. What it returns is the run's result. */
 	readonly run: (game: RunningGame) => Effect.Effect<A, ScriptError>;
 	readonly state: typeof StartState.Encoded;
+	/** `game` writes the game's text at its own speed; `instant`, as a player has it, unless given. */
+	readonly textSpeed?: TextSpeed;
 }
 
 /** Declares a script, so its body's types are checked against `RunningGame`. */
@@ -45,9 +52,10 @@ export const script = <A>(definition: Script<A>) => definition;
 export const Declaration = Schema.Struct({
 	about: Schema.String,
 	limit: Schema.optionalKey(Limit),
-	mod: Schema.optionalKey(ModSource),
+	mod: Schema.optionalKey(Schema.Union([ModFolder, Schema.Literal("none")])),
 	person: Schema.optionalKey(Schema.Literals(["here", "nobody"])),
 	state: StartState,
+	textSpeed: Schema.optionalKey(TextSpeed),
 });
 
 /** A script file's default export, as its child reads it. */
@@ -78,3 +86,5 @@ export const load = Effect.fn("Script.load")(function* (path: string) {
 		)
 	);
 });
+
+export { Effect } from "effect";

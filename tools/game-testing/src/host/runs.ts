@@ -13,20 +13,21 @@ import {
 	Exit,
 	FileSystem,
 	Layer,
+	Option,
 	Order,
 	Ref,
 	Schema,
 	Semaphore,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
-import type { Outcome, RunSummary, Step } from "../contract/record.ts";
+import type { Outcome, RunList, RunSummary, Step } from "../contract/record.ts";
 import { RunRecord } from "../contract/record.ts";
-import type { ReadBack } from "../contract/state.ts";
+import type { ReadBack, TextSpeed } from "../contract/state.ts";
 import type { PlaceId } from "../contract/values.ts";
 import { Picture, RunId } from "../contract/values.ts";
 import type { WireLog } from "../emulator/emulator.ts";
 import { wireLog } from "../emulator/emulator.ts";
-import { RunNotFound } from "../errors.ts";
+import { CopyFailed, RunNotFound } from "../errors.ts";
 
 /** What a run's record holds before its state is planned. */
 export type RunHeader = Omit<
@@ -50,16 +51,17 @@ export interface Recorder {
 		png: Uint8Array,
 		label: string | undefined
 	) => Effect.Effect<Picture>;
-	/** Link can move: the emulator's build and the values the state wrote, as the game holds them. */
+	/** Link can move: the emulator's build, how the game writes its text, and the values the state wrote as it holds them. */
 	readonly started: (details: {
 		readonly build: string;
 		readonly readBack: typeof ReadBack.Type;
+		readonly textSpeed: TextSpeed;
 	}) => Effect.Effect<void>;
 	readonly step: (step: Step) => Effect.Effect<void>;
 	/** A place was taken: the place, and the mod it gets with its digest. */
 	readonly taken: (details: {
 		readonly place: PlaceId;
-		readonly mod: RunRecord["mod"];
+		readonly mod: NonNullable<RunRecord["mod"]>;
 	}) => Effect.Effect<void>;
 	readonly wire: WireLog;
 }
@@ -94,16 +96,23 @@ export class Runs extends Context.Service<
 		readonly begin: (
 			header: RunHeader
 		) => Effect.Effect<Recorder, never, Scope.Scope>;
-		/** The newest runs first, of one script when it is given. */
+		/** The newest runs first, of one script when it is given, and how many records could not be read. */
 		readonly list: (filter: {
 			readonly script?: string | undefined;
 			readonly limit: number;
-		}) => Effect.Effect<readonly RunSummary[]>;
+		}) => Effect.Effect<RunList>;
 		readonly get: (run: RunId) => Effect.Effect<RunRecord, RunNotFound>;
 		readonly picture: (
 			run: RunId,
 			path: string
 		) => Effect.Effect<Uint8Array, RunNotFound>;
+		/** The folder that holds a run's record and pictures. */
+		readonly folder: (run: RunId) => string;
+		/** Keeps a run another machine recorded, with its pictures by path, as its own folder holds it there. */
+		readonly copy: (
+			record: RunRecord,
+			pictures: readonly { readonly path: string; readonly png: Uint8Array }[]
+		) => Effect.Effect<void, CopyFailed>;
 	}
 >()("game-testing/host/runs") {
 	static readonly layer = Layer.effect(
@@ -174,12 +183,13 @@ export class Runs extends Context.Service<
 						Effect.provideService(FileSystem.FileSystem, fs),
 						Effect.orDie
 					),
-					started: ({ build, readBack }) =>
+					started: ({ build, readBack, textSpeed }) =>
 						update((current) =>
 							RunRecord.make({
 								...current,
 								emulator: { ...current.emulator, build },
 								readBack,
+								textSpeed,
 							})
 						),
 					step: (step) =>
@@ -187,13 +197,7 @@ export class Runs extends Context.Service<
 							RunRecord.make({ ...current, steps: [...current.steps, step] })
 						),
 					taken: ({ place, mod }) =>
-						update((current) =>
-							RunRecord.make({
-								...current,
-								place,
-								...(mod === undefined ? {} : { mod }),
-							})
-						),
+						update((current) => RunRecord.make({ ...current, place, mod })),
 					picture: Effect.fnUntraced(function* (png, label) {
 						const count = yield* Ref.updateAndGet(pictures, (n) => n + 1);
 						const path = `picture-${count}.png`;
@@ -218,12 +222,19 @@ export class Runs extends Context.Service<
 					Arr.filter(names, (name) => Schema.is(RunId)(name)),
 					Order.flip(Order.String)
 				);
+				// A record another contract wrote may not decode; it is counted, not listed.
 				const records = yield* Effect.forEach(
 					newest,
-					(name) => get(RunId.make(name)).pipe(Effect.option),
+					(name) =>
+						fs
+							.readFileString(`${folderOf(RunId.make(name))}/record.json`)
+							.pipe(
+								Effect.flatMap(Schema.decodeEffect(RecordJson)),
+								Effect.option
+							),
 					{ concurrency: 4 }
 				);
-				return Arr.take(
+				const runs = Arr.take(
 					Arr.flatMap(records, (found): RunSummary[] => {
 						if (found._tag === "None") {
 							return [];
@@ -255,6 +266,11 @@ export class Runs extends Context.Service<
 					}),
 					filter.limit
 				);
+				const listed: RunList = {
+					runs,
+					unreadable: Arr.filter(records, Option.isNone).length,
+				};
+				return listed;
 			});
 
 			const picture = Effect.fn("Runs.picture")(function* (
@@ -269,7 +285,30 @@ export class Runs extends Context.Service<
 					.pipe(Effect.mapError(() => RunNotFound.make({ run })));
 			});
 
-			return Runs.of({ begin, list, get, picture });
+			const copy = Effect.fnUntraced(function* (
+				record: RunRecord,
+				pictures: readonly { readonly path: string; readonly png: Uint8Array }[]
+			) {
+				// A picture is written only by a picture's own name, so nothing lands outside the run's folder.
+				const refused = Arr.findFirst(
+					pictures,
+					({ path }) => !pictureName.test(path)
+				);
+				if (Option.isSome(refused)) {
+					return yield* CopyFailed.make({
+						run: record.id,
+						reason: `the game machine named a picture ${refused.value.path}, which is no picture's name`,
+					});
+				}
+				const folder = folderOf(record.id);
+				yield* Effect.orDie(fs.makeDirectory(folder, { recursive: true }));
+				for (const kept of pictures) {
+					yield* Effect.orDie(fs.writeFile(`${folder}/${kept.path}`, kept.png));
+				}
+				yield* write(record);
+			});
+
+			return Runs.of({ begin, list, get, picture, folder: folderOf, copy });
 		})
 	);
 }

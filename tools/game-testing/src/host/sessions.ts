@@ -18,7 +18,7 @@ import {
 	Formatter,
 	Layer,
 	Option,
-	Order,
+	Path,
 	RcMap,
 	Record as Rec,
 	Schedule,
@@ -26,8 +26,14 @@ import {
 	Scope,
 } from "effect";
 import { SecureRandom } from "effect/crypto";
+import { UserDirectories } from "effect/persistence";
 import type { Outcome, ScriptSource, Step } from "../contract/record.ts";
-import type { ModSource, ReadBack, StartState } from "../contract/state.ts";
+import type {
+	Mod,
+	ReadBack,
+	StartState,
+	TextSpeed,
+} from "../contract/state.ts";
 import type {
 	Buttons,
 	Picture,
@@ -59,11 +65,13 @@ import type {
 } from "../errors.ts";
 import {
 	failureOf,
+	ModUnreadable,
 	NobodyThere,
 	ProvesNothing,
 	SessionNotFound,
 	WaitTimedOut,
 } from "../errors.ts";
+import { digestOf, readMod } from "../mod.ts";
 import { decode, read } from "../save/codec.ts";
 import type { Plan } from "../save/state.ts";
 import { StartStates } from "../save/state.ts";
@@ -101,16 +109,20 @@ const screenshotHeight = 720;
 /** What a host needs to start one game. */
 export interface Start {
 	readonly attemptOf?: RunId | undefined;
-	readonly mod?: ModSource | undefined;
+	/** The mod the place gets alone; `none` for none; absent, the machine's own mod that skips. */
+	readonly mod?: Mod | "none" | undefined;
 	/** Shown in the places list: a script's path, `mcp`, or a CI job's name. */
 	readonly owner: string;
 	readonly run: RunId;
 	readonly script?: typeof ScriptSource.Type | undefined;
 	readonly state: StartState;
+	/** `instant` unless given. */
+	readonly textSpeed?: TextSpeed | undefined;
 	readonly waitForPlace: Duration.Duration;
 }
 
 export type StartError =
+	| ModUnreadable
 	| UnknownName
 	| StateRefused
 	| ValueRefused
@@ -251,22 +263,38 @@ export class Sessions extends Context.Service<
 			const boot = yield* Boot;
 			const program = yield* Config.String("GAME_TESTING_LICHII");
 			const fs = yield* FileSystem.FileSystem;
+			const path = yield* Path.Path;
+			const directories = yield* UserDirectories.UserDirectories;
 			const random = yield* SecureRandom.SecureRandom;
 			const machine = hostname();
+			const skips = `${yield* Effect.orDie(directories.data("game-testing"))}/skips`;
+			const staging = `${yield* Effect.orDie(directories.cache("game-testing"))}/mods`;
 
-			/** SHA-256 over a mod folder's files, each path then its bytes, in path order. */
-			const digestOf = Effect.fnUntraced(function* (mod: ModSource) {
-				const paths = yield* fs.readDirectory(mod.folder, { recursive: true });
-				const hash = new Bun.CryptoHasher("sha256");
-				for (const path of Arr.sort(paths, Order.String)) {
-					const info = yield* fs.stat(`${mod.folder}/${path}`);
-					if (info.type === "File") {
-						const bytes = yield* fs.readFile(`${mod.folder}/${path}`);
-						hash.update(path);
-						hash.update(bytes);
-					}
+			/** The mod a start names: the caller's, none, or the machine's own that skips. */
+			const modOf = (mod: Start["mod"]) => {
+				if (mod === "none") {
+					return Effect.succeedNone;
 				}
-				return hash.digest("hex");
+				return mod === undefined
+					? readMod(fs, path, skips).pipe(
+							Effect.mapError(() =>
+								ModUnreadable.make({ folder: skips, reason: "no-skips" })
+							),
+							Effect.asSome
+						)
+					: Effect.succeedSome(mod);
+			};
+
+			/** Writes a mod's files into a folder of its own for as long as the scope lasts, and gives the folder. */
+			const staged = Effect.fnUntraced(function* (mod: Mod) {
+				yield* fs.makeDirectory(staging, { recursive: true });
+				const folder = `${yield* fs.makeTempDirectoryScoped({ directory: staging })}/${mod.name}`;
+				for (const file of mod.files) {
+					const at = `${folder}/${file.path}`;
+					yield* fs.makeDirectory(path.dirname(at), { recursive: true });
+					yield* fs.writeFile(at, file.bytes);
+				}
+				return folder;
 			}, Effect.orDie);
 			const games = new Map<SessionId, HostGame>();
 			const people = new Map<RunId, Person>();
@@ -351,30 +379,38 @@ export class Sessions extends Context.Service<
 					...(Option.isSome(span) ? { traceId: span.value.traceId } : {}),
 				});
 				const plan = yield* states.plan(start.state);
-				if (start.mod !== undefined) {
-					yield* data.checkMod(start.mod.folder);
+				const mod = yield* modOf(start.mod);
+				const folder = Option.isSome(mod)
+					? yield* Effect.asSome(staged(mod.value))
+					: Option.none();
+				if (Option.isSome(folder)) {
+					yield* data.checkMod(folder.value);
 				}
 				const saves = yield* states.build(plan);
-				const mod =
-					start.mod === undefined
-						? undefined
-						: { source: start.mod, digest: yield* digestOf(start.mod) };
 				const place = yield* places.take({
 					session,
 					run: start.run,
 					owner: start.owner,
 					waitForPlace: start.waitForPlace,
 				});
-				yield* recorder.taken({ place: place.id, mod });
+				yield* recorder.taken({
+					place: place.id,
+					mod: Option.match(mod, {
+						onNone: () => "none" as const,
+						onSome: (taken) => ({ name: taken.name, digest: digestOf(taken) }),
+					}),
+				});
 				const booted = yield* boot.start(place, {
 					plan,
 					saves,
-					mod: start.mod,
+					mod: Option.getOrUndefined(folder),
+					textSpeed: start.textSpeed ?? "instant",
 					wire: recorder.wire,
 				});
 				yield* recorder.started({
 					build: booted.build,
 					readBack: booted.readBack,
+					textSpeed: booted.textSpeed,
 				});
 				const { emulator, values } = booted;
 				const built = {

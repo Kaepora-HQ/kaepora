@@ -18,12 +18,12 @@ import {
 	Schema,
 	String as Str,
 } from "effect";
-import type { ModSource, ReadBack } from "../contract/state.ts";
+import type { ReadBack, TextSpeed } from "../contract/state.ts";
 import type { Saved } from "../contract/values.ts";
 import { Buttons, Value } from "../contract/values.ts";
 import { GameData } from "../data/game-data.ts";
 import type { Emulator, EmulatorError, WireLog } from "../emulator/emulator.ts";
-import { Launcher } from "../emulator/launcher.ts";
+import { Launcher, programId, textSpeedOf } from "../emulator/launcher.ts";
 import type { Values } from "../emulator/values.ts";
 import { attach, entryOf } from "../emulator/values.ts";
 import type { EmulatorUnavailable } from "../errors.ts";
@@ -75,8 +75,6 @@ const lookAgain = Duration.millis(250);
 const pressSpacing = Duration.seconds(1);
 const pressFrames = 4;
 
-const programId = "0400486024DEC000";
-
 /**
  * The one user every place's Lichii has. Lichii writes a user with a random id when it finds none, and a save belongs
  * to its user's folder, so the place writes its own before each start, as it writes its settings.
@@ -108,6 +106,8 @@ export interface Booted {
 	readonly build: string;
 	readonly emulator: Emulator;
 	readonly readBack: typeof ReadBack.Type;
+	/** How the game writes its text, as its program holds it. */
+	readonly textSpeed: TextSpeed;
 	readonly values: Values;
 }
 
@@ -115,15 +115,16 @@ export class Boot extends Context.Service<
 	Boot,
 	{
 		/**
-		 * Puts the save and the mod into the place, starts its game and brings Link into control, then reads back every
-		 * value the plan wrote. The game stops when the scope closes.
+		 * Puts the save and the mod folder into the place, starts its game and brings Link into control, then reads back
+		 * every value the plan wrote. The game stops when the scope closes.
 		 */
 		readonly start: (
 			place: Place,
 			options: {
 				readonly plan: Plan;
 				readonly saves: Saves;
-				readonly mod: ModSource | undefined;
+				readonly mod: string | undefined;
+				readonly textSpeed: TextSpeed;
 				readonly wire: WireLog;
 			}
 		) => Effect.Effect<
@@ -149,7 +150,7 @@ export class Boot extends Context.Service<
 			const furnish = Effect.fnUntraced(function* (
 				folder: string,
 				saves: Saves,
-				mod: ModSource | undefined
+				mod: string | undefined
 			) {
 				const nand = `${folder}/data/lichii/nand`;
 				const profile = `${nand}/system/save/8000000000000010/su/avators`;
@@ -166,7 +167,7 @@ export class Boot extends Context.Service<
 				yield* fs.remove(mods, { recursive: true, force: true });
 				yield* fs.makeDirectory(mods, { recursive: true });
 				if (mod !== undefined) {
-					yield* fs.copy(mod.folder, `${mods}/${path.basename(mod.folder)}`);
+					yield* fs.copy(mod, `${mods}/${path.basename(mod)}`);
 				}
 			}, Effect.orDie);
 
@@ -175,12 +176,16 @@ export class Boot extends Context.Service<
 				options: {
 					readonly plan: Plan;
 					readonly saves: Saves;
-					readonly mod: ModSource | undefined;
+					readonly mod: string | undefined;
+					readonly textSpeed: TextSpeed;
 					readonly wire: WireLog;
 				}
 			) {
 				yield* furnish(place.folder, options.saves, options.mod);
-				const emulator = yield* launcher.launch(place, { wire: options.wire });
+				const emulator = yield* launcher.launch(place, {
+					wire: options.wire,
+					textSpeed: options.textSpeed,
+				});
 				const failed = (stage: LaunchFailed["stage"], detail: string) =>
 					Effect.flatMap(
 						emulator
@@ -269,12 +274,19 @@ export class Boot extends Context.Service<
 					pressA
 				);
 				yield* until("control", loadLimit, Option.exists(isControl), wait);
-				const readBack = yield* readBackOf(data, values, options.plan).pipe(
+				const { readBack, textSpeed } = yield* Effect.all(
+					{
+						readBack: readBackOf(data, values, options.plan),
+						textSpeed: textSpeedOf(emulator, values.program),
+					},
+					{ concurrency: 1 }
+				).pipe(
 					Effect.catchTag("EmulatorRefused", (error) =>
 						failed("control", error.message)
 					)
 				);
 				const booted: Booted = {
+					textSpeed,
 					emulator,
 					values,
 					build: status.build,
