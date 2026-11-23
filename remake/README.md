@@ -658,7 +658,7 @@ writes come in order. A seed lets a player take another order, and a write can t
 passed: what waited for the later step shuts again, and what Link handed over to pass it is gone.
 
 Every mod changes the places below, whatever the seed's settings. The tables are of the game's files, so a row named
-here shows the game's own write or question, and the change is what this section says of it. A change takes one of four
+here shows the game's own write or question, and the change is what this section says of it. A change takes one of five
 shapes:
 
 - The write names another quest with the step `Complete`: a quest that is complete wherever the write can run, so the
@@ -666,6 +666,7 @@ shapes:
 - The switch before the write asks another flag or expression.
 - The event before the write goes on to a later event, past the write.
 - A placed actor's presence names another flag.
+- An entry of an NPC's schedule holds on another flag and starts another talk.
 
 The warp after Gohma, `Dm_SY_BancChange_EscapeDungeon` `Event4`, sets `Goto_HyruleCastle` to Step01 with no test. A Link
 who woke Talon before Gohma stood at Step04 and was set back: Talon was gone from the crates, and Zelda only asked
@@ -736,6 +737,32 @@ at the ranch and had not learned her song was set back a step, and she then star
 `Event179` asks `Get_Epona_IsAfter_Ready_Exp`, so the write moves only a quest still at Ready. Seen in the game: after a
 lost race the step stays and the child then learns the song, and an adult who learned it as a child still wins Epona and
 rides out.
+
+Darunia's son gives his tunic only as a participant of `SageOfFire`, at Ready, StopDaruniaJr and TalkDaruniaJr. His
+talk at TalkDaruniaJr, `1396283892_1460050088_2425371882_C1_T`, gives it in `SageOfFire` `Event18`, and the door scene
+after it sets `SageOfFire_Step02_DoorOpen` and the quest to MoveStatue. The crater's arrival from Goron City
+(`Logic/DeathMountainCrater_Adult_Prefab_a0e2`), Sheik's lesson there (`_e63c`) and the Fire Temple's first room
+(`Logic/FireTemple_Level_Room_00_Prefab_1ae5`) each set a later step from any earlier one, and past his step only his
+own schedule, `Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult`, applies, with no talk that gives. Seen in the
+game, with the quest at MeetSheik and no Goron Tunic: he stood at his post and gave nothing. Every mod changes that
+schedule's entry [0], which holds while `SageOfFire_Step01_DaruniaJr_BombHit` is false and starts his plain talk: it
+holds while `DoorOpen` is false instead, still reversed, and starts the gift talk. Only that talk's door scene sets
+`DoorOpen`, so past his step he gives once, until the Fire Temple is finished. Seen in the game with the quest at
+MeetSheik: he gave, and a second talk gave nothing. His gift writes MoveStatue back from the later step, and the quest
+lands on EnterCrater: `Logic/GoronCity_Adult_Prefab_d9d1` writes EnterCrater whenever the quest is before it and
+Darunia's statue stands in `Area_64c2`, and it forces the statue there while the quest is past MoveStatue (read; seen
+at MeetSheik). The crater's arrival and the temple's first room set their steps again as Link passes them, but
+EnterTemple, GetBossKey, MeetBoss and DefeatBoss do not come again (read). `BombHit` is not saved, so in the game's
+order he takes entry [0] again from MoveStatue on. In a mod `DoorOpen` is set by then, so he takes his default entry,
+one unit from his post, with the balloon "It's up to you! Gowo!" in place of "Dad... Where are you?" (read).
+
+Once the Fire Temple is finished the son gives nothing, and he stands in front of Darunia's door (seen). At Complete
+entry [1] holds too, on `SageOfFire_IsCompleted_Exp`, and with both holding the later entry won (seen). Entries [2] to
+[5] hold on `SageOfFire_FromCrater`, `_FromCrater_FarJr`, `_FromDeathMt` and `_FromDeathMt2`: unsaved Bools, set only
+while the quest is complete and his temple talk (`Npc_Goron_DaruniaJr_SageOfFireClearTalked`) is not done. The
+arrivals from the trail and the crater set `FromDeathMt` and `FromCrater` (`SageOfFire_CityInFromDeathMt` and
+`_CityInFromCrater`), and the areas of `Logic/GoronCity_Adult_Prefab_a09c` and `_64b3` set `FromDeathMt2` and
+`FromCrater_FarJr` (read). So a Link who beats Volvagia before the son's talk loses what his place holds.
 
 With "Biggoron Quest" ticked, a mod changes one more write. Biggoron's hand-over for the Claim Check,
 `Npc_Goron_Biggoron_Adult` `Event89`, sets `SubEvent_GetSwordBigGoron` to Complete after his gift, and his question

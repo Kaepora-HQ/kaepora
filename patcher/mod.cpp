@@ -130,6 +130,13 @@ static PlannedActorItem ParseActorItem(const nlohmann::json& entry) {
     return planned;
 }
 
+static PlannedScheduleEntry ParseScheduleEntry(const nlohmann::json& entry) {
+    return { .file = entry.at("file").get<std::string>(),
+             .replaces = entry.at("replaces").get<std::string>(),
+             .flag = entry.at("flag").get<std::string>(),
+             .talk = entry.at("talk").get<std::string>() };
+}
+
 static std::string Name(std::string_view flow, std::string_view event, std::string_view param) {
     return std::format("{} {} in {}", event, param, flow);
 }
@@ -315,6 +322,14 @@ Plan ParsePlan(const nlohmann::json& json) {
         }
     }
     plan.midoCastleEntryRemoved = json.at("mido_castle_entry_removed").get<bool>();
+    const auto scheduleEntries = json.at("schedule_entries").get<std::vector<nlohmann::json>>();
+    for (size_t i = 0; i < scheduleEntries.size(); ++i) {
+        try {
+            plan.scheduleEntries.push_back(ParseScheduleEntry(scheduleEntries[i]));
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("schedule_entries[{}]: {}", i, e.what()));
+        }
+    }
     plan.openingSkipped = json.at("opening_skipped").get<bool>();
     plan.cutscenesSkipped = json.at("cutscenes_skipped").get<bool>();
     for (const auto& [key, list] : { std::pair{ "skulltulas", &plan.skulltulas },
@@ -1124,6 +1139,13 @@ static std::map<uint32_t, std::string_view> Flags(GameFile& game, const std::str
     return flags;
 }
 
+static void CheckFlag(const std::map<uint32_t, std::string_view>& flags, std::string_view flag) {
+    if (!flags.contains(Murmur3(flag))) {
+        throw std::runtime_error(
+            std::format("\"{}\" is not a true-or-false value or expression in the game data list", flag));
+    }
+}
+
 // The game data actor's queries whose one string parameter names a flag, each with the table it looks the name up in.
 // Given a name the table lacks, the expression query gives no answer and its switch repeats the last one (read in the
 // program).
@@ -1145,6 +1167,64 @@ static void CheckFlagName(const bfevfl::Flow& flow, const PlannedEventText& text
                 std::format("{} asks for {}, and the game data list has none named \"{}\"", name, words, text.text));
         }
     }
+}
+
+constexpr std::string_view EventSettingPath = "RSDB/EventSetting.Product.111.rstbl.byml.zs";
+
+static byml::Node& ScheduleEntry(byml::Node& schedule, std::string_view flag) {
+    if (byml::Node* entries = Find(schedule, "ConditionalSchedule"); entries != nullptr) {
+        const auto entry =
+            std::ranges::find(entries->array, flag, [](byml::Node& e) { return Text(e, "ConditionFlag"); });
+        if (entry != entries->array.end()) {
+            return *entry;
+        }
+    }
+    throw std::runtime_error("the schedule has no such entry");
+}
+
+static byml::Node& TalkEvent(byml::Node& entry) {
+    if (byml::Node* events = Find(entry, "EventEntry"); events != nullptr) {
+        const auto talk = std::ranges::find(events->array, "game__aischedule__OnPlayerTalk",
+                                            [](byml::Node& e) { return Text(e, "$type"); });
+        if (talk != events->array.end()) {
+            return *talk;
+        }
+    }
+    throw std::runtime_error("the entry has no talk");
+}
+
+// The game's size table entry for a schedule is several times the schedule's size, so an edit of a few strings needs
+// no larger entry.
+static std::map<std::string, std::string> EditedSchedules(GameFile& game,
+                                                          const std::vector<PlannedScheduleEntry>& edits,
+                                                          const std::map<uint32_t, std::string_view>& flags) {
+    byml::Document talks = byml::Parse(Decompress(game.Read(std::string(EventSettingPath))));
+    std::map<std::string, byml::Document> schedules;
+    for (const PlannedScheduleEntry& planned : edits) {
+        try {
+            auto schedule = schedules.find(planned.file);
+            if (schedule == schedules.end()) {
+                schedule = schedules.emplace(planned.file, byml::Parse(game.Read(planned.file))).first;
+            }
+            byml::Node& entry = ScheduleEntry(schedule->second.root, planned.replaces);
+            CheckFlag(flags, planned.flag);
+            if (std::ranges::find(talks.root.array, planned.talk,
+                                  [](byml::Node& row) { return Text(row, "__RowId"); }) == talks.root.array.end()) {
+                throw std::runtime_error(std::format("\"{}\" is not a row of {}", planned.talk, EventSettingPath));
+            }
+            Find(entry, "ConditionFlag")->string = planned.flag;
+            Find(TalkEvent(entry), "EventName")->string =
+                std::format("Work/Event/EventSetting/{}.engine__event__EventSettingParam.gyml", planned.talk);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("schedule entry on \"{}\" in {}: {}", planned.replaces, planned.file, e.what()));
+        }
+    }
+    std::map<std::string, std::string> written;
+    for (const auto& [path, schedule] : schedules) {
+        written.emplace(path, byml::Write(schedule));
+    }
+    return written;
 }
 
 // Link takes a bomb out of the bag only when the bomb's lift grade is at most his, as he lifts a rock. A bomb's grade
@@ -1529,10 +1609,7 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     const std::map<uint32_t, std::string_view> flags = Flags(game, zsDictionary, plan.claims, plan.expressions);
     for (const PlannedPresence& presence : plan.presences) {
         try {
-            if (!flags.contains(Murmur3(presence.flag))) {
-                throw std::runtime_error(std::format(
-                    "\"{}\" is not a true-or-false value or expression in the game data list", presence.flag));
-            }
+            CheckFlag(flags, presence.flag);
             byml::Node& actor = Actor(placement(presence.actor.file), presence.actor.hash);
             byml::Node* own = Find(actor, "Presence");
             if (presence.replaces) {
@@ -1642,6 +1719,9 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     }
     if (plan.midoCastleEntryRemoved) {
         addToRomfs(MidoSchedule, MidoScheduleWithoutCastleEntry(game));
+    }
+    for (auto& [path, data] : EditedSchedules(game, plan.scheduleEntries, flags)) {
+        addToRomfs(path, std::move(data));
     }
     addToRomfs(PedestalModule, OpenPedestal(game));
     std::string table = ReadSizeTable(game);

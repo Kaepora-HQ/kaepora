@@ -1181,6 +1181,15 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     }
     // Only with the exit open and Mido still blocking can Link meet Zelda before Mido lets him by.
     plan["mido_castle_entry_removed"] = settings.forest == Forest::ClosedDeku;
+    // Darunia's son gives what the Goron Tunic's place holds only as a participant of the Fire quest, up to its step
+    // TalkDaruniaJr. Past it his own schedule applies, and its entry for a son no bomb has hit talks with no gift. That
+    // entry holds instead until his gift has opened the door, and starts his gift talk.
+    plan["schedule_entries"] = nlohmann::ordered_json::array();
+    plan["schedule_entries"].push_back(
+        { { "file", "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml" },
+          { "replaces", "SageOfFire_Step01_DaruniaJr_BombHit" },
+          { "flag", "SageOfFire_Step02_DoorOpen" },
+          { "talk", "1396283892_1460050088_2425371882_C1_T" } });
     plan["opening_skipped"] = settings.opening == Opening::Skipped;
     plan["cutscenes_skipped"] = settings.cutscenes == Cutscenes::Skipped;
     plan["skulltulas"] = nlohmann::ordered_json::array();

@@ -26,7 +26,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step <kaepora-patch> <game.nup>
+           river-arrival-writes-no-step|schedule-entry <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -117,6 +117,10 @@ COLOSSUS_STONE_AREA = 12757003145401657983
 KING_ZORA_ICE = {"file": "Banc/ZoraDomain/ZoraDomain_Adult_Alternative_Static.bcett.byml.zs",
                  "hash": "3341274640047764997", "flag": "HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice",
                  "replaces": "SageOfWater_IsCompleted_Exp"}
+# Darunia's son's own schedule, its entry for a son no bomb has hit, and his gift talk of the Fire quest.
+DARUNIA_JR_SCHEDULE = "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml"
+DARUNIA_JR_GIFT = {"file": DARUNIA_JR_SCHEDULE, "replaces": "SageOfFire_Step01_DaruniaJr_BombHit",
+                   "flag": "SageOfFire_Step02_DoorOpen", "talk": "1396283892_1460050088_2425371882_C1_T"}
 BASE_PACKAGE = 0
 UPDATE_PACKAGE = 1
 NSO_HEADER_SIZE = 0x100
@@ -581,7 +585,7 @@ def actor(placement, hash):
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
          loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=(),
-         kept_goods=()):
+         kept_goods=(), schedule_entries=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -596,6 +600,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
             "shops": [shop_slot(slot, item, price) for slot, item, price in shops] +
                      [kept_slot(slot, goods) for slot, goods in kept_goods],
             "mido_castle_entry_removed": mido_castle_entry_removed,
+            "schedule_entries": list(schedule_entries),
             "opening_skipped": opening_skipped,
             "cutscenes_skipped": cutscenes_skipped,
             "skulltulas": [{"hash": str(h), "files": files, "item": item} for h, files, item in skulltulas],
@@ -1088,6 +1093,27 @@ def tested_mido_mod(patch, game, mod):
     assert MIDO_SCHEDULE not in patched(patch, game, plan([]))
 
 
+def with_schedule_entry(schedule, planned):
+    """The schedule with the planned entry on its new flag and its new talk."""
+    entry = next(e for e in schedule["ConditionalSchedule"] if e["ConditionFlag"] == planned["replaces"])
+    entry["ConditionFlag"] = planned["flag"]
+    talk = next(e for e in entry["EventEntry"] if e["$type"] == "game__aischedule__OnPlayerTalk")
+    talk["EventName"] = f"Work/Event/EventSetting/{planned['talk']}.engine__event__EventSettingParam.gyml"
+
+
+def schedule_entry(patch, game):
+    """Darunia's son's entry for a son no bomb has hit holds instead until his gift has opened the door, and starts
+    his gift talk: read apart from the patcher, his schedule is the game's with that entry's flag and talk changed,
+    and it fits the size table entry the game reads."""
+    mod = patched(patch, game, plan([], schedule_entries=[DARUNIA_JR_GIFT]))
+    assert sorted(mod) == [DARUNIA_JR_SCHEDULE], sorted(mod)
+    expected = byml(game.read(DARUNIA_JR_SCHEDULE))
+    with_schedule_entry(expected, DARUNIA_JR_GIFT)
+    assert byml(mod[DARUNIA_JR_SCHEDULE]) == expected
+    sizes = dict(read_size_table(zstd.decompress(game.read(SIZE_TABLE)))[1])
+    assert len(mod[DARUNIA_JR_SCHEDULE]) <= sizes[size_key(DARUNIA_JR_SCHEDULE)]
+
+
 def tested_pedestal_mod(patch, game, plan_file, mod):
     """The Master Sword pedestal's logic module that the game ran, with the condition every adult meets in place of
     the Forest Temple's quest complete, in the mod of any plan: an empty one and a seed's."""
@@ -1207,7 +1233,8 @@ def together(patch, game):
     whole = {key: [entry for part in parts for entry in part[key]]
              for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "stone_texts",
                          "message_texts",
-                         "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions")}
+                         "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions",
+                         "schedule_entries")}
     whole |= {"seed": "1", "start_values": values, "mido_castle_entry_removed": False, "opening_skipped": False,
               "cutscenes_skipped": False}
     *alone, combined = (patched(patch, game, part) for part in parts + [whole])
@@ -2863,8 +2890,8 @@ def seed_plan(patch, game, plan_file):
     """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
     substitute where it has one, and as an added value where it names none, every planned stone and message saying
     its text in both English text packs, every planned event going on to its next, the opening skipped where the plan
-    skips it, and the Kokiri Sword's scene left out where its chest holds another item. Each fits the size table entry
-    the game reads."""
+    skips it, the Kokiri Sword's scene left out where its chest holds another item, and each planned schedule entry on
+    its flag with its talk. Each fits the size table entry the game reads."""
     seed = json.loads(pathlib.Path(plan_file).read_text())
     expected, kinds = {}, set()
     for chest in seed["chests"]:
@@ -2887,6 +2914,9 @@ def seed_plan(patch, game, plan_file):
         with_presence(expected[planned["file"]], planned)
     changed = sorted(path for path, placement in expected.items()
                      if ordered(placement) != ordered(game.placement(game.read(path))))
+    schedules = {}
+    for planned in seed["schedule_entries"]:
+        with_schedule_entry(schedules.setdefault(planned["file"], byml(game.read(planned["file"]))), planned)
     edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"] + seed["event_nexts"]}
     flows = {path: game.event_flow(game.read(path)) for path in edited}
     if seed["opening_skipped"]:
@@ -2904,13 +2934,16 @@ def seed_plan(patch, game, plan_file):
     assert seed["stone_texts"]
     planned_files = {STONE_MESSAGES} | {entry["file"] for entry in seed["message_texts"]}
     mod = patched(patch, game, seed)
-    written = sorted(changed + list(flows) + ENGLISH_PACKS + [STONE_FLOW])
+    written = sorted(changed + list(flows) + ENGLISH_PACKS + [STONE_FLOW] + list(schedules))
     assert sorted(set(mod) - {SIZE_TABLE, GAME_DATA_LIST}) == written, sorted(mod)
     for path in changed:
         assert ordered(game.placement(mod[path])) == ordered(expected[path]), path
+    for path, schedule in schedules.items():
+        assert byml(mod[path]) == schedule, path
     for path, flow in flows.items():
         assert game.event_flow(mod[path]) == flow, path
     needed = {key: load_size(size) for key, size in placement_sizes(game, mod, changed).items()}
+    needed |= {size_key(path): len(mod[path]) for path in schedules}
     stones = {entry["label"]: RUMOUR_OPENING + message_bytes(entry["text"]) for entry in seed["stone_texts"]}
     for path in ENGLISH_PACKS:
         ours, theirs = game.text_pack(mod[path]), game.text_pack(game.read(path))
@@ -2987,6 +3020,20 @@ def bad_input(patch, game):
         {key: value for key, value in good.items() if key != "mido_castle_entry_removed"},
         ["plan.json", "mido_castle_entry_removed"])
     plans["no presences"] = ({key: value for key, value in good.items() if key != "presences"}, ["plan.json", "presences"])
+    plans["no schedule_entries"] = (
+        {key: value for key, value in good.items() if key != "schedule_entries"}, ["plan.json", "schedule_entries"])
+    no_flag = "SageOfFire_Step02_DoorShut"
+    no_talk = "Npc_Goron_DaruniaJr_Adult_Nowhere"
+    schedule_entries = {
+        "schedule entry on a flag no entry holds on": (
+            dict(DARUNIA_JR_GIFT, replaces=DARUNIA_JR_GIFT["flag"]),
+            [DARUNIA_JR_GIFT["flag"], DARUNIA_JR_SCHEDULE, "no such entry"]),
+        "schedule entry on a flag not in the list": (dict(DARUNIA_JR_GIFT, flag=no_flag), [no_flag, "game data list"]),
+        "schedule entry with a talk no row names": (
+            dict(DARUNIA_JR_GIFT, talk=no_talk), [no_talk, "RSDB/EventSetting"]),
+    }
+    for name, (entry, named) in schedule_entries.items():
+        plans[name] = (good | {"schedule_entries": [entry]}, named)
     valid_presence = plan([], presences=colossus_gates()[:1])["presences"][0]
     stone_area = {"file": COLOSSUS_ADULT_STATIC, "hash": str(COLOSSUS_STONE_AREA), "flag": PAST_SPIRIT_STEP02}
     unknown_flag = "SageOfSpirit_IsAfter_Step99_Exp"
@@ -3244,6 +3291,7 @@ def main():
         "lichii-built-ins": lichii_built_ins,
         "tested-bomb-mod": tested_bomb_mod,
         "tested-mido-mod": tested_mido_mod,
+        "schedule-entry": schedule_entry,
         "tested-pedestal-mod": tested_pedestal_mod,
         "tested-sheik-mod": tested_sheik_mod,
         "tested-stone-text-mod": tested_stone_text_mod,

@@ -1593,6 +1593,14 @@
   ],
   "shops": [],
   "mido_castle_entry_removed": false,
+  "schedule_entries": [
+    {
+      "file": "Component/AIScheduleParam/Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml",
+      "replaces": "SageOfFire_Step01_DaruniaJr_BombHit",
+      "flag": "SageOfFire_Step02_DoorOpen",
+      "talk": "1396283892_1460050088_2425371882_C1_T"
+    }
+  ],
   "opening_skipped": true,
   "cutscenes_skipped": true,
   "skulltulas": [],

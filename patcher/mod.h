@@ -1,12 +1,12 @@
-// A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file, event flow and actor pack
-// the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English text packs if
-// the plan gives texts to gossip stones or other messages, the stones' flow if it gives gossip stones texts, the
-// opening's flow if it skips the opening, the Kokiri Sword chest's flow if the chest holds another item, the size table
-// if a file outgrows its entry or is new, the game data list if the plan names start values, start items or shop slots
-// or skips the opening, the actor packs that let a bomb out of the bag with no strength, the logic module that lets
-// every adult put the Master Sword back, the Temple of Time's placement with Sheik waiting behind the sword, and the
-// pouch table in which the Fairy Bow and the Fairy Slingshot bring their quiver and bullet bag. Under exefs/ is the
-// patch to the game's program (program_patch.h).
+// A plan as a mod. Under romfs/, at their paths in the game's RomFS, are each placement file, event flow, schedule and
+// actor pack the plan changes, the pack of each actor it adds and the actor tables with their rows, the two English
+// text packs if the plan gives texts to gossip stones or other messages, the stones' flow if it gives gossip stones
+// texts, the opening's flow if it skips the opening, the Kokiri Sword chest's flow if the chest holds another item, the
+// size table if a file outgrows its entry or is new, the game data list if the plan names start values, start items or
+// shop slots or skips the opening, the actor packs that let a bomb out of the bag with no strength, the logic module
+// that lets every adult put the Master Sword back, the Temple of Time's placement with Sheik waiting behind the sword,
+// and the pouch table in which the Fairy Bow and the Fairy Slingshot bring their quiver and bullet bag. Under exefs/ is
+// the patch to the game's program (program_patch.h).
 #pragma once
 
 #include <nlohmann/json.hpp>
@@ -95,6 +95,15 @@ struct PlannedExpression {
     std::string flag;
 };
 
+// The entry of an NPC's schedule that holds on a flag in the game, made to hold on another and to start another
+// talk. It keeps its reversal. The talk is a row of the event setting table.
+struct PlannedScheduleEntry {
+    std::string file; // RomFS path of the schedule
+    std::string replaces;
+    std::string flag;
+    std::string talk;
+};
+
 // An item a shop slot sells at a price, once from each shopkeeper.
 struct ItemSale {
     std::string item;
@@ -144,6 +153,7 @@ struct Plan {
     std::vector<PlannedMessageText> messageTexts;
     std::vector<PlannedShopSlot> shops;
     bool midoCastleEntryRemoved;
+    std::vector<PlannedScheduleEntry> scheduleEntries;
     bool openingSkipped;
     bool cutscenesSkipped;
     std::vector<PlannedActorItem> skulltulas;
