@@ -332,6 +332,26 @@ describe("a game on the host", () => {
 	);
 
 	it.live(
+		"a start whose facing the game recomputed by a few float steps counts as taken, and any other Float holds exactly",
+		() =>
+			Effect.gen(function* () {
+				// Seen on the game: a facing written as -0.22997942566871668 read back as -0.22997945547103882.
+				const turned = yield* played(() => Effect.void, {
+					words: {
+						set: { "PlayerStatus.SavePosRadY": -0.229_979_425_668_716_68 },
+					},
+					rewrites: { "PlayerStatus.SavePosRadY": -0.229_979_455_471_038_82 },
+				});
+				expect(turned.startFailure).toBeUndefined();
+				const other = yield* played(() => Effect.void, {
+					words: { set: { Fake_Float: -0.229_979_425_668_716_68 } },
+					rewrites: { Fake_Float: -0.229_979_455_471_038_82 },
+				});
+				expect(other.startFailure).toBeInstanceOf(StartNotTaken);
+			})
+	);
+
+	it.live(
 		"a record states the mod and the text speed the game had, which is the game's own when a mod took the add-on's bytes",
 		() =>
 			Effect.gen(function* () {

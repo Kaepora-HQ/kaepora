@@ -69,6 +69,8 @@ export const game: FakeGame = {
 		"IsTreasureBoxOpen.5005": { type: "Bool", value: false },
 		"IsTreasureBoxOpen.6006": { type: "Bool", value: false },
 		"PlayerStatus.CurrentRupee": { type: "Int", value: 0 },
+		"PlayerStatus.SavePosRadY": { type: "Float", value: 0 },
+		Fake_Float: { type: "Float", value: 0 },
 		Fake_Lamp_Lit: { type: "Bool", value: false, file: unsaved },
 	},
 	mods: {

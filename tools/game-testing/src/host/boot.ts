@@ -311,11 +311,26 @@ type Reading =
 	  }
 	| { readonly _tag: "notRead"; readonly value: string };
 
+/**
+ * Link's facing, which the game recomputes as it turns him on load: written as -0.22997942566871668 radians, it read back
+ * as -0.22997945547103882 on the game. It holds within this many radians; every other value holds exactly.
+ */
+const facing = { value: "PlayerStatus.SavePosRadY", within: 1e-6 } as const;
+
 /** The game holds a Float in 32 bits, so a written Float is compared as the save stored it. */
-const sameAs = (type: string, written: Saved, held: Value) =>
-	type === "Float" && typeof written === "number"
-		? Math.fround(written) === held
-		: Equal.equals(written, held);
+const sameAs = (
+	{ value, type }: { readonly value: string; readonly type: string },
+	written: Saved,
+	held: Value
+) => {
+	if (typeof written !== "number" || typeof held !== "number") {
+		return Equal.equals(written, held);
+	}
+	if (value === facing.value) {
+		return Math.abs(written - held) <= facing.within;
+	}
+	return type === "Float" ? Math.fround(written) === held : written === held;
+};
 
 /**
  * Every value the plan wrote, as the game holds it once Link can move. A value of a type the memory is not read for,
@@ -362,7 +377,7 @@ const readBackOf = Effect.fnUntraced(function* (
 		reading._tag === "read" ? [reading] : []
 	);
 	const differences = Arr.flatMap(read, ({ value, written, held, type }) =>
-		Schema.is(Value)(written) && !sameAs(type, written, held)
+		Schema.is(Value)(written) && !sameAs({ value, type }, written, held)
 			? [{ value, written, held }]
 			: []
 	);
