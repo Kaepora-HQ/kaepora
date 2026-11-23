@@ -991,13 +991,14 @@ class SeedgenTest(unittest.TestCase):
             self.assertIn("Bongo Bongo", playthrough_steps(never))
 
     def assert_every_setting_changed_at_once(self, seeds):
-        # The place after a boss is a step for the boss whatever it holds, so only there may the Lens stand on the
-        # route.
-        bosses = REWARD_AREAS.keys() - {"Gift from Rauru"}
+        # A scene's place is a step whatever it holds (fill.cpp, scenePlaces), and the Lens is never needed, so only
+        # there may it stand on the route.
+        scene_places = REWARD_AREAS.keys() - {"Gift from Rauru"} | {
+            "GF Freed All Carpenters", "Market ToT Light Arrow Cutscene", "HC Malon Egg", "Kak Anju as Adult"}
         for seed in seeds:
             spoiler, _ = self.generate(str(seed), EVERY_SETTING_CHANGED | NO_HINTS)
             lens = {place for place, item in playthrough_steps(spoiler).items() if item == "Lens of Truth"}
-            self.assertLessEqual(lens, bosses, seed)
+            self.assertLessEqual(lens, scene_places, seed)
             # No shuffled place, the nine reward places among them, holds an item the seed starts with.
             placed = {spoiler_item(item) for item in spoiler["locations"].values()}
             self.assertFalse(placed & set(EVERY_SETTING_CHANGED["Start with"]), seed)
