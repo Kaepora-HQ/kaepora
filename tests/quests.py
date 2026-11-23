@@ -51,8 +51,8 @@ PRINTABLE = re.compile(rb"[\x20-\x7e]{4,}")
 
 class Ainb:
     """An AINB file of version 0x408, a logic node graph: each node's name, its fixed strings, the strings its inputs
-    hold only as defaults, its inputs with the node and output each reads, and its outputs; and the names of the
-    string parameters of its blackboard."""
+    hold only as defaults, the whole numbers its inputs hold, its inputs with the node and output each reads, and its
+    outputs; and the names of the string parameters of its blackboard."""
 
     def __init__(self, data):
         assert data[:4] == b"AIB ", data[:4]
@@ -72,7 +72,8 @@ class Ainb:
             at = nodes + 0x3C * index
             assert struct.unpack_from("<H", data, at + 2)[0] == index, at
             params = self.u32(at + 0x14)
-            node = {"name": self.string(self.u32(at + 8)), "strings": {}, "defaults": {}, "inputs": [], "outputs": []}
+            node = {"name": self.string(self.u32(at + 8)), "strings": {}, "defaults": {}, "numbers": {}, "inputs": [],
+                    "outputs": []}
             first, count = struct.unpack_from("<II", data, params + 8 * AINB_TYPES.index("string"))
             for entry in range(strings + 12 * first, strings + 12 * (first + count), 12):
                 node["strings"][self.string(self.u32(entry))] = self.string(self.u32(entry + 8))
@@ -87,6 +88,8 @@ class Ainb:
                     if kind == "string":
                         fixed = source == -1 and not flags & NOT_FIXED
                         node["strings" if fixed else "defaults"][name] = self.string(self.u32(source_at + 8))
+                    if kind == "int":
+                        node["numbers"][name] = struct.unpack_from("<i", data, source_at + 8)[0]
                     node["inputs"].append((kind, name, source, output, flags))
                 size = 8 if kind == "userdefined" else 4
                 for entry in range(wire_tables[2 * k + 1] + size * first_out,

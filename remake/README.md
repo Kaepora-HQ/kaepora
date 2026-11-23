@@ -879,6 +879,13 @@ from before them were made by hand):
   and a value named twice, by its name or by its hash, is refused.
 - A cure the pouch does not keep, such as the Large Magic Jar, writes only its played flag, as its find does.
 
+The start sequence, `Sequence/SetPouchAndStatusForGameStart`, sets `Life` and `MaxLife` to 12 and `MP`, `MPEconomy`
+and `MPMax` to 0 after the list's defaults (read), so start values cannot carry them. A start that holds a Heart
+Container or an item that brings magic sets the sequence's own numbers in place: life and its limit 12 plus 4 for each
+Heart Container, and `MP` and `MPMax` 240, the meter full. A Heart Container's find raised `MaxLife` by 4 and filled
+`Life`, and a first find of an item whose row's `MPMax` is 24 set both 240 (measured). Every row a start accepts holds
+24; that the meter is ten times the largest such row is inferred.
+
 A start does not write what a find writes beside these: a sword or a shield in Link's hand (`PlayerStatus.EquipWeapon`,
 `EquipShield`), the menu's counts (`UI_GetAssignableItemNum`, `UI_GetWeaponShieldArmorNum`), an item's place among the
 items a button can take, or the first item a button takes (measured). A started sword goes on from the menu and swings

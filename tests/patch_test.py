@@ -1364,6 +1364,33 @@ def start_items_of_every_kind(patch, game):
     assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, expected)
 
 
+START_SEQUENCE = "Sequence/SetPouchAndStatusForGameStart.module.ainb"
+
+
+def start_life_and_magic(patch, game):
+    """The start sequence sets life and magic after the list's defaults, so a start raises the sequence's own numbers.
+    A Heart Container adds a heart, 4 points, to life and its limit, and the first magic item brings a meter of 240,
+    full, as finds do. The module keeps its size and nothing else of it changes. The Lens keeps its records under the
+    actor it names."""
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    from quests import Ainb  # quests.py reads the game through this file, so it is imported here
+    mod = patched(patch, game, plan([], start_items=["Obj_Heart_Container", "Item_GlassTruth"]))
+    assert sorted(mod) == [GAME_DATA_LIST, START_SEQUENCE], sorted(mod)
+    container = {"IsGet.Obj_Heart_Container": True, "HavePlayedGetEvent.Obj_Heart_Container": True}
+    assert game.game_data_list(mod[GAME_DATA_LIST]) == with_defaults(game, container | found("Armor_GlassTruth"))
+    ours, theirs = mod[START_SEQUENCE], game.read(START_SEQUENCE)
+    assert len(ours) == len(theirs)
+    expected = Ainb(theirs).nodes
+    started = {"Life": (12, 16), "MaxLife": (12, 16), "MP": (0, 240), "MPMax": (0, 240)}
+    for node in expected:
+        if node["name"] == "SeqOneShotSetGameDataInt" and node["strings"]["GameDataName"] in started:
+            shipped, value = started.pop(node["strings"]["GameDataName"])
+            assert node["numbers"]["Value"] == shipped, node
+            node["numbers"]["Value"] = value
+    assert not started, started
+    assert Ainb(ours).nodes == expected
+
+
 def skipped_opening(flow):
     """A parsed OpeningEvent flow whose loading entry point starts at the check that the forest has loaded, past the
     narrated movie, and whose wait before Navi's scene goes on to the fade out after it."""
@@ -3693,6 +3720,7 @@ def main():
         "start-values": start_values,
         "start-items": start_items,
         "start-items-of-every-kind": start_items_of_every_kind,
+        "start-life-and-magic": start_life_and_magic,
         "start-steps": start_steps,
         "opening-skipped": opening_skipped,
         "tested-opening-mod": tested_opening_mod,
