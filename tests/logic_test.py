@@ -405,6 +405,14 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet))
         self.assertTrue(self.reachable("DMT Chest", NEVER_ADULT, no_bracelet, bomb_bag))
 
+    def test_a_bigger_bomb_bag_found_first_is_the_bomb_bag(self):
+        # Every mod makes a bigger bomb bag bring the small one with its bombs, and the small one is what the rolling
+        # Goron asks for.
+        self.assertFalse(self.reachable("GC Rolling Goron as Child", *NO_BOMB_BAG))
+        for bag in ("Big Bomb Bag", "Biggest Bomb Bag"):
+            self.assertTrue(self.reachable("GC Rolling Goron as Child", *NO_BOMB_BAG, ("KF Mido Top Left Chest", bag)),
+                            bag)
+
     def test_golden_gauntlets_lift_what_silver_gauntlets_lift(self):
         # Boulders only the Silver Gauntlets lift ring the rightmost chest of the Goron City maze.
         self.assertTrue(self.reachable("GC Maze Right Chest", NO_SILVER_GAUNTLETS,

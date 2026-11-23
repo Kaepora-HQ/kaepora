@@ -335,13 +335,14 @@ Link who already holds the bigger (read from the flows). It adds one size to the
 galleries, the bowling alley and the Deku theater add the bigger bag, and the Lost Woods target, horseback archery, the
 rolling Goron and the two bag scrubs the biggest. The places of one bag share a group: a kept place gives by what Link
 holds and a shuffled one gives one size, so with the theater shuffled and the scrubs kept, a Link who bought from a
-scrub first would get the bigger bag twice and never the biggest. No rule of SoH's logic reads what these ten items set:
-their logic values, and for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger
-quiver or bullet bag is no Bow or Slingshot to the logic, and the logic makes the rolling Goron wait for the Bomb Bag
-itself. That is stricter than the game, where a bigger bomb bag brings the small one he asks for. No shelf has been seen
-to sell a bag, so the fill keeps them out of shops as it keeps the Bomb Bag. For a place whose group is left out, the
-logic counts what SoH's location list says the place gives, so a row's item must be that, and the list gives the ten
-places their bags, the 40-token reward its 20 Bombchus, and the scrubs the remake's goods and prices.
+scrub first would get the bigger bag twice and never the biggest. A bigger bomb bag is the Bomb Bag to the logic, as
+SoH's progressive bag is: in every mod one found first brings the small one and its bombs (below), and the small one is
+what the rolling Goron asks for. No rule of SoH's logic reads what the other eight items set: their logic values, and
+for the stick and nut bags the inventory slot of sticks or nuts (`logic.cpp:2317`). So a bigger quiver or bullet bag is
+no Bow or Slingshot to the logic, as in the game. No shelf has been seen to sell a bag, so the fill keeps them out of
+shops as it keeps the Bomb Bag. For a place whose group is left out, the logic counts what SoH's location list says the
+place gives, so a row's item must be that, and the list gives the ten places their bags, the 40-token reward its 20
+Bombchus, and the scrubs the remake's goods and prices.
 
 Adult Anju gives the Pocket Egg in Kakariko, and Biggoron, on the summit, the Biggoron Sword for the Claim Check, the
 game's Biggoron Receipt. "Biggoron Quest" shuffles both places as SoH shuffles them with its adult trade off: the
