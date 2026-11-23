@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.0](https://github.com/Kaepora-HQ/kaepora/compare/v0.7.1...v0.8.0) (2026-11-23)
+
+
+### Features
+
+* cut the scene that plays the first time Link reaches an area ([133d716](https://github.com/Kaepora-HQ/kaepora/commit/133d71648c6e77c46d233899c672a9697c7ffe73))
+* list what a seed skips under one setting of check boxes ([624acb7](https://github.com/Kaepora-HQ/kaepora/commit/624acb7b9a16500fecf5ddabc07a3b9cba081f56))
+* **patch:** let a plan start an entry at an event or end a branch ([d292961](https://github.com/Kaepora-HQ/kaepora/commit/d292961bb880ab45a41aa9224f50c5ec83df80be))
+* shuffle the first chest of Dampé's race ([fdb15dd](https://github.com/Kaepora-HQ/kaepora/commit/fdb15dd9e985f05fa42f0218a20388ca871c0b2c))
+* skip Saria's greeting ([12cbd9a](https://github.com/Kaepora-HQ/kaepora/commit/12cbd9a8846c6558d33e496d9772faa1d86b38bc))
+* skip the game's tutorial messages ([7110621](https://github.com/Kaepora-HQ/kaepora/commit/71106213ee1b2f1878428d55cf0186e049cf0c5d))
+
+
+### Bug Fixes
+
+* create seeds that start with an ocarina and shuffle shop goods ([a5737d5](https://github.com/Kaepora-HQ/kaepora/commit/a5737d5aeffd4fcdb091b0bac5fd1d8198db0406))
+* start the forest visited in a seed that starts with the sword ([6ff0acb](https://github.com/Kaepora-HQ/kaepora/commit/6ff0acbcf3ae271c8663e76cc238b096dd16b660))
+
 ## [0.7.1](https://github.com/Kaepora-HQ/kaepora/compare/v0.7.0...v0.7.1) (2026-11-23)
 
 
