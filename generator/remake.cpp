@@ -1173,6 +1173,7 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
         }
     }
     plan["event_nexts"] = nlohmann::ordered_json::array();
+    plan["module_texts"] = nlohmann::ordered_json::array();
     plan["start_values"] = StartValues(settings);
     if (biggoron) {
         for (const auto& [flow, event, next] : biggoronNexts) {

@@ -26,7 +26,7 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            loose-item-table|copies-play-every-get|loose-item-heights|loose-spot-keys|claims|goods-and-copies| \
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
-           river-arrival-writes-no-step|schedule-entry <kaepora-patch> <game.nup>
+           river-arrival-writes-no-step|schedule-entry|module-texts <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -59,6 +59,10 @@ BOMB_LIFT_PACKS = [f"Pack/Actor/{actor}.pack.zs" for actor in (
     "Item_Bomb", "Npc_Hylia_ImperialSoldier_Bomb", "Obj_BombFlower_A_01", "Obj_BombFlower_A_04",
     "Obj_BombFlower_Fruit_For_Break_Obj_DeathMtTrail_BrokenRock_A_01")]
 PEDESTAL_MODULE = "Logic/Market_Adult_Prefab_89da.logic.module.ainb"
+# The Door of Time, in both ages' Temple of Time. Its node 8 opens it once the Door of Time's quest is at Step06.
+DOOR_MODULE = "Logic/Market_Common_f252.logic.module.ainb"
+DOOR_OF_TIME_QUEST = "Work/Challenge/DoorOfTime.game__challenge__Challenge.gyml"
+ALL_SAGE_QUEST = "Work/Challenge/AllSage.game__challenge__Challenge.gyml"
 TEMPLE_STATIC = "Banc/Market/Market_Adult_Static.bcett.byml.zs"
 GAME_DATA_LIST = "GameData/GameDataList.Product.110.byml.zs"
 SLINGSHOT_CHEST = 821372075822700622
@@ -589,7 +593,7 @@ def actor(placement, hash):
 def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_texts=(), shops=(),
          mido_castle_entry_removed=False, opening_skipped=False, cutscenes_skipped=False, skulltulas=(),
          loose_items=(), event_numbers=(), presences=(), start_items=(), claims=(), expressions=(), event_nexts=(),
-         kept_goods=(), schedule_entries=()):
+         kept_goods=(), schedule_entries=(), module_texts=()):
     return {"seed": "1", "chests": [{"hash": str(h), "files": files, "drop_actor": d} for h, files, d in chests],
             "presences": [{"file": path, "hash": str(h), "flag": flag} for path, h, flag in presences],
             "event_texts": [{"flow": flow, "event": event, "param": param, "text": text}
@@ -598,6 +602,7 @@ def plan(chests, start_values=None, event_texts=(), stone_texts=(), message_text
                               for flow, event, param, value in event_numbers],
             "event_nexts": [{"flow": flow, "event": event, "next": next_event}
                             for flow, event, next_event in event_nexts],
+            "module_texts": [{"file": file, "from": old, "to": new} for file, old, new in module_texts],
             "start_values": start_values or {},
             "stone_texts": [{"label": label, "text": text} for label, text in stone_texts],
             "message_texts": [{"file": file, "label": label, "text": text} for file, label, text in message_texts],
@@ -1241,7 +1246,8 @@ def together(patch, game):
              plan([], values),
              plan([], stone_texts=[(SHORT_RUMOUR_STONE, LONG_STONE_TEXT)])]
     whole = {key: [entry for part in parts for entry in part[key]]
-             for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "stone_texts",
+             for key in ("chests", "presences", "event_texts", "event_numbers", "event_nexts", "module_texts",
+                         "stone_texts",
                          "message_texts",
                          "shops", "skulltulas", "loose_items", "start_items", "claims", "expressions",
                          "schedule_entries")}
@@ -2779,6 +2785,24 @@ def event_nexts(patch, game):
         assert game.event_flow(mod[flow]) == flowchart, flow
 
 
+def module_texts(patch, game):
+    """A plan swaps a string of a logic module, which the game reads uncompressed, for one no longer. The new string
+    takes the old one's place and NUL bytes the rest, so the module keeps its size, and nothing else of it changes. Here
+    the Door of Time opens once AllSage is at Ready, in place of once the Door of Time's quest is at Step06."""
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    from quests import Ainb  # quests.py reads the game through this file, so it is imported here
+    swaps = [(DOOR_MODULE, DOOR_OF_TIME_QUEST, ALL_SAGE_QUEST), (DOOR_MODULE, "Step06", "Ready")]
+    mod = patched(patch, game, plan([], module_texts=swaps))
+    assert sorted(mod) == [DOOR_MODULE], sorted(mod)
+    ours, theirs = mod[DOOR_MODULE], game.read(DOOR_MODULE)
+    assert len(ours) == len(theirs)
+    expected = Ainb(theirs).nodes
+    door_quest = expected[8]["strings"]
+    assert door_quest == {"ChallengeName": DOOR_OF_TIME_QUEST, "ChallengeStepName": "Step06"}, door_quest
+    door_quest.update(ChallengeName=ALL_SAGE_QUEST, ChallengeStepName="Ready")
+    assert Ainb(ours).nodes == expected
+
+
 def river_arrival_writes_no_step(patch, game):
     """In every mod the arrival flow is the game's but for one next event, so a first walk into Zora's Domain from
     Zora's River plays the domain's intro and leaves the Water quest where it is. Entry point Goto_ZoraDomain goes on
@@ -3311,6 +3335,24 @@ def bad_input(patch, game):
     }
     for name, (entry, named) in nexts.items():
         plans[name] = (good | {"event_nexts": [valid_next, entry]}, named)
+    valid_swap = {"file": DOOR_MODULE, "from": "Step06", "to": "Ready"}
+    swaps = {
+        "module text not this shape": ({"file": DOOR_MODULE, "from": "Step06"}, ["plan.json", "module_texts[1]"]),
+        "module text longer": (dict(valid_swap, **{"from": DOOR_OF_TIME_QUEST, "to": DOOR_OF_TIME_QUEST + "X"}),
+                               ["plan.json", "module_texts[1]", "longer"]),
+        "module text empty": (dict(valid_swap, **{"from": DOOR_OF_TIME_QUEST, "to": ""}),
+                              ["plan.json", "module_texts[1]", "empty"]),
+        "module text listed twice": (dict(valid_swap, to="Step05"),
+                                     ["plan.json", "module_texts[1]", "Step06", DOOR_MODULE, "twice"]),
+        "module text not in the module": (dict(valid_swap, **{"from": "Step99"}), [DOOR_MODULE, "Step99", "once"]),
+        "module text part of a string": (dict(valid_swap, **{"from": "Step0", "to": "Step"}),
+                                         [DOOR_MODULE, "Step0", "once"]),
+        "module text of a flow": (dict(valid_swap, file=BIGGORON_FLOW), [BIGGORON_FLOW, "not a logic module"]),
+    }
+    for name, (entry, named) in swaps.items():
+        plans[name] = (good | {"module_texts": [valid_swap, entry]}, named)
+    plans["no module_texts"] = (
+        {key: value for key, value in good.items() if key != "module_texts"}, ["plan.json", "module_texts"])
     plans["no event_nexts"] = (
         {key: value for key, value in good.items() if key != "event_nexts"}, ["plan.json", "event_nexts"])
     for name, (entry, named) in numbers.items():
@@ -3424,6 +3466,7 @@ def main():
         "claims": claims,
         "expressions": expressions,
         "event-nexts": event_nexts,
+        "module-texts": module_texts,
         "biggoron-place": biggoron_place,
         "mido-hint-every-talk": mido_hint_every_talk,
         "darunias-dance": darunias_dance,

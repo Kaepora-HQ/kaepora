@@ -289,6 +289,26 @@ Plan ParsePlan(const nlohmann::json& json) {
             throw std::runtime_error(std::format("expressions[{}]: {} is listed twice", i, expression.name));
         }
     }
+    const auto modules = json.at("module_texts").get<std::vector<nlohmann::json>>();
+    std::set<std::pair<std::string, std::string>> swapped;
+    for (size_t i = 0; i < modules.size(); ++i) {
+        try {
+            const PlannedModuleText& text = plan.moduleTexts.emplace_back(modules[i].at("file").get<std::string>(),
+                                                                          modules[i].at("from").get<std::string>(),
+                                                                          modules[i].at("to").get<std::string>());
+            if (text.from.empty() || text.to.empty()) {
+                throw std::runtime_error("from and to must not be empty");
+            }
+            if (text.to.size() > text.from.size()) {
+                throw std::runtime_error(std::format("\"{}\" is longer than \"{}\"", text.to, text.from));
+            }
+            if (!swapped.emplace(text.file, text.from).second) {
+                throw std::runtime_error(std::format("{} in {} is listed twice", text.from, text.file));
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::format("module_texts[{}]: {}", i, e.what()));
+        }
+    }
     const auto nexts = json.at("event_nexts").get<std::vector<nlohmann::json>>();
     std::set<std::pair<std::string, std::string>> sent;
     for (size_t i = 0; i < nexts.size(); ++i) {
@@ -1250,24 +1270,25 @@ static std::string MidoScheduleWithoutCastleEntry(GameFile& game) {
 
 // Adult Link becomes a child by putting the Master Sword back. This logic module takes the sword's interaction away
 // while the expression it names is false, and the game names the Forest Temple's quest complete. Every adult has the
-// Door of Time's quest complete, since the first pull of the sword completes it. The module names its expression once,
-// in its string pool, and the file is stored uncompressed. The shorter name ends in NUL bytes where the longer one
-// stood, so the module keeps its size and its size table entry.
+// Door of Time's quest complete, since the first pull of the sword completes it.
 constexpr std::string_view PedestalModule = "Logic/Market_Adult_Prefab_89da.logic.module.ainb";
 constexpr std::string_view ForestTempleDone = "SageOfForest_IsCompleted_Exp";
 constexpr std::string_view DoorOfTimeOpened = "DoorOfTime_IsCompleted_Exp";
 
-static std::string OpenPedestal(GameFile& game) {
-    std::string module = game.Read(std::string(PedestalModule));
-    const std::string gameName = std::string(ForestTempleDone) + '\0';
-    const size_t at = module.find(gameName);
-    if (at == std::string::npos || module.find(gameName, at + 1) != std::string::npos) {
-        throw std::runtime_error(std::format("{}: the module does not name {} once", PedestalModule, ForestTempleDone));
+// A module names each string once, in its string pool, and the file is stored uncompressed. A shorter string ends in
+// NUL bytes where the longer one stood, so the module keeps its size and its size table entry.
+static void SwapString(std::string& module, std::string_view from, std::string_view to) {
+    if (!module.starts_with("AIB ")) {
+        throw std::runtime_error("it is not a logic module");
     }
-    std::string name(DoorOfTimeOpened);
-    name.resize(gameName.size(), '\0');
-    module.replace(at, name.size(), name);
-    return module;
+    const std::string whole = std::format("{}{}{}", '\0', from, '\0');
+    const size_t at = module.find(whole);
+    if (at == std::string::npos || module.find(whole, at + 1) != std::string::npos) {
+        throw std::runtime_error(std::format("the module does not name \"{}\" once", from));
+    }
+    std::string padded(to);
+    padded.resize(from.size(), '\0');
+    module.replace(at + 1, padded.size(), padded);
 }
 
 // Before the Forest Temple, Sheik's schedule sends him to his AnchorAction1, 0.77 units in front of the Master Sword on
@@ -1691,7 +1712,23 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
     for (auto& [path, data] : EditedSchedules(game, plan.scheduleEntries, flags)) {
         addToRomfs(path, std::move(data));
     }
-    addToRomfs(PedestalModule, OpenPedestal(game));
+    std::map<std::string, std::string> modules;
+    const auto swap = [&](const std::string& path, std::string_view from, std::string_view to) {
+        auto module = modules.find(path);
+        if (module == modules.end()) {
+            module = modules.emplace(path, game.Read(path)).first;
+        }
+        try {
+            SwapString(module->second, from, to);
+        } catch (const std::exception& e) { throw std::runtime_error(std::format("{}: {}", path, e.what())); }
+    };
+    swap(std::string(PedestalModule), ForestTempleDone, DoorOfTimeOpened);
+    for (const PlannedModuleText& text : plan.moduleTexts) {
+        swap(text.file, text.from, text.to);
+    }
+    for (auto& [path, module] : modules) {
+        addToRomfs(path, std::move(module));
+    }
     std::string table = ReadSizeTable(game);
     bool tableChanged = false;
     for (const std::string& path : changed) {

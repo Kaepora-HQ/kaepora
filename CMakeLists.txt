@@ -482,9 +482,9 @@ if(KAEPORA_GAME_NUP)
                  skulltula-table loose-items copies-play-every-get loose-item-heights goods-and-copies
                  loose-item-table loose-spot-keys claims expressions weapons-bring-containers
                  bigger-containers-bring-the-small-one
-                 weapon-copies event-numbers event-nexts song-table river-arrival-writes-no-step schedule-entry
-                 presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out sword-scene-kept
-                 both-stones-before-zelda)
+                 weapon-copies event-numbers event-nexts module-texts song-table river-arrival-writes-no-step
+                 schedule-entry presence lichii-built-ins opening-skipped cutscenes-skipped sword-scene-left-out
+                 sword-scene-kept both-stones-before-zelda)
         add_test(NAME patch-${test} COMMAND ${PATCH_TEST} ${test} $<TARGET_FILE:kaepora-patch> "${KAEPORA_GAME_NUP}")
     endforeach()
     add_test(NAME patch-fountain-claims COMMAND ${PATCH_TEST} fountain-claims $<TARGET_FILE:kaepora-patch>
