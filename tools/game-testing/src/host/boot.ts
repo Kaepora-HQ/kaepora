@@ -326,13 +326,16 @@ type Reading =
 
 /**
  * Link's facing, which the game recomputes as it turns him on load: written as -0.22997942566871668 radians, it read back
- * as -0.22997945547103882 on the game. The map's copy of it, in degrees, the game recomputes from it once a mod's start
- * values are in the save: written as 24.91800541306725, it read back as 24.917978286743164. Each holds within a
- * millionth of a radian; every other value holds exactly.
+ * as -0.22997945547103882 on the game, and half a turn written either way read back as the other. The map's copy of
+ * it, in degrees, the game recomputes from it once a mod's start values are in the save: written as 24.91800541306725,
+ * it read back as 24.917978286743164. Each holds within a millionth of a radian around its turn; every other value
+ * holds exactly.
  */
-const facings: Readonly<Record<string, number>> = {
-	"PlayerStatus.SavePosRadY": 1e-6,
-	Player_Rot_For_Map: (1e-6 * 180) / Math.PI,
+const facings: Readonly<
+	Record<string, { readonly within: number; readonly turn: number }>
+> = {
+	"PlayerStatus.SavePosRadY": { within: 1e-6, turn: 2 * Math.PI },
+	Player_Rot_For_Map: { within: (1e-6 * 180) / Math.PI, turn: 360 },
 };
 
 /**
@@ -361,9 +364,10 @@ const sameAs = (
 	if (typeof written !== "number" || typeof held !== "number") {
 		return Equal.equals(written, held);
 	}
-	const within = facings[value];
-	if (within !== undefined) {
-		return Math.abs(written - held) <= within;
+	const facing = facings[value];
+	if (facing !== undefined) {
+		const apart = Math.abs(written - held) % facing.turn;
+		return Math.min(apart, facing.turn - apart) <= facing.within;
 	}
 	return type === "Float" ? Math.fround(written) === held : written === held;
 };
