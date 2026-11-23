@@ -88,6 +88,14 @@ function remakeCounts(): Plugin {
   }
 }
 
+// Vercel answers this before its files and functions. Nitro's type for a route leaves out `has`, which Vercel reads.
+const apiHostShowsOnlyTheApi = {
+  src: '^/(?!v[0-9]+(?:/|$))(.*)$',
+  has: [{ type: 'host', value: 'api.kaepora.org' }],
+  status: 307,
+  headers: { Location: 'https://kaepora.org/$1' },
+}
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   build: { license: true },
@@ -98,7 +106,7 @@ export default defineConfig({
     remakeCounts(),
     tailwindcss(),
     tanstackStart({ prerender: { enabled: true } }),
-    nitro(),
+    nitro({ vercel: { config: { version: 3, routes: [apiHostShowsOnlyTheApi] } } }),
     viteReact({ compiler: true }),
   ],
 })

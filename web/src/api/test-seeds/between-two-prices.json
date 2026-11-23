@@ -1,0 +1,41 @@
+{
+ "kaepora": "0.4.0",
+ "seed": "4418003377",
+ "settings": {
+  "Shuffled dungeons": [
+   "Deku Tree",
+   "Dodongo's Cavern",
+   "Jabu-Jabu's Belly",
+   "Forest Temple",
+   "Fire Temple",
+   "Water Temple",
+   "Shadow Temple",
+   "Spirit Temple",
+   "Bottom of the Well",
+   "Ice Cavern",
+   "Gerudo Training Ground",
+   "Ganon's Castle"
+  ],
+  "Small and boss keys": "Anywhere in their dungeon",
+  "Maps and compasses": "Anywhere in their dungeon",
+  "Kokiri Forest": "Closed",
+  "Rainbow Bridge": "After the Light Arrows",
+  "Ganon's trials": "All six",
+  "Opening": "Skipped",
+  "Start with": [],
+  "Shop goods": "Four per shop shuffled",
+  "Shop prices": "Between two prices",
+  "Shop price range": [
+   20,
+   200
+  ],
+  "Gold Skulltulas": "Vanilla",
+  "Gifts": "Vanilla",
+  "Songs": "Vanilla",
+  "Loose items": "Vanilla",
+  "Dungeon rewards": "Vanilla",
+  "Lens of Truth": "Needed",
+  "Gossip stones": "Give hints",
+  "Hints from characters": "Give hints"
+ }
+}

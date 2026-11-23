@@ -4,3 +4,4 @@ node_modules
 .tanstack
 .vercel
 .env*
+!.env.example

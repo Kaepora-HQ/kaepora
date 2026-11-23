@@ -1,0 +1,240 @@
+{
+  "type": "base",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "1fbf8722-3384-4de7-95bf-0bd40452ddc4",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "seed_completions"
+      ],
+      "writes": [
+        "s|tbl|public.seed_completions",
+        "n|tbl|public.seed_completions",
+        "e|tbl|public.seed_completions",
+        "n|rel|public.seed_completions",
+        "n|type|public.seed_completions",
+        "n|rel|public.seed_completions_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "seeds"
+      ],
+      "writes": [
+        "s|tbl|public.seeds",
+        "n|tbl|public.seeds",
+        "e|tbl|public.seeds",
+        "n|rel|public.seeds",
+        "n|type|public.seeds",
+        "n|rel|public.seeds_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "seed_completions"
+      ],
+      "writes": [
+        "s|fk|public.seed_completions.seed_completions_seed_seeds_id_fkey",
+        "n|fk|public.seed_completions.seed_completions_seed_seeds_id_fkey",
+        "e|fk|public.seed_completions.seed_completions_seed_seeds_id_fkey",
+        "n|con|public.seed_completions.seed_completions_seed_seeds_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.seed_completions",
+        "n|sch|public",
+        "n|tbl|public.seeds",
+        "n|sch|public",
+        "n|col|public.seed_completions.seed",
+        "n|col|public.seeds.id",
+        "e|uniqueness|public.seeds.id"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "seed_completions",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "seeds",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "table": "seed_completions",
+      "name": "seed",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seed_completions",
+      "name": "play_seconds",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seed_completions",
+      "name": "arrived_on",
+      "type": "date",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "(now() at time zone 'UTC')",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "key",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "version",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "settings",
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "text",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "arrived_on",
+      "type": "date",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "(now() at time zone 'UTC')",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "seed_completions",
+      "name": "seed_completions_seed_seeds_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "seed"
+      ],
+      "schemaTo": "public",
+      "tableTo": "seeds",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "seed_completions",
+      "name": "seed_completions_pkey",
+      "columns": [
+        "seed"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "seeds",
+      "name": "seeds_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    }
+  ]
+}

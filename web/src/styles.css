@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/fraunces/full.css';
 @import '@fontsource-variable/figtree/wght.css';
+/* Tailwind reads every file in web/ for classes. The server, its migrations and the README hold none, but words in them
+   (a table) would add rules. */
+@source not './api';
+@source not '../migrations';
+@source not '../README.md';
 
 @theme {
   --color-midnight: oklch(0.223 0.051 266);
