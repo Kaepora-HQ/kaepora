@@ -161,10 +161,12 @@ class LogicTest(unittest.TestCase):
                 others = [pair for pair in no_way_out if pair != song]
                 self.assertTrue(self.reachable(location, *others), (location, song[0]))
 
-    def test_only_adult_link_buys_a_tunic(self):
-        never_adult = ("HF Ocarina of Time Item", "Green Rupee")
-        self.assertFalse(self.reachable("ZD Shop Item 1", never_adult))
-        self.assertFalse(self.reachable("GC Shop Item 5", never_adult))
+    def test_a_child_buys_a_tunic_in_any_shop(self):
+        # Every mod sends the Goron and Zora shopkeepers' question whether Link is a child on to the sale, and the
+        # Kokiri shopkeeper sells a child a tunic in the game (seen).
+        for location, tunic in (("GC Shop Item 5", "Buy Goron Tunic"), ("ZD Shop Item 1", "Buy Zora Tunic"),
+                                ("KF Shop Item 2", "Buy Goron Tunic")):
+            self.assertTrue(self.reachable(location, NEVER_ADULT, (location, {"item": tunic, "price": 10})), location)
 
     def test_a_tunic_needs_the_largest_wallet(self):
         # Each tunic costs 600.
@@ -174,17 +176,12 @@ class LogicTest(unittest.TestCase):
         # The price belongs to the shop slot, so it holds whatever is placed there.
         self.assertFalse(self.reachable("GC Shop Item 5", ONE_WALLET_UPGRADE, ("GC Shop Item 5", "Buy Goron Tunic")))
 
-    def test_the_tunic_and_blue_fire_gates_follow_the_goods(self):
-        # The Goron and Zora shopkeepers refuse a child a tunic on any shelf of theirs, and the Kokiri shopkeeper sells
-        # him one (seen). The potion shops sell Blue Fire only to a Link who has had some, and another shop's shelf
-        # sells it to him as it sells other bottle contents.
-        tunic = {"item": "Buy Goron Tunic", "price": 10}
+    def test_the_blue_fire_gate_follows_the_goods(self):
+        # The potion shops sell Blue Fire only to a Link who has had some, and another shop's shelf sells it to him as
+        # it sells other bottle contents.
         nuts = {"item": "Buy Deku Nut (5)", "price": 10}
         blue_fire = {"item": "Buy Blue Fire", "price": 10}
         bottle = ("KF Mido Top Left Chest", "Empty Bottle")
-        self.assertFalse(self.reachable("GC Shop Item 1", NEVER_ADULT, ("GC Shop Item 1", tunic)))
-        self.assertTrue(self.reachable("GC Shop Item 5", NEVER_ADULT, ("GC Shop Item 5", nuts)))
-        self.assertTrue(self.reachable("KF Shop Item 2", NEVER_ADULT, ("KF Shop Item 2", tunic)))
         self.assertFalse(self.reachable("Market Potion Shop Item 4", NEVER_ADULT, bottle,
                                         ("Market Potion Shop Item 4", blue_fire)))
         self.assertTrue(self.reachable("Market Potion Shop Item 2", NEVER_ADULT, bottle,

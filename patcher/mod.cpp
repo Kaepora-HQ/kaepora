@@ -1416,6 +1416,14 @@ constexpr struct {
 } DinsFireQuestions[] = { { "Event/EventFlow/TriForcePoint.bfevfl.zs", "Event8", "Event26" },
                           { "Event/EventFlow/Npc_Kaepora_DeathMountainTrail.bfevfl.zs", "Event4", "Event18" } };
 
+// A shop's choice of goods runs this flow's Outofstock_SelectCloth. Once the goods are found by name to be a tunic, it
+// asks whether Link is a child, and on a child's answer the Goron and Zora shopkeepers refuse him. The question goes on
+// to the flow's next check, for Blue Fire, on both answers, as it does for an adult.
+constexpr std::string_view ShopFlow = "Event/EventFlow/DisplayShop.bfevfl.zs";
+constexpr std::string_view ChildQuery = "Event169";
+constexpr std::string_view BlueFireCheck = "Event491";
+constexpr std::pair<std::string_view, std::string_view> ShopFlowNext[] = { { ChildQuery, BlueFireCheck } };
+
 // The text pack with each planned stone saying its text, and each planned message its text after the codes the game's
 // message opens with. Another language's pack keeps the game's words, and a copy there says its copied message whole.
 static std::string TextPack(GameFile& game, const std::string& path, const std::string& dictionary, const Plan& plan,
@@ -1754,6 +1762,12 @@ std::map<std::string, std::string> ModFiles(const std::filesystem::path& nup, co
         const std::string path(flow);
         if (bfevfl::SetNext(flowAt(path), question, next)) {
             changedFlows.insert(path);
+        }
+    }
+    const std::string shopFlow(ShopFlow);
+    for (const auto& [event, next] : ShopFlowNext) {
+        if (bfevfl::SetNext(flowAt(shopFlow), event, next)) {
+            changedFlows.insert(shopFlow);
         }
     }
 

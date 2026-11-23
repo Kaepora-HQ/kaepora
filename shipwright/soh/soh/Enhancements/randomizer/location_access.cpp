@@ -115,19 +115,12 @@ uint16_t GetCheckPrice(RandomizerCheck check /* = RC_UNKNOWN_CHECK */) {
 }
 
 // Whether Link can buy what the shop slot being checked sells: its price within his wallet, and what the remake asks
-// of the goods there. The Goron and Zora shopkeepers sell no child a tunic, and the potion shops sell Blue Fire only to
-// a Link who has had some. The game sells its own bombchus only once the Goron Ruby is won, and whether another shop
-// sells them before is unseen.
+// of the goods there. The potion shops sell Blue Fire only to a Link who has had some. The game sells its own bombchus
+// only once the Goron Ruby is won, and whether another shop sells them before is unseen.
 bool CanBuyShopGoods() {
     const RandomizerCheck rc = logic->CurrentCheckKey;
     const SceneID scene = Rando::StaticData::GetLocation(rc)->GetScene();
     switch (OTRGlobals::Instance->gRandoContext->GetItemLocation(rc)->GetPlacedRandomizerGet()) {
-        case RG_BUY_GORON_TUNIC:
-        case RG_BUY_ZORA_TUNIC:
-            if (logic->IsChild && (scene == SCENE_GORON_SHOP || scene == SCENE_ZORA_SHOP)) {
-                return false;
-            }
-            break;
         case RG_BUY_BLUE_FIRE:
             if (!logic->BlueFire() && (scene == SCENE_POTION_SHOP_MARKET || scene == SCENE_POTION_SHOP_KAKARIKO)) {
                 return false;

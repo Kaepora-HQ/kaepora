@@ -27,7 +27,8 @@ Usage: python3 -I tests/patch_test.py tested-mod <kaepora-patch> <game.nup> <tes
            weapons-bring-containers|weapon-copies|event-numbers|song-table|presence|lichii-built-ins| \
            opening-skipped|cutscenes-skipped|sword-scene-left-out|sword-scene-kept|both-stones-before-zelda| \
            river-arrival-writes-no-step|market-arrival-writes-no-step|fairies-and-summit-owl-without-dins-fire| \
-           a-child-comes-back-with-the-sword-he-left-with|schedule-entry|module-texts <kaepora-patch> <game.nup>
+           a-child-comes-back-with-the-sword-he-left-with|a-child-buys-a-tunic|schedule-entry|module-texts \
+           <kaepora-patch> <game.nup>
        python3 -I tests/patch_test.py gift-size-table|stone-texts|message-texts <kaepora-patch> <game.nup>
 
 The game's data is read from the container at test time. These readers are written apart from the patcher's, so a
@@ -3006,6 +3007,31 @@ def a_child_comes_back_with_the_sword_he_left_with(patch, game):
     assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
 
 
+SHOP_FLOW = "Event/EventFlow/DisplayShop.bfevfl.zs"
+SHOP_FLOW_NEXTS = [("Event169", "Event491")]
+
+
+def shop_flow(patch, game):
+    mod = every_mod(patch, game)
+    assert SHOP_FLOW in mod, sorted(mod)
+    expected = game.event_flow(game.read(SHOP_FLOW))
+    for event, next_event in SHOP_FLOW_NEXTS:
+        sent_on(expected, event, next_event)
+    flow = game.event_flow(mod[SHOP_FLOW])
+    assert flow == expected, [ours[0] for ours, theirs in zip(flow["events"], expected["events"]) if ours != theirs]
+    return flow
+
+
+def a_child_buys_a_tunic(patch, game):
+    """In every mod the Goron and Zora shopkeepers sell a child either tunic. Once the shops' flow finds by name that the
+    goods are a tunic, in Event25 or Event23, it asks in Event169 whether Link is a child, and on a child's answer those
+    two shopkeepers refuse him. Every mod sends that question on to the flow's next check, Event491, on both answers, as
+    the game does for an adult."""
+    flow = shop_flow(patch, game)
+    checked = [flow["events"][i][0] for i in sorted(reached(flow, "Outofstock_SelectCloth"))]
+    assert checked == ["Event23", "Event25", "Event169", "Event491"], checked
+
+
 def market_arrival_writes_no_step(patch, game):
     """In every mod a first walk from Hyrule Field into the Market plays the Market's scene, Dm_HrlCastle_0005, and
     leaves the castle quest where it is. The entry goes on from the scene's depth of field, Event65, to a wait that
@@ -3721,6 +3747,7 @@ def main():
         "market-arrival-writes-no-step": market_arrival_writes_no_step,
         "fairies-and-summit-owl-without-dins-fire": fairies_and_summit_owl_without_dins_fire,
         "a-child-comes-back-with-the-sword-he-left-with": a_child_comes_back_with_the_sword_he_left_with,
+        "a-child-buys-a-tunic": a_child_buys_a_tunic,
     }
     tests[test](patch, game, *rest)
     print(f"{test} passed")

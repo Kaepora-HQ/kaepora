@@ -229,23 +229,30 @@ Read from the game's data and not yet seen:
 
 - A day passing leaves a sold slot sold out, since its count's reset type is 0 where the game's is 2.
 - The Bombchu Shop's shopkeeper stands only once Link has the Goron Ruby.
-- The Goron Shop and the Zora Shop refuse a child a tunic by its name: each shop's flow compares the chosen goods
-  with the two tunics, then asks whether Link is a child. So the logic asks for adult Link wherever either shop sells
-  a tunic. The potion shops ask for Blue Fire by name the same way.
+- The potion shops refuse Blue Fire by its name to a Link who has never had it: the shops' flow compares the chosen
+  goods with Blue Fire, then asks `IsGet.Item_Bottle_BlueFire`. So the logic asks for Blue Fire already reached
+  wherever a potion shop sells it.
 - A quantity sign is an actor of its own that the shelf and the shopkeeper link to. The goods tell it to show while
   the slot is on sale and to hide once sold out. With no message it does nothing, so a sign nothing links to would
   show. So the patcher takes a sign out of the scene with every mention of it in the placement file: its links and its
   places in the file's groups. A saved value in the game data list and two records in the scene's baked collision
   still name it, and nothing reads them without the actor.
 
+The Goron Shop and the Zora Shop refuse a child either tunic in the game (seen). Once goods are chosen, the shops'
+flow `DisplayShop` compares them with the two tunics by name, and then asks in `Event169` whether Link is a child; on
+a child's answer the two shopkeepers refuse him (read). In every mod that question goes on to the flow's next check,
+`Event491`, on both answers, so every shop sells a child a tunic as it sells an adult one, as SoH's shops do. The flow
+still refuses a tunic Link already holds, with the shopkeeper's line for it (read), as it refuses a shield he holds
+(seen).
+
 The fill keeps dungeon items, the Bow, the Slingshot, the Bomb Bag and Bombchus out of shops. A shop may refuse
 arrows, seeds or bombs to a Link without the quiver, the bullet bag or the Goron Ruby, and which of these kinds the
 four items fall under is unknown.
 
 `shop_goods.tsv` has a row for each item a shop slot can hold, and the generator fails when it starts if one has no row.
-A slot can hold what a shuffled chest or a gift holds, but for the dungeon items and the seven `KeptFromShops` keeps
-out, the token a shuffled Gold Skulltula adds, and the shop filler. Four items are sold as the game's own goods, named
-in `goods`. Every other item is sold from a goods actor of its own, which shows the item's own model. The game's own
+A slot can hold what a shuffled chest or a gift holds, but for the dungeon items and what `KeptFromShops` keeps out,
+the token a shuffled Gold Skulltula adds, and the shop filler. Six items are sold as the game's own goods, named in
+`goods`. Every other item is sold from a goods actor of its own, which shows the item's own model. The game's own
 goods rest the lowest point of their shop pose between 26 mm under their shelf's origin (the Hylian Shield) and 34 mm
 over it (the heart), and the patcher raises each shelf so that its item rests on the origin. It also sizes the item as
 the game sizes its own goods, whose shop poses shrink some and grow others: an item taller or reaching farther than the
@@ -621,14 +628,13 @@ which does the same, and then moves the statue and opens the door whatever he gi
 talk at his step or at any later one (the Quests section below).
 
 The Gerudo's card is a key item of the pouch, as the stones are, so it goes to a chest, a gift or a reward's place only.
-A shop asks whether Link is a child before it sells either tunic (`DisplayShop.bfevfl`, read; both tunic shops refused a
-child, seen), and a slot's rule asks for no age, so no shuffled slot holds the Zora Tunic or the Goron Tunic
-(`KeptFromShops`). A slot a count leaves may sell the game's own, at 600 rupees (`kept_goods.tsv`). The Light Arrows
-may go wherever the Fire and Ice Arrows go. Seen in the game: a chest gave the pass; a chest, a Gold Skulltula and a
-loose spot gave the Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the Light Arrows, the shelf to a child. A
-seed that starts with either tunic leaves its copy at King Zora's or Darunia's son's place out of the pool, with a Red
-Rupee in its stead. The Goron Tunic's other readers are a Gerudo's and Navi's lines and the shops' sale, which read its
-ownership and whether Link wears it (read).
+Every shop sells a child a tunic in every mod (above), so a shuffled slot may hold the Zora Tunic or the Goron Tunic,
+sold as the game's own goods at the slot's price. A slot a count leaves may sell the game's own, at 600 rupees
+(`kept_goods.tsv`). The Light Arrows may go wherever the Fire and Ice Arrows go. Seen in the game: a chest gave the
+pass; a chest, a Gold Skulltula and a loose spot gave the Zora Tunic; a Gold Skulltula and a Kokiri Shop shelf gave the
+Light Arrows, the shelf to a child. A seed that starts with either tunic leaves its copy at King Zora's or Darunia's
+son's place out of the pool, with a Red Rupee in its stead. The Goron Tunic's other readers are a Gerudo's and Navi's
+lines and the shops' sale, which read its ownership and whether Link wears it (read).
 
 The Goron Bracelet may go wherever the gauntlets go, with its row in `shop_goods.tsv`. The pouch add writes its `IsGet`
 and the lift level whatever gives it (read from the program), and its other readers are a Goron shopkeeper's lines, an
