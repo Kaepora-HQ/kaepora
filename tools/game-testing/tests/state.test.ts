@@ -636,7 +636,7 @@ describe("the start state", () => {
 				const words: Words[] = [
 					{ withItems: [{ item: "Item_Range_Bow", count: 5 }] },
 					{ withItems: [{ item: "Item_Bomb", count: 20 }] },
-					{ equip: ["Item_Sword_Kokiri"] },
+					{ equipped: ["Item_Sword_Kokiri"] },
 				];
 				const refusals = yield* Effect.forEach(
 					words,
@@ -671,10 +671,10 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"fresh on a room gives its chest, door and key records, and what its modules name",
+		"a room in reset gets back its chest, door and key records, and what its modules name",
 		() =>
 			Effect.gen(function* () {
-				const { edits } = yield* plan({ fresh: ["ForestTemple/17"] });
+				const { edits } = yield* plan({ reset: ["ForestTemple/17"] });
 				expect(writes(edits)).toEqual({
 					[`IsTreasureBoxOpen.${chest}`]: false,
 					[`IsChainLockDoorOpen.${door}`]: false,
@@ -687,11 +687,11 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"fresh on a whole field keeps the age a word wrote, resets the field's own and lists what it left alone",
+		"a whole field in reset keeps the age a word wrote, puts back the field's own and lists what it left alone",
 		() =>
 			Effect.gen(function* () {
 				const planned = yield* plan(
-					{ age: "adult", fresh: ["FakeField_Adult"] },
+					{ age: "adult", reset: ["FakeField_Adult"] },
 					{
 						FakeField_Gate_Open: true,
 						Fake_Lake_Gate: true,
@@ -718,11 +718,11 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"fresh on a check with no record of its own is refused, naming what its flow holds",
+		"a check in reset with no record of its own is refused, naming what its flow holds",
 		() =>
 			Effect.gen(function* () {
 				const refused = yield* Effect.flip(
-					plan({ fresh: ["Fake 20 Token Reward"] })
+					plan({ reset: ["Fake 20 Token Reward"] })
 				);
 				expect(refused).toMatchObject({
 					reason: "incomplete",
@@ -733,7 +733,7 @@ describe("the start state", () => {
 
 	it.effect("a room the scene does not have is refused", () =>
 		Effect.gen(function* () {
-			const refused = yield* Effect.flip(plan({ fresh: ["ForestTemple/99"] }));
+			const refused = yield* Effect.flip(plan({ reset: ["ForestTemple/99"] }));
 			expect(refused).toBeInstanceOf(UnknownName);
 			expect(refused).toMatchObject({ kind: "room", asked: "ForestTemple/99" });
 		})
@@ -871,13 +871,13 @@ describe("the start state", () => {
 	);
 
 	it.effect(
-		"equip puts a held item in its slot, or on a button for its age",
+		"equipped puts a held item in its slot, or on a button for its age",
 		() =>
 			Effect.gen(function* () {
 				const { edits } = yield* plan(
 					{
 						withItems: ["Item_Range_Bow"],
-						equip: ["Item_Sword_Kokiri", "Item_Range_Bow"],
+						equipped: ["Item_Sword_Kokiri", "Item_Range_Bow"],
 					},
 					{ "IsGet.Weapon_Sword_Kokiri": true }
 				);
@@ -935,7 +935,7 @@ describe("the start state", () => {
 							StartState.make({
 								base: "test-base",
 								location: "ForestTemple",
-								fresh: ["ForestTemple/17"],
+								reset: ["ForestTemple/17"],
 								set: { "PlayerStatus.CurrentRupee": 99 },
 							})
 						);

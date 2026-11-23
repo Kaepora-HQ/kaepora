@@ -10,7 +10,7 @@ export default script({
 	state: {
 		base: "new-game-autosave",
 		location: "KF Mido Top Left Chest",
-		fresh: ["KF Mido Top Left Chest"],
+		reset: ["KF Mido Top Left Chest"],
 	},
 	run: (game) =>
 		Effect.gen(function* () {

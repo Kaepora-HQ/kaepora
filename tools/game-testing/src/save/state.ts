@@ -91,7 +91,7 @@ const across = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 
 const sceneRoom = /^(?<scene>.+)\/(?<room>\d+)$/u;
 const weights: Readonly<Record<Weight, number>> = {
-	fresh: 0,
+	reset: 0,
 	derived: 1,
 	written: 2,
 };
@@ -191,12 +191,12 @@ export class StartStates extends Context.Service<
 				yield* words.notAutosave();
 				yield* words.age(state.age);
 				yield* words.items(state.withItems ?? [], state.withoutItems ?? []);
-				yield* words.equip(
-					state.equip ?? [],
+				yield* words.equipped(
+					state.equipped ?? [],
 					state.age,
 					state.withoutItems ?? []
 				);
-				yield* Effect.forEach(state.fresh ?? [], words.fresh, {
+				yield* Effect.forEach(state.reset ?? [], words.reset, {
 					concurrency: 1,
 					discard: true,
 				});
@@ -362,7 +362,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 					base: Arr.contains(saves.progress.keys ?? [], key),
 					from,
 				},
-				"fresh"
+				"reset"
 			);
 		}
 	});
@@ -370,7 +370,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 	const putRecord = Effect.fnUntraced(function* (from: string, name: string) {
 		const found = yield* data.find(name);
 		if (Option.exists(found, (value) => value.named)) {
-			yield* put(from, name, (value) => value.default, "fresh");
+			yield* put(from, name, (value) => value.default, "reset");
 		}
 	});
 
@@ -384,7 +384,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 	const baseAge: Age = childhood === true ? "child" : "adult";
 	const ageOf = (age: Age | undefined): Age => age ?? baseAge;
 
-	/** The values a fresh place's files name that a start state writes, steps aside. */
+	/** The values a reset place's files name that a start state writes, steps aside. */
 	const kept = Effect.fnUntraced(function* (names: readonly string[]) {
 		const found = yield* Effect.filter(
 			names,
@@ -405,7 +405,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		Str.startsWith("Step_")(name) &&
 		quests.has(Str.slice("Step_".length)(name));
 
-	const freshPlace = Effect.fnUntraced(function* (
+	const resetPlace = Effect.fnUntraced(function* (
 		from: string,
 		placements: readonly Placement[],
 		named: readonly string[],
@@ -422,7 +422,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		}
 		for (const name of named) {
 			if (isOwn(name) && !isStep(name)) {
-				yield* put(from, name, (value) => value.default, "fresh");
+				yield* put(from, name, (value) => value.default, "reset");
 			} else {
 				leftAlone.set(name, { name, from });
 			}
@@ -432,7 +432,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				from,
 				`Shop_SoldNum.${each.keeper}.${each.slot}`,
 				(value) => value.default,
-				"fresh"
+				"reset"
 			);
 		}
 	});
@@ -445,7 +445,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		);
 	};
 
-	const freshCheck = Effect.fnUntraced(function* (from: string, check: Check) {
+	const resetCheck = Effect.fnUntraced(function* (from: string, check: Check) {
 		const each = yield* Effect.forEach(
 			check.placements,
 			(hash) => data.placements({ hash }),
@@ -453,7 +453,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 		);
 		const placements = Arr.flatten(each);
 		const edits = planned.size;
-		yield* freshPlace(from, placements, [], () => false, check.stock);
+		yield* resetPlace(from, placements, [], () => false, check.stock);
 		if (planned.size === edits) {
 			const named = yield* namedBy([], check.flows);
 			return yield* StateRefused.make({
@@ -527,11 +527,11 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			}
 		});
 
-	/** The names a fresh place reset, which are not left alone. */
-	const resetByFresh = () =>
+	/** The names a reset place put back, which are not left alone. */
+	const putBack = () =>
 		new Set(
 			Arr.flatMapNullishOr([...planned.values()], (each) =>
-				each.weight === "fresh" && each.edit._tag === "value"
+				each.weight === "reset" && each.edit._tag === "value"
 					? each.edit.name
 					: undefined
 			)
@@ -543,7 +543,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			leftAlone: Arr.sort(
 				Arr.filter(
 					[...leftAlone.values()],
-					(left) => !resetByFresh().has(left.name)
+					(left) => !putBack().has(left.name)
 				),
 				Order.mapInput(
 					Order.String,
@@ -616,7 +616,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			}
 		}),
 
-		equip: Effect.fn("StartStates.equip")(function* (
+		equipped: Effect.fn("StartStates.equipped")(function* (
 			names: readonly string[],
 			age: Age | undefined,
 			withoutItems: readonly string[]
@@ -645,12 +645,12 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 						detail: `${name} goes in no slot and on no button.`,
 					});
 				}
-				yield* put(`equip ${name}`, slot.value, () => slot.holds, "written");
+				yield* put(`equipped ${name}`, slot.value, () => slot.holds, "written");
 			}
 		}),
 
-		fresh: Effect.fn("StartStates.fresh")(function* (subject: string) {
-			const from = `fresh ${subject}`;
+		reset: Effect.fn("StartStates.reset")(function* (subject: string) {
+			const from = `reset ${subject}`;
 			const check = own.checks.get(subject);
 			const inRoom = sceneRoom.exec(subject)?.groups;
 			const scene = Option.getOrUndefined(data.scene(subject));
@@ -669,7 +669,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				});
 			}
 			if (check !== undefined) {
-				return yield* freshCheck(from, check);
+				return yield* resetCheck(from, check);
 			}
 			if (inRoom?.scene !== undefined) {
 				const roomScene = yield* sceneOf(inRoom.scene);
@@ -679,7 +679,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 					room,
 				});
 				const named = yield* namedBy(placements, []);
-				return yield* freshPlace(
+				return yield* resetPlace(
 					from,
 					placements,
 					named,
@@ -696,7 +696,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 				);
 				const rooms = new Set(roomValues);
 				const name = [scene.name, scene.folder];
-				return yield* freshPlace(
+				return yield* resetPlace(
 					from,
 					placements,
 					named,
@@ -706,7 +706,7 @@ const makeWords = ({ data, own, items, quests, saves }: Inputs) => {
 			}
 			if (Arr.isReadonlyArrayNonEmpty(placed)) {
 				const named = yield* namedBy(placed, [subject]);
-				return yield* freshPlace(
+				return yield* resetPlace(
 					from,
 					placed,
 					named,

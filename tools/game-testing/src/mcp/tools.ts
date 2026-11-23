@@ -77,7 +77,7 @@ const ToolFailure = Schema.Union([
 
 const state = StartState.annotate({
 	description:
-		"The start state: a base save, and words in the game's own names that change it. Only base is needed. base: a base save, such as new-game-autosave, a new game's first autosave with a child in Kokiri Forest by day; a base it does not know is refused with the ones it knows. location: where Link stands: a check by its spoiler log name such as KF Mido Top Left Chest, which stands him before it; a spot; a landing such as KokiriForest/Mido_House_Front; or { scene, room, position: [x, y, z], facing } in the game's own coordinates, with facing in degrees. age: child or adult; the sword and shield swap with it. withItems: items Link holds as well as what the base holds, such as Item_Range_Bow, or { item, count } such as { item: \"Item_Bomb\", count: 20 }, the count he holds; an item's bag, tier and limit come with it. withoutItems: items taken from what the base holds. equip: items worn or on a button. fresh: places as on a first visit: a check, a scene such as ForestTemple, or a scene and room such as ForestTemple/17. story: { quests: { <quest>: <step> }, events: [<event setting>] }. set: saved values by name, written last, such as { \"PlayerStatus.CurrentRupee\": 50 }. search_names finds every name these take.",
+		"The start state: a base save, and words in the game's own names that change it. Only base is needed. base: a base save, such as new-game-autosave, a new game's first autosave with a child in Kokiri Forest by day; a base it does not know is refused with the ones it knows. location: where Link stands: a check by its spoiler log name such as KF Mido Top Left Chest, which stands him before it; a spot; a landing such as KokiriForest/Mido_House_Front; or { scene, room, position: [x, y, z], facing } in the game's own coordinates, with facing in degrees. age: child or adult; the sword and shield swap with it. withItems: items Link holds as well as what the base holds, such as Item_Range_Bow, or { item, count } such as { item: \"Item_Bomb\", count: 20 }, the count he holds; an item's bag, tier and limit come with it. withoutItems: items taken from what the base holds. equipped: items worn or on a button. reset: places put back as on a first visit: a check such as GV Chest, a scene such as ForestTemple, or a scene and room such as ForestTemple/17. story: { quests: { <quest>: <step> }, events: [<event setting>] }. set: saved values by name, written last, such as { \"PlayerStatus.CurrentRupee\": 50 }. search_names finds every name these take.",
 });
 
 const session = SessionId.annotate({
@@ -188,7 +188,7 @@ export const waitRun = Tool.make("wait_run", {
 
 export const searchNames = Tool.make("search_names", {
 	description:
-		"Finds the names that contain text, in the name or in its line, shortest first. kind narrows it: value (saved values, for read_values, set_values, a state's set, and a body's read, wait, set, check and still), item (for a state's withItems, withoutItems and equip), quest (with its steps, for story.quests), event (event settings, for story.events), scene (for location and fresh), landing (for location), check (a check by its spoiler log name, for location and fresh), spot (a place Link can stand, for location) or base (a base save, for base). Answers names, each with its kind, the name and a line on it. Every name a state or a body takes is one of these, and one that is not is refused with its nearest names.",
+		"Finds the names that contain text, in the name or in its line, shortest first. kind narrows it: value (saved values, for read_values, set_values, a state's set, and a body's read, wait, set, check and still), item (for a state's withItems, withoutItems and equipped), quest (with its steps, for story.quests), event (event settings, for story.events), scene (for location and reset), landing (for location), check (a check by its spoiler log name, for location and reset), spot (a place Link can stand, for location) or base (a base save, for base). Answers names, each with its kind, the name and a line on it. Every name a state or a body takes is one of these, and one that is not is refused with its nearest names.",
 	parameters: Schema.Struct({
 		text: Schema.String.annotate({
 			description: "Part of a name, such as Slingshot or TreasureBox.",
@@ -208,7 +208,7 @@ export const searchNames = Tool.make("search_names", {
 
 export const planState = Tool.make("plan_state", {
 	description:
-		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from; and the values a fresh place's files name that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
+		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from; and the values named by the files of a place it resets that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
 	parameters: Schema.Struct({ state }),
 	success: Schema.Struct({ ...StatePlan.fields, more }),
 	failure: ToolFailure,

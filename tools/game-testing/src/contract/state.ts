@@ -64,8 +64,9 @@ export class StartState extends Schema.Class<
 	/** Items taken from what the base holds, with the same expansion; tiers above one taken go too. */
 	withoutItems: Schema.optionalKey(Schema.Array(Schema.String)),
 	/** Items worn or assigned, in the slot their pouch row names. */
-	equip: Schema.optionalKey(Schema.Array(Schema.String)),
-	fresh: Schema.optionalKey(Schema.Array(Subject)),
+	equipped: Schema.optionalKey(Schema.Array(Schema.String)),
+	/** Places put back as on a first visit. */
+	reset: Schema.optionalKey(Schema.Array(Subject)),
 	story: Schema.optionalKey(Story),
 	/** Saved values by name, written last. */
 	set: Schema.optionalKey(Schema.Record(Schema.String, Value)),

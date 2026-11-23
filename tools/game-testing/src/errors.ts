@@ -49,7 +49,7 @@ export class UnknownName extends Schema.TaggedError<
  * stands in. `ambiguous`: a name two tables hold. `shut`: Link would stand inside a grotto the base leaves shut.
  * `mod-too-large`: a mod file is larger than its size-table entry, which the game drops silently. `unsaved`: `set`
  * names a value neither `progress.sav` nor `caption.sav` keeps, which only a running game can change. `no-slot`:
- * `equip` names an item that no slot or button holds. `incomplete`: a word needs another to be honoured whole, which
+ * `equipped` names an item that no slot or button holds. `incomplete`: a word needs another to be honoured whole, which
  * the detail names.
  */
 export class StateRefused extends Schema.TaggedError<

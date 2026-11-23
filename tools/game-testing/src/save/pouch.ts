@@ -7,9 +7,9 @@ import { StateRefused } from "../errors.ts";
 
 /**
  * How strongly an edit holds: the record a person's word names outweighs what the library derives from it, which
- * outweighs a fresh place's reset.
+ * outweighs what `reset` puts back.
  */
-export type Weight = "fresh" | "derived" | "written";
+export type Weight = "reset" | "derived" | "written";
 
 export interface Writer {
 	/** What the plan writes so far, else what the base holds. */
@@ -79,7 +79,7 @@ const slotsOf = (item: Item, row: PouchRow) => {
 	];
 };
 
-/** Where `equip` puts an item: its slot, or else the button of Link's age. */
+/** Where `equipped` puts an item: its slot, or else the button of Link's age. */
 export const slotOf = (item: Item, row: PouchRow, age: Age) =>
 	Option.orElse(Arr.head(slotsOf(item, row)), () =>
 		Arr.findFirst(buttonsOf(row), (button) =>

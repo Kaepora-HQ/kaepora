@@ -76,7 +76,7 @@ const StartErrors = Schema.Union([
  * The contract's version. A change to any command, schema or error raises it, and `Hello` refuses a caller built from
  * another one, since the CI runner and the game machine can run different commits.
  */
-export const contract = 11;
+export const contract = 12;
 
 /** What the `Open` stream says, in order: `started` once, then a `beat` every few seconds until it ends. */
 export const SessionEvent = Schema.Union([
@@ -126,8 +126,8 @@ export const PlannedEdit = Schema.Union([
 export type PlannedEdit = typeof PlannedEdit.Type;
 
 /**
- * What a state writes into its base, and the values a fresh place's files name that are not the place's own, which it
- * leaves as the base holds them, so a test that needs one adds it with `set`.
+ * What a state writes into its base, and the values named by the files of a place it resets that are not the place's
+ * own, which it leaves as the base holds them, so a test that needs one adds it with `set`.
  */
 export const StatePlan = Schema.Struct({
 	base: Schema.Struct({ name: Schema.String, about: Schema.String }),

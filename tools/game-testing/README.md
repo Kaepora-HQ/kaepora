@@ -32,7 +32,7 @@ export default script({
 	state: {
 		base: "new-game-autosave",
 		location: "KF Mido Top Left Chest",
-		fresh: ["KF Mido Top Left Chest"],
+		reset: ["KF Mido Top Left Chest"],
 	},
 	run: (game) =>
 		Effect.gen(function* () {
@@ -70,12 +70,14 @@ state: {
 	age: "child",                         // the sword and shield swap with it
 	withItems: ["Item_Hammer", { item: "Item_Token_Gold", count: 30 }], // added to what the base holds
 	withoutItems: ["Item_Range_Bow"],     // taken away, with its quiver, arrows and button
-	equip: ["Item_Hammer"],               // on its button or slot
-	fresh: ["GV Chest"],                  // as on a first visit: a check, a scene, or a scene and room
+	equipped: ["Item_Hammer"],            // on its button or slot
+	reset: ["GV Chest"],                  // back as on a first visit: a check, a scene, or a scene and room
 	story: { quests: { GatheringTokenGold: "CollectToken" }, events: ["Dm_Kakariko_0000"] },
 	set: { "PlayerStatus.CurrentRupee": 50 }, // saved values by name, written last
 }
 ```
+
+`reset: ["GV Chest"]` puts a chest, a room or a scene back as on a first visit.
 
 The bases: `new-game-autosave` (a child in Link's house, holding nothing), `early-child`, `child-after-impa`,
 `early-adult` (an adult in the Temple of Time, time standing still) and `complete`. Start from a new or early base:
