@@ -832,7 +832,7 @@ UNPLAYED_TEXTS = {("Event/EventFlow/Get_StoneOfWater.bfevfl.zs", "Event293"),
                   ("Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42"),
                   ("Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172"),
                   ("Event/EventFlow/Dm_SY_BancChange_EscapeDungeon.bfevfl.zs", "Event208"),
-                  (FIRE_QUEST_FLOW, "Event39")}
+                  (FIRE_QUEST_FLOW, "Event39"), (DOOR_OF_TIME_FLOW, "Event38"), (DOOR_OF_TIME_FLOW, "Event148")}
 
 
 def tested_event_text_mods(patch, game, plan_file, *romfs):
@@ -840,26 +840,27 @@ def tested_event_text_mods(patch, game, plan_file, *romfs):
     the warp left the castle quest at Step04 and Zelda's scene played; after Ruto's letter Kaepora Gaebora left the
     Water quest at Step07 and King Zora stood aside; after a lost bet race adult Malon left Epona's quest at
     ReadyForGetEponaSong and child Malon then taught her song. A flow with a text no played mod has is compared, read
-    apart from the patcher, with the played mod's flow, or the game's where no played mod has that flow, with the text
-    set."""
+    apart from the patcher, with the played mod's flow, or the flow every mod carries where no played mod has it, with
+    the text set."""
     planned = json.loads(pathlib.Path(plan_file).read_text())
     texts = planned["event_texts"]
+    unplayed = [t for t in texts if (t["flow"], t["event"]) in UNPLAYED_TEXTS]
+    assert {(t["flow"], t["event"]) for t in unplayed} == UNPLAYED_TEXTS, unplayed
     tested = {path.relative_to(folder).as_posix(): path.read_bytes()
               for folder in map(pathlib.Path, romfs) for path in folder.rglob("*.bfevfl.zs")}
     mod = patched(patch, game, plan([], event_texts=[(t["flow"], t["event"], t["param"], t["text"]) for t in texts],
                                     expressions=[(e["name"], e["all_of"]) for e in planned["expressions"]]))
-    # Zelda's flow grows past its size table entry, which gift-size-table covers, and the dance's question asks an
-    # expression of the list, which expressions covers.
+    # Zelda's flow grows past its size table entry, which gift-size-table covers. expressions covers the game data list
+    # that holds the plan's expressions.
     mod.pop(SIZE_TABLE)
     mod.pop(GAME_DATA_LIST)
-    unplayed = [t for t in texts if (t["flow"], t["event"]) in UNPLAYED_TEXTS]
-    assert {(t["flow"], t["event"]) for t in unplayed} == UNPLAYED_TEXTS, unplayed
     # The list may name played mods for texts this plan does not carry.
     assert set(mod) - {t["flow"] for t in unplayed} <= set(tested), sorted(set(mod) - set(tested))
+    every = every_mod(patch, game)
     for path, ours in mod.items():
         own = [t for t in unplayed if t["flow"] == path]
         if own:
-            expected = game.event_flow(tested[path] if path in tested else game.read(path))
+            expected = game.event_flow(tested.get(path) or every.get(path) or game.read(path))
             for t in own:
                 string_parameter(expected, t["event"], t["param"])[1] = t["text"]
             assert game.event_flow(ours) == expected, path
@@ -2919,7 +2920,7 @@ def message_bytes(text, page=RUMOUR_PAGE):
 
 
 def seed_plan(patch, game, plan_file):
-    """A seed's plan, applied: each written file is the game's with every planned chest giving its item, also as its
+    """A seed's plan, applied: each written file is every mod's with every planned chest giving its item, also as its
     substitute where it has one, and as an added value where it names none, every planned stone and message saying
     its text in both English text packs, every planned event going on to its next, the opening skipped where the plan
     skips it, the Kokiri Sword's scene left out where its chest holds another item, and each planned schedule entry on
@@ -2950,7 +2951,8 @@ def seed_plan(patch, game, plan_file):
     for planned in seed["schedule_entries"]:
         with_schedule_entry(schedules.setdefault(planned["file"], byml(game.read(planned["file"]))), planned)
     edited = {edit["flow"] for edit in seed["event_texts"] + seed["event_numbers"] + seed["event_nexts"]}
-    flows = {path: game.event_flow(game.read(path)) for path in edited}
+    every = every_mod(patch, game)
+    flows = {path: game.event_flow(every.get(path) or game.read(path)) for path in edited}
     if seed["opening_skipped"]:
         flows[OPENING_FLOW] = skipped_opening(game.event_flow(game.read(OPENING_FLOW)))
     if any(int(chest["hash"]) == KOKIRI_SWORD_CHEST and chest["drop_actor"] != "Item_Sword_Kokiri"

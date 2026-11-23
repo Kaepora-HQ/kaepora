@@ -828,6 +828,8 @@ struct EventText {
 static constexpr std::string_view danceGiven = "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp";
 static constexpr std::string_view danceGiftPlayed = "HavePlayedEvent.Dm_Goron_0030";
 
+static constexpr std::string_view stonesAfterStep01 = "Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp";
+
 static constexpr EventText eventTexts[] = {
     // The warp after Gohma completes the Forest quest in its Event1. Its Event4 sets the castle quest to Step01 even when
     // the quest is further on, and a Link who woke Talon before Gohma can then not meet Zelda. These texts make Event4 a
@@ -864,6 +866,16 @@ static constexpr EventText eventTexts[] = {
     { "Event/EventFlow/Npc_Hylia_Zelda_Child.bfevfl.zs", "Event42", "StepName", "Complete" },
     { "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172", "ChallengeName", "Get_StoneOfFire" },
     { "Event/EventFlow/Dm_SY_Ocarina_SariaSong.bfevfl.zs", "Event172", "StepName", "Complete" },
+    // A warp song takes a child out of the courtyard after Zelda's scene and before Impa's lesson. The stone check,
+    // DoorOfTime_CheckStoneNum, runs as each stone dungeon ends and writes Step2_1 (Event147), Step2_2 (Event148) or
+    // Step03 (Event37) whatever step the quest stands at, so a stone dungeon finished after that warp sends Impa
+    // away. These texts make Event38 ask for both stones and the quest past Step01 at once, so Step03 waits for both
+    // and for Impa's send-off, which writes Step02 and then runs the check. Event147 then runs no more. Event148 runs
+    // only with the Water quest complete, so they make it complete the Water quest, a write the game ignores on a
+    // completed quest. The quest stays at Step01 until the send-off, and at Step02 until both stones are done.
+    { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event38", "GameDataName", stonesAfterStep01 },
+    { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event148", "ChallengeName", "Get_StoneOfWater" },
+    { "Event/EventFlow/DoorOfTime.bfevfl.zs", "Event148", "StepName", "Complete" },
     // After Link loses Ingo's bet race on a horse that is not Epona, adult Malon's talk sets Epona's quest to
     // GuideToLonLonRanchAdult in Event177 whenever Event179 finds the quest not past ReadyForGetEponaSong. A Link who
     // met child Malon at the ranch and has not learned her song is set back, and she then never teaches it. This text
@@ -1223,6 +1235,10 @@ nlohmann::ordered_json RemakePlan(const std::string& seed, const std::vector<Rem
     plan["expressions"] = nlohmann::ordered_json::array();
     plan["expressions"].push_back(
         { { "name", danceGiven }, { "all_of", nlohmann::ordered_json::array({ danceGiftPlayed }) } });
+    plan["expressions"].push_back({ { "name", stonesAfterStep01 },
+                                    { "all_of", nlohmann::ordered_json::array({ "Get_StoneOfFire_IsCompleted_Exp",
+                                                                                "Get_StoneOfWater_IsCompleted_Exp",
+                                                                                "DoorOfTime_IsAfter_Step01_Exp" }) } });
     if (biggoron) {
         plan["claims"].push_back(biggoronClaim);
         plan["expressions"].push_back(

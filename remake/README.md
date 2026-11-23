@@ -734,9 +734,26 @@ Zelda's talk after her scene, `Npc_Hylia_Zelda_Child` `Event42`, and Saria's Son
 `Dm_SY_Ocarina_SariaSong` `Event172`, each set the quest to Srep2_1_1, and Impa was gone with what her lesson holds
 (seen in the game). Every way to either write passes the true case of `Get_StoneOfFire_IsCompleted_Exp` (measured), so
 both name `Get_StoneOfFire` and `Complete`. Seen in the game: Impa stays after the talk and after the song, and teaches.
-One order still loses her lesson: a warp song out of the courtyard before it, and then a stone dungeon, whose check
-writes Step2_1 or Step2_2 in `Event147` or `Event148`. A child holds a warp song before Zelda only with the songs
-shuffled.
+
+A warp song takes a child out of the courtyard after Zelda's scene and before Impa's lesson, with `DoorOfTime` at Step01
+(seen in the game). The stone check writes Step2_1 in `Event147`, Step2_2 in `Event148` or Step03 in `Event37` whatever
+step the quest stands at, so a stone dungeon finished after the warp sends Impa away with what her lesson holds (read).
+`Event38` asks `Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp`, an expression of the mod's own that joins
+`Get_StoneOfFire_IsCompleted_Exp`, `Get_StoneOfWater_IsCompleted_Exp` and `DoorOfTime_IsAfter_Step01_Exp`. So `Event37`
+writes Step03 only once both stones are done and the quest is past Step01. At the earliest that is the send-off's own
+run of the check, where the expression reads the Step02 that the send-off's `Event7` has just written. `Event39` then
+always holds, and no path reaches `Event147`. `Event148` runs only with the Water quest complete, so it names
+`Get_StoneOfWater` and `Complete`. The quest stays at Step01 until the send-off, so Impa stays and teaches, and at
+Step02 until both stones are done. Only `Npc_Hylia_037_Child` `Event53` and Saria's talk in the meadow, `Event41`, tell
+Step02 from Step2_1 and Step2_2, and both only choose a line (read). Seen in the game: with both stones done and the
+quest at Step01, Impa teaches, her send-off plays Zelda's escape, and the moat holds the Ocarina of Time. With the
+Goron's Ruby got and the quest at Step01, the warp after Barinade keeps Step01. A child holds a warp song before Zelda
+only with the songs shuffled.
+
+After a warp out, the send-off can come after the letter is shown to Kakariko's guard. The send-off's `Event62` then
+sets `Get_StoneOfFire` back to KakarikoVillageNpc with no test, and the walk into Kakariko sets it to
+KakarikoVillageLetter. Seen in the game, from a save set as the letter's show leaves it: both writes happen, the gate to
+Death Mountain Trail stays open, and the guard talks of a shield. So nothing is lost.
 
 The Forest Temple's exit, `Dm_SY_BancChange_EscapeDungeon` `Event208`, sets `AllSage` to Step01_00 with no test, right
 after `Event199` completes `SageOfForest`. Zelda's scene in the Temple of Time starts as Link walks in while `AllSage`

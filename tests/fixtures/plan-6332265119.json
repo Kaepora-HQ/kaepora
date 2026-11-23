@@ -1387,6 +1387,24 @@
       "text": "Complete"
     },
     {
+      "flow": "Event/EventFlow/DoorOfTime.bfevfl.zs",
+      "event": "Event38",
+      "param": "GameDataName",
+      "text": "Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp"
+    },
+    {
+      "flow": "Event/EventFlow/DoorOfTime.bfevfl.zs",
+      "event": "Event148",
+      "param": "ChallengeName",
+      "text": "Get_StoneOfWater"
+    },
+    {
+      "flow": "Event/EventFlow/DoorOfTime.bfevfl.zs",
+      "event": "Event148",
+      "param": "StepName",
+      "text": "Complete"
+    },
+    {
       "flow": "Event/EventFlow/Npc_Hylia_Malon_Adult.bfevfl.zs",
       "event": "Event179",
       "param": "GameDataName",
@@ -1617,6 +1635,14 @@
       "name": "Kaepora_HavePlayedEvent_Dm_Goron_0030_Exp",
       "all_of": [
         "HavePlayedEvent.Dm_Goron_0030"
+      ]
+    },
+    {
+      "name": "Kaepora_BothStones_AND_DoorOfTime_IsAfter_Step01_Exp",
+      "all_of": [
+        "Get_StoneOfFire_IsCompleted_Exp",
+        "Get_StoneOfWater_IsCompleted_Exp",
+        "DoorOfTime_IsAfter_Step01_Exp"
       ]
     }
   ],
