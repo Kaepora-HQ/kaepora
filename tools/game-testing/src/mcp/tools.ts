@@ -214,7 +214,7 @@ export const searchNames = Tool.make("search_names", {
 
 export const planState = Tool.make("plan_state", {
 	description:
-		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from, or mod <name> for a value the mod's new game starts with; and the values named by the files of a place it resets that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
+		"Shows what a start state writes into its base save, without starting a game: each value, what the base held, and the word it came from, or mod <name> for a value the mod's new game starts with, which is added, by its hash, for a value the mod adds to the game's list; and the values named by the files of a place it resets that it leaves as the base holds them, so you can add one with set. A state that cannot be honoured is refused with what to change. A state plan_state takes, start_game and run_script take too.",
 	parameters: Schema.Struct({ state, mod: Schema.optionalKey(mod) }),
 	success: Schema.Struct({ ...StatePlan.fields, more }),
 	failure: ToolFailure,

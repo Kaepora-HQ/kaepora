@@ -324,7 +324,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 			weight === "written" &&
 			!Equal.equals(old.edit.to, edit.to)
 		) {
-			const name = edit._tag === "value" ? edit.name : `key ${edit.key}`;
+			const name = edit._tag === "key" ? `key ${edit.key}` : edit.name;
 			return yield* StateRefused.make({
 				reason: "contradiction",
 				detail: `${originText(old.edit.from)} writes ${name} as ${String(old.edit.to)}, and ${originText(edit.from)} as ${String(edit.to)}.`,
@@ -582,7 +582,7 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 	const written = () =>
 		new Set(
 			Arr.flatMapNullishOr([...planned.values()], (each) =>
-				each.edit._tag === "value" ? each.edit.name : undefined
+				each.edit._tag === "key" ? undefined : each.edit.name
 			)
 		);
 
@@ -619,8 +619,25 @@ const makeWords = ({ data, own, items, quests, saves, starts }: Inputs) => {
 			values: readonly StartValue[]
 		) {
 			const from: Origin = { _tag: "mod", mod };
-			for (const { value, to } of values) {
-				if (value.file !== "progress" && value.file !== "caption") {
+			for (const { value, to, added } of values) {
+				const { file } = value;
+				if (file !== "progress" && file !== "caption") {
+					continue;
+				}
+				if (added) {
+					yield* place(
+						`value ${value.hash}`,
+						{
+							_tag: "added",
+							name: value.name,
+							file,
+							type: value.type,
+							...(value.type === "Enum" ? { choices: value.choices } : {}),
+							to,
+							from,
+						},
+						"mod"
+					);
 					continue;
 				}
 				const base = held(value);

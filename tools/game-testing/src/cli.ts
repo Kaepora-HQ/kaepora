@@ -235,7 +235,13 @@ const declaredIn = Effect.fnUntraced(function* (
 const fromMod = (from: Origin) => from._tag === "mod";
 
 const nameOf = (edit: PlannedEdit) =>
-	edit._tag === "value" ? edit.name : `key ${edit.key}`;
+	edit._tag === "key" ? `key ${edit.key}` : edit.name;
+
+/** What the base held, or for a value the mod adds, that the base holds none. */
+const wasOf = (edit: PlannedEdit) =>
+	edit._tag === "added"
+		? "added by the mod: the base has no record, so the game starts it so"
+		: `was ${String(edit.base)}`;
 
 /**
  * A plan as `plan` prints it: the base, each value the words write, each a place it resets leaves alone, and then under a
@@ -250,7 +256,7 @@ const printPlan = (planned: StatePlan) =>
 		yield* Console.log(`From ${planned.base.name}: ${planned.base.about}`);
 		for (const edit of words) {
 			yield* Console.log(
-				`${nameOf(edit)} = ${String(edit.to)}    was ${String(edit.base)}, from ${originText(edit.from)}`
+				`${nameOf(edit)} = ${String(edit.to)}    ${wasOf(edit)}, from ${originText(edit.from)}`
 			);
 		}
 		for (const each of left) {
@@ -267,7 +273,7 @@ const printPlan = (planned: StatePlan) =>
 		);
 		for (const edit of started) {
 			yield* Console.log(
-				`${nameOf(edit)} = ${String(edit.to)}    was ${String(edit.base)}`
+				`${nameOf(edit)} = ${String(edit.to)}    ${wasOf(edit)}`
 			);
 		}
 		for (const each of moved) {

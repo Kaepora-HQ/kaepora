@@ -19,6 +19,7 @@ import {
 } from "effect";
 import { UserDirectories } from "effect/persistence";
 import { ChildProcessSpawner } from "effect/process";
+import type { ValueType as ValueTypeSchema } from "../contract/plan.ts";
 import type { NameMatch } from "../contract/rpc.ts";
 import type { Mod } from "../contract/state.ts";
 import type {
@@ -52,16 +53,7 @@ import { FileLine, GameDataList, Key, ModLine, modTooLarge } from "./dump.ts";
 /** The layout of the cache file; a change to its tables raises it, which gives every game file a new cache. */
 const cacheLayout = 2;
 
-export type ValueType =
-	| "Bool"
-	| "Int"
-	| "UInt"
-	| "Float"
-	| "Enum"
-	| "String16"
-	| "String32"
-	| "String64"
-	| "Vector3";
+export type ValueType = typeof ValueTypeSchema.Type;
 
 export type SaveFileName = (typeof saveFiles)[number] | "none";
 
@@ -77,8 +69,12 @@ export interface GameValue {
 	readonly type: ValueType;
 }
 
-/** A value a mod's new game starts with in place of the game's own start, `value.default`. */
+/**
+ * A value a mod's new game starts with in place of the game's own start, `value.default`; or, `added`, a value the mod
+ * adds to the game's list, which no base holds, named by its hash, with the mod's entry as its `value`.
+ */
 export interface StartValue {
+	readonly added: boolean;
 	readonly to: Saved;
 	readonly value: GameValue;
 }
@@ -414,13 +410,19 @@ const serve = Effect.fn("GameData.open")(function* (
 				ModUnreadable
 			> {
 				const [found] = yield* valueRows(entry.hash);
+				const hex = `0x${entry.hash.toString(16)}`;
 				if (found === undefined) {
-					return yield* unreadable(
-						`it starts 0x${entry.hash.toString(16)}, a value the game's own list does not hold`
-					);
+					return {
+						added: true,
+						value: { ...entry, name: hex, named: false },
+						to: entry.default,
+					};
 				}
-				const name = found.name ?? `0x${entry.hash.toString(16)}`;
-				return { value: gameValue(name, entry.hash, found), to: entry.default };
+				return {
+					added: false,
+					value: gameValue(found.name ?? hex, entry.hash, found),
+					to: entry.default,
+				};
 			}),
 			{ concurrency: 1 }
 		);

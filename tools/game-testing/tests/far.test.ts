@@ -632,6 +632,52 @@ describe("a place's game", () => {
 	);
 
 	it.live(
+		"a look with a mod that adds a value to the game's list starts, and its plan says the mod added it",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const { far, caller, scratch, command } = yield* farAndCaller({
+					onA: openChest,
+				});
+				const skips = `${far.home}/data/game-testing/skips`;
+				yield* fs.makeDirectory(`${skips}/romfs/GameData`, { recursive: true });
+				yield* fs.writeFile(
+					`${skips}/${startList}`,
+					modList(
+						{
+							...fakeGame,
+							values: {
+								...fakeGame.values,
+								Kaepora_Once_1: { type: "Bool", value: false },
+							},
+						},
+						{}
+					)
+				);
+				yield* fs.writeFileString(`${scratch}/look.ts`, look({}));
+				const ran = yield* command(["run", `${scratch}/look.ts`]);
+				expect(ran.lines[0]).toStartWith("passed  ");
+				const run = Arr.lastNonEmpty(Str.split(ran.lines[0] ?? "", "  "));
+				const record = yield* Schema.decodeEffect(
+					Schema.fromJsonString(RunRecord)
+				)(
+					yield* fs.readFileString(
+						`${caller.home}/state/game-testing/runs/${run}/record.json`
+					)
+				);
+				expect(record.plan?.edits).toContainEqual(
+					expect.objectContaining({
+						_tag: "added",
+						name: `0x${Bun.hash.murmur32v3("Kaepora_Once_1").toString(16)}`,
+						to: false,
+						from: { _tag: "mod", mod: "skips" },
+					})
+				);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
 		"a machine with no mod that skips refuses a start that names no mod, and says what to do",
 		() =>
 			Effect.gen(function* () {

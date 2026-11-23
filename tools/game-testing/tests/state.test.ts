@@ -471,9 +471,9 @@ const writes = (edits: readonly PlannedEdit[]) =>
 		Arr.map(
 			Arr.filter(edits, (edit) => edit.from._tag !== "rule"),
 			(edit): [string, Saved] =>
-				edit._tag === "value"
-					? [edit.name, edit.to]
-					: [`key ${edit.key}`, edit.to]
+				edit._tag === "key"
+					? [`key ${edit.key}`, edit.to]
+					: [edit.name, edit.to]
 		)
 	);
 
@@ -1018,18 +1018,54 @@ describe("the start state", () => {
 				);
 				expect(notAList).toBeInstanceOf(ModUnreadable);
 				expect(notAList.message).toContain(`test-mod/${startList}`);
-				const unknownValue = yield* refused(
-					modList(
-						{ ...game, values: { ...game.values, Fake_Not_In_Game: flag } },
-						{ Fake_Not_In_Game: true }
-					)
-				);
-				expect(unknownValue).toBeInstanceOf(ModUnreadable);
-				expect(unknownValue.message).toContain(`test-mod/${startList}`);
+
 				const notAFile = yield* refused(new TextEncoder().encode("not zstd"));
 				expect(notAFile).toBeInstanceOf(ModUnreadable);
 				expect(notAFile.message).toContain(`test-mod/${startList}`);
 			})
+	);
+
+	it.effect(
+		"a value the mod adds to the game's list is planned under the mod for the game to start, and the save builds",
+		() =>
+			Effect.gen(function* () {
+				const layer = yield* startStates();
+				const mod: Mod = {
+					name: "test-mod",
+					files: [
+						{
+							path: startList,
+							bytes: modList(
+								{ ...game, values: { ...game.values, Fake_Added: flag } },
+								{ Fake_Added: true }
+							),
+						},
+					],
+				};
+				const saves = yield* Effect.provide(
+					Effect.gen(function* () {
+						const states = yield* StartStates;
+						const planned = yield* states.plan(
+							StartState.make({ base: "test-base" }),
+							mod
+						);
+						expect(planned.edits).toContainEqual({
+							_tag: "added",
+							name: `0x${Bun.hash.murmur32v3("Fake_Added").toString(16)}`,
+							file: "progress",
+							type: "Bool",
+							to: true,
+							from: { _tag: "mod", mod: "test-mod" },
+						});
+						return yield* states.build(planned);
+					}),
+					[layer, BunFileSystem.layer]
+				);
+				const progress = yield* decode("progress.sav", saves.progress);
+				expect(read(progress, Bun.hash.murmur32v3("Fake_Added"))).toEqual(
+					Option.none()
+				);
+			}).pipe(Effect.provide(BunFileSystem.layer))
 	);
 
 	it.effect("reset puts a place back to its mod's start values", () =>

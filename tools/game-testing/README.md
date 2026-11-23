@@ -148,6 +148,8 @@ By default a look plays the game as a Kaepora player has it, with nothing shuffl
   base still holds the game's own start, as a seed's new game has it, so a look meets no tutorial its player skips. A
   value play moved in the base keeps the base's. `gt plan` lists them under `From the mod <name>, as its new game
   starts:`, and a word of the state wins over them. A place `reset` puts back takes the mod's start too.
+- A value the mod adds to the game's list, such as a seed's `Kaepora_Once_` flags, has no record in a base. The game
+  starts it at the mod's default, as a new game does, and `gt plan` lists it under the mod by its hash, `0x...`.
 - `startValues: "base"` keeps the base's own values in place of the mod's: for a save older than its mod on purpose, or
   when the game rewrites a start value on load and refuses the start.
 

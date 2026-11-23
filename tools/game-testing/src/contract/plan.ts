@@ -5,6 +5,19 @@
 import { Schema } from "effect";
 import { Saved } from "./values.ts";
 
+/** The types of a saved value the library reads and writes. */
+export const ValueType = Schema.Literals([
+	"Bool",
+	"Int",
+	"UInt",
+	"Float",
+	"Enum",
+	"String16",
+	"String32",
+	"String64",
+	"Vector3",
+]);
+
 /** The words of a start state that write values. */
 export const Word = Schema.Literals([
 	"location",
@@ -56,6 +69,19 @@ export const PlannedEdit = Schema.Union([
 		key: Schema.String,
 		to: Schema.Boolean,
 		base: Schema.Boolean,
+		from: Origin,
+	}),
+	/**
+	 * A value the mod adds to the game's list, such as a seed's `Kaepora_Once_` flags, by its hash. A base has no record
+	 * for it and nothing is written: the game loads a save with no record for a value at the list's default, so the look
+	 * starts with it at `to`, as a new game of the mod does.
+	 */
+	Schema.TaggedStruct("added", {
+		name: Schema.String,
+		file: Schema.Literals(["progress", "caption"]),
+		type: ValueType,
+		choices: Schema.optionalKey(Schema.Array(Schema.String)),
+		to: Saved,
 		from: Origin,
 	}),
 ]);

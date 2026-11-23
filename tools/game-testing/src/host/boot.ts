@@ -21,7 +21,8 @@ import {
 import type { ReadBack, TextSpeed } from "../contract/state.ts";
 import type { Saved } from "../contract/values.ts";
 import { Buttons, Value } from "../contract/values.ts";
-import { GameData } from "../data/game-data.ts";
+import type { GameValue } from "../data/game-data.ts";
+import { GameData, valueHash } from "../data/game-data.ts";
 import type { Emulator, EmulatorError, WireLog } from "../emulator/emulator.ts";
 import { Launcher, programId, textSpeedOf } from "../emulator/launcher.ts";
 import type { Values } from "../emulator/values.ts";
@@ -370,7 +371,19 @@ const readBackOf = Effect.fnUntraced(function* (
 			if (edit._tag === "key") {
 				return { _tag: "notRead", value: `key ${edit.key}` };
 			}
-			const value = yield* Effect.orDie(data.value(edit.name));
+			// A value the mod adds is in no game's table, so its edit says what it is.
+			const value: GameValue =
+				edit._tag === "added"
+					? {
+							name: edit.name,
+							named: false,
+							hash: valueHash(edit.name),
+							type: edit.type,
+							choices: edit.choices ?? [],
+							default: edit.to,
+							file: edit.file,
+						}
+					: yield* Effect.orDie(data.value(edit.name));
 			const entry = yield* Effect.option(entryOf(value));
 			if (Option.isNone(entry)) {
 				return { _tag: "notRead", value: edit.name };
