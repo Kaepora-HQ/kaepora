@@ -222,6 +222,8 @@ static void Ask(QWidget* window, const QString& question, const QString& action,
 Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kaepora/seeds") {
     setWindowTitle("Kaepora");
     auto* form = new QFormLayout;
+    // The Mac's style keeps a form's fields at their size hint, which leaves a wide window empty at both sides.
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
     gameFile = addPathRow(form, "Game file", "gameFile", &QFileInfo::isFile, [this] {
         return QFileDialog::getOpenFileName(this, "Choose the game file", {}, "Game file (*.nup)");
