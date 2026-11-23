@@ -18,7 +18,8 @@ class TrackerWindow;
 
 class Window : public QWidget {
 public:
-    Window();
+    // Follows the game through Lichii's debug server on this port, where Play asks Lichii to serve it.
+    explicit Window(quint16 gamePort);
     ~Window() override;
 
 protected:
@@ -40,6 +41,7 @@ private:
     QString seedNamedBy(const char* fileName) const;
 
     const QString library; // holds a folder for each seed made
+    const quint16 gamePort;
     QString inUse;         // the seed in the mods folder, as of the last refresh
     QThread* making = nullptr;
     QThread* readingPictures = nullptr;

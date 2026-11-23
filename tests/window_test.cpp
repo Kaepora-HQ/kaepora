@@ -1,5 +1,7 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
+#include "fake_lichii.h"
+#include "generator/generate.h"
 #include "kaepora/game_values.h"
 #include "kaepora/tracker_window.h"
 #include "kaepora/window.h"
@@ -25,6 +27,7 @@
 #include <QPointer>
 #include <QProcess>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QSet>
@@ -40,6 +43,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTreeWidget>
+#include <QUuid>
 
 #include <functional>
 #include <memory>
@@ -98,22 +102,37 @@ static void Write(const QString& path, const QByteArray& data) {
     }
 }
 
-// Stands in for GitHub as Qt's proxy for this process. An HTTPS request opens a tunnel to it with CONNECT, and it
-// answers over TLS with a certificate for github.com that this process trusts.
-class FakeGitHub : public QTcpServer {
+constexpr char ApiHost[] = "api.kaepora.org";
+constexpr char OfferKey[] = "offerToRecordCompletedSeeds";
+constexpr char PlayTime[] = "0xe573f564";
+constexpr int ThreeTwelveFortyFour = 3 * 3600 + 12 * 60 + 44;
+static const quint32 StepBeforeComplete = Murmur3("Step08");
+
+static const QByteArray Recorded = Answer("201 Created", R"({"key":"6c9f1d2e0b7a4c35"})");
+
+struct Request {
+    QByteArray requestLine;
+    QByteArray headers;
+    QByteArray body;
+};
+
+// Qt's proxy for this process. An HTTPS request opens a tunnel to it with CONNECT, and it answers over TLS.
+class FakeInternet : public QTcpServer {
 public:
-    QByteArray answer;
-    int requests = 0;
+    QByteArray githubAnswer;
+    int githubRequests = 0;
     // Runs when the request for latest.json arrives, before its answer goes out.
     std::function<void()> requested;
+    QByteArray apiAnswer;
+    QList<Request> apiRequests;
 
-    explicit FakeGitHub(const QString& folder) {
+    explicit FakeInternet(const QString& folder) {
         // An RSA key, since Qt's Schannel backend, the one Windows uses, can serve only an RSA or a DSA key. macOS
         // trusts a server's certificate only when it names the server's use. The key is left unencrypted with -nodes,
         // since macOS's own openssl, LibreSSL, does not know OpenSSL 3's -noenc.
         QProcess openssl;
         openssl.start("openssl", { "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-subj", "/CN=github.com",
-                                   "-addext", "subjectAltName=DNS:github.com", "-addext",
+                                   "-addext", QString("subjectAltName=DNS:github.com,DNS:%1").arg(ApiHost), "-addext",
                                    "extendedKeyUsage=serverAuth", "-keyout", folder + "/github.key", "-out",
                                    folder + "/github.pem" });
         if (!openssl.waitForFinished() || openssl.exitCode() != 0) {
@@ -135,24 +154,41 @@ protected:
         socket->setLocalCertificate(certificate);
         socket->setPrivateKey(key);
         connect(socket, &QSslSocket::readyRead, socket, [this, socket] {
-            // A request ends with an empty line.
-            if (!socket->peek(socket->bytesAvailable()).contains("\r\n\r\n")) {
+            // A request's headers end with an empty line, and its body follows them.
+            const QByteArray held = socket->peek(socket->bytesAvailable());
+            const qsizetype end = held.indexOf("\r\n\r\n");
+            if (end == -1) {
                 return;
             }
-            const QByteArray request = socket->readAll();
-            const bool offline = answer.isEmpty();
-            if (!socket->isEncrypted() && offline) {
-                socket->disconnectFromHost();
-            } else if (!socket->isEncrypted()) {
-                socket->write("HTTP/1.1 200 Connection established\r\n\r\n");
-                socket->startServerEncryption();
+            const QByteArray headers = held.first(end);
+            static const QRegularExpression contentLength("\r\ncontent-length: *([0-9]+)",
+                                                          QRegularExpression::CaseInsensitiveOption);
+            const qsizetype length = contentLength.match(QString::fromLatin1(headers)).captured(1).toLongLong();
+            if (held.size() < end + 4 + length) {
+                return;
+            }
+            const QByteArray read = socket->read(end + 4 + length);
+            const Request request{ headers.first(headers.indexOf("\r\n")), headers, read.sliced(end + 4) };
+            if (!socket->isEncrypted()) {
+                const QByteArray host = request.requestLine.split(' ').at(1).split(':').front();
+                socket->setProperty("host", host);
+                const bool offline = (host == ApiHost ? apiAnswer : githubAnswer).isEmpty();
+                if (offline) {
+                    socket->disconnectFromHost();
+                } else {
+                    socket->write("HTTP/1.1 200 Connection established\r\n\r\n");
+                    socket->startServerEncryption();
+                }
+            } else if (socket->property("host").toByteArray() == ApiHost) {
+                apiRequests << request;
+                socket->write(apiAnswer);
             } else {
-                ++requests;
-                const bool latest = request.startsWith(QByteArray("GET ") + LatestPath + ' ');
+                ++githubRequests;
+                const bool latest = request.requestLine.startsWith(QByteArray("GET ") + LatestPath + ' ');
                 if (latest && requested) {
                     requested();
                 }
-                socket->write(latest ? answer : NotFound);
+                socket->write(latest ? githubAnswer : NotFound);
             }
         });
     }
@@ -166,7 +202,7 @@ class WindowTest : public QObject {
     Q_OBJECT
 
 public:
-    explicit WindowTest(const QString& home) : mods(home + "/mods"), github(home) {
+    explicit WindowTest(const QString& home) : mods(home + "/mods"), internet(home) {
         QDesktopServices::setUrlHandler("https", this, "openUrl");
     }
 
@@ -186,9 +222,79 @@ private:
     const QString game = qEnvironmentVariable("KAEPORA_GAME_NUP");
     const QString library = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kaepora/seeds";
     const QString mods;
-    FakeGitHub github;
+    FakeInternet internet;
+    FakeLichii lichii{ std::vector<FakeValue>{ { "Step_Defeat_Ganon", ValueType::Enum, StepBeforeComplete },
+                                               { "Kaepora_Seed", ValueType::Int, 0 },
+                                               { PlayTime, ValueType::UInt, 0 } } };
     QList<QUrl> opened;
     std::unique_ptr<Window> window;
+
+    static nlohmann::json Settings() {
+        return { { "Kokiri Forest", "Open" },
+                 { "Shuffled dungeons", { "Deku Tree", "Forest Temple" } },
+                 { "Start with", nlohmann::json::array() } };
+    }
+
+    quint32 addSeed(const QString& seed) const {
+        const nlohmann::json log = { { "kaepora", "0.7.1" },
+                                     { "seed", seed.toStdString() },
+                                     { "settings", Settings() },
+                                     { "locations", { { "Deku Tree Map Chest", "Hookshot" } } } };
+        QDir().mkpath(library + "/" + seed + "/romfs");
+        Write(library + "/" + seed + "/spoiler.json", QByteArray::fromStdString(log.dump()));
+        return SeedId("0.7.1", seed.toStdString(), Settings());
+    }
+
+    static QJsonObject Completion(const QString& seed, int seconds) {
+        const nlohmann::json body = { { "kaepora", "0.7.1" },
+                                      { "seed", seed.toStdString() },
+                                      { "settings", Settings() },
+                                      { "playSeconds", seconds } };
+        return QJsonDocument::fromJson(QByteArray::fromStdString(body.dump())).object();
+    }
+
+    static bool IsVersion7(const QString& id) {
+        const QUuid uuid = QUuid::fromString(id);
+        return uuid.toString(QUuid::WithoutBraces) == id && uuid.data3 >> 12 == 7 && uuid.variant() == QUuid::DCE;
+    }
+
+    // The seed's id in the request's address, when the address is the one that records a completion.
+    static QString CompletionId(const Request& request) {
+        static const QRegularExpression put("^PUT /v1/seeds/([^/ ]+)/completion HTTP/1\\.1$");
+        const QString id = put.match(QString::fromLatin1(request.requestLine)).captured(1);
+        return IsVersion7(id) ? id : QString();
+    }
+
+    QString idOf(const QString& seed) const {
+        return QString::fromLatin1(Read(library + "/" + seed + "/id.txt"));
+    }
+
+    void complete(quint32 seed, quint32 seconds) {
+        lichii.set(PlayTime, seconds);
+        lichii.set("Kaepora_Seed", seed);
+        lichii.set("Step_Defeat_Ganon", Murmur3("Complete"));
+    }
+
+    void openOffering() {
+        QSettings().remove(OfferKey);
+        window = std::make_unique<Window>(lichii.port);
+        window->show();
+    }
+
+    // Qt gives a message box no title on macOS.
+    QMessageBox* offer() const {
+        QMessageBox* shown = box();
+        return shown != nullptr && buttonTexts(shown).contains("Record it") ? shown : nullptr;
+    }
+
+    QCheckBox* checkBox(const QString& text) const {
+        for (QCheckBox* box : window->findChildren<QCheckBox*>()) {
+            if (box->window() == window.get() && box->text() == text) {
+                return box;
+            }
+        }
+        return nullptr;
+    }
 
     QPushButton* button(const QString& text) const {
         for (QPushButton* button : window->findChildren<QPushButton*>()) {
@@ -483,9 +589,9 @@ private:
 
     // Opens the window with "Check for new versions" as it is by default. True once its request has finished.
     bool openAndAsk(const QByteArray& answer) {
-        github.answer = answer;
+        internet.githubAnswer = answer;
         QSettings().remove("checkForNewVersions");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
         return replies.wait();
@@ -502,11 +608,18 @@ private slots:
         settings.setValue("modsFolder", mods);
         // The window asks GitHub on every open while this box is ticked. The tests of that tick it.
         settings.setValue("checkForNewVersions", false);
-        github.answer = NotFound;
-        github.requests = 0;
-        github.requested = nullptr;
+        // While this box is ticked, the window follows the game. The tests of that tick it.
+        settings.setValue(OfferKey, false);
+        internet.githubAnswer = NotFound;
+        internet.githubRequests = 0;
+        internet.requested = nullptr;
+        internet.apiAnswer = Recorded;
+        internet.apiRequests.clear();
+        lichii.set("Step_Defeat_Ganon", StepBeforeComplete);
+        lichii.set("Kaepora_Seed", 0);
+        lichii.set(PlayTime, 0);
         opened.clear();
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
     }
 
@@ -522,14 +635,14 @@ private slots:
 #endif
         // A fresh Lichii has its load folder, but no folder in it for the game until a mod is put there.
         QVERIFY(QDir().mkpath(data.filePath("lichii/load")));
-        const QString lichii = data.filePath("lichii/load/0400486024DEC000");
+        const QString lichiisMods = data.filePath("lichii/load/0400486024DEC000");
         QSettings().remove("modsFolder");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         QStringList paths;
         for (QLineEdit* field : window->findChildren<QLineEdit*>()) {
             paths << field->text();
         }
-        QVERIFY2(paths.contains(lichii), qPrintable(paths.join(", ")));
+        QVERIFY2(paths.contains(lichiisMods), qPrintable(paths.join(", ")));
     }
 
     void createSeed() {
@@ -655,7 +768,7 @@ private slots:
         const QStringList files = FilesIn(mods + "/Kaepora/romfs").keys();
         QVERIFY(QFile::remove(mods + "/Kaepora/romfs/" + files.front()));
 
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("No seed in use"));
         QCOMPARE(listed(), QStringList{ "7" });
@@ -667,7 +780,7 @@ private slots:
         // name it has until it is written in full.
         Write(library + "/7/romfs/Pack/Other.pack.zs", "other");
         Write(library + "/7/spoiler.json.part", "{\"seed\": \"7\", \"sett");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(), QStringList{});
 
@@ -922,7 +1035,7 @@ private slots:
         QVERIFY(shows("Shop goods shuffled"));
         const QStringList details = label("Shop goods shuffled")->toolTip().split('\n');
         QVERIFY(details.contains("Shop prices: Between 150 and 300 rupees"));
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         button("Settings…")->click();
         QCOMPARE(choice("Shop prices")->currentText(), QString("Between two prices"));
@@ -943,14 +1056,14 @@ private slots:
         choice("Shop goods")->setCurrentText("Vanilla");
         dialogButton("OK")->click();
         QVERIFY(shows("Default settings"));
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("Default settings"));
     }
 
     void rememberedPricesWithVanillaGoodsStartAsTheDefaults() {
         QSettings().setValue("seedSettings", R"({"Shop goods": "Vanilla", "Shop prices": "One price", "Shop price": 45})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("Default settings"));
     }
@@ -1311,7 +1424,7 @@ private slots:
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
               "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
               "Shop goods": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints"}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, new area scenes "
                                          "played, tutorial messages played, Saria's greeting played, no gifts "
@@ -1337,7 +1450,7 @@ private slots:
               "Start with": [], "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla", "Gifts": "Vanilla",
               "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed",
               "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, new area scenes "
                                          "played, tutorial messages played, Saria's greeting played, no gifts "
@@ -1358,7 +1471,7 @@ private slots:
               "Opening": "Skipped", "Start with": [], "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
               "Gifts": "Vanilla", "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla",
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(1), QStringList{ "Player skippable scenes played, new area scenes played, tutorial "
                                          "messages played, Saria's greeting played, no gifts shuffled, songs not "
@@ -1379,7 +1492,7 @@ private slots:
               "Gold Skulltulas": "Vanilla", "Gifts": [], "Songs": "Vanilla", "Loose items": "Vanilla",
               "Dungeon rewards": "Vanilla", "Lens of Truth": "Needed", "Gossip stones": "Give hints",
               "Hints from characters": "Give hints"}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(1), QStringList{ "Opening movie played, new area scenes played, tutorial messages played, "
                                          "Saria's greeting played, no gifts shuffled, songs not shuffled, loose "
@@ -1401,7 +1514,7 @@ private slots:
               "Shop goods": "Five per shop shuffled", "Shop prices": "Cheap", "Gold Skulltulas": "All",
               "Gifts": "Shuffled", "Songs": "Shuffled among themselves", "Loose items": "Shuffled",
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(1), QStringList{ "Opening movie played, player skippable scenes played, new area scenes "
                                          "played, tutorial messages played, Saria's greeting played, shop goods "
@@ -1415,7 +1528,7 @@ private slots:
         // What an editor leaves when a letter is typed in front of the log and saved.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json", R"(d{"seed": "OWL", "settings": {}})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QCOMPARE(listed(), QStringList{ "OWL" });
         QCOMPARE(listed(1), QStringList{ "Spoiler log cannot be read" });
@@ -1424,7 +1537,7 @@ private slots:
     void settingsAreRemembered() {
         chooseForestOutKeysInChestsLensNeverNeeded();
         dialogButton("OK")->click();
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("Forest Temple not shuffled, keys in their own chests, Lens never needed"));
         button("Settings…")->click();
@@ -1436,7 +1549,7 @@ private slots:
 
     void rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime() {
         QSettings().setValue("seedSettings", R"({"Gifts": "Shuffled"})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("4 of 8 gift groups shuffled"));
         button("Settings…")->click();
@@ -1455,7 +1568,7 @@ private slots:
     void rememberedSettingsFromBeforeTheSkipListKeepTheirChoices() {
         QSettings().setValue("seedSettings",
                              R"({"Opening": "Played", "Cutscenes": "Skipped", "Lens of Truth": "Never needed"})");
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("Opening movie played, Lens never needed"));
         button("Settings…")->click();
@@ -1469,7 +1582,7 @@ private slots:
     void unreadableRememberedSettingsStartAsTheDefaults() {
         for (const QString saved : { "Lens never needed", "{\"Forest\": \"Open\"}" }) {
             QSettings().setValue("seedSettings", saved);
-            window = std::make_unique<Window>();
+            window = std::make_unique<Window>(lichii.port);
             window->show();
             QVERIFY2(shows("Default settings"), qPrintable(saved));
         }
@@ -1485,7 +1598,9 @@ private slots:
             make.start(qEnvironmentVariable("KAEPORA_MAKE_SEED"), { seed, game, alone.filePath(seed) });
             QVERIFY(make.waitForFinished(MakeTimeout));
             QCOMPARE(make.exitCode(), 0);
-            QCOMPARE(FilesIn(library + "/" + seed), FilesIn(alone.filePath(seed)));
+            Files made = FilesIn(library + "/" + seed);
+            QVERIFY(made.remove("id.txt") == 1);
+            QCOMPARE(made, FilesIn(alone.filePath(seed)));
         }
     }
 
@@ -1498,7 +1613,7 @@ private slots:
         QVERIFY(shows("Kaepora 99.0.0 is out."));
         button("Download")->click();
         QCOMPARE(opened, QList<QUrl>{ QUrl(ReleasePage) });
-        QCOMPARE(github.requests, 1);
+        QCOMPARE(internet.githubRequests, 1);
     }
 
     void aNewerVersionAsksInAPopup() {
@@ -1555,12 +1670,12 @@ private slots:
         QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
         QVERIFY(box() != nullptr);
         answer("Later");
-        auto* check = window->findChild<QCheckBox*>();
+        auto* check = checkBox("Check for new versions");
         check->click();
         QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
         check->click();
         QVERIFY(replies.wait());
-        QCOMPARE(github.requests, 2);
+        QCOMPARE(internet.githubRequests, 2);
         QVERIFY(box() == nullptr);
     }
 
@@ -1582,18 +1697,18 @@ private slots:
         QSettings settings;
         settings.setValue("checkForNewVersions", false);
         settings.setValue("latestRelease", QString::fromUtf8(Latest("99.0.0")));
-        github.answer = Ok(Latest("99.0.0"));
-        window = std::make_unique<Window>();
+        internet.githubAnswer = Ok(Latest("99.0.0"));
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QTest::qWait(NoRequestWait);
-        QCOMPARE(github.requests, 0);
+        QCOMPARE(internet.githubRequests, 0);
         QVERIFY(box() == nullptr);
         QVERIFY(button("Download") == nullptr);
 
         QSignalSpy replies(window->findChild<QNetworkAccessManager*>(), &QNetworkAccessManager::finished);
-        window->findChild<QCheckBox*>()->click();
+        checkBox("Check for new versions")->click();
         QVERIFY(replies.wait());
-        QCOMPARE(github.requests, 1);
+        QCOMPARE(internet.githubRequests, 1);
         QVERIFY(box() != nullptr);
     }
 
@@ -1624,56 +1739,230 @@ private slots:
 
     void theBoxTurnsTheCheckOff() {
         QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
-        auto* check = window->findChild<QCheckBox*>();
+        auto* check = checkBox("Check for new versions");
         QCOMPARE(check->text(), QString("Check for new versions"));
         QVERIFY(check->isChecked());
         check->click();
         QVERIFY(!shows("Kaepora 99.0.0 is out."));
         QVERIFY(button("Download") == nullptr);
 
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
-        QVERIFY(!window->findChild<QCheckBox*>()->isChecked());
+        QVERIFY(!checkBox("Check for new versions")->isChecked());
         QVERIFY(button("Download") == nullptr);
         QTest::qWait(NoRequestWait);
-        QCOMPARE(github.requests, 1);
+        QCOMPARE(internet.githubRequests, 1);
     }
 
     void everyOpenAsks() {
         QVERIFY(openAndAsk(NotFound));
         QVERIFY(openAndAsk(NotFound));
-        QCOMPARE(github.requests, 2);
+        QCOMPARE(internet.githubRequests, 2);
     }
 
     void aNewerVersionIsRememberedUntilItRuns() {
         QVERIFY(openAndAsk(Ok(Latest("99.0.0"))));
-        github.answer = NotFound;
-        window = std::make_unique<Window>();
+        internet.githubAnswer = NotFound;
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(shows("Kaepora 99.0.0 is out."));
 
         QSettings().setValue("latestRelease", QString::fromUtf8(Latest(KAEPORA_VERSION)));
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(button("Download") == nullptr);
     }
 
     void untickingStopsARequestInFlight() {
-        github.requested = [this] {
+        internet.requested = [this] {
             // The offscreen platform warns when a window shows. From the request on, nothing may.
             QTest::failOnWarning();
-            window->findChild<QCheckBox*>()->click();
+            checkBox("Check for new versions")->click();
         };
         QVERIFY(openAndAsk(ToTheTag));
         QTest::qWait(NoRequestWait);
-        QCOMPARE(github.requests, 1);
+        QCOMPARE(internet.githubRequests, 1);
+    }
+
+    void aCompletedSeedOfTheLibraryIsOffered_data() {
+        QTest::addColumn<QString>("seed");
+        QTest::addColumn<QString>("text");
+        const QString record =
+            "Record it on kaepora.org? The site will list completed seeds once there are enough of them.\n\nKaepora "
+            "sends the seed, its settings, your play time and the version of Kaepora that made it. It sends nothing "
+            "about you or your computer.";
+        QTest::newRow("random") << "6332265119" << "You completed seed 6332265119 in 3:12:44.\n\n" + record;
+        QTest::newRow("typed") << "OWL"
+                               << "You completed seed OWL in 3:12:44.\nYou typed this seed's name, so the site will "
+                                  "not show it.\n\n" + record;
+    }
+
+    void aCompletedSeedOfTheLibraryIsOffered() {
+        QFETCH(QString, seed);
+        QFETCH(QString, text);
+        const quint32 id = addSeed(seed);
+        openOffering();
+        QVERIFY(checkBox("Offer to record completed seeds") != nullptr);
+        QVERIFY(checkBox("Offer to record completed seeds")->isChecked());
+        complete(id, ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        QCOMPARE(offer()->parent(), window.get());
+#ifndef Q_OS_MACOS
+        QCOMPARE(offer()->windowTitle(), QString("Seed completed"));
+#endif
+        QCOMPARE(offer()->text(), text);
+        QCOMPARE(buttonTexts(offer()), (QStringList{ "Not now", "Record it" }));
+        QCOMPARE(offer()->checkBox()->text(), QString("Do not offer this again"));
+        QVERIFY(!offer()->checkBox()->isChecked());
+        QCOMPARE(offer()->defaultButton()->text(), QString("Not now"));
+    }
+
+    void recordItSendsTheCompletionOnce() {
+        const quint32 id = addSeed("6332265119");
+        openOffering();
+        complete(id, ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        answer("Record it");
+        QTRY_VERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("Recorded on kaepora.org."));
+        QCOMPARE(internet.apiRequests.size(), 1);
+        const Request& sent = internet.apiRequests.front();
+        QVERIFY2(!CompletionId(sent).isEmpty(), sent.requestLine.constData());
+        QCOMPARE(CompletionId(sent), idOf("6332265119"));
+        const QByteArrayList headers = sent.headers.toLower().replace("\r", "").split('\n');
+        QVERIFY(headers.contains("content-type: application/json"));
+        QVERIFY(headers.contains("accept-language: *"));
+        QCOMPARE(QJsonDocument::fromJson(sent.body).object(), Completion("6332265119", ThreeTwelveFortyFour));
+
+        openOffering();
+        QTest::qWait(NoRequestWait);
+        QVERIFY(box() == nullptr);
+        QCOMPARE(internet.apiRequests.size(), 1);
+    }
+
+    void notNowSendsNothing() {
+        const quint32 id = addSeed("6332265119");
+        openOffering();
+        complete(id, ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        answer("Not now");
+        QVERIFY(box() == nullptr);
+        openOffering();
+        QTest::qWait(NoRequestWait);
+        QVERIFY(box() == nullptr);
+        QVERIFY(internet.apiRequests.isEmpty());
+    }
+
+    void aSeedNotInTheLibraryIsNotOffered() {
+        const quint32 id = addSeed("6332265119");
+        openOffering();
+        complete(id + 1, ThreeTwelveFortyFour);
+        QTest::qWait(NoRequestWait);
+        QVERIFY(box() == nullptr);
+        lichii.set("Kaepora_Seed", id);
+        QTRY_VERIFY(offer() != nullptr);
+    }
+
+    void anUntickedBoxOffersNothing() {
+        const quint32 id = addSeed("6332265119");
+        QVERIFY(checkBox("Offer to record completed seeds") != nullptr);
+        QVERIFY(!checkBox("Offer to record completed seeds")->isChecked());
+        complete(id, ThreeTwelveFortyFour);
+        QTest::qWait(NoRequestWait);
+        QVERIFY(box() == nullptr);
+        checkBox("Offer to record completed seeds")->click();
+        QTRY_VERIFY(offer() != nullptr);
+    }
+
+    void doNotOfferThisAgainUnticksTheBox() {
+        const quint32 id = addSeed("6332265119");
+        const quint32 other = addSeed("OWL");
+        openOffering();
+        complete(id, ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        offer()->checkBox()->click();
+        answer("Not now");
+        QVERIFY(!checkBox("Offer to record completed seeds")->isChecked());
+
+        window = std::make_unique<Window>(lichii.port);
+        window->show();
+        QVERIFY(!checkBox("Offer to record completed seeds")->isChecked());
+        complete(other, ThreeTwelveFortyFour);
+        QTest::qWait(NoRequestWait);
+        QVERIFY(box() == nullptr);
+    }
+
+    void aCompletionKaeporaCouldNotSendIsSentWhenItNextOpens() {
+        const quint32 id = addSeed("6332265119");
+        internet.apiAnswer.clear();
+        openOffering();
+        complete(id, ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        answer("Record it");
+        QTRY_VERIFY(box() != nullptr);
+        QCOMPARE(box()->text(),
+                 QString("Kaepora could not reach kaepora.org. It will try again the next time it opens."));
+        QVERIFY(internet.apiRequests.isEmpty());
+
+        internet.apiAnswer = Answer("500 Internal Server Error", {});
+        window = std::make_unique<Window>(lichii.port);
+        window->show();
+        QTRY_COMPARE(internet.apiRequests.size(), 1);
+        const Request failed = internet.apiRequests.front();
+        QVERIFY2(!CompletionId(failed).isEmpty(), failed.requestLine.constData());
+        QCOMPARE(QJsonDocument::fromJson(failed.body).object(), Completion("6332265119", ThreeTwelveFortyFour));
+
+        internet.apiAnswer = Recorded;
+        window = std::make_unique<Window>(lichii.port);
+        window->show();
+        QTRY_COMPARE(internet.apiRequests.size(), 2);
+        QCOMPARE(internet.apiRequests.back().requestLine, failed.requestLine);
+        QCOMPARE(internet.apiRequests.back().body, failed.body);
+        // The answer reaches the window after the request reaches kaepora.org.
+        QTRY_VERIFY(!QSettings().childGroups().contains("unrecordedCompletions"));
+
+        window = std::make_unique<Window>(lichii.port);
+        window->show();
+        QTest::qWait(NoRequestWait);
+        QCOMPARE(internet.apiRequests.size(), 2);
+        QVERIFY(box() == nullptr);
+    }
+
+    void aSeedKeepsItsId() {
+        QVERIFY(create("7"));
+        const QString id = idOf("7");
+        QVERIFY2(IsVersion7(id), qPrintable(id));
+
+        const nlohmann::json log = nlohmann::json::parse(Read(library + "/7/spoiler.json").toStdString());
+        openOffering();
+        complete(SeedId(log.at("kaepora").get<std::string>(), log.at("seed").get<std::string>(), log.at("settings")),
+                 ThreeTwelveFortyFour);
+        QTRY_VERIFY(offer() != nullptr);
+        answer("Record it");
+        QTRY_COMPARE(internet.apiRequests.size(), 1);
+        QCOMPARE(CompletionId(internet.apiRequests.front()), id);
+        QCOMPARE(idOf("7"), id);
+    }
+
+    void aGameWithNoSeedValueIsSearchedOnce() {
+        FakeLichii noSeedValue(std::vector<FakeValue>{ { "Step_Defeat_Ganon", ValueType::Enum, Murmur3("Complete") },
+                                                       { PlayTime, ValueType::UInt, ThreeTwelveFortyFour } });
+        addSeed("6332265119");
+        QSettings().remove(OfferKey);
+        window = std::make_unique<Window>(noSeedValue.port);
+        window->show();
+        QTest::qWait(3 * NoRequestWait);
+        QVERIFY(box() == nullptr);
+        QCOMPARE(noSeedValue.taken(), 1);
+        QCOMPARE(noSeedValue.asked("search_memory"), 1);
+        window.reset();
     }
 
     void aGameFileWithoutPicturesOpensNoTracker() {
         const QString game = QDir::home().filePath("game.nup");
         Write(game, {});
         QSettings().setValue("gameFile", game);
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         button("Tracker")->click();
         QTRY_VERIFY(box() != nullptr);
@@ -1726,11 +2015,11 @@ private slots:
         Write(mods + "/Kaepora/seed.txt", "7");
         QSettings().setValue("emulator", emulator);
         QSettings().setValue("gameFile", game);
-        window = std::make_unique<Window>();
+        window = std::make_unique<Window>(lichii.port);
         window->show();
         QVERIFY(button("Play")->isEnabled());
         button("Play")->click();
-        QTRY_COMPARE(QString::fromUtf8(Read(given)), QString("127.0.0.1:%1\n-g\n%2\n").arg(DebugServerPort).arg(game));
+        QTRY_COMPARE(QString::fromUtf8(Read(given)), QString("127.0.0.1:%1\n-g\n%2\n").arg(lichii.port).arg(game));
 #endif
     }
 };

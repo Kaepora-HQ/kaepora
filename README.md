@@ -65,6 +65,14 @@ To capture the window itself instead:
 2. Key the background colour out with a **Color Key** filter, or choose a background colour that suits your layout.
 3. Do not minimise the tracker. OBS cannot capture a minimised window.
 
+### Record a completed seed
+
+When you beat Ganon, Kaepora offers to record the seed on kaepora.org. The site will list completed seeds once there are enough of them. Click **Record it** to send it, or **Not now** to send nothing. Kaepora offers once for each seed.
+
+Kaepora sends the seed, its settings, your play time and the version of Kaepora that made it, and only when you click **Record it**. The site keeps and shows a seed's name only when it is all digits, as the ones **Random** makes are. A name with a letter in it is not kept. If Kaepora cannot reach kaepora.org, it sends the seed the next time it opens.
+
+Kaepora sees the end of the game while its window is open and you started the game with **Play**. It offers only for a seed that is still in its list, and only if a version of Kaepora that offers to record seeds made it. To stop the offers, untick **Offer to record completed seeds** at the bottom of the window.
+
 ## What a seed changes
 
 A seed moves the items that chests hold. With the default settings, it also moves what characters and minigames hand you, the items that lie in the open, the songs, and the stones and medallions among the bosses and Rauru, as Ship of Harkinian's default settings do. Its settings decide what joins the shuffle and how the game starts. Adult Link can put the Master Sword back at any time, to be a child again before the Forest Temple. [What is randomized](RANDOMIZED.md) has every part, and <https://kaepora.org/randomized> shows the same page with the current counts.

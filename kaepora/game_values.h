@@ -12,7 +12,7 @@
 
 constexpr quint16 DebugServerPort = 21198;
 
-enum class ValueType { Bool, Int, Enum, String64 };
+enum class ValueType { Bool, Int, UInt, Enum, String64 };
 
 struct SavedValue {
     // Or, for a value the game names nowhere, 0x and its hash in eight hex digits.
@@ -25,12 +25,18 @@ struct GameUnreadable : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
+// The game's list holds no value of the name. The list stays as it is while the game runs.
+struct NoSuchValue : GameUnreadable {
+    using GameUnreadable::GameUnreadable;
+};
+
 // Its calls block.
 class GameValues {
 public:
     explicit GameValues(quint16 port);
 
-    // A Bool as 0 or 1, an Int as its 32 bits, an Enum as its choice's hash, and a String64 as its text's hash.
+    // A Bool as 0 or 1, an Int or a UInt as its 32 bits, an Enum as its choice's hash, and a String64 as its text's
+    // hash.
     std::vector<quint32> read(std::span<const SavedValue> values);
 
 private:

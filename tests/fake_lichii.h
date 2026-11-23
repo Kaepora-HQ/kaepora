@@ -5,6 +5,7 @@
 
 #include "bytes.h"
 
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -81,6 +82,19 @@ public:
         return open;
     }
 
+    // How many connections the fake has taken, and how many times it was asked for the method.
+    int taken() {
+        int count = 0;
+        onItsThread([&] { count = connectionsTaken; });
+        return count;
+    }
+
+    int asked(const QString& method) {
+        int count = 0;
+        onItsThread([&] { count = asks.value(method); });
+        return count;
+    }
+
     void start(const std::vector<quint64>& programs) {
         onItsThread([&] {
             layOut(programs);
@@ -100,9 +114,11 @@ private:
         int stride;
         int offset;
     };
-    static constexpr Table Tables[] = {
-        { Bool, 0, 0x18, 0x16 }, { Int, 2, 0x28, 0x1C }, { Enum, 6, 0x38, 0x1C }, { String64, 16, 0x108, 0x74 }
-    };
+    static constexpr Table Tables[] = { { Bool, 0, 0x18, 0x16 },
+                                        { Int, 2, 0x28, 0x1C },
+                                        { Enum, 6, 0x38, 0x1C },
+                                        { String64, 16, 0x108, 0x74 },
+                                        { UInt, 20, 0x28, 0x1C } };
     static constexpr int ReadLimit = 64 * 1024;
     static constexpr int PairSize = 8;
     static constexpr int MapCapacity = 2 * ReadLimit / PairSize;
@@ -115,6 +131,8 @@ private:
     std::map<quint64, QByteArray> memory;
     quint64 next = 0x2107000000;
     std::map<std::string_view, quint64> addresses;
+    int connectionsTaken = 0;
+    QHash<QString, int> asks;
 
     static quint32 Hash(std::string_view name) {
         return name.starts_with("0x") ? std::stoul(std::string(name.substr(2)), nullptr, 16) : Murmur3(name);
@@ -171,7 +189,7 @@ private:
         for (const quint64 program : programs) {
             place(QByteArray::fromHex("010000005c70c4039070c403"), program);
         }
-        QByteArray manager(0x8 + 0x60 * 17, 0);
+        QByteArray manager(0x8 + 0x60 * 21, 0);
         for (const Table& table : Tables) {
             std::vector<const FakeValue*> held;
             for (const FakeValue& value : values) {
@@ -213,9 +231,11 @@ private:
 
     void take() {
         while (QTcpSocket* socket = server.nextPendingConnection()) {
+            ++connectionsTaken;
             QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] {
                 while (socket->canReadLine()) {
                     const QJsonObject request = QJsonDocument::fromJson(socket->readLine()).object();
+                    ++asks[request["method"].toString()];
                     QJsonObject reply = answer(request["method"].toString(), request["params"].toObject());
                     reply["id"] = request["id"];
                     socket->write(QJsonDocument(reply).toJson(QJsonDocument::Compact) + '\n');

@@ -861,6 +861,30 @@ the hearts show the screen's heart, `HeartW_00_ASTC4x4`.
 The maps and compasses tell little and are left out, as are the Gerudo Fortress's keys, which no seed shuffles, the
 Kokiri Tunic and the Kokiri Boots, which Link always owns, and the rupees.
 
+## The seed's id
+
+Every seed's mod names its seed in a saved value, so a save tells which seed it began on. Two seeds with the same
+settings differ in no other saved value (measured on two seeds' plans).
+
+The seed's id is 32 bits, `SeedId` in `generator/generate.h`: MurmurHash3, the hash the game data list keys its values
+by, of the JSON array of the Kaepora version, the seed in upper case and the settings, each as the spoiler log holds it
+under `kaepora`, `seed` and `settings`, written with no spaces and with each object's keys sorted, which for these
+values is the canonical JSON of RFC 8785. So a program that holds a seed's `spoiler.json` gives the same id. The id
+changes with the version, as a seed's game may.
+
+The plan carries the id as `seed_id`. The patcher adds an Int of the mod's own to the game data list, `Kaepora_Seed`,
+with the id as its default, kept in the progress save with reset type 8, as the game keeps most of its own saved Ints
+and as the claims are kept. A new game starts with the id, and a save keeps it: seen for the claims, unseen for this
+Int. The Int holds the id's 32 bits, so a reading of it as a signed number gives an id from 2,147,483,648 on as a
+negative number. As a claim does, the Int moves the end of the progress save's table, the progress save's size and the
+offset and size of all saves by 8 bytes, and it grows the list past its size table entry, so every mod raises that
+entry. No value of the game's list has the name's hash, `c9863f4a` (measured).
+
+A save made before the value, on the game or with an older Kaepora, holds no record of it. The game's loader finds each
+record of a save by its hash (read from the program), and a save made before a claim loaded with the claim false (seen),
+which its default and a fresh boot's memory both give. So after loading such a save the Int holds either its default,
+the installed seed's id, or what memory held before the load. Which one is unseen.
+
 ## Quests
 
 A quest is one saved value, `Step_<quest>`, and the game moves it as Link acts. A write names the step it sets, and asks

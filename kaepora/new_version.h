@@ -2,4 +2,4 @@
 
 class QWidget;
 
-QWidget* NewVersionRow();
+QWidget* NewVersionRow(QWidget* afterBox);

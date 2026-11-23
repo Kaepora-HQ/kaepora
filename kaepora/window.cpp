@@ -1,12 +1,15 @@
 #include "window.h"
 
+#include "completion_offer.h"
 #include "game_file.h"
 #include "game_values.h"
+#include "library.h"
 #include "mod.h"
 #include "new_version.h"
 #include "pictures.h"
 #include "seed.h"
 #include "settings_dialog.h"
+#include "tell.h"
 #include "tracker_page.h"
 #include "tracker_window.h"
 
@@ -39,7 +42,6 @@
 #include <algorithm>
 #include <exception>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <system_error>
@@ -148,7 +150,7 @@ struct LoggedSettings {
 // seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
 // A log that leaves out "Skip" is of a seed whose mod skips only what its "Opening" and "Cutscenes" say it skips.
 static LoggedSettings SettingsOf(const QString& folder) {
-    nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
+    nlohmann::json logged = LogOf(folder).at("settings");
     const nlohmann::json asTheGameIs = {
         { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
         { GiftsSetting, nlohmann::json::array() },
@@ -212,13 +214,6 @@ protected:
 };
 }
 
-// Message boxes open window-modal and return at once, so the window's events go on while one is open.
-static void Tell(QWidget* window, QMessageBox::Icon icon, const QString& text) {
-    auto* box = new QMessageBox(icon, "Kaepora", text, QMessageBox::Ok, window);
-    box->setAttribute(Qt::WA_DeleteOnClose);
-    box->open();
-}
-
 static void Ask(QWidget* window, const QString& question, const QString& action, const std::function<void()>& then) {
     auto* box = new QMessageBox(QMessageBox::Question, "Kaepora", question, QMessageBox::Cancel, window);
     box->setAttribute(Qt::WA_DeleteOnClose);
@@ -226,7 +221,9 @@ static void Ask(QWidget* window, const QString& question, const QString& action,
     box->open();
 }
 
-Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kaepora/seeds") {
+Window::Window(quint16 gamePort)
+    : library(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kaepora/seeds"),
+      gamePort(gamePort) {
     setWindowTitle("Kaepora");
     auto* form = new QFormLayout;
     // The Mac's style keeps a form's fields at their size hint, which leaves a wide window empty at both sides.
@@ -285,7 +282,7 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     layout->addLayout(form);
     layout->addWidget(status);
     layout->addWidget(trackerStatus);
-    layout->addWidget(NewVersionRow());
+    layout->addWidget(NewVersionRow(CompletionOfferBox(gamePort, library)));
 
     connect(seedField, &QLineEdit::textChanged, this, &Window::updateButtons);
     connect(random, &QPushButton::clicked, this, [this] {
@@ -376,9 +373,10 @@ void Window::createSeed() {
     std::error_code ignored;
     std::filesystem::remove_all(folder, ignored);
     auto error = std::make_shared<QString>();
-    making = QThread::create([seed, settings = newSeedSettings, nup, folder, error] {
+    making = QThread::create([seed, settings = newSeedSettings, nup, folder, error, made = inLibrary.filePath()] {
         try {
             MakeSeed(seed.toStdString(), settings, nup, folder);
+            LibraryId(made);
         } catch (const std::exception& e) {
             *error = QString::fromUtf8(e.what());
         }
@@ -488,7 +486,7 @@ void Window::play() {
     lichii.setArguments({ "-g", gameFile->text() });
     // The tracker reads the game through Lichii's debug server, which listens only when this names its port.
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-    environment.insert("EDEN_NX2_DEBUG_SERVER", QString("127.0.0.1:%1").arg(DebugServerPort));
+    environment.insert("EDEN_NX2_DEBUG_SERVER", QString("127.0.0.1:%1").arg(gamePort));
     lichii.setProcessEnvironment(environment);
     if (!lichii.startDetached()) {
         Tell(this, QMessageBox::Critical, "The emulator did not start.");
@@ -523,7 +521,7 @@ void Window::openTracker() {
             return;
         }
         trackerStatus->clear();
-        tracker = new TrackerWindow(DebugServerPort, TrackerPagePort, std::move(*pictures));
+        tracker = new TrackerWindow(gamePort, TrackerPagePort, std::move(*pictures));
         tracker->setAttribute(Qt::WA_DeleteOnClose);
         connect(tracker, &TrackerWindow::statusChanged, trackerStatus, &QLabel::setText);
         connect(tracker, &QObject::destroyed, trackerStatus, &QLabel::hide);

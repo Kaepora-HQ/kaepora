@@ -384,6 +384,11 @@ def without_version(log):
     return re.sub(rb'^    "kaepora": ".*",\n', b"", log, count=1, flags=re.MULTILINE)
 
 
+def without_id(plan):
+    """The plan's text without the line of the seed's id, which changes with every release."""
+    return re.sub(rb'^  "seed_id": \d+,\n', b"", plan, count=1, flags=re.MULTILINE)
+
+
 def shop_slot(row):
     return {"shopkeepers": [dict(zip(("actor", "goods_list"), cell.split(":")))
                             for cell in row["shopkeepers"].split(",")],
@@ -923,7 +928,7 @@ class SeedgenTest(unittest.TestCase):
         self.assertNotEqual(plan, plan_played)
         unordered = lambda plan: {key: sorted(value, key=json.dumps) if isinstance(value, list) else value
                                   for key, value in plan.items()}
-        self.assertEqual(unordered(plan), unordered(with_parts(plan_played)))
+        self.assertEqual(unordered(plan), unordered(with_parts(plan_played) | {"seed_id": plan["seed_id"]}))
 
     def test_the_opening_movie_is_skipped_while_listed(self):
         self.assert_skip_adds_only_its_parts("Opening movie", lambda plan: plan | {"opening_skipped": True})
@@ -2023,7 +2028,8 @@ class SeedgenTest(unittest.TestCase):
         self.assertEqual(given_plan["event_nexts"], DAMPES_RACE_NEXTS + sent_on + plan["event_nexts"][race:])
         told = ("stone_texts", "message_texts", "event_nexts")
         self.assertEqual({key: value for key, value in plan.items() if key not in told},
-                         {key: value for key, value in given_plan.items() if key not in told})
+                         {key: value for key, value in (given_plan | {"seed_id": plan["seed_id"]}).items()
+                          if key not in told})
         self.assertEqual((spoiler["locations"], spoiler["playthrough"]), (given["locations"], given["playthrough"]))
         self.assertIn("They say that the Kokiri Sword can be found at Kokiri Forest.", spoiler["hints"].values())
         self.assertNotIn("They say that the Kokiri Sword can be found at Kokiri Forest.", given["hints"].values())
@@ -2149,7 +2155,7 @@ class SeedgenTest(unittest.TestCase):
         spoiler, plan = self.run_seedgen(FIXED_SEED, CHESTS_ALONE)
         self.assertEqual(without_version(spoiler),
                          without_version((FIXTURES / f"spoiler-{FIXED_SEED}.json").read_bytes()))
-        self.assertEqual(plan, (FIXTURES / f"plan-{FIXED_SEED}.json").read_bytes())
+        self.assertEqual(without_id(plan), without_id((FIXTURES / f"plan-{FIXED_SEED}.json").read_bytes()))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 // Kaepora: makes seeds, keeps them, and puts the one in use into the emulator's mods folder.
+#include "game_values.h"
 #include "window.h"
 
 #include <QApplication>
@@ -20,7 +21,7 @@ int main(int argc, char** argv) {
     QApplication::setApplicationName("kaepora");
     // Names the desktop file, so the desktop shows the window with its icon.
     QApplication::setDesktopFileName("org.kaepora.Kaepora");
-    Window window;
+    Window window(DebugServerPort);
     window.show();
     return app.exec();
 }
