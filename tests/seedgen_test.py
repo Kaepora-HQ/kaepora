@@ -59,6 +59,7 @@ NO_CHARACTER_HINTS = {"Hints from characters": "Vanilla"}
 EVERY_SETTING_CHANGED = {
     "Shuffled dungeons": [name for name in DUNGEONS if name not in ("Water Temple", "Ice Cavern")],
     "Small and boss keys": "In their own chests", "Maps and compasses": "In their own chests", "Kokiri Forest": "Open",
+    "Door of Time": "Open",
     "Rainbow Bridge": "Always open", "Ganon's trials": "None", "Opening": "Played", "Cutscenes": "Played",
     "Start with": ["Hover Boots", "Megaton Hammer"],
     "Shop goods": "Four per shop shuffled", "Gold Skulltulas": "All",
@@ -622,6 +623,16 @@ class SeedgenTest(unittest.TestCase):
     def test_route_steps_are_in_reach_in_their_sphere(self):
         # In seed 1, the pruning drops what three steps counted on in an earlier sphere.
         log, _ = self.generate("1")
+        self.assertEqual(self.route_out_of_reach(log), [])
+
+    def test_a_seller_left_off_the_route_stands_in_for_no_step(self):
+        # The route names one seller of each purchase, the first it reaches. With the Door of Time open and the dungeon
+        # rewards shuffled, seed 5's route reaches Bombchus for sale first at the Market's Bombchu Shop, which opens
+        # after Dodongo's Cavern, and later at the Haunted Wasteland's carpet merchant, who does not wait for the
+        # cavern. Paring the route with the merchant counted dropped King Dodongo and kept the shop.
+        log, _ = self.generate("5", CHESTS_ALONE | {"Door of Time": "Open", "Dungeon rewards": "Shuffled"})
+        self.assertNotIn("Wasteland Carpet Salesman", playthrough_steps(log))
+        self.assertEqual(list(log["playthrough"].values())[-1], {"Ganon": "Triforce"})
         self.assertEqual(self.route_out_of_reach(log), [])
 
     def test_a_route_that_goes_back_to_child_before_the_forest_temple_is_in_reach_in_its_sphere(self):

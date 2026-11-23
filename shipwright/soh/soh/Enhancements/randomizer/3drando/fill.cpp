@@ -734,6 +734,24 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
         ctx->GetItemLocation(loc)->DelayItem();
         toAddBackItem.push_back(loc);
     }
+    // The route names one shop slot of each purchase, the first it reaches. Every other item that counts as progress,
+    // and every scene's place the route leaves out, is set aside before the passes below, so no slot off the route
+    // stands in for a step they drop. No token is set aside: the passes count on every one.
+    std::bitset<RC_MAX> onRoute;
+    for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
+        for (RandomizerCheck loc : sphere) {
+            onRoute.set(loc);
+        }
+    }
+    for (RandomizerCheck loc : ctx->allLocations) {
+        Rando::ItemLocation* location = ctx->GetItemLocation(loc);
+        if (!onRoute[loc] && location->GetPlacedRandomizerGet() != RG_NONE &&
+            (IsScenePlace(loc) || (location->GetPlacedItem().IsAdvancement() &&
+                                   location->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN))) {
+            location->DelayItem();
+            toAddBackItem.push_back(loc);
+        }
+    }
     // Purchases and Skulltula House rewards the seed can do without go first, so the route takes what Link is handed
     // over what he buys or earns with tokens.
     for (bool purchasesAndRewardsOnly : { true, false }) {
@@ -760,18 +778,6 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
                 if (IsBeatableWithout(loc, false, ignore)) {
                     ctx->playthroughLocations[i].erase(ctx->playthroughLocations[i].begin() + j);
                     toAddBackItem.push_back(loc); // Game is still beatable, don't add back until later
-                    // The route buys this nowhere, so no shop slot left off the route stands in for a step after it.
-                    if (Rando::StaticData::RetrieveItem(locGet).GetItemType() == ITEMTYPE_SHOP) {
-                        for (RandomizerCheck other : ctx->allLocations) {
-                            Rando::ItemLocation* slot = ctx->GetItemLocation(other);
-                            if (slot->GetPlacedItem().GetItemType() == ITEMTYPE_SHOP &&
-                                slot->GetPlacedItem().GetLogicVal() ==
-                                    Rando::StaticData::RetrieveItem(locGet).GetLogicVal()) {
-                                slot->DelayItem();
-                                toAddBackItem.push_back(other);
-                            }
-                        }
-                    }
                 } else {
                     ctx->GetItemLocation(loc)->SaveDelayedItem(); // Immediately put item back so game is beatable again
                 }
@@ -780,26 +786,9 @@ static void PareDownPlaythrough(const std::vector<RandomizerCheck>& lateLocation
     }
 
     // The spheres were numbered before the passes above, which can drop what a step counted on in an earlier sphere.
-    // So the route is walked again over the steps it kept, with every other item that counts as progress and every
-    // scene's place it left out set aside, and no step stands in a sphere before Link can reach it with what the
-    // spheres before it gave him. No other token is set aside: the route names none, and the passes above counted on
-    // every one. A walk that stops short of Ganon would give the spoiler log a route that does not finish the seed.
-    std::bitset<RC_MAX> kept;
-    for (const std::vector<RandomizerCheck>& sphere : ctx->playthroughLocations) {
-        for (RandomizerCheck loc : sphere) {
-            kept.set(loc);
-        }
-    }
-    for (RandomizerCheck loc : ctx->allLocations) {
-        Rando::ItemLocation* location = ctx->GetItemLocation(loc);
-        // A place the passes above dropped already has its item set aside.
-        if (!kept[loc] && location->GetPlacedRandomizerGet() != RG_NONE &&
-            (IsScenePlace(loc) || (location->GetPlacedItem().IsAdvancement() &&
-                                  location->GetPlacedRandomizerGet() != RG_GOLD_SKULLTULA_TOKEN))) {
-            location->DelayItem();
-            toAddBackItem.push_back(loc);
-        }
-    }
+    // So the route is walked again over the steps it kept, and no step stands in a sphere before Link can reach it
+    // with what the spheres before it gave him. A walk that stops short of Ganon would give the spoiler log a route
+    // that does not finish the seed.
     ctx->playthroughLocations.clear();
     GeneratePlaythrough();
     if (!ctx->playthroughBeatable) {
