@@ -82,7 +82,7 @@ static std::pair<QStringList, QStringList> GiftGroupsShuffledAndLeftOut(const Se
     return names;
 }
 
-QString Summary(const SeedSettings& settings) {
+QString Summary(const SeedSettings& settings, LoggedGifts gifts) {
     if (settings == SeedSettings{}) {
         return "Default settings";
     }
@@ -132,7 +132,9 @@ QString Summary(const SeedSettings& settings) {
     } else if (settings.skulltulas == Skulltulas::All) {
         changed << "Gold Skulltulas shuffled";
     }
-    if (settings.gifts.empty()) {
+    if (gifts == LoggedGifts::ShuffledByARelease) {
+        changed << "21 gifts shuffled";
+    } else if (settings.gifts.empty()) {
         changed << "no gifts shuffled";
     } else if (settings.gifts.size() == GiftRows()) {
         changed << "gifts shuffled";
@@ -197,7 +199,14 @@ static QString ShopPricesDetail(const ShopPrices& prices) {
     return QString::fromUtf8(ShopPricesChoice(prices).second);
 }
 
-QString Details(const SeedSettings& settings) {
+static QString GiftsDetail(const SeedSettings& settings, LoggedGifts gifts) {
+    if (gifts == LoggedGifts::ShuffledByARelease) {
+        return "Characters, House of Skulltula, and Minigames without the six bigger bags";
+    }
+    return settings.gifts.empty() ? "Vanilla" : Chosen(GiftGroupsShuffledAndLeftOut(settings));
+}
+
+QString Details(const SeedSettings& settings, LoggedGifts gifts) {
     QStringList lines{ Line(ShuffledDungeonsSetting, Chosen(ShuffledAndLeftOut(settings))),
                         Line(KeysSetting, QString::fromUtf8(Words(KeysChoices, settings.keys))),
                         Line(MapsAndCompassesSetting,
@@ -213,7 +222,7 @@ QString Details(const SeedSettings& settings) {
         lines << Line(ShopPricesSetting, ShopPricesDetail(settings.shops->prices));
     }
     lines << Line(SkulltulasSetting, QString::fromUtf8(Words(SkulltulasChoices, settings.skulltulas)))
-          << Line(GiftsSetting, settings.gifts.empty() ? "Vanilla" : Chosen(GiftGroupsShuffledAndLeftOut(settings)))
+          << Line(GiftsSetting, GiftsDetail(settings, gifts))
           << Line(SongsSetting, QString::fromUtf8(Words(SongsChoices, settings.songs)))
           << Line(LooseItemsSetting, QString::fromUtf8(Words(LooseItemsChoices, settings.looseItems)))
           << Line(RewardsSetting, QString::fromUtf8(Words(RewardsChoices, settings.rewards)))

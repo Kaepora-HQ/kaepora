@@ -303,7 +303,7 @@ if(Qt6Test_FOUND)
                      untickingStopsARequestInFlight theStartWithListHasTheItems
                      oneItemToStartWithIsOneItem cancelLeavesTheItemsToStartWith defaultsClearsTheItemsToStartWith
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
-                     aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroupOfItsTime
+                     aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
                      rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime)
     if(APPLE)
         list(APPEND WINDOW_TESTS playStartsTheProgramLichiisAppNames)

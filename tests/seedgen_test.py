@@ -127,7 +127,7 @@ GIFT_POOL = collections.Counter(POOLED_AS_SOH.get(row["location"], row["item"])
                                 for row in {row["location"]: row for row in GIFT_SITES}.values())
 GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Great Fairies", "Story gifts", "Malon's Egg",
                "Biggoron Quest", "Deku Scrubs (One Time Rewards)"]
-# Released seeds' "Shuffled" and the settings stored by their Kaepora name these, all the groups of their time.
+# The groups "Shuffled" names, in a seed's settings and in the settings a window remembers.
 RELEASED_GIFT_GROUPS = ["Minigames", "Characters", "House of Skulltula", "Story gifts"]
 GIFTS_SHUFFLED = {"Gifts": GIFT_GROUPS}
 DEKU_SCRUBS_SHUFFLED = {"Gifts": ["Deku Scrubs (One Time Rewards)"]}

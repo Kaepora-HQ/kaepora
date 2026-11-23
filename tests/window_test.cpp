@@ -1278,8 +1278,10 @@ private slots:
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains("Cutscenes: Played"));
     }
 
-    void aSeedMadeBeforeTheGiftGroupsWithGiftsShuffledHasEveryGroupOfItsTime() {
-        // The settings of a seed made by Kaepora 0.4.0 with gifts shuffled. No release shuffled an egg or a Deku Scrub.
+    void aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts() {
+        // The settings of a seed made by Kaepora 0.2.0 with gifts shuffled. Every release from 0.2.0 to 0.5.0 wrote
+        // "Shuffled" for the same 21 gift places: Characters, House of Skulltula, and Minigames without the six bigger
+        // bags.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
               R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
@@ -1287,15 +1289,15 @@ private slots:
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
               "Kokiri Forest": "Closed", "Rainbow Bridge": "After the Light Arrows", "Ganon's trials": "All six",
-              "Opening": "Skipped", "Start with": [], "Shop goods": "Vanilla", "Gold Skulltulas": "Vanilla",
-              "Gifts": "Shuffled", "Songs": "Vanilla", "Loose items": "Vanilla", "Dungeon rewards": "Vanilla",
+              "Shop goods": "Five per shop shuffled", "Shop prices": "Cheap", "Gold Skulltulas": "All",
+              "Gifts": "Shuffled", "Songs": "Shuffled among themselves", "Loose items": "Shuffled",
               "Lens of Truth": "Needed", "Gossip stones": "Give hints", "Hints from characters": "Give hints"}})");
         window = std::make_unique<Window>();
         window->show();
-        QCOMPARE(listed(1), QStringList{ "Cutscenes played, 4 of 8 gift groups shuffled, songs not shuffled, "
-                                         "loose items not shuffled, dungeon rewards not shuffled" });
+        QCOMPARE(listed(1), QStringList{ "Opening played, cutscenes played, shop goods shuffled, Gold Skulltulas "
+                                         "shuffled, 21 gifts shuffled, dungeon rewards not shuffled" });
         QVERIFY(entry("OWL")->toolTip(1).split('\n').contains(
-            "Gifts: All but Great Fairies, Malon's Egg, Biggoron Quest and Deku Scrubs"));
+            "Gifts: Characters, House of Skulltula, and Minigames without the six bigger bags"));
     }
 
     void aSeedWhoseSpoilerLogCannotBeReadIsListed() {

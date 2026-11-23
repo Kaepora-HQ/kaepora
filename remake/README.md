@@ -268,8 +268,8 @@ places. A location of a group left out keeps what the game gives, and the plan n
 - `gives`: what the call gives in the unmodified game, by its remake name.
 - `item`: what the location adds to the pool, by its remake name. Every row of a location names the same item.
 - `group`: the group of "Gifts" that shuffles the location, by its name in a seed's settings. Every row of a location
-  names the same group. Released seeds' "Shuffled" names the four groups of its time, so it keeps the eggs, the Deku
-  Scrubs and the Great Fairies.
+  names the same group. "Shuffled" names Minigames, Characters, House of Skulltula and Story gifts. Every release from
+  0.2.0 to 0.5.0 wrote it for 21 places: Characters, House of Skulltula, and Minigames without the six bigger bags.
 - `place`: where the place stands, as an `area` of `places.tsv`, when that is not its location's SoH area, and empty
   otherwise. Hints name it there. SoH files the Great Fairy outside Ganon's Castle under Hyrule Castle; her mark stands
   in the scene the game names Ganondorf's Castle, where `skulltulas.tsv` places that scene's skulltula too.

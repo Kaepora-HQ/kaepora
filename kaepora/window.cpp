@@ -122,9 +122,14 @@ static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
 }
 
+struct LoggedSettings {
+    SeedSettings settings;
+    LoggedGifts gifts;
+};
+
 // A seed's settings as its spoiler log holds them. A setting a log leaves out is one its release did not have, so the
 // seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
-static SeedSettings SettingsOf(const QString& folder) {
+static LoggedSettings SettingsOf(const QString& folder) {
     nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
     const nlohmann::json asTheGameIs = {
         { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
@@ -138,7 +143,9 @@ static SeedSettings SettingsOf(const QString& folder) {
     for (const auto& [setting, value] : asTheGameIs.items()) {
         logged.emplace(setting, value);
     }
-    return ParseSeedSettings(logged);
+    return { ParseSeedSettings(logged), logged.at(std::string(GiftsSetting)) == "Shuffled"
+                                            ? LoggedGifts::ShuffledByARelease
+                                            : LoggedGifts::AsGroups };
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.
@@ -458,9 +465,9 @@ void Window::refresh(QString select) {
         }
         auto* item = new QTreeWidgetItem(seeds, { seed == inUse ? seed + " (in use)" : seed });
         try {
-            const SeedSettings made = SettingsOf(folder.filePath());
-            item->setText(1, Summary(made));
-            item->setToolTip(1, Details(made));
+            const LoggedSettings made = SettingsOf(folder.filePath());
+            item->setText(1, Summary(made.settings, made.gifts));
+            item->setToolTip(1, Details(made.settings, made.gifts));
         } catch (const std::exception& e) {
             item->setText(1, "Spoiler log cannot be read");
             item->setToolTip(1, QString::fromUtf8(e.what()));
