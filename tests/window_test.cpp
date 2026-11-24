@@ -1,5 +1,6 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
+#include "generator/seed_code.h"
 #include "kaepora/game_values.h"
 #include "kaepora/tracker_window.h"
 #include "kaepora/window.h"
@@ -7,6 +8,7 @@
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QDialog>
@@ -263,16 +265,23 @@ private:
         return nullptr;
     }
 
-    // Types the seed and presses "Create seed". True once the window has made it.
-    bool create(const QString& seed) {
-        QLineEdit* field = nullptr;
-        for (QLineEdit* candidate : window->findChildren<QLineEdit*>()) {
-            if (!candidate->isReadOnly() && candidate->window() == window.get()) {
-                field = candidate;
+    QLineEdit* seedField() const {
+        for (QLineEdit* field : window->findChildren<QLineEdit*>()) {
+            if (!field->isReadOnly() && field->window() == window.get()) {
+                return field;
             }
         }
-        field->clear();
-        QTest::keyClicks(field, seed);
+        return nullptr;
+    }
+
+    // Types the seed and presses "Create seed". True once the window has made it.
+    bool create(const QString& seed) {
+        seedField()->clear();
+        QTest::keyClicks(seedField(), seed);
+        return pressCreate();
+    }
+
+    bool pressCreate() {
         QPushButton* create = button("Create seed");
         create->click();
         return !create->isEnabled() && shows("Creating seed…") &&
@@ -482,6 +491,23 @@ private:
         Write(library + "/" + seed + "/spoiler.json", QByteArray::fromStdString(log.dump()));
     }
 
+    void pasteAfterChoosingASeedAndSettings(const QString& copied) {
+        QTest::keyClicks(seedField(), "ZELDA");
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        QGuiApplication::clipboard()->setText(copied);
+        button("Paste seed code")->click();
+    }
+
+    void expectTheSeedAndTheSettingsChosen() {
+        QCOMPARE(seedField()->text(), QString("ZELDA"));
+        const QString chosen = "Forest Temple not shuffled, keys in their own chests, Lens never needed";
+        QVERIFY(shows(chosen));
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows(chosen));
+    }
+
     void chooseAnEmptyGameFile() {
         Write(QDir::home().filePath("game.nup"), {});
         QSettings().setValue("gameFile", QDir::home().filePath("game.nup"));
@@ -653,6 +679,97 @@ private slots:
             QCOMPARE(box()->text(), refusal);
             QVERIFY(!shows("Creating seed…"));
         }
+    }
+
+    void aSeedMadeFromAnotherSeedsCodeIsTheSameGame() {
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        QVERIFY(create("OWL"));
+        const QByteArray log = Read(library + "/OWL/spoiler.json");
+        button("Copy seed code")->click();
+        button("Delete")->click();
+        answer("Delete");
+        button("Settings…")->click();
+        dialogButton("Defaults")->click();
+        dialogButton("OK")->click();
+        QVERIFY(shows("Default settings"));
+        seedField()->clear();
+
+        button("Paste seed code")->click();
+        QCOMPARE(seedField()->text(), QString("OWL"));
+        QVERIFY(shows("Forest Temple not shuffled, keys in their own chests, Lens never needed"));
+        QVERIFY(pressCreate());
+        QCOMPARE(Read(library + "/OWL/spoiler.json"), log);
+    }
+
+    void everySettingSurvivesASeedCode() {
+        const auto step = [](std::string_view name) { return *std::ranges::find(StartSteps, name, &StartStep::name); };
+        SeedSettings changed{ .shuffledDungeons = { Dungeons[0], Dungeons[11] },
+                              .keys = DungeonItems::GivenAtTheStart,
+                              .mapsAndCompasses = DungeonItems::InTheirOwnChests,
+                              .forest = Forest::Open,
+                              .doorOfTime = DoorOfTime::Open,
+                              .bridge = Bridge::AlwaysOpen,
+                              .trials = Trials::None,
+                              .skips = { Skip::NewAreaScenes },
+                              .startWith = { step("Kokiri Sword"), step("Fairy Bow (50 arrows)"), step("Longshot"),
+                                             step("Fairy Ocarina") },
+                              .shops = ShuffledShops{ ShopCount::RandomPerShop },
+                              .gifts = { GiftGroups[7] },
+                              .rewards = Rewards::Shuffled,
+                              .skulltulas = Skulltulas::All,
+                              .songs = Songs::Vanilla,
+                              .looseItems = LooseItems::Vanilla,
+                              .lens = Lens::NeverNeeded,
+                              .gossipStones = GossipStones::Vanilla,
+                              .hintsFromCharacters = HintsFromCharacters::Vanilla };
+        for (const ShopPrices& prices :
+             { ShopPrices(VanillaPrices{}), ShopPrices(CheapPrices{}), ShopPrices(BalancedPrices{}),
+               ShopPrices(OnePrice{ 995 }), ShopPrices(PricesBetween{ 5, 990 }) }) {
+            changed.shops->prices = prices;
+            QDir(library).removeRecursively();
+            putInLibrary("OWL", KAEPORA_VERSION, changed);
+            window = std::make_unique<Window>();
+            window->show();
+            select("OWL");
+            button("Copy seed code")->click();
+            // A line copied from a chat ends with a line break.
+            QGuiApplication::clipboard()->setText(QGuiApplication::clipboard()->text() + "\n");
+            button("Paste seed code")->click();
+            QCOMPARE(seedField()->text(), QString("OWL"));
+            QCOMPARE(QSettings().value("seedSettings").toString(), QString::fromStdString(ToJson(changed).dump()));
+        }
+    }
+
+    void aSeedCodeOfAnotherVersionNamesBothVersions() {
+        pasteAfterChoosingASeedAndSettings("99.0.0_OWL_ABCDEFGHIJKLMNOPQ");
+        QVERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("This seed code is from Kaepora 99.0.0, and this is Kaepora " KAEPORA_VERSION
+                                        ". The same seed can be a different game in another version, so both "
+                                        "players need the same version."));
+        expectTheSeedAndTheSettingsChosen();
+    }
+
+    void whatWasCopiedIsNotASeedCodeThisVersionCanRead() {
+        const QString withOneMoreSetting = QString::fromStdString(ToSeedCode("OWL", {})) + "A";
+        pasteAfterChoosingASeedAndSettings(withOneMoreSetting);
+        QVERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("What you copied is not a seed code that Kaepora can read. Copy the whole code "
+                                        "and click Paste seed code again."));
+        expectTheSeedAndTheSettingsChosen();
+    }
+
+    void onlyASeedOfThisVersionHasASeedCode() {
+        putInLibrary("OLD", "0.6.0", {});
+        putInLibrary("NEW", KAEPORA_VERSION, {});
+        window = std::make_unique<Window>();
+        window->show();
+        select("OLD");
+        QVERIFY(!button("Copy seed code")->isEnabled());
+        QCOMPARE(button("Copy seed code")->toolTip(),
+                 QString("Only a seed made by this version of Kaepora has a seed code."));
+        select("NEW");
+        QVERIFY(button("Copy seed code")->isEnabled());
     }
 
     void deleteLeavesAnotherSeedInUse() {

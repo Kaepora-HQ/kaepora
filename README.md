@@ -1,6 +1,6 @@
 # Kaepora
 
-Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It moves the game's items to new places, so the Hookshot could be anywhere. Every seed can be finished, and the same seed gives the same game on every computer.
+Kaepora is a randomizer for the Switch 2 remake of Ocarina of Time. It moves the game's items to new places, so the Hookshot could be anywhere. Every seed can be finished, and the same seed, settings and version of Kaepora give the same game on every computer.
 
 Website and downloads: <https://kaepora.org>
 
@@ -34,6 +34,17 @@ On a Mac, macOS blocks Kaepora the first time you open it. The download page has
 Kaepora keeps every seed you make. A save you started on an older seed still has its seed: select it and click **Use this seed** again before you load that save.
 
 If you get stuck, **Open spoiler log** shows where every item went and one route that finishes the game.
+
+### Share a seed
+
+Two players get the same game only with the same seed, the same settings and the same version of Kaepora. A seed code carries all three.
+
+1. Select your seed in the list and click **Copy seed code**.
+2. Send the code to the other player.
+3. They copy the code and click **Paste seed code**. Kaepora fills in the seed and its settings.
+4. They click **Create seed**.
+
+A code works only in the version of Kaepora that made it. In another version, Kaepora says which version the code is from.
 
 If the game runs slowly or stutters, see the [FAQ](FAQ.md).
 

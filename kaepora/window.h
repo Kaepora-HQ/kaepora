@@ -28,7 +28,9 @@ private:
     QLineEdit* addPathRow(QFormLayout* form, const QString& label, const QString& key,
                           bool (QFileInfo::*valid)() const, const std::function<QString()>& choose);
     void chooseSettings();
+    void setNewSeedSettings(const SeedSettings& settings);
     void showSettings();
+    void pasteSeedCode();
     void createSeed();
     void useSeed();
     void openSpoilerLog();
@@ -55,6 +57,7 @@ private:
     QTreeWidget* seeds;
     QPushButton* useButton;
     QPushButton* spoilerButton;
+    QPushButton* codeButton;
     QPushButton* deleteButton;
     QPushButton* playButton;
     QPushButton* trackerButton;

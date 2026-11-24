@@ -1,5 +1,6 @@
 #include "setup.h"
 
+#include "overloaded.h"
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/settings.h"
@@ -297,11 +298,6 @@ void InitializeRandomizer() {
     Rando::StaticData::InitHashMaps();
     ctx->AddExcludedOptions();
 }
-
-template <typename... Calls>
-struct Overloaded : Calls... {
-    using Calls::operator()...;
-};
 
 void SetOptions(const SeedSettings& settings) {
     Rando::Settings::GetInstance()->SetAllToContext();
