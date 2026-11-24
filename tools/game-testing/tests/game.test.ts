@@ -505,7 +505,7 @@ describe("a game on the host", () => {
 	);
 
 	it.live(
-		"a start reads Link's saved place back: one whose height the game set 0.09 lower is taken, and one a floor lower is not",
+		"a start reads Link's saved place back: one the game moved a hair across the floor or set 0.09 lower is taken, and one many units off is not",
 		() =>
 			Effect.gen(function* () {
 				const location = {
@@ -513,15 +513,20 @@ describe("a game on the host", () => {
 					position: [1.5, 2.25, 3.125] as const,
 					facing: 0,
 				};
-				// Seen on the game: a worked-out spot written at y 115.818 was held at 115.72996, set on the floor.
+				// Seen on the game: x -8.862 held as -8.8619957, and y 115.818 held as 115.72996, set on the floor.
 				const settled = yield* played(() => Effect.void, {
 					words: { location },
-					rewrites: { "PlayerStatus.SavePos": [1.5, 2.16, 3.125] },
+					rewrites: { "PlayerStatus.SavePos": [1.500_004, 2.16, 3.125] },
 				});
 				expect(settled.startFailure).toBeUndefined();
 				expect(settled.record.readBack?.values["PlayerStatus.SavePos"]).toEqual(
-					[1.5, Math.fround(2.16), 3.125]
+					[Math.fround(1.500_004), Math.fround(2.16), 3.125]
 				);
+				const elsewhere = yield* played(() => Effect.void, {
+					words: { location },
+					rewrites: { "PlayerStatus.SavePos": [9.5, 2.25, 3.125] },
+				});
+				expect(elsewhere.startFailure).toBeInstanceOf(StartNotTaken);
 				const fell = yield* played(() => Effect.void, {
 					words: { location },
 					rewrites: { "PlayerStatus.SavePos": [1.5, -7.75, 3.125] },

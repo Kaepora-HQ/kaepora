@@ -339,9 +339,10 @@ const facings: Readonly<
 };
 
 /**
- * How far Link's saved height may come back from what was written. The game sets Link on the floor when a save loads,
- * and a worked-out spot does not know the floor's height: at the Dodongo's Cavern bomb bag chest it moved him 0.088 down
- * from y 115.818 and 0.012 up from 115.718. A fall to another floor is far more. Across the floor a place holds exactly.
+ * How far Link's saved place may come back from what was written, on each axis. The game settles Link when a save loads:
+ * at the Dodongo's Cavern bomb bag chest it moved his height 0.088 down from 115.818 and 0.012 up from 115.718, and at
+ * the Forest Temple's first room chest it held x -8.862 as -8.8619957. A Link the game put somewhere else, or a fall to
+ * another floor, is many units away. The read-back keeps the place the game held.
  */
 const settles = 0.5;
 
@@ -351,14 +352,10 @@ const sameAs = (
 	written: Saved,
 	held: Saved
 ) => {
-	// A place is held as three 32-bit Floats, as the save stores them.
 	if (typeof written === "object" && typeof held === "object") {
-		const [x, y, z] = written;
-		const [heldX, heldY, heldZ] = held;
-		return (
-			Math.fround(x) === heldX &&
-			Math.fround(z) === heldZ &&
-			Math.abs(Math.fround(y) - heldY) <= settles
+		return Arr.every(
+			Arr.zip(written, held),
+			([axis, heldAxis]) => Math.abs(axis - heldAxis) <= settles
 		);
 	}
 	if (typeof written !== "number" || typeof held !== "number") {
