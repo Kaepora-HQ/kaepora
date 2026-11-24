@@ -19,7 +19,7 @@ GV Chest	GerudoValley_Adult		-34.077	102.223	22.813	154.1	save	test-runs/agent-l
 Wasteland Chest	HountedWasteland_Adult		15.975	87.690	-97.379	177.8	save	spikes/story-gifts/look-b/results/1-chest/progress.sav		
 Kak Open Grotto Chest	KakarikoVillage_Child		-40.747	79.817	11.737	250.0	worked out		passed 20261123-203357-udmm	
 Kak Lookout Chest	KakarikoVillage_Adult		4.594	130.156	41.059	68.9	save	test-runs/20261117-first-seed-route/runs/L2/autosave-B8/progress.sav		
-Graveyard Hookshot Chest	Graveyard_Adult		-5.151	82.480	77.660	-90.0	save	spikes/dampe-race/looks/results/d1-first-chest/085008-slot_05/progress.sav		
+Graveyard Hookshot Chest	Graveyard_Adult		-5.151	82.480	77.660	-90.0	save	spikes/dampe-race/looks/results/d1-first-chest/085008-slot_05/progress.sav	failed 20261124-020030-o64r	No chest stood here when the look started: it appears once Dampé's race is won.
 Graveyard Dampe Race Freestanding PoH	Graveyard_Adult		-5.151	82.480	77.658	-90.0	save	spikes/dampe-race/looks/results/d2-fast-race/090326-slot_02/progress.sav		
 GC Maze Left Chest	GoronCity_Adult		-48.040	113.684	1.301	-28.5	save	test-runs/owner-playtest/runs/gcd-autosave/progress.sav		
 GC Maze Center Chest	GoronCity_Adult		-46.623	113.684	-4.479	-132.7	save	test-runs/owner-playtest/runs/gca-autosave/progress.sav		
