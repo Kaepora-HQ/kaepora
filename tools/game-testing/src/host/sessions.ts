@@ -409,9 +409,9 @@ export class Sessions extends Context.Service<
 				const folder = Option.isSome(mod)
 					? yield* Effect.asSome(staged(mod.value))
 					: Option.none();
-				if (Option.isSome(folder)) {
-					yield* data.checkMod(folder.value);
-				}
+				const unmeasured = Option.isSome(folder)
+					? yield* data.checkMod(folder.value)
+					: [];
 				const saves = yield* states.build(plan);
 				yield* recorder.save({
 					kind: "built",
@@ -431,6 +431,7 @@ export class Sessions extends Context.Service<
 						onNone: () => "none" as const,
 						onSome: (taken) => ({ name: taken.name, digest: digestOf(taken) }),
 					}),
+					unmeasured,
 				});
 				const booted = yield* boot.start(place, {
 					plan,

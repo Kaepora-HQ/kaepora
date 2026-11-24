@@ -26,6 +26,9 @@ public:
     // Throws if the RomFS has no file at this path.
     std::string Read(const std::string& path);
 
+    // The file's first bytes, as many as it has up to `limit`. Throws as Read does.
+    std::string ReadStart(const std::string& path, uint64_t limit);
+
     const std::map<std::string, File>& Files() const {
         return files;
     }

@@ -11,8 +11,9 @@
  * - `open <game.nup> <file>...`: `{"path", "root"}` per file on disk, such as a mod's, as `files` prints one of the
  *   game's.
  * - `check-mod <game.nup> <mod-dir>`: per mod file in path order, `{"entry", "needs", "path"}` for a file the game
- *   would drop, or `{"path", "unchecked"}` with the reason it could not be measured. It exits 3 when a file is too
- *   large, 0 otherwise, and 1 on an error.
+ *   would drop, or `{"path", "unchecked"}` with the reason it could not be measured: the game has no copy, or the
+ *   game's own table gives files of its kind no one overhead over their size. It exits 3 when a file is too large,
+ *   0 otherwise, and 1 on an error.
  * - `strings <game.nup> [path...]`: with no path, each distinct run of `[A-Za-z0-9_]` of three or more characters in
  *   the files that name saved values, one per line; with paths, `{"path", "strings"}` per path.
  */

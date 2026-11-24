@@ -20,6 +20,7 @@ import {
 import { UserDirectories } from "effect/persistence";
 import { ChildProcessSpawner } from "effect/process";
 import type { ValueType as ValueTypeSchema } from "../contract/plan.ts";
+import type { UnmeasuredFile } from "../contract/record.ts";
 import type { NameMatch } from "../contract/rpc.ts";
 import type { Mod } from "../contract/state.ts";
 import type {
@@ -120,11 +121,6 @@ export type PlacementQuery =
 	| { readonly hash: string }
 	| { readonly actor: string };
 
-export interface Unchecked {
-	readonly path: string;
-	readonly reason: string;
-}
-
 export class GameData extends Context.Service<
 	GameData,
 	{
@@ -146,7 +142,7 @@ export class GameData extends Context.Service<
 		readonly names: (kind: TableKind) => Effect.Effect<readonly string[]>;
 		readonly checkMod: (
 			folder: string
-		) => Effect.Effect<readonly Unchecked[], StateRefused | DumpFailed>;
+		) => Effect.Effect<readonly UnmeasuredFile[], StateRefused | DumpFailed>;
 		/** Each value the mod's game data list starts a new game with that the game's own list starts otherwise. */
 		readonly startValues: (
 			mod: Mod

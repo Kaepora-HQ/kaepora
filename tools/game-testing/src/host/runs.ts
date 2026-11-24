@@ -26,6 +26,7 @@ import type {
 	RunList,
 	RunSummary,
 	Step,
+	UnmeasuredFile,
 } from "../contract/record.ts";
 import { RunRecord } from "../contract/record.ts";
 import type { ReadBack, TextSpeed } from "../contract/state.ts";
@@ -81,10 +82,11 @@ export interface Recorder {
 		readonly textSpeed: TextSpeed;
 	}) => Effect.Effect<void>;
 	readonly step: (step: Step) => Effect.Effect<void>;
-	/** A place was taken: the place, and the mod it gets with its digest. */
+	/** A place was taken: the place, the mod it gets with its digest, and the mod's files the size table cannot measure. */
 	readonly taken: (details: {
 		readonly place: PlaceId;
 		readonly mod: NonNullable<RunRecord["mod"]>;
+		readonly unmeasured: readonly UnmeasuredFile[];
 	}) => Effect.Effect<void>;
 	readonly wire: WireLog;
 }
@@ -261,8 +263,15 @@ export class Runs extends Context.Service<
 							})
 						);
 					}),
-					taken: ({ place, mod }) =>
-						update((current) => RunRecord.make({ ...current, place, mod })),
+					taken: ({ place, mod, unmeasured }) =>
+						update((current) =>
+							RunRecord.make({
+								...current,
+								place,
+								mod,
+								...(unmeasured.length === 0 ? {} : { unmeasured }),
+							})
+						),
 					picture: Effect.fnUntraced(function* (png, label) {
 						const count = yield* Ref.updateAndGet(pictures, (n) => n + 1);
 						const path = `picture-${count}.png`;

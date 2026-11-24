@@ -271,9 +271,41 @@ bool IsSizeTable(std::string_view path) {
     return path.ends_with(".rsizetable.zs");
 }
 
+// A kind of file: its name after the first dot, such as bcett.byml.zs for a placement.
+std::string_view KindOf(std::string_view path) {
+    const std::string_view name = path.substr(path.rfind('/') + 1);
+    const size_t dot = name.find('.');
+    return dot == std::string_view::npos ? name : name.substr(dot + 1);
+}
+
+// The one overhead the game's own size table gives every file of a kind over its decompressed size rounded up, when it
+// lists two files of the kind or more and all share it. Measured on the game file: each of the 160 placements has 264
+// and each of the 901 event flows 272, while the 315 schedules have 97 overheads, as a schedule's entry is several
+// times its size. A kind with no one overhead gives no rule for what a larger file needs.
+std::optional<size_t> OverheadOfKind(Game& game, const SizeEntries& games, std::string_view kind) {
+    std::optional<size_t> overhead;
+    size_t listed = 0;
+    for (const auto& [path, file] : game.file.Files()) {
+        const std::optional<uint32_t> entry = games.Find(path);
+        if (KindOf(path) != kind || !entry) {
+            continue;
+        }
+        const size_t size =
+            path.ends_with(Zs) ? FrameContentSize(game.file.ReadStart(path, FrameHeaderLimit)) : file.size;
+        const size_t aligned = AlignUp(size, SizeAlignment);
+        if (*entry < aligned || (overhead && *overhead != *entry - aligned)) {
+            return std::nullopt;
+        }
+        overhead = *entry - aligned;
+        ++listed;
+    }
+    return listed >= 2 ? overhead : std::nullopt;
+}
+
 // Names each file the game would drop without a word, as larger than the entry the size table it reads gives it, and
-// each mod file it cannot measure. A mod file the game also has needs its size rounded up, plus the overhead the game's
-// own entry gives that file. A file the mod does not carry needs the game's own entry.
+// each mod file it cannot measure. A mod file the game also has needs its size rounded up, plus the one overhead the
+// game's own table gives its kind; a kind with no one overhead is not measured. A file the mod does not carry needs the
+// game's own entry.
 int CheckMod(Game& game, std::span<const std::string> args) {
     const std::filesystem::path mod = args[0];
     if (!std::filesystem::is_directory(mod)) {
@@ -304,6 +336,14 @@ int CheckMod(Game& game, std::span<const std::string> args) {
     const auto unchecked = [&](const std::string& path, std::string_view why) {
         lines[path] = { { "path", path }, { "unchecked", why } };
     };
+    std::map<std::string, std::optional<size_t>, std::less<>> kinds;
+    const auto overheadOf = [&](std::string_view kind) {
+        auto known = kinds.find(kind);
+        if (known == kinds.end()) {
+            known = kinds.emplace(std::string(kind), OverheadOfKind(game, games, kind)).first;
+        }
+        return known->second;
+    };
     for (const auto& [path, file] : carried) {
         const std::optional<uint32_t> entry = table.Find(path);
         const std::optional<uint32_t> own = games.Find(path);
@@ -315,8 +355,13 @@ int CheckMod(Game& game, std::span<const std::string> args) {
             unchecked(path, "the game's own size table has no entry for its copy");
         } else {
             try {
-                const size_t overhead = *own - AlignUp(game.Content(path).size(), SizeAlignment);
-                const size_t needs = AlignUp(game.Opened(path, ReadFile(file)).size(), SizeAlignment) + overhead;
+                const std::optional<size_t> overhead = overheadOf(KindOf(path));
+                if (!overhead) {
+                    unchecked(path, "the game's own size table gives files of its kind no one overhead, so what a "
+                                    "larger one needs is not known");
+                    continue;
+                }
+                const size_t needs = AlignUp(game.Opened(path, ReadFile(file)).size(), SizeAlignment) + *overhead;
                 if (needs > *entry) {
                     tooLarge(path, needs, *entry);
                 }

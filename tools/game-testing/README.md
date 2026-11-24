@@ -158,7 +158,9 @@ By default a look plays the game as a Kaepora player has it, with nothing shuffl
 Give your look's own mod as `mod: { folder: "<the folder the patcher wrote>" }`, absolute or from the script's own
 folder. Its files travel with the run, and its start values reach the save as the default mod's do. A mod over 63 MiB
 as sent is refused before anything is sent, and a file too large for the game's size table is refused before the game
-starts. Build the mod with the current patcher. An older mod skips no scenes, and many older mods change the bytes
+starts. A file is too large only where the game's own table gives files of its kind their size plus one overhead.
+For any other kind, such as NPC schedules, what a larger file needs is not known, so the start goes on and the run's
+record names the file under `unmeasured`. Build the mod with the current patcher. An older mod skips no scenes, and many older mods change the bytes
 Lichii's instant text patches, so Lichii leaves instant text out.
 
 ## Where the pictures and saves are

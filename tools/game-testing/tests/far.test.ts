@@ -385,6 +385,49 @@ describe("what a far run promises its caller", () => {
 	);
 
 	it.live(
+		"a mod file whose size the game's table cannot measure is named in the record, and the start goes on",
+		() =>
+			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const { caller, scratch, command } = yield* farAndCaller({
+					onA: openChest,
+				});
+				const schedule =
+					"Component/AIScheduleParam/Npc_Fake.game__component__AIScheduleParam.bgyml";
+				yield* fs.makeDirectory(
+					`${scratch}/Unmeasured Mod/romfs/Component/AIScheduleParam`,
+					{ recursive: true }
+				);
+				yield* fs.writeFile(
+					`${scratch}/Unmeasured Mod/romfs/${schedule}`,
+					new Uint8Array(4096)
+				);
+				yield* fs.writeFileString(
+					`${scratch}/look.ts`,
+					look({ declares: 'mod: { folder: "./Unmeasured Mod" },' })
+				);
+				const { lines } = yield* command(["run", `${scratch}/look.ts`]);
+				expect(lines[0]).toStartWith("passed  ");
+				const run = Arr.lastNonEmpty(Str.split(lines[0] ?? "", "  "));
+				const record = yield* Schema.decodeEffect(
+					Schema.fromJsonString(RunRecord)
+				)(
+					yield* fs.readFileString(
+						`${caller.home}/state/game-testing/runs/${run}/record.json`
+					)
+				);
+				expect(record.unmeasured).toEqual([
+					{
+						path: schedule,
+						reason:
+							"the game's own size table gives files of its kind no one overhead, so what a larger one needs is not known",
+					},
+				]);
+			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),
+		lasting
+	);
+
+	it.live(
 		"a mod too large to send is refused before anything is sent, with its size and the limit",
 		() =>
 			Effect.gen(function* () {

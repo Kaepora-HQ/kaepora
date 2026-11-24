@@ -79,6 +79,16 @@ export const game: FakeGame = {
 			lines: [{ path: "romfs/Fake/Big.byml.zs", needs: 4096, entry: 2048 }],
 			code: 3,
 		},
+		"Unmeasured Mod": {
+			lines: [
+				{
+					path: "Component/AIScheduleParam/Npc_Fake.game__component__AIScheduleParam.bgyml",
+					unchecked:
+						"the game's own size table gives files of its kind no one overhead, so what a larger one needs is not known",
+				},
+			],
+			code: 0,
+		},
 	},
 };
 

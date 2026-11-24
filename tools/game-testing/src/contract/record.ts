@@ -122,6 +122,13 @@ export const KeptSave = Schema.Struct({
 });
 export type KeptSave = typeof KeptSave.Type;
 
+/** A mod's file whose size `check-mod` could not hold against the game's size table, and why. */
+export const UnmeasuredFile = Schema.Struct({
+	path: Schema.String,
+	reason: Schema.String,
+});
+export type UnmeasuredFile = typeof UnmeasuredFile.Type;
+
 /** What identifies the script a run came from, so runs of one script can be put side by side. */
 export const ScriptSource = Schema.Struct({
 	/** The kept script's path under `tools/game-testing/scripts/`, absent for one written inline. */
@@ -158,6 +165,8 @@ export class RunRecord extends Schema.Class<
 			Schema.Literal("none"),
 		])
 	),
+	/** The mod's files whose size the game's table could not measure, each with why; absent when there are none. */
+	unmeasured: Schema.optionalKey(Schema.Array(UnmeasuredFile)),
 	/**
 	 * How the running game wrote its text, as read from its program once Link could move: Lichii leaves its instant
 	 * text out when a mod changed the bytes it patches. Absent when the start never got that far.

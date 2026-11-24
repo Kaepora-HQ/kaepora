@@ -30,6 +30,11 @@ NAME = re.compile(rb"[A-Za-z0-9_]{3,}")
 TOO_LARGE = 3
 NO_COPY = "the game has no copy of it to measure it by"
 NO_ENTRY = "the size table the game reads has no entry for it"
+UNMEASURED = ("the game's own size table gives files of its kind no one overhead, "
+              "so what a larger one needs is not known")
+ACTOR_TABLE_KIND = ".Product.111.rstbl.byml.zs"
+DARUNIA_SON_SCHEDULE = ("Component/AIScheduleParam/"
+                        "Npc_Goron_DaruniaJr_Adult.game__component__AIScheduleParam.bgyml")
 
 
 def dump(*args):
@@ -229,6 +234,13 @@ class DumpTest(unittest.TestCase):
         self.assertEqual(self.check_mod({patch_test.DEKU_STATIC: self.placement_of(largest + 1)}),
                          (TOO_LARGE, [{"path": patch_test.DEKU_STATIC, "needs": entry + 32, "entry": entry}], ""))
 
+    def test_a_file_of_a_kind_whose_entries_share_no_overhead_is_named_unmeasured(self):
+        """Seen in the game: the son's schedule, grown past its entry less its own overhead, loaded. The game's
+        schedules have many overheads, so a larger one's need is not known."""
+        schedule = content(DARUNIA_SON_SCHEDULE)
+        self.assertEqual(self.check_mod({DARUNIA_SON_SCHEDULE: schedule + bytes(11_000)}),
+                         (0, [{"path": DARUNIA_SON_SCHEDULE, "unchecked": UNMEASURED}], ""))
+
     def test_a_mods_own_size_table_is_the_one_its_files_must_fit(self):
         entry = patch_test.load_size(len(content(patch_test.DEKU_STATIC)))
         grown = self.placement_of(entry - 264 + 32)
@@ -237,7 +249,8 @@ class DumpTest(unittest.TestCase):
 
     def test_a_mod_kaepora_patch_made_fits_its_size_table_and_outgrows_the_games(self):
         """The shop slot sells an item through an actor the mod adds, so the mod holds a pack the game lacks and
-        actor tables that grow."""
+        actor tables that grow. The game's own table gives its actor tables no one overhead: 264 to nineteen of them
+        and 3064 to ActorInfo. So a table is not measured."""
         seed = json.loads(pathlib.Path(PLAN).read_text())
         seed["shops"] = [patch_test.shop_slot(patch_test.GORON_TUNIC_SLOT, "TBox_Rupee_Blue", 10)]
         with tempfile.TemporaryDirectory() as tmp:
@@ -250,20 +263,25 @@ class DumpTest(unittest.TestCase):
             new = [{"path": path, "unchecked": NO_COPY}
                    for path in sorted(patch_test.files(romfs)) if path not in GAME.files]
             self.assertEqual(new, [{"path": "Pack/Actor/Shop_TBox_Rupee_Blue.pack.zs", "unchecked": NO_COPY}])
+            tables = [{"path": path, "unchecked": UNMEASURED}
+                      for path in sorted(patch_test.files(romfs)) if path.endswith(ACTOR_TABLE_KIND)]
+            self.assertTrue(tables)
+            unchecked = sorted(new + tables, key=lambda line: line["path"])
             result = run("check-mod", tmp / "mod")
             lines = [json.loads(line) for line in result.stdout.splitlines()]
-            self.assertEqual((result.returncode, lines, result.stderr), (0, new, ""))
+            self.assertEqual((result.returncode, lines, result.stderr), (0, unchecked, ""))
 
             games = dict(patch_test.read_size_table(content(patch_test.SIZE_TABLE))[1])
             ours = dict(patch_test.read_size_table(zstd.decompress((romfs / patch_test.SIZE_TABLE).read_bytes()))[1])
             raised = sorted(path for path in patch_test.files(romfs) if path in GAME.files
+                            and not path.endswith(ACTOR_TABLE_KIND)
                             and ours.get(patch_test.size_key(path)) != games.get(patch_test.size_key(path)))
             (romfs / patch_test.SIZE_TABLE).unlink()
             result = run("check-mod", tmp / "mod")
             self.assertEqual(result.returncode, TOO_LARGE, result.stderr)
             lines = [json.loads(line) for line in result.stdout.splitlines()]
             self.assertEqual([line["path"] for line in lines if "needs" in line], raised)
-            self.assertEqual([line for line in lines if "unchecked" in line], new)
+            self.assertEqual([line for line in lines if "unchecked" in line], unchecked)
             self.assertTrue(raised)
 
     def test_a_mods_file_opens_as_the_games_own_with_the_mods_start_values(self):

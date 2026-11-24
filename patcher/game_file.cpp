@@ -4,7 +4,9 @@
 #include "compression.h"
 #include "sarc.h"
 
+#include <algorithm>
 #include <format>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
@@ -139,6 +141,10 @@ GameFile::GameFile(const std::filesystem::path& path) : nup(path, std::ios::bina
 }
 
 std::string GameFile::Read(const std::string& path) {
+    return ReadStart(path, std::numeric_limits<uint64_t>::max());
+}
+
+std::string GameFile::ReadStart(const std::string& path, uint64_t limit) {
     const auto file = files.find(path);
     if (file == files.end()) {
         throw std::runtime_error("the game has no such file");
@@ -146,7 +152,7 @@ std::string GameFile::Read(const std::string& path) {
     if (file->second.codec != RawCodec) {
         throw std::runtime_error("the container stores this file compressed, which this reader does not read");
     }
-    return ReadBytes(file->second.offset, file->second.size);
+    return ReadBytes(file->second.offset, std::min(file->second.size, limit));
 }
 
 std::string GameFile::ReadBytes(uint64_t offset, uint64_t size) {

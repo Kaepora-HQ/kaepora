@@ -16,12 +16,16 @@ static size_t Check(size_t result) {
     return result;
 }
 
-std::string Decompress(std::string_view frame, std::string_view dictionary) {
+size_t FrameContentSize(std::string_view frame) {
     const unsigned long long size = ZSTD_getFrameContentSize(frame.data(), frame.size());
     if (size == ZSTD_CONTENTSIZE_UNKNOWN || size == ZSTD_CONTENTSIZE_ERROR) {
         throw std::runtime_error("not a zstd frame with its size in the header");
     }
-    std::string data(size, '\0');
+    return size;
+}
+
+std::string Decompress(std::string_view frame, std::string_view dictionary) {
+    std::string data(FrameContentSize(frame), '\0');
     const std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> context(ZSTD_createDCtx(), ZSTD_freeDCtx);
     Check(ZSTD_decompress_usingDict(context.get(), data.data(), data.size(), frame.data(), frame.size(),
                                     dictionary.data(), dictionary.size()));
