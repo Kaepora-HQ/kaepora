@@ -55,6 +55,7 @@ add_library(kaepora-generator OBJECT
     generator/generate.cpp
     generator/hints.cpp
     generator/remake.cpp
+    generator/seed_code.cpp
     generator/seed_settings.cpp
     generator/setup.cpp
     $<IF:$<PLATFORM_ID:Windows>,generator/traps_windows.cpp,generator/traps.cpp>
@@ -359,7 +360,10 @@ if(Qt6Test_FOUND)
                      theGiftsListHasTheGroups everyGiftGroupShowsAsGiftsShuffled
                      aSeedOfAReleaseWithGiftsShuffledListsItsTwentyOneGifts
                      rememberedSettingsWithGiftsShuffledTickEveryGroupOfTheirTime
-                     aGameFileWithoutPicturesOpensNoTracker)
+                     aGameFileWithoutPicturesOpensNoTracker
+                     aListedSeedOfTheSameNameThatIsAnotherGameMustBeDeleted everySettingSurvivesASeedCode
+                     aSeedCodeOfAnotherVersionNamesBothVersions whatWasCopiedIsNotASeedCodeThisVersionCanRead
+                     onlyASeedOfThisVersionHasASeedCode)
     if(NOT WIN32)
         list(APPEND WINDOW_TESTS playStartsLichiiWithItsDebugServerOn)
     endif()

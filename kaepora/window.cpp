@@ -2,6 +2,8 @@
 
 #include "game_file.h"
 #include "game_values.h"
+#include "generator/overloaded.h"
+#include "generator/seed_code.h"
 #include "mod.h"
 #include "new_version.h"
 #include "pictures.h"
@@ -9,12 +11,15 @@
 #include "settings_dialog.h"
 #include "tracker_page.h"
 #include "tracker_window.h"
+#include "version.h"
 
+#include <QClipboard>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDirListing>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -123,6 +128,11 @@ static QString FolderOf(const QTreeWidgetItem* item) {
     return item->data(0, Qt::UserRole).toString();
 }
 
+constexpr int CodeRole = Qt::UserRole + 1;
+static QString CodeOf(const QTreeWidgetItem* item) {
+    return item->data(0, CodeRole).toString();
+}
+
 static QString SeedOf(const QTreeWidgetItem* item) {
     return QFileInfo(FolderOf(item)).fileName();
 }
@@ -142,13 +152,15 @@ static QHash<QString, QImage> TrackerPictures(const std::filesystem::path& nup) 
 struct LoggedSettings {
     SeedSettings settings;
     LoggedGifts gifts;
+    std::string version;
 };
 
 // A seed's settings as its spoiler log holds them. A setting a log leaves out is one its release did not have, so the
 // seed has it as the game does. The table names each setting some release lacked whose default is not the game's own.
 // A log that leaves out "Skip" is of a seed whose mod skips only what its "Opening" and "Cutscenes" say it skips.
 static LoggedSettings SettingsOf(const QString& folder) {
-    nlohmann::json logged = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json"))).at("settings");
+    const nlohmann::json log = nlohmann::json::parse(std::ifstream(Path(folder + "/spoiler.json")));
+    nlohmann::json logged = log.at("settings");
     const nlohmann::json asTheGameIs = {
         { HintsFromCharactersSetting, Words(HintsFromCharactersChoices, HintsFromCharacters::Vanilla) },
         { GiftsSetting, nlohmann::json::array() },
@@ -167,8 +179,19 @@ static LoggedSettings SettingsOf(const QString& folder) {
             return released == std::end(ReleasedSkipSettings) || !logged.contains(std::string(released->first));
         });
     }
-    return { settings, logged.at(std::string(GiftsSetting)) == "Shuffled" ? LoggedGifts::ShuffledByARelease
-                                                                           : LoggedGifts::AsGroups };
+    return { settings,
+             logged.at(std::string(GiftsSetting)) == "Shuffled" ? LoggedGifts::ShuffledByARelease
+                                                                : LoggedGifts::AsGroups,
+             log.at("kaepora").get<std::string>() };
+}
+
+static bool IsTheGame(const QString& folder, const SeedSettings& settings) {
+    try {
+        const LoggedSettings made = SettingsOf(folder);
+        return made.version == KAEPORA_VERSION && made.settings == settings;
+    } catch (const std::exception&) {
+        return false;
+    }
 }
 
 // The settings the window remembers between runs, or the defaults when there are none it can read.
@@ -246,11 +269,13 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     seedField = new QLineEdit;
     seedField->setValidator(new UpperCaseSeedValidator(QRegularExpression(SeedPattern), seedField));
     auto* random = new QPushButton("Random");
+    auto* pasteButton = new QPushButton("Paste seed code");
     auto* settingsButton = new QPushButton("Settings…");
     createButton = new QPushButton("Create seed");
     auto* seedRow = new QHBoxLayout;
     seedRow->addWidget(seedField);
     seedRow->addWidget(random);
+    seedRow->addWidget(pasteButton);
     seedRow->addWidget(settingsButton);
     seedRow->addWidget(createButton);
     form->addRow("Seed", seedRow);
@@ -265,11 +290,12 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
     seeds->setRootIsDecorated(false);
     useButton = new QPushButton("Use this seed");
     spoilerButton = new QPushButton("Open spoiler log");
+    codeButton = new QPushButton("Copy seed code");
     deleteButton = new QPushButton("Delete");
     playButton = new QPushButton("Play");
     trackerButton = new QPushButton("Tracker");
     auto* seedButtons = new QVBoxLayout;
-    for (QPushButton* button : { useButton, spoilerButton, deleteButton, playButton, trackerButton }) {
+    for (QPushButton* button : { useButton, spoilerButton, codeButton, deleteButton, playButton, trackerButton }) {
         seedButtons->addWidget(button);
     }
     seedButtons->addStretch();
@@ -295,11 +321,14 @@ Window::Window() : library(QStandardPaths::writableLocation(QStandardPaths::Gene
         }
         seedField->setText(seed);
     });
+    connect(pasteButton, &QPushButton::clicked, this, &Window::pasteSeedCode);
     connect(settingsButton, &QPushButton::clicked, this, &Window::chooseSettings);
     connect(createButton, &QPushButton::clicked, this, &Window::createSeed);
     connect(seeds, &QTreeWidget::currentItemChanged, this, &Window::updateButtons);
     connect(useButton, &QPushButton::clicked, this, &Window::useSeed);
     connect(spoilerButton, &QPushButton::clicked, this, &Window::openSpoilerLog);
+    connect(codeButton, &QPushButton::clicked, this,
+            [this] { QGuiApplication::clipboard()->setText(CodeOf(seeds->currentItem())); });
     connect(deleteButton, &QPushButton::clicked, this, &Window::deleteSeed);
     connect(playButton, &QPushButton::clicked, this, &Window::play);
     connect(trackerButton, &QPushButton::clicked, this, &Window::openTracker);
@@ -350,16 +379,38 @@ QLineEdit* Window::addPathRow(QFormLayout* form, const QString& label, const QSt
 }
 
 void Window::chooseSettings() {
-    ChooseSettings(this, newSeedSettings, [this](const SeedSettings& chosen) {
-        newSeedSettings = chosen;
-        QSettings().setValue(SettingsKey, QString::fromStdString(ToJson(newSeedSettings).dump()));
-        showSettings();
-    });
+    ChooseSettings(this, newSeedSettings, [this](const SeedSettings& chosen) { setNewSeedSettings(chosen); });
+}
+
+void Window::setNewSeedSettings(const SeedSettings& settings) {
+    newSeedSettings = settings;
+    QSettings().setValue(SettingsKey, QString::fromStdString(ToJson(newSeedSettings).dump()));
+    showSettings();
 }
 
 void Window::showSettings() {
     settingsSummary->setText(Summary(newSeedSettings));
     settingsSummary->setToolTip(Details(newSeedSettings));
+}
+
+void Window::pasteSeedCode() {
+    std::visit(Overloaded{ [this](const SharedSeed& shared) {
+                               seedField->setText(QString::fromStdString(shared.seed));
+                               setNewSeedSettings(shared.settings);
+                           },
+                           [this](const FromAnotherVersion& other) {
+                               Tell(this, QMessageBox::Information,
+                                    QString("This seed code is from Kaepora %1, and this is Kaepora %2. The same seed "
+                                            "can be a different game in another version, so both players need the "
+                                            "same version.")
+                                        .arg(QString::fromStdString(other.version), QString(KAEPORA_VERSION)));
+                           },
+                           [this](Unreadable) {
+                               Tell(this, QMessageBox::Warning,
+                                    "What you copied is not a seed code that Kaepora can read. Copy the whole code "
+                                    "and click Paste seed code again.");
+                           } },
+               ParseSeedCode(QGuiApplication::clipboard()->text().trimmed().toStdString()));
 }
 
 void Window::createSeed() {
@@ -368,7 +419,11 @@ void Window::createSeed() {
     const QFileInfo inLibrary(QDir(library).filePath(seed));
     if (IsWholeSeed(inLibrary)) {
         Tell(this, QMessageBox::Information,
-             QString("A seed named %1 is already in the list. Type another seed, or use that one.").arg(seed));
+             (IsTheGame(inLibrary.filePath(), newSeedSettings)
+                  ? QString("A seed named %1 is already in the list. Type another seed, or use that one.")
+                  : QString("A seed named %1 is already in the list, with other settings or from another version "
+                            "of Kaepora. Delete it to create this one."))
+                 .arg(seed));
         return;
     }
     const std::filesystem::path folder = inLibrary.filesystemFilePath();
@@ -557,6 +612,9 @@ void Window::refresh(QString select) {
             const LoggedSettings made = SettingsOf(folder.filePath());
             item->setText(1, Summary(made.settings, made.gifts));
             item->setToolTip(1, Details(made.settings, made.gifts));
+            if (made.version == KAEPORA_VERSION) {
+                item->setData(0, CodeRole, QString::fromStdString(ToSeedCode(seed.toStdString(), made.settings)));
+            }
         } catch (const std::exception& e) {
             item->setText(1, "Spoiler log cannot be read");
             item->setToolTip(1, QString::fromUtf8(e.what()));
@@ -579,6 +637,10 @@ void Window::updateButtons() {
     createButton->setEnabled(making == nullptr && !gameFile->text().isEmpty() && seedField->hasAcceptableInput());
     useButton->setEnabled(selected && !modsFolder->text().isEmpty());
     spoilerButton->setEnabled(selected);
+    const bool coded = selected && !CodeOf(seeds->currentItem()).isEmpty();
+    codeButton->setEnabled(coded);
+    codeButton->setToolTip(selected && !coded ? "Only a seed made by this version of Kaepora has a seed code."
+                                              : QString());
     deleteButton->setEnabled(selected);
     playButton->setEnabled(!emulator->text().isEmpty() && !gameFile->text().isEmpty() && !inUse.isEmpty());
     trackerButton->setEnabled(readingPictures == nullptr && !gameFile->text().isEmpty());

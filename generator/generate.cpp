@@ -7,11 +7,11 @@
 #include "soh/util.h"
 #include "hints.h"
 #include "remake.h"
+#include "seed_text.h"
 #include "setup.h"
 #include "version.h"
 
 #include <algorithm>
-#include <cctype>
 #include <format>
 #include <iterator>
 #include <set>
@@ -235,8 +235,7 @@ GeneratedSeed Generate(const std::string& text, const SeedSettings& settings) {
                                                                     Joined(everyGift, rewardTable), skulltulaTable,
                                                                     songTable);
 
-    std::string seed = text;
-    std::ranges::transform(seed, seed.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    const std::string seed = UpperCase(text);
 
     std::vector<RemakeChest> chests = table;
     for (RemakeChest& chest : chests) {

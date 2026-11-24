@@ -1,5 +1,6 @@
 // End-to-end test of the window. It makes real seeds in this process, from the game file in KAEPORA_GAME_NUP, and
 // compares them with what kaepora-make-seed, in KAEPORA_MAKE_SEED, makes in a process of its own.
+#include "generator/seed_code.h"
 #include "kaepora/game_values.h"
 #include "kaepora/tracker_window.h"
 #include "kaepora/window.h"
@@ -7,6 +8,7 @@
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QDialog>
@@ -43,6 +45,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 
 using Files = QMap<QString, QByteArray>;
 
@@ -262,16 +265,23 @@ private:
         return nullptr;
     }
 
-    // Types the seed and presses "Create seed". True once the window has made it.
-    bool create(const QString& seed) {
-        QLineEdit* field = nullptr;
-        for (QLineEdit* candidate : window->findChildren<QLineEdit*>()) {
-            if (!candidate->isReadOnly() && candidate->window() == window.get()) {
-                field = candidate;
+    QLineEdit* seedField() const {
+        for (QLineEdit* field : window->findChildren<QLineEdit*>()) {
+            if (!field->isReadOnly() && field->window() == window.get()) {
+                return field;
             }
         }
-        field->clear();
-        QTest::keyClicks(field, seed);
+        return nullptr;
+    }
+
+    // Types the seed and presses "Create seed". True once the window has made it.
+    bool create(const QString& seed) {
+        seedField()->clear();
+        QTest::keyClicks(seedField(), seed);
+        return pressCreate();
+    }
+
+    bool pressCreate() {
         QPushButton* create = button("Create seed");
         create->click();
         return !create->isEnabled() && shows("Creating seed…") &&
@@ -473,6 +483,36 @@ private:
         list()->setCurrentItem(entry(seed));
     }
 
+    void putInLibrary(const QString& seed, const std::string& version, const SeedSettings& settings) {
+        QVERIFY(QDir().mkpath(library + "/" + seed + "/romfs"));
+        const nlohmann::ordered_json log = { { "kaepora", version },
+                                             { "seed", seed.toStdString() },
+                                             { "settings", ToJson(settings) } };
+        Write(library + "/" + seed + "/spoiler.json", QByteArray::fromStdString(log.dump()));
+    }
+
+    void pasteAfterChoosingASeedAndSettings(const QString& copied) {
+        QTest::keyClicks(seedField(), "ZELDA");
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        QGuiApplication::clipboard()->setText(copied);
+        button("Paste seed code")->click();
+    }
+
+    void expectTheSeedAndTheSettingsChosen() {
+        QCOMPARE(seedField()->text(), QString("ZELDA"));
+        const QString chosen = "Forest Temple not shuffled, keys in their own chests, Lens never needed";
+        QVERIFY(shows(chosen));
+        window = std::make_unique<Window>();
+        window->show();
+        QVERIFY(shows(chosen));
+    }
+
+    void chooseAnEmptyGameFile() {
+        Write(QDir::home().filePath("game.nup"), {});
+        QSettings().setValue("gameFile", QDir::home().filePath("game.nup"));
+    }
+
     void leaveOut(const QStringList& dungeons) {
         button("Settings…")->click();
         for (const QString& name : dungeons) {
@@ -616,6 +656,120 @@ private slots:
         QCOMPARE(ReadJson(library + "/OWL/spoiler.json")["seed"].toString(), QString("OWL"));
         QVERIFY(!create("OWL"));
         QVERIFY(box()->text().contains("seed named OWL"));
+    }
+
+    void aListedSeedOfTheSameNameThatIsAnotherGameMustBeDeleted() {
+        chooseAnEmptyGameFile();
+        SeedSettings lensNeverNeeded;
+        lensNeverNeeded.lens = Lens::NeverNeeded;
+        const QString sameGame = "A seed named OWL is already in the list. Type another seed, or use that one.";
+        const QString anotherGame = "A seed named OWL is already in the list, with other settings or from another "
+                                    "version of Kaepora. Delete it to create this one.";
+        const std::tuple<std::string, SeedSettings, QString> listed[] = {
+            { KAEPORA_VERSION, {}, sameGame },
+            { KAEPORA_VERSION, lensNeverNeeded, anotherGame },
+            { "0.6.0", {}, anotherGame },
+        };
+        for (const auto& [version, settings, refusal] : listed) {
+            QDir(library).removeRecursively();
+            putInLibrary("OWL", version, settings);
+            window = std::make_unique<Window>();
+            window->show();
+            QVERIFY(!create("OWL"));
+            QCOMPARE(box()->text(), refusal);
+            QVERIFY(!shows("Creating seed…"));
+        }
+    }
+
+    void aSeedMadeFromAnotherSeedsCodeIsTheSameGame() {
+        chooseForestOutKeysInChestsLensNeverNeeded();
+        dialogButton("OK")->click();
+        QVERIFY(create("OWL"));
+        const QByteArray log = Read(library + "/OWL/spoiler.json");
+        button("Copy seed code")->click();
+        button("Delete")->click();
+        answer("Delete");
+        button("Settings…")->click();
+        dialogButton("Defaults")->click();
+        dialogButton("OK")->click();
+        QVERIFY(shows("Default settings"));
+        seedField()->clear();
+
+        button("Paste seed code")->click();
+        QCOMPARE(seedField()->text(), QString("OWL"));
+        QVERIFY(shows("Forest Temple not shuffled, keys in their own chests, Lens never needed"));
+        QVERIFY(pressCreate());
+        QCOMPARE(Read(library + "/OWL/spoiler.json"), log);
+    }
+
+    void everySettingSurvivesASeedCode() {
+        const auto step = [](std::string_view name) { return *std::ranges::find(StartSteps, name, &StartStep::name); };
+        SeedSettings changed{ .shuffledDungeons = { Dungeons[0], Dungeons[11] },
+                              .keys = DungeonItems::GivenAtTheStart,
+                              .mapsAndCompasses = DungeonItems::InTheirOwnChests,
+                              .forest = Forest::Open,
+                              .doorOfTime = DoorOfTime::Open,
+                              .bridge = Bridge::AlwaysOpen,
+                              .trials = Trials::None,
+                              .skips = { Skip::NewAreaScenes },
+                              .startWith = { step("Kokiri Sword"), step("Fairy Bow (50 arrows)"), step("Longshot"),
+                                             step("Fairy Ocarina") },
+                              .shops = ShuffledShops{ ShopCount::RandomPerShop },
+                              .gifts = { GiftGroups[7] },
+                              .rewards = Rewards::Shuffled,
+                              .skulltulas = Skulltulas::All,
+                              .songs = Songs::Vanilla,
+                              .looseItems = LooseItems::Vanilla,
+                              .lens = Lens::NeverNeeded,
+                              .gossipStones = GossipStones::Vanilla,
+                              .hintsFromCharacters = HintsFromCharacters::Vanilla };
+        for (const ShopPrices& prices :
+             { ShopPrices(VanillaPrices{}), ShopPrices(CheapPrices{}), ShopPrices(BalancedPrices{}),
+               ShopPrices(OnePrice{ 995 }), ShopPrices(PricesBetween{ 5, 990 }) }) {
+            changed.shops->prices = prices;
+            QDir(library).removeRecursively();
+            putInLibrary("OWL", KAEPORA_VERSION, changed);
+            window = std::make_unique<Window>();
+            window->show();
+            select("OWL");
+            button("Copy seed code")->click();
+            // A line copied from a chat ends with a line break.
+            QGuiApplication::clipboard()->setText(QGuiApplication::clipboard()->text() + "\n");
+            button("Paste seed code")->click();
+            QCOMPARE(seedField()->text(), QString("OWL"));
+            QCOMPARE(QSettings().value("seedSettings").toString(), QString::fromStdString(ToJson(changed).dump()));
+        }
+    }
+
+    void aSeedCodeOfAnotherVersionNamesBothVersions() {
+        pasteAfterChoosingASeedAndSettings("99.0.0_OWL_ABCDEFGHIJKLMNOPQ");
+        QVERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("This seed code is from Kaepora 99.0.0, and this is Kaepora " KAEPORA_VERSION
+                                        ". The same seed can be a different game in another version, so both "
+                                        "players need the same version."));
+        expectTheSeedAndTheSettingsChosen();
+    }
+
+    void whatWasCopiedIsNotASeedCodeThisVersionCanRead() {
+        const QString withOneMoreSetting = QString::fromStdString(ToSeedCode("OWL", {})) + "A";
+        pasteAfterChoosingASeedAndSettings(withOneMoreSetting);
+        QVERIFY(box() != nullptr);
+        QCOMPARE(box()->text(), QString("What you copied is not a seed code that Kaepora can read. Copy the whole code "
+                                        "and click Paste seed code again."));
+        expectTheSeedAndTheSettingsChosen();
+    }
+
+    void onlyASeedOfThisVersionHasASeedCode() {
+        putInLibrary("OLD", "0.6.0", {});
+        putInLibrary("NEW", KAEPORA_VERSION, {});
+        window = std::make_unique<Window>();
+        window->show();
+        select("OLD");
+        QVERIFY(!button("Copy seed code")->isEnabled());
+        QCOMPARE(button("Copy seed code")->toolTip(),
+                 QString("Only a seed made by this version of Kaepora has a seed code."));
+        select("NEW");
+        QVERIFY(button("Copy seed code")->isEnabled());
     }
 
     void deleteLeavesAnotherSeedInUse() {
@@ -1305,7 +1459,8 @@ private slots:
         // items, dungeon rewards or hints from characters.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.1.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1329,7 +1484,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.3.0 with its defaults.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.3.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1350,7 +1506,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.4.0 with its defaults.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.4.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1370,7 +1527,8 @@ private slots:
         // The settings of a seed made by Kaepora 0.6.0 with the opening played.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.6.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
@@ -1393,7 +1551,8 @@ private slots:
         // bags.
         QVERIFY(QDir().mkpath(library + "/OWL/romfs"));
         Write(library + "/OWL/spoiler.json",
-              R"({"seed": "OWL", "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
+              R"({"kaepora": "0.2.0", "seed": "OWL",
+              "settings": {"Shuffled dungeons": ["Deku Tree", "Dodongo's Cavern",
               "Jabu-Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple", "Shadow Temple", "Spirit Temple",
               "Bottom of the Well", "Ice Cavern", "Gerudo Training Ground", "Ganon's Castle"],
               "Small and boss keys": "Anywhere in their dungeon", "Maps and compasses": "Anywhere in their dungeon",
