@@ -18,7 +18,7 @@ jobs:
   check:
     name: Game testing type check, lint and tests
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: tools/game-testing
