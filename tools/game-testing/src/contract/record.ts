@@ -1,5 +1,6 @@
 import { Effect, Schema, SchemaGetter, SchemaIssue } from "effect";
-import { StatePlan } from "./plan.ts";
+import { NamedStart } from "./bases.ts";
+import { PlannedBase, StatePlan } from "./plan.ts";
 import { ReadBack, StartState, TextSpeed } from "./state.ts";
 import { PlaceId, RunId, SessionId, Value } from "./values.ts";
 
@@ -119,6 +120,8 @@ export const KeptSave = Schema.Struct({
 	found: Instant,
 	progress: KeptFile,
 	caption: KeptFile,
+	/** The `option.sav` the start used, kept with the built save alone. */
+	option: Schema.optionalKey(KeptFile),
 });
 export type KeptSave = typeof KeptSave.Type;
 
@@ -174,6 +177,10 @@ export class RunRecord extends Schema.Class<
 	textSpeed: Schema.optionalKey(TextSpeed),
 	script: Schema.optionalKey(ScriptSource),
 	state: StartState,
+	/** The save the start was built on, and the run's save it is if it is one; absent until the state is planned. */
+	base: Schema.optionalKey(PlannedBase),
+	/** The named start the state named, as it stood when the run planned it. */
+	start: Schema.optionalKey(NamedStart),
 	/**
 	 * What the start wrote into its base, each value with where it came from, and what it left alone, and where its
 	 * location stood Link; absent until the state is planned.

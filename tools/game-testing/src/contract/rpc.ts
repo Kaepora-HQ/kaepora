@@ -13,12 +13,14 @@ import {
 	ImageBuildFailed,
 	LaunchFailed,
 	ModUnreadable,
+	NameTaken,
 	NobodyThere,
 	NoFreePlace,
 	NoGameHere,
 	NoGraphicsCard,
 	ProvesNothing,
 	RunNotFound,
+	RunUnreadable,
 	SaveUnreadable,
 	SessionNotFound,
 	SpotRefused,
@@ -32,6 +34,7 @@ import {
 	WaitTimedOut,
 	WriteUnsupported,
 } from "../errors.ts";
+import { Base, Catalog, NewBase } from "./bases.ts";
 import { StatePlan } from "./plan.ts";
 import { Outcome, RunList, RunRecord, ScriptSource } from "./record.ts";
 import { ChestSpots, Mark, PlayedSpot, Recordings, Spot } from "./spots.ts";
@@ -333,7 +336,21 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("MarkSpot", {
 		payload: { run: RunId },
 		success: Mark,
-		error: Schema.Union([SpotRefused, RunNotFound, NoGameHere, DumpFailed]),
+		error: Schema.Union([
+			SpotRefused,
+			RunNotFound,
+			RunUnreadable,
+			NoGameHere,
+			DumpFailed,
+		]),
+	}),
+	/** Every base and named start, with what an agent choosing a start reads. */
+	Rpc.make("Bases", { success: Catalog }),
+	/** Keeps a save the game wrote as a base on this machine, which a state's base names at once. */
+	Rpc.make("NameBase", {
+		payload: NewBase,
+		success: Base,
+		error: Schema.Union([NameTaken, StateRefused, SaveUnreadable]),
 	}),
 	Rpc.make("Runs", {
 		payload: { script: Schema.optionalKey(Schema.String), limit: Schema.Int },
@@ -342,7 +359,7 @@ export class GameRpcs extends RpcGroup.make(
 	Rpc.make("Run", {
 		payload: { run: RunId },
 		success: RunRecord,
-		error: RunNotFound,
+		error: Schema.Union([RunNotFound, RunUnreadable]),
 	}),
 	/** A picture or a kept save's file of a run, by its name in the run's folder. */
 	Rpc.make("RunFile", {

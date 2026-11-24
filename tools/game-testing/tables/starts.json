@@ -1,0 +1,10 @@
+[
+	{
+		"name": "adult-forest-temple-door",
+		"about": "An adult outside the Forest Temple's door with the Hookshot, who learnt the Minuet of the Forest there, on the early adult.",
+		"base": "early-adult",
+		"location": "SacredForestMeadow_Adult/OutsideOfForestTemple",
+		"withItems": ["Item_Hookshot", "Item_Melody_ForestMinuet"],
+		"story": { "events": ["Dm_MelodyGet_Forest"] }
+	}
+]

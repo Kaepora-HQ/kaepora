@@ -11,6 +11,7 @@ import {
 	Duration,
 	Effect,
 	FileSystem,
+	Formatter,
 	Layer,
 	Option,
 	Path,
@@ -22,11 +23,14 @@ import {
 import { McpServer } from "effect/ai";
 import { Argument, CliError, Command, Flag } from "effect/cli";
 import { UserDirectories } from "effect/persistence";
+import type { Catalog } from "./contract/bases.ts";
+import { Hour, keptText, NewBase } from "./contract/bases.ts";
 import type { Origin, PlannedEdit, StatePlan } from "./contract/plan.ts";
-import { originText } from "./contract/plan.ts";
+import { baseText, originText } from "./contract/plan.ts";
 import type { Outcome } from "./contract/record.ts";
 import type { ChestSpots, StartSpot } from "./contract/spots.ts";
 import { SpotName } from "./contract/spots.ts";
+import type { Location } from "./contract/state.ts";
 import { StartState } from "./contract/state.ts";
 import { NameKind, RunId } from "./contract/values.ts";
 import { namesHere, writeNames } from "./data/declarations.ts";
@@ -36,7 +40,7 @@ import type { Keep } from "./emulator/recorder.ts";
 import { recordHere, watchChests } from "./emulator/recorder.ts";
 import { TokenRequired } from "./errors.ts";
 import { farUrl, token, tokenFile } from "./far.ts";
-import { host, tables } from "./host/host.ts";
+import { bases as basesHere, host, tables } from "./host/host.ts";
 import { Places } from "./host/places.ts";
 import { Runs } from "./host/runs.ts";
 import { Machine } from "./machine.ts";
@@ -47,14 +51,17 @@ import {
 	serverName,
 } from "./mcp/server.ts";
 import { readMod, scriptMod } from "./mod.ts";
+import { Bases } from "./save/bases.ts";
 import { markSpot } from "./save/marks.ts";
 import { chestSpots, intoTracked, keepPlayed, Spots } from "./save/spots.ts";
 import { StartStates } from "./save/state.ts";
 import {
+	baseLine,
 	OwnTables,
-	parseSpots,
+	readSpots,
 	searchNames,
 	spotsText,
+	trackedBases,
 	trackedSpots,
 } from "./save/tables.ts";
 import { proveScript } from "./scripts/prove.ts";
@@ -309,7 +316,17 @@ const printPlan = (planned: StatePlan) =>
 		const started = Arr.filter(planned.edits, (edit) => fromMod(edit.from));
 		const left = Arr.filter(planned.leftAlone, (each) => !fromMod(each.from));
 		const moved = Arr.filter(planned.leftAlone, (each) => fromMod(each.from));
-		yield* Console.log(`From ${planned.base.name}: ${planned.base.about}`);
+		if (planned.start !== undefined) {
+			yield* Console.log(
+				`From the start ${planned.start.name}: ${planned.start.about}`
+			);
+		}
+		const { from } = planned.base;
+		const kept =
+			"name" in planned.base && from !== undefined ? `, ${keptText(from)}` : "";
+		yield* Console.log(
+			`${planned.start === undefined ? "From" : "On"} ${baseText(planned.base)}${kept}: ${planned.base.about}`
+		);
 		if (planned.location !== undefined) {
 			yield* Console.log(standing(planned.location));
 		}
@@ -352,17 +369,7 @@ const plan = Command.make(
 					Effect.gen(function* () {
 						const states = yield* StartStates;
 						const { state, mod } = yield* declaredIn(file, namesHere);
-						const { base, edits, leftAlone, location } = yield* states.plan(
-							state,
-							mod
-						);
-						const planned: StatePlan = {
-							base,
-							edits,
-							leftAlone,
-							...(location === undefined ? {} : { location }),
-						};
-						return planned;
+						return yield* states.plan(state, mod);
 					}).pipe(Effect.provide(tables)),
 					Effect.fnUntraced(function* (machine) {
 						const names = yield* machine.names;
@@ -423,12 +430,18 @@ const search = Command.make(
 					Effect.gen(function* () {
 						const data = yield* GameData;
 						const own = yield* OwnTables;
-						const kept = yield* Spots.use((service) => service.all);
+						const kept = yield* Effect.all(
+							{
+								spots: Spots.use((service) => service.all),
+								bases: Bases.use((service) => service.all),
+							},
+							{ concurrency: 1 }
+						);
 						return yield* searchNames(data, own, kept, text, {
 							limit,
 							kind: Option.getOrUndefined(kind),
 						});
-					}).pipe(Effect.provide([GameData.layer, Spots.layer])),
+					}).pipe(Effect.provide([GameData.layer, Spots.layer, basesHere])),
 					(machine) =>
 						machine.call((client) =>
 							client.Search({
@@ -652,8 +665,7 @@ const moveSpots = Command.make("move-spots", {}, () =>
 					"Nothing is recorded that git does not have."
 				);
 			}
-			const text = yield* Effect.orDie(fs.readFileString(trackedSpots));
-			const tracked = yield* Effect.orDie(parseSpots(text));
+			const tracked = yield* readSpots(trackedSpots);
 			yield* Effect.orDie(
 				fs.writeFileString(
 					trackedSpots,
@@ -676,13 +688,13 @@ const moveSpots = Command.make("move-spots", {}, () =>
 				);
 			}
 			yield* Console.log(
-				"They are in this package's tables/spots.tsv now, and no longer recorded there. Commit the table."
+				`They are in ${trackedSpots} now, and no longer recorded there: commit it.`
 			);
 		})
 	)
 ).pipe(
 	Command.withDescription(
-		"Moves the spots and marks recorded on the machine that plans looks, with GAME_TESTING_URL the far one, into this package's tables/spots.tsv, and takes them out of what is recorded there. Run it from the worktree you commit in."
+		"Moves the spots and marks recorded on the machine that runs looks, with GAME_TESTING_URL the far one, into the tables/spots.tsv of the package it runs from, takes them out of what is recorded there, and prints that table's path."
 	)
 );
 
@@ -778,6 +790,188 @@ const prove = Command.make(
 ).pipe(
 	Command.withDescription(
 		"Proves chests' spots by looks: each chest is put back closed, Link starts on its spot, and A opens it. A run that passed marks the spot proven and one that failed marks it failed, in the spots of the machine that ran it. About 40 seconds a chest, one at a time."
+	)
+);
+
+/** Where Link stands, as a line says it: a location's name, or a scene, its room, the place and the facing. */
+const standText = (stands: typeof Location.Type | undefined) => {
+	if (stands === undefined) {
+		return "its files are not where looks run";
+	}
+	if (typeof stands === "string") {
+		return `at ${stands}`;
+	}
+	const [x, y, z] = Arr.map(stands.position, (axis) => axis.toFixed(1));
+	return `in ${stands.scene}${stands.room === undefined ? "" : ` room ${stands.room}`} at (${x}, ${y}, ${z}) facing ${stands.facing.toFixed(0)}`;
+};
+
+/** The catalog as `bases` prints it: each base, then each start, with its line and what it was made from. */
+const printCatalog = (catalog: Catalog) =>
+	Effect.forEach(
+		[
+			...Arr.flatMap(catalog.bases, (base) => [
+				`${base.name}  base  ${base.age}, ${base.hour}, ${standText(base.stands)}`,
+				`    ${base.about}`,
+				`    made from ${base.from === undefined ? "a save the game wrote" : keptText(base.from)}${base.recorded ? "; recorded on the game's machine, not yet in git" : ""}`,
+			]),
+			...Arr.flatMap(catalog.starts, ({ start, age, hour, stands }) => {
+				const { name, about, base, ...words } = start;
+				return [
+					`${name}  start  ${age}, ${hour}, ${standText(stands)}`,
+					`    ${about}`,
+					`    made from ${base} with ${Formatter.formatJson(words)}`,
+				];
+			}),
+		],
+		(line) => Console.log(line),
+		{ concurrency: 1, discard: true }
+	);
+
+const bases = Command.make("bases", {}, () =>
+	shown(
+		Effect.flatMap(
+			hereOrFar(
+				Bases.use((kept) => kept.catalog).pipe(Effect.provide(basesHere)),
+				(machine) => machine.call((client) => client.Bases())
+			),
+			printCatalog
+		)
+	)
+).pipe(
+	Command.withDescription(
+		"Lists every base and every named start a state's base can name: its age and hour, where Link stands, what it holds and what it was made from. With GAME_TESTING_URL, the far machine's."
+	)
+);
+
+/** A save's files from a folder: its progress.sav and caption.sav, and its option.sav if it has one. Nothing else is read. */
+const folderFiles = Effect.fnUntraced(function* (folder: string) {
+	const fs = yield* FileSystem.FileSystem;
+	const option = `${folder}/option.sav`;
+	return {
+		progress: yield* fs.readFile(`${folder}/progress.sav`),
+		caption: yield* fs.readFile(`${folder}/caption.sav`),
+		...((yield* fs.exists(option))
+			? { option: yield* fs.readFile(option) }
+			: {}),
+	};
+});
+
+const nameBase = Command.make(
+	"name-base",
+	{
+		name: Argument.String("name").pipe(
+			Argument.withDescription("Lowercase words joined by hyphens.")
+		),
+		about: Flag.String("about").pipe(
+			Flag.withDescription("One line on what the save holds and where Link is.")
+		),
+		hour: Flag.Literals("hour", Hour.literals).pipe(
+			Flag.withDescription(
+				"Whether the save is by day or by night, as its pictures show."
+			)
+		),
+		run: Flag.String("run").pipe(Flag.withSchema(RunId), Flag.optional),
+		save: Flag.Int("save").pipe(
+			Flag.withDescription(
+				"The run's save by its number in the run's folder; the last save the game wrote unless given."
+			),
+			Flag.optional
+		),
+		folder: Flag.Directory("folder", { mustExist: true }).pipe(
+			Flag.withDescription(
+				"A folder that holds a save's progress.sav and caption.sav, and its option.sav if it has one."
+			),
+			Flag.optional
+		),
+	},
+	({ name, about, hour, run: from, save, folder }) =>
+		shown(
+			Effect.gen(function* () {
+				const refused = (userMessage: string) =>
+					Effect.fail(CliError.UserError.make({ cause: name, userMessage }));
+				if (Option.isSome(from) && Option.isSome(folder)) {
+					return yield* refused(
+						"Give one save to name: --run or --folder, not both."
+					);
+				}
+				const source = yield* Option.match(from, {
+					onSome: (ran) =>
+						Effect.succeed({
+							run: ran,
+							...Option.match(save, {
+								onNone: () => ({}),
+								onSome: (number) => ({ save: number }),
+							}),
+						}),
+					onNone: () =>
+						Option.match(folder, {
+							onSome: folderFiles,
+							onNone: () =>
+								refused("Give the save to name: --run, or --folder."),
+						}),
+				});
+				const request = yield* Schema.decodeEffect(NewBase)({
+					name,
+					about,
+					hour,
+					source,
+				});
+				const named = yield* hereOrFar(
+					Bases.use((kept) => kept.name(request)).pipe(
+						Effect.provide(basesHere)
+					),
+					(machine) => machine.call((client) => client.NameBase(request))
+				);
+				yield* Console.log(
+					`${named.name}  base  ${named.age}, ${named.hour}, made from ${named.from === undefined ? "a save the game wrote" : keptText(named.from)}. base: "${named.name}" starts from it now.`
+				);
+			})
+		)
+).pipe(
+	Command.withDescription(
+		"Keeps a save the game wrote as a base under a name, with a line on what it holds: a run's save, the last the game wrote unless --save is given, or a save in a folder, such as one from play. The base works at once on the machine that runs looks, with GAME_TESTING_URL the far one, and move-bases puts its row into git. A folder without option.sav takes the new game's."
+	)
+);
+
+const moveBases = Command.make("move-bases", {}, () =>
+	shown(
+		Effect.gen(function* () {
+			const fs = yield* FileSystem.FileSystem;
+			const own = yield* OwnTables;
+			const catalog = yield* hereOrFar(
+				Bases.use((kept) => kept.catalog).pipe(Effect.provide(basesHere)),
+				(machine) => machine.call((client) => client.Bases())
+			);
+			const moving = Arr.filter(
+				catalog.bases,
+				(base) => base.recorded && !own.bases.has(base.name)
+			);
+			if (moving.length === 0) {
+				return yield* Console.log(
+					"Nothing is recorded that git does not have."
+				);
+			}
+			const table = yield* fs.readFileString(trackedBases);
+			yield* fs.writeFileString(
+				trackedBases,
+				`${table}${Arr.join(
+					Arr.map(moving, ({ recorded: _, stands: __, ...base }) =>
+						baseLine(base)
+					),
+					"\n"
+				)}\n`
+			);
+			for (const base of moving) {
+				yield* Console.log(`${base.name}  moved`);
+			}
+			yield* Console.log(
+				`They are in ${trackedBases} now: commit it. Their files stay on the game machine, in its data folder's bases/<name>/.`
+			);
+		})
+	)
+).pipe(
+	Command.withDescription(
+		"Moves the rows of the bases named on the machine that runs looks, with GAME_TESTING_URL the far one, into the tables/bases.tsv of the package it runs from, and prints that table's path."
 	)
 );
 
@@ -934,6 +1128,9 @@ export const cli = Command.make("game-testing").pipe(
 		record,
 		moveSpots,
 		prove,
+		bases,
+		nameBase,
+		moveBases,
 		runs,
 		names,
 		mcp,

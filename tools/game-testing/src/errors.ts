@@ -73,6 +73,7 @@ export class StateRefused extends Schema.TaggedError<
 		"no-slot",
 		"incomplete",
 		"no-place",
+		"no-save",
 	]),
 	detail: Schema.String,
 }) {
@@ -523,6 +524,29 @@ export class SpotRefused extends Schema.TaggedError<
 }) {
 	override get message() {
 		return `No spot is kept for ${this.spot}: ${this.detail}`;
+	}
+}
+
+/** A base was not named: a base or a start already has its name. */
+export class NameTaken extends Schema.TaggedError<
+	NameTaken,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/NameTaken")("NameTaken", { base: Schema.String }) {
+	override get message() {
+		return `The name ${this.base} is taken, by a base or a start.`;
+	}
+}
+
+/** A run's record that this build of the tool cannot decode, such as one another version wrote. */
+export class RunUnreadable extends Schema.TaggedError<
+	RunUnreadable,
+	{ readonly brand: unique symbol }
+>("game-testing/errors/RunUnreadable")("RunUnreadable", {
+	run: RunId,
+	detail: Schema.String,
+}) {
+	override get message() {
+		return `Run ${this.run}'s record cannot be read by this build of the tool: ${this.detail}`;
 	}
 }
 

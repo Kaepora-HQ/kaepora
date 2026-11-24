@@ -66,6 +66,8 @@ export const game: FakeGame = {
 		Sequence_IsLoadingBanc: { type: "Bool", value: false, file: unsaved },
 		Sequence_CurrentBanc: { type: "String64", value: "" },
 		Sequence_IsChildhood: { type: "Bool", value: true },
+		DungeonRoom: { type: "Int", value: 0 },
+		"0x4a6bdb7d": { type: "String32", value: "" },
 		"CaptionData.IsAutoSave": { type: "Bool", value: true, file: 2 },
 		"IsTreasureBoxOpen.5005": { type: "Bool", value: false },
 		"IsTreasureBoxOpen.6006": { type: "Bool", value: false },
@@ -103,6 +105,8 @@ export const game: FakeGame = {
 /** What the base save holds over the game's defaults: Link in Kokiri Forest. */
 const baseHolds: Readonly<Record<string, Scalar>> = {
 	Sequence_CurrentBanc: "KokiriForest",
+	DungeonRoom: -1,
+	"PlayerStatus.SavePos": [1, 2, 3],
 };
 
 const userFolderOf = (profiles: Uint8Array) => {
@@ -209,13 +213,29 @@ export const fakeMachine = (options?: {
 		);
 		const caption = yield* fakeSave(game, 2);
 		const option = new Uint8Array([1, 2, 3]);
-		const base = `${home}/data/game-testing/bases/test-base`;
-		yield* fs.makeDirectory(base, { recursive: true });
-		yield* fs.writeFile(`${base}/progress.sav`, progress);
-		yield* fs.writeFile(`${base}/caption.sav`, caption);
-		yield* fs.writeFile(`${base}/option.sav`, option);
+		// The new game's base holds the same save, as the option.sav a base from a folder without one takes.
+		for (const name of ["test-base", "new-game-autosave"]) {
+			const base = `${home}/data/game-testing/bases/${name}`;
+			yield* fs.makeDirectory(base, { recursive: true });
+			yield* fs.writeFile(`${base}/progress.sav`, progress);
+			yield* fs.writeFile(`${base}/caption.sav`, caption);
+			yield* fs.writeFile(`${base}/option.sav`, option);
+		}
 		const sha256 = (bytes: Uint8Array) =>
 			new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
+		const baseRow = (name: string) =>
+			[
+				name,
+				{
+					name,
+					hour: "day",
+					age: "child",
+					progress: sha256(progress),
+					caption: sha256(caption),
+					option: sha256(option),
+					about: "the fake game's defaults, in Kokiri Forest",
+				},
+			] as const;
 
 		const skips = `${home}/data/game-testing/skips`;
 		if (options?.noSkips !== true) {
@@ -419,17 +439,15 @@ export const fakeMachine = (options?: {
 					},
 				],
 				chests: ["Fake Chest Check"],
-				bases: new Map([
+				bases: new Map([baseRow("test-base"), baseRow("new-game-autosave")]),
+				starts: new Map([
 					[
-						"test-base",
+						"test-start",
 						{
-							name: "test-base",
-							hour: "day",
-							age: "child",
-							progress: sha256(progress),
-							caption: sha256(caption),
-							option: sha256(option),
-							about: "the fake game's defaults, in Kokiri Forest",
+							name: "test-start",
+							about: "the test base with 5 rupees",
+							base: "test-base",
+							set: { "PlayerStatus.CurrentRupee": 5 },
 						},
 					],
 				]),

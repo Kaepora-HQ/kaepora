@@ -39,6 +39,7 @@ import type {
 	NoGameHere,
 	RemoteUnavailable,
 	RunNotFound,
+	RunUnreadable,
 	StartError,
 	VersionMismatch,
 } from "./errors.ts";
@@ -100,7 +101,7 @@ export class Machine extends Context.Service<
 		/** A run's record: this machine's copy once it has one, else the machine's own. */
 		readonly record: (
 			run: RunId
-		) => Effect.Effect<RunRecord, RunNotFound | Unreachable>;
+		) => Effect.Effect<RunRecord, RunNotFound | RunUnreadable | Unreachable>;
 		/** A picture or a kept save's file of a run, by its name in the run's folder, from where `record` reads. */
 		readonly file: (
 			run: RunId,
@@ -141,8 +142,11 @@ export class Machine extends Context.Service<
 				env: {},
 				record: runs.get,
 				file: runs.file,
+				// A record this build wrote as the run went decodes.
 				landed: (run) =>
-					finalOf(run, runs.get).pipe(
+					finalOf(run, (each) =>
+						Effect.catchTag(runs.get(each), "RunUnreadable", Effect.die)
+					).pipe(
 						Effect.map(
 							(record): Landed => ({ record, folder: runs.folder(run) })
 						),
@@ -190,6 +194,7 @@ export class Machine extends Context.Service<
 							...Arr.flatMap(record.saves ?? [], (save) => [
 								save.progress.path,
 								save.caption.path,
+								...(save.option === undefined ? [] : [save.option.path]),
 							]),
 						],
 						(file) =>
@@ -224,6 +229,8 @@ export class Machine extends Context.Service<
 						call((client) => client.Run({ run: each }))
 					).pipe(
 						Effect.catchTags({
+							RunUnreadable: (unreadable) =>
+								Effect.fail(failed(run, unreadable.message)),
 							RemoteUnavailable: (lost) =>
 								Effect.fail(failed(run, lost.message)),
 							VersionMismatch: (other) =>

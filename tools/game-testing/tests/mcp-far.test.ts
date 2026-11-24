@@ -321,6 +321,7 @@ describe("the MCP tools for an agent on another machine", () => {
 				expect(kept).toEqual([
 					"picture-1.png",
 					"save-0-caption.sav",
+					"save-0-option.sav",
 					"save-0-progress.sav",
 					"save-1-caption.sav",
 					"save-1-progress.sav",
@@ -472,6 +473,7 @@ describe("the MCP tools for an agent on another machine", () => {
 					"picture-3.png",
 					"record.json",
 					"save-0-caption.sav",
+					"save-0-option.sav",
 					"save-0-progress.sav",
 				]);
 			}).pipe(Effect.scoped, Effect.provide(BunServices.layer)),

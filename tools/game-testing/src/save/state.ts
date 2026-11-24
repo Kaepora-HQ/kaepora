@@ -12,6 +12,7 @@ import {
 	String as Str,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
+import { joined } from "../contract/bases.ts";
 import type { Origin, PlannedEdit, StatePlan } from "../contract/plan.ts";
 import { originText } from "../contract/plan.ts";
 import type { Spot, StartSpot } from "../contract/spots.ts";
@@ -28,32 +29,34 @@ import type {
 } from "../data/game-data.ts";
 import { GameData, nearest, valueHash } from "../data/game-data.ts";
 import { encodeValue } from "../emulator/values.ts";
-import type { DumpFailed } from "../errors.ts";
+import type { DumpFailed, SaveUnreadable } from "../errors.ts";
 import {
 	ModUnreadable,
-	SaveUnreadable,
 	StateRefused,
 	UnknownName,
 	ValueRefused,
 } from "../errors.ts";
 import { readMod } from "../mod.ts";
-import { sha256 } from "../sha256.ts";
+import type { Footing } from "./bases.ts";
+import { Bases } from "./bases.ts";
 import type { SaveFile } from "./codec.ts";
 import { decode, encode, read, write } from "./codec.ts";
+import { ageIn, degrees, radians, unnamed } from "./held.ts";
 import type { Weight, Writer } from "./pouch.ts";
 import { makePouch, rowOf, slotOf } from "./pouch.ts";
 import { aboutSpot, placedFor, Spots, workedOut } from "./spots.ts";
-import type { Base, Check, Stock } from "./tables.ts";
+import type { Check, Stock } from "./tables.ts";
 import { OwnTables } from "./tables.ts";
 
 export interface Plan extends StatePlan {
-	readonly base: Base;
+	/** Where the base's files are on this machine. */
+	readonly footing: Footing;
 	/** The mod the place gets alone, if any. */
 	readonly mod: Option.Option<Mod>;
 }
 
-/** What the state's words write, before the base and the mod are named beside them. */
-type Written = Omit<StatePlan, "base">;
+/** What the state's words write, before the base, the start and the mod are named beside them. */
+type Written = Omit<StatePlan, "base" | "start">;
 
 /** A place's save: the state written into the base's `progress.sav` and `caption.sav`, and the base's `option.sav`. */
 export interface Saves {
@@ -61,16 +64,6 @@ export interface Saves {
 	readonly option: Uint8Array;
 	readonly progress: Uint8Array;
 }
-
-/** Values of the save no string of the game names, found by comparing saves the game wrote. */
-const unnamed = {
-	/** The scene's `DungeonParam` entry, empty outside one. */
-	dungeon: "0x4a6bdb7d",
-	/** Follows `PlayerStatus.SavePos`. */
-	lastPosition: "0x8773f02d",
-	/** The caption's `<folder>/<scene>`. */
-	captionLabel: "0x0cccc6cd",
-} as const;
 
 /**
  * A grotto is a hole, the anchor named `HidingHole_FieldEntranceGo`, over a floor, the anchor named
@@ -105,8 +98,6 @@ const weights: Readonly<Record<Weight, number>> = {
 	written: 3,
 };
 
-const degrees = (angle: number) => (angle * 180) / Math.PI;
-const radians = (angle: number) => (angle * Math.PI) / 180;
 /** The caption's and the map's direction, in degrees: the facing turned half round. */
 const direction = (facing: number) => (((facing % 360) + 360) % 360) - 180;
 /** Link's facing as the game holds it once loaded, in radians above minus half a turn and up to half a turn. */
@@ -146,6 +137,7 @@ export class StartStates extends Context.Service<
 			const data = yield* GameData;
 			const own = yield* OwnTables;
 			const spots = yield* Spots;
+			const bases = yield* Bases;
 			const fs = yield* FileSystem.FileSystem;
 			const paths = yield* Path.Path;
 			const directories = yield* UserDirectories.UserDirectories;
@@ -155,39 +147,12 @@ export class StartStates extends Context.Service<
 			const questNames = yield* data.names("quest");
 			const quests = new Set(questNames);
 
-			/** A file of the base, checked against the SHA-256 `tables/bases.tsv` gives it. */
-			const bytesOf = Effect.fnUntraced(function* (
-				base: Base,
-				file: "progress" | "caption" | "option"
-			) {
-				const path = `${home}/bases/${base.name}/${file}.sav`;
-				if (base[file] === "") {
-					return yield* SaveUnreadable.make({
-						path,
-						detail: `tables/bases.tsv gives ${base.name} no ${file}.sav`,
-					});
-				}
-				const bytes = yield* fs
-					.readFile(path)
-					.pipe(
-						Effect.mapError(() =>
-							SaveUnreadable.make({ path, detail: "there is no such file" })
-						)
-					);
-				if (sha256(bytes) !== base[file]) {
-					return yield* SaveUnreadable.make({
-						path,
-						detail: `its SHA-256 is ${sha256(bytes)}, not the ${base[file]} that tables/bases.tsv gives`,
-					});
-				}
-				return bytes;
-			});
 			const load = Effect.fn("StartStates.load")(function* (
-				base: Base,
+				footing: Footing,
 				file: "progress" | "caption"
 			) {
-				const bytes = yield* bytesOf(base, file);
-				return yield* decode(`${home}/bases/${base.name}/${file}.sav`, bytes);
+				const bytes = yield* bases.bytes(footing, file);
+				return yield* decode(footing.files[file].path, bytes);
 			});
 
 			/** The mod a start names: the caller's, none, or the machine's own that skips. */
@@ -206,20 +171,22 @@ export class StartStates extends Context.Service<
 			};
 
 			const plan = Effect.fn("StartStates.plan")(function* (
-				state: StartState,
+				given: StartState,
 				asked: Mod | "none" | undefined
 			) {
-				const base = own.bases.get(state.base);
-				if (base === undefined) {
-					return yield* UnknownName.make({
-						kind: "base",
-						asked: state.base,
-						suggestions: nearest(state.base, [...own.bases.keys()]),
-					});
-				}
+				const start = Option.fromNullishOr(
+					typeof given.base === "string"
+						? own.starts.get(given.base)
+						: undefined
+				);
+				const state = Option.match(start, {
+					onNone: () => given,
+					onSome: (named) => joined(named, given),
+				});
+				const footing = yield* bases.footing(state.base);
 				const saves = {
-					progress: yield* load(base, "progress"),
-					caption: yield* load(base, "caption"),
+					progress: yield* load(footing, "progress"),
+					caption: yield* load(footing, "caption"),
 				};
 				const mod = yield* modOf(asked);
 				const starts =
@@ -256,7 +223,16 @@ export class StartStates extends Context.Service<
 				}
 				yield* words.set(state.set ?? {});
 				yield* words.counts(state.withItems ?? []);
-				const planned: Plan = { base, mod, ...words.result() };
+				const planned: Plan = {
+					base: footing.base,
+					...Option.match(start, {
+						onNone: () => ({}),
+						onSome: (named) => ({ start: named }),
+					}),
+					footing,
+					mod,
+					...words.result(),
+				};
 				return planned;
 			});
 
@@ -281,12 +257,12 @@ export class StartStates extends Context.Service<
 					const edited = yield* write(save, values, keys);
 					return encode(edited);
 				});
-				const progress = yield* load(planned.base, "progress");
-				const caption = yield* load(planned.base, "caption");
+				const progress = yield* load(planned.footing, "progress");
+				const caption = yield* load(planned.footing, "caption");
 				const saves: Saves = {
 					progress: yield* written("progress", progress),
 					caption: yield* written("caption", caption),
-					option: yield* bytesOf(planned.base, "option"),
+					option: yield* bases.bytes(planned.footing, "option"),
 				};
 				return saves;
 			});
@@ -445,11 +421,10 @@ const makeWords = ({
 	const writer: Writer = { held, current, put };
 	const pouch = makePouch(data, own.tiers, items, writer);
 
-	const childhood = Option.getOrThrowWith(
-		read(saves.progress, Bun.hash.murmur32v3("Sequence_IsChildhood")),
+	const baseAge = Option.getOrThrowWith(
+		ageIn(saves.progress),
 		notOfThisGame("Sequence_IsChildhood")
 	);
-	const baseAge: Age = childhood === true ? "child" : "adult";
 	const ageOf = (age: Age | undefined): Age => age ?? baseAge;
 
 	/** The values a reset place's files name that a start state writes, steps aside. */

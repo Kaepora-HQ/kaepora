@@ -20,6 +20,7 @@ import {
 	Semaphore,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
+import type { StatePlan } from "../contract/plan.ts";
 import type {
 	KeptSave,
 	Outcome,
@@ -34,7 +35,7 @@ import type { PlaceId } from "../contract/values.ts";
 import { Picture, RunId } from "../contract/values.ts";
 import type { WireLog } from "../emulator/emulator.ts";
 import { wireLog } from "../emulator/emulator.ts";
-import { CopyFailed, RunNotFound } from "../errors.ts";
+import { CopyFailed, RunNotFound, RunUnreadable } from "../errors.ts";
 import { sha256 } from "../sha256.ts";
 
 /** What a run's record holds before its state is planned. */
@@ -49,6 +50,8 @@ export type RunHeader = Omit<
 	| "result"
 	| "place"
 	| "mod"
+	| "base"
+	| "start"
 >;
 
 /** Writes one run's record as it goes. */
@@ -64,19 +67,18 @@ export interface Recorder {
 		png: Uint8Array,
 		label: string | undefined
 	) => Effect.Effect<Picture>;
-	/** The start's plan: each value it writes, with where it came from, and what it leaves alone. */
-	readonly planned: (
-		plan: NonNullable<RunRecord["plan"]>
-	) => Effect.Effect<void>;
+	/** The start's plan: its base and named start, each value it writes with where it came from, and what it leaves alone. */
+	readonly planned: (plan: StatePlan) => Effect.Effect<void>;
 	/**
 	 * Keeps a save in the run's folder, numbered by its place in the run's order, and lists it in the record after the
-	 * steps that have run.
+	 * steps that have run. The built save keeps its option.sav too, which a later start from one of the run's saves takes.
 	 */
 	readonly save: (save: {
 		readonly kind: KeptSave["kind"];
 		readonly slot: string;
 		readonly progress: Uint8Array;
 		readonly caption: Uint8Array;
+		readonly option?: Uint8Array;
 		readonly afterPress?: number;
 	}) => Effect.Effect<void>;
 	/** Link can move: the emulator's build, how the game writes its text, and the values the state wrote as it holds them. */
@@ -97,7 +99,8 @@ export interface Recorder {
 
 const RecordJson = Schema.fromJsonString(RunRecord);
 /** The files a run's folder keeps beside its record: its pictures and its saves. */
-const keptName = /^(?:picture-\d+\.png|save-\d+-(?:progress|caption)\.sav)$/u;
+const keptName =
+	/^(?:picture-\d+\.png|save-\d+-(?:progress|caption|option)\.sav)$/u;
 
 /** Why a run that ended without its outcome is broken: what it failed on, or its caller going away. */
 const brokenBy = (exit: Exit.Exit<unknown, unknown>): Outcome => {
@@ -131,7 +134,9 @@ export class Runs extends Context.Service<
 			readonly script?: string | undefined;
 			readonly limit: number;
 		}) => Effect.Effect<RunList>;
-		readonly get: (run: RunId) => Effect.Effect<RunRecord, RunNotFound>;
+		readonly get: (
+			run: RunId
+		) => Effect.Effect<RunRecord, RunNotFound | RunUnreadable>;
 		/** A picture or a kept save's file of a run, by its name in the run's folder. */
 		readonly file: (
 			run: RunId,
@@ -169,7 +174,11 @@ export class Runs extends Context.Service<
 				const text = yield* fs
 					.readFileString(`${folderOf(run)}/record.json`)
 					.pipe(Effect.mapError(() => RunNotFound.make({ run })));
-				return yield* Effect.orDie(Schema.decodeEffect(RecordJson)(text));
+				return yield* Schema.decodeEffect(RecordJson)(text).pipe(
+					Effect.mapError((issue) =>
+						RunUnreadable.make({ run, detail: issue.message })
+					)
+				);
 			});
 
 			const begin = Effect.fn("Runs.begin")(function* (header: RunHeader) {
@@ -238,8 +247,19 @@ export class Runs extends Context.Service<
 								textSpeed,
 							})
 						),
-					planned: (plan) =>
-						update((current) => RunRecord.make({ ...current, plan })),
+					planned: ({ base, start, location, edits, leftAlone }) =>
+						update((current) =>
+							RunRecord.make({
+								...current,
+								base,
+								...(start === undefined ? {} : { start }),
+								plan: {
+									...(location === undefined ? {} : { location }),
+									edits,
+									leftAlone,
+								},
+							})
+						),
 					step: (step) =>
 						update((current) =>
 							RunRecord.make({ ...current, steps: [...current.steps, step] })
@@ -249,10 +269,14 @@ export class Runs extends Context.Service<
 						slot,
 						progress,
 						caption,
+						option,
 						afterPress,
 					}) {
 						const order = yield* Ref.getAndUpdate(saves, (n) => n + 1);
-						const kept = (part: "progress" | "caption", bytes: Uint8Array) =>
+						const kept = (
+							part: "progress" | "caption" | "option",
+							bytes: Uint8Array
+						) =>
 							Effect.as(
 								Effect.orDie(
 									fs.writeFile(`${folder}/save-${order}-${part}.sav`, bytes)
@@ -262,6 +286,9 @@ export class Runs extends Context.Service<
 						const files = {
 							progress: yield* kept("progress", progress),
 							caption: yield* kept("caption", caption),
+							...(option === undefined
+								? {}
+								: { option: yield* kept("option", option) }),
 						};
 						const found = yield* Clock.currentTimeMillis;
 						yield* update((current) =>

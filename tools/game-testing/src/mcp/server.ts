@@ -672,7 +672,7 @@ const handlers = tools.toLayer(
 					mod === undefined || mod === "none"
 						? mod
 						: yield* readMod(fs, path, mod.folder);
-				const { base, edits, leftAlone, location } = yield* machine.call(
+				const { base, start, edits, leftAlone, location } = yield* machine.call(
 					(client) =>
 						client.Plan({
 							state,
@@ -680,7 +680,8 @@ const handlers = tools.toLayer(
 						})
 				);
 				const head = {
-					base: { name: base.name, about: base.about },
+					base,
+					...(start === undefined ? {} : { start }),
 					...(location === undefined ? {} : { location }),
 				};
 				const count = fitting(

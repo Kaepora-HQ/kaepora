@@ -63,6 +63,9 @@ export type SessionId = typeof SessionId.Type;
  * One run's record, named by its start time in UTC and a random suffix, such as `20261121-142233-k3f9`. The record's
  * folder takes the name, so nothing else passes.
  */
+/** A save's number among a run's saves, `save-<n>-progress.sav`, from 1: save 0 is the one the tool built. */
+export const SaveNumber = Schema.Int.check(Schema.isGreaterThanOrEqualTo(1));
+
 export const RunId = Schema.String.check(
 	Schema.isPattern(/^\d{8}-\d{6}-[0-9a-z]{4}$/u)
 ).pipe(Schema.brand("RunId"));

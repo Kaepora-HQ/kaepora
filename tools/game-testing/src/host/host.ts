@@ -10,6 +10,7 @@ import { RpcSerialization, RpcServer } from "effect/rpc";
 import { GameRpcs } from "../contract/rpc.ts";
 import { GameData } from "../data/game-data.ts";
 import { Launcher } from "../emulator/launcher.ts";
+import { Bases } from "../save/bases.ts";
 import { Spots } from "../save/spots.ts";
 import { StartStates } from "../save/state.ts";
 import { Boot } from "./boot.ts";
@@ -18,15 +19,18 @@ import { Places } from "./places.ts";
 import { Runs } from "./runs.ts";
 import { Sessions } from "./sessions.ts";
 
-/** The game's tables and the start states built on them, on our own tables. */
+/** The bases, on our own tables and this machine's runs. */
+export const bases = Bases.layer.pipe(Layer.provideMerge(Runs.layer));
+
+/** The game's tables, the bases and the start states built on them, on our own tables. */
 export const tables = StartStates.layer.pipe(
-	Layer.provideMerge(Layer.merge(GameData.layer, Spots.layer))
+	Layer.provideMerge(Layer.mergeAll(GameData.layer, Spots.layer, bases))
 );
 
 /** Every service a host's commands use, on our own tables. */
 export const services = Sessions.layer.pipe(
 	Layer.provideMerge(Boot.layer),
-	Layer.provideMerge(Layer.mergeAll(Places.layer, Launcher.layer, Runs.layer)),
+	Layer.provideMerge(Layer.mergeAll(Places.layer, Launcher.layer)),
 	Layer.provideMerge(tables),
 	Layer.provide(SecureRandom.layerWebCrypto)
 );

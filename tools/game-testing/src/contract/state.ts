@@ -3,7 +3,7 @@
  * through the game's tables and refuses the whole state before the emulator starts.
  */
 import { Array as Arr, Schema, String as Str } from "effect";
-import { Saved, Value } from "./values.ts";
+import { RunId, Saved, SaveNumber, Value } from "./values.ts";
 
 /** Swapping age also swaps the sword and shield, as the game does. */
 export const Age = Schema.Literals(["child", "adult"]);
@@ -48,12 +48,22 @@ export const Story = Schema.Struct({
 	events: Schema.optionalKey(Schema.Array(Schema.String)),
 });
 
+/**
+ * A save a run kept, by the run and the save's number in its folder, `save-<n>-progress.sav`: the last save the game
+ * wrote in the run unless given. Save 0 is the one built for the run's start, which the game did not write.
+ */
+export const RunSave = Schema.Struct({
+	run: RunId,
+	save: Schema.optionalKey(SaveNumber),
+});
+export type RunSave = typeof RunSave.Type;
+
 export class StartState extends Schema.Class<
 	StartState,
 	{ readonly brand: unique symbol }
 >("game-testing/contract/state/StartState")({
-	/** A row of `tables/bases.tsv`, such as `new-game`; the base's hour is the run's hour. */
-	base: Schema.String,
+	/** A base by its name, such as `new-game-autosave`, or a save a run kept; the base's hour is the run's hour. */
+	base: Schema.Union([Schema.String, RunSave]),
 	startValues: Schema.optionalKey(
 		Schema.Literals(["mod", "base"]).annotate({
 			description:
