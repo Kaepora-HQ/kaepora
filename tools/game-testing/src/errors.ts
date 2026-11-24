@@ -527,13 +527,13 @@ export class SpotRefused extends Schema.TaggedError<
 	}
 }
 
-/** A base was not named: a base already has its name. */
+/** A base was not named: a base or a start already has its name. */
 export class NameTaken extends Schema.TaggedError<
 	NameTaken,
 	{ readonly brand: unique symbol }
 >("game-testing/errors/NameTaken")("NameTaken", { base: Schema.String }) {
 	override get message() {
-		return `The name ${this.base} is taken by a base.`;
+		return `The name ${this.base} is taken, by a base or a start.`;
 	}
 }
 

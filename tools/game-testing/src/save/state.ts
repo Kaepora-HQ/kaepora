@@ -12,6 +12,7 @@ import {
 	String as Str,
 } from "effect";
 import { UserDirectories } from "effect/persistence";
+import { joined } from "../contract/bases.ts";
 import type { Origin, PlannedEdit, StatePlan } from "../contract/plan.ts";
 import { originText } from "../contract/plan.ts";
 import type { Spot, StartSpot } from "../contract/spots.ts";
@@ -54,8 +55,8 @@ export interface Plan extends StatePlan {
 	readonly mod: Option.Option<Mod>;
 }
 
-/** What the state's words write, before the base and the mod are named beside them. */
-type Written = Omit<StatePlan, "base">;
+/** What the state's words write, before the base, the start and the mod are named beside them. */
+type Written = Omit<StatePlan, "base" | "start">;
 
 /** A place's save: the state written into the base's `progress.sav` and `caption.sav`, and the base's `option.sav`. */
 export interface Saves {
@@ -170,9 +171,18 @@ export class StartStates extends Context.Service<
 			};
 
 			const plan = Effect.fn("StartStates.plan")(function* (
-				state: StartState,
+				given: StartState,
 				asked: Mod | "none" | undefined
 			) {
+				const start = Option.fromNullishOr(
+					typeof given.base === "string"
+						? own.starts.get(given.base)
+						: undefined
+				);
+				const state = Option.match(start, {
+					onNone: () => given,
+					onSome: (named) => joined(named, given),
+				});
 				const footing = yield* bases.footing(state.base);
 				const saves = {
 					progress: yield* load(footing, "progress"),
@@ -215,6 +225,10 @@ export class StartStates extends Context.Service<
 				yield* words.counts(state.withItems ?? []);
 				const planned: Plan = {
 					base: footing.base,
+					...Option.match(start, {
+						onNone: () => ({}),
+						onSome: (named) => ({ start: named }),
+					}),
 					footing,
 					mod,
 					...words.result(),

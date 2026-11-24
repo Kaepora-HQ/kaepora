@@ -467,6 +467,18 @@ const startStates = (
 				tiers: [],
 				checks,
 				chests,
+				starts: new Map([
+					[
+						"test-start",
+						{
+							name: "test-start",
+							about: "the test base with the Bow and 20 rupees",
+							base: "test-base",
+							withItems: ["Item_Range_Bow"],
+							set: { "PlayerStatus.CurrentRupee": 20 },
+						},
+					],
+				]),
 			})
 		);
 		return StartStates.layer.pipe(
@@ -478,7 +490,10 @@ const startStates = (
 		);
 	}).pipe(Effect.provide(BunFileSystem.layer));
 
-type Words = Omit<ConstructorParameters<typeof StartState>[0], "base">;
+/** A state's words, on the test base unless another base or start is named. */
+type Words = Omit<ConstructorParameters<typeof StartState>[0], "base"> & {
+	readonly base?: string;
+};
 
 const plan = (
 	words: Words,
@@ -534,6 +549,25 @@ const archer = {
 };
 
 describe("the start state", () => {
+	it.effect(
+		"a named start plans its own words and the look's, on its base, and the look's word wins where both give one value",
+		() =>
+			Effect.gen(function* () {
+				const planned = yield* plan({
+					base: "test-start",
+					withItems: ["Item_Sword_Kokiri"],
+					set: { "PlayerStatus.CurrentRupee": 50 },
+				});
+				expect(planned.base).toMatchObject({ name: "test-base" });
+				expect(planned.start).toMatchObject({ name: "test-start" });
+				expect(writes(planned.edits)).toMatchObject({
+					"IsGet.Weapon_Range_Bow": true,
+					"IsGet.Weapon_Sword_Kokiri": true,
+					"PlayerStatus.CurrentRupee": 50,
+				});
+			})
+	);
+
 	it.effect("the Bow in withoutItems gives the 17 values", () =>
 		Effect.gen(function* () {
 			const { edits } = yield* plan(

@@ -3,7 +3,7 @@
  * `plan_state` answer it, and a run's record keeps it.
  */
 import { Schema } from "effect";
-import { KeptFrom, keptText } from "./bases.ts";
+import { KeptFrom, keptText, NamedStart } from "./bases.ts";
 import { StartSpot } from "./spots.ts";
 import { Saved } from "./values.ts";
 
@@ -121,6 +121,8 @@ export const baseText = (base: PlannedBase) =>
  */
 export const StatePlan = Schema.Struct({
 	base: PlannedBase,
+	/** The named start the state named, as it stood, whose words were planned with the state's own. */
+	start: Schema.optionalKey(NamedStart),
 	/** Where the state's location stands Link, and what kind of spot that is. */
 	location: Schema.optionalKey(StartSpot),
 	edits: Schema.Array(PlannedEdit),

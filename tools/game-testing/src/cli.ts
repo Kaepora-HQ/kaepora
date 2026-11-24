@@ -11,6 +11,7 @@ import {
 	Duration,
 	Effect,
 	FileSystem,
+	Formatter,
 	Layer,
 	Option,
 	Path,
@@ -315,11 +316,16 @@ const printPlan = (planned: StatePlan) =>
 		const started = Arr.filter(planned.edits, (edit) => fromMod(edit.from));
 		const left = Arr.filter(planned.leftAlone, (each) => !fromMod(each.from));
 		const moved = Arr.filter(planned.leftAlone, (each) => fromMod(each.from));
+		if (planned.start !== undefined) {
+			yield* Console.log(
+				`From the start ${planned.start.name}: ${planned.start.about}`
+			);
+		}
 		const { from } = planned.base;
 		const kept =
 			"name" in planned.base && from !== undefined ? `, ${keptText(from)}` : "";
 		yield* Console.log(
-			`From ${baseText(planned.base)}${kept}: ${planned.base.about}`
+			`${planned.start === undefined ? "From" : "On"} ${baseText(planned.base)}${kept}: ${planned.base.about}`
 		);
 		if (planned.location !== undefined) {
 			yield* Console.log(standing(planned.location));
@@ -799,7 +805,7 @@ const standText = (stands: typeof Location.Type | undefined) => {
 	return `in ${stands.scene}${stands.room === undefined ? "" : ` room ${stands.room}`} at (${x}, ${y}, ${z}) facing ${stands.facing.toFixed(0)}`;
 };
 
-/** The catalog as `bases` prints it: each base with its line and what it was made from. */
+/** The catalog as `bases` prints it: each base, then each start, with its line and what it was made from. */
 const printCatalog = (catalog: Catalog) =>
 	Effect.forEach(
 		[
@@ -808,6 +814,14 @@ const printCatalog = (catalog: Catalog) =>
 				`    ${base.about}`,
 				`    made from ${base.from === undefined ? "a save the game wrote" : keptText(base.from)}${base.recorded ? "; recorded on the game's machine, not yet in git" : ""}`,
 			]),
+			...Arr.flatMap(catalog.starts, ({ start, age, hour, stands }) => {
+				const { name, about, base, ...words } = start;
+				return [
+					`${name}  start  ${age}, ${hour}, ${standText(stands)}`,
+					`    ${about}`,
+					`    made from ${base} with ${Formatter.formatJson(words)}`,
+				];
+			}),
 		],
 		(line) => Console.log(line),
 		{ concurrency: 1, discard: true }
@@ -825,7 +839,7 @@ const bases = Command.make("bases", {}, () =>
 	)
 ).pipe(
 	Command.withDescription(
-		"Lists every base a state's base can name: its age and hour, where Link stands, what it holds and what it was made from. With GAME_TESTING_URL, the far machine's."
+		"Lists every base and every named start a state's base can name: its age and hour, where Link stands, what it holds and what it was made from. With GAME_TESTING_URL, the far machine's."
 	)
 );
 

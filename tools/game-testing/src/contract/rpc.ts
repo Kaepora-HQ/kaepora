@@ -344,7 +344,7 @@ export class GameRpcs extends RpcGroup.make(
 			DumpFailed,
 		]),
 	}),
-	/** Every base, with what an agent choosing a start reads. */
+	/** Every base and named start, with what an agent choosing a start reads. */
 	Rpc.make("Bases", { success: Catalog }),
 	/** Keeps a save the game wrote as a base on this machine, which a state's base names at once. */
 	Rpc.make("NameBase", {

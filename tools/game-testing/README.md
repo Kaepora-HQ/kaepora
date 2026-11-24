@@ -17,7 +17,7 @@ gt run look.ts       # the start, your steps, and the outcome
 gt plan look.ts      # what the start state writes, without a game
 gt search Slingshot  # the names a state or a script takes
 gt spots             # every chest, and the spot a look starts on before it
-gt bases             # every base a look can start from
+gt bases             # every base and named start a look can start from
 gt runs              # past runs on the game machine
 ```
 
@@ -62,7 +62,7 @@ Only `base` is needed. Every other word changes the base save.
 
 ```ts
 state: {
-	base: "early-adult",                  // a base, as gt bases lists them
+	base: "early-adult",                  // a base or a named start, as gt bases lists them
 	location: "GV Chest",                 // where Link stands: a check, a spot or a landing
 	age: "child",                         // the sword and shield swap with it
 	withItems: ["Item_Hammer", { item: "Item_Token_Gold", count: 30 }], // added to what the base holds
@@ -143,21 +143,25 @@ machine's recorded spots, and prints that table's path. Commit the table.
 
 ## Choose a start
 
-`base` takes one of two things:
+`base` takes one of three things:
 
 ```ts
 base: "new-game-autosave"                      // a base: a save the game wrote, kept under a name
+base: "adult-forest-temple-door"               // a named start: a base and words, under one name
 base: { run: "20261123-231622-oyml" }          // the last save the game wrote in a run
 base: { run: "20261123-231622-oyml", save: 1 } // the run's save-1
 ```
 
-`gt bases` lists every base: its age and hour, where Link stands, what it holds, and what it was made from. Read it to
-choose a start:
+`gt bases` lists every base and named start: its age and hour, where Link stands, what it holds, and what it was made
+from. Read it to choose a start:
 
 ```text
 kokiri-mido-chest-open  base  child, day, in KokiriForest_Child room 0 at (-52.9, 112.3, -41.4) facing 25
     A child before Mido's top left chest, opened, in Mido's house in Kokiri Forest; holding nothing else.
     made from save 1 of run 20261123-231622-oyml
+adult-forest-temple-door  start  adult, day, at SacredForestMeadow_Adult/OutsideOfForestTemple
+    An adult outside the Forest Temple's door with the Hookshot, who learnt the Minuet of the Forest there, on the early adult.
+    made from early-adult with {"location":"SacredForestMeadow_Adult/OutsideOfForestTemple","withItems":["Item_Hookshot","Item_Melody_ForestMinuet"],"story":{"events":["Dm_MelodyGet_Forest"]}}
 ```
 
 A look that needs a long walk to reach its start pays for the walk once. Run the walk as a look, then start the next
@@ -172,10 +176,10 @@ gt name-base --run 20261123-231622-oyml --hour day --about "A child before Mido'
 gt name-base --folder <a save's folder> --hour night --about "Link in the Lost Woods by night." lost-woods-night
 ```
 
-A name is lowercase words joined by hyphens, and no other base has it. `--hour` is `day` or `night`, as the run's last
-picture shows. `--save <n>` names another save of the run than its last. `--folder` reads that folder's `progress.sav`,
-`caption.sav` and, if it has one, `option.sav`, and nothing else: a base without `option.sav` takes the new game's. The
-base's age is read from its save.
+A name is lowercase words joined by hyphens, and no other base or start has it. `--hour` is `day` or `night`, as the
+run's last picture shows. `--save <n>` names another save of the run than its last. `--folder` reads that folder's
+`progress.sav`, `caption.sav` and, if it has one, `option.sav`, and nothing else: a base without `option.sav` takes the
+new game's. The base's age is read from its save.
 
 The base works at once: `base: "<name>"` starts from it, `gt search` finds it, and `gt bases` says it is recorded on the
 game machine and not yet in git. Its three files go to the game machine's data folder, `bases/<name>/`, beside
@@ -196,11 +200,35 @@ Once the game machine runs that commit, git's row is the one it reads. Another g
 A base keeps the run it came from: that run's record holds the run's own base, its words and every step, so a base's
 whole history reads back. Nothing removes a run.
 
+### Named starts
+
+A named start is a base and the words a look adds to it, under one name, in `tables/starts.json`. Many looks share one,
+and it costs no save file:
+
+```json
+{
+	"name": "adult-forest-temple-door",
+	"about": "An adult outside the Forest Temple's door with the Hookshot, who learnt the Minuet of the Forest there, on the early adult.",
+	"base": "early-adult",
+	"location": "SacredForestMeadow_Adult/OutsideOfForestTemple",
+	"withItems": ["Item_Hookshot", "Item_Melody_ForestMinuet"],
+	"story": { "events": ["Dm_MelodyGet_Forest"] }
+}
+```
+
+Look at a new start's first picture: a place can hold a scene that waits for the player. Link arrives outside the Forest
+Temple's door into Sheik's lesson, so this start gives the Minuet and marks the lesson's scene played.
+
+Its `base` is a row of `tables/bases.tsv`, never another start or a run's save. A look that names it adds its own words.
+A word that holds one value, such as `location`, `age` or one name in `set`, is the look's where both give it, and the
+lists of both join. Words of the two that contradict each other, such as one item in `withItems` and `withoutItems`, are
+refused as in one state. `gt plan` names the start and its base. A start is added by a commit.
+
 ## Find a name
 
 `gt search <text>` finds every name a state or a script takes, with its kind: `value`, `item`, `quest`, `event`,
-`scene`, `landing`, `check`, `spot` or `base`. Add `--kind item` to narrow it. A name the game does not have is refused
-with its nearest names.
+`scene`, `landing`, `check`, `spot` or `base`, which finds the named starts too. Add `--kind item` to narrow it. A name
+the game does not have is refused with its nearest names.
 
 ## The steps
 
@@ -287,5 +315,5 @@ The folder also keeps every save of the run, whole, in the order they were writt
 `save-1` on are each autosave and menu save the game wrote, also when the run fails, breaks or stops. The record lists
 each under `saves`: its kind, its slot, how many steps had run when it appeared, the press of `pressUntil` it followed
 when it appeared inside one, and the SHA-256 of each file. A save is about 160 KB. The record also keeps the start's
-base and its plan: each value it wrote, with where it came from. A start that fails before Link can move keeps only the
-built save.
+base, its named start if it had one, and its plan: each value it wrote, with where it came from. A start that fails
+before Link can move keeps only the built save.

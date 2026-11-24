@@ -1,16 +1,19 @@
-/** The saves a start is built on: a base is a save the game wrote, kept under a name with the SHA-256 of each of its files. */
-import { Schema, String as Str } from "effect";
-import { Age, Location, RunSave } from "./state.ts";
+/**
+ * The saves a start is built on and the starts named in git: a base is a save the game wrote, kept under a name with the
+ * SHA-256 of each of its files; a named start is a base and words, under a name of its own.
+ */
+import { Schema, String as Str, Struct } from "effect";
+import { Age, Location, RunSave, StartState } from "./state.ts";
 import { RunId, SaveNumber } from "./values.ts";
 
-/** A base's name: lowercase words joined by hyphens, which a folder and a table's cell both take. */
+/** A base's or a start's name: lowercase words joined by hyphens, which a folder and a table's cell both take. */
 export const BaseName = Schema.String.check(
 	Schema.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)
 );
 
 const lineBreakOrTab = /[\t\n\r]/u;
 
-/** A line on what a base holds, with no tab or line break, which would break its table. */
+/** A line on what a base or a start holds, with no tab or line break, which would break its table. */
 export const About = Schema.String.check(
 	Schema.makeFilter((about) =>
 		Str.isNonEmpty(Str.trim(about)) && !lineBreakOrTab.test(about)
@@ -48,10 +51,74 @@ export const Base = Schema.Struct({
 });
 export type Base = typeof Base.Type;
 
-/** Where Link stands in a base, as its save holds it. */
+/**
+ * A start by name: a base by its name, and the words a look adds to it, kept in `tables/starts.json` so many looks
+ * share one start. A look that names it adds its own words: a word that holds one value, such as `location`, `age` or
+ * one value of `set`, is the look's where both give it, and the lists of both join.
+ */
+export const NamedStart = Schema.Struct({
+	name: BaseName,
+	about: About,
+	base: BaseName,
+	...Struct.omit(StartState.fields, ["base"]),
+});
+export type NamedStart = typeof NamedStart.Type;
+
+/** Two lists of a word joined, the start's first; absent when neither gives it. */
+const both = <A>(
+	start: readonly A[] | undefined,
+	look: readonly A[] | undefined
+) =>
+	start === undefined || look === undefined
+		? (start ?? look)
+		: [...start, ...look];
+
+/** A look's state with a named start's words joined to its own, on the named start's base. */
+export const joined = (start: NamedStart, look: StartState) => {
+	const word = {
+		location: look.location ?? start.location,
+		age: look.age ?? start.age,
+		startValues: look.startValues ?? start.startValues,
+		withItems: both(start.withItems, look.withItems),
+		withoutItems: both(start.withoutItems, look.withoutItems),
+		equipped: both(start.equipped, look.equipped),
+		reset: both(start.reset, look.reset),
+		set: look.set === undefined ? start.set : { ...start.set, ...look.set },
+	};
+	const quests =
+		look.story?.quests === undefined
+			? start.story?.quests
+			: { ...start.story?.quests, ...look.story.quests };
+	const events = both(start.story?.events, look.story?.events);
+	return StartState.make({
+		base: start.base,
+		...(word.location === undefined ? {} : { location: word.location }),
+		...(word.age === undefined ? {} : { age: word.age }),
+		...(word.startValues === undefined
+			? {}
+			: { startValues: word.startValues }),
+		...(word.withItems === undefined ? {} : { withItems: word.withItems }),
+		...(word.withoutItems === undefined
+			? {}
+			: { withoutItems: word.withoutItems }),
+		...(word.equipped === undefined ? {} : { equipped: word.equipped }),
+		...(word.reset === undefined ? {} : { reset: word.reset }),
+		...(word.set === undefined ? {} : { set: word.set }),
+		...(quests === undefined && events === undefined
+			? {}
+			: {
+					story: {
+						...(quests === undefined ? {} : { quests }),
+						...(events === undefined ? {} : { events }),
+					},
+				}),
+	});
+};
+
+/** Where Link stands in a base, as its save holds it; for a start, its own `location` if it gives one. */
 export const Stand = Location;
 
-/** Every base, each with what an agent choosing a start reads. */
+/** Every base and every named start, each with what an agent choosing a start reads. */
 export const Catalog = Schema.Struct({
 	bases: Schema.Array(
 		Schema.Struct({
@@ -59,6 +126,15 @@ export const Catalog = Schema.Struct({
 			/** Whether its row is recorded on this machine and not yet in git. */
 			recorded: Schema.Boolean,
 			/** Absent when its files are not on this machine. */
+			stands: Schema.optionalKey(Stand),
+		})
+	),
+	/** Each start as `tables/starts.json` gives it, with the age, the hour and the place its look starts at. */
+	starts: Schema.Array(
+		Schema.Struct({
+			start: NamedStart,
+			age: Age,
+			hour: Hour,
 			stands: Schema.optionalKey(Stand),
 		})
 	),

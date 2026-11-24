@@ -51,6 +51,7 @@ export type RunHeader = Omit<
 	| "place"
 	| "mod"
 	| "base"
+	| "start"
 >;
 
 /** Writes one run's record as it goes. */
@@ -66,7 +67,7 @@ export interface Recorder {
 		png: Uint8Array,
 		label: string | undefined
 	) => Effect.Effect<Picture>;
-	/** The start's plan: its base, each value it writes with where it came from, and what it leaves alone. */
+	/** The start's plan: its base and named start, each value it writes with where it came from, and what it leaves alone. */
 	readonly planned: (plan: StatePlan) => Effect.Effect<void>;
 	/**
 	 * Keeps a save in the run's folder, numbered by its place in the run's order, and lists it in the record after the
@@ -246,11 +247,12 @@ export class Runs extends Context.Service<
 								textSpeed,
 							})
 						),
-					planned: ({ base, location, edits, leftAlone }) =>
+					planned: ({ base, start, location, edits, leftAlone }) =>
 						update((current) =>
 							RunRecord.make({
 								...current,
 								base,
+								...(start === undefined ? {} : { start }),
 								plan: {
 									...(location === undefined ? {} : { location }),
 									edits,

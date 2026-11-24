@@ -440,6 +440,17 @@ export const fakeMachine = (options?: {
 				],
 				chests: ["Fake Chest Check"],
 				bases: new Map([baseRow("test-base"), baseRow("new-game-autosave")]),
+				starts: new Map([
+					[
+						"test-start",
+						{
+							name: "test-start",
+							about: "the test base with 5 rupees",
+							base: "test-base",
+							set: { "PlayerStatus.CurrentRupee": 5 },
+						},
+					],
+				]),
 				tiers: [],
 				checks: new Map<string, Check>([
 					[

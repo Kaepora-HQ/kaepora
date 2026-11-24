@@ -3,6 +3,7 @@
  *   and the look that started there. `Spots` reads it with the recorded table beside it.
  * - `tables/bases.tsv`: the base saves, whose files stay on machines with the game. `Bases` reads it with the bases
  *   recorded on this machine beside it.
+ * - `tables/starts.json`: the named starts, each a base and words.
  * - Tiers from `remake/items.tsv`: the items that stand for one SoH item, in the table's order, which puts the
  *   Hookshot before the Longshot. The wallets and scales stand there too, highest first; the pouch table joins
  *   those, and its tiers are used before these.
@@ -18,8 +19,13 @@ import {
 	Schema,
 	String as Str,
 } from "effect";
-import type { Base } from "../contract/bases.ts";
-import { About, BaseName, Hour } from "../contract/bases.ts";
+import type { Base, NamedStart } from "../contract/bases.ts";
+import {
+	About,
+	BaseName,
+	Hour,
+	NamedStart as NamedStartSchema,
+} from "../contract/bases.ts";
 import type { NameMatch } from "../contract/rpc.ts";
 import type { Spot } from "../contract/spots.ts";
 import { Found, Look, SpotName } from "../contract/spots.ts";
@@ -205,6 +211,8 @@ export class OwnTables extends Context.Service<
 		readonly chests: readonly string[];
 		/** The tracked bases, `tables/bases.tsv`. */
 		readonly bases: ReadonlyMap<string, Base>;
+		/** The named starts, `tables/starts.json`, each on a tracked base. */
+		readonly starts: ReadonlyMap<string, NamedStart>;
 		readonly tiers: readonly (readonly string[])[];
 		readonly checks: ReadonlyMap<string, Check>;
 	}
@@ -213,6 +221,7 @@ export class OwnTables extends Context.Service<
 		OwnTables,
 		Effect.gen(function* () {
 			const spots = yield* readSpots(trackedSpots);
+			const fs = yield* FileSystem.FileSystem;
 			const rows = yield* readTable(trackedBases, BaseRow);
 			const bases = byName(
 				Arr.map(
@@ -221,6 +230,28 @@ export class OwnTables extends Context.Service<
 						run === "" || save === "" ? row : { ...row, from: { run, save } }
 				)
 			);
+			const startsFile = `${tables}/starts.json`;
+			const starts = yield* fs.readFileString(startsFile).pipe(
+				Effect.orDie,
+				Effect.flatMap(
+					Schema.decodeEffect(
+						Schema.fromJsonString(Schema.Array(NamedStartSchema))
+					)
+				),
+				Effect.catch((issue) =>
+					Effect.die(new Error(`${startsFile}: ${issue.message}`))
+				),
+				Effect.map(byName)
+			);
+			for (const start of starts.values()) {
+				if (bases.has(start.name) || !bases.has(start.base)) {
+					return yield* Effect.die(
+						new Error(
+							`${startsFile}: the start ${start.name} must have a name no base has, on a base of ${trackedBases}.`
+						)
+					);
+				}
+			}
 			const items = yield* readTable(`${remake}/items.tsv`, ItemRow);
 			const placed = yield* Effect.forEach(
 				["chests", "loose_items", "skulltulas"] as const,
@@ -281,6 +312,7 @@ export class OwnTables extends Context.Service<
 						: undefined
 				),
 				checks,
+				starts,
 			});
 		})
 	);
@@ -318,7 +350,7 @@ export const searchNames = Effect.fn("searchNames")(function* (
 			name: spot.name,
 			about: spot.scene,
 		})),
-		...Arr.map(kept.bases, (base) => ({
+		...Arr.map([...kept.bases, ...own.starts.values()], (base) => ({
 			kind: "base",
 			name: base.name,
 			about: base.about,

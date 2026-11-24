@@ -98,7 +98,7 @@ export class Bases extends Context.Service<
 		readonly name: (
 			request: NewBase
 		) => Effect.Effect<Base, NameTaken | StateRefused | SaveUnreadable>;
-		/** Every base, with what an agent choosing a start reads. */
+		/** Every base and named start, with what an agent choosing a start reads. */
 		readonly catalog: Effect.Effect<Catalog>;
 	}
 >()("game-testing/save/bases") {
@@ -189,7 +189,11 @@ export class Bases extends Context.Service<
 				return yield* UnknownName.make({
 					kind: "base",
 					asked,
-					suggestions: nearest(asked, [...own.bases.keys(), ...here.keys()]),
+					suggestions: nearest(asked, [
+						...own.bases.keys(),
+						...here.keys(),
+						...own.starts.keys(),
+					]),
 				});
 			});
 
@@ -310,7 +314,11 @@ export class Bases extends Context.Service<
 			const keep = Effect.fn("Bases.name")(function* (request: NewBase) {
 				const taken = NameTaken.make({ base: request.name });
 				const here = yield* recorded;
-				if (own.bases.has(request.name) || here.has(request.name)) {
+				if (
+					own.bases.has(request.name) ||
+					own.starts.has(request.name) ||
+					here.has(request.name)
+				) {
 					return yield* taken;
 				}
 				const files = yield* sourceFiles(request.source);
@@ -393,7 +401,21 @@ export class Bases extends Context.Service<
 					}),
 					{ concurrency: 4 }
 				);
-				const listed: Catalog = { bases };
+				const starts = Arr.flatMap([...own.starts.values()], (start) =>
+					Arr.map(
+						Arr.filter(bases, (base) => base.name === start.base),
+						(base) => {
+							const stands = start.location ?? base.stands;
+							return {
+								start,
+								age: start.age ?? base.age,
+								hour: base.hour,
+								...(stands === undefined ? {} : { stands }),
+							};
+						}
+					)
+				);
+				const listed: Catalog = { bases, starts };
 				return listed;
 			});
 

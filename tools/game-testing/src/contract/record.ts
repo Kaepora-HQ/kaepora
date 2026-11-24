@@ -1,4 +1,5 @@
 import { Effect, Schema, SchemaGetter, SchemaIssue } from "effect";
+import { NamedStart } from "./bases.ts";
 import { PlannedBase, StatePlan } from "./plan.ts";
 import { ReadBack, StartState, TextSpeed } from "./state.ts";
 import { PlaceId, RunId, SessionId, Value } from "./values.ts";
@@ -178,6 +179,8 @@ export class RunRecord extends Schema.Class<
 	state: StartState,
 	/** The save the start was built on, and the run's save it is if it is one; absent until the state is planned. */
 	base: Schema.optionalKey(PlannedBase),
+	/** The named start the state named, as it stood when the run planned it. */
+	start: Schema.optionalKey(NamedStart),
 	/**
 	 * What the start wrote into its base, each value with where it came from, and what it left alone, and where its
 	 * location stood Link; absent until the state is planned.

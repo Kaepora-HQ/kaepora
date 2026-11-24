@@ -14,8 +14,11 @@ import {
 	Schema,
 	String as Str,
 } from "effect";
+import { Command } from "effect/cli";
 import { UserDirectories } from "effect/persistence";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
+import { TestConsole } from "effect/testing";
+import { cli } from "../src/cli.ts";
 import { Base } from "../src/contract/bases.ts";
 import { StartState } from "../src/contract/state.ts";
 import { newRunId, RunId, SessionId } from "../src/contract/values.ts";
@@ -138,7 +141,7 @@ describe("the bases", () => {
 	);
 
 	it.live(
-		"a save from a folder becomes a base, and the list shows each base with its age, hour and where Link stands",
+		"a save from a folder becomes a base, and the list shows each base and start with its age, hour and where Link stands",
 		() =>
 			Effect.gen(function* () {
 				const fs = yield* FileSystem.FileSystem;
@@ -187,6 +190,23 @@ describe("the bases", () => {
 							stands: { scene: "KokiriForest", position: [1, 2, 3], facing: 0 },
 						},
 					]);
+					expect(
+						Arr.map(listed.starts, ({ start, age, hour, stands }) => ({
+							name: start.name,
+							base: start.base,
+							age,
+							hour,
+							stands,
+						}))
+					).toEqual([
+						{
+							name: "test-start",
+							base: "test-base",
+							age: "child",
+							hour: "day",
+							stands: { scene: "KokiriForest", position: [1, 2, 3], facing: 0 },
+						},
+					]);
 					const from = yield* fs.readFile(
 						`${machine.home}/data/game-testing/bases/from-play/option.sav`
 					);
@@ -196,6 +216,23 @@ describe("the bases", () => {
 					expect(from).toEqual(newGame);
 				}).pipe(Effect.provide(machine.layer));
 			}).pipe(Effect.provide(BunServices.layer))
+	);
+
+	it.live("plan names the named start and the base it stands on", () =>
+		Effect.gen(function* () {
+			const fs = yield* FileSystem.FileSystem;
+			const machine = yield* fakeMachine();
+			const state = `${machine.home}/state.json`;
+			yield* fs.writeFileString(state, '{ "base": "test-start" }');
+			const lines = yield* Effect.gen(function* () {
+				yield* Command.runWith(cli, { version: "test" })(["plan", state]);
+				return Arr.map(yield* TestConsole.logLines, String);
+			}).pipe(Effect.provide([machine.platform, TestConsole.layer]));
+			expect(Arr.take(lines, 2)).toEqual([
+				"From the start test-start: the test base with 5 rupees",
+				"On test-base: the fake game's defaults, in Kokiri Forest",
+			]);
+		}).pipe(Effect.scoped, Effect.provide(BunServices.layer))
 	);
 });
 
@@ -253,6 +290,7 @@ const machineBases = (fs: Layer.Layer<FileSystem.FileSystem>) =>
 						},
 					],
 				]),
+				starts: new Map(),
 				tiers: [],
 				checks: new Map(),
 			})
@@ -515,12 +553,23 @@ describe("the tables in git", () => {
 	);
 
 	it.live(
-		"a wrong row of tables/bases.tsv stops the tool with a sentence naming the file and the line",
+		"a wrong tables/starts.json or row of tables/bases.tsv stops the tool with a sentence naming the file and the row",
 		() =>
 			Effect.gen(function* () {
 				const fs = yield* FileSystem.FileSystem;
 				const { copy, run } = yield* packageCopy;
+				const starts = `${copy}/tables/starts.json`;
 				const table = `${copy}/tables/bases.tsv`;
+				const good = yield* fs.readFileString(starts);
+				yield* fs.writeFileString(
+					starts,
+					'[{ "name": "on-a-run", "about": "A start on a run.", "base": { "run": "20261123-000000-abcd" } }]'
+				);
+				const start = yield* run(["bases"]);
+				expect(start.code).not.toBe(0);
+				expect(start.stdout).toContain(`${starts}: Expected string`);
+				expect(start.stdout).toContain('at [0]["base"]');
+				yield* fs.writeFileString(starts, good);
 				const rows = yield* fs.readFileString(table);
 				yield* fs.writeFileString(table, `${rows}broken-row\tnoon\n`);
 				const line =
