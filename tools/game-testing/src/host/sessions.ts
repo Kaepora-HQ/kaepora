@@ -356,11 +356,7 @@ export class Sessions extends Context.Service<
 					...(Option.isSome(span) ? { traceId: span.value.traceId } : {}),
 				});
 				const plan = yield* states.plan(start.state, start.mod);
-				yield* recorder.planned({
-					...(plan.location === undefined ? {} : { location: plan.location }),
-					edits: plan.edits,
-					leftAlone: plan.leftAlone,
-				});
+				yield* recorder.planned(plan);
 				const { mod } = plan;
 				const folder = Option.isSome(mod)
 					? yield* Effect.asSome(staged(mod.value))
@@ -374,6 +370,7 @@ export class Sessions extends Context.Service<
 					slot: builtSlot,
 					progress: saves.progress,
 					caption: saves.caption,
+					option: saves.option,
 				});
 				const place = yield* places.take({
 					session,

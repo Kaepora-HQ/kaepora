@@ -26,6 +26,8 @@ import {
 	UnknownName,
 	ValueRefused,
 } from "../src/errors.ts";
+import { Runs } from "../src/host/runs.ts";
+import { Bases } from "../src/save/bases.ts";
 import type { Scalar } from "../src/save/codec.ts";
 import { decode, encode, read, write } from "../src/save/codec.ts";
 import { markSpot } from "../src/save/marks.ts";
@@ -469,7 +471,9 @@ const startStates = (
 		);
 		return StartStates.layer.pipe(
 			Layer.provideMerge(Spots.layer),
+			Layer.provide(Bases.layer),
 			Layer.provideMerge([GameData.layer, own]),
+			Layer.provide(Runs.layer),
 			Layer.provide([dump.layer, UserDirectories.layer, config, Path.layer])
 		);
 	}).pipe(Effect.provide(BunFileSystem.layer));

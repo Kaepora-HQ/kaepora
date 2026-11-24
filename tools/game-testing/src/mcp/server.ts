@@ -680,7 +680,7 @@ const handlers = tools.toLayer(
 						})
 				);
 				const head = {
-					base: { name: base.name, about: base.about },
+					base,
 					...(location === undefined ? {} : { location }),
 				};
 				const count = fitting(

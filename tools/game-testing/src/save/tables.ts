@@ -1,7 +1,8 @@
 /**
  * - `tables/spots.tsv`: where Link starts for a location by name, a check or a spot of its own, with how each was found
  *   and the look that started there. `Spots` reads it with the recorded table beside it.
- * - `tables/bases.tsv`: the base saves, which stay on machines with the game.
+ * - `tables/bases.tsv`: the base saves, whose files stay on machines with the game. `Bases` reads it with the bases
+ *   recorded on this machine beside it.
  * - Tiers from `remake/items.tsv`: the items that stand for one SoH item, in the table's order, which puts the
  *   Hookshot before the Longshot. The wallets and scales stand there too, highest first; the pouch table joins
  *   those, and its tiers are used before these.
@@ -17,6 +18,8 @@ import {
 	Schema,
 	String as Str,
 } from "effect";
+import type { Base } from "../contract/bases.ts";
+import { About, BaseName, Hour } from "../contract/bases.ts";
 import type { NameMatch } from "../contract/rpc.ts";
 import type { Spot } from "../contract/spots.ts";
 import { Found, Look, SpotName } from "../contract/spots.ts";
@@ -25,19 +28,6 @@ import type { NameKind } from "../contract/values.ts";
 import { RunId } from "../contract/values.ts";
 import { stem } from "../data/dump.ts";
 import type { GameData } from "../data/game-data.ts";
-
-export interface Base {
-	readonly about: string;
-	readonly age: Age;
-	/** The SHA-256 of its caption.sav. */
-	readonly caption: string;
-	readonly hour: "day" | "night";
-	readonly name: string;
-	/** The SHA-256 of its option.sav, empty for a base whose option.sav was not kept. */
-	readonly option: string;
-	/** The SHA-256 of its progress.sav. */
-	readonly progress: string;
-}
 
 export interface Stock {
 	readonly keeper: string;
@@ -51,9 +41,11 @@ export interface Check {
 	readonly stock: readonly Stock[];
 }
 
-const tables = `${import.meta.dir}/../../tables`;
+const tables = Bun.fileURLToPath(new URL("../../tables", import.meta.url));
 /** This package's tracked spots, which a commit changes. */
 export const trackedSpots = `${tables}/spots.tsv`;
+/** This package's tracked bases, which a commit changes. */
+export const trackedBases = `${tables}/bases.tsv`;
 const remake = `${import.meta.dir}/../../../../remake`;
 
 const Text = Schema.String;
@@ -76,49 +68,85 @@ const SpotRow = Schema.Struct({
 	]),
 	note: Text,
 });
+/** A base's row: `run` and `save` name the run's save it was named from, or are both empty. */
 const BaseRow = Schema.Struct({
-	name: Text,
-	hour: Schema.Literals(["day", "night"]),
+	name: BaseName,
+	hour: Hour,
 	age: Age,
 	progress: Text,
 	caption: Text,
 	option: Text,
-	about: Text,
-});
+	about: About,
+	run: Schema.Union([Schema.Literal(""), RunId]),
+	save: Schema.Union([Schema.Literal(""), Int]),
+}).check(
+	Schema.makeFilter((row) =>
+		(row.run === "") === (row.save === "")
+			? undefined
+			: "a run and its save, or neither"
+	)
+);
+
+/** A base as a line of `tables/bases.tsv`, its cells in the header's order. */
+export const baseLine = (base: Base) =>
+	Arr.join(
+		[
+			base.name,
+			base.hour,
+			base.age,
+			base.progress,
+			base.caption,
+			base.option,
+			base.from?.run ?? "",
+			base.from === undefined ? "" : String(base.from.save),
+			base.about,
+		],
+		"\t"
+	);
 const ItemRow = Schema.Struct({ remake_item: Text, soh_item: Text });
 const PlacedRow = Schema.Struct({ location: Text, hash: Text });
 const FlowRow = Schema.Struct({ location: Text, flow: Text });
 const ShopRow = Schema.Struct({ location: Text, slot: Int, shopkeepers: Text });
 
-/** A table's rows from its text: a header of column names, then one line a row, cells split by tabs. */
-const parseTable = Effect.fnUntraced(function* <
-	S extends Schema.Top & { readonly DecodingServices: never },
->(text: string, row: S) {
-	const [header = "", ...lines] = Arr.filter(
-		Str.split(text, "\n"),
-		Str.isNonEmpty
-	);
-	const columns = Str.split(header, "\t");
-	const rows: unknown = Arr.map(lines, (line) => {
-		const cells = Str.split(line, "\t");
-		return Rec.fromEntries(
-			Arr.map(columns, (column, i) => [column, cells[i] ?? ""])
-		);
-	});
-	return yield* Schema.decodeUnknownEffect(Schema.Array(row))(rows);
-});
-
+/**
+ * A table's rows: a header of column names, then one line a row, cells split by tabs. A commit writes these tables by
+ * hand, so a row that is wrong stops the tool with a sentence naming the file and the line.
+ */
 const readTable = Effect.fn("OwnTables.read")(function* <
 	S extends Schema.Top & { readonly DecodingServices: never },
 >(path: string, row: S) {
 	const fs = yield* FileSystem.FileSystem;
 	const text = yield* fs.readFileString(path).pipe(Effect.orDie);
-	return yield* parseTable(text, row).pipe(Effect.orDie);
+	const lines = Arr.filter(
+		Arr.map(Str.split(text, "\n"), (line, index) => ({
+			line,
+			number: index + 1,
+		})),
+		({ line }) => Str.isNonEmpty(line)
+	);
+	const [header, ...rows] = lines;
+	const columns = Str.split(header?.line ?? "", "\t");
+	return yield* Effect.forEach(
+		rows,
+		({ line, number }) => {
+			const cells = Str.split(line, "\t");
+			return Schema.decodeEffect(row)(
+				Rec.fromEntries(
+					Arr.map(columns, (column, i) => [column, cells[i] ?? ""])
+				)
+			).pipe(
+				Effect.catch((issue) =>
+					Effect.die(new Error(`${path} line ${number}: ${issue.message}`))
+				)
+			);
+		},
+		{ concurrency: 1 }
+	);
 });
 
-/** The spots a table's text holds. A look is `passed <run>` or `failed <run>`. */
-export const parseSpots = Effect.fnUntraced(function* (text: string) {
-	const rows = yield* parseTable(text, SpotRow);
+/** The spots of a spots table. A look is `passed <run>` or `failed <run>`. */
+export const readSpots = Effect.fnUntraced(function* (path: string) {
+	const rows = yield* readTable(path, SpotRow);
 	return Arr.map(
 		rows,
 		(row): Spot => ({
@@ -137,7 +165,7 @@ export const parseSpots = Effect.fnUntraced(function* (text: string) {
 	);
 });
 
-/** The text of a spots table: its header, then one line a spot, as `parseSpots` reads it back. */
+/** The text of a spots table: its header, then one line a spot, as `readSpots` reads it back. */
 export const spotsText = (spots: readonly Spot[]) =>
 	Arr.join(
 		[
@@ -175,6 +203,7 @@ export class OwnTables extends Context.Service<
 		readonly spots: readonly Spot[];
 		/** Every chest check of `remake/chests.tsv`, by its spoiler log name, once, in the table's order. */
 		readonly chests: readonly string[];
+		/** The tracked bases, `tables/bases.tsv`. */
 		readonly bases: ReadonlyMap<string, Base>;
 		readonly tiers: readonly (readonly string[])[];
 		readonly checks: ReadonlyMap<string, Check>;
@@ -183,11 +212,15 @@ export class OwnTables extends Context.Service<
 	static readonly layer = Layer.effect(
 		OwnTables,
 		Effect.gen(function* () {
-			const fs = yield* FileSystem.FileSystem;
-			const spots = yield* fs
-				.readFileString(trackedSpots)
-				.pipe(Effect.flatMap(parseSpots), Effect.orDie);
-			const bases = yield* readTable(`${tables}/bases.tsv`, BaseRow);
+			const spots = yield* readSpots(trackedSpots);
+			const rows = yield* readTable(trackedBases, BaseRow);
+			const bases = byName(
+				Arr.map(
+					rows,
+					({ run, save, ...row }): Base =>
+						run === "" || save === "" ? row : { ...row, from: { run, save } }
+				)
+			);
 			const items = yield* readTable(`${remake}/items.tsv`, ItemRow);
 			const placed = yield* Effect.forEach(
 				["chests", "loose_items", "skulltulas"] as const,
@@ -241,7 +274,7 @@ export class OwnTables extends Context.Service<
 						Str.isNonEmpty
 					)
 				),
-				bases: byName(bases),
+				bases,
 				tiers: Arr.flatMapNullishOr(Rec.values(groups), (group) =>
 					group.length > 1
 						? Arr.map(group, (row) => row.remake_item)
@@ -265,7 +298,7 @@ const byLength = Order.combine(
 export const searchNames = Effect.fn("searchNames")(function* (
 	data: GameData["Service"],
 	own: OwnTables["Service"],
-	spots: readonly Spot[],
+	kept: { readonly spots: readonly Spot[]; readonly bases: readonly Base[] },
 	text: string,
 	options: { readonly kind?: NameKind | undefined; readonly limit: number }
 ) {
@@ -280,12 +313,12 @@ export const searchNames = Effect.fn("searchNames")(function* (
 			name,
 			about: "a check by its spoiler log name",
 		})),
-		...Arr.map(spots, (spot) => ({
+		...Arr.map(kept.spots, (spot) => ({
 			kind: "spot",
 			name: spot.name,
 			about: spot.scene,
 		})),
-		...Arr.map([...own.bases.values()], (base) => ({
+		...Arr.map(kept.bases, (base) => ({
 			kind: "base",
 			name: base.name,
 			about: base.about,

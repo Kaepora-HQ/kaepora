@@ -3,6 +3,7 @@
  * `plan_state` answer it, and a run's record keeps it.
  */
 import { Schema } from "effect";
+import { KeptFrom, keptText } from "./bases.ts";
 import { StartSpot } from "./spots.ts";
 import { Saved } from "./values.ts";
 
@@ -96,12 +97,30 @@ export const PlannedEdit = Schema.Union([
 export type PlannedEdit = typeof PlannedEdit.Type;
 
 /**
+ * The save a start was built on: a base by its name, with the run's save it was named from if it was; or a save a run
+ * kept, which the state named itself.
+ */
+export const PlannedBase = Schema.Union([
+	Schema.Struct({
+		name: Schema.String,
+		about: Schema.String,
+		from: Schema.optionalKey(KeptFrom),
+	}),
+	Schema.Struct({ about: Schema.String, from: KeptFrom }),
+]);
+export type PlannedBase = typeof PlannedBase.Type;
+
+/** A base as a sentence names it: its name, or the run's save it is. */
+export const baseText = (base: PlannedBase) =>
+	"name" in base ? base.name : keptText(base.from);
+
+/**
  * What a state writes into its base, and what it leaves as the base holds it and nothing writes: a value named by the
  * files of a place it resets that is not the place's own, so a test that needs one adds it with `set`, or a value the
  * mod's new game starts otherwise that play moved in the base.
  */
 export const StatePlan = Schema.Struct({
-	base: Schema.Struct({ name: Schema.String, about: Schema.String }),
+	base: PlannedBase,
 	/** Where the state's location stands Link, and what kind of spot that is. */
 	location: Schema.optionalKey(StartSpot),
 	edits: Schema.Array(PlannedEdit),

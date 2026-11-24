@@ -8,17 +8,15 @@ import { Array as Arr, Effect, FileSystem, Layer, Record as Rec } from "effect";
 import { UserDirectories } from "effect/persistence";
 import { StartState } from "../src/contract/state.ts";
 import type { Saved } from "../src/contract/values.ts";
-import { GameData } from "../src/data/game-data.ts";
+import { tables } from "../src/host/host.ts";
 import { decode, encode } from "../src/save/codec.ts";
-import { Spots } from "../src/save/spots.ts";
 import { StartStates } from "../src/save/state.ts";
 import { OwnTables } from "../src/save/tables.ts";
 
 const base = "new-game-autosave";
 
 const platform = Layer.mergeAll(BunServices.layer, UserDirectories.layer);
-const layer = StartStates.layer.pipe(
-	Layer.provideMerge([GameData.layer, Spots.layer]),
+const layer = tables.pipe(
 	Layer.provideMerge(OwnTables.layer),
 	Layer.provideMerge(platform)
 );
